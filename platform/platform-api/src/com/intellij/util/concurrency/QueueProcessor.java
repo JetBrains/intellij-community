@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -37,6 +38,11 @@ import java.util.Map;
  * @param <T> type of queue elements.
  */
 public class QueueProcessor<T> {
+  public static enum ThreadToUse {
+    AWT,
+    POOLED
+  }
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.QueueProcessor");
 
   private final PairConsumer<T, Runnable> myProcessor;
@@ -49,6 +55,44 @@ public class QueueProcessor<T> {
   private final ThreadToUse myThreadToUse;
   private final Condition<?> myDeathCondition;
   private final Map<MyOverrideEquals, ModalityState> myModalityState;
+
+  /**
+   * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
+   */
+  public QueueProcessor(Consumer<T> processor) {
+    this(processor, Condition.FALSE);
+  }
+
+  /**
+   * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
+   */
+  public QueueProcessor(Consumer<T> processor, @NotNull Condition<?> deathCondition) {
+    this(processor, deathCondition, true);
+  }
+
+  public QueueProcessor(final Consumer<T> processor, final Condition<?> deathCondition, boolean autostart) {
+    this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
+  }
+
+  private static <T> PairConsumer<T, Runnable> wrappingProcessor(final Consumer<T> processor) {
+    return new PairConsumer<T, Runnable>() {
+      @Override
+      public void consume(T item, Runnable runnable) {
+        try {
+          processor.consume(item);
+        }
+        catch (Throwable e) {
+          try {
+            LOG.error(e);
+          }
+          catch (Exception ignore) {
+            // should survive assertions
+          }
+        }
+        runnable.run();
+      }
+    };
+  }
 
   /**
    * Constructs a QueueProcessor with the given processor and autostart setting.
@@ -84,42 +128,6 @@ public class QueueProcessor<T> {
     };
   }
 
-  public QueueProcessor(final Consumer<T> processor, final Condition<?> deathCondition, boolean autostart) {
-    this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
-  }
-
-  public void add(T t, ModalityState state) {
-    myModalityState.put(new MyOverrideEquals(t), state);
-    doAdd(t, false);
-  }
-
-  private static <T> PairConsumer<T, Runnable> wrappingProcessor(final Consumer<T> processor) {
-    return new PairConsumer<T, Runnable>() {
-      @Override
-      public void consume(T item, Runnable runnable) {
-        try {
-          processor.consume(item);
-        }
-        catch (Throwable e) {
-          try {
-            LOG.error(e);
-          }
-          catch (Exception ignore) {
-            // should survive assertions
-          }
-        }
-        runnable.run();
-      }
-    };
-  }
-
-  /**
-   * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
-   */
-  public QueueProcessor(Consumer<T> processor, final Condition<?> deathCondition) {
-    this(processor, deathCondition, true);
-  }
-
   /**
    * Starts queue processing if it hasn't started yet.
    * Effective only if the QueueProcessor was created with no-autostart option: otherwise processing will start as soon as the first element
@@ -134,6 +142,11 @@ public class QueueProcessor<T> {
         startProcessing();
       }
     }
+  }
+
+  public void add(T t, ModalityState state) {
+    myModalityState.put(new MyOverrideEquals(t), state);
+    doAdd(t, false);
   }
 
   public void add(T element) {
@@ -220,11 +233,6 @@ public class QueueProcessor<T> {
     synchronized (myQueue) {
       return myQueue.isEmpty() && (!isProcessing);
     }
-  }
-
-  public static enum ThreadToUse {
-    AWT,
-    POOLED
   }
 
   private static class MyOverrideEquals {

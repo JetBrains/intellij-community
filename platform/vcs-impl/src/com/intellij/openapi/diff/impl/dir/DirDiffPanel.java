@@ -313,7 +313,7 @@ public class DirDiffPanel implements Disposable {
     clearDiffPanel();
     if (element.getType() == DType.CHANGED) {
       try {
-        myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow());
+        myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow(), myModel);
       }
       catch (FilesTooBigForDiffException e) {
         // todo KB: check
@@ -336,7 +336,7 @@ public class DirDiffPanel implements Disposable {
         object = element.isSource() ? element.getSource() : element.getTarget();
         target = element.isSource() ? element.getTarget() : element.getSource();
       }
-      myViewComponent = object.getViewComponent(project, target);
+      myViewComponent = object.getViewComponent(project, target, myModel);
 
       if (myViewComponent != null) {
         myCurrentElement = object;

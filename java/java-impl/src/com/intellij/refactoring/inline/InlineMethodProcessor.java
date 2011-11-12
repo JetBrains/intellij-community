@@ -122,6 +122,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    if (!myInlineThisOnly && checkReadOnly()) {
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
+    }
     final UsageInfo[] usagesIn = refUsages.get();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
@@ -139,10 +142,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
 
-    if (!myInlineThisOnly) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
-    }
     return showConflicts(conflicts, usagesIn);
+  }
+
+  private boolean checkReadOnly() {
+    return myMethod.isWritable() || myMethod instanceof PsiCompiledElement;
   }
 
   private void addInaccessibleSuperCallsConflicts(final UsageInfo[] usagesIn, final MultiMap<PsiElement, String> conflicts) {
@@ -310,7 +314,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               psiElement.delete();
             }
           }
-          myMethod.delete();
+          if (myMethod.isWritable()) myMethod.delete();
         }
       }
       removeAddedBracesWhenPossible();
@@ -1325,6 +1329,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       return Collections.singletonList(myReference);
     }
     else {
+      if (!checkReadOnly()) return Collections.emptyList();
       return myReference == null ? Collections.singletonList(myMethod) : Arrays.asList(myReference, myMethod);
     }
   }

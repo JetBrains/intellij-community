@@ -15,24 +15,24 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.framework.library.FrameworkSupportWithLibrary;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
 
 /**
 * @author peter
 */
-public class GroovySupportConfigurable extends FrameworkSupportConfigurable implements FrameworkSupportWithLibrary {
+public class GroovySupportConfigurable extends FrameworkSupportInModuleConfigurable {
+  @Override
+  public JComponent createComponent() {
+    return null;
+  }
+
   @NotNull
   @Override
   public CustomLibraryDescription createLibraryDescription() {
@@ -40,19 +40,14 @@ public class GroovySupportConfigurable extends FrameworkSupportConfigurable impl
   }
 
   @Override
-  public List<? extends FrameworkVersion> getVersions() {
-    return Collections.singletonList(getSelectedVersion());
-  }
-
-  public JComponent getComponent() {
-    return null;
-  }
-
-  @Override
-  public boolean isLibraryOnly() {
+  public boolean isOnlyLibraryAdded() {
     return true;
   }
 
-  public void addSupport(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel, @Nullable Library library) {
+  @Override
+  public void addSupport(@NotNull Module module,
+                         @NotNull ModifiableRootModel rootModel,
+                         @NotNull ModifiableModelsProvider modifiableModelsProvider) {
+
   }
 }

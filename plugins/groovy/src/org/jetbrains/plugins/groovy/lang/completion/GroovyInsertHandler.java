@@ -86,7 +86,8 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       if (PsiTreeUtil.getParentOfType(elementAt, GrImportStatement.class) != null) return;
 
       if (parameters.length == 1) {
-        if (context.getCompletionChar() != '(' && TypesUtil.isClassType(parameters[0].getType(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+        if ((context.getCompletionChar() != '(' && context.getCompletionChar() != ' ') && 
+            TypesUtil.isClassType(parameters[0].getType(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
           int afterBrace;
           final int nonWs = CharArrayUtil.shiftForward(document.getCharsSequence(), offset, " \t");
           if (nonWs < document.getTextLength() && document.getCharsSequence().charAt(nonWs) == '{') {
@@ -95,12 +96,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
             document.insertString(offset, " {}");
             afterBrace = offset + 2;
           }
-          if (context.getCompletionChar() == ' ') {
-            context.setAddCompletionChar(false);
-            caretModel.moveToOffset(offset + 1);
-          } else {
-            caretModel.moveToOffset(afterBrace);
-          }
+          caretModel.moveToOffset(afterBrace);
           return;
         }
       }

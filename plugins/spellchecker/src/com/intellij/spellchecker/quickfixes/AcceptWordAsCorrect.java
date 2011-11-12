@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.SpellCheckerManager;
@@ -52,7 +53,11 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
-    spellCheckerManager.acceptWordAsCorrect(myWord, project);
+    if (myWord != null) {
+      spellCheckerManager.acceptWordAsCorrect(myWord, project);
+    } else {
+      spellCheckerManager.acceptWordAsCorrect(ProblemDescriptionNode.extractHighlightedText(descriptor, descriptor.getPsiElement()), project);
+    }
   }
 
   public Icon getIcon(int flags) {

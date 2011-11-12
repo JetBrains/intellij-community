@@ -88,6 +88,8 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                         return '\u001b';
                     case'f':
                         return '\f';
+                    case 'b':
+                        return '\b';
                     case'c':
                         return (char)(ch ^ 64);
                     case'x':

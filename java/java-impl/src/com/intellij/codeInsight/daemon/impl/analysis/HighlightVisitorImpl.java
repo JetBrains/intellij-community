@@ -677,17 +677,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateNestedClass(aClass));
-      if (!myHolder.hasErrorResults()) {
-        TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-        myHolder.add(HighlightClassUtil.checkClassMustBeAbstract(aClass, textRange));
+      try {
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateNestedClass(aClass));
+        if (!myHolder.hasErrorResults()) {
+          TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
+          myHolder.add(HighlightClassUtil.checkClassMustBeAbstract(aClass, textRange));
+        }
+        if (!myHolder.hasErrorResults()) {
+          myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder, myResolveHelper));
+        }
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass));
+        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCyclicInheritance(aClass));
       }
-      if (!myHolder.hasErrorResults()) {
-        myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder, myResolveHelper));
+      catch (IndexNotReadyException ignored) {
       }
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass));
-      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCyclicInheritance(aClass));
     }
     else if (parent instanceof PsiEnumConstant) {
       if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkEnumConstantModifierList(list));

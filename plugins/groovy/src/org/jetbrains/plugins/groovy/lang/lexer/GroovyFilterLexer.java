@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
+import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.tree.IElementType;
 
 import static com.intellij.psi.search.UsageSearchContext.*;

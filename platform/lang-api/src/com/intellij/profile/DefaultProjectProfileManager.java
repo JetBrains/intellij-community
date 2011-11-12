@@ -15,7 +15,6 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -176,7 +176,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     return PROJECT_PROFILE;
   }
 
-  public void setProjectProfile(final String projectProfile) {
+  public void setProjectProfile(@Nullable final String projectProfile) {
     final String profileName = PROJECT_PROFILE;
     PROJECT_PROFILE = projectProfile;
     USE_PROJECT_PROFILE = projectProfile != null;

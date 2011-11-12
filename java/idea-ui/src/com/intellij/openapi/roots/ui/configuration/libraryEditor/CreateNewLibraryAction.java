@@ -76,7 +76,9 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     final DefaultMutableTreeNode
       libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
     rootConfigurable.selectNodeInTree(libraryNode);
+    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject);
   }
+
 
   @Nullable
   public static Library createLibrary(@Nullable final LibraryType type, @NotNull final Component parentComponent,
@@ -129,7 +131,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     if (librariesConfigurable instanceof ProjectLibrariesConfigurable) {
       final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
       for (LibraryType<?> extension : extensions) {
-        if (!LibraryEditingUtil.getSuitableModules(configurable, extension).isEmpty()) {
+        if (!LibraryEditingUtil.getSuitableModules(configurable, extension, null).isEmpty()) {
           suitableTypes.add(extension);
         }
       }

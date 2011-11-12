@@ -273,7 +273,6 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the PSI element.
    */
-  @Nullable
   PsiElement getPsi();
 
   /**

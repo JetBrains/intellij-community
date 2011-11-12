@@ -15,7 +15,6 @@
  */
 package com.intellij.framework.library;
 
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +24,4 @@ import org.jetbrains.annotations.NotNull;
 public interface FrameworkLibraryVersion extends DownloadableFileSetDescription {
   @NotNull
   String getDefaultLibraryName();
-
-  boolean isCompatibleWith(@NotNull FrameworkVersion frameworkVersion);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,18 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
 public abstract class ContentFolderBaseImpl extends RootModelComponentBase implements ContentFolder, Comparable<ContentFolderBaseImpl> {
+  @NonNls public static final String URL_ATTRIBUTE = "url";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentFolderBaseImpl");
+
   private final VirtualFilePointer myFilePointer;
   protected final ContentEntryImpl myContentEntry;
-  @NonNls public static final String URL_ATTRIBUTE = "url";
 
   ContentFolderBaseImpl(@NotNull VirtualFile file, @NotNull ContentEntryImpl contentEntry) {
     super(contentEntry.getRootModel());
@@ -107,8 +110,9 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     return getUrl().hashCode();
   }
   
+  @Nullable
   @Override
-   public String toString() {
+  public String toString() {
     return myFilePointer == null ? null : getUrl();
   }
 }

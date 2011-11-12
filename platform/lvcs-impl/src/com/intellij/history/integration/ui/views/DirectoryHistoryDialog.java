@@ -40,6 +40,7 @@ import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -61,7 +62,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     this(p, gw, f, true);
   }
 
-  protected DirectoryHistoryDialog(Project p, IdeaGateway gw, VirtualFile f, boolean doInit) {
+  protected DirectoryHistoryDialog(@NotNull Project p, IdeaGateway gw, VirtualFile f, boolean doInit) {
     super(p, gw, f, doInit);
   }
 

@@ -16,7 +16,9 @@
 package com.intellij.platform;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,5 +28,5 @@ import org.jetbrains.annotations.NotNull;
 public interface DirectoryProjectConfigurator {
   ExtensionPointName<DirectoryProjectConfigurator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectConfigurator");
 
-  void configureProject(Project project, @NotNull VirtualFile baseDir);
+  void configureProject(Project project, @NotNull VirtualFile baseDir, Ref<Module> moduleRef);
 }

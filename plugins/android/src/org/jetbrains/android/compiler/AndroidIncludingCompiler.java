@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -80,28 +81,38 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
       @Override
       public GenerationItem[] compute() {
         List<MyItem> result = new ArrayList<MyItem>();
+
         for (Module module : context.getProjectCompileScope().getAffectedModules()) {
-          Map<String, MyItem> qName2Item = new HashMap<String, MyItem>();
           AndroidFacet facet = AndroidFacet.getInstance(module);
-          if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
-            for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
+          if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
+            continue;
+          }
 
-              final String aptGenSrcRootPath = depFacet.getAptGenSourceRootPath();
-              final VirtualFile aptGenSrcRoot = aptGenSrcRootPath != null
-                                                ? LocalFileSystem.getInstance().findFileByPath(aptGenSrcRootPath)
-                                                : null;
+          Map<String, MyItem> qName2Item = new HashMap<String, MyItem>();
+          for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
+            final AndroidPlatform platform = depFacet.getConfiguration().getAndroidPlatform();
 
-              final String aidlGenSrcRootPath = depFacet.getAidlGenSourceRootPath();
-              final VirtualFile aidlGenSrcRoot = aidlGenSrcRootPath != null
-                                                 ? LocalFileSystem.getInstance().findFileByPath(aidlGenSrcRootPath)
-                                                 : null;
+            final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
+            if (platformToolsRevision < 0 || platformToolsRevision > 7) {
+              // "including" style building of library projects is deprecated since platform-tools-r8
+              continue;
+            }
 
-              VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
+            final String aptGenSrcRootPath = depFacet.getAptGenSourceRootPath();
+            final VirtualFile aptGenSrcRoot = aptGenSrcRootPath != null
+                                              ? LocalFileSystem.getInstance().findFileByPath(aptGenSrcRootPath)
+                                              : null;
 
-              for (VirtualFile depSourceRoot : srcRoots) {
-                if (depSourceRoot != aptGenSrcRoot && depSourceRoot != aidlGenSrcRoot) {
-                  collectCompilableFiles(module, depFacet.getModule(), context, depSourceRoot, qName2Item);
-                }
+            final String aidlGenSrcRootPath = depFacet.getAidlGenSourceRootPath();
+            final VirtualFile aidlGenSrcRoot = aidlGenSrcRootPath != null
+                                               ? LocalFileSystem.getInstance().findFileByPath(aidlGenSrcRootPath)
+                                               : null;
+
+            VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
+
+            for (VirtualFile depSourceRoot : srcRoots) {
+              if (depSourceRoot != aptGenSrcRoot && depSourceRoot != aidlGenSrcRoot) {
+                collectCompilableFiles(module, depFacet.getModule(), context, depSourceRoot, qName2Item);
               }
             }
           }

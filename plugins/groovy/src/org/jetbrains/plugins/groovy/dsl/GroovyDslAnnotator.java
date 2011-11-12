@@ -22,10 +22,12 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.unscramble.UnscrambleDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -33,41 +35,101 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author peter
  */
-public class GroovyDslAnnotator implements Annotator {
+public class GroovyDslAnnotator implements Annotator, DumbAware {
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof GroovyFile) {
       final VirtualFile vfile = ((GroovyFile)psiElement).getVirtualFile();
       if (vfile != null && "gdsl".equals(vfile.getExtension()) &&
           (!GroovyDslFileIndex.isActivated(vfile) || FileDocumentManager.getInstance().isFileModified(vfile))) {
-        final Annotation annotation = holder.createWarningAnnotation(psiElement, "DSL descriptor file has been changed and isn't currently executed. Click to activate it back.");
+        final String reason = GroovyDslFileIndex.getInactivityReason(vfile);
+        final String message;
+        boolean modified = reason == null || GroovyDslFileIndex.MODIFIED.equals(reason);
+        if (modified) {
+          message = "DSL descriptor file has been changed and isn't currently executed.";
+        } else {
+          message = "DSL descriptor file has been disabled due to a processing error.";
+        }
+        final Annotation annotation = holder.createWarningAnnotation(psiElement, message);
         annotation.setFileLevelAnnotation(true);
-        annotation.registerFix(new IntentionAction() {
-          @NotNull
-          public String getText() {
-            return "Activate";
-          }
-
-          @NotNull
-          public String getFamilyName() {
-            return "Activate DSL descriptor";
-          }
-
-          public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-            return true;
-          }
-
-          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-            FileDocumentManager.getInstance().saveAllDocuments();
-            GroovyDslFileIndex.activateUntilModification(vfile);
-            DaemonCodeAnalyzer.getInstance(project).restart();
-          }
-
-          public boolean startInWriteAction() {
-            return false;
-          }
-        });
+        if (!modified) {
+          annotation.registerFix(new InvestigateFix(reason));
+        }
+        annotation.registerFix(new ActivateFix(vfile));
       }
+    }
+  }
+
+  static void analyzeStackTrace(Project project, String exceptionText) {
+    final UnscrambleDialog dialog = new UnscrambleDialog(project);
+    dialog.setText(exceptionText);
+    dialog.show();
+  }
+
+  private static class InvestigateFix implements IntentionAction {
+    private final String myReason;
+
+    public InvestigateFix(String reason) {
+      myReason = reason;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return "View details";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Investigate DSL descriptor processing error";
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      analyzeStackTrace(project, myReason);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+  }
+
+  private static class ActivateFix implements IntentionAction {
+    private final VirtualFile myVfile;
+
+    public ActivateFix(VirtualFile vfile) {
+      myVfile = vfile;
+    }
+
+    @NotNull
+    public String getText() {
+      return "Activate back";
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return "Activate DSL descriptor";
+    }
+
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      GroovyDslFileIndex.activateUntilModification(myVfile);
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
+
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }

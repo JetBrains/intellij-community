@@ -49,50 +49,53 @@ public abstract class Builder {
    * @return true if additional compilation pass is required, false otherwise
    * @throws Exception
    */
-  public final boolean updateMappings(CompileContext context, Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws Exception {
+  public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws Exception {
     boolean additionalPassRequired = false;
 
     final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(getName());
     final Set<String> removedPaths = getRemovedPaths(context);
 
-    if (context.isMake()) {
-      final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
-      final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
+    final Mappings globalMappings = context.getMappings();
 
-      // mark as affected all files that were dirty before compilation
-      allAffectedFiles.addAll(filesToCompile);
-      // accumulate all successfully compiled in this round
-      allCompiledFiles.addAll(successfullyCompiled);
-      // unmark as affected all successfully compiled
-      allAffectedFiles.removeAll(successfullyCompiled);
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (globalMappings) {
+      if (context.isMake()) {
+        final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
+        final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
-      final Mappings globalMappings = context.getMappings();
+        // mark as affected all files that were dirty before compilation
+        allAffectedFiles.addAll(filesToCompile);
+        // accumulate all successfully compiled in this round
+        allCompiledFiles.addAll(successfullyCompiled);
+        // unmark as affected all successfully compiled
+        allAffectedFiles.removeAll(successfullyCompiled);
 
-      final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
+        final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
 
-      final boolean incremental = globalMappings.differentiate(
-        delta, removedPaths, successfullyCompiled, allCompiledFiles, allAffectedFiles
-      );
+        final boolean incremental = globalMappings.differentiate(
+          delta, removedPaths, successfullyCompiled, allCompiledFiles, allAffectedFiles
+        );
 
-      if (incremental) {
-        final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
-        newlyAffectedFiles.removeAll(affectedBeforeDif);
-        if (!newlyAffectedFiles.isEmpty()) {
-          for (File file : newlyAffectedFiles) {
-            tsStorage.markDirty(file);
+        if (incremental) {
+          final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
+          newlyAffectedFiles.removeAll(affectedBeforeDif);
+          if (!newlyAffectedFiles.isEmpty()) {
+            for (File file : newlyAffectedFiles) {
+              tsStorage.markDirty(file);
+            }
+            additionalPassRequired = chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
           }
-          additionalPassRequired = chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+        }
+        else {
+          additionalPassRequired = true;
+          context.setDirty(chunk, true);
         }
       }
-      else {
-        additionalPassRequired = true;
-        context.setDirty(chunk, true);
-      }
-    }
 
-    context.getMappings().integrate(delta, successfullyCompiled, removedPaths);
-    for (File file : successfullyCompiled) {
-      tsStorage.saveStamp(file);
+      globalMappings.integrate(delta, successfullyCompiled, removedPaths);
+      for (File file : successfullyCompiled) {
+        tsStorage.saveStamp(file);
+      }
     }
 
     return additionalPassRequired;

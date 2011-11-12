@@ -28,9 +28,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -203,10 +201,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         SimpleJavaParameters params = createJavaParameters();
         Sdk sdk = params.getJdk();
 
-        final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), params,
-                                                                           JdkUtil.useDynamicClasspath(PlatformDataKeys
-                                                                                                         .PROJECT.getData(
-                                                                               DataManager.getInstance().getDataContext())));
+        final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(
+          ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), params,false);
         final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
           @Override
           public Charset getCharset() {

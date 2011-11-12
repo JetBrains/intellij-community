@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,11 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return ArrayUtil.toObjectArray(elements);
   }
 
+  @Override
+  public boolean isValid(Object element) {
+    return element instanceof AbstractTreeNode;
+  }
+
   public Object getParentElement(Object element) {
     if (element instanceof AbstractTreeNode){
       return ((AbstractTreeNode)element).getParent();
@@ -68,6 +74,11 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   @NotNull
   public NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
     return (NodeDescriptor)element;
+  }
+
+  @Override
+  public AsyncResult<Object> revalidateElement(Object element) {
+    return super.revalidateElement(element);
   }
 
   @Nullable

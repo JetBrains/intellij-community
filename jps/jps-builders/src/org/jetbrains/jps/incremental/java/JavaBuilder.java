@@ -82,7 +82,7 @@ public class JavaBuilder extends Builder{
             final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
             // todo: the callback is not thread-safe?
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (callback) {
+            synchronized (context.getMappings()) {
               // todo: parse class data out of synchronized block (move it from the 'associate' implementation)
               callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), reader);
             }
@@ -169,6 +169,9 @@ public class JavaBuilder extends Builder{
       context.deleteCorrespondingClasses(filesToCompile);
 
       return compile(context, chunk, filesToCompile, formsToCompile);
+    }
+    catch (ProjectBuildException e) {
+      throw e;
     }
     catch (Exception e) {
       String message = e.getMessage();
@@ -599,7 +602,9 @@ public class JavaBuilder extends Builder{
         }
       }
 
-      myFileObjects.add(fileObject);
+      synchronized (myFileObjects) {
+        myFileObjects.add(fileObject);
+      }
     }
 
     @Nullable

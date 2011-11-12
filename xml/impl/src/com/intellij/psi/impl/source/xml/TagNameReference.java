@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -53,6 +54,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TagNameReference implements PsiReference {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.TagNameReference");
+
   protected final boolean myStartTagFlag;
   private final ASTNode myNameElement;
 
@@ -108,6 +111,11 @@ public class TagNameReference implements PsiReference {
   public PsiElement resolve() {
     final XmlTag tag = getTagElement();
     final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor():null;
+
+    LOG.debug("Descriptor for tag " +
+              (tag != null ? tag.getName() : "NULL") +
+              " is " +
+              (descriptor != null ? (descriptor.toString() + ": " + descriptor.getClass().getCanonicalName()) : "NULL"));
 
     if (descriptor != null){
       return descriptor instanceof AnyXmlElementDescriptor ? tag : descriptor.getDeclaration();

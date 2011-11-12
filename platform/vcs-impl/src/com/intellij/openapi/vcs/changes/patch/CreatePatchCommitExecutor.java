@@ -17,8 +17,6 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.PathManager;
@@ -209,11 +207,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         }
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
-            if (Messages.showOkCancelDialog(myProject, message,
-                                    VcsBundle.message("create.patch.commit.action.title"),
-                                    RevealFileAction.getActionName(), IdeBundle.message("action.close"), Messages.getInformationIcon()) == 0) {
-              ShowFilePathAction.open(file, file);
-            }
+            ShowFilePathAction.showDialog(myProject, message, VcsBundle.message("create.patch.commit.action.title"), file);
           }
         }, null, myProject);
       } catch (ProcessCanceledException e) {

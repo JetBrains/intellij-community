@@ -30,7 +30,6 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.SideBorder;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
@@ -473,7 +472,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
       myNameLabel.setFont(PluginManagerColumnInfo.getNameFont());
       myBundledLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-      myPanel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
+      myPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 1));
       
       final GridBagConstraints gn =
         new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
@@ -568,7 +567,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   private class MyPluginManagerColumnInfo extends PluginManagerColumnInfo {
     public MyPluginManagerColumnInfo() {
-      super(PluginManagerColumnInfo.COLUMN_NAME);
+      super(PluginManagerColumnInfo.COLUMN_NAME, InstalledPluginsTableModel.this);
     }
 
     @Override
@@ -579,16 +578,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     @Override
     protected boolean isSortByName() {
       return true;
-    }
-
-    @Override
-    protected boolean isSortByDownloads() {
-      return false;
-    }
-
-    @Override
-    protected boolean isSortByDate() {
-      return false;
     }
 
     /*@Override

@@ -17,11 +17,13 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,5 +57,11 @@ public class OtherTabsAndIndentsProvider extends CodeStyleSettingsProvider {
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.OTHER_SETTINGS;
+  }
+
+  @Override
+  public boolean hasSettingsPage() {
+    final FileTypeIndentOptionsProvider[] indentOptionsProviders = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+    return indentOptionsProviders.length > 0;
   }
 }

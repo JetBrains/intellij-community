@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.projectImport.ProjectAttachProcessor;
 
 public class CloseProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
@@ -35,7 +36,10 @@ public class CloseProjectAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     presentation.setEnabled(project != null);
+    if (ProjectAttachProcessor.canAttachToProject()) {
+      presentation.setText("Close Projects in Current Window");
+    }
   }
 }

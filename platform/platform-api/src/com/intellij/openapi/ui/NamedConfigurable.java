@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +84,12 @@ public abstract class NamedConfigurable<T> implements Configurable {
         myTopRightPanel.add(component, BorderLayout.CENTER);
       }
     }
-    myOptionsPanel.add(myOptionsComponent, BorderLayout.CENTER);
+    if (myOptionsComponent != null) {
+      myOptionsPanel.add(myOptionsComponent, BorderLayout.CENTER);
+    }
+    else {
+      Logger.getInstance(getClass().getName()).error("Options component is null for "+getClass());
+    }
     updateName();
     return myWholePanel;
   }

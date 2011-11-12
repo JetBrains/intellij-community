@@ -177,6 +177,11 @@ public final class GitRepository implements Disposable {
     return myRootDir;
   }
 
+  @NotNull
+  public String getPresentableUrl() {
+    return getRoot().getPresentableUrl();
+  }
+
   public Project getProject() {
     return myProject;
   }
@@ -336,4 +341,13 @@ public final class GitRepository implements Disposable {
     }
   }
 
+  public String toLogString() {
+    return String.format("GitRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s, myRootDir=%s}",
+                         myCurrentBranch, myCurrentRevision, myState, myRootDir);
+  }
+  
+  @Override
+  public String toString() {
+    return getPresentableUrl();
+  }
 }

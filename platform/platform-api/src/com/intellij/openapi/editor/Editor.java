@@ -89,7 +89,7 @@ public interface Editor extends UserDataHolder {
    * to the highlighters contained in the markup model for the document.
    *
    * @return the markup model instance.
-   * @see Document#getMarkupModel(com.intellij.openapi.project.Project)
+   * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(com.intellij.openapi.editor.Document, com.intellij.openapi.project.Project, boolean)
    */
   @NotNull MarkupModel getMarkupModel();
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
+import javax.swing.*;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,6 +55,8 @@ import java.util.List;
 public class GithubUtil {
   private static final String API_URL = "/api/v2/xml";
   private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());
+  public static final Icon GITHUB_ICON = IconLoader.getIcon("/org/jetbrains/plugins/github/github_icon.png");
+
 
   public static String getHttpsUrl() {
     return "https://" + GithubSettings.getInstance().getHost();

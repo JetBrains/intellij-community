@@ -46,12 +46,11 @@ import javax.swing.*;
  * @date 12/8/10
  */
 public class GithubRebaseAction extends DumbAwareAction {
-  public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
   private static final Logger LOG = Logger.getInstance(GithubRebaseAction.class.getName());
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Cannot perform github rebase";
 
   public GithubRebaseAction() {
-    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", ICON);
+    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", GithubUtil.GITHUB_ICON);
   }
 
   public void update(AnActionEvent e) {

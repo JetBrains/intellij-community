@@ -274,7 +274,7 @@ public class GitLogUI implements Disposable {
       @Override
       public void reportSymbolicRefs(VirtualFile root, SymbolicRefs symbolicRefs) {
         myRefs.put(root, symbolicRefs);
-        myTableModel.setHead(root, symbolicRefs.getHeadHash());
+        myTableModel.setHeadIfEmpty(root, symbolicRefs.getHeadHash());
 
         myRecalculatedCommon.clear();
         if (myRefs.isEmpty()) return;

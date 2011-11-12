@@ -21,9 +21,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -72,20 +70,16 @@ public class ModulePathMacroManager extends BasePathMacroManager {
   }
 
   @Nullable
-  private String getModuleDir(String moduleFilePath) {
+  private static String getModuleDir(String moduleFilePath) {
     File moduleDirFile = new File(moduleFilePath).getParentFile();
     if (moduleDirFile == null) return null;
 
     // hack so that, if a module is stored inside the .idea directory, the base directory
     // rather than the .idea directory itself is considered the module root
     // (so that a Ruby IDE project doesn't break if its directory is moved together with the .idea directory)
-    final VirtualFile baseDir = myModule.getProject().getBaseDir();
-    if (baseDir != null) {
-      File moduleDirParent = moduleDirFile.getParentFile();
-      if (moduleDirParent != null && moduleDirFile.getName().equals(".idea") &&
-          moduleDirParent.getPath().equals(FileUtil.toSystemDependentName(baseDir.getPath()))) {
-        moduleDirFile = moduleDirParent;
-      }
+    File moduleDirParent = moduleDirFile.getParentFile();
+    if (moduleDirParent != null && moduleDirFile.getName().equals(".idea")) {
+      moduleDirFile = moduleDirParent;
     }
     String moduleDir = moduleDirFile.getPath();
     moduleDir = moduleDir.replace(File.separatorChar, '/');

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
+import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -60,7 +61,7 @@ public class AddCustomLibraryDialog extends DialogWrapper {
     setTitle(IdeBundle.message("setup.library.dialog.title"));
     VirtualFile baseDir = myModule.getProject().getBaseDir();
     final String baseDirPath = baseDir != null ? baseDir.getPath() : "";
-    myPanel = new LibraryOptionsPanel(description, baseDirPath, null, myLibrariesContainer, false);
+    myPanel = new LibraryOptionsPanel(description, baseDirPath, FrameworkLibraryVersionFilter.ALL, myLibrariesContainer, false);
     Disposer.register(myDisposable, myPanel);
     init();
   }

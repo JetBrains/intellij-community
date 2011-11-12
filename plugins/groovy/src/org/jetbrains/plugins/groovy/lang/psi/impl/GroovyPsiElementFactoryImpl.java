@@ -180,7 +180,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
     if (initializer != null) {
       if (initializer instanceof GrApplicationStatement &&
-          !GroovyConfigUtils.getInstance().isVersionAtLeast(initializer, GroovyConfigUtils.GROOVY1_8)) {
+          !GroovyConfigUtils.getInstance().isVersionAtLeast(initializer, GroovyConfigUtils.GROOVY1_8, false)) {
         initializer = createMethodCallByAppCall((GrApplicationStatement)initializer);
       }
       assert initializer != null;

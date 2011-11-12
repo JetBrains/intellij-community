@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -54,7 +55,7 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class GrLightMethodBuilder extends LightElement implements GrMethod {
-  private String myName;
+  protected String myName;
   private PsiType myReturnType = PsiType.VOID;
   private final GrLightModifierList myModifierList;
   private final GrLightParameterListBuilder myParameterList;
@@ -341,6 +342,14 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return method instanceof GrLightMethodBuilder && kind.equals(((GrLightMethodBuilder)method).myMethodKind);
   }
 
+  public static boolean checkKind(@Nullable PsiElement method, @NotNull Object kind1, @NotNull Object kind2) {
+    if (method instanceof GrLightMethodBuilder) {
+      Object kind = ((GrLightMethodBuilder)method).getMethodKind();
+      return kind1.equals(kind) || kind2.equals(kind);
+    }
+    return false;
+  }
+
   public String toString() {
     return myMethodKind + ":" + getName();
   }
@@ -401,27 +410,55 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return getReturnType();
   }
 
+  protected void copyData(GrLightMethodBuilder dest) {
+    dest.setMethodKind(myMethodKind);
+    dest.setData(myData);
+    dest.setNamedParameters(myNamedParameters);
+    if (getNavigationElement() != this) {
+      dest.setNavigationElement(getNavigationElement());
+    }
+    dest.setBaseIcon(myBaseIcon);
+    dest.setReturnType(myReturnType);
+    dest.setContainingClass(myContainingClass);
+    
+    dest.getModifierList().copyModifiers(this);
+
+    dest.getParameterList().clear();
+    for (GrParameter parameter : myParameterList.getParameters()) {
+      dest.addParameter(parameter);
+    }
+  }
+
   @Override
   public GrLightMethodBuilder copy() {
     GrLightMethodBuilder copy = new GrLightMethodBuilder(myManager, myName);
-    copy.setMethodKind(myMethodKind);
-    copy.setData(myData);
-    copy.setNamedParameters(myNamedParameters);
-    if (getNavigationElement() != this) {
-      copy.setNavigationElement(getNavigationElement());
-    }
-    copy.setBaseIcon(myBaseIcon);
-    copy.setReturnType(myReturnType);
-
-    copy.getModifierList().copyModifiers(this);
-
-    for (GrParameter parameter : myParameterList.getParameters()) {
-      copy.addParameter(parameter);
-    }
-
+    copyData(copy);
     return copy;
   }
 
+  public static GrLightMethodBuilder wrap(PsiMethod method) {
+    GrLightMethodBuilder res = new GrLightMethodBuilder(method.getManager(), method.getName());
+
+    res.setReturnType(method.getReturnType());
+    res.setNavigationElement(method.getNavigationElement());
+
+    res.setContainingClass(method.getContainingClass());
+
+    res.getModifierList().copyModifiers(method);
+
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      GrLightParameter p = new GrLightParameter(StringUtil.notNullize(parameter.getName()), parameter.getType(), res);
+
+      if (parameter instanceof GrParameter) {
+        p.setOptional(((GrParameter)parameter).isOptional());
+      }
+
+      res.addParameter(p);
+    }
+    
+    return res;
+  }
+  
   public <T> T getData() {
     //noinspection unchecked
     return (T)myData;

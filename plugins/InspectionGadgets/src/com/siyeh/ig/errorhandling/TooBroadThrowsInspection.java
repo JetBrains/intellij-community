@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,19 +77,15 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("too.broad.catch.option"),
-      this, "onlyWarnOnRootExceptions");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("too.broad.catch.option"), this, "onlyWarnOnRootExceptions");
   }
 
   @NotNull
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final Collection<SmartTypePointer> maskedExceptions =
-      (Collection<SmartTypePointer>)infos[0];
+    final Collection<SmartTypePointer> maskedExceptions = (Collection<SmartTypePointer>)infos[0];
     final Boolean originalNeeded = (Boolean)infos[1];
-    return new AddThrowsClauseFix(maskedExceptions,
-                                  originalNeeded.booleanValue());
+    return new AddThrowsClauseFix(maskedExceptions, originalNeeded.booleanValue());
   }
 
   private static class AddThrowsClauseFix extends InspectionGadgetsFix {
@@ -97,8 +93,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
     private final Collection<SmartTypePointer> types;
     private final boolean originalNeeded;
 
-    AddThrowsClauseFix(Collection<SmartTypePointer> types,
-                       boolean originalNeeded) {
+    AddThrowsClauseFix(Collection<SmartTypePointer> types, boolean originalNeeded) {
       this.types = types;
       this.originalNeeded = originalNeeded;
     }
@@ -116,24 +111,21 @@ public class TooBroadThrowsInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceList)) {
         return;
       }
       final PsiReferenceList referenceList = (PsiReferenceList)parent;
-      final PsiElementFactory factory =
-        JavaPsiFacade.getElementFactory(project);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (!originalNeeded) {
         element.delete();
       }
       for (SmartTypePointer type : types) {
         final PsiType psiType = type.getType();
         if (psiType instanceof PsiClassType) {
-          final PsiJavaCodeReferenceElement referenceElement =
-            factory.createReferenceElementByType((PsiClassType)psiType);
+          final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType((PsiClassType)psiType);
           referenceList.add(referenceElement);
         }
       }
@@ -152,8 +144,10 @@ public class TooBroadThrowsInspection extends BaseInspection {
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       final PsiReferenceList throwsList = method.getThrowsList();
-      final PsiJavaCodeReferenceElement[] throwsReferences =
-        throwsList.getReferenceElements();
+      if (!throwsList.isPhysical()) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement[] throwsReferences = throwsList.getReferenceElements();
       if (throwsReferences.length == 0) {
         return;
       }
@@ -161,17 +155,13 @@ public class TooBroadThrowsInspection extends BaseInspection {
       if (body == null) {
         return;
       }
-      final Set<PsiClassType> exceptionsThrown =
-        ExceptionUtils.calculateExceptionsThrown(body);
-      final PsiClassType[] referencedExceptions =
-        throwsList.getReferencedTypes();
-      final Set<PsiClassType> exceptionsDeclared =
-        new HashSet(referencedExceptions.length);
+      final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);
+      final PsiClassType[] referencedExceptions = throwsList.getReferencedTypes();
+      final Set<PsiClassType> exceptionsDeclared = new HashSet(referencedExceptions.length);
       ContainerUtil.addAll(exceptionsDeclared, referencedExceptions);
       final int referencedExceptionsLength = referencedExceptions.length;
       for (int i = 0; i < referencedExceptionsLength; i++) {
-        final PsiClassType referencedException =
-          referencedExceptions[i];
+        final PsiClassType referencedException = referencedExceptions[i];
         if (onlyWarnOnRootExceptions) {
           if (!ExceptionUtils.isGenericExceptionClass(
             referencedException)) {
@@ -181,18 +171,14 @@ public class TooBroadThrowsInspection extends BaseInspection {
         final List<SmartTypePointer> exceptionsMasked = new ArrayList();
         final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(body.getProject());
         for (PsiClassType exceptionThrown : exceptionsThrown) {
-          if (referencedException.isAssignableFrom(exceptionThrown) &&
-              !exceptionsDeclared.contains(exceptionThrown)) {
+          if (referencedException.isAssignableFrom(exceptionThrown) && !exceptionsDeclared.contains(exceptionThrown)) {
             exceptionsMasked.add(pointerManager.createSmartTypePointer(exceptionThrown));
           }
         }
         if (!exceptionsMasked.isEmpty()) {
-          final PsiJavaCodeReferenceElement throwsReference =
-            throwsReferences[i];
-          final boolean originalNeeded =
-            exceptionsThrown.contains(referencedException);
-          registerError(throwsReference, exceptionsMasked,
-                        Boolean.valueOf(originalNeeded));
+          final PsiJavaCodeReferenceElement throwsReference = throwsReferences[i];
+          final boolean originalNeeded = exceptionsThrown.contains(referencedException);
+          registerError(throwsReference, exceptionsMasked, Boolean.valueOf(originalNeeded));
         }
       }
     }

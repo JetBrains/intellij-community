@@ -24,6 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.commands.*;
+import git4idea.push.GitPushSpec;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,7 @@ public class Git {
    */
   public static void init(Project project, VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.INIT);
+    h.setSilent(false);
     h.setNoSSH(true);
     h.run();
     if (!h.errors().isEmpty()) {
@@ -128,6 +131,7 @@ public class Git {
                                           @Nullable String newBranch,
                                           @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
+    h.setSilent(false);
     if (newBranch == null) { // simply checkout
       h.addParameters(reference);
     } else { // checkout reference as new branch
@@ -145,6 +149,7 @@ public class Git {
   public static GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                                    @Nullable GitLineHandlerListener listener) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
+    h.setSilent(false);
     h.addParameters("-b");
     h.addParameters(branchName);
     if (listener != null) {
@@ -156,6 +161,7 @@ public class Git {
   public static GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName,
                                                      @Nullable GitLineHandlerListener listener, String reference) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.TAG);
+    h.setSilent(false);
     h.addParameters(tagName);
     if (reference != null && ! reference.isEmpty()) {
       h.addParameters(reference);
@@ -174,6 +180,7 @@ public class Git {
                                               boolean force,
                                               @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setSilent(false);
     h.addParameters(force ? "-D" : "-d");
     h.addParameters(branchName);
     for (GitLineHandlerListener listener : listeners) {
@@ -204,11 +211,33 @@ public class Git {
     return run(h);
   }
 
+  public static GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
+    h.setSilent(false);
+
+    for (GitLineHandlerListener listener : listeners) {
+      h.addLineListener(listener);
+    }
+    if (!pushSpec.isPushAll()) {
+      GitRemote remote = pushSpec.getRemote();
+      LOG.assertTrue(remote != null, "Remote can't be null: " + pushSpec);
+      h.addParameters(remote.getName());
+      GitBranch remoteBranch = pushSpec.getDest();
+      String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
+      h.addParameters(pushSpec.getSource().getName() + ":" + destination);
+    }
+    return run(h, true);
+  }
+
+  private static GitCommandResult run(@NotNull GitLineHandler handler) {
+    return run(handler, false);
+  } 
+
   /**
    * Runs the given {@link GitLineHandler} in the current thread and returns the {@link GitCommandResult}.
    */
-  private static GitCommandResult run(GitLineHandler handler) {
-    handler.setNoSSH(true);
+  private static GitCommandResult run(@NotNull GitLineHandler handler, boolean remote) {
+    handler.setNoSSH(!remote);
 
     final List<String> errorOutput = new ArrayList<String>();
     final List<String> output = new ArrayList<String>();

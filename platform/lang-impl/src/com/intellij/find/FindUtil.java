@@ -609,6 +609,27 @@ public class FindUtil {
     return replaced;
   }
 
+
+  private static boolean selectionMayContainRange(SelectionModel selection, TextRange range) {
+    int[] starts = selection.getBlockSelectionStarts();
+    int[] ends = selection.getBlockSelectionEnds();
+    if (starts.length == 0) {
+      return false;
+    }
+    return new TextRange(starts[0], ends[starts.length-1]).contains(range);
+  }
+  
+  private static boolean selectionStrictlyContainsRange(SelectionModel selection, TextRange range) {
+    int[] starts = selection.getBlockSelectionStarts();
+    int[] ends = selection.getBlockSelectionEnds();
+    for (int i = 0; i < starts.length; ++i) {
+      if (new TextRange(starts[i], ends[i]).contains(range)) {  //todo
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   private static FindResult doSearch(Project project,
                                      final Editor editor,
@@ -621,10 +642,17 @@ public class FindUtil {
     final FindResult result = findManager.findString(document.getCharsSequence(), offset, model, getVirtualFile(editor));
 
     boolean isFound = result.isStringFound();
-    if (!model.isGlobal()) {
-      if (result.getEndOffset() > editor.getSelectionModel().getSelectionEnd() ||
-          result.getStartOffset() < editor.getSelectionModel().getSelectionStart()) {
+    final SelectionModel selection = editor.getSelectionModel();
+    if (isFound && !model.isGlobal()) {
+      if (!selectionMayContainRange(selection, result)) {
         isFound = false;
+      } else if (!selectionStrictlyContainsRange(selection, result)) {
+        final int[] starts = selection.getBlockSelectionStarts();
+        for (int newOffset : starts) {
+          if (newOffset > result.getStartOffset()) {
+            return doSearch(project, editor, newOffset, toWarn, model, adjustEditor);
+          }
+        }
       }
     }
     if (!isFound) {
@@ -643,7 +671,7 @@ public class FindUtil {
 
       if (model.isGlobal()) {
         caretModel.moveToOffset(result.getEndOffset());
-        editor.getSelectionModel().removeSelection();
+        selection.removeSelection();
         scrollingModel.scrollToCaret(scrollType);
         scrollingModel.runActionOnScrollingFinished(
           new Runnable() {
@@ -674,7 +702,7 @@ public class FindUtil {
         caretModel.addCaretListener(listener);
       }
       else {
-        editor.getSelectionModel().setSelection(result.getStartOffset(), result.getEndOffset());
+        selection.setSelection(result.getStartOffset(), result.getEndOffset());
       }
     }
 

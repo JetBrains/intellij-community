@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,8 @@ import java.beans.PropertyChangeListener;
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
-
+  
+  private boolean mySmallVariant = false;
   private DataContext myDataContext;
 
   protected ComboBoxAction() { }
@@ -52,6 +54,14 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   protected ComboBoxButton createComboBoxButton(Presentation presentation) {
     return new ComboBoxButton(presentation);
+  }
+
+  public boolean isSmallVariant() {
+    return mySmallVariant;
+  }
+
+  public void setSmallVariant(boolean smallVariant) {
+    mySmallVariant = smallVariant;
   }
 
   @Override
@@ -82,13 +92,14 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
-
       setModel(new MyButtonModel());
       setHorizontalAlignment(LEFT);
       setFocusable(false);
       Insets margins = getMargin();
       setMargin(new Insets(margins.top, 2, margins.bottom, 2));
-
+      if (isSmallVariant()) {
+        setBorder(IdeBorderFactory.createEmptyBorder(0));
+      }
       addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
@@ -232,7 +243,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public Insets getInsets(Insets insets) {
       final Insets result = super.getInsets(insets);
 
-      if (UIUtil.isUnderNimbusLookAndFeel()) {
+      if (UIUtil.isUnderNimbusLookAndFeel() && !isSmallVariant()) {
         result.top += 2;
         result.left += 8;
         result.bottom += 2;
@@ -246,23 +257,66 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
+    public boolean isOpaque() {
+      return !isSmallVariant();
+    }
+
+    @Override
     public Dimension getPreferredSize() {
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      final int width = isEmpty ? 10 + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
-      return new Dimension(width, UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
+      int width = isEmpty ? 10 + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
+      if (isSmallVariant()) width += 4;
+      return new Dimension(width, isSmallVariant() ? 19 : UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      final Dimension size = getSize();
-      final Insets insets = super.getInsets();
-      final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
-      int x = isEmpty ? (size.width - icon.getIconWidth()) / 2
-                      : size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
-      icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
+      final Dimension size = getSize();      
+      if (isSmallVariant()) {
+        final Graphics2D g2 = (Graphics2D)g;        
+        g2.setColor(UIUtil.getControlColor());
+        final int w = getWidth();
+        final int h = getHeight();
+        g2.fillRect(2, 0, w-2, h);
+        if (getMousePosition() == null ) {
+          g2.setColor(UIUtil.getBorderColor());
+        } else {
+          g2.setColor(UIUtil.isUnderAquaLookAndFeel() ? new Color(0, 0, 0, 30) : new Color(8, 36, 107));
+        }
+        g2.drawRect(0,0, w-1, h-1);
+        final Icon icon = getIcon();
+        int x = 5;
+        if (icon != null) {
+          icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
+          x += icon.getIconWidth() + 3;
+        }
+        if (!StringUtil.isEmpty(getText())) {
+          final Font font = UIUtil.getButtonFont();
+          g2.setFont(font);
+          g2.setColor(UIManager.getColor("Button.foreground"));
+          g2.drawString(getText(), x, (size.height + font.getSize())/2 - 1);
+        }
+      } else {
+        super.paintComponent(g);
+      }
+        final Insets insets = super.getInsets();
+        final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
+        final int x;
+        if (isEmpty) {
+          x = (size.width - icon.getIconWidth()) / 2;
+        } else {
+            if (isSmallVariant()) {
+              x = size.width - icon.getIconWidth() - insets.right + 1;
+            } else {
+              x = size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
+            }
+        }
+        icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);        
+    }
+
+    private boolean isGlowSupported() {
+      return false;
     }
 
     protected void updateButtonSize() {

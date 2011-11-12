@@ -137,4 +137,8 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   public boolean isFocusBeingTransferred() {
     return getGlobalInstance().isFocusBeingTransferred();
   }
+
+  @Override
+  public void dispose() {
+  }
 }

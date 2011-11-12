@@ -16,11 +16,9 @@
 package git4idea.update;
 
 import git4idea.config.GitVcsSettings;
-import git4idea.config.GitVcsSettings.UpdateType;
+import git4idea.config.UpdateMethod;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * Update options panel
@@ -38,7 +36,7 @@ public class GitUpdateOptionsPanel {
   }
 
   public boolean isModified(GitVcsSettings settings) {
-    UpdateType type = getUpdateType();
+    UpdateMethod type = getUpdateType();
     return type != settings.getUpdateType() || updateSaveFilesPolicy() != settings.updateChangesPolicy();
   }
 
@@ -52,16 +50,16 @@ public class GitUpdateOptionsPanel {
   /**
    * @return get the currently selected update type
    */
-  private UpdateType getUpdateType() {
-    UpdateType type = null;
+  private UpdateMethod getUpdateType() {
+    UpdateMethod type = null;
     if (myForceRebaseRadioButton.isSelected()) {
-      type = UpdateType.REBASE;
+      type = UpdateMethod.REBASE;
     }
     else if (myForceMergeRadioButton.isSelected()) {
-      type = UpdateType.MERGE;
+      type = UpdateMethod.MERGE;
     }
     else if (myBranchDefaultRadioButton.isSelected()) {
-      type = UpdateType.BRANCH_DEFAULT;
+      type = UpdateMethod.BRANCH_DEFAULT;
     }
     assert type != null;
     return type;

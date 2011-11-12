@@ -1820,10 +1820,6 @@
                      key="set.replaceable.by.enum.set.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.SetReplaceableByEnumSetInspection"/>
-    <localInspection language="JAVA" shortName="SizeReplaceableByIsEmpty" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="size.replaceable.by.isempty.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.performance.SizeReplaceableByIsEmptyInspection"/>
     <localInspection language="JAVA" suppressId="StringBufferWithoutInitialCapacity" shortName="StringBufferMustHaveInitialCapacity"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.buffer.must.have.initial.capacity.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
@@ -2278,6 +2274,10 @@
                      key="unclear.binary.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.UnclearBinaryExpressionInspection"/>
+    <localInspection language="JAVA" shortName="SizeReplaceableByIsEmpty" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="size.replaceable.by.isempty.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection"/>
 
     <localInspection language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="access.to.non.thread.safe.static.field.from.instance.display.name"

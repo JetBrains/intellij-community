@@ -74,6 +74,8 @@
 
   <depends>JUnit</depends>
   <depends>com.intellij.properties</depends>
+  <depends>IntentionPowerPack</depends>
+
   <depends optional="true" config-file="maven-support.xml">org.jetbrains.idea.maven</depends>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -139,6 +141,10 @@
                      groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.android.inspections.AndroidDomInspection"/>
 
+    <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle" key="android.inspections.group.name"
+                         groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
+                         implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
+
     <colorSettingsPage implementation="org.jetbrains.android.logcat.AndroidLogcatColorPage"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.android.AndroidFindUsagesHandlerFactory"/>
     <xml.schemaProvider implementation="org.jetbrains.android.AndroidXmlSchemaProvider"/>
@@ -168,6 +174,7 @@
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
     <refactoring.safeDeleteProcessor id="android" order="before javaProcessor"
                                      implementation="org.jetbrains.android.AndroidSafeDeleteProcessorDelegate"/>
+    <compiler.additionalCompileScopeProvider implementation="org.jetbrains.android.compiler.AndroidAdditionalCompileScopeProvider"/>
   </extensions>
 
   <extensionPoints>

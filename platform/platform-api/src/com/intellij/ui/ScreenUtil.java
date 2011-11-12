@@ -30,10 +30,9 @@ import java.util.Map;
 public class ScreenUtil {
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
   static {
-    final boolean useCache = SystemInfo.isLinux || SystemInfo.isSolaris
+    final boolean useCache = (SystemInfo.isLinux || SystemInfo.isSolaris)
                              && !GraphicsEnvironment.isHeadless()
-                             && SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7.0")
-                             && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1;
+                             && SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7");
     ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   }
 
@@ -116,7 +115,7 @@ public class ScreenUtil {
     synchronized (ourInsetsCache) {
       Pair<Insets, Long> data = ourInsetsCache.get(gc);
       final long now = System.currentTimeMillis();
-      if (data == null || now > data.second + 1000) {  // keep for 1 s
+      if (data == null || now > data.second + 17 * 1000) {  // keep for 17s
         data = Pair.create(Toolkit.getDefaultToolkit().getScreenInsets(gc), now);
         ourInsetsCache.put(gc, data);
       }

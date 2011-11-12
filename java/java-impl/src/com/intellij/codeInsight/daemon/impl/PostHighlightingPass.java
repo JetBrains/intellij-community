@@ -535,7 +535,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     });
-    ChangeSignatureGestureDetector.getInstance(myProject).dismissForElement(method);
+    if (method.getReturnType() != null || (containingClass != null && Comparing.strEqual(containingClass.getName(), method.getName()))) {
+      //ignore methods with deleted return types as they are always marked as unused without any reason
+      ChangeSignatureGestureDetector.getInstance(myProject).dismissForElement(method);
+    }
     return highlightInfo;
   }
 

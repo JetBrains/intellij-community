@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 import java.util.List;
@@ -26,7 +27,8 @@ public class CompositeContextFilter implements ContextFilter {
     return myAnd;
   }
 
-  public static ContextFilter compose(List<ContextFilter> filters, boolean and) {
+  @NotNull
+  public static ContextFilter compose(@NotNull List<ContextFilter> filters, boolean and) {
     if (filters.size() == 1) {
       return filters.get(0);
     }

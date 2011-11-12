@@ -342,6 +342,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
         yield(new Runnable() {
           public void run() {
+            if (isDisposed()) return;
             expandChild(kids, 0, nonStopCondition, file, element, async, indicator, target);
           }
         });
@@ -390,6 +391,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean validateNode(final Object child) {
+    if (child == null) {
+      return false;
+    }
     if (child instanceof ProjectViewNode) {
       final ProjectViewNode projectViewNode = (ProjectViewNode)child;
       return projectViewNode.validate();

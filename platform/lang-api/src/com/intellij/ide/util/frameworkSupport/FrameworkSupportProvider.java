@@ -20,6 +20,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +86,10 @@ public abstract class FrameworkSupportProvider {
 
   public boolean isSupportAlreadyAdded(@NotNull Module module) {
     return false;
+  }
+
+  public boolean isSupportAlreadyAdded(@NotNull Module module, @NotNull FacetsProvider facetsProvider) {
+    return isSupportAlreadyAdded(module);
   }
 
   @NotNull @NonNls

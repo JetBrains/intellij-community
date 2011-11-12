@@ -41,6 +41,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   private AndroidFacet myAppFacet;
 
   private Module myLibModule;
+  private Module myLibGenModule;
   private AndroidFacet myLibFacet;
 
   protected JavaCodeInsightTestFixture myFixture;
@@ -63,23 +64,41 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     final JavaModuleFixtureBuilder libModuleBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     String libModuleDir = myFixture.getTempDirPath() + "/lib";
     new File(libModuleDir).mkdir();
-    AndroidTestCase.tuneModule(libModuleBuilder, libModuleDir);
+
+    libModuleBuilder.addContentRoot(libModuleDir);
+    new File(libModuleDir + "/src/").mkdir();
+    libModuleBuilder.addSourceRoot("src");
+
+    final JavaModuleFixtureBuilder libGenModuleBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    String libGenModule = myFixture.getTempDirPath() + "/lib/gen";
+    new File(libGenModule).mkdir();
+    libGenModuleBuilder.addSourceContentRoot(libGenModule);
 
     myFixture.setUp();
     myFixture.setTestDataPath(AndroidTestCase.getAbsoluteTestDataPath());
 
     myAppModule = appModuleBuilder.getFixture().getModule();
     myLibModule = libModuleBuilder.getFixture().getModule();
+    myLibGenModule = libGenModuleBuilder.getFixture().getModule();
 
     myAppFacet = AndroidTestCase.addAndroidFacet(myAppModule, getTestSdkPath());
     myLibFacet = AndroidTestCase.addAndroidFacet(myLibModule, getTestSdkPath());
 
-    final ModifiableRootModel model = ModuleRootManager.getInstance(myAppModule).getModifiableModel();
-    model.addModuleOrderEntry(myLibModule);
+    final ModifiableRootModel model1 = ModuleRootManager.getInstance(myAppModule).getModifiableModel();
+    model1.addModuleOrderEntry(myLibModule);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        model.commit();
+        model1.commit();
+      }
+    });
+
+    final ModifiableRootModel model2 = ModuleRootManager.getInstance(myLibModule).getModifiableModel();
+    model2.addModuleOrderEntry(myLibGenModule);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model2.commit();
       }
     });
 
@@ -94,6 +113,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   protected void tearDown() throws Exception {
     myAppModule = null;
     myLibModule = null;
+    myLibGenModule = null;
 
     myAppFacet = null;
     myLibFacet = null;

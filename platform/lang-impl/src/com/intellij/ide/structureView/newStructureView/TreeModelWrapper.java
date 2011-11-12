@@ -20,15 +20,14 @@ import com.intellij.ide.structureView.FileEditorPositionListener;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.ide.util.treeView.smartTree.TreeAction;
+import com.intellij.ide.util.treeView.smartTree.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
-public class TreeModelWrapper implements StructureViewModel {
+public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel {
   private final StructureViewModel myModel;
   private final TreeActionsOwner myStructureView;
 
@@ -51,9 +50,21 @@ public class TreeModelWrapper implements StructureViewModel {
   private ArrayList<TreeAction> filterActive(TreeAction[] actions) {
     ArrayList<TreeAction> filtered = new ArrayList<TreeAction>();
     for (TreeAction action : actions) {
-      if (action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName())) filtered.add(action);
+      if (isFiltered(action)) filtered.add(action);
     }
     return filtered;
+  }
+  
+  private ArrayList<NodeProvider> filterProviders(Collection<NodeProvider> actions) {
+    ArrayList<NodeProvider> filtered = new ArrayList<NodeProvider>();
+    for (NodeProvider action : actions) {
+      if (isFiltered(action)) filtered.add(action);
+    }
+    return filtered;
+  }
+
+  private boolean isFiltered(TreeAction action) {
+    return action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName());
   }
 
   @NotNull
@@ -70,6 +81,14 @@ public class TreeModelWrapper implements StructureViewModel {
 
   public Object getCurrentEditorElement() {
     return myModel.getCurrentEditorElement();
+  }
+
+  @Override
+  public Collection<NodeProvider> getNodeProviders() {
+    if (myModel instanceof ProvidingTreeModel) {
+      return filterProviders(((ProvidingTreeModel)myModel).getNodeProviders());
+    }
+    return Collections.emptyList();
   }
 
   public static boolean isActive(final TreeAction action, final TreeActionsOwner actionsOwner) {
@@ -112,5 +131,10 @@ public class TreeModelWrapper implements StructureViewModel {
 
   public StructureViewModel getModel() {
     return myModel;
+  }
+
+  @Override
+  public boolean isEnabled(NodeProvider provider) {
+    return myStructureView.isActionActive(provider.getName());
   }
 }

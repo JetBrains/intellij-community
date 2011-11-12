@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ActivityTracker;
@@ -400,7 +401,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     @NonNls final String resBundleName = plugin != null && !plugin.getPluginId().getIdString().equals("com.intellij") ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
-      bundle = getBundle(loader, resBundleName);
+      bundle = AbstractBundle.getResourceBundle(resBundleName, loader);
     }
     return bundle;
   }
@@ -603,21 +604,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         processAddToGroupNode(action, child, pluginId, isSecondary(child));
       }
     }
-  }
-
-  private static final Map<String, ResourceBundle> ourBundlesCache = new HashMap<String, ResourceBundle>();
-
-  private static ResourceBundle getBundle(final ClassLoader loader, final String resBundleName) {
-
-    if (ourBundlesCache.containsKey(resBundleName)) {
-      return ourBundlesCache.get(resBundleName);
-    }
-
-    final ResourceBundle bundle = ResourceBundle.getBundle(resBundleName, Locale.getDefault(), loader);
-
-    ourBundlesCache.put(resBundleName, bundle);
-
-    return bundle;
   }
 
   /**\

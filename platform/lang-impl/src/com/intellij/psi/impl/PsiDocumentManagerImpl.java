@@ -295,7 +295,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
    *  @param key the (unique) name of the action. This action will overwrite any action which was registered under this key earlier.
    *  @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
-  public boolean cancelAndRunWhenAllCommitted(@NotNull Object key, @NotNull final Runnable action) {
+  public boolean cancelAndRunWhenAllCommitted(@NonNls @NotNull Object key, @NotNull final Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) {
       action.run();

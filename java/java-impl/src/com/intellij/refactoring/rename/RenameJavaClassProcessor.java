@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.ClassUtil;
@@ -125,7 +126,8 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
   }
 
-  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+  @Override
+  public void prepareRenaming(PsiElement element, String newName, Map<PsiElement, String> allRenames, SearchScope scope) {
     final PsiMethod[] constructors = ((PsiClass) element).getConstructors();
     for (PsiMethod constructor : constructors) {
       allRenames.put(constructor, newName);

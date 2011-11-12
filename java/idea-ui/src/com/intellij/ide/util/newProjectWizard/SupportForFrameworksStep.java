@@ -2,7 +2,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -30,7 +30,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   private boolean myCommitted;
 
   public SupportForFrameworksStep(final ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
-    List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(builder);
+    List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(builder);
     myFrameworkSupportModel = new FrameworkSupportModelInWizard(librariesContainer, builder);
     mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, myFrameworkSupportModel);
     builder.addModuleConfigurationUpdater(new ModuleBuilder.ModuleConfigurationUpdater() {

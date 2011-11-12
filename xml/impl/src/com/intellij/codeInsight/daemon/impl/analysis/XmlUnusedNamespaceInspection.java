@@ -22,6 +22,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
@@ -30,8 +31,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.DefaultXmlExtension;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
@@ -249,25 +250,38 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      doFix(project, descriptor, true);
+    }
+
+    @Nullable
+    public SmartPsiElementPointer<XmlTag> doFix(Project project, ProblemDescriptor descriptor, boolean reformat) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof XmlAttributeValue) {
         element = element.getParent();
       }
       else if (!(element instanceof XmlAttribute)) {
-        return;
+        return null;
       }
       XmlAttribute attribute = (XmlAttribute)element;
       XmlTag parent = attribute.getParent();
 
-      if (!CodeInsightUtilBase.prepareFileForWrite(parent.getContainingFile())) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(parent.getContainingFile())) return null;
 
       SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parent);
 
-      PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-      Document document = manager.getDocument(attribute.getContainingFile());
-      
       doRemove(project, attribute, parent);
 
+      if (reformat) {
+        reformatStartTag(project, pointer);
+      }
+      return pointer;
+    }
+
+    public static void reformatStartTag(Project project, SmartPsiElementPointer<XmlTag> pointer) {
+      PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+      PsiFile file = pointer.getContainingFile();
+      assert file != null;
+      Document document = manager.getDocument(file);
       assert document != null;
       manager.commitDocument(document);
       XmlTag tag = pointer.getElement();
@@ -277,7 +291,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     protected void doRemove(Project project, XmlAttribute attribute, XmlTag parent) {
       if (!attribute.isNamespaceDeclaration()) {
-        SchemaPrefix schemaPrefix = DefaultXmlExtension.DEFAULT_EXTENSION.getPrefixDeclaration(parent, myPrefix);
+        SchemaPrefix schemaPrefix = XmlExtension.DEFAULT_EXTENSION.getPrefixDeclaration(parent, myPrefix);
         if (schemaPrefix != null) {
           attribute = schemaPrefix.getDeclaration();
         }
@@ -311,6 +325,16 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       assert document != null;
       document.deleteString(range.getStartOffset(), range.getEndOffset());
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof RemoveNamespaceDeclarationFix && Comparing.equal(myPrefix, ((RemoveNamespaceDeclarationFix)obj).myPrefix);
+    }
+
+    @Override
+    public int hashCode() {
+      return myPrefix == null ? 0 : myPrefix.hashCode();
+    }
   }
 
   public static class RemoveNamespaceLocationFix extends RemoveNamespaceDeclarationFix {
@@ -342,5 +366,10 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       }
     }
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj;
+    }
   }
 }

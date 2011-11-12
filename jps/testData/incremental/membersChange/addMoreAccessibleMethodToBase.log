@@ -1,0 +1,24 @@
+Request to make modules:
+module AddMoreAccessibleMethodToBase
+End of request
+digraph X {
+  AddMoreAccessibleMethodToBase[label="AddMoreAccessibleMethodToBase"];
+}
+digraph X {
+  AddMoreAccessibleMethodToBase[label="AddMoreAccessibleMethodToBase"];
+}
+Propagated modules:
+module AddMoreAccessibleMethodToBase
+End of propagated
+Cleaning output files:
+out/production/AddMoreAccessibleMethodToBase/BaseServer.class
+End of files
+Compiling files:
+src/BaseServer.java
+End of files
+Cleaning output files:
+out/production/AddMoreAccessibleMethodToBase/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files

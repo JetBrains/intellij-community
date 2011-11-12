@@ -29,7 +29,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
 import com.intellij.ui.treeStructure.Tree;
@@ -133,6 +135,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     myTree.setLargeModel(true);
 
     JScrollPane scrollPane = NewErrorTreeRenderer.install(myTree);
+    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     myMessagePanel.add(scrollPane, BorderLayout.CENTER);
 
     if (createToolbar) {

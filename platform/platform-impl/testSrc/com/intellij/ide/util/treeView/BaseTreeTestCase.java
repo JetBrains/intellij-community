@@ -1,9 +1,6 @@
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SimpleTimer;
+import com.intellij.openapi.util.*;
 import com.intellij.testFramework.FlyIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.treeStructure.Tree;

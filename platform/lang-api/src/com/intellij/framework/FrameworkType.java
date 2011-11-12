@@ -15,43 +15,33 @@
  */
 package com.intellij.framework;
 
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author nik
  */
-public class FrameworkType {
+public abstract class FrameworkType {
   private final String myId;
-  private final String myPresentableName;
-  private final Icon myIcon;
 
-  public FrameworkType(@NotNull String id, @NotNull String presentableName, @Nullable Icon icon) {
+  protected FrameworkType(@NotNull String id) {
     myId = id;
-    myPresentableName = presentableName;
-    myIcon = icon != null ? icon : EmptyIcon.ICON_16;
   }
 
   @NotNull
-  public String getPresentableName() {
-    return myPresentableName;
-  }
+  public abstract String getPresentableName();
 
   @NotNull
-  public String getId() {
+  public abstract Icon getIcon();
+
+  @NotNull
+  public final String getId() {
     return myId;
   }
 
-  @NotNull
-  public Icon getIcon() {
-    return myIcon;
-  }
-
   @Override
-  public boolean equals(Object o) {
+  public final boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
@@ -59,7 +49,7 @@ public class FrameworkType {
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return myId.hashCode();
   }
 }

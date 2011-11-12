@@ -33,25 +33,28 @@ import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
 
 
 public class FileParser {
+  public static final FileParser INSTANCE = new FileParser();
+  private final ReferenceParser myReferenceParser;
+  private final DeclarationParser myDeclarationParser;
+
   private static final TokenSet IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
     ElementType.MODIFIER_BIT_SET,
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
-  private static final JavaParserUtil.MarkingParserWrapper TOP_LEVEL_DECLARATION_PARSER = new JavaParserUtil.MarkingParserWrapper() {
-    @Override
-    public PsiBuilder.Marker parse(final PsiBuilder builder) {
-      return DeclarationParser.parse(builder, DeclarationParser.Context.FILE);
-    }
-  };
-
-  private FileParser() { }
-
-  public static void parse(final PsiBuilder builder) {
-    parseFile(builder, IMPORT_LIST_STOPPER_SET, TOP_LEVEL_DECLARATION_PARSER, JavaErrorMessages.message("expected.class.or.interface"));
+  private FileParser() {
+    this(DeclarationParser.INSTANCE, ReferenceParser.INSTANCE);
   }
 
-  public static void parseFile(final PsiBuilder builder, final TokenSet importListStoppers,
-                               final JavaParserUtil.MarkingParserWrapper declarationParser, final String errorMessage) {
+  protected FileParser(DeclarationParser declarationParser, ReferenceParser referenceParser) {
+    myDeclarationParser = declarationParser;
+    myReferenceParser = referenceParser;
+  }
+
+  public void parse(final PsiBuilder builder) {
+    parseFile(builder, IMPORT_LIST_STOPPER_SET, JavaErrorMessages.message("expected.class.or.interface"));
+  }
+
+  public void parseFile(final PsiBuilder builder, final TokenSet importListStoppers, final String errorMessage) {
     parsePackageStatement(builder);
 
     final Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);
@@ -70,7 +73,7 @@ public class FileParser {
         continue;
       }
 
-      final PsiBuilder.Marker declaration = declarationParser.parse(builder);
+      final PsiBuilder.Marker declaration = parseInitial(builder);
       if (declaration != null) {
         if (invalidElements != null) {
           invalidElements.errorBefore(errorMessage, declaration);
@@ -102,13 +105,17 @@ public class FileParser {
     }
   }
 
+  protected PsiBuilder.Marker parseInitial(PsiBuilder builder) {
+    return myDeclarationParser.parse(builder, DeclarationParser.Context.FILE);
+  }
+
   @Nullable
-  public static PsiBuilder.Marker parsePackageStatement(final PsiBuilder builder) {
+  public PsiBuilder.Marker parsePackageStatement(final PsiBuilder builder) {
     final PsiBuilder.Marker statement = builder.mark();
 
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
       final PsiBuilder.Marker modList = builder.mark();
-      DeclarationParser.parseAnnotations(builder);
+      myDeclarationParser.parseAnnotations(builder);
       done(modList, JavaElementType.MODIFIER_LIST);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo();
@@ -116,7 +123,7 @@ public class FileParser {
       }
     }
 
-    final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, false, false, false, false);
+    final PsiBuilder.Marker ref = myReferenceParser.parseJavaCodeReference(builder, true, false, false, false, false);
     if (ref == null) {
       statement.rollbackTo();
       return null;
@@ -129,7 +136,7 @@ public class FileParser {
   }
 
   @NotNull
-  public static Pair<PsiBuilder.Marker, Boolean> parseImportList(final PsiBuilder builder, final TokenSet stoppers) {
+  public Pair<PsiBuilder.Marker, Boolean> parseImportList(final PsiBuilder builder, final TokenSet stoppers) {
     final PsiBuilder.Marker list = builder.mark();
 
     final boolean isEmpty = builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD;
@@ -163,7 +170,7 @@ public class FileParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseImportStatement(final PsiBuilder builder) {
+  private PsiBuilder.Marker parseImportStatement(final PsiBuilder builder) {
     if (builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD) return null;
 
     final PsiBuilder.Marker statement = builder.mark();
@@ -172,7 +179,7 @@ public class FileParser {
     final boolean isStatic = expect(builder, JavaTokenType.STATIC_KEYWORD);
     final IElementType type = isStatic ? JavaElementType.IMPORT_STATIC_STATEMENT : JavaElementType.IMPORT_STATEMENT;
 
-    final boolean isOk = ReferenceParser.parseImportCodeReference(builder, isStatic);
+    final boolean isOk = myReferenceParser.parseImportCodeReference(builder, isStatic);
     if (isOk) {
       semicolon(builder);
     }

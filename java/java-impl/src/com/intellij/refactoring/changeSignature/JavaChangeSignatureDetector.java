@@ -41,6 +41,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   public ChangeInfo createInitialChangeInfo(final @NotNull PsiElement element) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (method != null && isInsideMethodSignature(element, method)) {
+      //do not initialize change signature on return type change
+      if (element.getTextRange().getEndOffset() <= method.getTextOffset()) return null;
       return DetectedJavaChangeInfo.createFromMethod(method);
     } else {
       final PsiVariable variable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
@@ -87,6 +89,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
   @Override
   public boolean ignoreChanges(PsiElement element) {
+    if (element instanceof PsiMethod) return true;
     return PsiTreeUtil.getParentOfType(element, PsiImportList.class) != null;
   }
 

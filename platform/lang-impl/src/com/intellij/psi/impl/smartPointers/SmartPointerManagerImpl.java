@@ -41,7 +41,7 @@ import java.util.Set;
 public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
 
-  private static final Key<List<SmartPointerEx>> SMART_POINTERS_IN_PSI_FILE_KEY = Key.create("SMART_POINTERS_IN_DOCUMENT_KEY");
+  private static final Key<List<SmartPointerEx>> SMART_POINTERS_IN_PSI_FILE_KEY = Key.create("SMART_POINTERS_IN_PSI_FILE_KEY");
   private static final Key<Boolean> BELTS_ARE_FASTEN_KEY = Key.create("BELTS_ARE_FASTEN_KEY");
 
   private final Project myProject;

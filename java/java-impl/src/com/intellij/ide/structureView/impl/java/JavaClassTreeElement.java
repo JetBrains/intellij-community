@@ -16,19 +16,21 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
-  public JavaClassTreeElement(PsiClass aClass, boolean inherited) {
-    super(inherited,aClass);
+  public JavaClassTreeElement(PsiClass cls, boolean inherited) {
+    super(inherited, cls);
   }
 
   @NotNull
@@ -40,50 +42,31 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     final PsiClass aClass = getElement();
     if (aClass == null) return Collections.emptyList();
 
-    List<PsiElement> children = Arrays.asList(aClass.getChildren());
-    Collection<PsiElement> ownChildren = new THashSet<PsiElement>();
-    ContainerUtil.addAll(ownChildren, aClass.getFields());
-    ContainerUtil.addAll(ownChildren, aClass.getMethods());
-    ContainerUtil.addAll(ownChildren, aClass.getInnerClasses());
-    ContainerUtil.addAll(ownChildren, aClass.getInitializers());
-    Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>(children);
-    List<StructureViewTreeElement> array = new ArrayList<StructureViewTreeElement>(inherited.size());
+    Collection<PsiElement> members = new ArrayList<PsiElement>();
+    ContainerUtil.addAll(members, aClass.getFields());
+    ContainerUtil.addAll(members, aClass.getMethods());
+    ContainerUtil.addAll(members, aClass.getInnerClasses());
+    ContainerUtil.addAll(members, aClass.getInitializers());
+    List<StructureViewTreeElement> children = new ArrayList<StructureViewTreeElement>(members.size());
 
-    aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
+    //aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
 
-    for (PsiElement child : inherited) {
+    for (PsiElement child : members) {
       if (!child.isValid()) continue;
-      boolean isInherited = !ownChildren.contains(child);
       if (child instanceof PsiClass) {
-        array.add(new JavaClassTreeElement((PsiClass)child, isInherited));
+        children.add(new JavaClassTreeElement((PsiClass)child, false));
       }
       else if (child instanceof PsiField) {
-        array.add(new PsiFieldTreeElement((PsiField)child, isInherited));
+        children.add(new PsiFieldTreeElement((PsiField)child, false));
       }
       else if (child instanceof PsiMethod) {
-        array.add(new PsiMethodTreeElement((PsiMethod)child, isInherited));
+        children.add(new PsiMethodTreeElement((PsiMethod)child, false));
       }
       else if (child instanceof PsiClassInitializer) {
-        array.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
+        children.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
       }
     }
-    if (Registry.is("show.anonymous.in.structure.view")) {
-      for (PsiElement anonymous : getAnonymousClasses(aClass)) {
-        array.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)anonymous, false));
-      }
-    }
-    return array;
-  }
-
-  private static Collection<PsiElement> getAnonymousClasses(PsiClass aClass) {
-    final Collection<PsiAnonymousClass> anonymousClasses = PsiTreeUtil.collectElementsOfType(aClass, PsiAnonymousClass.class);
-    final Collection<PsiElement> classes = new ArrayList<PsiElement>();
-    for (PsiAnonymousClass cls : anonymousClasses) {
-      if (PsiTreeUtil.getParentOfType(cls, PsiClass.class) == aClass) {
-        classes.add(cls);
-      }
-    }
-    return classes;
+    return children;
   }
 
   public String getPresentableText() {

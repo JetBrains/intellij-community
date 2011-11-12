@@ -102,7 +102,7 @@ abstract class UndoRedo {
     }
 
 
-    if (myUndoableGroup.shouldAskConfirmation()) {
+    if (myUndoableGroup.shouldAskConfirmation(isRedo())) {
       if (!askUser()) return false;
     }
     else {
@@ -146,6 +146,8 @@ abstract class UndoRedo {
 
     return true;
   }
+
+  protected abstract boolean isRedo();
 
   private Collection<Document> collectReadOnlyDocuments() {
     Collection<DocumentReference> affectedDocument = myUndoableGroup.getAffectedDocuments();

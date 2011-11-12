@@ -896,6 +896,30 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
+  public static List<String> getCompiledClassNames(VirtualFile srcFile, Project project) {
+    SourceFileInfo info = loadSourceInfo(srcFile);
+    if (info == null) {
+      return Collections.emptyList();
+    }
+
+    final ArrayList<String> result = new ArrayList<String>();
+
+    info.processOutputPaths(getProjectId(project), new Proc() {
+      @Override
+      public boolean execute(int projectId, String outputPath) {
+        VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
+        if (clsFile != null) {
+          OutputFileInfo outputInfo = loadOutputInfo(clsFile);
+          if (outputInfo != null) {
+            ContainerUtil.addIfNotNull(result, outputInfo.getClassName());
+          }
+        }
+        return true;
+      }
+    });
+    return result;
+  }
+
 
   private interface FileProcessor {
     void execute(VirtualFile file);

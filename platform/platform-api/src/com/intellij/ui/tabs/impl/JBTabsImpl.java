@@ -23,10 +23,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.awt.RelativePoint;
@@ -169,6 +166,8 @@ public class JBTabsImpl extends JComponent
   private TabInfo myOldSelection;
   private SelectionChangeHandler mySelectionChangeHandler;
 
+  private Runnable myDeferredFocusRequest;
+  
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
   }
@@ -370,6 +369,13 @@ public class JBTabsImpl extends JComponent
   public void addNotify() {
     super.addNotify();
     addTimerUpdate();
+    
+    if (myDeferredFocusRequest != null) {
+      final Runnable request = myDeferredFocusRequest;
+      myDeferredFocusRequest = null;
+      
+      request.run();
+    }
   }
 
   public void removeNotify() {
@@ -822,7 +828,31 @@ public class JBTabsImpl extends JComponent
       return new ActionCallback.Done();
     }
 
-    return myFocusManager.requestFocus(new FocusCommand.ByComponent(toFocus), true);
+
+
+    if (isShowing()) {
+      return myFocusManager.requestFocus(new FocusCommand.ByComponent(toFocus), true);      
+    } else {
+      final ActionCallback result = new ActionCallback();
+      final FocusRequestor requestor = myFocusManager.getFurtherRequestor();
+      final Ref<Boolean> queued = new Ref<Boolean>(false);
+      Disposer.register(requestor, new Disposable() {
+        @Override
+        public void dispose() {
+          if (!queued.get()) {
+            result.setRejected();
+          }
+        }
+      });
+      myDeferredFocusRequest = new Runnable() {
+        @Override
+        public void run() {
+          queued.set(true);
+          requestor.requestFocus(new FocusCommand.ByComponent(toFocus), true).notify(result);
+        }
+      };
+      return result;
+    }
   }
 
   private ActionCallback removeDeferred() {

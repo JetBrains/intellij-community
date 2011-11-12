@@ -1,9 +1,11 @@
 package com.intellij;
 
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentWeakFactoryMap;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -27,8 +29,6 @@ import java.util.ResourceBundle;
  */
 public class AbstractBundle {
 
-  private Reference<ResourceBundle> myBundle;
-
   @NonNls
   private final String myPathToBundle;
 
@@ -41,12 +41,25 @@ public class AbstractBundle {
   }
 
   private ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (myBundle != null) bundle = myBundle.get();
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(myPathToBundle, Locale.getDefault(), getClass().getClassLoader());
-      myBundle = new SoftReference<ResourceBundle>(bundle);
+    return getResourceBundle(myPathToBundle, getClass().getClassLoader());
+  }
+  
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private static FactoryMap<ClassLoader, ConcurrentHashMap<String, SoftReference<ResourceBundle>>> ourCache =
+    new ConcurrentWeakFactoryMap<ClassLoader, ConcurrentHashMap<String, SoftReference<ResourceBundle>>>() {
+    @Override
+    protected ConcurrentHashMap<String, SoftReference<ResourceBundle>> create(ClassLoader key) {
+      return new ConcurrentHashMap<String, SoftReference<ResourceBundle>>();
     }
-    return bundle;
+  };
+
+  public static ResourceBundle getResourceBundle(String pathToBundle, ClassLoader loader) {
+    ConcurrentHashMap<String, SoftReference<ResourceBundle>> map = ourCache.get(loader);
+    SoftReference<ResourceBundle> reference = map.get(pathToBundle);
+    ResourceBundle result = reference == null ? null : reference.get();
+    if (result == null) {
+      map.put(pathToBundle, new SoftReference<ResourceBundle>(result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)));
+    }
+    return result;
   }
 }

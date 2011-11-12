@@ -43,7 +43,7 @@ import java.util.concurrent.Callable;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class DiffElement<T> implements Disposable {
+public abstract class DiffElement<T> /*implements Disposable */{
   public static final DiffElement[] EMPTY_ARRAY = new DiffElement[0];
   public static final DiffElement ERROR_NODE = new DiffErrorElement("Can't load elements", "An error has been occurred while getting children");
   private DiffPanel myDiffPanel;
@@ -84,7 +84,7 @@ public abstract class DiffElement<T> implements Disposable {
   }
 
   @Nullable
-  public JComponent getViewComponent(Project project, @Nullable DiffElement target) {
+  public JComponent getViewComponent(Project project, @Nullable DiffElement target, @NotNull Disposable parentDisposable) {
     disposeViewComponent();
     try {
       final T value = getValue();
@@ -116,7 +116,7 @@ public abstract class DiffElement<T> implements Disposable {
   }
 
   @Nullable
-  public JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow) throws FilesTooBigForDiffException {
+  public JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow, Disposable disposableParent) throws FilesTooBigForDiffException {
     disposeDiffComponent();
 
     DiffRequest request;
@@ -129,7 +129,7 @@ public abstract class DiffElement<T> implements Disposable {
       return null;
     }
     if (request != null) {
-      myDiffPanel = DiffManager.getInstance().createDiffPanel(parentWindow, project,this);
+      myDiffPanel = DiffManager.getInstance().createDiffPanel(parentWindow, project, disposableParent);
       myDiffPanel.setRequestFocus(false);
       myDiffPanel.setDiffRequest(request);
       myDiffPanel.setTitle1(getName());
@@ -205,9 +205,9 @@ public abstract class DiffElement<T> implements Disposable {
     return null;
   }
 
-  @Override
-  public void dispose() {
-  }
+  //@Override
+  //public void dispose() {
+  //}
 
   @Nullable
   public Callable<DiffElement<T>> getElementChooser(Project project) {

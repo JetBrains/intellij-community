@@ -54,6 +54,10 @@ public abstract class TestUtils {
     return getAbsoluteTestDataPath() + "/mockGroovyLib";
   }
 
+  public static String getMockGroovy1_6LibraryName() {
+    return getAbsoluteTestDataPath() + "/mockGroovyLib1.6/lib/groovy-all-1.6.jar";
+  }
+
   public static String getMockGroovy1_7LibraryHome() {
     return getAbsoluteTestDataPath() + "/mockGroovyLib1.7";
   }

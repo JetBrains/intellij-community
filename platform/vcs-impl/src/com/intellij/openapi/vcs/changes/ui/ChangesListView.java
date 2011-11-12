@@ -48,10 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -147,10 +144,35 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
                                                       switchedFiles, switchedRoots, ignoredFiles, lockedFolders, logicallyLockedFiles);
 
     storeState();
+    DefaultTreeModel oldModel = getModel();
     setModel(model);
     setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
-    expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
+    ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+    expandPath(new TreePath(root.getPath()));
     restoreState();
+    expandDefaultChangeList(oldModel, root);
+  }
+
+  private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
+    if (((ChangesBrowserNode)oldModel.getRoot()).getCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 1) {
+      TreeNode toExpand = null;
+      for (int i = 0; i < root.getChildCount(); i++) {
+        TreeNode node = root.getChildAt(i);
+        if (node instanceof ChangesBrowserChangeListNode && node.getChildCount() > 0) {
+          ChangeList object = ((ChangesBrowserChangeListNode)node).getUserObject();
+          if (object instanceof LocalChangeList) {
+            if (((LocalChangeList)object).isDefault()) {
+              toExpand = node;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (toExpand != null) {
+        expandPath(new TreePath(new Object[] {root, toExpand}));
+      }
+    }
   }
 
   public void calcData(DataKey key, DataSink sink) {

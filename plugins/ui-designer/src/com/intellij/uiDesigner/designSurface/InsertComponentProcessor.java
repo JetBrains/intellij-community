@@ -271,7 +271,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.setDesignTimeInsets(2);
 
-    item = replaceAnyComponentItem(myEditor, item);
+    item = replaceAnyComponentItem(myEditor, item, UIDesignerBundle.message("palette.non.palette.component.title"));
     if (item == null) {
       return;
     }
@@ -441,11 +441,11 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   @Nullable
-  public static ComponentItem replaceAnyComponentItem(GuiEditor editor, ComponentItem item) {
+  public static ComponentItem replaceAnyComponentItem(GuiEditor editor, ComponentItem item, final String title) {
     if (item.isAnyComponent()) {
       ComponentItem newItem = item.clone();
       ComponentItemDialog dlg = new ComponentItemDialog(editor.getProject(), editor, newItem, true);
-      dlg.setTitle(UIDesignerBundle.message("palette.non.palette.component.title"));
+      dlg.setTitle(title);
       dlg.show();
       if(!dlg.isOK()) {
         return null;

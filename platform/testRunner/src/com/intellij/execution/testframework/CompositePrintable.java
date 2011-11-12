@@ -172,7 +172,7 @@ public class CompositePrintable implements Printable, Disposable {
             printable.printOn(myPrinter);
           }
           myPrinter.close();
-          if (myOutputFile != null) {
+          if (myOutputFile != null && new File(myOutputFile).exists()) {
             PrintStream printStream = null;
             try {
               printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));

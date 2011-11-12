@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -764,5 +765,15 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   @Override
   public void setStickySelection(boolean enable) {
     myDelegate.setStickySelection(enable);
+  }
+
+  @Override
+  public void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes) {
+    myDelegate.setPrefixTextAndAttributes(prefixText, attributes);
+  }
+
+  @Override
+  public int getPrefixTextWidthInPixels() {
+    return myDelegate.getPrefixTextWidthInPixels();
   }
 }

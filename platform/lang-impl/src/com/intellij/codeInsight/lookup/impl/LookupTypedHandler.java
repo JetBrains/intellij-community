@@ -84,7 +84,12 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
         });
         lookup.appendPrefix(charTyped);
         if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
-          AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor, null);
+          final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+          if (completion != null) {
+            completion.scheduleRestart();
+          } else {
+            AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor, null);
+          }
         }
 
         AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStamp);

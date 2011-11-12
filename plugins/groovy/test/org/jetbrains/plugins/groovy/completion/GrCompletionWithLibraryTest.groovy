@@ -115,7 +115,7 @@ for (def ch: "abc".toCharArray()) {
   }
 
   public void testEachSpace() throws Exception {
-    checkCompletion '[].ea<caret>', ' ', '[].each <caret>{}'
+    checkCompletion '[].ea<caret>', ' ', '[].each <caret>'
   }
 
   public void testEachBrace() throws Exception {

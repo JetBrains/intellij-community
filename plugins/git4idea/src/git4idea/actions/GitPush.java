@@ -18,7 +18,7 @@ package git4idea.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.checkin.GitPushDialog;
+import git4idea.checkin.GitOldPushDialog;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -50,7 +50,7 @@ public class GitPush extends GitRepositoryAction {
                          @NotNull final VirtualFile defaultRoot,
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
-    GitPushDialog d = new GitPushDialog(project, gitRoots, defaultRoot);
+    GitOldPushDialog d = new GitOldPushDialog(project, gitRoots, defaultRoot);
     d.show();
     if (!d.isOK()) {
       return;

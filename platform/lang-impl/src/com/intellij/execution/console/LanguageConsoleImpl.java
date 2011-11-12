@@ -38,7 +38,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -105,7 +104,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private Editor myFullEditor;
   private ActionGroup myFullEditorActions;
 
+  private boolean myShowSeparatorLine = true;
+
   public LanguageConsoleImpl(final Project project, String title, final Language language) {
+    this(project, title, language, true);
+  }
+
+  public LanguageConsoleImpl(final Project project, String title, final Language language, boolean initComponents) {
     myProject = project;
     myTitle = title;
     installEditorFactoryListener();
@@ -117,6 +122,15 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
+    myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
+    Disposer.register(this, myUpdateQueue);
+
+    if (initComponents) {
+      initComponents();
+    }
+  }
+
+  public void initComponents() {
     final EditorColorsScheme colorsScheme = myConsoleEditor.getColorsScheme();
     final DelegateColorScheme scheme = new DelegateColorScheme(colorsScheme) {
       @Override
@@ -131,8 +145,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myPanel.add(myConsoleEditor.getComponent());
     setupComponents();
     DataManager.registerDataProvider(myPanel, new TypeSafeDataProviderAdapter(this));
-    myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
-    Disposer.register(this, myUpdateQueue);
+
     myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
       public void componentResized(ComponentEvent e) {
         if (myForceScrollToEnd.getAndSet(false)) {
@@ -191,11 +204,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     configureFullEditor();
   }
 
+  public void setShowSeparatorLine(boolean showSeparatorLine) {
+    myShowSeparatorLine = showSeparatorLine;
+  }
+
   private void setupComponents() {
     setupEditorDefault(myConsoleEditor);
     setupEditorDefault(myHistoryViewer);
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CUT_COPY_PASTE));
-    if (SEPARATOR_THICKNESS > 0) {
+    //noinspection PointlessBooleanExpression,ConstantConditions
+    if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
       myHistoryViewer.getComponent().setBorder(new SideBorder(Color.LIGHT_GRAY, SideBorder.BOTTOM));
     }
     myHistoryViewer.getComponent().setMinimumSize(new Dimension(0, 0));
@@ -296,20 +314,25 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setPrompt(String prompt) {
     // always add space to the prompt otherwise it may look ugly
-    myPrompt = prompt != null && !prompt.endsWith(" ")? prompt + " " : prompt;
+    myPrompt = prompt != null && !prompt.endsWith(" ") ? prompt + " " : prompt;
     setPromptInner(myPrompt);
   }
 
   private void setPromptInner(final String prompt) {
-    ((EditorImpl)myConsoleEditor).setPrefixTextAndAttributes(prompt, ConsoleViewContentType.USER_INPUT.getAttributes());
-    if (myPanel.isVisible()) {
-      queueUiUpdate(false);
-    }
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myConsoleEditor.setPrefixTextAndAttributes(prompt, ConsoleViewContentType.USER_INPUT.getAttributes());
+        if (myPanel.isVisible()) {
+          queueUiUpdate(false);
+        }
+      }
+    });
   }
 
   public void setEditable(boolean editable) {
     myConsoleEditor.setRendererMode(!editable);
-    setPromptInner(editable? myPrompt : "");
+    setPromptInner(editable ? myPrompt : "");
   }
 
   public boolean isEditable() {
@@ -395,7 +418,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public boolean shouldScrollHistoryToEnd() {
     final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
     final Dimension contentSize = myHistoryViewer.getContentSize();
-    return contentSize.getHeight() - visibleArea.getMaxY() < 2*myHistoryViewer.getLineHeight();
+    return contentSize.getHeight() - visibleArea.getMaxY() < 2 * myHistoryViewer.getLineHeight();
   }
 
   private void scrollHistoryToEnd() {
@@ -627,9 +650,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public static PsiFile setDocumentFileAndInitPsi(final Project project, final Document document, final LightVirtualFile newVFile) {
     newVFile.setContent(document, document.getText(), false);
     FileDocumentManagerImpl.registerDocument(document, newVFile);
-    final PsiFile psiFile = ((PsiFileFactoryImpl)PsiFileFactory.getInstance(project)).trySetupPsiForFile(newVFile, newVFile.getLanguage(), true, false);
+    final PsiFile psiFile =
+      ((PsiFileFactoryImpl)PsiFileFactory.getInstance(project)).trySetupPsiForFile(newVFile, newVFile.getLanguage(), true, false);
     if (psiFile == null) {
-      throw new AssertionError("PSI=null for light file: name=" + newVFile.getName() + ", language=" + newVFile.getLanguage().getDisplayName());
+      throw new AssertionError(
+        "PSI=null for light file: name=" + newVFile.getName() + ", language=" + newVFile.getLanguage().getDisplayName());
     }
     PsiDocumentManagerImpl.cachePsi(document, psiFile);
     FileContentUtil.reparseFiles(project, Collections.<VirtualFile>singletonList(newVFile), false);
@@ -647,7 +672,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       final int componentCount = parent.getComponentCount();
       if (componentCount == 0) return;
       final EditorEx history = myHistoryViewer;
-      final EditorEx editor = componentCount == 2? myConsoleEditor : null;
+      final EditorEx editor = componentCount == 2 ? myConsoleEditor : null;
 
       if (editor == null) {
         parent.getComponent(0).setBounds(parent.getBounds());
@@ -668,7 +693,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
       // deal with height
       if (historySize.width == 0) historySize.height = 0;
-      final int minHistorySize = historySize.height > 0 ? 2 * history.getLineHeight() + SEPARATOR_THICKNESS : 0;
+      final int minHistorySize = historySize.height > 0 ? 2 * history.getLineHeight() + (myShowSeparatorLine ? SEPARATOR_THICKNESS : 0) : 0;
       final int minEditorSize = editor.isViewer() ? 0 : editor.getLineHeight();
       final int editorPreferred = editor.isViewer() ? 0 : Math.max(minEditorSize, editorSize.height);
       final int historyPreferred = Math.max(minHistorySize, historySize.height);

@@ -42,6 +42,14 @@ public class Notification {
     this(groupDisplayId, title, content, type, null);
   }
 
+  /**
+   * @param groupDisplayId this should be a human-readable, capitalized string like "Facet Detector".
+   *                       It will appear in "Notifications" configurable.
+   * @param title notification title
+   * @param content notification content
+   * @param type notification type
+   * @param listener notification lifecycle listener
+   */
   public Notification(@NotNull final String groupDisplayId, @NotNull final String title, @NotNull final String content, @NotNull final NotificationType type, @Nullable NotificationListener listener) {
     myGroupId = groupDisplayId;
     myTitle = title;

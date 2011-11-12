@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.*;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.StatementParser;
+import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -505,6 +506,15 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   @Override
+  public PsiKeyword createKeyword(@NotNull @NonNls String keyword, PsiElement context) throws IncorrectOperationException {
+    if (!JavaLexer.isKeyword(keyword, PsiUtil.getLanguageLevel(context))) {
+      throw new IncorrectOperationException("\"" + keyword + "\" is not a keyword.");
+    }
+    return new LightKeyword(myManager, keyword);
+  }
+
+  @NotNull
+  @Override
   public PsiImportStatement createImportStatement(@NotNull final PsiClass aClass) throws IncorrectOperationException {
     if (aClass instanceof PsiAnonymousClass) {
       throw new IncorrectOperationException("Cannot create import statement for anonymous class.");
@@ -683,7 +693,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   private static final JavaParserUtil.ParserWrapper CATCH_SECTION = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      StatementParser.parseCatchBlock(builder);
+      StatementParser.INSTANCE.parseCatchBlock(builder);
     }
   };
 

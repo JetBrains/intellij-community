@@ -117,7 +117,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
 
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.parseClassBodyWithBraces(builder, myAnnotation, myAnEnum);
+      DeclarationParser.INSTANCE.parseClassBodyWithBraces(builder, myAnnotation, myAnEnum);
     }
   }
 }

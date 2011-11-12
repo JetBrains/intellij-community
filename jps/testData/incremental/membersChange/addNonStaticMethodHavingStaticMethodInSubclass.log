@@ -1,0 +1,24 @@
+Request to make modules:
+module AddNonStaticMethodHavingStaticMethodInSubclass
+End of request
+digraph X {
+  AddNonStaticMethodHavingStaticMethodInSubclass[label="AddNonStaticMethodHavingStaticMethodInSubclass"];
+}
+digraph X {
+  AddNonStaticMethodHavingStaticMethodInSubclass[label="AddNonStaticMethodHavingStaticMethodInSubclass"];
+}
+Propagated modules:
+module AddNonStaticMethodHavingStaticMethodInSubclass
+End of propagated
+Cleaning output files:
+out/production/AddNonStaticMethodHavingStaticMethodInSubclass/BaseServer.class
+End of files
+Compiling files:
+src/BaseServer.java
+End of files
+Cleaning output files:
+out/production/AddNonStaticMethodHavingStaticMethodInSubclass/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files

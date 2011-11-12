@@ -182,13 +182,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return aPackage;
     }
 
-    DumbService dumbService = DumbService.getInstance(getProject());
-    List<PsiElementFinder> finders = Arrays.asList(myElementFinders);
-    if (dumbService.isDumb()) {
-      finders = dumbService.filterByDumbAwareness(finders);
-    }
-
-    for (PsiElementFinder finder : finders) {
+    for (PsiElementFinder finder : filteredFinders()) {
       aPackage = finder.findPackage(qualifiedName);
       if (aPackage != null) {
         return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
@@ -198,7 +192,16 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return null;
   }
 
-  @Override
+  private List<PsiElementFinder> filteredFinders() {
+    DumbService dumbService = DumbService.getInstance(getProject());
+    List<PsiElementFinder> finders = Arrays.asList(myElementFinders);
+    if (dumbService.isDumb()) {
+      finders = dumbService.filterByDumbAwareness(finders);
+    }
+    return finders;
+  }
+
+    @Override
   @NotNull
   public PsiJavaParserFacade getParserFacade() {
     return getElementFactory(); // TODO: lighter implementation which doesn't mark all the elements as generated.
@@ -218,14 +221,15 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   public Set<String> getClassNames(PsiPackage psiPackage, GlobalSearchScope scope) {
     Set<String> result = new HashSet<String>();
-    for (PsiElementFinder finder : myElementFinders) {
+    for (PsiElementFinder finder : filteredFinders()) {
       result.addAll(finder.getClassNames(psiPackage, scope));
     }
     return result;
   }
+
   public PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope) {
     List<PsiClass> result = null;
-    for (PsiElementFinder finder : myElementFinders) {
+    for (PsiElementFinder finder : filteredFinders()) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
       if (classes.length == 0) continue;
       if (result == null) result = new ArrayList<PsiClass>();
@@ -236,7 +240,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, Processor<PsiDirectory> consumer) {
-    for (PsiElementFinder finder : myElementFinders) {
+    for (PsiElementFinder finder : filteredFinders()) {
       if (!finder.processPackageDirectories(psiPackage, scope, consumer)) {
         return false;
       }
@@ -246,7 +250,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
     List<PsiPackage> result = new ArrayList<PsiPackage>();
-    for (PsiElementFinder finder : myElementFinders) {
+    for (PsiElementFinder finder : filteredFinders()) {
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
       ContainerUtil.addAll(result, packages);
     }

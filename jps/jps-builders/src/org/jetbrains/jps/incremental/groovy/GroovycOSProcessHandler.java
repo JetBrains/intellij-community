@@ -27,11 +27,8 @@ import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -184,6 +181,47 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
 
   public StringBuffer getStdErr() {
     return stdErr;
+  }
+
+  public static void fillFileWithGroovycParameters(File tempFile,
+                                                   final String outputDir,
+                                                   final Collection<String> changedSources,
+                                                   String finalOutput,
+                                                   Map<String, String> class2Src, @Nullable final String encoding, List<String> patchers) throws IOException {
+    final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
+    try {
+      for (String file : changedSources) {
+        writer.write(GroovycRunner.SRC_FILE + "\n");
+        writer.write(file);
+        writer.write("\n");
+      }
+
+      writer.write("class2src\n");
+      for (Map.Entry<String, String> entry : class2Src.entrySet()) {
+        writer.write(entry.getKey() + "\n");
+        writer.write(entry.getValue() + "\n");
+      }
+      writer.write(GroovycRunner.END + "\n");
+
+      writer.write(GroovycRunner.PATCHERS + "\n");
+      for (String patcher : patchers) {
+        writer.write(patcher + "\n");
+      }
+      writer.write(GroovycRunner.END + "\n");
+      if (encoding != null) {
+        writer.write(GroovycRunner.ENCODING + "\n");
+        writer.write(encoding + "\n");
+      }
+      writer.write(GroovycRunner.OUTPUTPATH + "\n");
+      writer.write(outputDir);
+      writer.write("\n");
+      writer.write(GroovycRunner.FINAL_OUTPUTPATH + "\n");
+      writer.write(finalOutput);
+      writer.write("\n");
+    }
+    finally {
+      writer.close();
+    }
   }
 
   public static class OutputItem {

@@ -20,11 +20,16 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDetectorAction;
 import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -85,6 +90,35 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
 
   public void testOccurrencesInSameFile() {
     doTypingTest("int param");
+  }
+
+  public void testAddParameter2Constructor() {
+    doTypingTest("int param");
+  }
+
+  public void testAddParameter2UnusedConstructor() {
+    doTypingNoBorderTest("int param");
+  }
+
+  public void testAddParamChangeReturnType() {
+    doTest(new Runnable() {
+      @Override
+      public void run() {
+        myFixture.type("int param");
+        CaretModel model = myFixture.getEditor().getCaretModel();
+        PsiElement element = myFixture.getElementAtCaret();
+        PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+        assertTrue(method != null);
+        PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+        assertTrue(returnTypeElement != null);
+        model.moveToOffset(returnTypeElement.getTextRange().getEndOffset());
+        int i = returnTypeElement.getTextLength();
+        while (i-- > 0) {
+          myFixture.type('\b');
+        }
+        myFixture.type("boolean");
+      }
+    }, true, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
   }
 
   public void testNewParam() {

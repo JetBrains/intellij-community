@@ -53,8 +53,19 @@ public class MoveInstanceMembersUtil {
         if (pair != null) {
           PsiClass refClass = pair.getSecond();
           PsiMember member = pair.getFirst();
-          if (refClass != null && !PsiTreeUtil.isAncestor(refMember, member, false)) {
-            addReferencedMember(map, refClass, member);
+          if (refClass != null) {
+            boolean inherited = false;
+            PsiClass parentClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class, true);
+            while (parentClass != null && PsiTreeUtil.isAncestor(refMember, parentClass, false)) {
+              if (parentClass == refClass || parentClass.isInheritor(refClass, true)) {
+                inherited = true;
+                break;
+              }
+              parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
+            }
+            if (!inherited && !PsiTreeUtil.isAncestor(refMember, member, false)) {
+              addReferencedMember(map, refClass, member);
+            }
           }
         }
 

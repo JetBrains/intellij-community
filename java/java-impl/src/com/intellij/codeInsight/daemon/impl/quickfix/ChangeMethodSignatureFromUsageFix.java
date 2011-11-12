@@ -151,7 +151,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myTargetMethod.isValid()) return false;
+    if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return false;
     for (PsiExpression expression : myExpressions) {
       if (!expression.isValid()) return false;
     }
@@ -163,6 +163,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
 
   public boolean isMethodSignatureExists() {
     PsiClass target = myTargetMethod.getContainingClass();
+    LOG.assertTrue(target != null);
     PsiMethod[] methods = target.findMethodsByName(myTargetMethod.getName(), false);
     for (PsiMethod method : methods) {
       if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, myExpressions)) return true;

@@ -43,6 +43,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -302,14 +303,52 @@ public class JpsServerManager implements ApplicationComponent{
     return paths;
   }
 
+  //public static void addLocaleOptions(final List<String> commandLine, final boolean launcherUsed) {
+  //  // need to specify default encoding so that javac outputs messages in 'correct' language
+  //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
+  //}
+
+
+
   private Process launchServer(int port) throws ExecutionException {
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
     cmdLine.addParameter("-ea");
+    cmdLine.addParameter("-XX:MaxPermSize=150m");
+    cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
+    // todo: get xmx value from settings
+    if (SystemInfo.is64Bit) {
+      cmdLine.addParameter("-Xmx1024m");
+    }
+    else {
+      cmdLine.addParameter("-Xmx640m");
+    }
+
+    // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
     cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
-    cmdLine.addParameter("-Xmx640m"); // todo: get this value from settings
+
+
+    // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
+    final String lang = System.getProperty("user.language");
+    if (lang != null) {
+      //noinspection HardCodedStringLiteral
+      cmdLine.addParameter("-Duser.language=" + lang);
+    }
+    final String country = System.getProperty("user.country");
+    if (country != null) {
+      //noinspection HardCodedStringLiteral
+      cmdLine.addParameter("-Duser.country=" + country);
+    }
+    //noinspection HardCodedStringLiteral
+    final String region = System.getProperty("user.region");
+    if (region != null) {
+      //noinspection HardCodedStringLiteral
+      cmdLine.addParameter("-Duser.region=" + region);
+    }
+
+
     cmdLine.addParameter("-classpath");
 
     final List<File> cp = ClasspathBootstrap.getApplicationClasspath();

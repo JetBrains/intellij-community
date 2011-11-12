@@ -15,12 +15,13 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public interface FocusRequestor {
+public interface FocusRequestor extends Disposable {
 
   /**
    * Requests focus on a component

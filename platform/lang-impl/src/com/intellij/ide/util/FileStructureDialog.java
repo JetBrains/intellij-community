@@ -26,10 +26,7 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -169,12 +166,21 @@ public class FileStructureDialog extends DialogWrapper {
     myTreeStructure = new MyStructureTreeStructure();
 
     List<FileStructureFilter> fileStructureFilters = new ArrayList<FileStructureFilter>();
+    List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<FileStructureNodeProvider>();
     if (myTreeActionsOwner != null) {
       for(Filter filter: myBaseTreeModel.getFilters()) {
         if (filter instanceof FileStructureFilter) {
           final FileStructureFilter fsFilter = (FileStructureFilter)filter;
-          myTreeActionsOwner.setFilterIncluded(fsFilter, true);
+          myTreeActionsOwner.setActionIncluded(fsFilter, true);
           fileStructureFilters.add(fsFilter);
+        }
+      }
+
+      if (myBaseTreeModel instanceof ProvidingTreeModel) {
+        for (NodeProvider provider : ((ProvidingTreeModel)myBaseTreeModel).getNodeProviders()) {
+          if (provider instanceof FileStructureNodeProvider) {
+            fileStructureNodeProviders.add((FileStructureNodeProvider)provider);
+          }
         }
       }
     }
@@ -220,17 +226,23 @@ public class FileStructureDialog extends DialogWrapper {
 
     myCommanderPanel.setPreferredSize(new Dimension(400, 500));
 
-    JPanel panel = new JPanel(new GridBagLayout());
+    JPanel panel = new JPanel(new BorderLayout());
+    JPanel comboPanel = new JPanel(new GridLayout(0, 2, 0, 0));
 
-    addNarrowDownCheckbox(panel);
+    addNarrowDownCheckbox(comboPanel);
 
     for(FileStructureFilter filter: fileStructureFilters) {
-      addFilterCheckbox(panel, filter);
+      addCheckbox(comboPanel, filter);
+    }
+
+    for (FileStructureNodeProvider provider : fileStructureNodeProviders) {
+      addCheckbox(comboPanel, provider);
     }
 
     myCommanderPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-    panel.add(myCommanderPanel,
-              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(comboPanel, BorderLayout.NORTH);
+    panel.add(myCommanderPanel, BorderLayout.CENTER);
+              //new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
   }
@@ -257,11 +269,20 @@ public class FileStructureDialog extends DialogWrapper {
     });
 
     checkBox.setFocusable(false);
-    panel.add(checkBox,
-              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
+    panel.add(checkBox);
+    //,new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
-  private void addFilterCheckbox(final JPanel panel, final FileStructureFilter fileStructureFilter) {
+  private void addCheckbox(final JPanel panel, final TreeAction action) {
+    String text = action instanceof FileStructureFilter ? ((FileStructureFilter)action).getCheckBoxText() :
+                  action instanceof FileStructureNodeProvider ? ((FileStructureNodeProvider)action).getCheckBoxText() : null;
+
+    if (text == null) return;
+
+    Shortcut[] shortcuts = action instanceof FileStructureFilter ?
+                          ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
+
+
     final JCheckBox chkFilter = new JCheckBox();
     chkFilter.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -277,7 +298,8 @@ public class FileStructureDialog extends DialogWrapper {
             }
           }
         }
-        myTreeActionsOwner.setFilterIncluded(fileStructureFilter, !chkFilter.isSelected());
+        final boolean state = chkFilter.isSelected();
+        myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
         myTreeStructure.rebuildTree();
         if (builder != null) {
           if (currentParent != null) {
@@ -300,19 +322,18 @@ public class FileStructureDialog extends DialogWrapper {
       }
     });
     chkFilter.setFocusable(false);
-    String text = fileStructureFilter.getCheckBoxText();
-    final Shortcut[] shortcuts = fileStructureFilter.getShortcut();
+
     if (shortcuts.length > 0) {
       text += " (" + KeymapUtil.getShortcutText(shortcuts [0]) + ")";
       new AnAction() {
         public void actionPerformed(final AnActionEvent e) {
           chkFilter.doClick();
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), panel);
+      }.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myCommanderPanel);
     }
     chkFilter.setText(text);
-    panel.add(chkFilter,
-                new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
+    panel.add(chkFilter);
+      //,new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
   @Nullable
@@ -458,7 +479,7 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   private class MyTreeActionsOwner implements TreeActionsOwner {
-    private final Set<Filter> myFilters = new HashSet<Filter>();
+    private final Set<TreeAction> myActions = new HashSet<TreeAction>();
 
     public void setActionActive(String name, boolean state) {
     }
@@ -469,18 +490,18 @@ public class FileStructureDialog extends DialogWrapper {
           if (!sorter.isVisible()) return true;
         }
       }
-      for(Filter filter: myFilters) {
-        if (filter.getName().equals(name)) return true;
+      for(TreeAction action: myActions) {
+        if (action.getName().equals(name)) return true;
       }
       return Sorter.ALPHA_SORTER_ID.equals(name);
     }
 
-    public void setFilterIncluded(final FileStructureFilter filter, final boolean selected) {
+    public void setActionIncluded(final TreeAction filter, final boolean selected) {
       if (selected) {
-        myFilters.add(filter);
+        myActions.add(filter);
       }
       else {
-        myFilters.remove(filter);
+        myActions.remove(filter);
       }
     }
   }

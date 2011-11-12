@@ -33,7 +33,7 @@ public class VersionComparatorUtil {
   public enum VersionTokenType {
     SNAP(10), SNAPSHOT(10),
     M(20),
-    EAP(25), PRE(25),
+    EAP(25), PRE(25), PREVIEW(25),
     ALPHA(30), A(30),
     BETA(40), BETTA(40), B(40),
     RC(50),

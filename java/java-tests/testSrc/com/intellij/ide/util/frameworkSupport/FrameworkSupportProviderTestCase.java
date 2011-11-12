@@ -4,11 +4,16 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
+import com.intellij.framework.FrameworkType;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
+import com.intellij.ide.util.newProjectWizard.OldFrameworkSupportProviderWrapper;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -26,24 +31,23 @@ import java.util.*;
  */
 public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
   private FrameworkSupportModelBase myFrameworkSupportModel;
-  private Map<FrameworkSupportProvider, FrameworkSupportConfigurable> myConfigurables;
-  private Map<FrameworkSupportProvider, FrameworkSupportNode> myNodes;
+  private Map<FrameworkType, FrameworkSupportInModuleConfigurable> myConfigurables;
+  private Map<FrameworkType, FrameworkSupportNode> myNodes;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     final Project project = getProject();
     myFrameworkSupportModel = new FrameworkSupportModelImpl(project, "", LibrariesContainerFactory.createContainer(project));
-    myNodes = new HashMap<FrameworkSupportProvider, FrameworkSupportNode>();
-    final FrameworkSupportProvider[] providers = FrameworkSupportProvider.EXTENSION_POINT.getExtensions().clone();
-    Arrays.sort(providers, FrameworkSupportUtil
-      .getFrameworkSupportProvidersComparator(new ArrayList<FrameworkSupportProvider>(Arrays.asList(providers))));
-    for (FrameworkSupportProvider provider : providers) {
+    myNodes = new HashMap<FrameworkType, FrameworkSupportNode>();
+    final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getAllProviders();
+    Collections.sort(providers, FrameworkSupportUtil.getFrameworkSupportProvidersComparator(providers));
+    for (FrameworkSupportInModuleProvider provider : providers) {
       final FrameworkSupportNode node = new FrameworkSupportNode(provider, null, myFrameworkSupportModel, getTestRootDisposable());
-      myNodes.put(provider, node);
+      myNodes.put(provider.getFrameworkType(), node);
       myFrameworkSupportModel.registerComponent(provider, node);
     }
-    myConfigurables = new HashMap<FrameworkSupportProvider, FrameworkSupportConfigurable>();
+    myConfigurables = new HashMap<FrameworkType, FrameworkSupportInModuleConfigurable>();
   }
 
   protected void addSupport() throws IOException {
@@ -55,11 +59,14 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         try {
           List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
+          final IdeaModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
           for (FrameworkSupportNode node : myNodes.values()) {
             if (node.isChecked()) {
-              final FrameworkSupportConfigurable configurable = getOrCreateConfigurable(node.getProvider());
-              configurable.addSupport(myModule, model, null);
-              selectedConfigurables.add(configurable);
+              final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(node.getProvider());
+              configurable.addSupport(myModule, model, modelsProvider);
+              if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
+                selectedConfigurables.add(((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable());
+              }
             }
           }
           for (FrameworkSupportCommunicator communicator : FrameworkSupportCommunicator.EP_NAME.getExtensions()) {
@@ -69,39 +76,41 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
         finally {
           model.commit();
         }
-        for (FrameworkSupportConfigurable configurable : myConfigurables.values()) {
+        for (FrameworkSupportInModuleConfigurable configurable : myConfigurables.values()) {
           Disposer.dispose(configurable);
         }
       }
     }.execute().throwException();
   }
 
-  protected FrameworkSupportConfigurable selectFramework(@NotNull FacetTypeId<?> id) {
+  protected FrameworkSupportInModuleConfigurable selectFramework(@NotNull FacetTypeId<?> id) {
     return selectFramework(FacetBasedFrameworkSupportProvider.getProviderId(id));
   }
 
-  protected FrameworkSupportConfigurable selectFramework(@NotNull String id) {
-    for (FrameworkSupportProvider provider : FrameworkSupportProvider.EXTENSION_POINT.getExtensions()) {
-      if (provider.getId().equals(id)) {
-        return selectFramework(provider);
-      }
+  protected FrameworkSupportInModuleConfigurable selectFramework(@NotNull String id) {
+    final FrameworkSupportInModuleProvider provider = FrameworkSupportUtil.findProvider(id, FrameworkSupportUtil.getAllProviders());
+    if (provider != null) {
+      return selectFramework(provider);
     }
     fail("Framework provider with id='" + id + "' not found");
     return null;
   }
 
-  protected FrameworkSupportConfigurable selectFramework(@NotNull FrameworkSupportProvider provider) {
-    final FrameworkSupportConfigurable configurable = getOrCreateConfigurable(provider);
-    myNodes.get(provider).setChecked(true);
-    configurable.onFrameworkSelectionChanged(true);
+  protected FrameworkSupportInModuleConfigurable selectFramework(@NotNull FrameworkSupportInModuleProvider provider) {
+    final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(provider);
+    myNodes.get(provider.getFrameworkType()).setChecked(true);
+    if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
+      ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable().onFrameworkSelectionChanged(
+        true);
+    }
     return configurable;
   }
 
-  private FrameworkSupportConfigurable getOrCreateConfigurable(FrameworkSupportProvider provider) {
-    FrameworkSupportConfigurable configurable = myConfigurables.get(provider);
+  private FrameworkSupportInModuleConfigurable getOrCreateConfigurable(FrameworkSupportInModuleProvider provider) {
+    FrameworkSupportInModuleConfigurable configurable = myConfigurables.get(provider.getFrameworkType());
     if (configurable == null) {
       configurable = provider.createConfigurable(myFrameworkSupportModel);
-      myConfigurables.put(provider, configurable);
+      myConfigurables.put(provider.getFrameworkType(), configurable);
     }
     return configurable;
   }

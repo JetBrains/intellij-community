@@ -50,6 +50,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,7 +138,7 @@ public class HighlightClassUtil {
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, false, false);
         QuickFixAction.registerQuickFixAction(errorResult, fix);
       }
-      if (anyAbstractMethod != null && parent instanceof PsiNewExpression) {
+      if (anyAbstractMethod != null && parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getClassReference() != null) {
         QuickFixAction.registerQuickFixAction(errorResult, new ImplementAbstractClassMethodsFix(parent));
       }
     }
@@ -889,7 +890,23 @@ public class HighlightClassUtil {
                                @NotNull PsiFile file,
                                @NotNull PsiElement startElement,
                                @NotNull PsiElement endElement) {
-      return startElement instanceof PsiNewExpression;
+      if (startElement instanceof PsiNewExpression) {
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+        String startElementText = startElement.getText();
+        PsiNewExpression newExpression =
+          (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "{}", startElement);
+        if (newExpression.getAnonymousClass() == null) {
+          try {
+            newExpression = (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "){}", startElement);
+          }
+          catch (IncorrectOperationException e) {
+            return false;
+          }
+          if (newExpression.getAnonymousClass() == null) return false;
+        }
+        return true;
+      }
+      return false;
     }
 
     @Override
@@ -901,6 +918,7 @@ public class HighlightClassUtil {
       final PsiFile containingFile = startElement.getContainingFile();
       if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
       PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)startElement).getClassReference();
+      if (classReference == null) return;
       final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, (PsiClass)classReference.resolve());
       if (chooser == null) return;
 
@@ -913,9 +931,12 @@ public class HighlightClassUtil {
           PsiNewExpression newExpression =
             (PsiNewExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(startElement.getText() + "{}", startElement);
           newExpression = (PsiNewExpression)startElement.replace(newExpression);
-          final PsiClass psiClass = newExpression.getAnonymousClass();
-          PsiSubstitutor superClassSubstitutor = TypeConversionUtil
-            .getSuperClassSubstitutor(((PsiAnonymousClass)psiClass).getBaseClassType().resolve(), psiClass, PsiSubstitutor.EMPTY);
+          final PsiClass psiClass = newExpression.getAnonymousClass(); 
+          if (psiClass == null) return;
+          PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
+          PsiClass resolve = baseClassType.resolve();
+          if (resolve == null) return;
+          PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(resolve, psiClass, PsiSubstitutor.EMPTY);
           for (PsiMethodMember selectedElement : selectedElements) {
             selectedElement.setSubstitutor(superClassSubstitutor);
           }

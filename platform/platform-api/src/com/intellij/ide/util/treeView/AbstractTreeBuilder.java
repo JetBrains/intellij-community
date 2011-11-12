@@ -208,7 +208,9 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected boolean validateNode(final Object child) {
-    return true;
+    if (isDisposed()) return false;
+
+    return getUi().getTreeStructure().isValid(child);
   }
 
   protected boolean isDisposeOnCollapsing(NodeDescriptor nodeDescriptor) {

@@ -48,6 +48,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
+import git4idea.push.GitPusher;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NonNls;
@@ -202,7 +203,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       // push
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          GitPushActiveBranchesDialog.showDialogForProject(myProject);
+          if ( GitPusher.useNewPush()) {
+            GitPusher.showPushDialogAndPerformPush(myProject);
+          } else {
+            GitPushActiveBranchesDialog.showDialogForProject(myProject);
+          }
         }
       });
     }

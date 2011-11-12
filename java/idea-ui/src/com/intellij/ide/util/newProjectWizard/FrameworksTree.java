@@ -93,7 +93,7 @@ public class FrameworksTree extends CheckboxTree {
       if (value instanceof FrameworkSupportNode) {
         final FrameworkSupportNode node = (FrameworkSupportNode)value;
         getTextRenderer().append(node.getTitle());
-        getTextRenderer().setIcon(node.getProvider().getIcon());
+        getTextRenderer().setIcon(node.getProvider().getFrameworkType().getIcon());
       }
     }
   }

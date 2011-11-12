@@ -61,7 +61,8 @@ public interface GeneralTestEventsProcessor extends Disposable {
                           final Key outputType);
 
   void onError(@NotNull final String localizedMessage,
-               @Nullable final String stackTrace);
+               @Nullable final String stackTrace,
+               final boolean isCritical);
 
   // Custom progress statistics
 

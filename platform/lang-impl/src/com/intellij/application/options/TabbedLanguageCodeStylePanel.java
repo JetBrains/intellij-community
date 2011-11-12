@@ -25,18 +25,21 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -49,10 +52,11 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
   private JTabbedPane myTabbedPane;
-  private AdditionalCodeStylePanel myAdditionalPanel;
+  private PredefinedCodeStyle[] myPredefinedCodeStyles;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
+    myPredefinedCodeStyles = getPredefinedStyles();
   }
 
   /**
@@ -112,8 +116,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myTabbedPane = new JBTabbedPane();
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
       myPanel.add(myTabbedPane);
-      myAdditionalPanel = new AdditionalCodeStylePanel(this, getSettings());
-      myPanel.add(myAdditionalPanel.getContentPane(), BorderLayout.SOUTH);
       initTabs(getSettings());
     }
     assert !myTabs.isEmpty();
@@ -246,8 +248,91 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
 
+  @Override
+  public void setupCopyFromMenu(Menu copyMenu) {
+    super.setupCopyFromMenu(copyMenu);
+    if (myPredefinedCodeStyles.length > 0) {
+      Menu langs = new Menu("Language"); //TODO<rv>: Move to resource bundle
+      copyMenu.add(langs);
+      fillLanguages(langs);
+      Menu predefined = new Menu("Predefined Style"); //TODO<rv>: Move to resource bundle
+      copyMenu.add(predefined);
+      fillPredefined(predefined);
+    }
+    else {
+      fillLanguages(copyMenu);
+    }
+  }
 
-  //========================================================================================================================================
+
+  private void fillLanguages(Menu parentMenu) {
+      Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+      @SuppressWarnings("UnnecessaryFullyQualifiedName")
+      java.util.List<MenuItem> langItems = new ArrayList<MenuItem>();
+      for (final Language lang : languages) {
+        if (!lang.equals(getDefaultLanguage())) {
+          final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
+          MenuItem langItem = new MenuItem(langName);
+          langItem.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              applyLanguageSettings(lang);
+            }
+          });
+          langItems.add(langItem);
+        }
+      }
+      Collections.sort(langItems, new Comparator<MenuItem>() {
+        @Override
+        public int compare(MenuItem item1, MenuItem item2) {
+          return item1.getLabel().compareToIgnoreCase(item2.getLabel());
+        }
+      });
+      for (MenuItem langItem : langItems) {
+        parentMenu.add(langItem);
+      }
+    }
+
+  private void fillPredefined(Menu parentMenu) {
+    for (final PredefinedCodeStyle predefinedCodeStyle : myPredefinedCodeStyles) {
+      MenuItem predefinedItem = new MenuItem(predefinedCodeStyle.getName());
+      parentMenu.add(predefinedItem);
+      predefinedItem.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          applyPredefinedStyle(predefinedCodeStyle.getName());
+        }
+      });
+    }
+  }
+
+  private PredefinedCodeStyle[] getPredefinedStyles() {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
+    if (provider == null) return new PredefinedCodeStyle[0];
+    return provider.getPredefinedCodeStyles();
+  }
+
+
+  private void applyLanguageSettings(Language lang) {
+    final Project currProject = ProjectUtil.guessCurrentProject(getPanel());
+    CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(currProject);
+    CommonCodeStyleSettings sourceSettings = rootSettings.getCommonSettings(lang);
+    CommonCodeStyleSettings targetSettings = getSettings().getCommonSettings(getDefaultLanguage());
+    if (sourceSettings == null || targetSettings == null) return;
+    CommonCodeStyleSettingsManager.copy(sourceSettings, targetSettings);
+    reset(getSettings());
+    onSomethingChanged();
+  }
+
+  private void applyPredefinedStyle(String styleName) {
+    for (PredefinedCodeStyle style : myPredefinedCodeStyles) {
+      if (style.getName().equals(styleName)) {
+        applyPredefinedSettings(style);
+      }
+    }
+  }
+
+//========================================================================================================================================
 
   private class MySpacesPanel extends CodeStyleSpacesPanel {
 

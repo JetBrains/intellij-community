@@ -80,18 +80,20 @@ public class ProjectSdksModel implements SdkModel {
     mySdkEventsDispatcher.removeListener(listener);
   }
 
-  public void reset(Project project) {
+  public void reset(@Nullable Project project) {
     myProjectSdks.clear();
-    final Sdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
-    for (Sdk jdk : projectJdks) {
+    final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
+    for (Sdk sdk : projectSdks) {
       try {
-        myProjectSdks.put(jdk, (Sdk)jdk.clone());
+        myProjectSdks.put(sdk, (Sdk)sdk.clone());
       }
       catch (CloneNotSupportedException e) {
         //can't be
       }
     }
-    myProjectSdk = findSdk(ProjectRootManager.getInstance(project).getProjectSdkName());
+    if (project != null) {
+      myProjectSdk = findSdk(ProjectRootManager.getInstance(project).getProjectSdkName());
+    }
     myModified = false;
     myInitialized = true;
   }

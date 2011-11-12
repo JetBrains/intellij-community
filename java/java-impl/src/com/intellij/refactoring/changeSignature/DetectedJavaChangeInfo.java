@@ -120,25 +120,26 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
     if (fromMethod == null) return null;
     if (!this.equals(fromMethod)) {
       if (!createParametersInfo(fromMethod.newParms)) return null;
-      if (fromMethod.isReturnTypeChanged() || (fromMethod.newReturnType != null && getNewReturnType() == null) ||
+      if ((fromMethod.newReturnType != null && getNewReturnType() == null) ||
+          (fromMethod.newReturnType == null && getNewReturnType() != null) ||
           (fromMethod.newReturnType != null && getNewReturnType() != null && !Comparing.strEqual(getNewReturnType().getTypeText(),
                                                                                                  fromMethod.newReturnType.getTypeText()))) {
-        final String visibility = fromMethod.getNewVisibility();
+        final String visibility = getNewVisibility();
         if (Comparing.strEqual(visibility, PsiModifier.PRIVATE) &&
-            !fromMethod.isArrayToVarargs() &&
-            !fromMethod.isExceptionSetOrOrderChanged() &&
-            !fromMethod.isExceptionSetChanged() &&
-            !fromMethod.isNameChanged() &&
-            !fromMethod.isParameterSetOrOrderChanged() &&
-            !fromMethod.isParameterNamesChanged() &&
-            !fromMethod.isParameterTypesChanged()) {
+            !isArrayToVarargs() &&
+            !isExceptionSetOrOrderChanged() &&
+            !isExceptionSetChanged() &&
+            !isNameChanged() &&
+            !isParameterSetOrOrderChanged() &&
+            !isParameterNamesChanged() &&
+            !isParameterTypesChanged()) {
           return null;
         }
       }
 
       try {
         final DetectedJavaChangeInfo javaChangeInfo =
-          new DetectedJavaChangeInfo(newVisibility, method, newReturnType, fromMethod.newParms, getNewExceptions(), method.getName(), getOldName()) {
+          new DetectedJavaChangeInfo(newVisibility, method, fromMethod.newReturnType, fromMethod.newParms, getNewExceptions(), method.getName(), getOldName()) {
             @Override
             protected void fillOldParams(PsiMethod method) {
               oldParameterNames = DetectedJavaChangeInfo.this.getOldParameterNames();

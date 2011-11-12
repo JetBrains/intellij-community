@@ -11,10 +11,10 @@
 
 JDK="$IDEA_JDK"
 if [ -z "$JDK" ]; then
-  [ `uname -s` = "Darwin" ] && OS_TYPE="MAC" || OS_TYPE="NOT_MAC"
+  OS_TYPE=`uname -s`
   JDK="$JDK_HOME"
   # if JDK_HOME not defined and JAVA_HOME looks correct (tools.jar isn't included in Mac OS X Java bundle)
-  if [ -z "$JDK" ] && ([ "$OS_TYPE" = "MAC" -a -x "$JAVA_HOME/bin/java" ] || [ -f "$JAVA_HOME/lib/tools.jar" ]); then
+  if [ -z "$JDK" ] && ([ "$OS_TYPE" = "Darwin" -a -x "$JAVA_HOME/bin/java" ] || [ -f "$JAVA_HOME/lib/tools.jar" ]); then
     JDK="$JAVA_HOME"
   fi
 
@@ -22,7 +22,7 @@ if [ -z "$JDK" ]; then
     # try to get the JDK path from java binary path
     JAVA_BIN_PATH=`which java`
     if [ -n "$JAVA_BIN_PATH" ]; then
-      if [ "$OS_TYPE" = "MAC" ]; then
+      if [ "$OS_TYPE" = "Darwin" ]; then
         if [ -h "$JAVA_BIN_PATH" ]; then
           JAVA_LOCATION=`readlink "$JAVA_BIN_PATH" | xargs dirname | xargs dirname | xargs dirname`
           if [ -x "$JAVA_LOCATION/CurrentJDK/Home/bin/java" ]; then
@@ -34,7 +34,18 @@ if [ -z "$JDK" ]; then
             JDK="$JAVA_LOCATION"
           fi
         fi
-      else
+      elif [ "$OS_TYPE" = "FreeBSD" ]; then
+        JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | grep '^JAVA_HOME' | cut -c11-`
+        if [ -x "$JAVA_LOCATION/bin/java" ]; then
+          JDK="$JAVA_LOCATION"
+        fi
+      elif [ "$OS_TYPE" = "SunOS" ]; then
+        JAVA_LOCATION="/usr/jdk/latest"
+        if [ -x "$JAVA_LOCATION/bin/java" ]; then
+          JDK="$JAVA_LOCATION"
+        fi
+      fi
+      if [ -z "$JDK" -a -x "/bin/readlink" ]; then
         JAVA_LOCATION=`readlink -f "$JAVA_BIN_PATH"`
         case "$JAVA_LOCATION" in
           */jre/bin/java)
@@ -60,12 +71,12 @@ if [ -z "$JDK" ]; then
 fi
 
 VERSION_LOG=`mktemp -t java.version.log.XXXXXX`
-$JDK/bin/java -version 2> $VERSION_LOG
-grep 'OpenJDK' $VERSION_LOG
+$JDK/bin/java -version 2> "$VERSION_LOG"
+grep 'OpenJDK' "$VERSION_LOG"
 OPEN_JDK=$?
-grep '64-Bit' $VERSION_LOG
+grep '64-Bit' "$VERSION_LOG"
 BITS=$?
-rm $VERSION_LOG
+rm "$VERSION_LOG"
 if [ $OPEN_JDK -eq 0 ]; then
   echo "WARNING: You are launching IDE using OpenJDK Java runtime."
   echo

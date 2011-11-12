@@ -58,7 +58,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
   private static final Icon EXPAND = IconLoader.getIcon("/actions/expandall.png");
   private static final Icon COLLAPSE = IconLoader.getIcon("/actions/collapseall.png");
   private static final Icon FIX = IconLoader.findIcon("/actions/quickfixBulb.png");
-  private static final Icon IGNORE = IconLoader.findIcon("/toolbar/unknown.png");
+  private static final Icon IGNORE = IconLoader.findIcon("/actions/cancel.png");
   private static final Icon NAVIGATE = IconLoader.findIcon("/general/autoscrollToSource.png");
 
   @NonNls private static final String FIX_ACTION_NAME = "FIX";
@@ -66,9 +66,6 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
   private ConfigurationErrorsListModel myConfigurationErrorsListModel;
   private ErrorView myCurrentView;
-
-  private OneLineErrorComponent myOneLineErrorComponent;
-  private MultiLineErrorComponent myMultiLineErrorComponent;
 
   public ConfigurationErrorsComponent(@NotNull final Project project) {
     setLayout(new BorderLayout());
@@ -83,7 +80,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       }
     });
 
-    ensureCurrentViewIs(ONE_LINE);
+    ensureCurrentViewIs(ONE_LINE, null);
     Disposer.register(this, myConfigurationErrorsListModel);
   }
 
@@ -95,39 +92,45 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
     }
   }
 
-  private void ensureCurrentViewIs(final boolean oneLine) {
+  private void ensureCurrentViewIs(final boolean oneLine, @Nullable final Object data) {
     if (oneLine) {
       if (myCurrentView instanceof OneLineErrorComponent) return;
-      if (myOneLineErrorComponent == null) {
-        myOneLineErrorComponent = new OneLineErrorComponent(myConfigurationErrorsListModel) {
-          @Override
-          public void onViewChange() {
-            ensureCurrentViewIs(MULTI_LINE);
-          }
-        };
-      }
+      myConfigurationErrorsListModel.setFilter(null);
+      OneLineErrorComponent c = new OneLineErrorComponent(myConfigurationErrorsListModel) {
+        @Override
+        public void onViewChange(Object data) {
+          ensureCurrentViewIs(MULTI_LINE, data);
+        }
+      };
 
       if (myCurrentView != null) {
         remove(myCurrentView.self());
+        Disposer.dispose(myCurrentView);
       }
 
-      myCurrentView = myOneLineErrorComponent;
+      myCurrentView = c;
     } else {
+      Condition<ConfigurationError> filter = data == null ? null : new Condition<ConfigurationError>() {
+        @Override
+        public boolean value(ConfigurationError error) {
+          return data == null ? true : "Ignored".equals(data) ? error.isIgnored() : !error.isIgnored();
+        }
+      };
+      myConfigurationErrorsListModel.setFilter(filter);
       if (myCurrentView instanceof MultiLineErrorComponent) return;
-      if (myMultiLineErrorComponent == null) {
-        myMultiLineErrorComponent = new MultiLineErrorComponent(myConfigurationErrorsListModel) {
+        MultiLineErrorComponent c = new MultiLineErrorComponent(myConfigurationErrorsListModel) {
           @Override
-          public void onViewChange() {
-            ensureCurrentViewIs(ONE_LINE);
+          public void onViewChange(Object data) {
+            ensureCurrentViewIs(ONE_LINE, data);
           }
         };
-      }
 
       if (myCurrentView != null) {
         remove(myCurrentView.self());
+        Disposer.dispose(myCurrentView);
       }
 
-      myCurrentView = myMultiLineErrorComponent;
+      myCurrentView = c;
     }
 
     add(myCurrentView.self(), BorderLayout.CENTER);
@@ -153,27 +156,25 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
   private void updateCurrentView() {
     if (myCurrentView instanceof MultiLineErrorComponent && myConfigurationErrorsListModel.getSize() == 0) {
-      ensureCurrentViewIs(ONE_LINE);
+      ensureCurrentViewIs(ONE_LINE, null);
     }
 
     myCurrentView.updateView();
   }
 
-  private interface ErrorView {
+  private interface ErrorView extends Disposable {
     void updateView();
-    void onViewChange();
+    void onViewChange(Object data);
     JComponent self();
   }
 
   private abstract static class MultiLineErrorComponent extends JPanel implements ErrorView {
-    private ConfigurationErrorsListModel myModel;
     private JList myList = new JBList();
 
     protected MultiLineErrorComponent(@NotNull final ConfigurationErrorsListModel model) {
       setLayout(new BorderLayout());
       setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-      myModel = model;
       myList.setModel(model);
       myList.setCellRenderer(new ErrorListRenderer(myList));
       myList.setBackground(UIUtil.getPanelBackground());
@@ -183,6 +184,15 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
         public void mouseClicked(final MouseEvent e) {
           if (!e.isPopupTrigger()) {
             processListMouseEvent(e, true);
+          }
+        }
+      });
+      
+      myList.addMouseMotionListener(new MouseAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          if (!e.isPopupTrigger()) {
+            processListMouseEvent(e, false);
           }
         }
       });
@@ -197,6 +207,10 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
       add(new JBScrollPane(myList), BorderLayout.CENTER);
       add(buildToolbar(), BorderLayout.WEST);
+    }
+
+    @Override
+    public void dispose() {
     }
 
     private void processListMouseEvent(final MouseEvent e, final boolean click) {
@@ -217,19 +231,32 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
             final Component deepestComponentAt = SwingUtilities.getDeepestComponentAt(renderer, point.x, point.y);
             if (deepestComponentAt instanceof ToolbarAlikeButton) {
               final String name = ((ToolbarAlikeButton)deepestComponentAt).getButtonName();
-              if (FIX_ACTION_NAME.equals(name)) {
-                onClickFix(error, (JComponent)deepestComponentAt, e);
-              }
-              else if (NAVIGATE_ACTION_NAME.equals(name)) {
-                error.navigate();
+              if (click) {
+                if (FIX_ACTION_NAME.equals(name)) {
+                  onClickFix(error, (JComponent)deepestComponentAt, e);
+                }
+                else if (NAVIGATE_ACTION_NAME.equals(name)) {
+                  error.navigate();
+                }
+                else {
+                  onClickIgnore(error);
+                }
               }
               else {
-                onClickIgnore(error);
+                myList.setToolTipText(FIX_ACTION_NAME.equals(name) ? "Fix" : NAVIGATE_ACTION_NAME.equals(name) ? "Navigate to the problem" :
+                                                                             error.isIgnored() ? "Not ignore this error" : "Ignore this error");
+                return;
+              }
+            } else {
+              if (e.getClickCount() == 2) {
+                error.navigate();
               }
             }
           }
         }
       }
+      
+      myList.setToolTipText(null);
     }
 
     private void onClickIgnore(@NotNull final ConfigurationError error) {
@@ -271,7 +298,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
         @Override
         public void onClick(MouseEvent e) {
-          onViewChange();
+          onViewChange(null);
         }
       }, BorderLayout.NORTH);
 
@@ -287,7 +314,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       return this;
     }
 
-    public abstract void onViewChange();
+    public abstract void onViewChange(@Nullable Object data);
   }
 
   private abstract static class ToolbarAlikeButton extends JComponent {
@@ -506,17 +533,22 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       setLayout(new BorderLayout());
       setOpaque(true);
 
-      updateLabel(myErrorsLabel, MessageType.ERROR.getPopupBackground(), this);
-      updateLabel(mySingleErrorLabel, MessageType.ERROR.getPopupBackground(), null);
-      updateLabel(myIgnoredErrorsLabel, MessageType.WARNING.getPopupBackground(), this);
+      updateLabel(myErrorsLabel, MessageType.ERROR.getPopupBackground(), this, "Errors");
+      updateLabel(mySingleErrorLabel, MessageType.ERROR.getPopupBackground(), null, null);
+      updateLabel(myIgnoredErrorsLabel, MessageType.WARNING.getPopupBackground(), this, "Ignored");
     }
 
-    private static void updateLabel(@NotNull final JLabel label, @NotNull final Color bgColor, @Nullable final LinkListener listener) {
+    @Override
+    public void dispose() {
+      myModel = null;
+    }
+
+    private static void updateLabel(@NotNull final JLabel label, @NotNull final Color bgColor, @Nullable final LinkListener listener, @Nullable Object linkData) {
       label.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
       label.setOpaque(true);
       label.setBackground(bgColor);
       if (label instanceof LinkLabel) {
-        ((LinkLabel)label).setListener(listener, null);
+        ((LinkLabel)label).setListener(listener, linkData);
       }
     }
 
@@ -637,36 +669,45 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       return this;
     }
 
-    public abstract void onViewChange();
+    public abstract void onViewChange(Object data);
 
     @Override
-    public void linkSelected(LinkLabel aSource, Object aLinkData) {
-      onViewChange();
+    public void linkSelected(LinkLabel aSource, Object data) {
+      onViewChange(data);
     }
   }
 
   private static class ConfigurationErrorsListModel extends AbstractListModel implements ConfigurationErrors, Disposable {
     private MessageBusConnection myConnection;
     private List<ConfigurationError> myErrorsList = new ArrayList<ConfigurationError>();
+    private Condition<ConfigurationError> myFilter;
 
     private ConfigurationErrorsListModel(@NotNull final Project project) {
       myConnection = project.getMessageBus().connect();
       myConnection.subscribe(TOPIC, this);
     }
+    
+    public void setFilter(Condition<ConfigurationError> filter) {
+      myFilter = filter;
+    }
 
     @Override
     public int getSize() {
-      return myErrorsList.size();
+      return myFilter == null ? myErrorsList.size() : ContainerUtil.filter(myErrorsList, myFilter).size();
     }
 
     @Override
     public Object getElementAt(int index) {
-      return myErrorsList.get(index);
+      return myFilter == null ? myErrorsList.get(index) : ContainerUtil.filter(myErrorsList, myFilter).get(index);
+    }
+    
+    private boolean accept(ConfigurationError error) {
+      return myFilter == null || myFilter.value(error);
     }
 
     @Override
     public void addError(@NotNull ConfigurationError error) {
-      if (!myErrorsList.contains(error)) {
+      if (!myErrorsList.contains(error) && accept(error)) {
         int ndx = 0;
         if (error.isIgnored()) {
           ndx = myErrorsList.size();

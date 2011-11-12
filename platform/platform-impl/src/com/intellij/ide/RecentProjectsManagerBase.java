@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
@@ -51,12 +53,11 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   public static class State {
     public List<String> recentPaths = new ArrayList<String>();
     public List<String> openPaths = new ArrayList<String>();
+    public Map<String, String> names = new HashMap<String, String>();
     public String lastPath;
   }
 
   private State myState = new State();
-
-  private static final int MAX_RECENT_PROJECTS = 25;
 
   public RecentProjectsManagerBase(ProjectManager projectManager, MessageBus messageBus) {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
@@ -88,33 +89,28 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
         if (s == null) {
           i.remove();
-        } else {
-          final File file = new File(s);
-          if (file.isDirectory()) {
-            if (!new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
-              i.remove();
-            }
-          } else if (!file.exists()) {
-            i.remove();
-          }
         }
       }
-      while (myState.recentPaths.size() > MAX_RECENT_PROJECTS) {
-        myState.recentPaths.remove(myState.recentPaths.size() - 1);
+      while (myState.recentPaths.size() > Registry.intValue("ide.max.recent.projects")) {
+        final int index = myState.recentPaths.size() - 1;
+        myState.names.remove(myState.recentPaths.get(index));
+        myState.recentPaths.remove(index);
       }
     }
   }
 
-  private void removePath(final String path) {
+  public void removePath(final String path) {
     if (path == null) return;
     if (SystemInfo.isFileSystemCaseSensitive) {
       myState.recentPaths.remove(path);
+      myState.names.remove(path);
     }
     else {
       Iterator<String> i = myState.recentPaths.iterator();
       while (i.hasNext()) {
         String p = i.next();
         if (path.equalsIgnoreCase(p)) {
+          myState.names.remove(p);
           i.remove();
         }
       }
@@ -134,10 +130,18 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       myState.lastPath = getProjectPath(openProjects[openProjects.length - 1]);
       myState.openPaths = new ArrayList<String>();
       for (Project openProject : openProjects) {
-        ContainerUtil.addIfNotNull(myState.openPaths, getProjectPath(openProject));
+        final String path = getProjectPath(openProject);
+        ContainerUtil.addIfNotNull(myState.openPaths, path);
+        myState.names.put(path, getProjectDisplayName(openProject));
       }
     }
   }
+
+  @NotNull
+  protected String getProjectDisplayName(Project project) {
+    return "";
+  }
+  
 
   /**
    * @param addClearListItem - used for detecting whether the "Clear List" action should be added
@@ -170,7 +174,18 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
     for (final String path : paths) {
       final String projectName = getProjectName(path);
-      actions.add(map.get(projectName) > 1 ? new ReopenProjectAction(path, path) : new ReopenProjectAction(path, projectName));
+      boolean needShowPath = false;
+      String displayName = myState.names.get(path);
+      if (StringUtil.isEmptyOrSpaces(displayName)) {
+        if (map.get(projectName) > 1) {
+          displayName = path;
+        }
+        else {
+          displayName = projectName;
+          needShowPath = true;
+        }
+      }
+      actions.add(new ReopenProjectAction(path, displayName, needShowPath));
     }
 
     if (actions.isEmpty()) {
@@ -225,7 +240,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   protected abstract void doOpenProject(String projectPath, Project projectToClose, final boolean forceOpenInNewFrame);
 
-  private static boolean isValidProjectPath(String projectPath) {
+  public static boolean isValidProjectPath(String projectPath) {
     final File file = new File(projectPath);
     return file.exists() && (!file.isDirectory() || new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists());
   }
@@ -236,6 +251,11 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       if (path != null) {
         markPathRecent(path);
       }
+    }
+
+    @Override
+    public void projectClosing(Project project) {
+      myState.names.put(getProjectPath(project), getProjectDisplayName(project));
     }
 
     public void projectClosed(final Project project) {

@@ -64,13 +64,15 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
         if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
           facet.getConfiguration().LIBRARY_PROJECT = true;
         }
-
-        Manifest manifest = facet.getManifest();
-        if (manifest != null) {
-          if (AndroidUtils.getDefaultActivityName(manifest) != null) {
-            AndroidUtils.addRunConfiguration(project, facet, null, true, null, null);
+        else {
+          Manifest manifest = facet.getManifest();
+          if (manifest != null) {
+            if (AndroidUtils.getDefaultActivityName(manifest) != null) {
+              AndroidUtils.addRunConfiguration(project, facet, null, true, null, null);
+            }
           }
         }
+
         ApplicationManager.getApplication().saveAll();
       }
     });

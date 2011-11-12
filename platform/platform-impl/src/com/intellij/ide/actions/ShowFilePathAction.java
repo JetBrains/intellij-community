@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -26,6 +27,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -184,22 +186,36 @@ public class ShowFilePathAction extends AnAction {
   }
 
   private static void doOpen(@NotNull final String path) throws IOException, ExecutionException {
-
     if (SystemInfo.isWindows) {
       new GeneralCommandLine("explorer", "/select,", path).createProcess();
+      return;
     }
-    else if (SystemInfo.isMac) {
+
+    if (SystemInfo.isMac) {
       final String script = String.format(
         "tell application \"Finder\"\n" +
         "\treveal {\"%s\"} as POSIX file\n" +
         "\tactivate\n" +
         "end tell", path);
       new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
+      return;
     }
-    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-      Desktop.getDesktop().open(new File(path));
+
+    // workaround for Ubuntu 11.10 inability to open file:/path/ URLs
+    try {
+      if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+        Desktop.getDesktop().open(new File(path));
+        return;
+      }
     }
-    else if (SystemInfo.hasXdgOpen) {
+    catch (IOException e) {
+      final String message = e.getMessage();
+      if (!new File(path).isDirectory() || message == null || !message.startsWith("Failed to show URI:file")) {
+        throw e;
+      }
+    }
+
+    if (SystemInfo.hasXdgOpen) {
       new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
     }
     else if (SystemInfo.isGnome) {
@@ -216,5 +232,12 @@ public class ShowFilePathAction extends AnAction {
   @Nullable
   private static VirtualFile getFile(final AnActionEvent e) {
     return PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+  }
+
+  public static void showDialog(Project project, String message, String title, File file) {
+    if (Messages.showOkCancelDialog(project, message, title, RevealFileAction.getActionName(),
+                                    IdeBundle.message("action.close"), Messages.getInformationIcon()) == 0) {
+      open(file, file);
+    }
   }
 }

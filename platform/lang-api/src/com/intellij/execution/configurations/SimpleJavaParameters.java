@@ -19,8 +19,6 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -40,6 +38,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private final PathsList myClassPath = new PathsList();
   private final ParametersList myVmParameters = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
+  private boolean myUseDynamicClasspath;
 
   public String getMainClass() {
     return myMainClass;
@@ -79,12 +78,15 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     myCharset = charset;
   }
 
+  public void setUseDynamicClasspath(final boolean useDynamicClasspath) {
+    myUseDynamicClasspath = useDynamicClasspath;
+  }
+
   public OSProcessHandler createOSProcessHandler() throws ExecutionException {
     final Sdk sdk = getJdk();
     assert sdk != null : "SDK should be defined";
     final String exePath = ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk);
-    final boolean forceDynamicClasspath = JdkUtil.useDynamicClasspath(PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
-    final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, this, forceDynamicClasspath);
+    final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, this, myUseDynamicClasspath);
     final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
       @Override
       public Charset getCharset() {

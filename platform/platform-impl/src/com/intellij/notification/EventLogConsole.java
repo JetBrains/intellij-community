@@ -98,6 +98,9 @@ class EventLogConsole {
 
   private DefaultActionGroup createPopupActions(ActionManager actionManager) {
     DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new EditorCopyAction());
+    group.add(actionManager.getAction(IdeActions.ACTION_COMPARE_CLIPBOARD_WITH_SELECTION));
+    group.addSeparator();
     group.add(new DumbAwareAction("Clear All") {
       @Override
       public void update(AnActionEvent e) {
@@ -118,9 +121,6 @@ class EventLogConsole {
         }
       }
     });
-    group.add(new EditorCopyAction());
-    group.addSeparator();
-    group.add(actionManager.getAction(IdeActions.ACTION_COMPARE_CLIPBOARD_WITH_SELECTION));
     return group;
   }
 

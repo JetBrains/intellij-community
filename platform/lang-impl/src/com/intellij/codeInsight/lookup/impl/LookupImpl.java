@@ -105,7 +105,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
 
-  final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
+  private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
   private long myStampShown = 0;
   private boolean myShown = false;
@@ -607,7 +607,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       Collections.sort(better, itemComparator);
     }
 
-    return myPresentableModel.classifyByRelevance(better);
+    List<LookupElement> classified = myPresentableModel.classifyByRelevance(better);
+    List<LookupElement> result = new ArrayList<LookupElement>(classified.size());
+    for (LookupElement element : classified) {
+      if (element.getLookupString().equals(itemPattern(element))) {
+        result.add(element);
+      }
+    }
+    for (LookupElement element : classified) {
+      if (!element.getLookupString().equals(itemPattern(element))) {
+        result.add(element);
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -803,7 +815,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public int getLookupStart() {
-    LOG.assertTrue(myLookupStartMarker.isValid());
+    LOG.assertTrue(myLookupStartMarker.isValid(), disposeTrace);
     return myLookupStartMarker.getStartOffset();
   }
 

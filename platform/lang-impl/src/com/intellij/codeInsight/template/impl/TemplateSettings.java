@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.PathManager;
@@ -570,7 +571,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       if (classLoader == null) {
         classLoader = getClass().getClassLoader();
       }
-      ResourceBundle bundle = ResourceBundle.getBundle(resourceBundle, Locale.getDefault(), classLoader);
+      ResourceBundle bundle = AbstractBundle.getResourceBundle(resourceBundle, classLoader);
       description = bundle.getString(key);
     }
     else {

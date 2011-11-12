@@ -47,7 +47,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     this("GROOVY_HOME", getAllGroovyKinds(), GROOVY_FRAMEWORK_NAME);
   }
 
-  private static Set<? extends LibraryKind<?>> getAllGroovyKinds() {
+  public static Set<? extends LibraryKind<?>> getAllGroovyKinds() {
     final HashSet<LibraryKind<?>> kinds = new HashSet<LibraryKind<?>>();
     for (LibraryPresentationProvider provider : LibraryPresentationProvider.EP_NAME.getExtensions()) {
       if (provider instanceof GroovyLibraryPresentationProviderBase) {

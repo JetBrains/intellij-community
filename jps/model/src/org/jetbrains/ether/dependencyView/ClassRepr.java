@@ -4,12 +4,12 @@ import com.intellij.util.io.DataExternalizer;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -300,6 +300,18 @@ public class ClassRepr extends Proto {
     }
 
     return null;
+  }
+
+  public Collection<MethodRepr> findMethodsByJavaRules(final MethodRepr m) {
+    final List<MethodRepr> result = new LinkedList<MethodRepr>();
+
+    for (MethodRepr mm : methods) {
+      if (mm.equalsByJavaRules(m)) {
+        result.add(mm);
+      }
+    }
+
+    return result;
   }
 
   public MethodRepr findMethod(final MethodRepr m) {

@@ -1,11 +1,14 @@
 
 package com.intellij.ide.util.frameworkSupport;
 
+import com.intellij.framework.FrameworkTypeEx;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.util.newProjectWizard.OldFrameworkSupportProviderWrapper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -24,61 +27,73 @@ public class FrameworkSupportUtil {
   private FrameworkSupportUtil() {
   }
 
-  public static List<FrameworkSupportProvider> getProviders(@NotNull ModuleType moduleType) {
-    return getProviders(moduleType, null);
+  public static List<FrameworkSupportInModuleProvider> getProviders(@NotNull ModuleType moduleType, @NotNull FacetsProvider facetsProvider) {
+    return getProviders(moduleType, null, facetsProvider);
   }
 
-  public static List<FrameworkSupportProvider> getProviders(@NotNull Module module) {
-    return getProviders(ModuleType.get(module), module);
+  public static List<FrameworkSupportInModuleProvider> getProviders(@NotNull Module module, final @NotNull FacetsProvider facetsProvider) {
+    return getProviders(ModuleType.get(module), module, facetsProvider);
   }
 
-  private static List<FrameworkSupportProvider> getProviders(@NotNull ModuleType moduleType, @Nullable Module module) {
-    FrameworkSupportProvider[] providers = Extensions.getExtensions(FrameworkSupportProvider.EXTENSION_POINT);
-    ArrayList<FrameworkSupportProvider> result = new ArrayList<FrameworkSupportProvider>();
-    for (FrameworkSupportProvider provider : providers) {
-      if (provider.isEnabledForModuleType(moduleType) && (module == null || !provider.isSupportAlreadyAdded(module))) {
+  private static List<FrameworkSupportInModuleProvider> getProviders(@NotNull ModuleType moduleType,
+                                                                     @Nullable Module module,
+                                                                     @NotNull FacetsProvider facetsProvider) {
+    List<FrameworkSupportInModuleProvider> allProviders = getAllProviders();
+    ArrayList<FrameworkSupportInModuleProvider> result = new ArrayList<FrameworkSupportInModuleProvider>();
+    for (FrameworkSupportInModuleProvider provider : allProviders) {
+      if (provider.isEnabledForModuleType(moduleType) && (module == null || provider.canAddSupport(module, facetsProvider))) {
         result.add(provider);
       }
     }
     return result;
   }
 
-  public static List<FrameworkSupportProvider> getProviders(@NotNull ModuleBuilder builder) {
-    ArrayList<FrameworkSupportProvider> result = new ArrayList<FrameworkSupportProvider>();
-    for (FrameworkSupportProvider provider : Extensions.getExtensions(FrameworkSupportProvider.EXTENSION_POINT)) {
-      if (provider.isEnabledForModuleBuilder(builder)) {
-        result.add(provider);
+  public static List<FrameworkSupportInModuleProvider> getAllProviders() {
+    List<FrameworkSupportInModuleProvider> allTypes = new ArrayList<FrameworkSupportInModuleProvider>();
+    for (FrameworkSupportProvider provider : FrameworkSupportProvider.EXTENSION_POINT.getExtensions()) {
+      allTypes.add(new OldFrameworkSupportProviderWrapper(provider));
+    }
+    for (FrameworkTypeEx type : FrameworkTypeEx.EP_NAME.getExtensions()) {
+      allTypes.add(type.createProvider());
+    }
+    return allTypes;
+  }
+
+  public static List<FrameworkSupportInModuleProvider> getProviders(@NotNull ModuleBuilder builder) {
+    List<FrameworkSupportInModuleProvider> result = new ArrayList<FrameworkSupportInModuleProvider>();
+    for (FrameworkSupportInModuleProvider type : getAllProviders()) {
+      if (type.isEnabledForModuleBuilder(builder)) {
+        result.add(type);
       }
     }
     return result;
   }
 
-  public static boolean hasProviders(final Module module) {
-    List<FrameworkSupportProvider> providers = getProviders(module);
-    for (FrameworkSupportProvider provider : providers) {
-      if (provider.getUnderlyingFrameworkId() == null) {
+  public static boolean hasProviders(final Module module, @NotNull FacetsProvider facetsProvider) {
+    List<FrameworkSupportInModuleProvider> providers = getProviders(module, facetsProvider);
+    for (FrameworkSupportInModuleProvider provider : providers) {
+      if (provider.getFrameworkType().getUnderlyingFrameworkTypeId() == null) {
         return true;
       }
     }
     return false;
   }
 
-  public static Comparator<FrameworkSupportProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportProvider> providers) {
-    DFSTBuilder<FrameworkSupportProvider>
-      builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(
-      new ProvidersGraph(providers))));
+  public static Comparator<FrameworkSupportInModuleProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportInModuleProvider> types) {
+    DFSTBuilder<FrameworkSupportInModuleProvider>
+      builder = new DFSTBuilder<FrameworkSupportInModuleProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(types))));
     if (!builder.isAcyclic()) {
-      Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
-      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
+      Pair<FrameworkSupportInModuleProvider, FrameworkSupportInModuleProvider> pair = builder.getCircularDependency();
+      LOG.error("Circular dependency between types '" + pair.getFirst().getFrameworkType().getId() + "' and '" + pair.getSecond().getFrameworkType().getId() + "' was found.");
     }
 
     return builder.comparator();
   }
 
   @Nullable
-  public static FrameworkSupportProvider findProvider(@NotNull String id, final List<FrameworkSupportProvider> providers) {
-    for (FrameworkSupportProvider provider : providers) {
-      if (id.equals(provider.getId())) {
+  public static FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<FrameworkSupportInModuleProvider> providers) {
+    for (FrameworkSupportInModuleProvider provider : providers) {
+      if (id.equals(provider.getFrameworkType().getId())) {
         return provider;
       }
     }
@@ -86,31 +101,33 @@ public class FrameworkSupportUtil {
     return null;
   }
 
-  private static class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportProvider> {
-    private final List<FrameworkSupportProvider> myFrameworkSupportProviders;
+  private static class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportInModuleProvider> {
+    private final List<FrameworkSupportInModuleProvider> myFrameworkSupportProviders;
 
-    public ProvidersGraph(final List<FrameworkSupportProvider> frameworkSupportProviders) {
-      myFrameworkSupportProviders = new ArrayList<FrameworkSupportProvider>(frameworkSupportProviders);
+    public ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {
+      myFrameworkSupportProviders = new ArrayList<FrameworkSupportInModuleProvider>(frameworkSupportProviders);
     }
 
-    public Collection<FrameworkSupportProvider> getNodes() {
+    public Collection<FrameworkSupportInModuleProvider> getNodes() {
       return myFrameworkSupportProviders;
     }
 
-    public Iterator<FrameworkSupportProvider> getIn(final FrameworkSupportProvider provider) {
-      String[] ids = provider.getPrecedingFrameworkProviderIds();
-      List<FrameworkSupportProvider> dependencies = new ArrayList<FrameworkSupportProvider>();
-      String underlyingId = provider.getUnderlyingFrameworkId();
+    public Iterator<FrameworkSupportInModuleProvider> getIn(final FrameworkSupportInModuleProvider provider) {
+      List<FrameworkSupportInModuleProvider> dependencies = new ArrayList<FrameworkSupportInModuleProvider>();
+      String underlyingId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();
       if (underlyingId != null) {
-        FrameworkSupportProvider underlyingProvider = findProvider(underlyingId, myFrameworkSupportProviders);
+        FrameworkSupportInModuleProvider underlyingProvider = findProvider(underlyingId, myFrameworkSupportProviders);
         if (underlyingProvider != null) {
           dependencies.add(underlyingProvider);
         }
       }
-      for (String id : ids) {
-        FrameworkSupportProvider dependency = findProvider(id, myFrameworkSupportProviders);
-        if (dependency != null) {
-          dependencies.add(dependency);
+      if (provider instanceof OldFrameworkSupportProviderWrapper) {
+        String[] ids = ((OldFrameworkSupportProviderWrapper)provider).getProvider().getPrecedingFrameworkProviderIds();
+        for (String id : ids) {
+          FrameworkSupportInModuleProvider dependency = findProvider(id, myFrameworkSupportProviders);
+          if (dependency != null) {
+            dependencies.add(dependency);
+          }
         }
       }
       return dependencies.iterator();

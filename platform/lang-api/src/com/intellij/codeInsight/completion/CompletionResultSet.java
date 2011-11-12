@@ -99,4 +99,6 @@ public abstract class CompletionResultSet {
   }
 
   public abstract void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition);
+
+  public abstract void restartCompletionWhenNothingMatches();
 }

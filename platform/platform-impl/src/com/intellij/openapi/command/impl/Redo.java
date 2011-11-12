@@ -57,4 +57,9 @@ class Redo extends UndoRedo {
   protected void setBeforeState(EditorAndState state) {
     myUndoableGroup.setStateBefore(state);
   }
+
+  @Override
+  protected boolean isRedo() {
+    return true;
+  }
 }

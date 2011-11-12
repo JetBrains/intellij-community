@@ -19,10 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -193,7 +190,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (ActionPlaces.NAVIGATION_BAR.equals(myPlace)) {
       final Dimension size = getSize();
       g.setColor(UIUtil.getBorderColor());
-      g.drawLine(0, size.height - 2, size.width, size.height - 2);
+      g.drawLine(0, size.height - 1, size.width, size.height - 1);
       return;
     }
     if (doMacEnhancementsForMainToolbar()) {
@@ -220,6 +217,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private void fillToolBar(final List<AnAction> actions, boolean layoutSecondaries) {
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
+      if (action instanceof Separator && isNavBar()) {
+        continue;
+      }
+
+      if (action instanceof ComboBoxAction) {
+        ((ComboBoxAction)action).setSmallVariant(isNavBar());
+      }
 
       if (layoutSecondaries) {
         if (!myActionGroup.isPrimary(action)) {
@@ -248,7 +252,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       add(mySecondaryActionsButton);
     }
   }
-  
+
+  private boolean isNavBar() {
+    return myPlace == ActionPlaces.NAVIGATION_BAR;
+  }
+
   private Dimension getMinimumButtonSize() {
     return ActionPlaces.NAVIGATION_BAR.equals(myPlace) ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
   } 

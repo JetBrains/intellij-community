@@ -154,7 +154,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   
   @SuppressWarnings("unchecked")
   public void method(Map<Object, Object> args) {
-    args.put("type", stringifyType(args.get("type")));
+    String type = stringifyType(args.get("type"));
+    args.put("type", type);
 
     Object namedParams = args.get("namedParams");
     if (namedParams instanceof List) {
@@ -201,6 +202,10 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
     String s = type.toString();
     LOG.assertTrue(!s.startsWith("? extends"), s);
+    LOG.assertTrue(!s.contains("?extends"), s);
+    LOG.assertTrue(!s.contains("<null."), s);
+    LOG.assertTrue(!s.startsWith("null."), s);
+    LOG.assertTrue(!(s.contains(",") && !s.contains("<")), s);
     return s;
   }
 
@@ -240,7 +245,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       name = (String)args.get("name");
       final String typeText = stringifyType(args.get("type"));
       Object doc = args.get("doc");
-      descriptor = new NamedArgumentDescriptor(new GdslNamedParameter(name, doc instanceof String ? (String)doc : null, context)) {
+      descriptor = new NamedArgumentDescriptor(new GdslNamedParameter(name, doc instanceof String ? (String)doc : null, context, typeText)) {
         @Override
         public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
           return typeText == null || ClassContextFilter.isSubtype(type, context.getContainingFile(), typeText);
@@ -255,11 +260,13 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     private final String myName;
     public final String docString;
     private final PsiElement myParent;
+    @Nullable public final String myParameterTypeText;
 
-    public GdslNamedParameter(String name, String doc, @NotNull PsiElement parent) {
+    public GdslNamedParameter(String name, String doc, @NotNull PsiElement parent, String type) {
       myName = name;
       this.docString = doc;
       myParent = parent;
+      myParameterTypeText = type;
     }
 
     @Override

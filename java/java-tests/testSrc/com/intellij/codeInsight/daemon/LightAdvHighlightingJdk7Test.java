@@ -294,4 +294,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testSuperBound() throws Exception {
     doTest(false, false);
   }
+
+  public void testExtendsBound() throws Exception {
+    doTest(false, false);
+  }
 }

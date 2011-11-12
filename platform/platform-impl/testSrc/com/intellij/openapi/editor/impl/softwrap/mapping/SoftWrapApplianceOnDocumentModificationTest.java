@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.TestFileType;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -807,6 +808,15 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     // in all cases when soft wrap is located at the left screen edge.
     assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
   }
+
+  public void testLeadingTabWithShiftedWidth() throws IOException {
+    // Inspired by IDEA-76353. The point is that we need to consider cached information about tab symbols width during logical
+    // position to offset mapping
+    String text = "\t test";
+    init(100, text);
+    ((EditorImpl)myEditor).setPrefixTextAndAttributes(" ", new TextAttributes());
+    myEditor.getCaretModel().moveToOffset(text.length());
+  }
   
   private void init(final int visibleWidth, @NotNull String fileText) throws IOException {
     init(visibleWidth, fileText, TestFileType.TEXT);
@@ -828,7 +838,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     applianceManager.registerSoftWrapIfNecessary();
   }
 
-  private static SoftWrapModelEx getSoftWrapModel() {
-    return (SoftWrapModelEx)myEditor.getSoftWrapModel();
+  private static SoftWrapModelImpl getSoftWrapModel() {
+    return (SoftWrapModelImpl)myEditor.getSoftWrapModel();
   }
 }

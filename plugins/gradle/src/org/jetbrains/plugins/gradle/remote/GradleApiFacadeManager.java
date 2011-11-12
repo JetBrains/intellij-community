@@ -29,6 +29,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager;
 import org.jetbrains.plugins.gradle.remote.impl.GradleApiFacadeImpl;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
@@ -41,6 +42,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +66,8 @@ public class GradleApiFacadeManager {
   private final AtomicReference<Pair<GradleApiFacade, RemoteGradleProcessSettings>> myFacade
     = new AtomicReference<Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
 
-  private final GradleLibraryManager myGradleLibraryManager;
+  private final GradleLibraryManager                    myGradleLibraryManager;
+  private final RemoteGradleProgressNotificationManager myProgressManager;
 
   // Please note that we don't use RemoteGradleProcessSettings as the 'Configuration' type parameter here because we need
   // to apply the settings to the newly created process. I.e. every time new process is created we need to call
@@ -72,8 +75,9 @@ public class GradleApiFacadeManager {
   private final RemoteProcessSupport<Object, GradleApiFacade, Object> mySupport;
   private final GradleApiFacade                                       myApiFacade;
 
-  public GradleApiFacadeManager(@NotNull GradleLibraryManager gradleLibraryManager) {
+  public GradleApiFacadeManager(@NotNull GradleLibraryManager gradleLibraryManager, @NotNull GradleProgressNotificationManager manager) {
     myGradleLibraryManager = gradleLibraryManager;
+    myProgressManager = (RemoteGradleProgressNotificationManager)manager;
     mySupport = new RemoteProcessSupport<Object, GradleApiFacade, Object>(GradleApiFacade.class) {
       @Override
       protected void fireModificationCountChanged() {
@@ -226,6 +230,13 @@ public class GradleApiFacadeManager {
       return myFacade.get().first;
     }
     result.applySettings(getRemoteSettings());
+    RemoteGradleProgressNotificationManager exported = (RemoteGradleProgressNotificationManager)UnicastRemoteObject.exportObject(myProgressManager, 0);
+    if (exported == null) {
+      GradleLog.LOG.warn("Can't export progress manager"); 
+    }
+    else {
+      result.applyProgressManager(exported);
+    }
     return result;
   }
 

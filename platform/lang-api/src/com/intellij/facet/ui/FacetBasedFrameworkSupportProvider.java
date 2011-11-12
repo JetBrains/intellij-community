@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,8 +85,8 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
     return myFacetType.isSuitableModuleType(moduleType);
   }
 
-  public boolean isSupportAlreadyAdded(@NotNull final Module module) {
-    return !FacetManager.getInstance(module).getFacetsByType(myFacetType.getId()).isEmpty();
+  public boolean isSupportAlreadyAdded(@NotNull final Module module, @NotNull FacetsProvider facetsProvider) {
+    return !facetsProvider.getFacetsByType(module, myFacetType.getId()).isEmpty();
   }
 
   public Icon getIcon() {

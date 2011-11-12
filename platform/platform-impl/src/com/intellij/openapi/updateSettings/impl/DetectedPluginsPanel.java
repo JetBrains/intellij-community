@@ -58,7 +58,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
         final String loadedVersion = downloader.getPluginVersion();
         if (loadedVersion != null || (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null)) {
           final String installedVersion = ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null
-                                          ? "v." + ideaPluginDescriptor.getVersion() + (loadedVersion != null ? " -> " : "")
+                                          ? "v. " + ideaPluginDescriptor.getVersion() + (loadedVersion != null ? " -> " : "")
                                           : "";
           final String availableVersion = loadedVersion != null ? loadedVersion : "";
           append(" (" + installedVersion + availableVersion + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);

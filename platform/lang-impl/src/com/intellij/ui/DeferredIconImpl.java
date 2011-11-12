@@ -127,7 +127,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
               setDone(result);
 
               Component actualTarget = target.get();
-              if (SwingUtilities.getWindowAncestor(actualTarget) == null) {
+              if (actualTarget != null && SwingUtilities.getWindowAncestor(actualTarget) == null) {
                 actualTarget = paintingParent.get();
                 if (actualTarget == null || SwingUtilities.getWindowAncestor(actualTarget) == null) {
                   actualTarget = null;

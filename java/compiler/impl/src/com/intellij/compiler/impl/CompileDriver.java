@@ -577,7 +577,7 @@ public class CompileDriver {
             for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
               outputs.add(new File(path));
             }
-            CompilerUtil.refreshIODirectories(outputs);
+            CompilerUtil.refreshIOFiles(outputs);
           }
         }
       };

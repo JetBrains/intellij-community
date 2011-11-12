@@ -19,7 +19,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,8 +32,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Key;
@@ -128,11 +125,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.setBorder(null);
 
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    final Shortcut[] shortcuts = keymap.getShortcuts(getActionName());
-    if (shortcuts.length > 0) {
-      setAdvertisementText("Press " + shortcuts[0] + " to show dialog");
-    }
+    showDialogAdvertisement(getActionName());
   }
 
   protected final void setPreviewText(final String text) {

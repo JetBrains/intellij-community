@@ -40,7 +40,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,19 +90,7 @@ public class NavBarPresentation {
     for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
       String text = modelExtension.getPresentableText(object);
       if (text != null) {
-        boolean truncated = false;
-        if (window != null) {
-          Rectangle wndBounds = window.getBounds();
-          Rectangle rec = ScreenUtil.getScreenRectangle(wndBounds.x, wndBounds.y);
-
-          final int windowWidth = rec.width;
-
-          while (window.getFontMetrics(window.getFont()).stringWidth(text) + 100 > windowWidth && text.length() > 10) {
-            text = text.substring(0, text.length() - 10);
-            truncated = true;
-          }
-        }
-        return text + (truncated ? "..." : "");
+        return text.length() > 50 ? text.substring(0, 47) + "..." : text;
       }
     }
     return object.toString();

@@ -34,11 +34,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class UndoableGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
@@ -57,24 +55,24 @@ class UndoableGroup {
 
   public UndoableGroup(String commandName,
                        boolean isGlobal,
-                       Project project,
+                       UndoManagerImpl manager,
                        EditorAndState stateBefore,
                        EditorAndState stateAfter,
                        List<UndoableAction> actions,
-                       int commandTimestamp,
                        UndoConfirmationPolicy confirmationPolicy,
                        boolean transparent,
                        boolean valid) {
     myCommandName = commandName;
     myGlobal = isGlobal;
-    myCommandTimestamp = commandTimestamp;
+    myCommandTimestamp = manager.nextCommandTimestamp();
     myActions = actions;
-    myProject = project;
+    myProject = manager.getProject();
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
     myConfirmationPolicy = confirmationPolicy;
     myTransparent = transparent;
     myValid = valid;
+    composeStartFinishGroup(manager.getUndoStacksHolder());
   }
 
   public boolean isGlobal() {
@@ -173,6 +171,70 @@ class UndoableGroup {
     commitAllDocuments();
   }
 
+  boolean isInsideStopFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
+    final FinishMarkAction finishMark = getFinishMark();
+    final StartMarkAction startMark = getStartMark();
+    if (startMark == null || finishMark == null) {
+      if (isUndo) {
+        if (finishMark != null) {
+          return true;
+        }
+        else if (startMark != null) {
+          return false;
+        }
+      }
+      else {
+        if (startMark != null) {
+          return true;
+        }
+        else if (finishMark != null) {
+          return false;
+        }
+      }
+    }
+    return isInsideStartFinishGroup;
+  }
+
+  void composeStartFinishGroup(final UndoRedoStacksHolder holder) {
+    FinishMarkAction finishMark = getFinishMark();
+    if (finishMark != null) {
+      boolean global = false;
+      String commandName = null;
+      LinkedList<UndoableGroup> stack = holder.getStack(finishMark.getAffectedDocument());
+      for (Iterator<UndoableGroup> iterator = stack.descendingIterator(); iterator.hasNext(); ) {
+        UndoableGroup group = iterator.next();
+        if (group.isGlobal()) {
+          global = true;
+          commandName = group.getCommandName();
+          break;
+        }
+        if (group.getStartMark() != null) {
+          break;
+        }
+      }
+      if (global) {
+        finishMark.setGlobal(global);
+        finishMark.setCommandName(commandName);
+      }
+    }
+  }
+
+  private boolean shouldAskConfirmationForStartFinishGroup(boolean redo) {
+    if (redo) {
+      StartMarkAction mark = getStartMark();
+      if (mark != null) {
+        return mark.isGlobal();
+      }
+    }
+    else {
+      FinishMarkAction finishMark = getFinishMark();
+      if (finishMark != null) {
+        return finishMark.isGlobal();
+      }
+    }
+    return false;
+  }
+
   private static void commitAllDocuments() {
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
       PsiDocumentManager.getInstance(p).commitAllDocuments();
@@ -229,6 +291,15 @@ class UndoableGroup {
   }
 
   public String getCommandName() {
+    for (UndoableAction action : myActions) {
+      if (action instanceof StartMarkAction) {
+        String commandName = ((StartMarkAction)action).getCommandName();
+        if (commandName != null) return commandName;
+      } else if (action instanceof FinishMarkAction) {
+        String commandName = ((FinishMarkAction)action).getCommandName();
+        if (commandName != null) return commandName;
+      }
+    }
     return myCommandName;
   }
 
@@ -236,7 +307,24 @@ class UndoableGroup {
     return myCommandTimestamp;
   }
 
-  public boolean shouldAskConfirmation() {
+  @Nullable
+  public StartMarkAction getStartMark() {
+    for (UndoableAction action : myActions) {
+      if (action instanceof StartMarkAction) return (StartMarkAction)action;
+    }
+    return null;
+  }
+  
+  @Nullable
+  public FinishMarkAction getFinishMark() {
+    for (UndoableAction action : myActions) {
+      if (action instanceof FinishMarkAction) return (FinishMarkAction)action;
+    }
+    return null;
+  }
+
+  public boolean shouldAskConfirmation(boolean redo) {
+    if (shouldAskConfirmationForStartFinishGroup(redo)) return true;
     return myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION ||
            myConfirmationPolicy != UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION && myGlobal;
   }

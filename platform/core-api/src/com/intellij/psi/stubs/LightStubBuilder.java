@@ -95,18 +95,20 @@ public class LightStubBuilder implements StubBuilder {
     while (element != null) {
       final StubElement stub = createStub(tree, element, parentStub);
 
-      final List<LighterASTNode> kids = tree.getChildren(element);
-      if (!kids.isEmpty()) {
-        if (parent != null) {
-          parents.push(parent);
-          childNumbers.push(childNumber);
-          kinderGarden.push(children);
-          parentStubs.push(parentStub);
+      if (parent == null || !skipChildProcessingWhenBuildingStubs(this, tree, parent, element)) {
+        final List<LighterASTNode> kids = tree.getChildren(element);
+        if (!kids.isEmpty()) {
+          if (parent != null) {
+            parents.push(parent);
+            childNumbers.push(childNumber);
+            kinderGarden.push(children);
+            parentStubs.push(parentStub);
+          }
+          parent = element;
+          element = (children = kids).get(childNumber = 0);
+          parentStub = stub;
+          if (!skipChildProcessingWhenBuildingStubs(parent.getTokenType(), element.getTokenType())) continue nextElement;
         }
-        parent = element;
-        element = (children = kids).get(childNumber = 0);
-        parentStub = stub;
-        if (!skipChildProcessingWhenBuildingStubs(parent.getTokenType(), element.getTokenType())) continue nextElement;
       }
 
       while (children != null && ++childNumber < children.size()) {
@@ -150,6 +152,13 @@ public class LightStubBuilder implements StubBuilder {
   @Override
   public final boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType) {
     return skipChildProcessingWhenBuildingStubs(parent != null ? parent.getElementType() : null, childType);
+  }
+
+  public boolean skipChildProcessingWhenBuildingStubs(LightStubBuilder builder,
+                                                       LighterAST tree,
+                                                       final LighterASTNode parent,
+                                                       final LighterASTNode child) {
+    return false;
   }
 
   public boolean skipChildProcessingWhenBuildingStubs(final IElementType parent, final IElementType childType) {

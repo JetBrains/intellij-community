@@ -18,12 +18,15 @@ package com.intellij.testFramework;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author peter
@@ -47,7 +50,14 @@ public class TestDataProvider implements DataProvider {
       Editor editor = (Editor)getData(PlatformDataKeys.EDITOR.getName());
       if (editor != null) {
         FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-        return manager.getData(dataId, editor, manager.getSelectedFiles()[0]);
+        Object managerData = manager.getData(dataId, editor, manager.getSelectedFiles()[0]);
+        if (managerData != null) {
+          return managerData;
+        }
+        JComponent component = editor.getContentComponent();
+        if (component instanceof EditorComponentImpl) {
+          return ((EditorComponentImpl)component).getData(dataId);
+        }
       }
       return null;
     }

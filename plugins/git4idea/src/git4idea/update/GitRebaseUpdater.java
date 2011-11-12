@@ -60,7 +60,7 @@ public class GitRebaseUpdater extends GitUpdater {
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String remoteBranch = gitBranchPair.getTracked().getName();
+    String remoteBranch = gitBranchPair.getDest().getName();
 
     final GitLineHandler rebaseHandler = new GitLineHandler(myProject, myRoot, GitCommand.REBASE);
     rebaseHandler.addParameters(remoteBranch);

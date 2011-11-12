@@ -22,7 +22,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
 import com.intellij.psi.impl.source.PsiParameterImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -52,12 +51,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
 
   @Override
   public PsiParameter createPsi(final PsiParameterStub stub) {
-    if (isCompiled(stub)) {
-      return new ClsParameterImpl(stub);
-    }
-    else {
-      return new PsiParameterImpl(stub);
-    }
+    return getPsiFactory(stub).createParameter(stub);
   }
 
   @Override

@@ -129,7 +129,7 @@ public class MismatchedCollectionQueryUpdate {
     return "not " + bar + "";
   }
 
-  private Set foo = new HashSet();
+
 
   public void foo()
   {
@@ -144,6 +144,26 @@ public class MismatchedCollectionQueryUpdate {
     while(it.hasNext()){
       Object o = it.next();
 
+    }
+  }
+
+  class MyClass {
+    private  List<String> ourValues = new ArrayList<String>() {{
+      Collections.addAll((this), "A", "B", "C");
+    }};
+
+    public void foo() {
+      for (final String value : ourValues) {}
+    }
+  }
+
+  class MyClass2 {
+    private  List<String> ourValues = new ArrayList<String>() {{
+      (this).add("");
+    }};
+
+    public void foo() {
+      for (final String value : ourValues) {}
     }
   }
 }

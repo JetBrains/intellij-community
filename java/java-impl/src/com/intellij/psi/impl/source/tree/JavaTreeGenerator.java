@@ -49,7 +49,7 @@ public class JavaTreeGenerator implements TreeGenerator {
   private static final JavaParserUtil.ParserWrapper MOD_LIST = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.parseModifierList(builder);
+      DeclarationParser.INSTANCE.parseModifierList(builder);
     }
   };
 

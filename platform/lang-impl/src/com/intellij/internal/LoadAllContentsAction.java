@@ -31,17 +31,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class LoadAllContentsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.LoadAllContentsAction");
   public LoadAllContentsAction() {
-    super("Load all files content", "Measure reading the content of all files in the project", null);
+    super("Load all files content", "Measure FileUtil.loadFile() for all files in the project", null);
   }
+
+
+  AtomicInteger count = new AtomicInteger();
+  AtomicLong totalSize = new AtomicLong();
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -50,7 +56,8 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
     LOG.info(m);
     System.out.println(m);
     long start = System.currentTimeMillis();
-    final AtomicInteger count = new AtomicInteger();
+    count.set(0);
+    totalSize.set(0);
     ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -59,9 +66,9 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
           public boolean processFile(VirtualFile fileOrDir) {
             if (fileOrDir.isDirectory() || fileOrDir.isSpecialFile()) return true;
             try {
-              //fileOrDir.contentsToByteArray();
               count.incrementAndGet();
-              FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
+              byte[] bytes = FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
+              totalSize.addAndGet(bytes.length);
               ProgressManager.getInstance().getProgressIndicator().setText(fileOrDir.getPresentableUrl());
             }
             catch (IOException e1) {
@@ -73,7 +80,8 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
        }
     }, "Loading", false, project);
     long end = System.currentTimeMillis();
-    String message = "Finished loading content of " + count + " files. elapsed=" + ((end - start) / 1000) + "sec.";
+    String message = "Finished loading content of " + count + " files. Total size=" + StringUtil.formatFileSize(totalSize.get()) +
+                     ". Elapsed=" + ((end - start) / 1000) + "sec.";
     LOG.info(message);
     System.out.println(message);
   }

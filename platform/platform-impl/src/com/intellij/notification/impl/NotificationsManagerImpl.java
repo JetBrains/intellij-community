@@ -203,7 +203,14 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
           }
         };
         assert toolWindowId != null;
-        String msg = StringUtil.isEmpty(notification.getTitle()) ? notification.getContent() : notification.getTitle();
+        String msg = notification.getTitle();
+        if (StringUtil.isNotEmpty(notification.getContent())) {
+          if (StringUtil.isNotEmpty(msg)) {
+            msg += "<br>";
+          }
+          msg += notification.getContent();
+        }
+
         //noinspection SSBasedInspection
         ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, msg, notification.getIcon(), listener);
     }

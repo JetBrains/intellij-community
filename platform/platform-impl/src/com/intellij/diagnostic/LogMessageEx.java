@@ -80,14 +80,14 @@ public class LogMessageEx extends LogMessage {
   /**
    * @param userMessage      user-friendly message description (short, single line if possible)
    * @param details          technical details (exception stack trace etc.)
-   * @param title            text to show in Event Log tool window entry (it comes before 'more')
+   * @param title            text to show in Event Log tool window entry (it comes before 'more'), use <code>null</code> to reuse <code>userMessage</code>
    * @param notificationText text to show in the error balloon that is popped up automatically. Default is <code>com.intellij.diagnostic.IdeMessagePanel#INTERNAL_ERROR_NOTICE</code>
    * @param attachments      attachments that will be suggested to include to the report
    * @return
    */
-  public static IdeaLoggingEvent createEvent(String userMessage,
+  public static IdeaLoggingEvent createEvent(final String userMessage,
                                              final String details,
-                                             final String title,
+                                             @Nullable final String title,
                                              @Nullable final String notificationText,
                                              final Collection<Attachment> attachments) {
     return new IdeaLoggingEvent(userMessage, new Throwable() {
@@ -103,7 +103,7 @@ public class LogMessageEx extends LogMessage {
     }) {
       @Override
       public Object getData() {
-        final LogMessageEx logMessageEx = new LogMessageEx(this, title, notificationText);
+        final LogMessageEx logMessageEx = new LogMessageEx(this, title != null ? title : userMessage, notificationText);
         for (Attachment attachment : attachments) {
           logMessageEx.addAttachment(attachment);
         }
@@ -115,14 +115,14 @@ public class LogMessageEx extends LogMessage {
   /**
    * @param userMessage      user-friendly message description (short, single line if possible)
    * @param details          technical details (exception stack trace etc.)
-   * @param title            text to show in Event Log tool window entry (it comes before 'more')
+   * @param title            text to show in Event Log tool window entry (it comes before 'more'), use <code>null</code> to reuse <code>userMessage</code>
    * @param notificationText text to show in the error balloon that is popped up automatically. Default is <code>com.intellij.diagnostic.IdeMessagePanel#INTERNAL_ERROR_NOTICE</code>
    * @param attachment       attachment that will be suggested to include to the report
    * @return
    */
   public static IdeaLoggingEvent createEvent(String userMessage,
                                              final String details,
-                                             final String title,
+                                             @Nullable final String title,
                                              @Nullable final String notificationText,
                                              @Nullable Attachment attachment) {
     return createEvent(userMessage, details, title, notificationText,

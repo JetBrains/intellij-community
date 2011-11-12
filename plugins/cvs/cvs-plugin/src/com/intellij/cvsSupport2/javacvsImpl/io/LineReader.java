@@ -27,25 +27,28 @@ import java.io.InputStream;
  */
 public class LineReader {
 
-  private static final int BUFFER_SIZE = 128 * 1024;
+  private static final int DEFAULT_BUFFER_SIZE = 10 * 1024;
   private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-  private static final ThreadLocal<byte[]> myBuffer = new ThreadLocal<byte[]>() {
-    @Override
-    protected byte[] initialValue() {
-      return new byte[BUFFER_SIZE];
-    }
-  };
 
+  private final byte[] myBuffer;
   private final InputStream myInputStream;
   private final ByteArrayOutputStream myOutputStream = new ByteArrayOutputStream();
   private int myBytesExpected;
   private int myPosition = 0;
   private int myBytesBuffered = 0;
-  private int myEolFlag = 0;
+  private int myLastEol = 0;
 
   public LineReader(InputStream in, int bytesExpected) {
+   this(in, bytesExpected, DEFAULT_BUFFER_SIZE);
+  }
+
+  public LineReader(InputStream in, int bytesExpected, final int bufferSize) {
+    if (bufferSize < 2) {
+      throw new IllegalArgumentException("buffer size must be greater than 1");
+    }
     myInputStream = in;
     myBytesExpected = bytesExpected;
+    myBuffer = new byte[bufferSize];
   }
 
   private void fillBuffer() throws IOException {
@@ -53,8 +56,7 @@ public class LineReader {
       myBytesBuffered = -1;
       return;
     }
-    final byte[] buffer = myBuffer.get();
-    myBytesBuffered = myInputStream.read(buffer, 0, Math.min(buffer.length, myBytesExpected));
+    myBytesBuffered = myInputStream.read(myBuffer, 0, Math.min(myBuffer.length, myBytesExpected));
     if (myBytesBuffered > 0) {
       myBytesExpected -= myBytesBuffered;
       myPosition = 0;
@@ -62,7 +64,6 @@ public class LineReader {
   }
 
   private byte[] getLineArray() {
-    myEolFlag = 0;
     myPosition++;
     if (myOutputStream.size() == 0) {
       return EMPTY_BYTE_ARRAY;
@@ -79,35 +80,36 @@ public class LineReader {
     } else if (myPosition >= myBytesBuffered) {
       fillBuffer();
       if (myBytesBuffered == -1) {
-        return EMPTY_BYTE_ARRAY;
+        return getLineArray();
       }
     }
-
+    final byte[] buffer = myBuffer;
     while (myBytesBuffered != -1) {
       for (; myPosition < myBytesBuffered; myPosition++) {
-        final byte c = myBuffer.get()[myPosition];
+        final byte c = buffer[myPosition];
         switch (c) {
           case '\r':
-            if (myEolFlag < 2) {
-              myEolFlag++;
-            }
-            else {
-              myPosition -= 2;
+            if (myLastEol == '\r') {
               return getLineArray();
+            } else {
+              myLastEol = '\r';
             }
             break;
           case '\n':
-            return getLineArray();
+            if (myLastEol == '\n') {
+              return getLineArray();
+            } else {
+              myLastEol = '\n';
+            }
+            break;
           default:
-            switch (myEolFlag) {
-              case 2:
-                myPosition--;
-              case 1:
-                myPosition--;
-                return getLineArray();
-              default:
-                myEolFlag = 0;
-                myOutputStream.write(c);
+            if (myLastEol != 0) {
+              myLastEol = 0;
+              final byte[] line = getLineArray();
+              myOutputStream.write(c);
+              return line;
+            } else {
+              myOutputStream.write(c);
             }
             break;
         }

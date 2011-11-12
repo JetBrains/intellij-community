@@ -34,6 +34,11 @@ public abstract class FindManager {
 
   public abstract FindModel createReplaceInFileModel();
 
+  @Nullable
+  public abstract FindModel getPreviousFindModel();
+
+  public abstract void setPreviousFindModel(FindModel previousFindModel);
+
   /**
    * Returns the find manager instance for the specified project.
    *

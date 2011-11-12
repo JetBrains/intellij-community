@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -259,9 +259,9 @@ public class InspectionToolRegistrar {
     return tools;
   }
 
-  private static Object instantiateTool(Class toolClass) {
+  private static Object instantiateTool(Class<?> toolClass) {
     try {
-      Constructor constructor = toolClass.getDeclaredConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+      Constructor<?> constructor = toolClass.getDeclaredConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
       constructor.setAccessible(true);
       return constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
     } catch (SecurityException e) {
@@ -314,9 +314,17 @@ public class InspectionToolRegistrar {
 
   private static boolean checkTool(@NotNull final InspectionTool toolWrapper) {
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      if (!LocalInspectionTool.isValidID(((LocalInspectionToolWrapper)toolWrapper).getID())) {
-        final String message = InspectionsBundle.message("inspection.disabled.wrong.id",
-                                                         toolWrapper.getShortName(), ((LocalInspectionToolWrapper)toolWrapper).getID(), LocalInspectionTool.VALID_ID_PATTERN);
+      String message = null;
+      try {
+        final String id = ((LocalInspectionToolWrapper)toolWrapper).getID();
+        if (id == null || !LocalInspectionTool.isValidID(id)) {
+          message = InspectionsBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN);
+        }
+      }
+      catch (Throwable t) {
+        message = InspectionsBundle.message("inspection.disabled.error", toolWrapper.getShortName(), t.getMessage());
+      }
+      if (message != null) {
         showNotification(message);
         return false;
       }

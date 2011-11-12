@@ -56,6 +56,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.block.comment"), SyntaxHighlighterColors.JAVA_BLOCK_COMMENT),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.comment"), SyntaxHighlighterColors.DOC_COMMENT),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag"), SyntaxHighlighterColors.DOC_COMMENT_TAG),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag.value"), CodeInsightColors.DOC_COMMENT_TAG_VALUE),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.markup"), SyntaxHighlighterColors.DOC_COMMENT_MARKUP),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.class"), CodeInsightColors.CLASS_NAME_ATTRIBUTES),

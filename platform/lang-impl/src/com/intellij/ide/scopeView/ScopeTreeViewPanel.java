@@ -217,7 +217,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   public void selectScope(final NamedScope scope) {
     refreshScope(scope);
-    if (scope != DefaultScopesProvider.getAllScope()) {
+    if (scope != DefaultScopesProvider.getAllScope() && scope != null) {
       CURRENT_SCOPE_NAME = scope.getName();
     }
   }

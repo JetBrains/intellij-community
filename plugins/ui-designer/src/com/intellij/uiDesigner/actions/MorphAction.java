@@ -93,7 +93,7 @@ public class MorphAction extends AbstractGuiEditorAction {
   }
 
   private static boolean morphComponent(final GuiEditor editor, final RadComponent oldComponent, ComponentItem targetItem) {
-    targetItem = InsertComponentProcessor.replaceAnyComponentItem(editor, targetItem);
+    targetItem = InsertComponentProcessor.replaceAnyComponentItem(editor, targetItem, "Morph to Non-Palette Component");
     if (targetItem == null) {
       return false;
     }

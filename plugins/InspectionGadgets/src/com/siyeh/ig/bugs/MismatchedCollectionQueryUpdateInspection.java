@@ -32,6 +32,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -215,7 +216,12 @@ public class MismatchedCollectionQueryUpdateInspection
         final PsiNewExpression newExpression = (PsiNewExpression)initializer;
         final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
         if (anonymousClass != null) {
-          if (collectionUpdateCalled(variable, anonymousClass)) {
+          if (collectionUpdateCalled(null, anonymousClass)) {
+            return true;
+          }
+          final ThisPassedAsArgumentVisitor visitor = new ThisPassedAsArgumentVisitor();
+          anonymousClass.accept(visitor);
+          if (visitor.isPassed()) {
             return true;
           }
         }
@@ -240,7 +246,7 @@ public class MismatchedCollectionQueryUpdateInspection
       return visitor.isQueried();
     }
 
-    private boolean collectionUpdateCalled(PsiVariable variable, PsiElement context) {
+    private boolean collectionUpdateCalled(@Nullable PsiVariable variable, PsiElement context) {
       final CollectionUpdateCalledVisitor visitor = new CollectionUpdateCalledVisitor(variable, updateNames);
       context.accept(visitor);
       return visitor.isUpdated();

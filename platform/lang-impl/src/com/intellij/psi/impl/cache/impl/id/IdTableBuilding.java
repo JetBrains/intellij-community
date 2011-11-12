@@ -39,9 +39,9 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
+import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
-import com.intellij.psi.impl.cache.impl.todo.TodoOccurrenceConsumer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -96,7 +96,7 @@ public class IdTableBuilding {
 
       final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();
       if (indexPatterns.length > 0) {
-        final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
+        final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
         for (IndexPattern indexPattern : indexPatterns) {
           Pattern pattern = indexPattern.getPattern();
           if (pattern != null) {
@@ -319,7 +319,7 @@ public class IdTableBuilding {
     public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
       if (IndexPatternUtil.getIndexPatternCount() > 0) {
         final CharSequence chars = inputData.getContentAsText();
-        final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
+        final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
         EditorHighlighter highlighter;
 
         final EditorHighlighter editorHighlighter = inputData.getUserData(FileBasedIndex.EDITOR_HIGHLIGHTER);

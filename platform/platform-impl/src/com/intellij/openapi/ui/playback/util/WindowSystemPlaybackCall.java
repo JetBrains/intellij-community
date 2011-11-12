@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.ui.playback.util;
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,8 +33,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.InputEvent;
@@ -291,12 +288,8 @@ public class WindowSystemPlaybackCall {
   private static AsyncResult<MenuElement[]> activateItem(final PlaybackContext context, final MenuElement element) {
     final AsyncResult<MenuElement[]> result = new AsyncResult<MenuElement[]>();
     final AbstractButton c = (AbstractButton)element.getComponent();
-    if (!c.isShowing()) {
-      result.setRejected();
-      return result; 
-    }
 
-    context.runPooledThread(new Runnable() {
+    final Runnable pressRunnable = new Runnable() {
       @Override
       public void run() {
         Robot robot = context.getRobot();
@@ -309,11 +302,11 @@ public class WindowSystemPlaybackCall {
         robot.delay(90);
         robot.mouseRelease(InputEvent.BUTTON1_MASK);
         robot.delay(90);
-        context.flushAwtAndRun(new Runnable() {
+        context.flushAwtAndRunInEdt(new Runnable() {
           @Override
           public void run() {
 
-            context.flushAwtAndRun(new Runnable() {
+            context.flushAwtAndRunInEdt(new Runnable() {
               @Override
               public void run() {
                 MenuElement[] subElements = element.getSubElements();
@@ -329,14 +322,29 @@ public class WindowSystemPlaybackCall {
           }
         });
       }
-    });
+    };
+
+    if (c.isShowing()) {
+      context.runPooledThread(pressRunnable);
+    } else {
+      context.delayAndRunInEdt(new Runnable() {
+        @Override
+        public void run() {
+          if (c.isShowing()) {
+            context.runPooledThread(pressRunnable);
+          } else {
+            result.setRejected();
+          }
+        }
+      }, 1000);
+    }
 
     return result;
   }
 
   public static ActionCallback getUiReady(final PlaybackContext context) {
     final ActionCallback result = new ActionCallback();
-    context.flushAwtAndRun(new Runnable() {
+    context.flushAwtAndRunInEdt(new Runnable() {
       @Override
       public void run() {
         UiActivityMonitor.getInstance().getBusy().getReady(context).notify(result);

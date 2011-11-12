@@ -47,6 +47,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.RefactoringBaseIntention;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
@@ -81,6 +82,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/realIntentionBulb.png");
   static final Icon ourBulbIcon = IconLoader.getIcon("/actions/intentionBulb.png");
   static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
+  static final Icon ourRefactoringBulbIcon = IconLoader.getIcon("/actions/refactoringBulb.png");
   static final Icon ourIntentionOffIcon = IconLoader.getIcon("/actions/realIntentionOffBulb.png");
   static final Icon ourQuickFixOffIcon = IconLoader.getIcon("/actions/quickfixOffBulb.png");
   static final Icon ourArrowIcon = IconLoader.getIcon("/general/arrowDown.png");
@@ -300,16 +302,26 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     setLayout(new BorderLayout());
     setOpaque(false);
 
-    boolean showFix = false;
-    for (final HighlightInfo.IntentionActionDescriptor pairs : intentions.errorFixesToShow) {
-      IntentionAction fix = pairs.getAction();
-      if (IntentionManagerSettings.getInstance().isShowLightBulb(fix)) {
-        showFix = true;
+    boolean showRefactoringsBulb = false;
+    for (HighlightInfo.IntentionActionDescriptor descriptor : intentions.inspectionFixesToShow) {
+      if (descriptor.getAction() instanceof RefactoringBaseIntention) {
+        showRefactoringsBulb = true;
         break;
       }
     }
+    boolean showFix = false;
+    if (!showRefactoringsBulb) {
+      showFix = false;
+      for (final HighlightInfo.IntentionActionDescriptor pairs : intentions.errorFixesToShow) {
+        IntentionAction fix = pairs.getAction();
+        if (IntentionManagerSettings.getInstance().isShowLightBulb(fix)) {
+          showFix = true;
+          break;
+        }
+      }
+    }
 
-    Icon smartTagIcon = showFix ? ourQuickFixIcon : ourBulbIcon;
+    Icon smartTagIcon = showRefactoringsBulb ? ourRefactoringBulbIcon : showFix ? ourQuickFixIcon : ourBulbIcon;
 
     myHighlightedIcon = new RowIcon(2);
     myHighlightedIcon.setIcon(smartTagIcon, 0);

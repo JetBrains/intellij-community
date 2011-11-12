@@ -224,9 +224,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
           for (ExpectedTypeInfo info : mergedInfos) {
             final boolean searchInheritors = params.getInvocationCount() > 1;
-            new JavaMembersGetter(info.getType()).addMembers(position, searchInheritors, noTypeCheck);
+            new JavaMembersGetter(info.getType(), position).addMembers(position, searchInheritors, noTypeCheck);
             if (!info.getDefaultType().equals(info.getType())) {
-              new JavaMembersGetter(info.getDefaultType()).addMembers(position, searchInheritors, noTypeCheck);
+              new JavaMembersGetter(info.getDefaultType(), position).addMembers(position, searchInheritors, noTypeCheck);
             }
           }
         }

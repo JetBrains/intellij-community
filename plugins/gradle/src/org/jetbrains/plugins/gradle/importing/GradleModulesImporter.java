@@ -25,6 +25,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.notification.*;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -63,20 +64,21 @@ public class GradleModulesImporter {
    */
   @NotNull
   public Map<GradleModule, Module> importModules(@NotNull final Iterable<GradleModule> modules, @Nullable final Project project, 
-                                                 @Nullable final ModifiableModuleModel model, @NotNull String gradleProjectPath)
+                                                 @Nullable final ModifiableModuleModel model, @NotNull String gradleProjectPath,
+                                                 @NotNull GradleProgressNotificationManager progressManager)
   {
     if (project == null) {
       return Collections.emptyMap();
     }
     removeExistingModulesSettings(modules);
     if (!project.isInitialized()) {
-      myAlarm.addRequest(new ImportModulesTask(project, modules, gradleProjectPath), PROJECT_INITIALISATION_DELAY_MS);
+      myAlarm.addRequest(new ImportModulesTask(project, modules, gradleProjectPath, progressManager), PROJECT_INITIALISATION_DELAY_MS);
       return Collections.emptyMap();
     } 
     if (model == null) {
       return Collections.emptyMap();
     }
-    return importModules(modules, model, project, gradleProjectPath);
+    return importModules(modules, model, project, gradleProjectPath, progressManager);
   }
 
   private static void removeExistingModulesSettings(@NotNull Iterable<GradleModule> modules) {
@@ -96,7 +98,8 @@ public class GradleModulesImporter {
   public Map<GradleModule, Module> importModules(@NotNull final Iterable<GradleModule> modules, 
                                                  @NotNull final ModifiableModuleModel model,
                                                  @NotNull final Project intellijProject,
-                                                 @NotNull final String gradleProjectPath)
+                                                 @NotNull final String gradleProjectPath,
+                                                 @NotNull final GradleProgressNotificationManager progressManager)
   {
     final Map<GradleModule, Module> result = new HashMap<GradleModule, Module>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -111,7 +114,7 @@ public class GradleModulesImporter {
             result.putAll(moduleMappings);
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(
-              new SetupExternalLibrariesTask(moduleMappings, gradleProjectPath, intellijProject),
+              new SetupExternalLibrariesTask(moduleMappings, gradleProjectPath, intellijProject, progressManager),
               PROJECT_INITIALISATION_DELAY_MS
             );
           }
@@ -130,8 +133,8 @@ public class GradleModulesImporter {
   }
 
   /**
-   * Actual implementation of {@link #importModules(Iterable, Project, ModifiableModuleModel, String)}. Insists on all arguments to
-   * be ready to use.
+   * Actual implementation of {@link #importModules(Iterable, Project, ModifiableModuleModel, String, GradleProgressNotificationManager)}.
+   * Insists on all arguments to be ready to use.
    *  
    * @param modules     modules to import
    * @param model       modules model
@@ -279,7 +282,8 @@ public class GradleModulesImporter {
    */
   private static void setupLibraries(@NotNull final Map<GradleModule, Module> moduleMappings,
                                      @NotNull final Project intellijProject,
-                                     @NotNull final String gradleProjectPath)
+                                     @NotNull final String gradleProjectPath,
+                                     @NotNull final GradleProgressNotificationManager progressManager)
   {
     final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
     final Ref<GradleProject> gradleProjectRef = new Ref<GradleProject>();
@@ -309,16 +313,28 @@ public class GradleModulesImporter {
         ProgressManager.getInstance().run(
           new Task.Backgroundable(intellijProject, GradleBundle.message("gradle.library.resolve.progress.text"), false) {
             @Override
-            public void run(@NotNull ProgressIndicator indicator) {
+            public void run(@NotNull final ProgressIndicator indicator) {
               indicator.setIndeterminate(true);
+              GradleTaskNotificationListener progressListener = new GradleTaskNotificationListenerAdapter() {
+                @Override
+                public void onStatusChange(@NotNull GradleTaskNotificationEvent event) {
+                  indicator.setText2(event.getDescription());
+                }
+              };
+              GradleTaskId taskId = GradleTaskId.create(GradleTaskType.RESOLVE_PROJECT);
+              progressManager.addNotificationListener(taskId, progressListener);
               try {
                 GradleProjectResolver resolver = manager.getFacade().getResolver();
-                GradleProject projectWithResolvedLibraries = resolver.resolveProjectInfo(gradleProjectPath, true);
+                
+                GradleProject projectWithResolvedLibraries = resolver.resolveProjectInfo(taskId, gradleProjectPath, true);
                 gradleProjectRef.set(projectWithResolvedLibraries);
                 ApplicationManager.getApplication().invokeLater(setupExternalDependenciesTask, ModalityState.NON_MODAL);
               }
               catch (Exception e) {
                 GradleLog.LOG.warn("Can't resolve external dependencies of the target gradle project (" + gradleProjectPath + ")", e);
+              }
+              finally {
+                progressManager.removeNotificationListener(progressListener);
               }
             }
           }); 
@@ -472,18 +488,24 @@ public class GradleModulesImporter {
     private final Project myProject;
     private final Iterable<GradleModule> myModules;
     private final String myGradleProjectPath;
+    private final GradleProgressNotificationManager myProgressManger;
 
-    private ImportModulesTask(@NotNull Project project, @NotNull Iterable<GradleModule> modules, @NotNull String gradleProjectPath) {
+    ImportModulesTask(@NotNull Project project, @NotNull Iterable<GradleModule> modules, @NotNull String gradleProjectPath,
+                      @NotNull GradleProgressNotificationManager progressManager) {
       myProject = project;
       myModules = modules;
       myGradleProjectPath = gradleProjectPath;
+      myProgressManger = progressManager;
     }
 
     @Override
     public void run() {
       myAlarm.cancelAllRequests();
       if (!myProject.isInitialized()) {
-        myAlarm.addRequest(new ImportModulesTask(myProject, myModules, myGradleProjectPath), PROJECT_INITIALISATION_DELAY_MS);
+        myAlarm.addRequest(
+          new ImportModulesTask(myProject, myModules, myGradleProjectPath, myProgressManger),
+          PROJECT_INITIALISATION_DELAY_MS
+        );
         return;
       } 
       
@@ -493,25 +515,31 @@ public class GradleModulesImporter {
         }
       }.execute().getResultObject();
       
-      importModules(myModules, model, myProject, myGradleProjectPath);
+      importModules(myModules, model, myProject, myGradleProjectPath, myProgressManger);
     }
   }
   
   private static class SetupExternalLibrariesTask implements Runnable {
 
-    private final Map<GradleModule, Module> myModules;
-    private final String                    myGradleProjectPath;
-    private final Project                   myIntellijProject;
+    private final Map<GradleModule, Module>         myModules;
+    private final String                            myGradleProjectPath;
+    private final Project                           myIntellijProject;
+    private final GradleProgressNotificationManager myProgressManager;
 
-    SetupExternalLibrariesTask(@NotNull Map<GradleModule, Module> modules, @NotNull String gradleProjectPath, Project intellijProject) {
+    SetupExternalLibrariesTask(@NotNull Map<GradleModule, Module> modules,
+                               @NotNull String gradleProjectPath,
+                               @NotNull Project intellijProject,
+                               @NotNull GradleProgressNotificationManager manager)
+    {
       myModules = modules;
       myGradleProjectPath = gradleProjectPath;
       myIntellijProject = intellijProject;
+      myProgressManager = manager;
     }
 
     @Override
     public void run() {
-      setupLibraries(myModules, myIntellijProject, myGradleProjectPath); 
+      setupLibraries(myModules, myIntellijProject, myGradleProjectPath, myProgressManager); 
     }
   }
 }

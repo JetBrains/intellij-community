@@ -87,13 +87,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private MergingUpdateQueue myUpdateQueue;
   private boolean isUpdating;
 
-  protected HistoryDialog(Project project, IdeaGateway gw, VirtualFile f, boolean doInit) {
+  protected HistoryDialog(@NotNull Project project, IdeaGateway gw, VirtualFile f, boolean doInit) {
     super(project);
     myProject = project;
     myGateway = gw;
     myFile = f;
 
-    setProject(myProject);
+    setProject(project);
     setDimensionKey(getPropertiesKey());
     setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     closeOnEsc();

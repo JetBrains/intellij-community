@@ -94,6 +94,7 @@ public class Splitter extends JPanel {
     myVerticalSplit = vertical;
     myShowDividerControls = false;
     myShowDividerIcon = true;
+    myHonorMinimumSize = true;
     myDivider = createDivider();
     setProportion(proportion);
     myDividerWidth = 7;
@@ -213,62 +214,62 @@ public class Splitter extends JPanel {
     final double width = getWidth();
     final double height = getHeight();
 
+    final double componentSize = getOrientation() ? height : width;
+    if (componentSize <= 0) return;
+
     if (!isNull(myFirstComponent) && myFirstComponent.isVisible() && !isNull(mySecondComponent) && mySecondComponent.isVisible()) {
       // both first and second components are visible
       Rectangle firstRect = new Rectangle();
       Rectangle dividerRect = new Rectangle();
       Rectangle secondRect = new Rectangle();
 
-      final double componentSize = getOrientation() ? height : width;
       double dividerWidth = getDividerWidth();
-      double firstCompontSize;
+      double firstComponentSize;
       double secondComponentSize;
 
       if (componentSize <= dividerWidth) {
-        firstCompontSize = 0;
+        firstComponentSize = 0;
         secondComponentSize = 0;
         dividerWidth = componentSize;
       }
       else {
-        firstCompontSize = myProportion * (float)(componentSize - dividerWidth);
-        secondComponentSize = getOrientation() ? height - firstCompontSize - dividerWidth : width - firstCompontSize - dividerWidth;
+        firstComponentSize = myProportion * (float)(componentSize - dividerWidth);
+        secondComponentSize = getOrientation() ? height - firstComponentSize - dividerWidth : width - firstComponentSize - dividerWidth;
 
         if (isHonorMinimumSize()) {
-          double minWidth = 75;
-          double minHeight = 45;
 
-          final double firstMinSize = getOrientation() ? minHeight : minWidth;
-          final double secondMinSize = getOrientation() ? minHeight : minWidth;
+          final double firstMinSize = getOrientation() ? myFirstComponent.getMinimumSize().getHeight() : myFirstComponent.getMinimumSize().getWidth();
+          final double secondMinSize = getOrientation() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
 
-          if (firstCompontSize + secondComponentSize <= firstMinSize + secondMinSize) {
-            double propotion = firstMinSize / (firstMinSize + secondMinSize);
-            firstCompontSize = (int)(propotion * (float)(componentSize - dividerWidth));
-            secondComponentSize = getOrientation() ? height - firstCompontSize - dividerWidth : width - firstCompontSize - dividerWidth;
+          if (firstComponentSize + secondComponentSize < firstMinSize + secondMinSize) {
+            double proportion = firstMinSize / (firstMinSize + secondMinSize);
+            firstComponentSize = (int)(proportion * (float)(componentSize - dividerWidth));
+            secondComponentSize = getOrientation() ? height - firstComponentSize - dividerWidth : width - firstComponentSize - dividerWidth;
           }
           else {
-            if (firstCompontSize < firstMinSize) {
-              if (secondComponentSize - (firstMinSize - firstCompontSize) > secondMinSize) {
-                secondComponentSize = secondComponentSize - (firstMinSize - firstCompontSize);
-              }
-              firstCompontSize = firstMinSize;
+            if (firstComponentSize < firstMinSize) {
+              secondComponentSize -= firstMinSize - firstComponentSize;
+              firstComponentSize = firstMinSize;
             }
             else if (secondComponentSize < secondMinSize) {
-              firstCompontSize = firstCompontSize - (secondMinSize - secondComponentSize);
+              firstComponentSize -= secondMinSize - secondComponentSize;
               secondComponentSize = secondMinSize;
             }
           }
         }
       }
 
+      myProportion = (float)(firstComponentSize / (firstComponentSize + secondComponentSize));
+
       if (getOrientation()) {
-        firstRect.setBounds(0, 0, (int)width, (int)firstCompontSize);
-        dividerRect.setBounds(0, (int)firstCompontSize, (int)width, (int)dividerWidth);
-        secondRect.setBounds(0, (int)(firstCompontSize + dividerWidth), (int)width, (int)secondComponentSize);
+        firstRect.setBounds(0, 0, (int)width, (int)firstComponentSize);
+        dividerRect.setBounds(0, (int)firstComponentSize, (int)width, (int)dividerWidth);
+        secondRect.setBounds(0, (int)(firstComponentSize + dividerWidth), (int)width, (int)secondComponentSize);
       }
       else {
-        firstRect.setBounds(0, 0, (int)firstCompontSize, (int)height);
-        dividerRect.setBounds((int)firstCompontSize, 0, (int)dividerWidth, (int)height);
-        secondRect.setBounds((int)(firstCompontSize + dividerWidth), 0, (int)secondComponentSize, (int)height);
+        firstRect.setBounds(0, 0, (int)firstComponentSize, (int)height);
+        dividerRect.setBounds((int)firstComponentSize, 0, (int)dividerWidth, (int)height);
+        secondRect.setBounds((int)(firstComponentSize + dividerWidth), 0, (int)secondComponentSize, (int)height);
       }
       myDivider.setVisible(true);
       myFirstComponent.setBounds(firstRect);
@@ -536,13 +537,13 @@ public class Splitter extends JPanel {
         float proportion;
         if (getOrientation()) {
           if (getHeight() > 0) {
-            proportion = Math.min(1.0f, Math.max(getMinProportion(myFirstComponent), (float)myPoint.y / (float)Splitter.this.getHeight()));
+            proportion = Math.min(1.0f, Math.max(.0f, Math.min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.y / (float)Splitter.this.getHeight()), 1 - getMinProportion(mySecondComponent))));
             setProportion(proportion);
           }
         }
         else {
           if (getWidth() > 0) {
-            proportion = Math.min(1.0f, Math.max(getMinProportion(myFirstComponent), (float)myPoint.x / (float)Splitter.this.getWidth()));
+            proportion = Math.min(1.0f, Math.max(.0f, Math.min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.x / (float)Splitter.this.getWidth()), 1 - getMinProportion(mySecondComponent))));
             setProportion(proportion);
           }
         }

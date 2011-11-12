@@ -16,10 +16,9 @@
 
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
@@ -30,11 +29,13 @@ import com.intellij.util.io.StringRef;
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
   private StringRef myPackageName;
   private final boolean myCompiled;
+  private StubPsiFactory myFactory;
 
   public PsiJavaFileStubImpl(final PsiJavaFile file, final StringRef packageName, final boolean compiled) {
     super(file);
     myPackageName = packageName;
     myCompiled = compiled;
+    myFactory = compiled ? new ClsStubPsiFactory() : new SourceStubPsiFactory();
   }
 
   public PsiJavaFileStubImpl(final String packageName, final boolean compiled) {
@@ -49,6 +50,16 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   @Override
   public boolean isCompiled() {
     return myCompiled;
+  }
+
+  @Override
+  public StubPsiFactory getPsiFactory() {
+    return myFactory;
+  }
+
+  @Override
+  public void setPsiFactory(StubPsiFactory factory) {
+    myFactory = factory;
   }
 
   public void setPackageName(final String packageName) {

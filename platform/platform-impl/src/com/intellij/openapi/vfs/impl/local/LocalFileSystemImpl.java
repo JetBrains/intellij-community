@@ -21,8 +21,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.SymLinkUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -501,7 +501,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   @Override
   public VirtualFile getRealFile(@NotNull final VirtualFile file) {
-    final String realPath = SymLinkUtil.resolveSymLink(file.getPath());
+    final String realPath = FileSystemUtil.resolveSymLink(file.getPath());
     return realPath != null ? findFileByPath(realPath) : null;
   }
 

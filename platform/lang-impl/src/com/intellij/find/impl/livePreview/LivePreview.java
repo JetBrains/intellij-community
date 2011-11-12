@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -45,8 +44,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class LivePreview extends DocumentAdapter implements ReplacementView.Delegate, SearchResults.SearchResultsListener,
                                                             SelectionListener {
@@ -285,7 +286,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       final TextRange range = o.getPrimaryRange();
 
       TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
-      
+
       if (mySearchResults.isExcluded(o)) {
         highlightRange(range, strikout(attrs), myHighlighters);
       } else {
@@ -297,22 +298,31 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       mySearchResults.getEditor().getSelectionModel().addSelectionListener(this);
       myListeningSelection = true;
     }
-    
+
   }
 
   private void updateInSelectionHighlighters() {
     if (mySearchResults.getEditor() == null) return;
     final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
-    final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    int[] starts = selectionModel.getBlockSelectionStarts();
+    int[] ends = selectionModel.getBlockSelectionEnds();
 
     final HashSet<RangeHighlighter> toRemove = new HashSet<RangeHighlighter>();
     Set<RangeHighlighter> toAdd = new HashSet<RangeHighlighter>();
     for (RangeHighlighter highlighter : myHighlighters) {
       if (myCursorHighlighter != null && highlighter.getStartOffset() == myCursorHighlighter.getStartOffset() &&
         highlighter.getEndOffset() == myCursorHighlighter.getEndOffset()) continue;
-      final boolean intersectsWithSelection = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset()) &&
-                                              selectionRange.getEndOffset() != highlighter.getStartOffset() &&
-                                              highlighter.getEndOffset() != selectionRange.getStartOffset();
+
+
+      boolean intersectsWithSelection = false;
+      for (int i = 0; i < starts.length; ++i) {
+        TextRange selectionRange = new TextRange(starts[i], ends[i]);
+        intersectsWithSelection = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset()) &&
+                                  selectionRange.getEndOffset() != highlighter.getStartOffset() &&
+                                  highlighter.getEndOffset() != selectionRange.getStartOffset();
+        if (intersectsWithSelection) break;
+      }
+      
       final Object userData = highlighter.getUserData(IN_SELECTION_KEY);
       if (userData != null) {
         if (!intersectsWithSelection) {
@@ -392,7 +402,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     return highlighter;
   }
 
-  private RangeHighlighter doHightlightRange(TextRange textRange, final TextAttributes attributes, Set<RangeHighlighter> highlighters) {
+  private RangeHighlighter doHightlightRange(final TextRange textRange, final TextAttributes attributes, Set<RangeHighlighter> highlighters) {
     HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
 
     MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
@@ -408,7 +418,9 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
             highlighter.getTextAttributes();
           if (highlighter.getUserData(SEARCH_MARKER) != null &&
               textAttributes != null &&
-              textAttributes.equals(attributes)) {
+              textAttributes.equals(attributes) &&
+              highlighter.getStartOffset() == textRange.getStartOffset() &&
+              highlighter.getEndOffset() == textRange.getEndOffset()) {
             candidate[0] = highlighter;
             return false;
           }

@@ -125,4 +125,9 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     myCachedParameters = null;
     return removed;
   }
+
+  public void clear() {
+    myParameters.clear();
+    myCachedParameters = null;
+  }
 }

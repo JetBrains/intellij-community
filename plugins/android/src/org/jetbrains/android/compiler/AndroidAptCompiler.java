@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.dom.manifest.Manifest;
@@ -85,7 +86,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       GenerationItem[] generationItems = computation.compute();
       List<VirtualFile> generatedVFiles = new ArrayList<VirtualFile>();
       for (GenerationItem item : generationItems) {
-        final File[] generatedFiles = ((AptGenerationItem)item).myGeneratedFiles;
+        final Set<File> generatedFiles = ((AptGenerationItem)item).myGeneratedFile2Package.keySet();
         for (File generatedFile : generatedFiles) {
           CompilerUtil.refreshIOFile(generatedFile);
           CompilerUtil.refreshIOFile(generatedFile.getParentFile());
@@ -124,9 +125,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(aptItem);
           }
-          for (int i = 0, n = aptItem.myGeneratedFiles.length; i < n; i++) {
-            final File generatedFile = aptItem.myGeneratedFiles[i];
-            final String aPackage = i == 0 ? aptItem.myPackage : aptItem.myLibraryPackages[i - 1];
+          for (Map.Entry<File, String> entry : aptItem.myGeneratedFile2Package.entrySet()) {
+            final File generatedFile = entry.getKey();
+            final String aPackage = entry.getValue();
+
             if (generatedFile.exists()) {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 public void run() {
@@ -181,7 +183,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final String mySourceRootPath;
     final IAndroidTarget myAndroidTarget;
     
-    final File[] myGeneratedFiles;
+    final Map<File, String> myGeneratedFile2Package;
     
     final String myPackage;
     final String[] myLibraryPackages;
@@ -207,28 +209,42 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myPackage = aPackage;
       myLibraryPackages = libPackages;
       myIsLibrary = isLibrary;
-      myGeneratedFiles = new File[libPackages.length + 1];
       myPlatformToolsRevision = platformToolsRevision;
       
-      myGeneratedFiles[0] =
-        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
-      for (int i = 0; i < myLibraryPackages.length; i++) {
-        myGeneratedFiles[i + 1] =
-          new File(sourceRootPath, libPackages[i].replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
+      myGeneratedFile2Package = new HashMap<File, String>();
+
+      myGeneratedFile2Package.put(
+        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME), aPackage);
+
+      for (String libPackage : myLibraryPackages) {
+        myGeneratedFile2Package
+          .put(new File(sourceRootPath, libPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME),
+               libPackage);
       }
       
       myNonExistingFiles = new HashSet<String>();
 
-      for (File generatedFile : myGeneratedFiles) {
+      // We need to check only R.java files, not Manifest.java files, so add Manifest files LATER
+      for (File generatedFile : myGeneratedFile2Package.keySet()) {
         if (!generatedFile.exists()) {
           myNonExistingFiles.add(FileUtil.toSystemIndependentName(generatedFile.getPath()));
         }
       }
+
+      myGeneratedFile2Package.put(
+        new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.MANIFEST_JAVA_FILE_NAME),
+        aPackage);
+
+      for (String libraryPackage : myLibraryPackages) {
+        myGeneratedFile2Package.put(
+          new File(sourceRootPath, libraryPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.MANIFEST_JAVA_FILE_NAME),
+          libraryPackage);
+      }
     }
 
     @NotNull
-    public File[] getGeneratedFiles() {
-      return myGeneratedFiles;
+    public Map<File, String> getGeneratedFiles() {
+      return myGeneratedFile2Package;
     }
 
     public String getPath() {
@@ -322,7 +338,6 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                  AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()), null, -1, -1);
             continue;
           }
-          AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
 
           final String[] libPackages = getLibPackages(module, packageName);
 

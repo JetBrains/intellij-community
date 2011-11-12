@@ -56,7 +56,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -245,18 +244,13 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
             .createBalloon();
           ref.set(balloon);
           Disposer.register(myNewFile.getProject(), balloon);
-          balloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
-            @Override
-            public RelativePoint recalculateLocation(Balloon object) {
-              final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
-              final Point screenPoint = target.getScreenPoint();
-              int y = screenPoint.y;
-              if (target.getPoint().getY() > myEditor.getLineHeight() + balloon.getPreferredSize().getHeight()) {
-                y -= myEditor.getLineHeight();
-              }
-              return new RelativePoint(new Point(screenPoint.x, y));
-            }
-          }, Balloon.Position.above);
+          final Balloon.Position position = getBalloonPosition(myEditor);
+          RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+          if (position == Balloon.Position.above) {
+            final Point p = point.getPoint();
+            point = new RelativePoint(point.getComponent(), new Point(p.x, p.y - myEditor.getLineHeight()));
+          }
+          balloon.show(point, position);
         }
       } else {
         final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
@@ -386,5 +380,12 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     public void dispose() {
       // noop
     }
+  }
+
+  private static Balloon.Position getBalloonPosition(Editor editor) {
+    final int line = editor.getCaretModel().getVisualPosition().line;
+    final Rectangle area = editor.getScrollingModel().getVisibleArea();
+    int startLine  = area.y / editor.getLineHeight() + 1;
+    return (line - startLine) * editor.getLineHeight() < 200 ? Balloon.Position.below : Balloon.Position.above;
   }
 }

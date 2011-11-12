@@ -49,11 +49,11 @@ public class GitFetcher {
   public boolean fetch(VirtualFile root) {
     final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.FETCH);
 
-    final GitTask fetchTask = new GitTask(myProject, h, "Fetching changes...");
+    final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
     fetchTask.setProgressIndicator(myProgressIndicator);
     fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicBoolean success = new AtomicBoolean();
-    fetchTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
+    fetchTask.execute(true, false, new GitTaskResultHandlerAdapter() {
       @Override protected void onSuccess() {
         success.set(true);
       }

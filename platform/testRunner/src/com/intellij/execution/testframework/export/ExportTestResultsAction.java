@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.testframework.export;
 
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -44,6 +46,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -149,7 +152,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
           final File outputFile = new File(outputFolder, filename_);
           final String outputText;
           try {
-            outputText = getOutputText(project);
+            outputText = getOutputText(ExportTestResultsConfiguration.getInstance(project));
             if (outputText == null) {
               return;
             }
@@ -167,6 +170,20 @@ public class ExportTestResultsAction extends DumbAwareAction {
           catch (SAXException ex) {
             LOG.warn(ex);
             showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
+            return;
+          }
+          catch (RuntimeException ex) {
+            ExportTestResultsConfiguration c = new ExportTestResultsConfiguration();
+            c.setExportFormat(ExportTestResultsConfiguration.ExportFormat.Xml);
+            c.setOpenResults(false);
+            try {
+              String xml = getOutputText(c);
+              LOG.error(LogMessageEx.createEvent("Failed to export test results", ExceptionUtil.getThrowableText(ex), null, null,
+                                                 new Attachment("dump.xml", xml)));
+            }
+            catch (Throwable ignored) {
+              LOG.error("Failed to export test results", ex);
+            }
             return;
           }
 
@@ -239,8 +256,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
   }
 
   @Nullable
-  private String getOutputText(Project project) throws IOException, TransformerException, SAXException {
-    ExportTestResultsConfiguration config = ExportTestResultsConfiguration.getInstance(project);
+  private String getOutputText(ExportTestResultsConfiguration config) throws IOException, TransformerException, SAXException {
     ExportTestResultsConfiguration.ExportFormat exportFormat = config.getExportFormat();
 
     SAXTransformerFactory transformerFactory = (SAXTransformerFactory)SAXTransformerFactory.newInstance();

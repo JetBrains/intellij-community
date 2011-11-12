@@ -46,11 +46,10 @@ import java.util.List;
  * @author oleg
  */
 public class GithubShareAction extends DumbAwareAction {
-  public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
   private static final Logger LOG = Logger.getInstance(GithubShareAction.class.getName());
 
   public GithubShareAction() {
-    super("Share project on GitHub", "Easily share project on GitHub", ICON);
+    super("Share project on GitHub", "Easily share project on GitHub", GithubUtil.GITHUB_ICON);
   }
 
   public void update(AnActionEvent e) {

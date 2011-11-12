@@ -17,19 +17,15 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -37,30 +33,20 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -81,124 +67,10 @@ public class GroovyCompiler extends GroovyCompilerBase {
 
   @Override
   protected void compileFiles(final CompileContext context, final Module module, List<VirtualFile> toCompile, OutputSink sink, boolean tests) {
-    final Set<VirtualFile> allToCompile = new LinkedHashSet<VirtualFile>(toCompile);
-
-    // groovyc may fail if we don't also recompile files like B such that A depends on B and B depends on C, where A & C \in toCompile
-    // see http://jira.codehaus.org/browse/GROOVY-4024
-    if (!"false".equals(System.getProperty("compile.groovy.dependencies", "true"))) {
-      context.getProgressIndicator().checkCanceled();
-      context.getProgressIndicator().setText("Enumerating Groovy classes...");
-
-      Set<VirtualFile> groovyFiles = enumerateGroovyFiles(module);
-
-      if (toCompile.size() < groovyFiles.size()) {
-        context.getProgressIndicator().checkCanceled();
-        context.getProgressIndicator().setText("Processing Groovy dependencies...");
-
-        addIntermediateGroovyClasses(allToCompile, groovyFiles);
-      }
-    }
-
     context.getProgressIndicator().checkCanceled();
-    context.getProgressIndicator().setText(GroovycOSProcessHandler.GROOVY_COMPILER_IN_OPERATION);
+    context.getProgressIndicator().setText("Starting Groovy compiler...");
 
-    runGroovycCompiler(context, module, new ArrayList<VirtualFile>(allToCompile), false, getMainOutput(context, module, tests), sink, tests);
-  }
-
-  private void addIntermediateGroovyClasses(Set<VirtualFile> allToCompile, final Set<VirtualFile> groovyFiles) {
-    final Set<VirtualFile> initialFiles = new THashSet<VirtualFile>(allToCompile);
-
-    final THashSet<VirtualFile> visited = new THashSet<VirtualFile>();
-    for (VirtualFile aClass : initialFiles) {
-      if (visited.add(aClass)) {
-        goForIntermediateFiles(aClass, allToCompile, new FactoryMap<VirtualFile, Set<VirtualFile>>() {
-          @Override
-          protected Set<VirtualFile> create(final VirtualFile key) {
-            AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-            try {
-              return calcCodeReferenceDependencies(key, groovyFiles);
-            }
-            finally {
-              accessToken.finish();
-            }
-          }
-        }, visited);
-      }
-    }
-  }
-
-  private Set<VirtualFile> enumerateGroovyFiles(final Module module) {
-    final Set<VirtualFile> moduleClasses = new THashSet<VirtualFile>();
-    ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new ContentIterator() {
-      public boolean processFile(final VirtualFile vfile) {
-        if (!vfile.isDirectory() &&
-            GroovyFileType.GROOVY_FILE_TYPE.equals(vfile.getFileType())) {
-
-          AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-          try {
-            if (PsiManager.getInstance(myProject).findFile(vfile) instanceof GroovyFile) {
-              moduleClasses.add(vfile);
-            }
-          }
-          finally {
-            accessToken.finish();
-          }
-        }
-        return true;
-      }
-    });
-    return moduleClasses;
-  }
-
-  private static void goForIntermediateFiles(VirtualFile from, Set<VirtualFile> dirty, FactoryMap<VirtualFile, Set<VirtualFile>> deps, Set<VirtualFile> visited) {
-    final Set<VirtualFile> set = deps.get(from);
-    for (VirtualFile psiClass : set) {
-      if (visited.add(psiClass)) {
-        goForIntermediateFiles(psiClass, dirty, deps, visited);
-      }
-      if (dirty.contains(psiClass)) {
-        dirty.add(from);
-      }
-    }
-  }
-
-  private Set<VirtualFile> calcCodeReferenceDependencies(VirtualFile vfile, final Set<VirtualFile> moduleFiles) {
-    final PsiFile psi = PsiManager.getInstance(myProject).findFile(vfile);
-    if (!(psi instanceof GroovyFile)) return Collections.emptySet();
-
-    final Set<VirtualFile> deps = new THashSet<VirtualFile>();
-    psi.acceptChildren(new PsiElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof GrReferenceElement &&
-            (!(element instanceof GrReferenceExpression) || !((GrReferenceExpression)element).isQualified())) {
-          GrReferenceElement referenceElement = (GrReferenceElement)element;
-          try {
-            final PsiElement target = referenceElement.resolve();
-            if (target instanceof GrTypeDefinition || target instanceof GroovyScriptClass) {
-              final VirtualFile targetFile = target.getContainingFile().getViewProvider().getVirtualFile();
-              if (moduleFiles.contains(targetFile)) {
-                deps.add(targetFile);
-              }
-            }
-          }
-          catch (ProcessCanceledException ignored) {
-          }
-          catch (Exception e) {
-            LOG.error(e);
-            //prevent our PSI errors from failing the entire compilation
-          }
-          catch (AssertionError e) {
-            LOG.error(e);
-            //prevent our PSI errors from failing the entire compilation
-          }
-        }
-
-        element.acceptChildren(this);
-      }
-    });
-    return deps;
+    runGroovycCompiler(context, module, toCompile, false, getMainOutput(context, module, tests), sink, tests);
   }
 
   public boolean validateConfiguration(CompileScope compileScope) {

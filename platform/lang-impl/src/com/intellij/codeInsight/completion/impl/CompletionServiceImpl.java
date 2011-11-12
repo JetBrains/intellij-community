@@ -181,6 +181,14 @@ public class CompletionServiceImpl extends CompletionService{
         indicator.addWatchedPrefix(myTextBeforePosition.length() - getPrefixMatcher().getPrefix().length(), prefixCondition);
       }
     }
+
+    @Override
+    public void restartCompletionWhenNothingMatches() {
+      final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
+      if (indicator != null) {
+        indicator.getLookup().setStartCompletionWhenNothingMatches(true);
+      }
+    }
   }
 
   public static boolean assertPhase(Class<? extends CompletionPhase>... possibilities) {

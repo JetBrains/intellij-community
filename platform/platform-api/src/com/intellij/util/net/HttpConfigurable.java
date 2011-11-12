@@ -23,7 +23,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.apache.commons.codec.binary.Base64;
@@ -99,7 +99,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         }
       };
       try {
-        GuiUtils.runOrInvokeAndWait(runnable);
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable);
       }
       catch (Exception e) {
         // ignore

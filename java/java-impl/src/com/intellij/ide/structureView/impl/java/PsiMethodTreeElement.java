@@ -33,7 +33,7 @@ import java.util.Collection;
 
 public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement {
   public PsiMethodTreeElement(PsiMethod method, boolean isInherited) {
-    super(isInherited,method);
+    super(isInherited, method);
   }
 
   @NotNull

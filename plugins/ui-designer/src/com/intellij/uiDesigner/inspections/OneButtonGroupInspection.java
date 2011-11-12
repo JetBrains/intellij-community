@@ -48,7 +48,7 @@ public class OneButtonGroupInspection extends BaseFormInspection {
           return;
         }
       }
-      collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.one.button.group.error"), null);
+      collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.one.button.group.error"));
     }
   }
 }

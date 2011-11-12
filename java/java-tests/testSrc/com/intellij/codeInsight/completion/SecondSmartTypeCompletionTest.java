@@ -197,6 +197,13 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     assertEquals("Collections.<String, S...>emptyMap", presentation.getItemText());
   }
 
+  public void testEmptyMapPresentation2() {
+    configure();
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    myItems[0].renderElement(presentation);
+    assertEquals("Collections.emptyMap", presentation.getItemText());
+  }
+
   @Override
   protected void complete() {
     complete(2);

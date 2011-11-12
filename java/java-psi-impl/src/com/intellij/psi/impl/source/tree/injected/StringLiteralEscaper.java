@@ -37,7 +37,11 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
     ProperTextRange.assertProperRange(rangeInsideHost);
     String subText = rangeInsideHost.substring(myHost.getText());
     outSourceOffsets = new int[subText.length()+1];
-    return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, outSourceOffsets);
+    return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, outSourceOffsets, isStrictBackSlash());
+  }
+
+  protected boolean isStrictBackSlash() {
+    return true;
   }
 
   @Override

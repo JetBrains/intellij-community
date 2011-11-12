@@ -80,107 +80,107 @@ public class RecordUtil {
 
   public static int packModifierList(final LighterAST tree, final LighterASTNode modList, final StubElement parent) {
     int packed = 0;
+    boolean alreadyPublic = false;
+    boolean alreadyStatic = false;
+    boolean alreadyFinal = false;
+    boolean alreadyAbstract = false;
 
-    if (hasModifierProperty(tree, modList, JavaTokenType.ABSTRACT_KEYWORD, parent)) {
-      packed |= ModifierFlags.ABSTRACT_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.FINAL_KEYWORD, parent)) {
-      packed |= ModifierFlags.FINAL_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.NATIVE_KEYWORD, parent)) {
-      packed |= ModifierFlags.NATIVE_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.STATIC_KEYWORD, parent)) {
-      packed |= ModifierFlags.STATIC_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.SYNCHRONIZED_KEYWORD, parent)) {
-      packed |= ModifierFlags.SYNCHRONIZED_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.TRANSIENT_KEYWORD, parent)) {
-      packed |= ModifierFlags.TRANSIENT_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.VOLATILE_KEYWORD, parent)) {
-      packed |= ModifierFlags.VOLATILE_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.PRIVATE_KEYWORD, parent)) {
-      packed |= ModifierFlags.PRIVATE_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.PROTECTED_KEYWORD, parent)) {
-      packed |= ModifierFlags.PROTECTED_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.PUBLIC_KEYWORD, parent)) {
-      packed |= ModifierFlags.PUBLIC_MASK;
-    }
-    if (hasModifierProperty(tree, modList, null, parent)) {
-      packed |= ModifierFlags.PACKAGE_LOCAL_MASK;
-    }
-    if (hasModifierProperty(tree, modList, JavaTokenType.STRICTFP_KEYWORD, parent)) {
-      packed |= ModifierFlags.STRICTFP_MASK;
-    }
-
-    return packed;
-  }
-
-  private static boolean hasModifierProperty(final LighterAST tree, final LighterASTNode modList, @Nullable final IElementType type, final StubElement parent) {
     final LighterASTNode modListOwner = tree.getParent(modList);
     if (modListOwner != null && modListOwner.getTokenType() == parent.getStubType()) {
       final StubElement grandParent = parent.getParentStub();
       if (parent instanceof PsiClassStub) {
         if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
-          if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD) return true;
-          else if (type == null) return false;
+          alreadyPublic = true;
+          alreadyStatic = true;
         }
         if (((PsiClassStub)parent).isInterface()) {
-          if (type == JavaTokenType.ABSTRACT_KEYWORD) return true;
-          else if (type == JavaTokenType.STATIC_KEYWORD) {
-            if (grandParent instanceof PsiClassStub) return true;
-          }
+          alreadyAbstract = true;
+          alreadyStatic = grandParent instanceof PsiClassStub;
         }
         if (((PsiClassStub)parent).isEnum()) {
-          if (type == JavaTokenType.STATIC_KEYWORD) {
-            if (!(grandParent instanceof PsiFileStub)) return true;
-          }
-          else if (type == JavaTokenType.FINAL_KEYWORD) {
-            final List<LighterASTNode> enumConstants = LightTreeUtil.getChildrenOfType(tree, modListOwner, JavaElementType.ENUM_CONSTANT);
-            for (final LighterASTNode constant : enumConstants) {
-              if (LightTreeUtil.firstChildOfType(tree, constant, JavaElementType.ENUM_CONSTANT_INITIALIZER) != null) return false;
+          alreadyStatic = !(grandParent instanceof PsiFileStub);
+
+          alreadyFinal = true;
+          final List<LighterASTNode> enumConstants = LightTreeUtil.getChildrenOfType(tree, modListOwner, JavaElementType.ENUM_CONSTANT);
+          for (final LighterASTNode constant : enumConstants) {
+            if (LightTreeUtil.firstChildOfType(tree, constant, JavaElementType.ENUM_CONSTANT_INITIALIZER) != null) {
+              alreadyFinal = false;
+              break;
             }
-            return true;
           }
-          else if (type == JavaTokenType.ABSTRACT_KEYWORD) {
-            final List<LighterASTNode> methods = LightTreeUtil.getChildrenOfType(tree, modListOwner, JavaElementType.METHOD);
-            for (final LighterASTNode method : methods) {
-              final LighterASTNode mods = LightTreeUtil.requiredChildOfType(tree, method, JavaElementType.MODIFIER_LIST);
-              if (LightTreeUtil.firstChildOfType(tree, mods, JavaTokenType.ABSTRACT_KEYWORD) != null) return true;
+
+          alreadyAbstract = false;
+          final List<LighterASTNode> methods = LightTreeUtil.getChildrenOfType(tree, modListOwner, JavaElementType.METHOD);
+          for (final LighterASTNode method : methods) {
+            final LighterASTNode mods = LightTreeUtil.requiredChildOfType(tree, method, JavaElementType.MODIFIER_LIST);
+            if (LightTreeUtil.firstChildOfType(tree, mods, JavaTokenType.ABSTRACT_KEYWORD) != null) {
+              alreadyAbstract = true;
+              break;
             }
-            return false;
           }
         }
       }
       else if (parent instanceof PsiMethodStub) {
         if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
-          if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return true;
-          else if (type == null) return false;
+          alreadyPublic = true;
+          alreadyAbstract = true;
         }
       }
       else if (parent instanceof PsiFieldStub) {
         if (parent.getStubType() == JavaElementType.ENUM_CONSTANT) {
-          return type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD;
+          alreadyPublic = true;
+          alreadyStatic = true;
+          alreadyFinal = true;
         }
         else if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
-          if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD) return true;
-          else if (type == null) return false;
+          alreadyPublic = true;
+          alreadyStatic = true;
+          alreadyFinal = true;
         }
       }
     }
 
-    if (type == null) {
-      return !hasModifierProperty(tree, modList, JavaTokenType.PUBLIC_KEYWORD, parent) &&
-             !hasModifierProperty(tree, modList, JavaTokenType.PROTECTED_KEYWORD, parent) &&
-             !hasModifierProperty(tree, modList, JavaTokenType.PRIVATE_KEYWORD, parent);
+    for (final LighterASTNode child : tree.getChildren(modList)) {
+      final IElementType type = child.getTokenType();
+
+      if(type == JavaTokenType.PUBLIC_KEYWORD) {
+        alreadyPublic = true;
+      } else if(type == JavaTokenType.PRIVATE_KEYWORD) {
+        packed |= ModifierFlags.PRIVATE_MASK;
+      } else if(type == JavaTokenType.PROTECTED_KEYWORD) {
+        packed |= ModifierFlags.PROTECTED_MASK;
+      } else if(type == JavaTokenType.ABSTRACT_KEYWORD) {
+        alreadyAbstract =true;
+      } else if (type == JavaTokenType.FINAL_KEYWORD) {
+        alreadyFinal = true;
+      } else if (type == JavaTokenType.STATIC_KEYWORD) {
+        alreadyStatic = true;
+      } else if(type == JavaTokenType.NATIVE_KEYWORD) {
+        packed |= ModifierFlags.NATIVE_MASK;
+      } else if (type == JavaTokenType.SYNCHRONIZED_KEYWORD) {
+        packed |= ModifierFlags.SYNCHRONIZED_MASK;
+      } else if (type == JavaTokenType.TRANSIENT_KEYWORD) {
+        packed |= ModifierFlags.TRANSIENT_MASK;
+      } else if (type == JavaTokenType.VOLATILE_KEYWORD) {
+        packed |= ModifierFlags.VOLATILE_MASK;
+      } else if (type == JavaTokenType.STRICTFP_KEYWORD) {
+        packed |= ModifierFlags.STRICTFP_MASK;
+      }
     }
 
-    return LightTreeUtil.firstChildOfType(tree, modList, type) != null;
+    if (alreadyAbstract) packed |= ModifierFlags.ABSTRACT_MASK;
+    if (alreadyFinal) packed |= ModifierFlags.FINAL_MASK;
+    if (alreadyPublic) packed |= ModifierFlags.PUBLIC_MASK;
+    if (alreadyStatic) packed |= ModifierFlags.STATIC_MASK;
+
+    if ((packed & ModifierFlags.PRIVATE_MASK) == 0 &&
+        (packed & ModifierFlags.PROTECTED_MASK) == 0 &&
+        (packed & ModifierFlags.PUBLIC_MASK) == 0
+       ) {
+      packed |= ModifierFlags.PACKAGE_LOCAL_MASK;
+    }
+
+    return packed;
   }
 
   public static boolean isDeprecatedByDocComment(final LighterAST tree, final LighterASTNode comment) {

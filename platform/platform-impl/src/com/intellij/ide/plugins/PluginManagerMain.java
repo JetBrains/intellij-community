@@ -116,13 +116,19 @@ public abstract class PluginManagerMain implements Disposable {
     installTableActions(pluginTable);
 
     myTablePanel.add(installedScrollPane, BorderLayout.CENTER);
-    myTablePanel.setMinimumSize(new Dimension(400, -1));
 
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(true), true);
     final JComponent component = myActionToolbar.getComponent();
     component.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-    myToolbarPanel.add(component, BorderLayout.WEST);
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getMinimumSize() {
+        return getPreferredSize();
+      }
+    };
+    panel.add(component, BorderLayout.CENTER);
+    myToolbarPanel.add(panel, BorderLayout.WEST);
     myToolbarPanel.add(myFilter, BorderLayout.CENTER);
   }
 

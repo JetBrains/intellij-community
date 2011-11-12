@@ -34,7 +34,9 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 
 import java.util.Collection;
 
@@ -88,21 +90,22 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
   @Override
   public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
-    if (!isInSet(file)) return;
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(VirtualFile file) {
 
-    if (file.isDirectory()) {
-      for (VirtualFile child : file.getChildren()) {
-        iterateIndexableFilesIn(child, iterator);
+        if (!isInSet(file)) return false;
+        if (!file.isDirectory()) {
+          iterator.processFile(file);
+        }
+        return true;
       }
-    }
-    else {
-      iterator.processFile(file);
-    }
+    });
   }
 
   @Override
   public void disposeComponent() {
-    // done mostly for tests. In real life this is noop, becase the set was removed on project closing
+    // done mostly for tests. In real life this is noop, because the set was removed on project closing
     myIndex.removeIndexableSet(this);
   }
 

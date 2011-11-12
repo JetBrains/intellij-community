@@ -36,11 +36,17 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     };
     result.runRemainingContributors(parameters, passResult);
 
+    if (!empty.get() && parameters.getInvocationCount() == 0) {
+      result.restartCompletionWhenNothingMatches();
+    }
+
     if (empty.get()) {
       if (parameters.getCompletionType() == CompletionType.BASIC &&
-          parameters.getInvocationCount() == 1 &&
+          parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result, false) &&
           JavaCompletionContributor.isClassNamePossible(parameters.getPosition())) {
+        final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
+        
         JavaClassNameCompletionContributor.addAllClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result),
                                                          true, new Consumer<LookupElement>() {
           @Override
@@ -49,9 +55,13 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
             if (classElement != null) {
               classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
             }
-            result.addElement(element);
+            
+            merger.consume(classElement);
           }
         });
+
+        merger.finishedClassProcessing();
+
       } else if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 2) {
         result.runRemainingContributors(parameters.withInvocationCount(3), passResult);
       }

@@ -3,7 +3,10 @@ package org.jetbrains.ether.dependencyView;
 import org.jetbrains.ether.RW;
 
 import java.io.BufferedReader;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,7 +36,7 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
     Collection<X> create();
   }
 
-  private final Map<K, Collection<V>> map = new HashMap<K, Collection<V>>();
+  private final Map<K, Collection<V>> myMap = new HashMap<K, Collection<V>>();
 
   private final CollectionConstructor<V> constr;
 
@@ -42,21 +45,20 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
-  public boolean containsKey(final Object key) {
-    return map.containsKey(key);
+  public boolean containsKey(final K key) {
+    return myMap.containsKey(key);
   }
 
   @Override
-  public Collection<V> get(final Object key) {
-    return map.get(key);
+  public Collection<V> get(final K key) {
+    return myMap.get(key);
   }
 
   @Override
   public void put(final K key, final Collection<V> value) {
-    final Collection<V> x = map.get(key);
-
+    final Collection<V> x = myMap.get(key);
     if (x == null) {
-      map.put(key, value);
+      myMap.put(key, value);
     }
     else {
       x.addAll(value);
@@ -72,21 +74,31 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public void removeFrom(final K key, final V value) {
-    final Object got = map.get(key);
-
-    if (got != null) {
-      if (got instanceof Collection) {
-        ((Collection)got).remove(value);
-      }
-      else if (got.equals(value)) {
-        map.remove(key);
+    final Collection<V> collection = myMap.get(key);
+    if (collection != null) {
+      if (collection.remove(value)) {
+        if (collection.isEmpty()) {
+          myMap.remove(key);
+        }
       }
     }
   }
 
   @Override
-  public void remove(final Object key) {
-    map.remove(key);
+  public void removeAll(K key, Collection<V> values) {
+    final Collection<V> collection = myMap.get(key);
+    if (collection != null) {
+      if (collection.removeAll(values)) {
+        if (collection.isEmpty()) {
+          myMap.remove(key);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void remove(final K key) {
+    myMap.remove(key);
   }
 
   @Override
@@ -99,12 +111,12 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public Collection<K> keyCollection() {
-    return map.keySet();
+    return myMap.keySet();
   }
 
   @Override
   public Set<Map.Entry<K, Collection<V>>> entrySet() {
-    return map.entrySet();
+    return myMap.entrySet();
   }
 
   @Override

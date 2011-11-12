@@ -767,7 +767,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
     assert handler != null : "Cannot find handler for: " + targetElement;
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
-    final FindUsagesOptions options = handler.getFindUsagesOptions();
+    final FindUsagesOptions options = handler.getFindUsagesOptions(null);
     for (PsiElement psiElement : psiElements) {
       handler.processElementUsages(psiElement, processor, options);
     }

@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OrderedSet;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,27 +238,24 @@ public class AndroidRootUtil {
           }
           else if (entry instanceof ModuleOrderEntry) {
             Module depModule = ((ModuleOrderEntry)entry).getModule();
-            if (depModule == null) {
+            if (depModule == null || AndroidCompileUtil.isGenModule(depModule)) {
               continue;
             }
-            AndroidFacet facet = AndroidFacet.getInstance(depModule);
-            if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
-              CompilerModuleExtension extension = CompilerModuleExtension.getInstance(depModule);
-              if (extension != null) {
-                VirtualFile classDir = extension.getCompilerOutputPath();
-                if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
-                  outputDirs.add(classDir);
-                }
-                VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
-                if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
-                  outputDirs.add(classDirForTests);
-                }
+            final AndroidFacet facet = AndroidFacet.getInstance(depModule);
+            final boolean libraryProject = facet != null && facet.getConfiguration().LIBRARY_PROJECT;
+
+            CompilerModuleExtension extension = CompilerModuleExtension.getInstance(depModule);
+            if (extension != null) {
+              VirtualFile classDir = extension.getCompilerOutputPath();
+              if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
+                outputDirs.add(classDir);
               }
-              fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, true);
+              VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
+              if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
+                outputDirs.add(classDirForTests);
+              }
             }
-            else {
-              fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, exportedLibrariesOnly);
-            }
+            fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, !libraryProject || exportedLibrariesOnly);
           }
         }
       }

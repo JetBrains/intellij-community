@@ -194,7 +194,7 @@ public class MyCategory {
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['param1', 'param2']
-    assert 'My doc' == generateDoc()
+    assert '<pre><b>param1</b>: java.lang.String</pre><p>My doc' == generateDoc()
   }
 
   private String generateDoc() {
@@ -222,7 +222,9 @@ public class MyCategory {
 }'''
     myFixture.configureByText 'a.groovy', '"".fo<caret>o'
     myFixture.completeBasic()
-    assert 'Some doc' == generateDoc()
+    assert generateDoc().contains('Some doc')
+    assert generateDoc().contains('foo')
+    assert generateDoc().contains('()')
   }
 
   public void testPropertyDoc() {
@@ -231,6 +233,7 @@ public class MyCategory {
 }'''
     myFixture.configureByText 'a.groovy', '"".fo<caret>o'
     myFixture.completeBasic()
-    assert 'Some doc2' == generateDoc()
+    assert generateDoc().contains('Some doc2')
+    assert generateDoc().contains('foo')
   }
 }

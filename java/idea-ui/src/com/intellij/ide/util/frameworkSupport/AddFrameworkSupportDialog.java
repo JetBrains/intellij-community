@@ -2,6 +2,8 @@
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.CommonBundle;
+import com.intellij.facet.impl.DefaultFacetsProvider;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.Result;
@@ -29,7 +31,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
   private final AddSupportForFrameworksPanel myAddSupportPanel;
   private final Module myModule;
 
-  private AddFrameworkSupportDialog(@NotNull Module module, final @NotNull String contentRootPath, final List<FrameworkSupportProvider> providers) {
+  private AddFrameworkSupportDialog(@NotNull Module module, final @NotNull String contentRootPath, final List<FrameworkSupportInModuleProvider> providers) {
     super(module.getProject(), true);
     setTitle(ProjectBundle.message("dialog.title.add.frameworks.support"));
     myModule = module;
@@ -52,7 +54,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
     if (roots.length == 0) return null;
 
-    List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(module);
+    List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(module, DefaultFacetsProvider.INSTANCE);
     if (providers.isEmpty()) return null;
 
     return new AddFrameworkSupportDialog(module, roots[0].getPath(), providers);
@@ -60,7 +62,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
 
   public static boolean isAvailable(@NotNull Module module) {
     VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-    return roots.length != 0 && FrameworkSupportUtil.hasProviders(module);
+    return roots.length != 0 && FrameworkSupportUtil.hasProviders(module, DefaultFacetsProvider.INSTANCE);
   }
 
   @Override

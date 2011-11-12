@@ -114,7 +114,9 @@ public class DetectionExcludesConfigurationTest extends PlatformTestCase {
 
 
   private ExcludesConfigurationState getState() {
-    return getConfiguration().getState();
+    final ExcludesConfigurationState state = getConfiguration().getState();
+    assertNotNull(state);
+    return state;
   }
 
   private File doCreateTempDir() {
@@ -127,11 +129,11 @@ public class DetectionExcludesConfigurationTest extends PlatformTestCase {
   }
 
   private static FrameworkType getType() {
-    return new FrameworkType("type", "Type", null);
+    return new MockFrameworkType("type");
   }
 
   private static FrameworkType getType2() {
-    return new FrameworkType("type2", "Type2", null);
+    return new MockFrameworkType("type2");
   }
 
   private DetectionExcludesConfigurationImpl getConfiguration() {

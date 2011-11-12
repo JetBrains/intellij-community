@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,30 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
 
+/**
+ * @author max
+ */
 public class SafeFileOutputStream extends OutputStream {
   private final File myTargetFile;
+  private final boolean myPreserveAttributes;
   private final OutputStream myBackDoorStream;
   private boolean failed = false;
 
   public SafeFileOutputStream(File target) throws FileNotFoundException {
+    this(target, false);
+  }
+
+  public SafeFileOutputStream(File target, boolean preserveAttributes) throws FileNotFoundException {
     myTargetFile = target;
+    myPreserveAttributes = preserveAttributes;
+    //noinspection IOResourceOpenedButNotSafelyClosed
     myBackDoorStream = new FileOutputStream(backdoorFile());
   }
 
@@ -90,11 +98,15 @@ public class SafeFileOutputStream extends OutputStream {
       throw e;
     }
 
+    final int permissions = myPreserveAttributes ? FileSystemUtil.getPermissions(myTargetFile) : -1;
     if (failed || !FileUtil.delete(myTargetFile)) {
-      throw new IOException("Failed to save to " + myTargetFile + ". No data there harmed. Attempt result left at " + backdoorFile());
+      throw new IOException("Failed to save to " + myTargetFile + ". No data were harmed. Attempt result left at " + backdoorFile());
     }
 
     FileUtil.rename(backdoorFile(), myTargetFile);
-  }
 
+    if (permissions != -1) {
+      FileSystemUtil.setPermissions(myTargetFile, permissions);
+    }
+  }
 }

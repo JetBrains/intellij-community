@@ -18,8 +18,8 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
@@ -99,7 +99,7 @@ public class LibraryOptionsPanel implements Disposable {
 
   public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,
                              @NotNull final String baseDirectoryPath,
-                             @Nullable final FrameworkVersion currentFrameworkVersion,
+                             @NotNull final FrameworkLibraryVersionFilter versionFilter,
                              @NotNull final LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
     myLibrariesContainer = librariesContainer;
@@ -114,7 +114,7 @@ public class LibraryOptionsPanel implements Disposable {
             @Override
             public void run() {
               if (!myDisposed) {
-                showSettingsPanel(libraryDescription, baseDirectoryPath, currentFrameworkVersion, showDoNotCreateOption, versions);
+                showSettingsPanel(libraryDescription, baseDirectoryPath, versionFilter, showDoNotCreateOption, versions);
               }
             }
           });
@@ -122,7 +122,7 @@ public class LibraryOptionsPanel implements Disposable {
       });
     }
     else {
-      showSettingsPanel(libraryDescription, baseDirectoryPath, currentFrameworkVersion, showDoNotCreateOption,
+      showSettingsPanel(libraryDescription, baseDirectoryPath, versionFilter, showDoNotCreateOption,
                         new ArrayList<FrameworkLibraryVersion>());
     }
   }
@@ -143,10 +143,10 @@ public class LibraryOptionsPanel implements Disposable {
 
   private void showSettingsPanel(CustomLibraryDescription libraryDescription,
                                  String baseDirectoryPath,
-                                 FrameworkVersion currentFrameworkVersion,
+                                 FrameworkLibraryVersionFilter versionFilter,
                                  boolean showDoNotCreateOption, final List<? extends FrameworkLibraryVersion> versions) {
     //todo[nik] create mySettings only in apply() method
-    mySettings = new LibraryCompositionSettings(libraryDescription, baseDirectoryPath, currentFrameworkVersion, versions);
+    mySettings = new LibraryCompositionSettings(libraryDescription, baseDirectoryPath, versionFilter, versions);
     Disposer.register(this, mySettings);
     List<Library> libraries = calculateSuitableLibraries();
 
@@ -284,9 +284,9 @@ public class LibraryOptionsPanel implements Disposable {
     }
   }
 
-  public void updateDownloadableVersions(FrameworkVersion version) {
+  public void setVersionFilter(@NotNull FrameworkLibraryVersionFilter versionFilter) {
     if (mySettings != null) {
-      mySettings.updateDownloadableVersions(version);
+      mySettings.setVersionFilter(versionFilter);
       updateState();
     }
   }

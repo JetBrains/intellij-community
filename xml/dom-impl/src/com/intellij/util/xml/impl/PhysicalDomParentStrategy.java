@@ -20,15 +20,11 @@ import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author peter
@@ -138,33 +134,9 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     if (fst.getTextLength() != snd.getTextLength()) return false;
     if (fst.getStartOffsetInParent() != snd.getStartOffsetInParent()) return false;
 
-    final PsiElement parent1 = fst.getParent();
-    final PsiElement parent2 = snd.getParent();
-    if (parent1 == null || parent2 == null || !xmlElementsEqual(parent1, parent2)) {
-      return false;
-    }
-
-    if (parent1 instanceof XmlElement && parent2 instanceof XmlElement &&
-        (fst.getUserData(XmlElement.INCLUDING_ELEMENT) != null || snd.getUserData(XmlElement.INCLUDING_ELEMENT) != null)) {
-      return getChildIndex(fst, (XmlElement)parent1) == getChildIndex(snd, (XmlElement)parent2);
-    }
-    
-    return true;
-  }
-
-  private static int getChildIndex(final PsiElement child, XmlElement parent) {
-    final AtomicInteger counter = new AtomicInteger();
-    XmlUtil.processXmlElementChildren(parent, new PsiElementProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element) {
-        if (element == child) {
-          return false;
-        }
-        counter.incrementAndGet();
-        return true;
-      }
-    }, false);
-    return counter.intValue();
+    PsiElement nav1 = fst.getNavigationElement();
+    PsiElement nav2 = snd.getNavigationElement();
+    return nav1 != null && nav1.equals(nav2);
   }
 
   public int hashCode() {

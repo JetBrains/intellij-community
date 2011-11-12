@@ -15,9 +15,7 @@
  */
 package com.intellij.ide.structureView;
 
-import com.intellij.ide.util.treeView.smartTree.Filter;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -32,6 +30,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,7 +40,7 @@ import java.util.List;
  * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel()
  */
 
-public abstract class TextEditorBasedStructureViewModel implements StructureViewModel {
+public abstract class TextEditorBasedStructureViewModel implements StructureViewModel, ProvidingTreeModel {
   private final Editor myEditor;
   private final PsiFile myPsiFile;
   private final CaretListener myCaretListener;
@@ -167,5 +167,15 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   @NotNull
   public Filter[] getFilters() {
     return Filter.EMPTY_ARRAY;
+  }
+
+  @Override
+  public Collection<NodeProvider> getNodeProviders() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public boolean isEnabled(NodeProvider provider) {
+    return false;
   }
 }

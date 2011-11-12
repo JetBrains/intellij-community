@@ -16,18 +16,15 @@
 package com.intellij.openapi.ui.playback.util;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.messages.MessageBusConnection;
 
 public class EditorPlaybackCall {
@@ -89,7 +86,7 @@ public class EditorPlaybackCall {
         bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
           @Override
           public void daemonFinished() {
-            context.flushAwtAndRun(new Runnable() {
+            context.flushAwtAndRunInEdt(new Runnable() {
               @Override
               public void run() {
                 result.setDone();

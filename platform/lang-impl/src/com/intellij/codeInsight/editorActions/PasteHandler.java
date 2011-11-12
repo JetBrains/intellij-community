@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,10 +64,11 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
   public void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> transferableProvider) {
     if (editor.isViewer()) return;
+    final Document document = editor.getDocument();
 
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), PlatformDataKeys.PROJECT.getData(dataContext))){
-        return;
-      }
+    if (!FileDocumentManager.getInstance().requestWriting(document, PlatformDataKeys.PROJECT.getData(dataContext))) {
+      return;
+    }
 
     DataContext context = new DataContext() {
       @Override
@@ -88,7 +89,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
       return;
     }
-    final Document document = editor.getDocument();
+    
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
     if (file == null) {

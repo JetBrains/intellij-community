@@ -21,6 +21,8 @@ import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerPaths;
@@ -161,22 +163,40 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     return JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.moduleScope(module));
   }
 
-  private static void cleanDirectory(final VirtualFile dir) {
-    VfsUtil.processFilesRecursively(dir, new Processor<VirtualFile>() {
+  private void cleanDirectory(final VirtualFile dir) {
+    Runnable runnable = new Runnable() {
       @Override
-      public boolean process(VirtualFile virtualFile) {
-        TranslatingCompilerFilesMonitor.removeSourceInfo(virtualFile);
-        return true;
+      public void run() {
+        AccessToken token = WriteAction.start();
+        try {
+          VfsUtil.processFilesRecursively(dir, new Processor<VirtualFile>() {
+            @Override
+            public boolean process(VirtualFile virtualFile) {
+              if (!virtualFile.isDirectory()) {
+                TranslatingCompilerFilesMonitor.removeSourceInfo(virtualFile);
+                try {
+                  virtualFile.delete(this);
+                }
+                catch (IOException e) {
+                  LOG.info(e);
+                }
+              }
+              return true;
+            }
+          });
+        }
+        finally {
+          token.finish();
+        }
       }
-    });
-    File file = VfsUtil.virtualToIoFile(dir);
-    for (File child : file.listFiles()) {
-      FileUtil.delete(child);
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      assert ApplicationManager.getApplication().isUnitTestMode();
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.NON_MODAL);
     }
-
-    dir.refresh(false, true);
   }
-
 
   @NotNull
   public String getDescription() {

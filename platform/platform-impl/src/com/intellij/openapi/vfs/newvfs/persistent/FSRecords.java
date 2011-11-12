@@ -939,7 +939,7 @@ public class FSRecords implements Forceable {
   }
 
   @Nullable
-  static DataInputStream readContent(int fileId) {
+  public static DataInputStream readContent(int fileId) {
     try {
       int page;
       synchronized (lock) {

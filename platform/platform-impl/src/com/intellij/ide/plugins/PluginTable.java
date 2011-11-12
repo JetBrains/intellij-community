@@ -34,7 +34,7 @@ import javax.swing.table.TableColumn;
 public class PluginTable extends JBTable {
   public PluginTable(final PluginTableModel model) {
     super(model);
-    setTableHeader(null);
+    getColumnModel().setColumnMargin(0);
     for (int i = 0; i < model.getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
       final ColumnInfo columnInfo = model.getColumnInfos()[i];
@@ -50,6 +50,7 @@ public class PluginTable extends JBTable {
 
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
+    setStriped(true);
   }
 
   public void setColumnWidth(final int columnIndex, final int width) {

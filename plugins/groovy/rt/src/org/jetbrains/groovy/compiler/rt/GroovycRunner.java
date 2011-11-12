@@ -16,14 +16,14 @@
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyClassLoader;
-import org.codehaus.groovy.ast.ClassNode;
+import org.codehaus.groovy.ast.*;
+import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
 
 import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
@@ -125,8 +125,6 @@ public class GroovycRunner {
         options.put("stubDir", config.getTargetDirectory());
         options.put("keepStubs", Boolean.TRUE);
         config.setJointCompilationOptions(options);
-
-        config.setTargetBytecode(CompilerConfiguration.POST_JDK5);
       }
 
       System.out.println(PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
@@ -405,6 +403,38 @@ public class GroovycRunner {
 
   private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader) {
     JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
+      private boolean annoRemovedAdded;
+
+      @Override
+      public void addPhaseOperation(PrimaryClassNodeOperation op, int phase) {
+        if (!annoRemovedAdded && phase == Phases.CONVERSION && op.getClass().getName().startsWith("org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit$")) {
+          annoRemovedAdded = true;
+          super.addPhaseOperation(new PrimaryClassNodeOperation() {
+            @Override
+            public void call(final SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
+              final ClassCodeVisitorSupport annoRemover = new ClassCodeVisitorSupport() {
+                @Override
+                protected SourceUnit getSourceUnit() {
+                  return source;
+                }
+
+                @Override
+                public void visitAnnotations(AnnotatedNode node) {
+                  List<AnnotationNode> annotations = node.getAnnotations();
+                  if (!annotations.isEmpty()) {
+                    annotations.clear();
+                  }
+                  super.visitAnnotations(node);
+                }
+              };
+              annoRemover.visitClass(classNode);
+            }
+          }, phase);
+        }
+
+        super.addPhaseOperation(op, phase);
+      }
+
       public void gotoPhase(int phase) throws CompilationFailedException {
         if (phase == Phases.SEMANTIC_ANALYSIS) {
           System.out.println(PRESENTABLE_MESSAGE + "Generating Groovy stubs...");
@@ -448,20 +478,63 @@ public class GroovycRunner {
               throw new RuntimeException("Problem loading class " + name, e);
             }
 
-            if (resourceLoader.getSourceFile(name) != null) {
+            ensureWellFormed(aClass, new HashSet<Class>());
+
+            return aClass;
+          }
+
+          private void ensureWellFormed(Type aClass, Set<Class> visited) throws ClassNotFoundException {
+            if (aClass instanceof Class) {
+              ensureWellFormed((Class)aClass, visited);
+            }
+            else if (aClass instanceof ParameterizedType) {
+              ensureWellFormed(((ParameterizedType)aClass).getOwnerType(), visited);
+              for (Type type : ((ParameterizedType)aClass).getActualTypeArguments()) {
+                ensureWellFormed(type, visited);
+              }
+            }
+            else if (aClass instanceof WildcardType) {
+              for (Type type : ((WildcardType)aClass).getLowerBounds()) {
+                ensureWellFormed(type, visited);
+              }
+              for (Type type : ((WildcardType)aClass).getUpperBounds()) {
+                ensureWellFormed(type, visited);
+              }
+            }
+            else if (aClass instanceof GenericArrayType) {
+              ensureWellFormed(((GenericArrayType)aClass).getGenericComponentType(), visited);
+            }
+          }
+          private void ensureWellFormed(Class aClass, Set<Class> visited) throws ClassNotFoundException {
+            String name = aClass.getName();
+            if (resourceLoader.getSourceFile(name) != null && visited.add(aClass)) {
               try {
                 for (Method method : aClass.getDeclaredMethods()) {
-                  method.getGenericReturnType();
-                  method.getGenericExceptionTypes();
-                  method.getGenericParameterTypes();
+                  ensureWellFormed(method.getGenericReturnType(), visited);
+                  for (Type type : method.getGenericExceptionTypes()) {
+                    ensureWellFormed(type, visited);
+                  }
+                  for (Type type : method.getGenericParameterTypes()) {
+                    ensureWellFormed(type, visited);
+                  }
                 }
 
                 for (Field field : aClass.getDeclaredFields()) {
-                  field.getGenericType();
+                  ensureWellFormed(field.getGenericType(), visited);
                 }
 
-                aClass.getDeclaredClasses();
-                aClass.getDeclaredAnnotations();
+                for (Class inner : aClass.getDeclaredClasses()) {
+                  ensureWellFormed(inner, visited);
+                }
+
+                Type superclass = aClass.getGenericSuperclass();
+                if (superclass != null) {
+                  ensureWellFormed(aClass, visited);
+                }
+
+                for (Type intf : aClass.getGenericInterfaces()) {
+                  ensureWellFormed(intf, visited);
+                }
               }
               catch (LinkageError e) {
                 throw new ClassNotFoundException(name);
@@ -470,8 +543,6 @@ public class GroovycRunner {
                 throw new ClassNotFoundException(name);
               }
             }
-
-            return aClass;
           }
         };
       }

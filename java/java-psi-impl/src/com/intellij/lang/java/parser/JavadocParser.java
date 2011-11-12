@@ -51,12 +51,12 @@ public class JavadocParser {
   private JavadocParser() { }
 
   public static void parseJavadocReference(@NotNull final PsiBuilder builder) {
-    ReferenceParser.parseJavaCodeReference(builder, true, true, false, false, false);
+    ReferenceParser.INSTANCE.parseJavaCodeReference(builder, true, true, false, false, false);
     swallowTokens(builder);
   }
 
   public static void parseJavadocType(@NotNull final PsiBuilder builder) {
-    ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD);
+    ReferenceParser.INSTANCE.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD);
     swallowTokens(builder);
   }
 

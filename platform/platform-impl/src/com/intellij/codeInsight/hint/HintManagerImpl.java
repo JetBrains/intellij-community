@@ -758,7 +758,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     if (showByBalloon) {
       hintInfo.setBorderColor(Color.gray);
       hintInfo.setFont(hintInfo.getTextFont().deriveFont(Font.PLAIN));
-      hintInfo.setCalloutShift(-(int)(editor.getLineHeight() * 0.1));
+      hintInfo.setCalloutShift((int)(editor.getLineHeight() * 0.1));
     }
     hintInfo.setPreferredPosition(Balloon.Position.above);
     if (constraint == UNDER || constraint == RIGHT_UNDER) {

@@ -203,6 +203,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (ModuleEditor.ChangeListener listener : myAllModulesChangeListeners) {
       listener.moduleStateChanged(moduleRootModel);
     }
+    myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, moduleRootModel.getModule()));
   }
 
   public void addAllModuleChangeListener(ModuleEditor.ChangeListener listener) {

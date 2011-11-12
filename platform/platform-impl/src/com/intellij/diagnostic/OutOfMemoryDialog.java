@@ -26,7 +26,7 @@ import java.awt.event.ActionEvent;
 
 public class OutOfMemoryDialog extends DialogWrapper {
   public enum MemoryKind {
-    HEAP, PERM_GEN
+    HEAP, PERM_GEN, CODE_CACHE
   }
 
   private final MemoryKind myMemoryKind;
@@ -42,6 +42,10 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private JLabel myHeapUnitsLabel;
   private JLabel myPermGenUnitsLabel;
   private JBLabel mySettingsFileHintLabel;
+  private JLabel myCodeCacheSizeLabel;
+  private JTextField myCodeCacheSizeField;
+  private JLabel myCodeCacheUnitsLabel;
+  private JBLabel myCodeCacheCurrentValueLabel;
   private final Action myIgnoreAction;
   private final Action myShutdownAction;
 
@@ -53,7 +57,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
     myMessageLabel.setIcon(Messages.getErrorIcon());
     myMessageLabel.setText(DiagnosticBundle.message(
         "diagnostic.out.of.memory.error",
-        memoryKind == MemoryKind.HEAP ? VMOptions.XMX_OPTION_NAME : VMOptions.PERM_GEN_OPTION_NAME,
+        memoryKind == MemoryKind.HEAP ? VMOptions.XMX_OPTION_NAME : memoryKind == MemoryKind.PERM_GEN ? VMOptions.PERM_GEN_OPTION_NAME : VMOptions.CODE_CACHE_OPTION_NAME,
         ApplicationNamesInfo.getInstance().getProductName()));
 
     mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo",
@@ -90,16 +94,24 @@ public class OutOfMemoryDialog extends DialogWrapper {
                    myPermGenUnitsLabel,
                    myPermGenCurrentValueLabel);
 
+    configControls(VMOptions.CODE_CACHE_OPTION_NAME,
+                   VMOptions.readCodeCache(),
+                   memoryKind == MemoryKind.CODE_CACHE,
+                   myCodeCacheSizeLabel,
+                   myCodeCacheSizeField,
+                   myCodeCacheUnitsLabel,
+                   myCodeCacheCurrentValueLabel);
+
     init();
   }
 
-  private void configControls(String optionName,
-                              int value,
-                              boolean highlight,
-                              JLabel sizeLabel,
-                              JTextField sizeField,
-                              JLabel unitsLabel,
-                              JLabel currentValueLabel) {
+  private static void configControls(String optionName,
+                                     int value,
+                                     boolean highlight,
+                                     JLabel sizeLabel,
+                                     JTextField sizeField,
+                                     JLabel unitsLabel,
+                                     JLabel currentValueLabel) {
     sizeLabel.setText(optionName);
 
     String formatted = value == -1
@@ -120,13 +132,19 @@ public class OutOfMemoryDialog extends DialogWrapper {
     try {
       VMOptions.writeXmx(Integer.parseInt(myHeapSizeField.getText()));
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
 
     try {
       VMOptions.writeMaxPermGen(Integer.parseInt(myPermGenSizeField.getText()));
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
+    }
+
+    try {
+      VMOptions.writeCodeCache(Integer.parseInt(myCodeCacheSizeField.getText()));
+    }
+    catch (NumberFormatException ignored) {
     }
   }
 
@@ -140,6 +158,6 @@ public class OutOfMemoryDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myMemoryKind == MemoryKind.HEAP ? myHeapSizeField : myPermGenSizeField;
+    return myMemoryKind == MemoryKind.HEAP ? myHeapSizeField : myMemoryKind == MemoryKind.PERM_GEN ? myPermGenSizeField : myCodeCacheSizeField;
   }
 }

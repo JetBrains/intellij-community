@@ -51,6 +51,8 @@ import com.intellij.util.concurrency.Semaphore
  * @author peter
  */
 class GroovyDebuggerTest extends GroovyCompilerTestCase {
+  @Override
+  protected boolean useJps() { false }
 
   @Override
   protected void setUp() {
@@ -138,22 +140,27 @@ interface Goo {
 '''
     myFixture.addFileToProject("com/Foo.groovy", """
 package com
-class Foo { static bar = 2 }""")
+class Foo {
+  static bar = 2
+  int field = 3
+}""")
 
 
     myFixture.addFileToProject("com/Bar.groovy", """package com
 import static com.Goo.*
 
-println 2 //3
+def lst = [new Foo()] as Set
+println 2 //4
 """)
 
-    addBreakpoint 'com/Bar.groovy', 3
+    addBreakpoint 'com/Bar.groovy', 4
     runDebugger 'com.Bar', {
       waitForBreakpoint()
       eval 'Foo.bar', '2'
       eval 'mainConstant', '42'
       eval 'secondConstant', '1'
       eval 'mainConstant - secondConstant', '41'
+      eval '(lst as List<Foo>)[0].field', '3'
     }
   }
 

@@ -67,7 +67,7 @@ public class MockGeneralTestEventsProcessorAdapter implements GeneralTestEventsP
   }
 
   @Override
-  public void onError(@NotNull String localizedMessage, @Nullable String stackTrace) {
+  public void onError(@NotNull String localizedMessage, @Nullable String stackTrace, boolean isCritical) {
   }
 
   @Override

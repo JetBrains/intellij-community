@@ -49,9 +49,8 @@ public class GroovyBuilder extends Builder {
       context.processFiles(chunk, new FileProcessor() {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
-          file = file.getCanonicalFile();
-          String path = file.getPath();
-          if ((path.endsWith(".groovy") || path.endsWith(".gpp")) && isFileDirty(file, context, tsStorage)) { //todo file type check
+          final String path = file.getPath();
+          if (isGroovyFile(path) && isFileDirty(file, context, tsStorage)) { //todo file type check
             toCompile.add(file);
           }
           return true;
@@ -62,12 +61,15 @@ public class GroovyBuilder extends Builder {
         return exitCode;
       }
 
-      final List<String> cp = new ArrayList<String>();
+      final Set<String> cp = new LinkedHashSet<String>();
       //groovy_rt.jar
       // IMPORTANT! must be the first in classpath
       cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath());
 
       for (File file : context.getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(context.isCompilingTests()), false)) {
+        cp.add(FileUtil.toCanonicalPath(file.getPath()));
+      }
+      for (File file : context.getProjectPaths().getClasspathFiles(chunk, ClasspathKind.runtime(context.isCompilingTests()), false)) {
         cp.add(FileUtil.toCanonicalPath(file.getPath()));
       }
 
@@ -79,7 +81,7 @@ public class GroovyBuilder extends Builder {
 
       Set<String> toCompilePaths = new LinkedHashSet<String>();
       for (File file : toCompile) {
-        toCompilePaths.add(FileUtil.toCanonicalPath(file.getPath()));
+        toCompilePaths.add(file.getPath());
       }
       
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());
@@ -88,19 +90,24 @@ public class GroovyBuilder extends Builder {
       }
       Map<String, String> class2Src = buildClassToSourceMap(context, toCompilePaths, moduleOutputPath);
 
-      fillFileWithGroovycParameters(tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths, moduleOutputPath, class2Src);
+      String encoding = "UTF-8"; //todo encoding
+      List<String> patchers = Collections.emptyList(); //todo patchers
+      GroovycOSProcessHandler.fillFileWithGroovycParameters(tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths,
+                                                            moduleOutputPath, class2Src,
+                                                            encoding, patchers);
 
       if (myForStubs) {
         JavaBuilder.addTempSourcePathRoot(context, dir);
       }
 
-      // todo cmd.add("-bootclasspath");
+      // todo CompilerUtil.addLocaleOptions()
+      //todo different outputs in a chunk
       //todo module jdk path
       final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
         SystemProperties.getJavaHome() + "/bin/java",
         "org.jetbrains.groovy.compiler.rt.GroovycRunner",
-        Collections.<String>emptyList(), cp,
-        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5858"*/),
+        Collections.<String>emptyList(), new ArrayList<String>(cp),
+        Arrays.asList("-Xmx384m"/*, "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5858"*/),
         Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
       );
 
@@ -174,50 +181,23 @@ public class GroovyBuilder extends Builder {
     }
   }
 
+  private static boolean isGroovyFile(String path) {
+    return path.endsWith(".groovy") || path.endsWith(".gpp");
+  }
+
   private static Map<String, String> buildClassToSourceMap(CompileContext context, Set<String> toCompilePaths, String moduleOutputPath)
     throws Exception {
     Map<String, String> class2Src = new HashMap<String, String>();
     for (String out : context.getBuildDataManager().getOutputToSourceStorage().getKeys()) {
       if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {
         String src = context.getBuildDataManager().getOutputToSourceStorage().getState(out);
-        if (!toCompilePaths.contains(src)) {
+        if (!toCompilePaths.contains(src) && isGroovyFile(src)) {
           String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.').replace('$', '.');
           class2Src.put(className, src);
         }
       }
     }
     return class2Src;
-  }
-
-  private static void fillFileWithGroovycParameters(File tempFile, final String outputDir, final Collection<String> files, String finalOutput, Map<String, String> class2Src) throws IOException {
-    final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
-    try {
-      for (String file : files) {
-        writer.write("src_file\n");
-        writer.write(file);
-        writer.write("\n");
-      }
-      
-      writer.write("class2src\n");
-      for (Map.Entry<String, String> entry : class2Src.entrySet()) {
-        writer.write(entry.getKey() + "\n");
-        writer.write(entry.getValue() + "\n");
-      }
-      writer.write("end\n");
-
-      //todo patchers
-      writer.write("encoding\n");
-      writer.write("UTF-8\n");  //todo encoding
-      writer.write("outputpath\n");
-      writer.write(outputDir);
-      writer.write("\n");
-      writer.write("final_outputpath\n");
-      writer.write(finalOutput);
-      writer.write("\n");
-    }
-    finally {
-      writer.close();
-    }
   }
 
   public String getDescription() {

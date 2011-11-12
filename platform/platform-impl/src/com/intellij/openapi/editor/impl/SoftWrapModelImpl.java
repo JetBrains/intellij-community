@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -183,12 +182,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDeferredFoldRegions.clear();
       myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
       settings.setAdditionalColumnsCount(0);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
     else if (!myUseSoftWraps && softWrapsUsedBefore) {
       settings.setAdditionalColumnsCount(myAdditionalColumnsCount);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
   @Override
@@ -600,6 +598,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myDeferredFoldRegions.clear();
   }
 
+  @Override
+  public void recalculate() {
+    myApplianceManager.reset();
+    myDeferredFoldRegions.clear();
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+  }
+
   public SoftWrapApplianceManager getApplianceManager() {
     return myApplianceManager;
   }
@@ -620,11 +625,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       task.run(true);
     } catch (Throwable e) {
       if (Boolean.getBoolean(DEBUG_PROPERTY_NAME)) {
-        LOG.error(String.format(
-          "Unexpected exception occurred during performing '%s'. Current soft wraps cache: %n"
-          + "%s%nFold regions: %s",
-          task, myDataMapper, Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e
-        );
+        String info = "";
+        if (myEditor instanceof EditorImpl) {
+          info = ((EditorImpl)myEditor).dumpState();
+        } 
+        LOG.error(String.format("Unexpected exception occurred during performing '%s'", task), e, info);
       }
       myEditor.getFoldingModel().rebuild();
       myDataMapper.release();
@@ -634,11 +639,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         task.run(true);
       }
       catch (Throwable e1) {
-        LOG.error(String.format(
-          "Can't perform %s even with complete soft wraps cache re-parsing. Current soft wraps cache: %n"
-          + "%s. Document:%n%s%nFold regions: %s", task, myDataMapper, myEditor.getDocument().getText(),
-          Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e1
-        );
+        String info = "";
+        if (myEditor instanceof EditorImpl) {
+          info = ((EditorImpl)myEditor).dumpState();
+        }
+        LOG.error(String.format("Can't perform %s even with complete soft wraps cache re-parsing", task), e1, info);
         myEditor.getSettings().setUseSoftWraps(false);
         task.run(false);
       }
@@ -647,7 +652,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public String toString() {
-    return myDataMapper.toString();
+    return String.format("appliance manager state: %s; soft wraps mapping info: %s", myApplianceManager, myDataMapper);
   }
 
   /**

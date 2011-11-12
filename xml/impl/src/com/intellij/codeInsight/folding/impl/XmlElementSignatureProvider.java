@@ -30,7 +30,7 @@ import java.util.StringTokenizer;
 /**
  * @author yole
  */
-public class XmlElementSignatureProvider extends ElementSignatureProvider {
+public class XmlElementSignatureProvider extends AbstractElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider");
 
   public String getSignature(@NotNull PsiElement element) {
@@ -39,11 +39,11 @@ public class XmlElementSignatureProvider extends ElementSignatureProvider {
       PsiElement parent = tag.getParent();
 
       StringBuilder buffer = new StringBuilder();
-      buffer.append("tag#");
+      buffer.append("tag").append(ELEMENT_TOKENS_SEPARATOR);
       String name = tag.getName();
       buffer.append(name.length() == 0 ? "<unnamed>" : name);
 
-      buffer.append("#");
+      buffer.append(ELEMENT_TOKENS_SEPARATOR);
       buffer.append(getChildIndex(tag, parent, name, XmlTag.class));
 
       if (parent instanceof XmlTag) {
@@ -58,7 +58,7 @@ public class XmlElementSignatureProvider extends ElementSignatureProvider {
   }
 
   @Override
-  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, String type, StringTokenizer tokenizer) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, @NotNull String type, @NotNull StringTokenizer tokenizer) {
     if (type.equals("tag")) {
       String name = tokenizer.nextToken();
 

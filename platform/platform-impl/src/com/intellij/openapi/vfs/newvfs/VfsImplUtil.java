@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +25,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class VfsImplUtil {
+  
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
+  
   @NonNls private static final String FILE_SEPARATORS = "/" + File.separator;
+
+  private VfsImplUtil() {
+  }
 
   @Nullable
   public static VirtualFile findFileByPath(NewVirtualFileSystem vfs, @NotNull @NonNls final String path) {
@@ -83,6 +90,7 @@ public class VfsImplUtil {
     NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, vfs);
     if (file == null || !file.exists()) return null;
 
+    LOG.assertTrue(basePath.length() <= normalizedPath.length(), vfs + " failed to extract root path: " + basePath + " from " + normalizedPath);
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
       if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {

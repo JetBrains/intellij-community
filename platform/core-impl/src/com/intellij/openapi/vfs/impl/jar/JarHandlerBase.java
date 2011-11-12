@@ -200,7 +200,7 @@ public class JarHandlerBase {
   }
 
   public long getTimeStamp(@NotNull final VirtualFile file) {
-    if (file.getParent() == null) return -1L; // Optimization
+    if (file.getParent() == null) return getOriginalFile().lastModified(); // Optimization
     synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
       return entry != null ? entry.getTime() : -1L;

@@ -1,7 +1,7 @@
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
-import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
+import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -90,8 +90,6 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
 
     try {
       structureViewComponent = (StructureViewComponent)fileEditors[0].getStructureViewBuilder().createStructureView(fileEditors[0], myProject);
-      structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
-
       TreeUtil.collapseAll(structureViewComponent.getTree(), -1);
 
       structureViewComponent.select(innerClass2Field, true);
@@ -122,7 +120,7 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
 
       final FileEditor fileEditor = fileEditors[0];
       structureViewComponent2 = (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
-      structureViewComponent2.setActionActive(InheritedMembersFilter.ID, true);
+      structureViewComponent2.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
       IdeaTestUtil.assertTreeEqual(structureViewComponent2.getTree(), expected);
     }
     finally {
