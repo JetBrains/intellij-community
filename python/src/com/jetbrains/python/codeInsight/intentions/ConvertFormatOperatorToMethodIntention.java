@@ -46,7 +46,24 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
   private static void appendDoublingBraces(CharSequence source, StringBuilder target) {
     int index = 0;
     Matcher scanner = BRACE_PATTERN.matcher(source);
+    boolean skipClosingBrace = false;
     while (scanner.find(index)) {
+      if (scanner.start() > 1) {
+        // handle escaping sequences PY-977
+        if ("{".equals(scanner.group(0)) && "\\N".equals(source.subSequence(scanner.start()-2, scanner.start()).toString())) {
+          skipClosingBrace = true;
+          target.append(source.subSequence(index, scanner.end()));
+          index = scanner.end();
+          continue;
+        }
+      }
+      if (skipClosingBrace && "}".equals(scanner.group(0))) {
+        skipClosingBrace = false;
+        target.append(source.subSequence(index, scanner.end()));
+        index = scanner.end();
+        continue;
+      }
+
       target.append(source.subSequence(index, scanner.start()));
       if ("{".equals(scanner.group(0))) target.append("{{");
       else target.append("}}");
