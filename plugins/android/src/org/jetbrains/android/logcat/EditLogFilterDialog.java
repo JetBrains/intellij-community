@@ -1,12 +1,24 @@
 package org.jetbrains.android.logcat;
 
 import com.android.ddmlib.Log;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -32,6 +45,7 @@ class EditLogFilterDialog extends DialogWrapper {
   private JComboBox myLogLevelCombo;
   private JPanel myTagFieldWrapper;
   private JPanel myPidFieldWrapper;
+  private JBLabel myLogTagLabel;
 
   private final AndroidConfiguredLogFilters.MyFilterEntry myEntry;
   private final AndroidLogcatToolWindowView myView;
@@ -46,17 +60,20 @@ class EditLogFilterDialog extends DialogWrapper {
     super(view.getProject(), false);
 
     myView = view;
-    myTagField = new TextFieldWithAutoCompletion(view.getProject()) {
+
+    myTagField = new MyTextFieldWithAutoCompletion(view.getProject()) {
       @Override
       public void showLookup() {
         parseExistingMessagesIfNecessary();
-        myTagField.setVariants(myUsedTags);
+        myTagField.setVariants(Arrays.asList(toLookupElements(myUsedTags)));
         super.showLookup();
       }
     };
-    myTagFieldWrapper.add(myTagField);
 
-    myPidField = new TextFieldWithAutoCompletion(view.getProject()) {
+    myTagFieldWrapper.add(myTagField);
+    myLogTagLabel.setLabelFor(myTagField);
+
+    myPidField = new MyTextFieldWithAutoCompletion(view.getProject()) {
       @Override
       public void showLookup() {
         parseExistingMessagesIfNecessary();
@@ -94,6 +111,31 @@ class EditLogFilterDialog extends DialogWrapper {
     else {
       myEntry = new AndroidConfiguredLogFilters.MyFilterEntry();
     }
+  }
+
+  @Nullable
+  private static String getCompletionShortcutText() {
+    final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
+    if (action != null) {
+      final ShortcutSet shortcutSet = action.getShortcutSet();
+      if (shortcutSet != null) {
+        final Shortcut[] shortcuts = shortcutSet.getShortcuts();
+        if (shortcuts != null && shortcuts.length > 0) {
+          return KeymapUtil.getShortcutText(shortcuts[0]);
+        }
+      }
+    }
+    return null;
+  }
+  
+  private static LookupElement[] toLookupElements(@NotNull String[] strs) {
+    final LookupElement[] result = new LookupElement[strs.length];
+    
+    for (int i = 0; i < result.length; i++) {
+      final String s = strs[i];
+      result[i] = LookupElementBuilder.create(s).addLookupString(s.toLowerCase());
+    }
+    return result;
   }
 
   private void parseExistingMessagesIfNecessary() {
@@ -236,5 +278,52 @@ class EditLogFilterDialog extends DialogWrapper {
   @NotNull
   public AndroidConfiguredLogFilters.MyFilterEntry getCustomLogFiltersEntry() {
     return myEntry;
+  }
+
+  private static class MyTextFieldWithAutoCompletion extends TextFieldWithAutoCompletion {
+    private boolean myToShowHint;
+    private final String myCompletionShortcutText;
+
+    public MyTextFieldWithAutoCompletion(Project project) {
+      super(project);
+      myCompletionShortcutText = getCompletionShortcutText();
+      myToShowHint = true;
+    }
+
+    @Override
+    protected EditorEx createEditor() {
+      final EditorEx editor = super.createEditor();
+
+      if (myCompletionShortcutText == null) {
+        return editor;
+      }
+
+      editor.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          myToShowHint = false;
+        }
+      });
+
+      editor.addFocusListener(new FocusChangeListener() {
+        @Override
+        public void focusGained(final Editor editor) {
+          if (myToShowHint && getText().length() == 0) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                HintManager.getInstance().showInformationHint(editor, "Code completion available (" + myCompletionShortcutText + ")");
+              }
+            });
+          }
+        }
+
+        @Override
+        public void focusLost(Editor editor) {
+        }
+      });
+
+      return editor;
+    }
   }
 }
