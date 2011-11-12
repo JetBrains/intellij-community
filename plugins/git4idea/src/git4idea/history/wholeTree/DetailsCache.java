@@ -112,7 +112,8 @@ public class DetailsCache {
     synchronized (myLock) {
       myBranches.clear();
       myStash.clear();
-      myCache.clear();
+      // will be cleared by itself; commits are not changed while they have same hash
+      //myCache.clear();
     }
   }
 
