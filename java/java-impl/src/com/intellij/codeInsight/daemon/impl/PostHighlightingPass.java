@@ -257,7 +257,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         }
       }
     }
-    if (unusedImportEnabled && myFile instanceof PsiJavaFile) {
+    if (unusedImportEnabled && myFile instanceof PsiJavaFile && HighlightLevelUtil.shouldHighlight(myFile)) {
       PsiImportList importList = ((PsiJavaFile)myFile).getImportList();
       if (importList != null) {
         final PsiImportStatementBase[] imports = importList.getAllImportStatements();
