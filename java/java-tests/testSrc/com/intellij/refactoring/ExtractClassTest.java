@@ -97,6 +97,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestMethod();
   }
 
+  public void testEnumSwitch() throws Exception {
+    doTestMethod();
+  }
+
   private void doTestFieldAndMethod() throws Exception {
     doTestFieldAndMethod("bar");
   }

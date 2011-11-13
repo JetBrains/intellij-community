@@ -422,7 +422,9 @@ class ExtractedClassBuilder {
           }
           else {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
-              if (staticImported) {
+              if (field instanceof PsiEnumConstant) {
+                out.append(field.getName());
+              } else if (staticImported) {
                 final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)resolveResult.getCurrentFileResolveScope();
                 final PsiClass targetClass = importStaticStatement.resolveTargetClass();
                 out.append(targetClass != null ? targetClass.getQualifiedName() : "").append(".").append(field.getName());
