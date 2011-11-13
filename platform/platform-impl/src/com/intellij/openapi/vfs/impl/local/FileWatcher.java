@@ -247,27 +247,31 @@ public class FileWatcher {
 
     shutdownProcess();
 
-    @NonNls final String executableName = SystemInfo.isWindows ? "fsnotifier.exe"
-                                          : SystemInfo.isLinux && SystemInfo.isAMD64 ? "fsnotifier64"
-                                            : "fsnotifier";
+    String execPath = null;
 
-    String alternatePathToExecutable = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
-    if (alternatePathToExecutable != null) {
-      if (!new File(alternatePathToExecutable).isFile()) {
-        alternatePathToExecutable = null;
-      }
+    final String altExecPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
+    if (altExecPath != null && new File(altExecPath).isFile()) {
+      execPath = FileUtil.toSystemDependentName(altExecPath);
     }
-    final String pathToExecutable = alternatePathToExecutable != null
-                                    ? FileUtil.toSystemDependentName(alternatePathToExecutable)
-                                    : PathManager.getBinPath() + File.separatorChar + executableName;
-    final File exec = new File(pathToExecutable);
+
+    if (execPath == null) {
+      final String execName;
+      execName = getExecutableName();
+      if (execName == null) {
+        myFailureShownToTheUser = true;  // ignore unsupported platforms
+        return;
+      }
+      execPath = PathManager.getBinPath() + File.separatorChar + execName;
+    }
+
+    final File exec = new File(execPath);
     if (!exec.exists()) {
-      notifyOnFailure("File watcher is not found at path: " + pathToExecutable, null);
+      notifyOnFailure("File watcher is not found at path: " + execPath, null);
       return;
     }
 
     if (!exec.canExecute()) {
-      notifyOnFailure("File watcher is not executable: <a href=\"" + pathToExecutable + "\">" + pathToExecutable +"</a>", new NotificationListener() {
+      notifyOnFailure("File watcher is not executable: <a href=\"" + execPath + "\">" + execPath +"</a>", new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           ShowFilePathAction.open(exec, exec);
@@ -276,9 +280,9 @@ public class FileWatcher {
       return;
     }
 
-    LOG.info("Starting file watcher: " + pathToExecutable);
+    LOG.info("Starting file watcher: " + execPath);
 
-    notifierProcess = Runtime.getRuntime().exec(new String[]{pathToExecutable});
+    notifierProcess = Runtime.getRuntime().exec(new String[]{execPath});
 
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
@@ -292,6 +296,21 @@ public class FileWatcher {
         setWatchRoots(recursiveWatchRoots, flatWatchRoots);
       }
     }
+  }
+
+  @Nullable
+  private static String getExecutableName() {
+    if (SystemInfo.isWindows) {
+      return "fsnotifier.exe";
+    }
+    else if (SystemInfo.isMac) {
+      return "fsnotifier";
+    }
+    else if (SystemInfo.isLinux) {
+      return SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier";
+    }
+
+    return null;
   }
 
   private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
