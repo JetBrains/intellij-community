@@ -226,8 +226,32 @@ public class Mappings {
       return propagateMemberAccess(false, name, className);
     }
 
+    MethodRepr.Predicate lessSpecific(final MethodRepr than) {
+      return new MethodRepr.Predicate() {
+        @Override
+        public boolean satisfy(final MethodRepr m) {
+          if (!m.name.equals(than.name) || m.argumentTypes.length != than.argumentTypes.length) {
+            return false;
+          }
+
+          for (int i = 0; i < than.argumentTypes.length; i++) {
+            if (!isSubtypeOf(than.argumentTypes[i], m.argumentTypes[i])) {
+              return false;
+            }
+          }
+
+          return true;
+        }
+      };
+    }
+
     Collection<Pair<MethodRepr, ClassRepr>> findOverridingMethods(final MethodRepr m, final ClassRepr c) {
+      return findOverridingMethods(m, c, false);
+    }
+
+    Collection<Pair<MethodRepr, ClassRepr>> findOverridingMethods(final MethodRepr m, final ClassRepr c, final boolean bySpecificity) {
       final Set<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
+      final MethodRepr.Predicate predicate = bySpecificity ? lessSpecific(m) : MethodRepr.equalByJavaRules(m);
 
       new Object() {
         public void run(final ClassRepr c) {
@@ -240,11 +264,13 @@ public class Mappings {
               if (r != null) {
                 boolean cont = true;
 
-                final Collection<MethodRepr> methods = r.findMethodsByJavaRules(m);
+                final Collection<MethodRepr> methods = r.findMethods(predicate);
 
                 for (MethodRepr mm : methods) {
-                  result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
-                  cont = false;
+                  if (isVisibleIn(c, m, r)) {
+                    result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
+                    cont = false;
+                  }
                 }
 
                 if (cont) {
@@ -260,7 +286,12 @@ public class Mappings {
     }
 
     Collection<Pair<MethodRepr, ClassRepr>> findOverridenMethods(final MethodRepr m, final ClassRepr c) {
+      return findOverridenMethods(m, c, false);
+    }
+
+    Collection<Pair<MethodRepr, ClassRepr>> findOverridenMethods(final MethodRepr m, final ClassRepr c, final boolean bySpecificity) {
       final Set<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
+      final MethodRepr.Predicate predicate = bySpecificity ? lessSpecific(m) : MethodRepr.equalByJavaRules(m);
 
       new Object() {
         public void run(final ClassRepr c) {
@@ -272,10 +303,10 @@ public class Mappings {
             if (r != null) {
               boolean cont = true;
 
-              final Collection<MethodRepr> methods = r.findMethodsByJavaRules(m);
+              final Collection<MethodRepr> methods = r.findMethods(predicate);
 
               for (MethodRepr mm : methods) {
-                if ((mm.access & Opcodes.ACC_PRIVATE) == 0) {
+                if (isVisibleIn(r, mm, c)) {
                   result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
                   cont = false;
                 }
@@ -288,6 +319,14 @@ public class Mappings {
           }
         }
       }.run(c);
+
+      return result;
+    }
+
+    Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
+      final Collection<Pair<MethodRepr, ClassRepr>> result = findOverridenMethods(m, c, true);
+
+      result.addAll(findOverridingMethods(m, c, true));
 
       return result;
     }
@@ -309,7 +348,7 @@ public class Mappings {
                 final FieldRepr ff = r.findField(f.name);
 
                 if (ff != null) {
-                  if ((ff.access & Opcodes.ACC_PRIVATE) == 0) {
+                  if (isVisibleIn(r, ff, c)) {
                     result.add(new Pair<FieldRepr, ClassRepr>(ff, r));
                     cont = false;
                   }
@@ -546,16 +585,27 @@ public class Mappings {
     }
   }
 
+  private static boolean isPackageLocal(final int access) {
+    return (access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0;
+  }
+
   private static boolean weakerAccess(final int me, final int then) {
     return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||
            ((me & Opcodes.ACC_PROTECTED) > 0 && (then & Opcodes.ACC_PUBLIC) > 0) ||
-           ((me & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0 && (then & Opcodes.ACC_PROTECTED) > 0);
+           (isPackageLocal(me) && (then & Opcodes.ACC_PROTECTED) > 0);
   }
 
-  private boolean empty (final DependencyContext.S s){
+  private static boolean isVisibleIn(final ClassRepr c, final ProtoMember m, final ClassRepr scope) {
+    final boolean privacy = ((m.access & Opcodes.ACC_PRIVATE) > 0) && !c.name.equals(scope.name);
+    final boolean packageLocality = isPackageLocal(m.access) && !c.getPackageName().equals(scope.getPackageName());
+
+    return !privacy && !packageLocality;
+  }
+
+  private boolean empty(final DependencyContext.S s) {
     return s.equals(myContext.get(""));
   }
-  
+
   public boolean differentiate(final Mappings delta,
                                final Collection<String> removed,
                                final Collection<File> filesToCompile,
@@ -676,25 +726,38 @@ public class Mappings {
           }
 
           if ((m.access & Opcodes.ACC_PRIVATE) == 0) {
-            final Collection<Pair<MethodRepr, ClassRepr>> overridingMethods = u.findOverridingMethods(m, it);
+            final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = u.findAllMethodsBySpecificity(m, it);
+            final MethodRepr.Predicate overrides = MethodRepr.equalByJavaRules(m);
+            final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
 
-            for (Pair<MethodRepr, ClassRepr> p : overridingMethods) {
+            final Collection<MethodRepr> lessSpecific = it.findMethods(u.lessSpecific(m));
+
+            for (MethodRepr mm : lessSpecific) {
+              u.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
+            }
+            
+            for (Pair<MethodRepr, ClassRepr> p : affectedMethods) {
               final MethodRepr mm = p.first;
               final ClassRepr cc = p.second;
 
-              if (weakerAccess(mm.access, m.access) ||
-                  ((m.access & Opcodes.ACC_STATIC) > 0 && (mm.access & Opcodes.ACC_STATIC) == 0) ||
-                  ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
-                  ((m.access & Opcodes.ACC_FINAL) > 0) ||
-                  !m.exceptions.equals(mm.exceptions) ||
-                  !u.isSubtypeOf(mm.type, m.type) ||
-                  !empty(mm.signature) || !empty(m.signature)
-                ) {
-                final DependencyContext.S file = myClassToSourceFile.get(cc.name);
+              if (overrides.satisfy(mm)) {
+                if (weakerAccess(mm.access, m.access) ||
+                    ((m.access & Opcodes.ACC_STATIC) > 0 && (mm.access & Opcodes.ACC_STATIC) == 0) ||
+                    ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
+                    ((m.access & Opcodes.ACC_FINAL) > 0) ||
+                    !m.exceptions.equals(mm.exceptions) ||
+                    !u.isSubtypeOf(mm.type, m.type) ||
+                    !empty(mm.signature) || !empty(m.signature)) {
+                  final DependencyContext.S file = myClassToSourceFile.get(cc.name);
 
-                if (file != null) {
-                  affectedFiles.add(new File(myContext.getValue(file)));
+                  if (file != null) {
+                    affectedFiles.add(new File(myContext.getValue(file)));
+                  }
                 }
+              }
+              else {
+                final Collection<DependencyContext.S> yetPropagated = u.propagateMethodAccess(mm.name, cc.name);
+                u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
               }
             }
           }
@@ -710,10 +773,11 @@ public class Mappings {
           else {
             boolean clear = true;
 
-            loop: for (Pair<MethodRepr, ClassRepr> overriden : overridenMethods) {
+            loop:
+            for (Pair<MethodRepr, ClassRepr> overriden : overridenMethods) {
               final MethodRepr mm = overriden.first;
-              
-              if (! mm.type.equals(m.type) || !empty(mm.signature) || !empty(m.signature)){
+
+              if (!mm.type.equals(m.type) || !empty(mm.signature) || !empty(m.signature)) {
                 clear = false;
                 break loop;
               }
@@ -873,7 +937,7 @@ public class Mappings {
             final boolean ffPrivate = (ff.access & Opcodes.ACC_PRIVATE) > 0;
             final boolean ffProtected = (ff.access & Opcodes.ACC_PROTECTED) > 0;
             final boolean ffPublic = (ff.access & Opcodes.ACC_PUBLIC) > 0;
-            final boolean ffPLocal = !ffPrivate && !ffProtected && !ffPublic;
+            final boolean ffPLocal = isPackageLocal(ff.access);
 
             if (!ffPrivate) {
               final Collection<DependencyContext.S> propagated = o.propagateFieldAccess(ff.name, cc.name);
