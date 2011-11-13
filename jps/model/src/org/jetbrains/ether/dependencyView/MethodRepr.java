@@ -19,6 +19,11 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 class MethodRepr extends ProtoMember {
+
+  interface Predicate {
+    boolean satisfy(MethodRepr m);
+  }
+
   private static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
   public final TypeRepr.AbstractType[] argumentTypes;
@@ -139,10 +144,23 @@ class MethodRepr extends ProtoMember {
     };
   }
 
-  boolean equalsByJavaRules(final MethodRepr that) {
-    if (this == that) return true;
-
-    return name.equals(that.name) && Arrays.equals(argumentTypes, that.argumentTypes);
+  static Predicate equalByJavaRules(final MethodRepr me) {
+    return new Predicate() {
+      @Override
+      public boolean satisfy(MethodRepr that) {
+        if (me == that) return true;
+        return me.name.equals(that.name) && Arrays.equals(me.argumentTypes, that.argumentTypes);
+      }
+    };
+  }
+  
+  static Predicate equal(final MethodRepr me){
+    return new Predicate() {
+      @Override
+      public boolean satisfy(MethodRepr that) {
+        return me.equals(that);
+      }
+    };
   }
 
   @Override

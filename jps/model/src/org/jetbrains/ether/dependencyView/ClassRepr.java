@@ -4,6 +4,7 @@ import com.intellij.util.io.DataExternalizer;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
+import javax.sql.rowset.Predicate;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -302,11 +303,11 @@ public class ClassRepr extends Proto {
     return null;
   }
 
-  public Collection<MethodRepr> findMethodsByJavaRules(final MethodRepr m) {
-    final List<MethodRepr> result = new LinkedList<MethodRepr>();
+  public Collection<MethodRepr> findMethods (final MethodRepr.Predicate p) {
+    final Collection<MethodRepr> result = new LinkedList<MethodRepr> ();
 
     for (MethodRepr mm : methods) {
-      if (mm.equalsByJavaRules(m)) {
+      if (p.satisfy(mm)) {
         result.add(mm);
       }
     }
@@ -314,17 +315,7 @@ public class ClassRepr extends Proto {
     return result;
   }
 
-  public MethodRepr findMethod(final MethodRepr m) {
-    for (MethodRepr mm : methods) {
-      if (mm.equals(m)) {
-        return mm;
-      }
-    }
-
-    return null;
-  }
-
-  public final static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
+  public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<ClassRepr>() {
       @Override
       public void save(final DataOutput out, final ClassRepr value) throws IOException {
