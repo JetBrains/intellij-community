@@ -168,7 +168,7 @@ class HgCommandAuthenticator {
       }
 
       final AuthDialog dialog = new AuthDialog(myProject, HgVcsMessages.message("hg4idea.dialog.login.password.required"), HgVcsMessages.message("hg4idea.dialog.login.description", myURL),
-                                               login, password);
+                                               login, password, true);
       dialog.show();
       if (dialog.isOK()) {
         myUserName = dialog.getUsername();
