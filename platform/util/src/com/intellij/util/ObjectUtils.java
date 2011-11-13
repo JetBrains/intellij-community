@@ -41,4 +41,9 @@ public class ObjectUtils {
   public static <T> T chooseNotNull(@Nullable T t1, @Nullable T t2) {
     return t1 == null? t2 : t1;
   }
+
+  @NotNull
+  public static <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
+    return value != null ? value : defaultValue;
+  }
 }
