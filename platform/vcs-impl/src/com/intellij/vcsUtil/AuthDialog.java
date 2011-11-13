@@ -10,34 +10,33 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.ui;
+package com.intellij.vcsUtil;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.AuthenticationPanel;
-import org.apache.commons.lang.StringUtils;
-import org.zmlx.hg4idea.HgVcsMessages;
 
 import javax.swing.*;
 
-public class HgAuthDialog extends DialogWrapper {
+public class AuthDialog extends DialogWrapper {
   private AuthenticationPanel authPanel;
 
-  public HgAuthDialog(Project project, String url, String login, String password) {
+  public AuthDialog(Project project, String title, String description, String login, String password) {
     super(project, false);
-    setTitle(HgVcsMessages.message("hg4idea.dialog.login.password.required"));
+    setTitle(title);
 
     // if password is prefilled, it is expected to continue remembering it.
-    Boolean rememberPassword = !StringUtils.isBlank(password);
+    Boolean rememberPassword = !StringUtil.isEmptyOrSpaces(password);
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     // if password saving is disabled, don't show the checkbox.
     if (passwordSafe.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
       rememberPassword = null;
     }
-    authPanel = new AuthenticationPanel(HgVcsMessages.message("hg4idea.dialog.login.description", url), login, password,
+    authPanel = new AuthenticationPanel(description, login, password,
                                         rememberPassword);
     init();
   }

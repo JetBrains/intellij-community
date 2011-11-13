@@ -19,11 +19,12 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.vcsUtil.AuthDialog;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.ui.HgAuthDialog;
+import org.zmlx.hg4idea.HgVcsMessages;
 
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
@@ -166,7 +167,8 @@ class HgCommandAuthenticator {
         return;
       }
 
-      final HgAuthDialog dialog = new HgAuthDialog(myProject, myURL, login, password);
+      final AuthDialog dialog = new AuthDialog(myProject, HgVcsMessages.message("hg4idea.dialog.login.password.required"), HgVcsMessages.message("hg4idea.dialog.login.description", myURL),
+                                               login, password);
       dialog.show();
       if (dialog.isOK()) {
         myUserName = dialog.getUsername();
