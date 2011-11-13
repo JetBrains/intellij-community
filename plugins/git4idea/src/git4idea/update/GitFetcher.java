@@ -19,6 +19,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.commands.*;
@@ -59,8 +60,14 @@ public class GitFetcher {
    */
   public GitFetchResult fetch(@NotNull VirtualFile root) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    LOG.assertTrue(repository != null, "Couldn't find repository for root " + root + "\n" + myRepositoryManager);
+    boolean disposeRepository = false;
+    
+    if (repository == null) { // we are cloning => no repository is registered => making a fake repository
+      repository = GitRepository.getTempRepository(root, myProject);
+      disposeRepository = true;
+    }
 
+    GitFetchResult result = GitFetchResult.success();
     for (GitRemote remote : repository.getRemotes()) {
       String url = remote.getFirstUrl();
       if (url == null) {
@@ -70,15 +77,21 @@ public class GitFetcher {
         GitFetchResult res = GitHttpAdapter.fetch(repository, remote);
         myErrors.addAll(res.getErrors());
         if (!res.isSuccess()) {
-          return res;
+          result = res;
+          break;
         }
       } else {
         if (!fetchNatively(root, remote)) {
-          return GitFetchResult.error(myErrors);
+          result = GitFetchResult.error(myErrors);
+          break;
         }
       }
     }
-    return GitFetchResult.success();
+    
+    if (disposeRepository) {
+      Disposer.dispose(repository);
+    }
+    return result;
   }
 
   private boolean fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote) {
