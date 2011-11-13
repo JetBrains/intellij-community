@@ -151,28 +151,31 @@ public class Mappings {
 
   private static class Option<X> {
     final X myValue;
-    
-    Option(final X value){
+
+    Option(final X value) {
       this.myValue = value;
     }
-    
-    Option(){
+
+    Option() {
       myValue = null;
     }
-    
-    boolean isNone(){
+
+    boolean isNone() {
       return myValue == null;
     }
 
-    boolean isValue(){
+    boolean isValue() {
       return myValue != null;
     }
 
-    X value(){
+    X value() {
       return myValue;
     }
   }
-  
+
+  private static ClassRepr myMockClass = null;
+  private static MethodRepr myMockMethod = null;
+
   private class Util {
     final Mappings myDelta;
 
@@ -337,6 +340,9 @@ public class Mappings {
                 run(r);
               }
             }
+            else {
+              result.add(new Pair<MethodRepr, ClassRepr>(myMockMethod, myMockClass));
+            }
           }
         }
       }.run(c);
@@ -473,7 +479,7 @@ public class Mappings {
         return findOverridenFields(field, r).size() > 0;
       }
 
-      return false;
+      return true;
     }
 
     void affectSubclasses(final DependencyContext.S className,
@@ -801,32 +807,37 @@ public class Mappings {
               final MethodRepr mm = p.first;
               final ClassRepr cc = p.second;
 
-              if (overrides.satisfy(mm)) {
-                final Option<Boolean> subtypeOf = u.isSubtypeOf(mm.type, m.type);
+              if (cc == myMockClass) {
 
-                if (weakerAccess(mm.access, m.access) ||
-                    ((m.access & Opcodes.ACC_STATIC) > 0 && (mm.access & Opcodes.ACC_STATIC) == 0) ||
-                    ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
-                    ((m.access & Opcodes.ACC_FINAL) > 0) ||
-                    !m.exceptions.equals(mm.exceptions) ||
-                    (subtypeOf.isNone() || !subtypeOf.value()) ||
-                    !empty(mm.signature) || !empty(m.signature)) {
-                  final DependencyContext.S file = myClassToSourceFile.get(cc.name);
-
-                  if (file != null) {
-                    affectedFiles.add(new File(myContext.getValue(file)));
-                  }
-                }
               }
               else {
-                final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, cc.name);
-                final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
+                if (overrides.satisfy(mm)) {
+                  final Option<Boolean> subtypeOf = u.isSubtypeOf(mm.type, m.type);
 
-                if (deps != null){
-                  dependants.addAll(deps);
+                  if (weakerAccess(mm.access, m.access) ||
+                      ((m.access & Opcodes.ACC_STATIC) > 0 && (mm.access & Opcodes.ACC_STATIC) == 0) ||
+                      ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
+                      ((m.access & Opcodes.ACC_FINAL) > 0) ||
+                      !m.exceptions.equals(mm.exceptions) ||
+                      (subtypeOf.isNone() || !subtypeOf.value()) ||
+                      !empty(mm.signature) || !empty(m.signature)) {
+                    final DependencyContext.S file = myClassToSourceFile.get(cc.name);
+
+                    if (file != null) {
+                      affectedFiles.add(new File(myContext.getValue(file)));
+                    }
+                  }
                 }
-                
-                u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
+                else {
+                  final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, cc.name);
+                  final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
+
+                  if (deps != null) {
+                    dependants.addAll(deps);
+                  }
+
+                  u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
+                }
               }
             }
 
@@ -863,7 +874,7 @@ public class Mappings {
             for (Pair<MethodRepr, ClassRepr> overriden : overridenMethods) {
               final MethodRepr mm = overriden.first;
 
-              if (!mm.type.equals(m.type) || !empty(mm.signature) || !empty(m.signature)) {
+              if (mm == myMockMethod || !mm.type.equals(m.type) || !empty(mm.signature) || !empty(m.signature)) {
                 clear = false;
                 break loop;
               }
@@ -887,12 +898,19 @@ public class Mappings {
                 boolean visited = false;
 
                 for (Pair<MethodRepr, ClassRepr> pp : overridenInS) {
-                  if (pp.second.name.equals(it.name)) {
+                  final ClassRepr cc = pp.second;
+
+                  if (cc == myMockClass) {
+                    visited = true;
+                    continue;
+                  }
+
+                  if (cc.name.equals(it.name)) {
                     continue;
                   }
 
                   visited = true;
-                  allAbstract = ((pp.first.access & Opcodes.ACC_ABSTRACT) > 0) || ((pp.second.access & Opcodes.ACC_INTERFACE) > 0);
+                  allAbstract = ((pp.first.access & Opcodes.ACC_ABSTRACT) > 0) || ((cc.access & Opcodes.ACC_INTERFACE) > 0);
 
                   if (!allAbstract) {
                     break;
@@ -996,7 +1014,7 @@ public class Mappings {
                   else {
                     final DependencyContext.S outerClass = r.outerClassName;
 
-                    if (u.fieldVisible(outerClass, f)) {
+                    if (!empty(outerClass) && u.fieldVisible(outerClass, f)) {
                       affectedFiles.add(new File(myContext.getValue(sourceFileName)));
                     }
                   }
