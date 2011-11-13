@@ -39,6 +39,25 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     return TokenSets.STRING_LITERALS.contains(token.getNode().getElementType());
   }
 
+  @Override
+  protected String getLineBreaker(PsiElement token) {
+    final String text = token.getText();
+    if (text.contains("'''") || text.contains("\"\"\"")) {
+      return "\n";
+    }
+
+    final IElementType type = token.getNode().getElementType();
+    if (type == mGSTRING_LITERAL || type == mGSTRING_CONTENT) {
+      return super.getLineBreaker(token);
+    }
+    if (type == mSTRING_LITERAL) {
+      return super.getLineBreaker(token).replace('"', '\'');
+    }
+
+    return "\n";
+
+  }
+
   @NotNull
   @Override
   protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
