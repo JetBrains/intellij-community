@@ -381,7 +381,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = JavaErrorMessages.message("private.field.is.not.used", identifier.getText());
 
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, identifier, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
+        if (!field.hasInitializer()) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
+        }
         return highlightInfo;
       }
 
