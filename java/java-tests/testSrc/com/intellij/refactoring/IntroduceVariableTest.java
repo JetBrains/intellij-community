@@ -16,7 +16,6 @@ import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -296,6 +295,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testMultiCatchTyped() throws Exception {
     doTest(new MockIntroduceVariableHandler("b", true, true, false, "java.lang.Exception", true));
+  }
+
+  public void testBeforeVoidStatement() throws Exception {
+    doTest(new MockIntroduceVariableHandler("c", false, false, false, "java.lang.Object"));
   }
 
   private void doTest(IntroduceVariableBase testMe) throws Exception {

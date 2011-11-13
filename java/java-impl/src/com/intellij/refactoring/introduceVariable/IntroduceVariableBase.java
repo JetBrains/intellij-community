@@ -96,8 +96,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       //try line selection
       if (statementsInRange.length == 1 && (PsiUtilCore.hasErrorElementChild(statementsInRange[0]) ||
                                             !PsiUtil.isStatement(statementsInRange[0]) ||
-                                            statementsInRange[0].getTextRange().getStartOffset() >= offset ||
-                                            statementsInRange[0].getTextRange().getEndOffset() <= offset ||
+                                            statementsInRange[0].getTextRange().getStartOffset() > offset ||
+                                            statementsInRange[0].getTextRange().getEndOffset() < offset ||
                                             isPreferStatements())) {
         selectionModel.selectLineAtCaret();
         final PsiExpression expressionInRange =
