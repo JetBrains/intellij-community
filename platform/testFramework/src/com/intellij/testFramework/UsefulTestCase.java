@@ -317,8 +317,10 @@ public abstract class UsefulTestCase extends TestCase {
       list.add(t);
     }
     if (!list.equals(new ArrayList<T>(expected))) {
-      Assert.assertEquals(erroMsg, toString(expected), toString(actual));
-      Assert.fail();
+      String expectedString = toString(expected);
+      String actualString = toString(actual);
+      Assert.assertEquals(erroMsg, expectedString, actualString);
+      Assert.fail("Warning! 'toString' do not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
     }
   }
 
