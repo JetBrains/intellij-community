@@ -17,6 +17,8 @@ package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -113,33 +115,37 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     try {
       final PsiNamedElement variable = getVariable();
       if (variable != null && !newName.equals(myOldName)) {
-        RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(variable);
-        final PsiElement substitutedElement = processor.substituteElementToRename(variable, myEditor);
-        if (substitutedElement == null) {
-          return;
-        }
-
-        final String commandName = RefactoringBundle
-          .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), newName);
-        restore(variable, commandName);
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(substitutedElement);
-            final RenameProcessor
-              renameProcessor = new RenameProcessor(myProject, substitutedElement, newName,
-                                                    elementProcessor.isToSearchInComments(substitutedElement),
-                                                    elementProcessor.isToSearchForTextOccurrences(substitutedElement));
-            for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-              if (factory.isApplicable(substitutedElement) && factory.getOptionName() != null) {
-                if (factory.isEnabled()) {
-                  renameProcessor.addRenamerFactory(factory);
+        final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(variable.getLanguage());
+        LOG.assertTrue(namesValidator != null);
+        if (namesValidator.isIdentifier(newName, myProject)) {
+          RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(variable);
+          final PsiElement substitutedElement = processor.substituteElementToRename(variable, myEditor);
+          if (substitutedElement == null) {
+            return;
+          }
+  
+          final String commandName = RefactoringBundle
+            .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), newName);
+          restore(variable, commandName);
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            public void run() {
+              final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(substitutedElement);
+              final RenameProcessor
+                renameProcessor = new RenameProcessor(myProject, substitutedElement, newName,
+                                                      elementProcessor.isToSearchInComments(substitutedElement),
+                                                      elementProcessor.isToSearchForTextOccurrences(substitutedElement));
+              for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+                if (factory.isApplicable(substitutedElement) && factory.getOptionName() != null) {
+                  if (factory.isEnabled()) {
+                    renameProcessor.addRenamerFactory(factory);
+                  }
                 }
               }
+              renameProcessor.run();
+              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             }
-            renameProcessor.run();
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          }
-        }, commandName, null);
+          }, commandName, null);
+        }
       }
     }
     finally {
