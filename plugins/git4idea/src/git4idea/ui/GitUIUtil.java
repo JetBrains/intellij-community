@@ -69,23 +69,26 @@ public class GitUIUtil {
     group.createNotification(title, desc, type, null).notify(project.isDefault() ? null : project);
   }
 
-  public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
+  public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<? extends Exception> errors) {
     Collection<String> errorMessages;
     if (errors == null) {
       errorMessages = null;
     } else {
       errorMessages = new HashSet<String>(errors.size());
-      for (VcsException error : errors) {
-        for (String message : error.getMessages()) {
-          errorMessages.add(message.replace("\n", "<br/>"));
+      for (Exception error : errors) {
+        if (error instanceof VcsException) {
+          for (String message : ((VcsException)error).getMessages()) {
+            errorMessages.add(message.replace("\n", "<br/>"));
+          }
+        } else {
+          errorMessages.add(error.getMessage().replace("\n", "<br/>"));
         }
       }
     }
     notifyMessages(project, title, description, type, important, errorMessages);
   }
 
-  public static void notifyError(Project project, String title, String description, boolean important, @Nullable VcsException error) {
-    notifyMessage(project, title, description, NotificationType.ERROR, important, Collections.singleton(error));
+  public static void notifyError(Project project, String title, String description, boolean important, @Nullable Exception error) {    notifyMessage(project, title, description, NotificationType.ERROR, important, Collections.singleton(error));
   }
 
   /**

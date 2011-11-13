@@ -34,7 +34,6 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 import git4idea.stash.GitChangesSaver;
-import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -219,17 +218,7 @@ public class GitUpdateProcess {
 
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify() {
-    GitFetcher fetcher = new GitFetcher(myProject, myProgressIndicator);
-    for (VirtualFile root : myRoots) {
-      fetcher.fetch(root);
-    }
-    if (!fetcher.isSuccess()) {
-      if (myVcs.getExecutableValidator().isExecutableValid()) {
-        GitUIUtil.notifyMessage(myProject, "Update failed", "Couldn't fetch", NotificationType.ERROR, true, fetcher.getErrors());
-      }
-      return false;
-    }
-    return true;
+    return new GitFetcher(myProject, myProgressIndicator).fetchRootsAndNotify(myRoots, "Update failed", false);
   }
 
   public Map<VirtualFile, GitBranchPair> getTrackedBranches() {

@@ -15,15 +15,23 @@
  */
 package git4idea.update;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitVcs;
 import git4idea.commands.*;
+import git4idea.jgit.GitHttpAdapter;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
+import git4idea.ui.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -32,37 +40,67 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class GitFetcher {
 
   private static final Logger LOG = Logger.getInstance(GitFetcher.class);
-  private final Project myProject;
-  private final ProgressIndicator myProgressIndicator;
-  private final Collection<VcsException> myErrors = new HashSet<VcsException>();
 
-  public GitFetcher(Project project, ProgressIndicator progressIndicator) {
+  private final Project myProject;
+  private final GitRepositoryManager myRepositoryManager;
+  private final ProgressIndicator myProgressIndicator;
+
+  private final Collection<Exception> myErrors = new ArrayList<Exception>();
+
+  public GitFetcher(@NotNull Project project, @NotNull ProgressIndicator progressIndicator) {
     myProject = project;
     myProgressIndicator = progressIndicator;
+    myRepositoryManager = GitRepositoryManager.getInstance(project);
   }
 
   /**
    * Invokes 'git fetch'.
-   * @param notify specify true to notify about errors.
    * @return true if fetch was successful, false in the case of error.
    */
-  public boolean fetch(VirtualFile root) {
-    final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.FETCH);
+  public GitFetchResult fetch(@NotNull VirtualFile root) {
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    LOG.assertTrue(repository != null, "Couldn't find repository for root " + root + "\n" + myRepositoryManager);
 
+    for (GitRemote remote : repository.getRemotes()) {
+      String url = remote.getFirstUrl();
+      if (url == null) {
+        continue;
+      }
+      if (GitHttpAdapter.isHttpUrl(url)) {
+        GitFetchResult res = GitHttpAdapter.fetch(repository, remote);
+        myErrors.addAll(res.getErrors());
+        if (!res.isSuccess()) {
+          return res;
+        }
+      } else {
+        if (!fetchNatively(root, remote)) {
+          return GitFetchResult.error(myErrors);
+        }
+      }
+    }
+    return GitFetchResult.success();
+  }
+
+  private boolean fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote) {
+    final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.FETCH);
+    h.addParameters(remote.getName());
     final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
     fetchTask.setProgressIndicator(myProgressIndicator);
     fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicBoolean success = new AtomicBoolean();
     fetchTask.execute(true, false, new GitTaskResultHandlerAdapter() {
-      @Override protected void onSuccess() {
+      @Override
+      protected void onSuccess() {
         success.set(true);
       }
 
-      @Override protected void onCancel() {
+      @Override
+      protected void onCancel() {
         LOG.info("Cancelled fetch.");
       }
 
-      @Override protected void onFailure() {
+      @Override
+      protected void onFailure() {
         LOG.info("Error fetching: " + h.errors());
         myErrors.addAll(h.errors());
       }
@@ -70,15 +108,56 @@ public class GitFetcher {
     return success.get();
   }
 
-  /**
-   * @return true if last {@link #fetch(com.intellij.openapi.vfs.VirtualFile) fetch} performed by this GitFetcher was successful.
-   */
-  public boolean isSuccess() {
-    return myErrors.isEmpty();
-  }
-
-  public Collection<VcsException> getErrors() {
+  @NotNull
+  public Collection<Exception> getErrors() {
     return myErrors;
   }
 
+  public void displayFetchResult(@NotNull GitFetchResult result, @Nullable String errorNotificationTitle) {
+    if (result.isSuccess()) {
+      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetched successfully", NotificationType.WARNING).notify(myProject);
+    } else if (result.isCancelled()) {
+      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetch cancelled by user", NotificationType.WARNING).notify(myProject);
+    } else if (result.isNotAuthorized()) {
+      String title;
+      String description;
+      if (errorNotificationTitle != null) {
+        title = errorNotificationTitle;
+        description = "Fetch failed: couldn't authorize";
+      } else {
+        title = "Fetch failed";
+        description = "Couldn't authorize";
+      }
+      GitUIUtil.notifyMessage(myProject, title, description, NotificationType.ERROR, true, null);
+    } else {
+      GitVcs instance = GitVcs.getInstance(myProject);
+      if (instance != null && instance.getExecutableValidator().isExecutableValid()) {
+        GitUIUtil.notifyMessage(myProject, "Fetch failed", null, NotificationType.ERROR, true, getErrors());
+      }
+    }
+  }
+
+  /**
+   * Fetches all specified roots.
+   * Once a root has failed, stops and displays the notification.
+   * If needed, displays the successful notification at the end.
+   * @param roots                   roots to fetch.
+   * @param errorNotificationTitle  if specified, this notification title will be used instead of the standard "Fetch failed".
+   *                                Use this when fetch is a part of a compound process.
+   * @param notifySuccess           if set to {@code true} successful notification will be displayed.
+   * @return true if all fetches were successful, false if at least one fetch failed.
+   */
+  public boolean fetchRootsAndNotify(@NotNull Collection<VirtualFile> roots, @Nullable String errorNotificationTitle, boolean notifySuccess) {
+    for (VirtualFile root : roots) {
+      GitFetchResult result = fetch(root);
+      if (!result.isSuccess()) {
+        displayFetchResult(result, errorNotificationTitle);
+        return false;
+      }
+    }
+    if (notifySuccess) {
+      GitUIUtil.notifySuccess(myProject, "", "Fetched successfully");
+    }
+    return true;
+  }
 }
