@@ -1,0 +1,25 @@
+Request to make modules:
+module AddHidingMethod
+End of request
+digraph X {
+  AddHidingMethod[label="AddHidingMethod"];
+}
+digraph X {
+  AddHidingMethod[label="AddHidingMethod"];
+}
+Propagated modules:
+module AddHidingMethod
+End of propagated
+Cleaning output files:
+out/production/AddHidingMethod/BaseAction.class
+End of files
+Compiling files:
+src/BaseAction.java
+End of files
+Cleaning output files:
+out/production/AddHidingMethod/Client$1.class
+out/production/AddHidingMethod/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

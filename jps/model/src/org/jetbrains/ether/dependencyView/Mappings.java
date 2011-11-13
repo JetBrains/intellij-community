@@ -245,10 +245,6 @@ public class Mappings {
       };
     }
 
-    Collection<Pair<MethodRepr, ClassRepr>> findOverridingMethods(final MethodRepr m, final ClassRepr c) {
-      return findOverridingMethods(m, c, false);
-    }
-
     Collection<Pair<MethodRepr, ClassRepr>> findOverridingMethods(final MethodRepr m, final ClassRepr c, final boolean bySpecificity) {
       final Set<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
       final MethodRepr.Predicate predicate = bySpecificity ? lessSpecific(m) : MethodRepr.equalByJavaRules(m);
@@ -421,6 +417,20 @@ public class Mappings {
 
       if (whom instanceof TypeRepr.ClassType) {
         return isInheritorOf(((TypeRepr.ClassType)who).className, ((TypeRepr.ClassType)whom).className);
+      }
+
+      return false;
+    }
+
+    boolean methodVisible(final DependencyContext.S className, final MethodRepr m) {
+      final ClassRepr r = reprByName(className);
+
+      if (r != null) {
+        if (r.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
+          return true;
+        }
+
+        return findOverridenMethods(m, r).size() > 0;
       }
 
       return false;
@@ -606,6 +616,30 @@ public class Mappings {
     return s.equals(myContext.get(""));
   }
 
+  private Collection<DependencyContext.S> getAllSubclasses(final DependencyContext.S root) {
+    final Collection<DependencyContext.S> result = new HashSet<DependencyContext.S>();
+
+    addAllSubclasses(root, result);
+
+    return result;
+  }
+
+  private void addAllSubclasses(final DependencyContext.S root, final Collection<DependencyContext.S> acc) {
+    final Collection<DependencyContext.S> directSubclasses = myClassToSubclasses.get(root);
+
+    acc.add(root);
+
+    if (directSubclasses != null) {
+      for (final DependencyContext.S s : directSubclasses) {
+        if (acc.contains(s)) {
+          continue;
+        }
+
+        addAllSubclasses(s, acc);
+      }
+    }
+  }
+
   public boolean differentiate(final Mappings delta,
                                final Collection<String> removed,
                                final Collection<File> filesToCompile,
@@ -735,7 +769,7 @@ public class Mappings {
             for (MethodRepr mm : lessSpecific) {
               u.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
             }
-            
+
             for (Pair<MethodRepr, ClassRepr> p : affectedMethods) {
               final MethodRepr mm = p.first;
               final ClassRepr cc = p.second;
@@ -758,6 +792,23 @@ public class Mappings {
               else {
                 final Collection<DependencyContext.S> yetPropagated = u.propagateMethodAccess(mm.name, cc.name);
                 u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
+              }
+            }
+
+            final Collection<DependencyContext.S> subClasses = getAllSubclasses(it.name);
+
+            if (subClasses != null) {
+              for (final DependencyContext.S subClass : subClasses) {
+                final ClassRepr r = u.reprByName(subClass);
+                final DependencyContext.S sourceFileName = myClassToSourceFile.get(subClass);
+
+                if (r != null && sourceFileName != null) {
+                  final DependencyContext.S outerClass = r.outerClassName;
+
+                  if (u.methodVisible(outerClass, m)) {
+                    affectedFiles.add(new File(myContext.getValue(sourceFileName)));
+                  }
+                }
               }
             }
           }
@@ -896,7 +947,7 @@ public class Mappings {
           final boolean fPLocal = !fPrivate && !fProtected && !fPublic;
 
           if (!fPrivate) {
-            final Collection<DependencyContext.S> subClasses = myClassToSubclasses.get(it.name);
+            final Collection<DependencyContext.S> subClasses = getAllSubclasses(it.name);
 
             if (subClasses != null) {
               for (final DependencyContext.S subClass : subClasses) {

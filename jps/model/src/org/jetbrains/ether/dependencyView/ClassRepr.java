@@ -39,7 +39,7 @@ public class ClassRepr extends Proto {
     return context.getValue(fileName);
   }
 
-  public abstract class Diff extends Difference {
+  public abstract static class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
 
     public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
