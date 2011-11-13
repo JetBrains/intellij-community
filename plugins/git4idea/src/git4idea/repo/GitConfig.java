@@ -179,7 +179,7 @@ class GitConfig {
    */
   @NotNull
   private static UrlsAndPushUrls substituteUrls(@NotNull Collection<Url> urlSections, @NotNull Remote remote) {
-    Collection<String> urls = new ArrayList<String>(remote.getUrls().size());
+    List<String> urls = new ArrayList<String>(remote.getUrls().size());
     Collection<String> pushUrls = new ArrayList<String>();
 
     // urls are substituted by insteadOf
@@ -235,10 +235,10 @@ class GitConfig {
   }
   
   private static class UrlsAndPushUrls {
-    final Collection<String> myUrls;
+    final List<String> myUrls;
     final Collection<String> myPushUrls;
 
-    private UrlsAndPushUrls(Collection<String> urls, Collection<String> pushUrls) {
+    private UrlsAndPushUrls(List<String> urls, Collection<String> pushUrls) {
       myPushUrls = pushUrls;
       myUrls = urls;
     }
@@ -247,7 +247,7 @@ class GitConfig {
       return myPushUrls;
     }
 
-    public Collection<String> getUrls() {
+    public List<String> getUrls() {
       return myUrls;
     }
   }
