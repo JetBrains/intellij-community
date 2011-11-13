@@ -20,12 +20,12 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Mappings {
-  private final static String classToSubclassesName = "classToSubclasses.tab";
-  private final static String classToClassName = "classToClass.tab";
-  private final static String sourceToClassName = "sourceToClass.tab";
-  private final static String sourceToAnnotationsName = "sourceToAnnotations.tab";
-  private final static String sourceToUsagesName = "sourceToUsages.tab";
-  private final static String classToSourceName = "classToSource.tab";
+  private final static String myClassToSubclassesName = "classToSubclasses.tab";
+  private final static String myClassToClassName = "classToClass.tab";
+  private final static String mySourceToClassName = "sourceToClass.tab";
+  private final static String mySourceToAnnotationsName = "sourceToAnnotations.tab";
+  private final static String mySourceToUsagesName = "sourceToUsages.tab";
+  private final static String myClassToSourceName = "classToSource.tab";
 
   private final File myRootDir;
   private DependencyContext myContext;
@@ -80,32 +80,32 @@ public class Mappings {
     myContext = new DependencyContext(rootDir);
 
     myClassToSubclasses =
-      new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, classToSubclassesName),
+      new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, myClassToSubclassesName),
                                                                           DependencyContext.descriptorS, DependencyContext.descriptorS,
                                                                           ourStringSetConstructor);
 
     myClassToClassDependency =
-      new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, classToClassName),
+      new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, myClassToClassName),
                                                                           DependencyContext.descriptorS, DependencyContext.descriptorS,
                                                                           ourStringSetConstructor);
 
     mySourceFileToClasses =
-      new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(rootDir, sourceToClassName),
+      new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(rootDir, mySourceToClassName),
                                                                 DependencyContext.descriptorS, ClassRepr.externalizer(myContext),
                                                                 ourClassSetConstructor);
 
     mySourceFileToAnnotationUsages =
-      new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(DependencyContext.getTableFile(rootDir, sourceToAnnotationsName),
+      new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(DependencyContext.getTableFile(rootDir, mySourceToAnnotationsName),
                                                                       DependencyContext.descriptorS, UsageRepr.externalizer(myContext),
                                                                       ourUsageSetConstructor);
 
     mySourceFileToUsages =
-      new PersistentMaplet<DependencyContext.S, UsageRepr.Cluster>(DependencyContext.getTableFile(rootDir, sourceToUsagesName),
+      new PersistentMaplet<DependencyContext.S, UsageRepr.Cluster>(DependencyContext.getTableFile(rootDir, mySourceToUsagesName),
                                                                    DependencyContext.descriptorS,
                                                                    UsageRepr.Cluster.clusterExternalizer(myContext));
 
     myClassToSourceFile =
-      new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, classToSourceName),
+      new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, myClassToSourceName),
                                                                      DependencyContext.descriptorS, DependencyContext.descriptorS);
   }
 
@@ -149,15 +149,39 @@ public class Mappings {
     }
   }
 
+  private static class Option<X> {
+    final X myValue;
+    
+    Option(final X value){
+      this.myValue = value;
+    }
+    
+    Option(){
+      myValue = null;
+    }
+    
+    boolean isNone(){
+      return myValue == null;
+    }
+
+    boolean isValue(){
+      return myValue != null;
+    }
+
+    X value(){
+      return myValue;
+    }
+  }
+  
   private class Util {
-    final Mappings delta;
+    final Mappings myDelta;
 
     private Util() {
-      delta = null;
+      myDelta = null;
     }
 
     private Util(Mappings delta) {
-      this.delta = delta;
+      this.myDelta = delta;
     }
 
     void appendDependents(final Set<ClassRepr> classes, final Set<DependencyContext.S> result) {
@@ -166,7 +190,7 @@ public class Mappings {
       }
 
       for (ClassRepr c : classes) {
-        final Collection<DependencyContext.S> depClasses = delta.myClassToClassDependency.get(c.name);
+        final Collection<DependencyContext.S> depClasses = myDelta.myClassToClassDependency.get(c.name);
 
         if (depClasses != null) {
           for (DependencyContext.S className : depClasses) {
@@ -235,7 +259,8 @@ public class Mappings {
           }
 
           for (int i = 0; i < than.argumentTypes.length; i++) {
-            if (!isSubtypeOf(than.argumentTypes[i], m.argumentTypes[i])) {
+            final Option<Boolean> subtypeOf = isSubtypeOf(than.argumentTypes[i], m.argumentTypes[i]);
+            if (subtypeOf.isValue() && !subtypeOf.value()) {
               return false;
             }
           }
@@ -363,8 +388,8 @@ public class Mappings {
     }
 
     ClassRepr reprByName(final DependencyContext.S name) {
-      if (delta != null) {
-        final ClassRepr r = delta.getReprByName(name);
+      if (myDelta != null) {
+        final ClassRepr r = myDelta.getReprByName(name);
 
         if (r != null) {
           return r;
@@ -374,31 +399,32 @@ public class Mappings {
       return getReprByName(name);
     }
 
-    boolean isInheritorOf(final DependencyContext.S who, final DependencyContext.S whom) {
+    Option<Boolean> isInheritorOf(final DependencyContext.S who, final DependencyContext.S whom) {
       if (who.equals(whom)) {
-        return true;
+        return new Option<Boolean>(true);
       }
 
       final ClassRepr repr = reprByName(who);
 
       if (repr != null) {
         for (DependencyContext.S s : repr.getSupers()) {
-          if (isInheritorOf(s, whom)) {
-            return true;
+          final Option<Boolean> inheritorOf = isInheritorOf(s, whom);
+          if (inheritorOf.isValue() && inheritorOf.value()) {
+            return inheritorOf;
           }
         }
       }
 
-      return false;
+      return new Option<Boolean>();
     }
 
-    boolean isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
+    Option<Boolean> isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
       if (who.equals(whom)) {
-        return true;
+        return new Option<Boolean>(true);
       }
 
       if (who instanceof TypeRepr.PrimitiveType || whom instanceof TypeRepr.PrimitiveType) {
-        return false;
+        return new Option<Boolean>(false);
       }
 
       if (who instanceof TypeRepr.ArrayType) {
@@ -409,17 +435,17 @@ public class Mappings {
         final String descr = whom.getDescr(myContext);
 
         if (descr.equals("Ljava/lang/Cloneable") || descr.equals("Ljava/lang/Object") || descr.equals("Ljava/io/Serializable")) {
-          return true;
+          return new Option<Boolean>(true);
         }
 
-        return false;
+        return new Option<Boolean>(false);
       }
 
       if (whom instanceof TypeRepr.ClassType) {
         return isInheritorOf(((TypeRepr.ClassType)who).className, ((TypeRepr.ClassType)whom).className);
       }
 
-      return false;
+      return new Option<Boolean>(false);
     }
 
     boolean methodVisible(final DependencyContext.S className, final MethodRepr m) {
@@ -562,7 +588,8 @@ public class Mappings {
 
       @Override
       public boolean checkResidence(final DependencyContext.S residence) {
-        return !isInheritorOf(residence, rootClass);
+        final Option<Boolean> inheritorOf = isInheritorOf(residence, rootClass);
+        return inheritorOf.isNone() || !inheritorOf.value();
       }
     }
 
@@ -775,12 +802,14 @@ public class Mappings {
               final ClassRepr cc = p.second;
 
               if (overrides.satisfy(mm)) {
+                final Option<Boolean> subtypeOf = u.isSubtypeOf(mm.type, m.type);
+
                 if (weakerAccess(mm.access, m.access) ||
                     ((m.access & Opcodes.ACC_STATIC) > 0 && (mm.access & Opcodes.ACC_STATIC) == 0) ||
                     ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
                     ((m.access & Opcodes.ACC_FINAL) > 0) ||
                     !m.exceptions.equals(mm.exceptions) ||
-                    !u.isSubtypeOf(mm.type, m.type) ||
+                    (subtypeOf.isNone() || !subtypeOf.value()) ||
                     !empty(mm.signature) || !empty(m.signature)) {
                   final DependencyContext.S file = myClassToSourceFile.get(cc.name);
 
@@ -790,7 +819,13 @@ public class Mappings {
                 }
               }
               else {
-                final Collection<DependencyContext.S> yetPropagated = u.propagateMethodAccess(mm.name, cc.name);
+                final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, cc.name);
+                final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
+
+                if (deps != null){
+                  dependants.addAll(deps);
+                }
+                
                 u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
               }
             }
@@ -1110,11 +1145,11 @@ public class Mappings {
           }
         }
 
-        dependentFiles.removeAll(compiledFiles);
-
         filewise:
         for (DependencyContext.S depFile : dependentFiles) {
-          if (affectedFiles.contains(new File(myContext.getValue(depFile)))) {
+          final File theFile = new File(myContext.getValue(depFile));
+
+          if (affectedFiles.contains(theFile) || compiledFiles.contains(theFile)) {
             continue filewise;
           }
 
@@ -1131,14 +1166,14 @@ public class Mappings {
                 final Util.UsageConstraint constraint = usageConstraints.get(usage);
 
                 if (constraint == null) {
-                  affectedFiles.add(new File(myContext.getValue(depFile)));
+                  affectedFiles.add(theFile);
                   continue filewise;
                 }
                 else {
                   final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
                   for (DependencyContext.S residentName : residenceClasses) {
                     if (constraint.checkResidence(residentName)) {
-                      affectedFiles.add(new File(myContext.getValue(depFile)));
+                      affectedFiles.add(theFile);
                       continue filewise;
                     }
                   }
@@ -1153,7 +1188,7 @@ public class Mappings {
               for (UsageRepr.Usage usage : annotationUsages) {
                 for (UsageRepr.AnnotationUsage query : annotationQuery) {
                   if (query.satisfies(usage)) {
-                    affectedFiles.add(new File(myContext.getValue(depFile)));
+                    affectedFiles.add(theFile);
                     continue filewise;
                   }
                 }

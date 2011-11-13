@@ -249,7 +249,7 @@ class PackageNameSelector {
 //    final private static Pattern spacePattern = Pattern.compile("\\s+");
 //    final private static Pattern dotPattern = Pattern.compile("\\.");
 //
-//    public static String get (final String fileName) throws Exception {
+//    public static String value (final String fileName) throws Exception {
 //        //try {
 //            final FileChannel channel = new FileInputStream(fileName).getChannel();
 //
