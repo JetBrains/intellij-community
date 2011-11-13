@@ -164,7 +164,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
         conflicts
           .putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
       }
-    }, "Detecting possible conflicts...", true, myProject)) return false;
+    }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();

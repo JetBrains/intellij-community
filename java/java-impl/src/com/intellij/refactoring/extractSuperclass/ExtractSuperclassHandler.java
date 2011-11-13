@@ -139,7 +139,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
         final PsiClass superClass = mySubclass.getExtendsListTypes().length > 0 ? mySubclass.getSuperClass() : null;
         conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier(), false));
       }
-    }, "Detecting possible conflicts...", true, myProject)) return false;
+    }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     ExtractSuperClassUtil.checkSuperAccessible(targetDirectory, conflicts, mySubclass);
     return ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject);
   }
