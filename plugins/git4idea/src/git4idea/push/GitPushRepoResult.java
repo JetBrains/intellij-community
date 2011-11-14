@@ -17,9 +17,9 @@ package git4idea.push;
 
 import com.intellij.openapi.util.text.StringUtil;
 import git4idea.GitBranch;
-import git4idea.commands.GitCommandResult;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,32 +35,44 @@ final class GitPushRepoResult {
   private enum Type {
     SUCCESS,
     SOME_REJECTED,
-    ERROR
+    ERROR,
+    CANCEL,
+    NOT_AUTHORIZED
   }
 
   private final Type myType;
-  private final GitCommandResult myOutput;
+  private final String myOutput;
   private final Map<GitBranch, GitPushBranchResult> myBranchResults;
 
-  GitPushRepoResult(@NotNull Type type, @NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
+  GitPushRepoResult(@NotNull Type type, @NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull String output) {
     myType = type;
     myBranchResults = resultsByBranch;
     myOutput = output;
   }
 
   @NotNull
-  static GitPushRepoResult success(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
+  static GitPushRepoResult success(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull String output) {
     return new GitPushRepoResult(Type.SUCCESS, resultsByBranch, output);
   }
 
   @NotNull
-  static GitPushRepoResult error(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
+  static GitPushRepoResult error(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull String output) {
     return new GitPushRepoResult(Type.ERROR, resultsByBranch, output);
   }
 
   @NotNull
-  static GitPushRepoResult someRejected(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull GitCommandResult output) {
+  static GitPushRepoResult someRejected(@NotNull Map<GitBranch, GitPushBranchResult> resultsByBranch, @NotNull String output) {
     return new GitPushRepoResult(Type.SOME_REJECTED, resultsByBranch, output);
+  }
+
+  @NotNull
+  public static GitPushRepoResult cancelled() {
+    return new GitPushRepoResult(Type.CANCEL, Collections.<GitBranch, GitPushBranchResult>emptyMap(), "");
+  }
+
+  @NotNull
+  public static GitPushRepoResult notAuthorized() {
+    return new GitPushRepoResult(Type.NOT_AUTHORIZED, Collections.<GitBranch, GitPushBranchResult>emptyMap(), "");
   }
 
   boolean isError() {
@@ -71,8 +83,16 @@ final class GitPushRepoResult {
     return myType == Type.SUCCESS;
   }
 
+  public boolean isCancel() {
+    return myType == Type.CANCEL;
+  }
+
+  public boolean isNotAuthorized() {
+    return myType == Type.NOT_AUTHORIZED;
+  }
+
   @NotNull
-  GitCommandResult getOutput() {
+  String getOutput() {
     return myOutput;
   }
 

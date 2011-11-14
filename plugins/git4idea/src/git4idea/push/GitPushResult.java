@@ -293,7 +293,7 @@ class GitPushResult {
       if (resultType == GroupedResult.Type.SUCCESS || resultType == GroupedResult.Type.REJECT) {
         sb.append(result.getPerBranchesReport());
       } else {
-        sb.append(result.getOutput().getErrorOutputAsHtmlString());
+        sb.append(result.getOutput());
       }
       sb.append("<br/>");
     }

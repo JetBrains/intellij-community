@@ -204,49 +204,82 @@ public final class GitPusher {
     
     GitCommitsByRepoAndBranch commits = pushInfo.getCommits();
     for (GitRepository repository : commits.getRepositories()) {
-      GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
-      GitCommandResult res = Git.push(repository, pushInfo.getPushSpecs().get(repository), rejectedDetector);
-
-      GitPushRepoResult repoResult;
-      if (rejectedDetector.rejected()) {
-        Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
-        
-        Map<GitBranch, GitPushBranchResult> resultMap = new HashMap<GitBranch, GitPushBranchResult>();
-        GitCommitsByBranch commitsByBranch = commits.get(repository);
-        boolean pushedBranchWasRejected = false;
-        for (GitBranch branch : commitsByBranch.getBranches()) {
-          GitPushBranchResult branchResult;
-          if (branchInRejected(branch, rejectedBranches)) {
-            branchResult = GitPushBranchResult.rejected();
-            pushedBranchWasRejected = true;
-          }
-          else {
-            branchResult = successfulResultForBranch(commitsByBranch, branch);
-          }
-          resultMap.put(branch, branchResult);
-        }
-
-        if (pushedBranchWasRejected) {
-          repoResult = GitPushRepoResult.someRejected(resultMap, res);
-        } else {
-          // The rejectedDetector detected rejected push of the branch which had nothing to push (but is behind the upstream). We are not counting it.
-          repoResult = GitPushRepoResult.success(resultMap, res);
-        }
-      }
-      else if (res.success()) {
-        repoResult = successOrErrorRepoResult(commits, repository, res, true);
-      }
-      else {
-        repoResult = successOrErrorRepoResult(commits, repository, res, false);
-      }
-
+      GitPushRepoResult repoResult = pushRepository(pushInfo, commits, repository);
       pushResult.append(repository, repoResult);
+      if (repoResult.isCancel() || repoResult.isNotAuthorized()) { // don't proceed if user has cancelled or couldn't login
+        break;
+      }
     }
     return pushResult;
   }
 
   @NotNull
-  private static GitPushRepoResult successOrErrorRepoResult(@NotNull GitCommitsByRepoAndBranch commits, @NotNull GitRepository repository, @NotNull GitCommandResult res, boolean success) {
+  private static GitPushRepoResult pushRepository(@NotNull GitPushInfo pushInfo,
+                                                  @NotNull GitCommitsByRepoAndBranch commits,
+                                                  @NotNull GitRepository repository) {
+    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushInfo.getPushSpecs().get(repository));
+    switch (simplePushResult.getType()) {
+      case SUCCESS:
+        return successOrErrorRepoResult(commits, repository, simplePushResult.getOutput(), true);
+      case ERROR:
+        return successOrErrorRepoResult(commits, repository, simplePushResult.getOutput(), false);
+      case REJECT:
+        return getResultFromRejectedPush(commits, repository, simplePushResult);
+      case NOT_AUTHORIZED:
+        return GitPushRepoResult.notAuthorized();
+      case CANCEL:
+        return GitPushRepoResult.cancelled();
+      default:
+        return GitPushRepoResult.cancelled();
+    }
+  }
+
+  @NotNull
+  private static GitPushRepoResult getResultFromRejectedPush(@NotNull GitCommitsByRepoAndBranch commits,
+                                                             @NotNull GitRepository repository,
+                                                             @NotNull GitSimplePushResult simplePushResult) {
+    Collection<String> rejectedBranches = simplePushResult.getRejectedBranches();
+
+    Map<GitBranch, GitPushBranchResult> resultMap = new HashMap<GitBranch, GitPushBranchResult>();
+    GitCommitsByBranch commitsByBranch = commits.get(repository);
+    boolean pushedBranchWasRejected = false;
+    for (GitBranch branch : commitsByBranch.getBranches()) {
+      GitPushBranchResult branchResult;
+      if (branchInRejected(branch, rejectedBranches)) {
+        branchResult = GitPushBranchResult.rejected();
+        pushedBranchWasRejected = true;
+      }
+      else {
+        branchResult = successfulResultForBranch(commitsByBranch, branch);
+      }
+      resultMap.put(branch, branchResult);
+    }
+
+    if (pushedBranchWasRejected) {
+      return GitPushRepoResult.someRejected(resultMap, simplePushResult.getOutput());
+    } else {
+      // The rejectedDetector detected rejected push of the branch which had nothing to push (but is behind the upstream). We are not counting it.
+      return GitPushRepoResult.success(resultMap, simplePushResult.getOutput());
+    }
+  }
+
+  private static GitSimplePushResult pushAndGetSimpleResult(GitRepository repository, GitPushSpec pushSpec) {
+    GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
+    GitCommandResult res = Git.push(repository, pushSpec, rejectedDetector);
+    if (rejectedDetector.rejected()) {
+      Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
+      return GitSimplePushResult.reject(rejectedBranches);
+    }
+    else if (res.success()) {
+      return GitSimplePushResult.success();
+    }
+    else {
+      return GitSimplePushResult.error(res.getErrorOutputAsHtmlString());
+    }
+  }
+
+  @NotNull
+  private static GitPushRepoResult successOrErrorRepoResult(@NotNull GitCommitsByRepoAndBranch commits, @NotNull GitRepository repository, @NotNull String output, boolean success) {
     GitPushRepoResult repoResult;
     Map<GitBranch, GitPushBranchResult> resultMap = new HashMap<GitBranch, GitPushBranchResult>();
     GitCommitsByBranch commitsByBranch = commits.get(repository);
@@ -256,7 +289,7 @@ public final class GitPusher {
                                          GitPushBranchResult.error();
       resultMap.put(branch, branchResult);
     }
-    repoResult = success ? GitPushRepoResult.success(resultMap, res) : GitPushRepoResult.error(resultMap,  res);
+    repoResult = success ? GitPushRepoResult.success(resultMap, output) : GitPushRepoResult.error(resultMap,  output);
     return repoResult;
   }
 
