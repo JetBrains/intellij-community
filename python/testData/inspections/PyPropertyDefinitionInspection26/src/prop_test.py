@@ -46,4 +46,11 @@ class A(object):
   def futuroo(self):
     raise NotImplementedError("Override!") # ok though no return
 
+  @property
+  def xoo(self):
+    return self._x
 
+  @xoo.setter
+  def xoo(self, x):
+    self._x = x
+    return
