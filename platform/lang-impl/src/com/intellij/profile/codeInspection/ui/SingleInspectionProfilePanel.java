@@ -269,7 +269,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     InspectionProfileImpl inspectionProfile =
         new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
       if (initValue == -1) {
-        inspectionProfile.initInspectionTools();
+        inspectionProfile.initInspectionTools(null);
         ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
         final InspectionProfileEntry[] profileEntries = profileModifiableModel.getInspectionTools(null);
         for (InspectionProfileEntry entry : profileEntries) {
@@ -281,7 +281,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       } else if (initValue == 0) {
         inspectionProfile.copyFrom(selectedProfile);
         inspectionProfile.setName(profileName);
-        inspectionProfile.initInspectionTools();
+        inspectionProfile.initInspectionTools(null);
         inspectionProfile.setModified(true);
         return inspectionProfile;
       }

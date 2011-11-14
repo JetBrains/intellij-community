@@ -25,7 +25,10 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -1105,7 +1108,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @Override
-      public List<ToolsImpl> getAllEnabledInspectionTools() {
+      public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
         List<ToolsImpl> result = new ArrayList<ToolsImpl>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
           result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));
