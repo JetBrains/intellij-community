@@ -139,6 +139,10 @@ public class AndroidCompileUtil {
   private static void collectChildrenRecursively(@NotNull VirtualFile root,
                                                  @NotNull VirtualFile anchor,
                                                  @NotNull Collection<VirtualFile> result) {
+    if (root == anchor) {
+      return;
+    }
+    
     VirtualFile parent = anchor.getParent();
     if (parent == null) {
       return;
@@ -163,7 +167,7 @@ public class AndroidCompileUtil {
       return;
     }
     Set<VirtualFile> rootsToExclude = new HashSet<VirtualFile>();
-    collectChildrenRecursively(excludedRoot, root, rootsToExclude);
+    collectChildrenRecursively(excludedRoot, root, rootsToExclude);    
     final ModifiableRootModel model = manager.getModifiableModel();
     ContentEntry contentEntry = findContentEntryForRoot(model, excludedRoot);
     if (contentEntry != null) {
