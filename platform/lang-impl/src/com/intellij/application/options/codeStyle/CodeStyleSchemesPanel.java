@@ -154,14 +154,12 @@ public class CodeStyleSchemesPanel{
       }
     });
 
-    myCopyFromMenu = new PopupMenu();
     myCopyFromButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         showCopyFromMenu();
       }
     });
-    myCopyFromButton.add(myCopyFromMenu);
     myCopyFromButton.setEnabled(false);
     
     myJBScrollPane.setBorder(null);
@@ -320,6 +318,7 @@ public class CodeStyleSchemesPanel{
     mySettingsPanel = settingsPanel;
     CodeStyleAbstractPanel selectedPanel = mySettingsPanel.getSelectedPanel();
     if (selectedPanel != null) {
+      initCopyFromMenu();
       selectedPanel.setupCopyFromMenu(myCopyFromMenu);
     }
     myCopyFromButton.setEnabled(myCopyFromMenu.getItemCount() > 0);
@@ -334,8 +333,16 @@ public class CodeStyleSchemesPanel{
   }
   
   private void showCopyFromMenu() {
+    initCopyFromMenu();
     if (myCopyFromMenu.getItemCount() > 0) {
       myCopyFromMenu.show(myCopyFromButton, 0, 0);
+    }
+  }
+  
+  private void initCopyFromMenu() {
+    if (myCopyFromMenu == null) {      
+      myCopyFromMenu = new PopupMenu();
+      myCopyFromButton.add(myCopyFromMenu);
     }
   }
 
