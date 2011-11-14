@@ -282,7 +282,7 @@ public class MacMessagesImpl extends MacMessages {
             IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
 
             invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
-                   Foundation.createSelector("showVariableButtonsSheet:"), paramsArray, true);
+                   Foundation.createSelector("showVariableButtonsSheet:"), paramsArray, false);
           }
           finally {
             invoke(pool, "release");
@@ -443,7 +443,7 @@ public class MacMessagesImpl extends MacMessages {
             IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
             
             invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
-                   Foundation.createSelector("showSheet:"), paramsArray, true);
+                   Foundation.createSelector("showSheet:"), paramsArray, false);
           }
           finally {
             invoke(pool, "release");
