@@ -429,6 +429,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return true;
   }
 
+  @NotNull
+  public ConsoleView getConsole() {
+    return myConsole;
+  }
+
   public ActionGroup getToolbarActions() {
     return getOrCreateActions();
   }
