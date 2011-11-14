@@ -181,34 +181,30 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       String octal = escMatcher.group(2);
       String hex = escMatcher.group(3);
       String str = null;
-      if (!raw) {
-        if (octal != null) {
-          str = new String(new char[]{(char)Integer.parseInt(octal, 8)});
+      if (octal != null) {
+        str = new String(new char[]{(char)Integer.parseInt(octal, 8)});
 
-        }
-        else if (hex != null) {
-          str = new String(new char[]{(char)Integer.parseInt(hex, 16)});
+      }
+      else if (hex != null) {
+        str = new String(new char[]{(char)Integer.parseInt(hex, 16)});
 
-        }
-        else {
-          String toReplace = escMatcher.group(1);
-          String replacement = escapeMap.get(toReplace);
-          if (replacement != null) {
-            str = replacement;
-          }
+      }
+      else {
+        String toReplace = escMatcher.group(1);
+        String replacement = escapeMap.get(toReplace);
+        if (replacement != null) {
+          str = replacement;
         }
       }
       if (unicode) {
-        if (!raw) {
-          String unicodeName = escMatcher.group(4);
-          String unicode32 = escMatcher.group(6);
+        String unicodeName = escMatcher.group(4);
+        String unicode32 = escMatcher.group(6);
 
-          if (unicode32 != null) {
-            str = new String(Character.toChars((int)Long.parseLong(unicode32, 16)));
-          }
-          if (unicodeName != null) {
-            //TOLATER: implement unicode character name escapes
-          }
+        if (unicode32 != null) {
+          str = new String(Character.toChars((int)Long.parseLong(unicode32, 16)));
+        }
+        if (unicodeName != null) {
+          //TOLATER: implement unicode character name escapes
         }
         String unicode16 = escMatcher.group(5);
         if (unicode16 != null) {
@@ -372,7 +368,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public boolean characterNeedsEscaping(char c) {
-    return c == ']' || c == '}' || c == '\"';
+    return c == ']' || c == '}' || c == '\"' || c == '\'';
   }
 
   public boolean supportsPerl5EmbeddedComments() {
