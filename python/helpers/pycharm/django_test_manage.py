@@ -13,7 +13,9 @@ settings_file = os.getenv('PYCHARM_DJANGO_SETTINGS_MODULE') or os.getenv('DJANGO
 if not settings_file:
     settings_file = 'settings'
 
+from django.core import management
 from django.core.management.commands.test import Command
+from django.conf import settings
 
 class PycharmTestCommand(Command):
   def get_runner(self):
@@ -29,6 +31,16 @@ class PycharmTestCommand(Command):
     return test_runner
 
   def handle(self, *test_labels, **options):
+    # handle south migration in tests
+    management.get_commands()
+    if hasattr(settings, "SOUTH_TESTS_MIGRATE") and not settings.SOUTH_TESTS_MIGRATE:
+        # point at the core syncdb command when creating tests
+        # tests should always be up to date with the most recent model structure
+        management._commands['syncdb'] = 'django.core'
+    else:
+        from south.management.commands.test import MigrateAndSyncCommand
+        management._commands['syncdb'] = MigrateAndSyncCommand()
+
     verbosity = int(options.get('verbosity', 1))
     interactive = options.get('interactive', True)
     failfast = options.get('failfast', False)
