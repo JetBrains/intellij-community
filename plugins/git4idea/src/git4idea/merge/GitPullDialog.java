@@ -189,8 +189,8 @@ public class GitPullDialog extends DialogWrapper {
   /**
    * @return a pull handler configured according to dialog options
    */
-  public GitLineHandler pullHandler() {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
+  public GitLineHandler pullOrMergeHandler(boolean pull) {
+    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), pull ? GitCommand.PULL : GitCommand.MERGE);
     // ignore merge failure for the pull
     h.ignoreErrorCode(1);
     h.addParameters("--no-stat");
@@ -213,9 +213,16 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters("--strategy", strategy);
     }
     h.addParameters("-v");
-    h.addParameters(getRemote());
+
     final List<String> markedBranches = myBranchChooser.getMarkedElements();
-    h.addParameters(ArrayUtil.toStringArray(markedBranches));
+    if (pull) {
+      h.addParameters(getRemote());
+      h.addParameters(ArrayUtil.toStringArray(markedBranches));
+    } else {
+      for (String branch : markedBranches) {
+        h.addParameters(getRemote() + "/" + branch);
+      }
+    }
     h.addProgressParameter();
     return h;
   }

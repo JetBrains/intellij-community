@@ -17,43 +17,44 @@ package git4idea.actions;
 
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
+import git4idea.jgit.GitHttpAdapter;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitPullDialog;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitUIUtil;
+import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Git "pull" action
  */
 public class GitPull extends GitRepositoryAction {
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   protected String getActionName() {
     return GitBundle.getString("pull.action.name");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot,
@@ -65,26 +66,59 @@ public class GitPull extends GitRepositoryAction {
       return;
     }
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
-    final GitLineHandler h = dialog.pullHandler();
-    final VirtualFile root = dialog.gitRoot();
-    affectedRoots.add(root);
-    final GitRevisionNumber currentRev = GitRevisionNumber.resolve(project, root, "HEAD");
-
-    GitTask pullTask = new GitTask(project, h, GitBundle.message("pulling.title", dialog.getRemote()));
-    pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    pullTask.executeModal(new GitTaskResultHandlerAdapter() {
+    
+    final AtomicReference<GitLineHandler> handlerReference = new AtomicReference<GitLineHandler>();
+    new Task.Modal(project, GitBundle.message("pulling.title", dialog.getRemote()), false) {
       @Override
-      protected void onSuccess() {
-        GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
-        GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
-      }
+      public void run(@NotNull ProgressIndicator indicator) {
+        GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(dialog.gitRoot());
+        assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
+        String remoteName = dialog.getRemote();
+        GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
+        if (remote == null) {
+          return;
+        }
+        String url = remote.getFirstUrl();
+        if (url == null) {
+          return;
+        }
 
-      @Override
-      protected void onFailure() {
-        GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", h.errors());
-        GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
+        if (GitHttpAdapter.isHttpUrl(url)) {
+          boolean fetchSuccessful = new GitFetcher(project, indicator).fetchRootsAndNotify(gitRoots, "Push failed", false);
+          if (!fetchSuccessful) {
+            return; 
+          }
+          handlerReference.set(dialog.pullOrMergeHandler(false)); 
+        } else {
+          handlerReference.set(dialog.pullOrMergeHandler(true));
+        }
+        
+        
+        final VirtualFile root = dialog.gitRoot();
+        affectedRoots.add(root);
+        String revision = repository.getCurrentRevision();
+        if (revision == null) {
+          return;
+        }
+        final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
+    
+        GitTask pullTask = new GitTask(project, handlerReference.get(), GitBundle.message("pulling.title", dialog.getRemote()));
+        pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+        pullTask.executeModal(new GitTaskResultHandlerAdapter() {
+          @Override
+          protected void onSuccess() {
+            GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
+            GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
+          }
+    
+          @Override
+          protected void onFailure() {
+            GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", handlerReference.get().errors());
+            GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
+          }
+        });
       }
-    });
+    }.queue();
   }
 
 }
