@@ -182,6 +182,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     throws VcsException {
     try {
       final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
+      final String path = myVcs.getSvnFileUrlMapping().getLocalPath(((SvnRepositoryLocation)location).getURL());
+      final boolean isRemote = path == null;
       final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
       if (progress != null) {
         progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
@@ -206,7 +208,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
       getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
         public void consume(final SVNLogEntry svnLogEntry) {
-          final SvnChangeList cl = new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot);
+          final SvnChangeList cl = new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot, isRemote);
           if (filter.accepts(cl)) {
             consumer.consume(cl);
           }
