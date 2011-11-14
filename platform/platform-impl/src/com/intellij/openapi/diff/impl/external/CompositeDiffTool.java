@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UIBasedFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +49,16 @@ class CompositeDiffTool implements DiffTool {
 
   @Nullable
   private DiffTool chooseTool(DiffRequest data) {
+    final DiffContent[] contents = data.getContents();
+
+    if (contents != null && contents.length == 2) {
+      final FileType type1 = contents[0].getContentType();
+      final FileType type2 = contents[1].getContentType();
+      if (type1 == type2 && type1 instanceof UIBasedFileType) {
+        return BinaryDiffTool.INSTANCE;
+      }
+    }
+
     for (DiffTool tool : myTools) {
       if (tool.canShow(data)) return tool;
     }

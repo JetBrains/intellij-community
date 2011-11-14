@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class GuiFormFileType implements FileType {
+public class GuiFormFileType implements UIBasedFileType {
 
   public static final GuiFormFileType INSTANCE = new GuiFormFileType();
 

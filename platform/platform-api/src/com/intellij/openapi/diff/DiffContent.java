@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -80,6 +81,7 @@ public abstract class DiffContent {
    * @return VirtualFile from which this content gets data.
    * null means this content has no file associated
    */
+  @Nullable
   public abstract VirtualFile getFile();
 
   /**

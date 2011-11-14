@@ -19,11 +19,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
@@ -36,6 +40,7 @@ public class BinaryContent extends DiffContent {
   private final byte[] myBytes;
   private final Charset myCharset;
   private Document myDocument = null;
+  private String myFilePath;
 
   /**
    *
@@ -53,6 +58,11 @@ public class BinaryContent extends DiffContent {
     else {
       myCharset = charset;
     }
+  }
+  
+  public BinaryContent(byte[] bytes, Charset charset, @NotNull FileType fileType, String filePath) {
+    this(bytes, charset, fileType);
+    myFilePath = filePath;
   }
 
   @SuppressWarnings({"EmptyCatchBlock"})
@@ -91,10 +101,16 @@ public class BinaryContent extends DiffContent {
     return null;
   }
 
-  /**
-   * @return null
-   */
+  @Nullable
   public VirtualFile getFile() {
+    if (myFileType instanceof UIBasedFileType) {
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(myFilePath));
+      if (file != null) {
+        final LightVirtualFile lightFile = new LightVirtualFile(file, new String(myBytes), 1);
+        lightFile.setOriginalFile(file);
+        return lightFile;
+      }
+    }
     return null;
   }
 

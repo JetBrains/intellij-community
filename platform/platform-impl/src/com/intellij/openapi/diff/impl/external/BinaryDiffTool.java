@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -41,7 +42,8 @@ public class BinaryDiffTool implements DiffTool {
     final DiffContent current = data.getContents()[0];
     final DiffContent upToDate = data.getContents()[1];
     final Project project = data.getProject();
-    if ((current instanceof FileContent && upToDate instanceof FileContent)) {
+    if ((current instanceof FileContent && upToDate instanceof FileContent)
+        || (current.getContentType() instanceof UIBasedFileType && upToDate.getContentType() instanceof UIBasedFileType)) {
       final VirtualFile src = current.getFile();
       final VirtualFile trg = upToDate.getFile();
       if (src != null && trg != null) {
