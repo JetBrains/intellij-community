@@ -575,4 +575,16 @@ public class VcsUtil {
   public static void setAspectAvailability(String aspectID, boolean showByDefault) {
     PropertiesComponent.getInstance().setValue(ANNO_ASPECT + aspectID, String.valueOf(showByDefault));
   }
+
+  public static boolean isPathRemote(String path) {
+    final int idx = path.indexOf("://");
+    if (idx == -1) {
+      final int idx2 = path.indexOf(":\\\\");
+      if (idx2 == -1) {
+        return false;
+      }
+      return idx2 > 0;
+    }
+    return idx > 0;
+  }
 }

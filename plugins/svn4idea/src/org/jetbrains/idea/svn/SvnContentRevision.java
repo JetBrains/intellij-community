@@ -38,7 +38,7 @@ import java.io.IOException;
 /**
  * @author yole
 */
-class SvnContentRevision implements ContentRevision {
+public class SvnContentRevision implements ContentRevision {
   private final SvnVcs myVcs;
   protected final FilePath myFile;
   private final SVNRevision myRevision;
