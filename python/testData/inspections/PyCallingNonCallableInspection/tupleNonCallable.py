@@ -1,1 +1,1 @@
-<warning descr="'tuple' object is not callable">(1,2)()</warning>
+<warning descr="'tuple(int,int)' object is not callable">(1,2)()</warning>

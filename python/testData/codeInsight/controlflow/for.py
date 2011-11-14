@@ -1,4 +1,4 @@
-for i in range(10)
+for i in range(10):
     print(i)
-else
-    print "Something went  wrong"
+else:
+    print('for-loop executed 0 or more times, no break')

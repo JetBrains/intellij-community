@@ -43,7 +43,17 @@ public class PyCallingNonCallableTest extends PyTestCase {
   public void testClassMethodFirstParam() {
     doTest();
   }
-  
+
+  // PY-4090
+  public void testDecorators() {
+    doTest();
+  }
+
+  // PY-4608
+  public void testUnionType() {
+    doTest();
+  }
+
   private void doTest() {
     setLanguageLevel(LanguageLevel.PYTHON27);
     try {
