@@ -182,9 +182,9 @@ public class DirDiffPanel implements Disposable {
         column.setMinWidth(120);
       }
     }
-    final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, this.getPanel());
+    final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, myDiffPanel);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", actions, true);
-    registerCustomShortcuts(actions, myRootPanel);
+    registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.add(myComponent, BorderLayout.CENTER);
@@ -350,10 +350,14 @@ public class DirDiffPanel implements Disposable {
     myDiffPanel.repaint();
   }
 
-  private void registerCustomShortcuts(DirDiffToolbarActions actions, JPanel rootPanel) {
-    final ActionManager mgr = ActionManager.getInstance();
+  private void registerCustomShortcuts(DirDiffToolbarActions actions, JComponent component) {
     for (AnAction action : actions.getChildren(null)) {
-
+      if (action instanceof ShortcutProvider) {
+        final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
+        if (shortcut != null) {
+          action.registerCustomShortcutSet(shortcut, component);
+        }
+      }
     }
   }
 
