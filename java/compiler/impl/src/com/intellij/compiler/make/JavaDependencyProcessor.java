@@ -31,7 +31,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
-import gnu.trove.*;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectIterator;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -237,6 +240,8 @@ class JavaDependencyProcessor {
     else {
       boolean becameAbstract = !ClsUtil.isAbstract(oldCache.getFlags(myQName)) && ClsUtil.isAbstract(newCache.getFlags(myQName));
       boolean accessRestricted = MakeUtil.isMoreAccessible(oldCache.getFlags(myQName), newCache.getFlags(myQName));
+      Set<MethodInfo> removedMethods = null;
+      Set<MethodInfo> addedMethods = null;
       for (Dependency backDependency : getBackDependencies()) {
         if (myDependencyCache.isTargetClassInfoMarked(backDependency)) continue;
 
@@ -272,8 +277,11 @@ class JavaDependencyProcessor {
           }
           continue;
         }
-        Collection<Dependency.MethodRef> usedMethods = backDependency.getMethodRefs();
-        if (isDependentOnEquivalentMethods(usedMethods, extractMethods(myRemovedMembers, true))) {
+        final Collection<Dependency.MethodRef> usedMethods = backDependency.getMethodRefs();
+        if (removedMethods == null) {
+          removedMethods = extractMethods(myRemovedMembers, true);
+        }
+        if (isDependentOnEquivalentMethods(usedMethods, removedMethods)) {
           if (myDependencyCache.markTargetClassInfo(backDependency)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Mark dependent class " + myDependencyCache.resolve(backDependency.getClassQualifiedName()) +
@@ -282,7 +290,10 @@ class JavaDependencyProcessor {
           }
           continue;
         }
-        if (isDependentOnEquivalentMethods(usedMethods, extractMethods(myAddedMembers, true))) {
+        if (addedMethods == null) {
+          addedMethods = extractMethods(myAddedMembers, true);
+        }
+        if (isDependentOnEquivalentMethods(usedMethods, addedMethods)) {
           if (myDependencyCache.markTargetClassInfo(backDependency)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Mark dependent class " + myDependencyCache.resolve(backDependency.getClassQualifiedName()) +
