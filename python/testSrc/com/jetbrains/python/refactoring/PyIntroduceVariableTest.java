@@ -30,6 +30,10 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  public void testMultilineString() {  // PY-4962
+    doTest();
+  }
+
   public void testSuggestKeywordArgumentName() {   // PY-1260
     doTestSuggestions(PyExpression.class, "extra_context");
   }
