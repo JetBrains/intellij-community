@@ -20,23 +20,31 @@ public class ReadWriteInstruction extends InstructionImpl {
   };
 
   public enum ACCESS {
-    READ(true, false),
-    WRITE(false, true),
-    WRITETYPE(false, true),
-    READWRITE(true, true);
+    READ(true, false, false),
+    WRITE(false, true, false),
+    ASSERTTYPE(false, false, true),
+    READWRITE(true, true, false);
 
     private final boolean isWrite;
     private final boolean isRead;
+    private final boolean isAssertType;
 
-    ACCESS(boolean read, boolean write) {
+    ACCESS(boolean read, boolean write, boolean assertType) {
       isRead = read;
       isWrite = write;
+      isAssertType = assertType;
     }
-    public boolean isWriteAccess(){
+
+    public boolean isWriteAccess() {
       return isWrite;
     }
-    public boolean isReadAccess(){
+
+    public boolean isReadAccess() {
       return isRead;
+    }
+
+    public boolean isAssertTypeAccess() {
+      return isAssertType;
     }
   }
 
@@ -93,7 +101,7 @@ public class ReadWriteInstruction extends InstructionImpl {
                                                 final PsiElement element,
                                                 final String name,
                                                 final Function<TypeEvalContext, PyType> getType) {
-    return new ReadWriteInstruction(builder, element, name, ACCESS.WRITETYPE, getType);
+    return new ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType);
   }
 
   @Nullable

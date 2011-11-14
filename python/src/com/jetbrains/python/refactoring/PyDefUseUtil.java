@@ -50,7 +50,7 @@ public class PyDefUseUtil {
       final PsiElement element = instruction.getElement();
       final String name = elementName(element);
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
-      if (access.isWriteAccess() && Comparing.strEqual(name, var.getName())) {
+      if ((access.isWriteAccess() || access.isAssertTypeAccess()) && Comparing.strEqual(name, var.getName())) {
         result.add(instruction);
         return;
       }
