@@ -33,9 +33,17 @@ import java.util.regex.Pattern;
  */
 public class GitHttpCredentialsProvider extends CredentialsProvider {
 
+  private static final Pattern HTTP_URL_PATTERN = Pattern.compile("http(?:s?)://(?:([\\S^@\\.]*)@)?.*");
+
   private final Project myProject;
   private final String myRemoteUrl;
+
   private boolean myCancelled;
+  private boolean myRememberPassword;
+  private String myPassword;
+  private String myUserName;
+  private boolean myShowDialog;
+  private boolean myDialogShown;
 
   public GitHttpCredentialsProvider(@NotNull Project project, @NotNull String remoteUrl) {
     myProject = project;
@@ -75,16 +83,33 @@ public class GitHttpCredentialsProvider extends CredentialsProvider {
     
     if (userNameItem != null || passwordItem != null) {
       String username = getUserNameFromUrl(myRemoteUrl);
-      final AuthDialog dialog = new AuthDialog(myProject, "Login required", "Login to " + myRemoteUrl, username, null, true);
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          dialog.show();
-        }
-      });
-      boolean ok = dialog.isOK();
+      String password = null;
+      if (username == null) { // username is not in the url => reading pre-filled value from the password storage
+        username = myUserName;
+        password = myPassword;
+      } else if (username.equals(myUserName)) { // username is in url => read password only if it is for the same user
+        password = myPassword;
+      }
+
+      final AuthDialog dialog = new AuthDialog(myProject, "Login required", "Login to " + myRemoteUrl, username, password, false);
+      boolean ok;
+      if (username != null && password != null && !myShowDialog) {
+        ok = true;
+        myDialogShown = false;
+      } else {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            dialog.show();
+          }
+        });
+        ok = dialog.isOK();
+        myDialogShown = true;
+      }
+
       if (!ok) {
         myCancelled = true;
+        myRememberPassword = false;  // in case of re-usage of the provider
       } else {
         if (userNameItem != null) {
           userNameItem.setValue(dialog.getUsername());
@@ -92,14 +117,56 @@ public class GitHttpCredentialsProvider extends CredentialsProvider {
         if (passwordItem != null) {
           passwordItem.setValue(dialog.getPassword().toCharArray());
         }
+        myRememberPassword = dialog.isRememberPassword();
+        myPassword = dialog.getPassword();
+        myUserName = dialog.getUsername();
       }
       return ok;
     }
     return true;
   }
 
-  private static final Pattern HTTP_URL_PATTERN = Pattern.compile("http(?:s?)://(?:([\\S^@\\.]*)@)?.*");
-  
+  public boolean isRememberPassword() {
+    return myRememberPassword;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Nullable
+  public String getPassword() {
+    return myPassword;
+  }
+
+  @Nullable
+  public String getUserName() {
+    return myUserName;
+  }
+
+  @NotNull
+  public String getUrl() {
+    return myRemoteUrl;
+  }
+
+  public void fillAuthDataIfNotFilled(@NotNull String login, @NotNull String password) {
+    if (myUserName == null) {
+      myUserName = login;
+      myPassword = password;
+    } else if (myPassword != null) {
+      myPassword = password;
+    }
+  }
+
+  public void setAlwaysShowDialog(boolean showDialog) {
+    myShowDialog = showDialog;
+  }
+
+  public boolean wasDialogShown() {
+    return myDialogShown;
+  }
+
   @Nullable
   private static String getUserNameFromUrl(@NotNull String url) {
     Matcher matcher = HTTP_URL_PATTERN.matcher(url);

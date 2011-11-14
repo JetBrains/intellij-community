@@ -15,8 +15,15 @@
  */
 package git4idea.jgit;
 
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import git4idea.push.GitSimplePushResult;
+import git4idea.remote.GitRememberedInputs;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitFetchResult;
 import org.eclipse.jgit.api.FetchCommand;
@@ -195,7 +202,17 @@ public final class GitHttpAdapter {
   private static GeneralResult callWithAuthRetry(@NotNull MyRunnable command, GitHttpCredentialsProvider provider) throws InvalidRemoteException, IOException {
     for (int i = 0; i < 3; i++) {
       try {
+        AuthData authData = getUsernameAndPassword(provider.getProject(), provider.getUrl());
+        if (authData != null) {
+          provider.fillAuthDataIfNotFilled(authData.getLogin(), authData.getPassword());
+        }
+        if (i == 0) {
+          provider.setAlwaysShowDialog(false);   // if username and password are supplied, no need to show the dialog
+        } else {
+          provider.setAlwaysShowDialog(true);    // unless these values fail authentication
+        }
         command.run();
+        rememberPassword(provider);
         return GeneralResult.SUCCESS;
       } catch (JGitInternalException e) {
         if (!authError(e)) {
@@ -207,7 +224,98 @@ public final class GitHttpAdapter {
     }
     return GeneralResult.NOT_AUTHORIZED;
   }
+
+  private static void rememberPassword(@NotNull GitHttpCredentialsProvider credentialsProvider) {
+    if (!credentialsProvider.wasDialogShown()) { // the dialog is not shown => everything is already stored
+      return;
+    }
+    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+    if (passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
+      return;
+    }
+    String login = credentialsProvider.getUserName();
+    if (login == null || credentialsProvider.getPassword() == null) {
+      return;
+    }
+
+    String url = adjustHttpUrl(credentialsProvider.getUrl());
+    String key = keyForUrlAndLogin(url, login);
+    try {
+      // store in memory always
+      storePassword(passwordSafe.getMemoryProvider(), credentialsProvider, key);
+      if (credentialsProvider.isRememberPassword()) {
+        storePassword(passwordSafe.getMasterKeyProvider(), credentialsProvider, key);
+      }
+      GitRememberedInputs.getInstance().addUrl(url, login);
+    }
+    catch (PasswordSafeException e) {
+      LOG.info("Couldn't store the password for key [" + key + "]", e);
+    }
+  }
+
+  private static void storePassword(PasswordSafeProvider passwordProvider, GitHttpCredentialsProvider credentialsProvider, String key) throws PasswordSafeException {
+    passwordProvider.storePassword(credentialsProvider.getProject(), GitHttpCredentialsProvider.class, key, credentialsProvider.getPassword());
+  }
+
+  @Nullable
+  private static AuthData getUsernameAndPassword(Project project, String url) {
+    url = adjustHttpUrl(url);
+    String userName = GitRememberedInputs.getInstance().getUserNameForUrl(url);
+    if (userName == null) {
+      return null;
+    }
+    String key = keyForUrlAndLogin(url, userName);
+    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+    try {
+      String password = passwordSafe.getMemoryProvider().getPassword(project, GitHttpCredentialsProvider.class, key);
+      if (password == null) {
+        password = passwordSafe.getMasterKeyProvider().getPassword(project, GitHttpCredentialsProvider.class, key);
+      }
+      return password != null ? new AuthData(userName, password) : null;
+    }
+    catch (PasswordSafeException e) {
+      LOG.info("Couldn't store the password for key [" + key + "]", e);
+      return null;
+    }
+  }
   
+  private static class AuthData {
+    private final String myLogin;
+    private final String myPassword;
+
+    private AuthData(@NotNull String login, @NotNull String password) {
+      myPassword = password;
+      myLogin = login;
+    }
+
+    @NotNull
+    public String getLogin() {
+      return myLogin;
+    }
+
+    @NotNull
+    public String getPassword() {
+      return myPassword;
+    }
+  }
+  
+
+  /**
+   * If url is HTTPS, store it as HTTP in the password database, not to make user enter and remember same credentials twice. 
+   */
+  @NotNull
+  private static String adjustHttpUrl(@NotNull String url) {
+    if (url.startsWith("https")) {
+      return url.replaceFirst("https", "http");
+    }
+    return url;
+  }
+
+  @NotNull
+  private static String keyForUrlAndLogin(@NotNull String stringUrl, @NotNull String login) {
+    return login + ":" + stringUrl;
+  }
+
   private static boolean authError(@NotNull JGitInternalException e) {
     Throwable cause = e.getCause();
     return (cause instanceof TransportException && cause.getMessage().contains("not authorized"));
