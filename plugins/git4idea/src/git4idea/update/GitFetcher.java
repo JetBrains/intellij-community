@@ -74,7 +74,7 @@ public class GitFetcher {
         continue;
       }
       if (GitHttpAdapter.isHttpUrl(url)) {
-        GitFetchResult res = GitHttpAdapter.fetch(repository, remote);
+        GitFetchResult res = GitHttpAdapter.fetch(repository, remote.getName(), url);
         myErrors.addAll(res.getErrors());
         if (!res.isSuccess()) {
           result = res;

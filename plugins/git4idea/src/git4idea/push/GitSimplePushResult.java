@@ -50,12 +50,12 @@ public final class GitSimplePushResult {
   
   @NotNull
   public static GitSimplePushResult cancel() {
-    return new GitSimplePushResult(Type.CANCEL, "", Collections.<String>emptyList());
+    return new GitSimplePushResult(Type.CANCEL, "Cancelled by user", Collections.<String>emptyList());
   }
 
   @NotNull
   public static GitSimplePushResult notAuthorized() {
-    return new GitSimplePushResult(Type.NOT_AUTHORIZED, "", Collections.<String>emptyList());
+    return new GitSimplePushResult(Type.NOT_AUTHORIZED, "Couldn't authorize", Collections.<String>emptyList());
   }
 
   @NotNull

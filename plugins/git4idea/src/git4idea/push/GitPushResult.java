@@ -88,9 +88,9 @@ class GitPushResult {
     }
   }
 
-  boolean wasError() {
+  boolean wasErrorCancelOrNotAuthorized() {
     for (GitPushRepoResult repoResult : myResults.values()) {
-      if (repoResult.isError()) {
+      if (repoResult.isError() || repoResult.isCancel() || repoResult.isNotAuthorized()) {
         return true;
       }
     }
@@ -108,7 +108,7 @@ class GitPushResult {
       GitPushRepoResult repoResult = entry.getValue();
       if (repoResult.isSuccess()) {
         successfulResults.put(repository, repoResult);
-      } else if (repoResult.isError()) {
+      } else if (repoResult.isError() || repoResult.isCancel() || repoResult.isNotAuthorized()) {
         errorResults.put(repository, repoResult);
       } else {
         rejectedResults.put(repository, repoResult);

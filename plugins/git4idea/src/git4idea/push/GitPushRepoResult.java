@@ -66,13 +66,13 @@ final class GitPushRepoResult {
   }
 
   @NotNull
-  public static GitPushRepoResult cancelled() {
-    return new GitPushRepoResult(Type.CANCEL, Collections.<GitBranch, GitPushBranchResult>emptyMap(), "");
+  public static GitPushRepoResult cancelled(@NotNull String output) {
+    return new GitPushRepoResult(Type.CANCEL, Collections.<GitBranch, GitPushBranchResult>emptyMap(), output);
   }
 
   @NotNull
-  public static GitPushRepoResult notAuthorized() {
-    return new GitPushRepoResult(Type.NOT_AUTHORIZED, Collections.<GitBranch, GitPushBranchResult>emptyMap(), "");
+  public static GitPushRepoResult notAuthorized(@NotNull String output) {
+    return new GitPushRepoResult(Type.NOT_AUTHORIZED, Collections.<GitBranch, GitPushBranchResult>emptyMap(), output);
   }
 
   boolean isError() {

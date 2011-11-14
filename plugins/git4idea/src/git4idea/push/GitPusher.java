@@ -16,6 +16,7 @@
 package git4idea.push;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.Git;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.GitCommandResult;
@@ -34,6 +36,8 @@ import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
+import git4idea.jgit.GitHttpAdapter;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.settings.GitPushSettings;
@@ -52,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class GitPusher {
 
   public static final String INDICATOR_TEXT = "Pushing";
+  private static final Logger LOG = Logger.getInstance(GitPusher.class);
 
   private final Project myProject;
   private final ProgressIndicator myProgressIndicator;
@@ -217,20 +222,21 @@ public final class GitPusher {
   private static GitPushRepoResult pushRepository(@NotNull GitPushInfo pushInfo,
                                                   @NotNull GitCommitsByRepoAndBranch commits,
                                                   @NotNull GitRepository repository) {
-    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushInfo.getPushSpecs().get(repository));
+    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushInfo.getPushSpecs().get(repository), commits.get(repository));
+    String output = simplePushResult.getOutput();
     switch (simplePushResult.getType()) {
       case SUCCESS:
-        return successOrErrorRepoResult(commits, repository, simplePushResult.getOutput(), true);
+        return successOrErrorRepoResult(commits, repository, output, true);
       case ERROR:
-        return successOrErrorRepoResult(commits, repository, simplePushResult.getOutput(), false);
+        return successOrErrorRepoResult(commits, repository, output, false);
       case REJECT:
         return getResultFromRejectedPush(commits, repository, simplePushResult);
       case NOT_AUTHORIZED:
-        return GitPushRepoResult.notAuthorized();
+        return GitPushRepoResult.notAuthorized(output);
       case CANCEL:
-        return GitPushRepoResult.cancelled();
+        return GitPushRepoResult.cancelled(output);
       default:
-        return GitPushRepoResult.cancelled();
+        return GitPushRepoResult.cancelled(output);
     }
   }
 
@@ -263,7 +269,56 @@ public final class GitPusher {
     }
   }
 
-  private static GitSimplePushResult pushAndGetSimpleResult(GitRepository repository, GitPushSpec pushSpec) {
+  @NotNull
+  private static GitSimplePushResult pushAndGetSimpleResult(GitRepository repository, GitPushSpec pushSpec, GitCommitsByBranch commitsByBranch) {
+    if (pushSpec.isPushAll()) {
+      // TODO support pushing to different branches with http remotes from one and ssh from other.
+      // Currently it is a hack - get just one remote url and hope that others are the same type and the same server.
+      String remoteUrl = null;
+      for (GitBranch branch : commitsByBranch.getBranches()) {
+        if (remoteUrl != null) {
+          break;
+        }
+        try {
+          String remoteName = branch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
+          GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
+          if (remote != null) {
+            if (!remote.getPushUrls().isEmpty()) {
+              remoteUrl = remote.getPushUrls().iterator().next();
+            }
+          }
+        }
+        catch (VcsException e) {
+          LOG.info(e);
+        }
+      }
+
+      if (remoteUrl == null) {
+        return pushNatively(repository, pushSpec);
+      } else {
+        return GitHttpAdapter.isHttpUrl(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl) : pushNatively(repository, pushSpec);
+      }
+    }
+    else {
+      GitRemote remote = pushSpec.getRemote();
+      assert remote != null : "Remote can't be null for pushSpec " + pushSpec;
+      String httpUrl = null;
+      for (String pushUrl : remote.getPushUrls()) {
+        if (GitHttpAdapter.isHttpUrl(pushUrl)) {
+          httpUrl = pushUrl;
+          break;            // TODO support http and ssh urls in one origin
+        }
+      }
+      if (httpUrl != null) {
+        return GitHttpAdapter.push(repository,  remote.getName(), httpUrl);
+      } else {
+        return pushNatively(repository, pushSpec);
+      }
+    }
+  }
+
+  @NotNull
+  private static GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
     GitCommandResult res = Git.push(repository, pushSpec, rejectedDetector);
     if (rejectedDetector.rejected()) {
@@ -300,8 +355,13 @@ public final class GitPusher {
 
   private static boolean branchInRejected(@NotNull GitBranch branch, @NotNull Collection<String> rejectedBranches) {
     String branchName = branch.getName();
+    final String REFS_HEADS = "refs/heads/";
+    if (branchName.startsWith(REFS_HEADS)) {
+      branchName = branchName.substring(REFS_HEADS.length());
+    }
+    
     for (String rejectedBranch : rejectedBranches) {
-      if (rejectedBranch.equals(branchName)) {
+      if (rejectedBranch.equals(branchName) || (rejectedBranch.startsWith(REFS_HEADS) &&  rejectedBranch.substring(REFS_HEADS.length()).equals(branchName))) {
         return true;
       }
     }
@@ -323,7 +383,7 @@ public final class GitPusher {
     if (result.isEmpty()) {
       GitVcs.NOTIFICATION_GROUP_ID.createNotification("Nothing to push", NotificationType.INFORMATION).notify(myProject);
     }
-    else if (result.wasError()) {
+    else if (result.wasErrorCancelOrNotAuthorized()) {
       // if there was an error on any repo, we won't propose to update even if current branch of a repo was rejected
       result.createNotification().notify(myProject);
     }

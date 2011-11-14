@@ -18,7 +18,6 @@ package git4idea.jgit;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.AuthDialog;
-import git4idea.repo.GitRemote;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -35,12 +34,12 @@ import java.util.regex.Pattern;
 public class GitHttpCredentialsProvider extends CredentialsProvider {
 
   private final Project myProject;
-  private final GitRemote myRemote;
+  private final String myRemoteUrl;
   private boolean myCancelled;
 
-  public GitHttpCredentialsProvider(@NotNull Project project, @NotNull GitRemote remote) {
+  public GitHttpCredentialsProvider(@NotNull Project project, @NotNull String remoteUrl) {
     myProject = project;
-    myRemote = remote;
+    myRemoteUrl = remoteUrl;
   }
 
   @Override
@@ -75,12 +74,8 @@ public class GitHttpCredentialsProvider extends CredentialsProvider {
     }
     
     if (userNameItem != null || passwordItem != null) {
-      String url = myRemote.getFirstUrl();
-      if (url == null) {
-        return false;
-      }
-      String username = getUserNameFromUrl(url);
-      final AuthDialog dialog = new AuthDialog(myProject, "Login required", "Login to " + url, username, null, true);
+      String username = getUserNameFromUrl(myRemoteUrl);
+      final AuthDialog dialog = new AuthDialog(myProject, "Login required", "Login to " + myRemoteUrl, username, null, true);
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
