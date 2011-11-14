@@ -45,7 +45,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
     private static final int LEFT_MARGIN = new JLabel().getFontMetrics(UIUtil.getLabelFont()).stringWidth("  ");
     private final JLabel myNameLabel = new JLabel();
     private final JLabel myStatusLabel = new JLabel();
-    private final JLabel myRepositoryLabel = new JLabel();
+    private final JLabel myCategoryLabel = new JLabel();
     private final JPanel myPanel = new JPanel(new GridBagLayout());
 
     private final IdeaPluginDescriptor myPluginDescriptor;
@@ -57,6 +57,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
       final Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
       myStatusLabel.setFont(smallFont);
+      myCategoryLabel.setFont(smallFont);
 
       myPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0));
 
@@ -72,6 +73,9 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       gn.fill = GridBagConstraints.HORIZONTAL;
       namePanel.add(Box.createHorizontalBox(), gn);
       namePanel.setOpaque(false);
+      gn.fill = GridBagConstraints.NONE;
+      gn.weightx = 0;
+      namePanel.add(myCategoryLabel, gn);
       myPanel.add(namePanel, gc);
     }
 
@@ -84,15 +88,20 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
         final Color fg = orig.getForeground();
         final Color bg = orig.getBackground();
-        final Color grayedFg = isSelected ? fg : Color.GRAY;
+        final Color grayedFg = isSelected ? fg : Color.DARK_GRAY;
         myNameLabel.setForeground(fg);
         myStatusLabel.setForeground(grayedFg);
+        
 
         myPanel.setBackground(bg);
         myNameLabel.setBackground(bg);
         myNameLabel.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
+        String category = myPluginDescriptor.getCategory();
+        if (category != null) {
+          myCategoryLabel.setText(category);
+          myCategoryLabel.setForeground(grayedFg);
+        }
 
-        
         if (isDownloaded(pluginNode)) {
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_ADDED);
           myStatusLabel.setText("[Downloaded]");

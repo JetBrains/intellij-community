@@ -81,6 +81,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -477,7 +478,11 @@ public class CompileDriver {
 
       public void sessionTerminated() {
         if (callback != null) {
-          callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+              callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
+            }
+          });
         }
       }
     });

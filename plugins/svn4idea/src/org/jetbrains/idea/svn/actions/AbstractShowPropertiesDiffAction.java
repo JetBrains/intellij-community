@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnContentRevision;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
@@ -94,6 +95,10 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction implements Dumb
   }
 
   protected boolean checkVcs(final Project project, final Change change) {
+    if (change.getBeforeRevision() instanceof SvnContentRevision || change.getAfterRevision() instanceof SvnContentRevision ||
+        change.getBeforeRevision() instanceof SvnRepositoryContentRevision || change.getAfterRevision() instanceof SvnRepositoryContentRevision) {
+      return true;
+    }
     final VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
     if (virtualFile == null) {
       return false;

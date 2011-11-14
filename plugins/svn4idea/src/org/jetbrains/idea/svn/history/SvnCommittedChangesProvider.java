@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -40,10 +41,12 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
+import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -493,6 +496,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Override
   public Pair<SvnChangeList, FilePath> getOneList(final VirtualFile file, VcsRevisionNumber number) throws VcsException {
+    if (! file.isInLocalFileSystem() && VcsUtil.isPathRemote(file.getPath())) {
+      final SvnChangeList list = ShowAllSubmittedFilesAction.loadRevisions(myProject, file, (SvnRevisionNumber)number,
+                                                                           FileUtil.toSystemIndependentName(file.getPath()));
+      return new Pair<SvnChangeList, FilePath>(list, new FilePathImpl(file));
+    }
+
     final RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
     if (rootUrlInfo == null) return null;
     final VirtualFile root = rootUrlInfo.getVirtualFile();
