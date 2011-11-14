@@ -804,9 +804,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     boolean sameCase = true;
     for (int i = 0; i < length && (isAllLower || isAllUpper || sameCase); i++) {
       final char c = prefix.charAt(i);
-      isAllLower = isAllLower && Character.isLowerCase(c);
-      isAllUpper = isAllUpper && Character.isUpperCase(c);
-      sameCase = sameCase && Character.isLowerCase(c) == Character.isLowerCase(lookupString.charAt(i));
+      boolean isLower = Character.isLowerCase(c);
+      boolean isUpper = Character.isUpperCase(c);
+      // do not take this kind of symbols into account ('_', '@', etc.)
+      if (!isLower && !isUpper) continue;
+      isAllLower = isAllLower && isLower;
+      isAllUpper = isAllUpper && isUpper;
+      sameCase = sameCase && isLower == Character.isLowerCase(lookupString.charAt(i));
     }
     if (sameCase) return lookupString;
     if (isAllLower) return lookupString.toLowerCase();
