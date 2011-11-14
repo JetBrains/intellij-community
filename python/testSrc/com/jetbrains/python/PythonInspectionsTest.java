@@ -198,6 +198,10 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  public void testPyByteLiteralInspection1() {
+    doHighlightingTest(PyByteLiteralInspection.class);
+  }
+
   public void testPyTupleItemAssignmentInspection() {
     LocalInspectionTool inspection = new PyTupleItemAssignmentInspection();
     doTest(getTestName(false), inspection);

@@ -4,10 +4,13 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.nio.charset.Charset;
 
 import static com.jetbrains.python.psi.FutureFeature.UNICODE_LITERALS;
 
@@ -37,6 +40,7 @@ public class PyByteLiteralInspection extends PyInspection {
     @Override
     public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
       PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
+      if (file == null) return;
       boolean default_bytes = false;
       if (file instanceof PyFile) {
         PyFile pyfile = (PyFile)file;
@@ -44,6 +48,11 @@ public class PyByteLiteralInspection extends PyInspection {
                          !pyfile.hasImportFromFuture(UNICODE_LITERALS)
         );
       }
+
+      final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(file.getText());
+      if (charsetString != null && !Charset.forName(charsetString).equals(Charset.forName("US-ASCII")))
+        default_bytes = false;
+
       boolean hasProblem = false;
       char first_char = Character.toLowerCase(node.getText().charAt(0));
       if (first_char == 'b' || (default_bytes && first_char != 'u')) {
