@@ -68,6 +68,7 @@ public class GradleConfigurable implements SearchableConfigurable {
   private JComponent         myComponent;
   private NamePathComponent  myGradleHomeComponent;
   private boolean            myPathManuallyModified;
+  private boolean            myShowBalloonIfNecessary;
 
   public GradleConfigurable(@Nullable Project project) {
     this(project, ServiceManager.getService(GradleLibraryManager.class));
@@ -105,7 +106,26 @@ public class GradleConfigurable implements SearchableConfigurable {
   }
 
   private void doCreateComponent() {
-    myComponent = new JPanel(new GridBagLayout());
+    myComponent = new JPanel(new GridBagLayout()) {
+      @Override
+      public void paint(Graphics g) {
+        super.paint(g);
+        if (!myShowBalloonIfNecessary) {
+          return;
+        }
+        myShowBalloonIfNecessary = false;
+        MessageType messageType = null;
+        switch (myGradleHomeSettingType) {
+          case DEDUCED: messageType = MessageType.WARNING; break;
+          case EXPLICIT_INCORRECT:
+          case UNKNOWN: messageType = MessageType.ERROR; break;
+          default:
+        }
+        if (messageType != null) {
+          new DelayedBalloonInfo(messageType, myGradleHomeSettingType).run();
+        }
+      }
+    };
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridwidth = GridBagConstraints.REMAINDER;
     constraints.weightx = 1;
@@ -140,6 +160,7 @@ public class GradleConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
+    myShowBalloonIfNecessary = true;
     if (!myPathManuallyModified) {
       return false;
     }
