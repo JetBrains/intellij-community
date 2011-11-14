@@ -11,7 +11,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
@@ -100,9 +99,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression qualifier = node.getQualifier();
     if (qualifier != null) {
       qualifier.accept(this);
-      if (!isSelf(qualifier)) {
-        return;
-      }
+      return;
     }
     if (PyImportStatementNavigator.getImportStatementByElement(node) != null) {
       return;
@@ -114,23 +111,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
     myBuilder.addNode(readWriteInstruction);
     myBuilder.checkPending(readWriteInstruction);
-  }
-
-  public static boolean isSelf(PsiElement qualifier) {
-    PyFunction func = PsiTreeUtil.getParentOfType(qualifier, PyFunction.class);
-    if (func == null || !(ScopeUtil.getScopeOwner(func) instanceof PyClass)) {
-      return false;
-    }
-    final PyParameter[] params = func.getParameterList().getParameters();
-    if (params.length == 0) {
-      return false;
-    }
-    final PyNamedParameter named = params[0].getAsNamed();
-    if (named == null) {
-      return false;
-    }
-    final String name = named.getName();
-    return name != null && name.equals(qualifier.getText());
   }
 
   @Override
@@ -159,7 +139,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyTargetExpression(final PyTargetExpression node) {
     final PsiElement[] children = node.getChildren();
     // Case of non qualified reference
-    if (children.length == 0 || (children.length == 1 && isSelf(children[0]))) {
+    if (children.length == 0) {
       final ReadWriteInstruction.ACCESS access = node.getParent() instanceof PySliceExpression
                                                  ? ReadWriteInstruction.ACCESS.READ : ReadWriteInstruction.ACCESS.WRITE;
       final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
