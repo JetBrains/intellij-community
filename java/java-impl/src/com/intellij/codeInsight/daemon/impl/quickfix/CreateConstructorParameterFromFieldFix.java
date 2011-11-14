@@ -77,16 +77,17 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiField field = getField();
+    return isAvailable(getField());
+  }
+
+  private static boolean isAvailable(PsiField field) {
     PsiClass containingClass = field == null ? null : field.getContainingClass();
-    return
-           field != null
+    return field != null
            && field.getManager().isInProject(field)
            && !field.hasModifierProperty(PsiModifier.STATIC)
            && containingClass != null
            && !(containingClass instanceof JspClass)
-           && containingClass.getName() != null
-      ;
+           && containingClass.getName() != null;
   }
 
   @Override
@@ -146,7 +147,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       final List<PsiField> fields = new ArrayList<PsiField>();
       for (SmartPsiElementPointer<PsiField> elementPointer : fieldsToFix) {
         final PsiField field = elementPointer.getElement();
-        if (field != null && filterConstructorsIfFieldAlreadyAssigned(new PsiMethod[]{constructor}, field).contains(constructor)) {
+        if (field != null && isAvailable(field) && filterConstructorsIfFieldAlreadyAssigned(new PsiMethod[]{constructor}, field).contains(constructor)) {
           fields.add(field);
         }
       }
@@ -165,6 +166,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     return new AbstractCollection<SmartPsiElementPointer<PsiField>>() {
       @Override
       public boolean add(SmartPsiElementPointer<PsiField> psiVariable) {
+        PsiField field = psiVariable.getElement();
+        if (field == null || !isAvailable(field)) return false;
         return finalFields.put(psiVariable, Boolean.TRUE) == null;
       }
 

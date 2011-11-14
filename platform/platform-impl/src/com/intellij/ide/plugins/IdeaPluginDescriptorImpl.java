@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.PathManager;
@@ -486,7 +487,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     ResourceBundle bundle = null;
     if (myResourceBundleBaseName != null) {
       try {
-        bundle = ResourceBundle.getBundle(myResourceBundleBaseName, Locale.getDefault(), classLoader);
+        bundle = AbstractBundle.getResourceBundle(myResourceBundleBaseName, classLoader);
       }
       catch (MissingResourceException e) {
         LOG.info("Cannot find plugin " + myId + " resource-bundle: " + myResourceBundleBaseName);

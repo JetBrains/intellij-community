@@ -41,6 +41,7 @@ public class MediatorImpl implements Mediator {
   private Loader myLoader;
   private final LoadGrowthController myController;
   private Map<VirtualFile, SequenceSupportBuffer> mySequenceBuffers;
+  private DetailsLoader myDetailsLoader;
 
   public MediatorImpl(final Project project, GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
@@ -88,6 +89,7 @@ public class MediatorImpl implements Mediator {
       @Override
       public void run() {
         if (!myTicket.equals(ticket)) return;
+        myDetailsLoader.reportRefs(root, symbolicRefs);
         myUIRefresh.reportSymbolicRefs(root, symbolicRefs);
       }
     };
@@ -159,6 +161,10 @@ public class MediatorImpl implements Mediator {
 
   public void setUIRefresh(UIRefresh UIRefresh) {
     myUIRefresh = UIRefresh;
+  }
+
+  public void setDetailsLoader(DetailsLoader loader) {
+    myDetailsLoader = loader;
   }
 
   private static boolean pageSizeOk(final Integer size) {

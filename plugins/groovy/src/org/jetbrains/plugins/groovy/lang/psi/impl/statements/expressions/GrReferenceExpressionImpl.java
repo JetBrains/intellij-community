@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -434,7 +436,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GroovyResolveResult[]>() {
       @Override
       public Result<GroovyResolveResult[]> compute() {
-        return Result.create(doPolyResolve(false, false), PsiModificationTracker.MODIFICATION_COUNT);
+        GroovyResolveResult[] value = RecursionManager.doPreventingRecursion(GrReferenceExpressionImpl.this, true, new Computable<GroovyResolveResult[]>() {
+          @Override
+          public GroovyResolveResult[] compute() {
+            return doPolyResolve(false, false);
+          }
+        });
+        if (value == null) {
+          value = GroovyResolveResult.EMPTY_ARRAY;
+        }
+        return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }

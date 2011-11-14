@@ -16,12 +16,20 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 public class GrLiteralEscaper extends StringLiteralEscaper<GrLiteralImpl> {
 
   public GrLiteralEscaper(final GrLiteralImpl literal) {
     super(literal);
+  }
+
+  @Override
+  protected boolean isStrictBackSlash() {
+    PsiElement child = myHost.getFirstChild();
+    return child == null || child.getNode().getElementType() != GroovyTokenTypes.mREGEX_LITERAL;
   }
 
   public boolean isOneLine() {

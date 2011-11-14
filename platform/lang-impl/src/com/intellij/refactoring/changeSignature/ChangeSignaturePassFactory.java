@@ -28,7 +28,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -96,7 +95,7 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
       if (myRange != null)  {
         info = new HighlightInfo(new TextAttributes(null, null,
                                                     myEditor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor(),
-                                                    EffectType.BOXED, Font.PLAIN),
+                                                    null, Font.PLAIN),
                                  HighlightInfoType.INFORMATION, myRange.getStartOffset(), myRange.getEndOffset(),
                                  SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED, SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED,
                                  HighlightSeverity.INFORMATION, false, true, false);

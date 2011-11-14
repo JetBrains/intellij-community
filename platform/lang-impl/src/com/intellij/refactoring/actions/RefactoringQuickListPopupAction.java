@@ -33,18 +33,29 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(IdeActions.GROUP_REFACTOR);
+    collectEnabledChildren(action, group, dataContext, actionManager);
+  }
+
+  private static void collectEnabledChildren(AnAction action,
+                                             DefaultActionGroup destinationGroup,
+                                             DataContext dataContext,
+                                             ActionManager actionManager) {
     if (action instanceof DefaultActionGroup) {
       final AnAction[] children = ((DefaultActionGroup)action).getChildren(null);
       for (AnAction child : children) {
-        if (child instanceof Separator) {
-          group.add(child);
+        if (child instanceof DefaultActionGroup) {
+          collectEnabledChildren(child, destinationGroup, dataContext, actionManager);
+        } else if (child instanceof Separator) {
+          destinationGroup.add(child);
         }
-        else if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext)) {
-          final Presentation presentation = new Presentation();
-          final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, actionManager, 0);
-          child.update(event);
-          if (presentation.isEnabled() && presentation.isVisible()) {
-            group.add(child);
+        else {
+          if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext)) {
+            final Presentation presentation = new Presentation();
+            final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, actionManager, 0);
+            child.update(event);
+            if (presentation.isEnabled() && presentation.isVisible()) {
+              destinationGroup.add(child);
+            }
           }
         }
       }

@@ -50,6 +50,7 @@ public class PluginTable extends JBTable {
 
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
+    setStriped(true);
   }
 
   public void setColumnWidth(final int columnIndex, final int width) {

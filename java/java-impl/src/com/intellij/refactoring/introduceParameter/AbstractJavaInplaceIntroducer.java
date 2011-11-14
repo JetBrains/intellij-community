@@ -81,6 +81,9 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   protected void restoreState(PsiVariable psiField) {
     final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(getType());
     super.restoreState(psiField);
+    for (PsiExpression occurrence : myOccurrences) {
+      if (!occurrence.isValid()) return;
+    }
     try {
       myTypeSelectorManager = myExpr != null
                               ? new TypeSelectorManagerImpl(myProject, typePointer.getType(), myExpr, myOccurrences)

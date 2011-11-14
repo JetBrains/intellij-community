@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -50,10 +49,19 @@ s.codePointAt(<caret>0)
     myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
     final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate("s = new String()")');
     assertNotNull(psiFile);
+
     def offset = psiFile.getText().indexOf('"') + 1
-    final PsiElement elementAt = psiFile.findElementAt(offset);
-    assertNotNull(elementAt);
+    assertNotNull(psiFile.findElementAt(offset));
     assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, offset)
+  }
+
+  public void testRegexInjections() {
+    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
+    final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate(/ blah-blah-blah \\ language won\'t be injected here /)');
+    assertNotNull(psiFile);
+
+    assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('blah') + 1)
+    assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('injected') + 1)
   }
 
 }

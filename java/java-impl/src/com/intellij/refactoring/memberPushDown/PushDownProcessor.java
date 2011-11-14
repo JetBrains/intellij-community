@@ -115,7 +115,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usagesIn) {
       final PsiElement element = usage.getElement();
       if (element instanceof PsiClass) {
-        pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1, element);
+        boolean canceled = pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1, element);
+        if (canceled) return false;
       }
     }
 

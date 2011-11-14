@@ -46,11 +46,6 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   }
 
   @Override
-  public boolean accept(VirtualFile file) {
-    return myBaseScope.accept(file);
-  }
-
-  @Override
   public boolean isSearchInLibraries() {
     return myBaseScope.isSearchInLibraries();
   }

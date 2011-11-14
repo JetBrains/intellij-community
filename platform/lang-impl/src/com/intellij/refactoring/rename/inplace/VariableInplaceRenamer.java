@@ -99,7 +99,7 @@ public class VariableInplaceRenamer {
   );
   static final String RENAME_TITLE = RefactoringBundle.message("rename.title");
 
-  private PsiNamedElement myElementToRename;
+  protected PsiNamedElement myElementToRename;
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
   private ArrayList<RangeHighlighter> myHighlighters;
@@ -174,7 +174,7 @@ public class VariableInplaceRenamer {
     ourRenamersStack.push(this);
 
     final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<Pair<PsiElement, TextRange>>();
-    collectAdditionalElementsToRename(processTextOccurrences, stringUsages); //todo check default to be consistent
+    collectAdditionalElementsToRename(processTextOccurrences, stringUsages);
     if (appendAdditionalElement(stringUsages)) {
       return runRenameTemplate(nameSuggestions, refs, stringUsages, scope, containingFile);
     } else {
@@ -326,9 +326,11 @@ public class VariableInplaceRenamer {
               }
 
               public void templateCancelled(Template template) {
-                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+                documentManager.commitAllDocuments();
                 finish();
                 moveOffsetAfter(false);
+                documentManager.doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
                 FinishMarkAction.finish(myProject, myEditor, markAction);
               }
             });

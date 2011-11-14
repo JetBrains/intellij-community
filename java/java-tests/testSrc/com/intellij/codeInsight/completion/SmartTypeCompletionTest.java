@@ -435,6 +435,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testPrivateOverloads() throws Throwable { doTest(); }
 
+  public void testPolyadicExpression() throws Throwable { doTest(); }
+
   public void testCastAutoboxing() throws Throwable {
     doItemTest();
   }

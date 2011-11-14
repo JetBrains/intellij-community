@@ -395,15 +395,21 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public void selectInspectionTool(String selectedToolShortName) {
-    final SingleInspectionProfilePanel panel = getSelectedPanel();
-    LOG.assertTrue(panel != null, "No settings panel for: " + getSelectedObject());
+    final InspectionProfileImpl inspectionProfile = getSelectedObject();
+    assert inspectionProfile != null : configuredProfiles();
+    final SingleInspectionProfilePanel panel = myPanels.get(inspectionProfile.getName());
+    LOG.assertTrue(panel != null, "No settings panel for: " + inspectionProfile.getName() + "; " + configuredProfiles());
     panel.selectInspectionTool(selectedToolShortName);
   }
 
   protected SingleInspectionProfilePanel getSelectedPanel() {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
-    assert inspectionProfile != null;
+    assert inspectionProfile != null : configuredProfiles();
     return myPanels.get(inspectionProfile.getName());
+  }
+
+  private String configuredProfiles() {
+    return "configured profiles: " + StringUtil.join(myPanels.keySet(), ", ");
   }
 
   protected Set<String> getKnownNames() {
@@ -417,7 +423,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   @Override
   public JComponent getPreferredFocusedComponent() {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
-    assert inspectionProfile != null;
+    assert inspectionProfile != null : configuredProfiles();
     return myPanels.get(inspectionProfile.getName()).getTree();
   }
 }

@@ -55,7 +55,12 @@ public class GitConfigUtil {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
     h.setNoSSH(true);
     h.setSilent(true);
-    h.addParameters("--null", "--get-regexp", keyMask);
+    h.addParameters("--null");
+    if (keyMask != null) {
+      h.addParameters("--get-regexp", keyMask);
+    } else {
+      h.addParameters("-l");
+    }
     String output = h.run();
     int start = 0;
     int pos;

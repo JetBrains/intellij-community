@@ -18,52 +18,49 @@ package org.jetbrains.android.logcat;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
+import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsoleBase;
 import com.intellij.diagnostic.logging.LogConsoleListener;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.IconUtil;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.JTextComponent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public abstract class AndroidLogcatToolWindowView implements Disposable {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.logcat.AndroidLogcatToolWindowView");
-  @NonNls private static final String ANDROID_LOG_TAG_HISTORY_PROPERTY_NAME = "ANDROID_LOG_TAG_HISTORY";
+  static final String EMPTY_CONFIGURED_FILTER = "All messages";
 
   private final Project myProject;
   private JComboBox myDeviceCombo;
@@ -71,6 +68,10 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private JPanel myPanel;
   private JButton myClearLogButton;
   private JPanel mySearchComponentWrapper;
+  private JPanel myFiltersToolbarPanel;
+
+  private JBList myFiltersList;
+
   private volatile IDevice myDevice;
   private final Object myLock = new Object();
   private final LogConsoleBase myLogConsole;
@@ -100,10 +101,22 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private void updateInUIThread() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) {
+          return;
+        }
+
         updateDevices();
         updateLogConsole();
       }
     });
+  }
+
+  Project getProject() {
+    return myProject;
+  }
+
+  public LogConsoleBase getLogConsole() {
+    return myLogConsole;
   }
 
   private class MyLoggingReader extends AndroidLoggingReader {
@@ -135,33 +148,41 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         }
       }
     });
-    AndroidLogFilterModel logFilterModel = new AndroidLogFilterModel(AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_LEVEL) {
-      @Override
-      protected void setCustomFilter(String filter) {
-        AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_CUSTOM_FILTER = filter;
-      }
+    final AndroidLogFilterModel logFilterModel =
+      new AndroidLogFilterModel(AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_LEVEL) {
+        private ConfiguredFilter myConfiguredFilter;
+        
+        @Override
+        protected void setCustomFilter(String filter) {
+          AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_CUSTOM_FILTER = filter;
+        }
 
-      @Override
-      protected void saveLogLevel(Log.LogLevel logLevel) {
-        AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_LEVEL = logLevel.name();
-      }
+        @Override
+        protected void saveLogLevel(Log.LogLevel logLevel) {
+          AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_LEVEL = logLevel.name();
+        }
 
-      @Override
-      public String getCustomFilter() {
-        return AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_CUSTOM_FILTER;
-      }
+        @Override
+        public String getCustomFilter() {
+          return AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_CUSTOM_FILTER;
+        }
 
-      @Override
-      protected void setTagFilter(String tag) {
-        AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_TAG_FILTER = tag;
-      }
+        @Override
+        protected void setConfiguredFilter(ConfiguredFilter filter) {
+          AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_CONFIGURED_FILTER = filter != null ? filter.getName() : "";
+          myConfiguredFilter = filter;
+        }
 
-      @NotNull
-      @Override
-      protected String getTagFilter() {
-        return AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_TAG_FILTER;
-      }
-    };
+        @Nullable
+        @Override
+        protected ConfiguredFilter getConfiguredFilter() {
+          if (myConfiguredFilter == null) {
+            final String name = AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_CONFIGURED_FILTER;
+            myConfiguredFilter = compileConfiguredFilter(name);
+          }
+          return myConfiguredFilter;
+        }
+      };
     myLogConsole = new MyLogConsole(project, logFilterModel);
     myLogConsole.addListener(new LogConsoleListener() {
       @Override
@@ -178,13 +199,33 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     });
     mySearchComponentWrapper.add(myLogConsole.getSearchComponent());
     JComponent consoleComponent = myLogConsole.getComponent();
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.addAll(myLogConsole.getToolbarActions());
-    group.add(new AndroidEnableDdmsAction(AndroidUtils.DDMS_ICON));
-    group.add(new MyRestartAction());
-    final JComponent tbComp =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent();
-    myConsoleWrapper.add(tbComp, BorderLayout.WEST);
+
+    final DefaultActionGroup group1 = new DefaultActionGroup();
+    group1.addAll(myLogConsole.getToolbarActions());
+    group1.add(new AndroidEnableDdmsAction(AndroidUtils.DDMS_ICON));
+    group1.add(new MyRestartAction());
+    final JComponent tbComp1 =
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group1, false).getComponent();
+    myConsoleWrapper.add(tbComp1, BorderLayout.EAST);
+
+    final DefaultActionGroup group2 = new DefaultActionGroup();
+    group2.add(new MyAddFilterAction());
+    group2.add(new MyRemoveFilterAction());
+    group2.add(new MyEditFilterAction());
+    final JComponent tbComp2 =
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group2, true).getComponent();
+    myFiltersToolbarPanel.add(tbComp2, BorderLayout.CENTER);
+
+    final String savedConfiguredFilterName = AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_CONFIGURED_FILTER;
+    myFiltersList.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        final String filterName = (String)myFiltersList.getSelectedValue();
+        final ConfiguredFilter filter = filterName != null ? compileConfiguredFilter(filterName) : null;
+        logFilterModel.updateConfiguredFilter(filter);
+      }
+    });
+
     myConsoleWrapper.add(consoleComponent, BorderLayout.CENTER);
     Disposer.register(this, myLogConsole);
     myClearLogButton.addActionListener(new ActionListener() {
@@ -201,9 +242,60 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
     updateDevices();
     updateLogConsole();
+    updateConfiguredFilters();
+
+    myFiltersList.setSelectedValue(savedConfiguredFilterName, true);
+    if (myFiltersList.getSelectedValue() == null && myFiltersList.getItemsCount() > 0) {
+      myFiltersList.setSelectedIndex(0);
+    }
   }
 
   protected abstract boolean isActive();
+  
+  @Nullable
+  private ConfiguredFilter compileConfiguredFilter(@NotNull String name) {
+    if (EMPTY_CONFIGURED_FILTER.equals(name)) {
+      return null;
+    }
+
+    final AndroidConfiguredLogFilters.MyFilterEntry entry = 
+      AndroidConfiguredLogFilters.getInstance(myProject).findFilterEntryByName(name);
+    if (entry == null) {
+      return null;
+    }
+
+    Pattern logMessagePattern = null;
+    final String logMessagePatternStr = entry.getLogMessagePattern();
+    if (logMessagePatternStr != null && logMessagePatternStr.length() > 0) {
+      try {
+        logMessagePattern = Pattern.compile(logMessagePatternStr, AndroidConfiguredLogFilters.getPatternCompileFlags(logMessagePatternStr));
+      }
+      catch (PatternSyntaxException e) {
+        LOG.info(e);
+      }
+    }
+
+    Pattern logTagPattern = null;
+    final String logTagPatternStr = entry.getLogTagPattern();
+    if (logTagPatternStr != null && logTagPatternStr.length() > 0) {
+      try {
+        logTagPattern = Pattern.compile(logTagPatternStr, AndroidConfiguredLogFilters.getPatternCompileFlags(logTagPatternStr));
+      }
+      catch (PatternSyntaxException e) {
+        LOG.info(e);
+      }
+    }
+    
+    final String pid = entry.getPid();
+
+    Log.LogLevel logLevel = null;
+    final String logLevelStr = entry.getLogLevel();
+    if (logLevelStr != null && logLevelStr.length() > 0) {
+      logLevel = Log.LogLevel.getByString(logLevelStr);
+    }
+
+    return new ConfiguredFilter(name, logMessagePattern, logTagPattern, pid, logLevel);
+  }
 
   public void activate() {
     updateDevices();
@@ -235,7 +327,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
           }
         }
         if (device != null) {
-          final Pair<Reader,Writer> pair = AndroidLogcatUtil.startLoggingThread(myProject, device, false, myLogConsole);
+          final Pair<Reader, Writer> pair = AndroidLogcatUtil.startLoggingThread(myProject, device, false, myLogConsole);
           if (pair != null) {
             myCurrentReader = pair.first;
             myCurrentWriter = pair.second;
@@ -259,6 +351,34 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
       }
     }
     return null;
+  }
+
+  private void updateConfiguredFilters() {
+    final String selectedFilterName = (String)myFiltersList.getSelectedValue();
+
+    final AndroidConfiguredLogFilters filters = AndroidConfiguredLogFilters.getInstance(myProject);
+    final List<AndroidConfiguredLogFilters.MyFilterEntry> entries = filters.getFilterEntries();
+    final List<String> filterNames = new ArrayList<String>(entries.size() + 1);
+    filterNames.add(EMPTY_CONFIGURED_FILTER);
+
+    boolean hasSelectedFilter = false;
+    for (AndroidConfiguredLogFilters.MyFilterEntry entry : entries) {
+      final String name = entry.getName();
+
+      if (selectedFilterName != null && selectedFilterName.equals(name)) {
+        hasSelectedFilter = true;
+      }
+      filterNames.add(name);
+    }
+
+    myFiltersList.setModel(new CollectionListModel<String>(filterNames));
+
+    if (hasSelectedFilter) {
+      myFiltersList.setSelectedValue(selectedFilterName, true);
+    }
+    else if (myFiltersList.getItemsCount() > 0) {
+      myFiltersList.setSelectedIndex(0);
+    }
   }
 
   private void updateDevices() {
@@ -288,6 +408,22 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     AndroidDebugBridge.removeDeviceChangeListener(myDeviceChangeListener);
   }
 
+  @Nullable
+  private AndroidConfiguredLogFilters.MyFilterEntry getSelectedFilterEntry() {
+    final String filterName = (String)myFiltersList.getSelectedValue();
+
+    if (filterName == null || EMPTY_CONFIGURED_FILTER.equals(filterName)) {
+      return null;
+    }
+
+    final AndroidConfiguredLogFilters.MyFilterEntry filterEntry =
+      AndroidConfiguredLogFilters.getInstance(myProject).findFilterEntryByName(filterName);
+    if (filterEntry == null) {
+      return null;
+    }
+    return filterEntry;
+  }
+
   private class MyRestartAction extends AnAction {
     public MyRestartAction() {
       super(AndroidBundle.message("android.restart.logcat.action.text"), AndroidBundle.message("android.restart.logcat.action.description"),
@@ -303,104 +439,104 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
   class MyLogConsole extends LogConsoleBase {
 
-    private final AndroidLogFilterModel myModel;
-    private static final int HISTORY_SIZE = 7;
-    private JComboBox myTagCombo;
-    private JPanel mySearchBoxWrapper;
-    private JPanel myTextFilterPanel;
-
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     public MyLogConsole(Project project, AndroidLogFilterModel logFilterModel) {
       super(project, new MyLoggingReader(), null, false, logFilterModel);
-      myModel = logFilterModel;
-
-      myTagCombo.setEditable(true);
-      final JTextComponent editorComponent = (JTextComponent)myTagCombo.getEditor().getEditorComponent();
-      editorComponent.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(DocumentEvent e) {
-          ProgressManager.getInstance().run(new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              final String filter = (String)myTagCombo.getEditor().getItem();
-              myModel.updateTagFilter(filter != null ? filter : "");
-            }
-          });
-        }
-      });
-
-      editorComponent.addFocusListener(new FocusListener() {
-        @Override
-        public void focusGained(FocusEvent e) {
-        }
-
-        @Override
-        public void focusLost(FocusEvent e) {
-          addTagToHistory();
-        }
-      });
-
-      myTagCombo.setModel(new DefaultComboBoxModel(ArrayUtil.reverseArray(getRecentTags())));
-      final String filter = (String)myTagCombo.getEditor().getItem();
-      myModel.updateTagFilter(filter != null ? filter : "");
-    }
-    
-    @NotNull
-    private String toHistoryString(@NotNull Collection<String> c) {
-      final StringBuilder builder = new StringBuilder();
-      for (Iterator<String> it = c.iterator(); it.hasNext(); ) {
-        String s = it.next();
-        builder.append(s);
-        if (it.hasNext()) {
-          builder.append('\n');
-        }
-      }
-      return builder.toString();
-    }
-    
-    private void addTagToHistory() {
-      final String tag = (String)myTagCombo.getEditor().getItem();
-      if (tag != null && tag.length() != 0) {
-        final List<String> recentTags = new ArrayList<String>(Arrays.asList(getRecentTags()));
-
-        if (recentTags.contains(tag)) {
-          recentTags.remove(tag);
-          recentTags.add(tag);
-        }
-        else {
-          if (recentTags.size() >= HISTORY_SIZE) {
-            recentTags.remove(0);
-          }
-          recentTags.add(tag);
-        }
-        
-        PropertiesComponent.getInstance().setValue(ANDROID_LOG_TAG_HISTORY_PROPERTY_NAME, toHistoryString(recentTags));
-        
-        myTagCombo.setModel(new DefaultComboBoxModel(ArrayUtil.reverseArray(recentTags.toArray())));
-        myTagCombo.getEditor().setItem(tag);
-      }
-      myModel.updateTagFilter(tag != null ? tag : "");
-    }
-
-    @NotNull
-    private String[] getRecentTags() {
-      final String historyString = PropertiesComponent.getInstance().getValue(ANDROID_LOG_TAG_HISTORY_PROPERTY_NAME);
-      return historyString == null || historyString.length() == 0
-             ? ArrayUtil.EMPTY_STRING_ARRAY
-             : historyString.split("\n");
     }
 
     @Override
     public boolean isActive() {
       return AndroidLogcatToolWindowView.this.isActive();
     }
+  }
 
-    @NotNull
+  private class MyAddFilterAction extends AnAction {
+    private MyAddFilterAction() {
+      super(CommonBundle.message("button.add"), AndroidBundle.message("android.logcat.add.logcat.filter.button"), IconUtil.getAddRowIcon());
+    }
+
     @Override
-    protected Component getTextFilterComponent() {
-      final Component filterComponent = super.getTextFilterComponent();
-      mySearchBoxWrapper.add(filterComponent, BorderLayout.CENTER);
-      return myTextFilterPanel;
+    public void actionPerformed(AnActionEvent e) {
+      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatToolWindowView.this, null);
+      dialog.setTitle(AndroidBundle.message("android.logcat.new.filter.dialog.title"));
+      dialog.show();
+
+      if (dialog.isOK()) {
+        final AndroidConfiguredLogFilters.MyFilterEntry newEntry = dialog.getCustomLogFiltersEntry();
+        final AndroidConfiguredLogFilters configuredLogFilters = AndroidConfiguredLogFilters.getInstance(myProject);
+        final List<AndroidConfiguredLogFilters.MyFilterEntry> entries =
+          new ArrayList<AndroidConfiguredLogFilters.MyFilterEntry>(configuredLogFilters.getFilterEntries());
+        entries.add(newEntry);
+        configuredLogFilters.setFilterEntries(entries);
+
+        updateConfiguredFilters();
+        myFiltersList.setSelectedValue(newEntry.getName(), true);
+      }
+    }
+  }
+
+  private class MyRemoveFilterAction extends AnAction {
+    private MyRemoveFilterAction() {
+      super(CommonBundle.message("button.delete"), AndroidBundle.message("android.logcat.remove.logcat.filter.button"),
+            IconUtil.getRemoveRowIcon());
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(getSelectedFilterEntry() != null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final AndroidConfiguredLogFilters.MyFilterEntry filterEntry = getSelectedFilterEntry();
+      if (filterEntry == null) {
+        return;
+      }
+
+      final int selectedIndex = myFiltersList.getSelectedIndex();
+      final AndroidConfiguredLogFilters configuredLogFilters = AndroidConfiguredLogFilters.getInstance(myProject);
+      final List<AndroidConfiguredLogFilters.MyFilterEntry> entries =
+        new ArrayList<AndroidConfiguredLogFilters.MyFilterEntry>(configuredLogFilters.getFilterEntries());
+      entries.remove(filterEntry);
+      configuredLogFilters.setFilterEntries(entries);
+
+      updateConfiguredFilters();
+      final int index = selectedIndex < myFiltersList.getItemsCount()
+                        ? selectedIndex
+                        : myFiltersList.getItemsCount() - 1;
+      myFiltersList.setSelectedIndex(index);
+      myFiltersList.ensureIndexIsVisible(index);
+    }
+  }
+
+  private class MyEditFilterAction extends AnAction {
+    private MyEditFilterAction() {
+      super(CommonBundle.message("button.edit"), AndroidBundle.message("android.logcat.edit.logcat.filter.button"), IconUtil.getEditIcon());
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(getSelectedFilterEntry() != null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final AndroidConfiguredLogFilters.MyFilterEntry filterEntry = getSelectedFilterEntry();
+      if (filterEntry == null) {
+        return;
+      }
+
+      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatToolWindowView.this, filterEntry);
+      dialog.setTitle(AndroidBundle.message("android.logcat.edit.filter.dialog.title"));
+      dialog.show();
+
+      if (dialog.isOK()) {
+        final String newName = filterEntry.getName();
+        updateConfiguredFilters();
+        myFiltersList.setSelectedValue(newName, true);
+      }
     }
   }
 }

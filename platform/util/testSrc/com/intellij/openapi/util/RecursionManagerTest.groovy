@@ -107,6 +107,28 @@ public class RecursionManagerTest extends TestCase {
     }
   }
 
+  public void testNoCachingForMemoizedValues2() {
+    assert "1-return" == prevent("1") {
+      assert "2-return" == prevent("2") {
+        assert "3-return" == prevent("3") {
+          assert null == prevent("2") { "2-return" }
+          assert null == prevent("1") { "1-return" }
+          return "3-return"
+        }
+        return "2-return"
+      }
+      def stamp = myGuard.markStack()
+      assert "2-return" == prevent("2") { fail() }
+      assert !stamp.mayCacheNow()
+
+      stamp = myGuard.markStack()
+      assert "3-return" == prevent("3") { fail() }
+      assert !stamp.mayCacheNow()
+
+      return "1-return"
+    }
+  }
+
   public void testNoMemoizationForNoReentrancy() {
     assert "foo-return" == prevent("foo") {
       assert null == prevent("foo") { "foo-return" }

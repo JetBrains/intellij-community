@@ -38,7 +38,6 @@ public class DetailsLoaderImpl implements DetailsLoader {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.DetailsLoaderImpl");
 
   private final static int ourLoadSize = 20;
-  private final static long ourRefsReload = 120000;
 
   private final BackgroundTaskQueue myQueue;
   private final Map<VirtualFile, CommitIdsHolder<AbstractHash>> myLoadIdsGatherer;
@@ -46,7 +45,6 @@ public class DetailsLoaderImpl implements DetailsLoader {
   private DetailsCache myDetailsCache;
   private final Project myProject;
   private final Map<VirtualFile, SymbolicRefs> myRefs;
-  private long myRefsReloadTick;
 
   private final Object myLock;
   private ModalityState myState;
@@ -57,13 +55,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
     myLoadIdsGatherer = new HashMap<VirtualFile, CommitIdsHolder<AbstractHash>>();
     myAccesses = new HashMap<VirtualFile, LowLevelAccess>();
     myRefs = new HashMap<VirtualFile, SymbolicRefs>();
-    myRefsReloadTick = 0;
     myLock = new Object();
-    //scheduleRefs();
-  }
-
-  private void scheduleRefs() {
-    myQueue.run(new RefsLoader(myProject), myState, null);
   }
 
   public void setDetailsCache(DetailsCache detailsCache) {
@@ -80,18 +72,12 @@ public class DetailsLoaderImpl implements DetailsLoader {
         myLoadIdsGatherer.put(root, new CommitIdsHolder<AbstractHash>());
         myAccesses.put(root, new LowLevelAccessImpl(myProject, root));
       }
-      myRefsReloadTick = 0;
     }
   }
 
   @Override
   public void load(MultiMap<VirtualFile,AbstractHash> hashes) {
-    final long now = System.currentTimeMillis();
     synchronized (myLock) {
-      if (now - myRefsReloadTick >= ourRefsReload) {
-        scheduleRefs();
-      }
-      myRefsReloadTick = now;
       for (VirtualFile root : hashes.keySet()) {
         final CommitIdsHolder<AbstractHash> holder = myLoadIdsGatherer.get(root);
         holder.add(hashes.get(root));
@@ -100,30 +86,15 @@ public class DetailsLoaderImpl implements DetailsLoader {
     }
   }
 
-  public void setModalityState(ModalityState state) {
-    myState = state;
+  @Override
+  public void reportRefs(VirtualFile root, SymbolicRefs refs) {
+    synchronized (myLock) {
+      myRefs.put(root, refs);
+    }
   }
 
-  private class RefsLoader extends Task.Backgroundable {
-    private RefsLoader(@Nullable Project project) {
-      super(project, "Reload symbolic references", false, BackgroundFromStartOption.getInstance());
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      for (VirtualFile file : myAccesses.keySet()) {
-        final LowLevelAccess access = myAccesses.get(file);
-        try {
-          final SymbolicRefs refs = access.getRefs();
-          synchronized (myLock) {
-            myRefs.put(file, refs);
-          }
-        }
-        catch (VcsException e) {
-          LOG.info(e);
-        }
-      }
-    }
+  public void setModalityState(ModalityState state) {
+    myState = state;
   }
 
   private class Worker extends Task.Backgroundable {

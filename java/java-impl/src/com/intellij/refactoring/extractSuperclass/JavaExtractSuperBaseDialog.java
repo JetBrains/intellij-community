@@ -135,12 +135,12 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
       myDestinationFolderComboBox.selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), getTargetPackageName()), false);
     if (moveDestination == null) return;
 
-    myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+    myTargetDirectory = myTargetDirectory != null ? ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
       @Override
       public PsiDirectory compute() {
         return moveDestination.getTargetDirectory(myTargetDirectory);
       }
-    });
+    }) : null;
 
     if (myTargetDirectory == null) {
       throw new OperationFailedException(""); // message already reported by PackageUtil

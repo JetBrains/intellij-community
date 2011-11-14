@@ -16,7 +16,10 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -50,5 +53,28 @@ public class ApplicationManager {
       }
     });
     setApplication(instance);
+  }
+
+  public static void setApplication(Application instance, 
+                                    Getter<FileTypeRegistry> fileTypeRegistryGetter,
+                                    Getter<EncodingRegistry> encodingRegistryGetter,
+                                    @NotNull Disposable parent) {
+    final Application old = ourApplication;
+    final Getter<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;
+    final Getter<EncodingRegistry> oldEncodingRegistry = EncodingRegistry.ourInstanceGetter;
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        if (old != null) { // to prevent NPEs in threads still running
+          setApplication(old);
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          FileTypeRegistry.ourInstanceGetter = oldFileTypeRegistry;
+          EncodingRegistry.ourInstanceGetter = oldEncodingRegistry;
+        }
+      }
+    });
+    setApplication(instance);
+    FileTypeRegistry.ourInstanceGetter = fileTypeRegistryGetter;
+    EncodingRegistry.ourInstanceGetter = encodingRegistryGetter;
   }
 }

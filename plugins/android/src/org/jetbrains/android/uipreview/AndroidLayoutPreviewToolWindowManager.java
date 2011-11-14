@@ -136,7 +136,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         if (myToolWindowForm != null &&
             myToolWindowReady &&
             !myToolWindowDisposed) {
-          render();
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              render();
+            }
+          });
         }
         return true;
       }
@@ -266,6 +271,8 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
   }
 
   public void render() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     if (!myToolWindow.isVisible()) {
       return;
     }

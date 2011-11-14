@@ -44,4 +44,17 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
       }
     }
   }
+
+  protected void doTextTest(String before, String hint, String after) {
+    myFixture.configureByText("a.groovy", before);
+    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
+    myFixture.launchAction(assertOneElement(list));
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    myFixture.checkResult(after);
+  }
+
+  protected void doAntiTest(String before, String hint) {
+    myFixture.configureByText("a.groovy", before);
+    assertEmpty(myFixture.filterAvailableIntentions(hint));
+  }
 }

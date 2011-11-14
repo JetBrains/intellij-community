@@ -15,13 +15,13 @@
  */
 package com.intellij.ide;
 
+import com.intellij.AbstractBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -54,7 +54,7 @@ public class TypeNameEP extends AbstractExtensionPointBean {
           bundleName = ((IdeaPluginDescriptor) myPluginDescriptor).getResourceBundleBaseName();
         }
         if (bundleName != null) {
-          ResourceBundle bundle = ResourceBundle.getBundle(bundleName, Locale.getDefault(), getLoaderForClass());
+          ResourceBundle bundle = AbstractBundle.getResourceBundle(bundleName, getLoaderForClass());
           return bundle.getString(resourceKey);
         }
       }

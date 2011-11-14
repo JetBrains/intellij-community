@@ -180,7 +180,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       }
     }
     else {
-      if (myExpressionToSearch != null) {
+      if (myExpressionToSearch != null && myExpressionToSearch.isValid()) {
         result.add(new InternalUsageInfo(myExpressionToSearch));
       }
     }
@@ -390,12 +390,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
           if (element instanceof PsiExpression) {
             element = RefactoringUtil.outermostParenthesizedExpression((PsiExpression)element);
           }
-          if (element.getParent() instanceof PsiExpressionStatement) {
-            element.getParent().delete();
-          }
-          else {
-            PsiExpression newExpr = factory.createExpressionFromText(myParameterName, element);
-            IntroduceVariableBase.replace((PsiExpression)element, newExpr, myProject);
+          if (element != null) {
+            if (element.getParent() instanceof PsiExpressionStatement) {
+              element.getParent().delete();
+            }
+            else {
+              PsiExpression newExpr = factory.createExpressionFromText(myParameterName, element);
+              IntroduceVariableBase.replace((PsiExpression)element, newExpr, myProject);
+            }
           }
         }
       }

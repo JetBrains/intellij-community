@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -26,7 +27,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -95,7 +95,7 @@ public class InspectionEP extends LanguageExtensionPoint {
     if (baseName == null) {
       LOG.error("No resource bundle specified for " + myPluginDescriptor + " Inspection: " + implementationClass);
     }
-    final ResourceBundle bundle = ResourceBundle.getBundle(baseName, Locale.getDefault(), myPluginDescriptor.getPluginClassLoader());
+    final ResourceBundle bundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
     return CommonBundle.message(bundle, key);
   }
 

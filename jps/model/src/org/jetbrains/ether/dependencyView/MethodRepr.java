@@ -4,8 +4,9 @@ import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.Type;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,6 +19,11 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 class MethodRepr extends ProtoMember {
+
+  interface Predicate {
+    boolean satisfy(MethodRepr m);
+  }
+
   private static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
   public final TypeRepr.AbstractType[] argumentTypes;
@@ -138,7 +144,24 @@ class MethodRepr extends ProtoMember {
     };
   }
 
-  ;
+  static Predicate equalByJavaRules(final MethodRepr me) {
+    return new Predicate() {
+      @Override
+      public boolean satisfy(MethodRepr that) {
+        if (me == that) return true;
+        return me.name.equals(that.name) && Arrays.equals(me.argumentTypes, that.argumentTypes);
+      }
+    };
+  }
+  
+  static Predicate equal(final MethodRepr me){
+    return new Predicate() {
+      @Override
+      public boolean satisfy(MethodRepr that) {
+        return me.equals(that);
+      }
+    };
+  }
 
   @Override
   public boolean equals(Object o) {

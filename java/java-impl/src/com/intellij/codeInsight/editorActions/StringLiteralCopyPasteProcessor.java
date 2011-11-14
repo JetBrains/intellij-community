@@ -26,8 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters;
 
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
-  
-  private static final TokenSet SYMBOL_LITERAL_TYPES = TokenSet.create(JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL);
-  
+
   @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   @Override
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
@@ -77,7 +73,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
         TextRange elementRange = element.getTextRange();
         int escapedStartOffset;
         int escapedEndOffset;
-        if (element instanceof PsiJavaToken && SYMBOL_LITERAL_TYPES.contains(((PsiJavaToken)element).getTokenType())
+        if ((isStringLiteral(element) || isCharLiteral(element))
             // We don't want to un-escape if complete literal is copied.
             && (elementRange.getStartOffset() < fileStartOffset || elementRange.getEndOffset() > fileEndOffset)) {
           escapedStartOffset = elementRange.getStartOffset() + 1 /* String/char literal quote */;
@@ -121,9 +117,12 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     // pastes in block selection mode (column mode) are not handled by a CopyPasteProcessor
     final int selectionStart = selectionModel.getSelectionStart();
     final int selectionEnd = selectionModel.getSelectionEnd();
-    IElementType tokenType = findLiteralTokenType(file, selectionStart, selectionEnd);
+    PsiElement token = findLiteralTokenType(file, selectionStart, selectionEnd);
+    if (token == null) {
+      return text;
+    }
 
-    if (tokenType == JavaTokenType.STRING_LITERAL) {
+    if (isStringLiteral(token)) {
       if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
 
       StringBuilder buffer = new StringBuilder(text.length());
@@ -132,37 +131,36 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
-        buffer.append(StringUtil.escapeStringCharacters(line));
+        buffer.append(escapeCharCharacters(line, token));
         if (i != lines.length - 1) buffer.append(breaker);
       }
       text = buffer.toString();
     }
-    else if (tokenType == JavaTokenType.CHARACTER_LITERAL) {
+    else if (isCharLiteral(token)) {
       if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
-      return escapeCharCharacters(text);
+      return escapeCharCharacters(text, token);
     }
     return text;
   }
 
   @Nullable
-  private static IElementType findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
+  private PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
     final PsiElement elementAtSelectionStart = file.findElementAt(selectionStart);
-    if (!(elementAtSelectionStart instanceof PsiJavaToken)) {
+    if (elementAtSelectionStart == null) {
       return null;
     }
-    final IElementType tokenType = ((PsiJavaToken)elementAtSelectionStart).getTokenType();
-    if ((tokenType != JavaTokenType.STRING_LITERAL && tokenType != JavaTokenType.CHARACTER_LITERAL)) {
+    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart)) {
       return null;
     }
 
     if (elementAtSelectionStart.getTextRange().getEndOffset() < selectionEnd) {
       final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
-      if (!(elementAtSelectionEnd instanceof PsiJavaToken)) {
+      if (elementAtSelectionEnd == null) {
         return null;
       }
-      PsiJavaToken tokenAtSelectionEnd = (PsiJavaToken)elementAtSelectionEnd;
-      if (tokenAtSelectionEnd.getTokenType() == tokenType && tokenAtSelectionEnd.getTextRange().getStartOffset() < selectionEnd) {
-        return tokenType;
+      if (elementAtSelectionEnd.getNode().getElementType() == elementAtSelectionStart.getNode().getElementType() &&
+          elementAtSelectionEnd.getTextRange().getStartOffset() < selectionEnd) {
+        return elementAtSelectionStart;
       }
     }
     
@@ -170,13 +168,21 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     if (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset()) {
       return null;
     }
-    return tokenType;
+    return elementAtSelectionStart;
+  }
+
+  protected boolean isCharLiteral(@NotNull PsiElement token) {
+    return token.getNode().getElementType() == JavaTokenType.CHARACTER_LITERAL;
+  }
+
+  protected boolean isStringLiteral(@NotNull PsiElement token) {
+    return token.getNode().getElementType() == JavaTokenType.STRING_LITERAL;
   }
 
   @NotNull
-  public static String escapeCharCharacters(@NotNull String s) {
+  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     StringBuilder buffer = new StringBuilder();
-    StringUtil.escapeStringCharacters(s.length(), s, "\'", buffer);
+    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'", buffer);
     return buffer.toString();
   }
 }

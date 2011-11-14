@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * This data class represents a Git branch
@@ -306,11 +307,13 @@ public class GitBranch extends GitReference {
    */
   @Nullable
   public GitBranch tracked(Project project, VirtualFile root) throws VcsException {
-    String remote = getTrackedRemoteName(project, root);
+    final HashMap<String, String> result = new HashMap<String, String>();
+    GitConfigUtil.getValues(project, root, null, result);
+    String remote = result.get(trackedRemoteKey());
     if (remote == null) {
       return null;
     }
-    String branch = getTrackedBranchName(project, root);
+    String branch = result.get(trackedBranchKey());
     if (branch == null) {
       return null;
     }

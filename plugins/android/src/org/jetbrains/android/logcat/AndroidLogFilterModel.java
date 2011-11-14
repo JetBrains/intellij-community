@@ -35,14 +35,15 @@ import java.util.regex.Pattern;
  * @author Eugene.Kudelevsky
  */
 public abstract class AndroidLogFilterModel extends LogFilterModel {
-  private static final Pattern ANDROID_LOG_MESSAGE_PATTERN =
-    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/(\\w+)\\(\\d+\\):.*");
+  static final Pattern ANDROID_LOG_MESSAGE_PATTERN =
+    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/(\\w+)\\((\\d+)\\):(.*)");
 
   private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
 
   private Log.LogLevel myPrevMessageLogLevel;
-  
   private String myPrevTag;
+  private String myPrevPid;
+  
   private LogFilter mySelectedLogFilter;
   private List<AndroidLogFilter> myLogFilters = new ArrayList<AndroidLogFilter>();
 
@@ -62,18 +63,19 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     fireTextFilterChange();
   }
 
-  public void updateTagFilter(String tag) {
-    setTagFilter(tag);
+  public void updateConfiguredFilter(ConfiguredFilter filter) {
+    setConfiguredFilter(filter);
     fireTextFilterChange();
   }
 
   protected abstract void setCustomFilter(String filter);
 
-  protected void setTagFilter(String tag) {
+  protected void setConfiguredFilter(@Nullable ConfiguredFilter filter) {
   }
 
-  protected String getTagFilter() {
-    return "";
+  @Nullable
+  protected ConfiguredFilter getConfiguredFilter() {
+    return null;
   }
 
   protected abstract void saveLogLevel(Log.LogLevel logLevel);
@@ -123,17 +125,43 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
       return false;
     }
 
-    final String tagFilter = getTagFilter();
-    if (tagFilter == null || tagFilter.length() == 0) {
+    final ConfiguredFilter configuredFilterName = getConfiguredFilter();
+    if (configuredFilterName == null) {
       return true;
     }
 
-    String tag = getLogTag(text);
+
+    String tag = null;
+    String pid = null;
+    String message = null;
+    
+    final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(text);
+    if (matcher.matches()) {
+      String s = matcher.group(1).trim();
+      if (s.length() > 0) {
+        tag = s;
+      }
+      
+      s = matcher.group(2).trim();
+      if (s.length() > 0) {
+        pid = s;
+      }
+      
+      s = matcher.group(3).trim();
+      if (s.length() > 0) {
+        message = s;
+      }
+    }
+
     if (tag == null) {
       tag = myPrevTag;
     }
+    
+    if (pid == null) {
+      pid = myPrevPid;
+    }
 
-    return tagFilter.equals(tag);
+    return configuredFilterName.isApplicable(message, tag, pid, getLogLevel(text));
   }
 
   public List<? extends LogFilter> getLogFilters() {
@@ -150,12 +178,18 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
 
     @Override
     public boolean isAcceptable(String line) {
-      Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);
-      if (logLevel == null) {
-        logLevel = myPrevMessageLogLevel;
-      }
+      Log.LogLevel logLevel = getLogLevel(line);
       return logLevel != null && logLevel.getPriority() >= myLogLevel.getPriority();
     }
+  }
+
+  @Nullable
+  Log.LogLevel getLogLevel(String line) {
+    Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);
+    if (logLevel == null) {
+      logLevel = myPrevMessageLogLevel;
+    }
+    return logLevel;
   }
 
   public boolean isFilterSelected(LogFilter filter) {
@@ -171,10 +205,28 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
   }
 
   public Key processLine(String line) {
-    final String tag = getLogTag(line);
+    String tag = null;
+    String pid = null;
+    
+    final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(line);
+    if (matcher.matches()) {
+      String s = matcher.group(1).trim();
+      if (s.length() > 0) {
+        tag = s;
+      }
+      
+      s = matcher.group(2).trim();
+      if (s.length() > 0) {
+        pid = s;
+      }
+    }
     
     if (tag != null) {
       myPrevTag = tag;
+    }
+    
+    if (pid != null) {
+      myPrevPid = pid;
     }
     
     Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);

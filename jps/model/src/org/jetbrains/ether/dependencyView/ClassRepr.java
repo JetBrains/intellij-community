@@ -4,12 +4,13 @@ import com.intellij.util.io.DataExternalizer;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
-import java.io.*;
+import javax.sql.rowset.Predicate;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,7 +39,7 @@ public class ClassRepr extends Proto {
     return context.getValue(fileName);
   }
 
-  public abstract class Diff extends Difference {
+  public abstract static class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
 
     public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
@@ -302,17 +303,19 @@ public class ClassRepr extends Proto {
     return null;
   }
 
-  public MethodRepr findMethod(final MethodRepr m) {
+  public Collection<MethodRepr> findMethods (final MethodRepr.Predicate p) {
+    final Collection<MethodRepr> result = new LinkedList<MethodRepr> ();
+
     for (MethodRepr mm : methods) {
-      if (mm.equals(m)) {
-        return mm;
+      if (p.satisfy(mm)) {
+        result.add(mm);
       }
     }
 
-    return null;
+    return result;
   }
 
-  public final static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
+  public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<ClassRepr>() {
       @Override
       public void save(final DataOutput out, final ClassRepr value) throws IOException {

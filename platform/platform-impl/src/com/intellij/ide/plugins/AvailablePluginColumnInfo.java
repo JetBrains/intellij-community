@@ -18,11 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.SideBorder;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -50,9 +46,6 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
     private final JLabel myNameLabel = new JLabel();
     private final JLabel myStatusLabel = new JLabel();
     private final JLabel myRepositoryLabel = new JLabel();
-    private final JLabel myCategoryLabel = new JLabel();
-    private final JLabel myDateLabel = new JLabel();
-    private final JLabel myDownloadsLabel = new JLabel();
     private final JPanel myPanel = new JPanel(new GridBagLayout());
 
     private final IdeaPluginDescriptor myPluginDescriptor;
@@ -64,15 +57,11 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
       final Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
       myStatusLabel.setFont(smallFont);
-      myCategoryLabel.setFont(smallFont);
-      myRepositoryLabel.setFont(smallFont);
-      myDateLabel.setFont(smallFont);
-      myDownloadsLabel.setFont(smallFont);
 
-      myPanel.setBorder(new SideBorder(Color.lightGray, SideBorder.BOTTOM, true));
+      myPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0));
 
       final GridBagConstraints gc =
-        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, ((PluginNode)myPluginDescriptor).getRepositoryName() != null ? 5 : 4, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                new Insets(0, LEFT_MARGIN, 0, 0), 0, 0);
       final JPanel namePanel = new JPanel(new GridBagLayout());
       GridBagConstraints gn = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0,0), 0,0);
@@ -84,61 +73,24 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
       namePanel.add(Box.createHorizontalBox(), gn);
       namePanel.setOpaque(false);
       myPanel.add(namePanel, gc);
-
-      gc.weightx = 0;
-      gc.fill = GridBagConstraints.NONE;
-      gc.gridwidth = 1;
-      gc.gridy = 1;
-      if (((PluginNode)myPluginDescriptor).getRepositoryName() != null) {
-        myPanel.add(myRepositoryLabel, gc);
-      }
-      myPanel.add(myCategoryLabel, gc);
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      myPanel.add(Box.createHorizontalBox(), gc);
-      gc.weightx = 0;
-      gc.fill = GridBagConstraints.NONE;
-      gc.anchor = GridBagConstraints.NORTHEAST;
-      myPanel.add(myDownloadsLabel, gc);
-      gc.insets.left = 15;
-      myPanel.add(myDateLabel, gc);
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final String updatedMask = "Updated: xx/xx/xx";
       Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (myPluginDescriptor != null) {
         final PluginNode pluginNode = (PluginNode)myPluginDescriptor;
         myNameLabel.setText(myPluginDescriptor.getName());
-        final String repositoryName = pluginNode.getRepositoryName();
-        if (repositoryName != null) {
-          myRepositoryLabel.setText("Repository: " + repositoryName);
-        } else {
-          myCategoryLabel.setText(myPluginDescriptor.getCategory());
-          long date = ((PluginNode)myPluginDescriptor).getDate();
-          String formattedDate = date != 0 ? DateFormatUtil.formatDate(date) : "n/a";
-          if (formattedDate.length() < updatedMask.length()) {
-            formattedDate = StringUtil.repeat(" ", updatedMask.length() - formattedDate.length()) + formattedDate;
-          }
-          //myDateLabel.setText(formattedDate);
-          //myDownloadsLabel.setText("Downloads: " + myPluginDescriptor.getDownloads());
-        }
 
         final Color fg = orig.getForeground();
         final Color bg = orig.getBackground();
         final Color grayedFg = isSelected ? fg : Color.GRAY;
         myNameLabel.setForeground(fg);
-        myRepositoryLabel.setForeground(grayedFg);
-        myCategoryLabel.setForeground(grayedFg);
         myStatusLabel.setForeground(grayedFg);
-        myDateLabel.setForeground(grayedFg);
-        myDownloadsLabel.setForeground(grayedFg);
 
         myPanel.setBackground(bg);
         myNameLabel.setBackground(bg);
-        myDateLabel.setBackground(bg);
-        myDownloadsLabel.setBackground(bg);
+        myNameLabel.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
 
         
         if (isDownloaded(pluginNode)) {
@@ -151,9 +103,12 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
           final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_MODIFIED);
           if (hasNewerVersion) {
-            if (!isSelected) myPanel.setBackground(LightColors.BLUE);
+            if (!isSelected){
+              myNameLabel.setForeground(Color.RED);
+            }
+            myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
           }
-          myStatusLabel.setText("[Installed " + "v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (": Ready to update to " + pluginNode.getVersion()) : "") + "]");
+          myStatusLabel.setText("v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (" -> " + pluginNode.getVersion()) : ""));
         }
       }
       return myPanel;

@@ -147,14 +147,11 @@ public class GraphGutter {
                                         final int yOffset,
                                         final Set<Integer> wires,
                                         @Nullable final WireEventI event,
-                                        HashSet<Integer> selected,
+                                        final HashSet<Integer> selected,
                                         final List<Integer> wiresGroups,
-                                        Map<Integer, Set<Integer>> grey,
-                                        HashSet<Integer> wireModificationSet) {
+                                        final Map<Integer, Set<Integer>> grey,
+                                        final HashSet<Integer> wireModificationSet) {
       int rowYOffset = yOffset;
-      final CommitI commitAt1 = myModel.getCommitAt(event.getCommitIdx());
-      // fictive wire umber. for the end of the graph
-      final int eventWire = commitAt1 == null ? -1 : myModel.getCorrectedWire(commitAt1);
       for (int i = idxFrom; i < event.getCommitIdx(); i++) {
         final CommitI commitAt = myModel.getCommitAt(i);
         if (commitAt == null) continue;
@@ -165,10 +162,30 @@ public class GraphGutter {
         rowYOffset += myRowHeight;
       }
 
+      final CommitI commitAt1 = myModel.getCommitAt(event.getCommitIdx());
+      // fictive wire umber. for the end of the graph
+      final int eventWire = commitAt1 == null ? -1 : myModel.getCorrectedWire(commitAt1);
+
+      final Set<Integer> skip = new HashSet<Integer>();
+      final int finalRowYOffset = rowYOffset;
+      Runnable drawEventRowLines = new Runnable() {
+        public void run() {
+          for (Integer wire : wires) {
+            if (skip.contains(wire)) continue;
+            verticalLine(g, selected, wiresGroups, grey, finalRowYOffset, event.getCommitIdx(), wire, wireModificationSet, wire == eventWire);
+          }
+        }
+      };
+      
+      if (commitAt1 == null) {
+        // fictive wire
+        drawEventRowLines.run();
+        return;
+      }
+
       g.setColor(getConnectorColor(g, selected, event.getCommitIdx(), eventWire, grey));
       int eventStartXPoint = startPoint(eventWire, wiresGroups) + ourLineWidth/2;
 
-      final Set<Integer> skip = new HashSet<Integer>();
       if (event.isStart() && event.isEnd()) {
         return;
       }
@@ -191,10 +208,7 @@ public class GraphGutter {
         }
       }
 
-      for (Integer wire : wires) {
-        if (skip.contains(wire)) continue;
-        verticalLine(g, selected, wiresGroups, grey, rowYOffset, event.getCommitIdx(), wire, wireModificationSet, wire == eventWire);
-      }
+      drawEventRowLines.run();
 
       if (commitsStarts != null) {
         for (int commitsStart : commitsStarts) {

@@ -572,11 +572,13 @@ public class ExpectedTypesProvider {
       myResult = getExpectedArgumentTypesForMethodCall(candidates, argumentList, myExpr, myForCompletion);
     }
 
-    @Override public void visitBinaryExpression(PsiBinaryExpression expr) {
+    @Override
+    public void visitPolyadicExpression(PsiPolyadicExpression expr) {
+      PsiExpression[] operands = expr.getOperands();
+      int index = Arrays.asList(operands).indexOf(myExpr);
+      assert index >= 0;
 
-      PsiExpression op1 = expr.getLOperand();
-      PsiExpression op2 = expr.getROperand();
-      if (myForCompletion && op1.equals(myExpr)) {
+      if (myForCompletion && index == 0) {
         final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable, myUsedAfter);
         myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(visitor);
@@ -588,7 +590,7 @@ public class ExpectedTypesProvider {
         }
         return;
       }
-      PsiExpression anotherExpr = op1.equals(myExpr) ? op2 : op1;
+      PsiExpression anotherExpr = index > 0 ? operands[0] : operands[1];
       PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
       IElementType i = expr.getOperationTokenType();
       if (i == JavaTokenType.MINUS ||
@@ -613,7 +615,7 @@ public class ExpectedTypesProvider {
           myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
-          if (anotherType.equalsToText("java.lang.String")) {
+          if (anotherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             PsiType objType = PsiType.getJavaLangObject(myExpr.getManager(), myExpr.getResolveScope());
             ExpectedTypeInfo info = createInfoImpl(objType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, anotherType,
                                                    TailType.NONE);

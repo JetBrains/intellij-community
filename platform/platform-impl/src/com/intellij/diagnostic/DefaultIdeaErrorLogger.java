@@ -71,9 +71,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
-  private boolean isOOMError(Throwable throwable) {
+  private static boolean isOOMError(Throwable throwable) {
     return throwable instanceof OutOfMemoryError ||
-        throwable instanceof VirtualMachineError && throwable.getMessage().contains("CodeCache");
+        (throwable instanceof VirtualMachineError &&
+         throwable.getMessage() != null &&
+         throwable.getMessage().contains("CodeCache"));
   }
 
   /**

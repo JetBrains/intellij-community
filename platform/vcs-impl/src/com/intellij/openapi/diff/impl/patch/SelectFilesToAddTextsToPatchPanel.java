@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.patch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -127,6 +128,11 @@ public class SelectFilesToAddTextsToPatchPanel implements RefreshablePanel {
       if (beforeRevision != null) {
         try {
           String content = beforeRevision.getContent();
+          if (content == null) {
+            final FilePath file = beforeRevision.getFile();
+            LOG.info("null content for " + (file == null ? null : file.getPath()) + ", is dir: " + (file == null ? null : file.isDirectory()));
+            continue;
+          }
           if (content.length() > VcsConfiguration.ourMaximumFileForBaseRevisionSize) {
             exclude.add(change);
           }

@@ -14,10 +14,12 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import git4idea.history.browser.SymbolicRefs;
 
 /**
  * @author irengrig
  */
 public interface DetailsLoader {
   void load(final MultiMap<VirtualFile,AbstractHash> hashes);
+  void reportRefs(VirtualFile root, SymbolicRefs refs);
 }

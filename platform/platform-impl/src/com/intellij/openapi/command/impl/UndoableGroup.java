@@ -34,11 +34,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class UndoableGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
@@ -54,37 +52,27 @@ class UndoableGroup {
   private final UndoConfirmationPolicy myConfirmationPolicy;
 
   private boolean myValid;
-  private boolean myMerged4Undo;
-  private boolean myMerged4Redo;
 
   public UndoableGroup(String commandName,
                        boolean isGlobal,
-                       Project project,
+                       UndoManagerImpl manager,
                        EditorAndState stateBefore,
                        EditorAndState stateAfter,
                        List<UndoableAction> actions,
-                       int commandTimestamp,
                        UndoConfirmationPolicy confirmationPolicy,
                        boolean transparent,
                        boolean valid) {
     myCommandName = commandName;
     myGlobal = isGlobal;
-    myCommandTimestamp = commandTimestamp;
+    myCommandTimestamp = manager.nextCommandTimestamp();
     myActions = actions;
-    myProject = project;
+    myProject = manager.getProject();
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
     myConfirmationPolicy = confirmationPolicy;
     myTransparent = transparent;
     myValid = valid;
-    for (UndoableAction action : actions) {
-      if (action instanceof FinishMarkAction) {
-        ((FinishMarkAction)action).setGlobal(isGlobal);
-        ((FinishMarkAction)action).setCommandName(commandName);
-        myMerged4Undo = true;
-        break;
-      }
-    }
+    composeStartFinishGroup(manager.getUndoStacksHolder());
   }
 
   public boolean isGlobal() {
@@ -108,10 +96,6 @@ class UndoableGroup {
 
   public void redo() {
     undoOrRedo(false);
-  }
-
-  public boolean containsAction(UndoableAction action) {
-    return myActions.contains(action);
   }
 
   private void undoOrRedo(boolean isUndo) {
@@ -187,20 +171,68 @@ class UndoableGroup {
     commitAllDocuments();
   }
 
-  public void setMerged4Undo() {
-    myMerged4Undo = true;
+  boolean isInsideStopFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
+    final FinishMarkAction finishMark = getFinishMark();
+    final StartMarkAction startMark = getStartMark();
+    if (startMark == null || finishMark == null) {
+      if (isUndo) {
+        if (finishMark != null) {
+          return true;
+        }
+        else if (startMark != null) {
+          return false;
+        }
+      }
+      else {
+        if (startMark != null) {
+          return true;
+        }
+        else if (finishMark != null) {
+          return false;
+        }
+      }
+    }
+    return isInsideStartFinishGroup;
   }
 
-  public boolean isMerged4Undo() {
-    return myMerged4Undo;
+  void composeStartFinishGroup(final UndoRedoStacksHolder holder) {
+    FinishMarkAction finishMark = getFinishMark();
+    if (finishMark != null) {
+      boolean global = false;
+      String commandName = null;
+      LinkedList<UndoableGroup> stack = holder.getStack(finishMark.getAffectedDocument());
+      for (Iterator<UndoableGroup> iterator = stack.descendingIterator(); iterator.hasNext(); ) {
+        UndoableGroup group = iterator.next();
+        if (group.isGlobal()) {
+          global = true;
+          commandName = group.getCommandName();
+          break;
+        }
+        if (group.getStartMark() != null) {
+          break;
+        }
+      }
+      if (global) {
+        finishMark.setGlobal(global);
+        finishMark.setCommandName(commandName);
+      }
+    }
   }
 
-  public boolean isMerged4Redo() {
-    return myMerged4Redo;
-  }
-
-  public void setMerged4Redo() {
-    myMerged4Redo = true;
+  private boolean shouldAskConfirmationForStartFinishGroup(boolean redo) {
+    if (redo) {
+      StartMarkAction mark = getStartMark();
+      if (mark != null) {
+        return mark.isGlobal();
+      }
+    }
+    else {
+      FinishMarkAction finishMark = getFinishMark();
+      if (finishMark != null) {
+        return finishMark.isGlobal();
+      }
+    }
+    return false;
   }
 
   private static void commitAllDocuments() {
@@ -263,6 +295,9 @@ class UndoableGroup {
       if (action instanceof StartMarkAction) {
         String commandName = ((StartMarkAction)action).getCommandName();
         if (commandName != null) return commandName;
+      } else if (action instanceof FinishMarkAction) {
+        String commandName = ((FinishMarkAction)action).getCommandName();
+        if (commandName != null) return commandName;
       }
     }
     return myCommandName;
@@ -272,25 +307,24 @@ class UndoableGroup {
     return myCommandTimestamp;
   }
 
-  public boolean shouldAskConfirmation(boolean redo) {
-    if (redo) {
-      if (myMerged4Redo) {
-        for (UndoableAction action : myActions) {
-          if (action instanceof StartMarkAction) {
-            if (action.isGlobal()) return true;
-            break;
-          }
-        }
-      }
-
-      if (myMerged4Undo) {
-        for (UndoableAction action : myActions) {
-          if (action instanceof FinishMarkAction) {
-            return false;
-          }
-        }
-      }
+  @Nullable
+  public StartMarkAction getStartMark() {
+    for (UndoableAction action : myActions) {
+      if (action instanceof StartMarkAction) return (StartMarkAction)action;
     }
+    return null;
+  }
+  
+  @Nullable
+  public FinishMarkAction getFinishMark() {
+    for (UndoableAction action : myActions) {
+      if (action instanceof FinishMarkAction) return (FinishMarkAction)action;
+    }
+    return null;
+  }
+
+  public boolean shouldAskConfirmation(boolean redo) {
+    if (shouldAskConfirmationForStartFinishGroup(redo)) return true;
     return myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION ||
            myConfirmationPolicy != UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION && myGlobal;
   }

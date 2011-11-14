@@ -1,7 +1,10 @@
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.psi.PsiFile;
 
 public class UnusedImportsTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedImports";
@@ -13,6 +16,20 @@ public class UnusedImportsTest extends DaemonAnalyzerTestCase {
 
   public void test1() throws Exception { doTest(); }
   public void test2() throws Exception { doTest(); }
+  
+  public void testWithHighlightingOff() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final PsiFile file = getFile();
+    final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(myProject);
+    final FileHighlighingSetting oldSetting = settingsPerFile.getHighlightingSettingForRoot(file);
+    try {
+      settingsPerFile.setHighlightingSettingForRoot(file, FileHighlighingSetting.NONE);
+      doDoTest(true, false, false);
+    }
+    finally {
+      settingsPerFile.setHighlightingSettingForRoot(file, oldSetting);
+    }
+  }
 
   public void testUnclosed() throws Exception { doTest(); }
 

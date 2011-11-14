@@ -148,7 +148,9 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
-      return;
+      if (!mySchemesManager.getAllSchemeNames().isEmpty()) {
+        return;
+      }
     }
     if (!LOAD_PROFILES) return;
 

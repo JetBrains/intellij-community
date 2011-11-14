@@ -848,7 +848,7 @@ public class ProjectWrapper {
       .loadFromPath(myProject, loadPath, pathVariables != null ? pathVariables : Collections.<String, String>emptyMap(), setupScript);
 
     myProjectSnapshot =
-              myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
+      myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
     try {
       dependencyMapping = new Mappings(getMapDir());
@@ -1045,7 +1045,13 @@ public class ProjectWrapper {
   }
 
   public void rebuild() {
-    makeModules(myProject.getModules().values(), defaultFlags);
+    try {
+      dependencyMapping.clean();
+      makeModules(myProject.getModules().values(), defaultFlags);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public Project getProject() {

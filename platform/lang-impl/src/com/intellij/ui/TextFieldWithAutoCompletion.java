@@ -41,6 +41,7 @@ import com.intellij.util.Function;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -61,6 +62,13 @@ import java.util.List;
 public class TextFieldWithAutoCompletion extends EditorTextField {
   private List<LookupElement> myVariants;
   private String myAdText;
+  
+  private Comparator<LookupElement> myComparator = new Comparator<LookupElement>() {
+    public int compare(final LookupElement item1,
+                       final LookupElement item2) {
+      return item1.getLookupString().compareTo(item2.getLookupString());
+    }
+  };
 
   public TextFieldWithAutoCompletion() {
     super();
@@ -162,14 +170,13 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
       }
     }
 
-    Collections.sort(items, new Comparator<LookupElement>() {
-      public int compare(final LookupElement item1,
-                         final LookupElement item2) {
-        return item1.getLookupString().compareTo(item2.getLookupString());
-      }
-    });
+    Collections.sort(items, myComparator);
 
     return items.toArray(new LookupElement[items.size()]);
+  }
+
+  public void setComparator(@NotNull Comparator<LookupElement> comparator) {
+    myComparator = comparator;
   }
 
   /**
