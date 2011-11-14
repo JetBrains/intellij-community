@@ -91,12 +91,13 @@ public class GitHttpCredentialsProvider extends CredentialsProvider {
         password = myPassword;
       }
 
-      final AuthDialog dialog = new AuthDialog(myProject, "Login required", "Login to " + myRemoteUrl, username, password, false);
+      boolean rememberPassword = myRememberPassword;
       boolean ok;
       if (username != null && password != null && !myShowDialog) {
         ok = true;
         myDialogShown = false;
       } else {
+        final AuthDialog dialog = new AuthDialog(myProject, "Login required", "Login to " + myRemoteUrl, username, password, false);
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -105,21 +106,27 @@ public class GitHttpCredentialsProvider extends CredentialsProvider {
         });
         ok = dialog.isOK();
         myDialogShown = true;
+        if (ok) {
+          username = dialog.getUsername();
+          password = dialog.getPassword();
+          rememberPassword = dialog.isRememberPassword();
+        }
       }
 
-      if (!ok) {
-        myCancelled = true;
-        myRememberPassword = false;  // in case of re-usage of the provider
-      } else {
+      if (ok) {
         if (userNameItem != null) {
-          userNameItem.setValue(dialog.getUsername());
+          userNameItem.setValue(username);
         }
         if (passwordItem != null) {
-          passwordItem.setValue(dialog.getPassword().toCharArray());
+          passwordItem.setValue(password.toCharArray());
         }
-        myRememberPassword = dialog.isRememberPassword();
-        myPassword = dialog.getPassword();
-        myUserName = dialog.getUsername();
+        myRememberPassword = rememberPassword;
+        myPassword = password;
+        myUserName = username;
+      }
+      else {
+        myCancelled = true;
+        myRememberPassword = false;  // in case of re-usage of the provider
       }
       return ok;
     }
