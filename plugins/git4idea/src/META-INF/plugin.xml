@@ -47,9 +47,8 @@
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="/actions/reset.png"/>
       <separator/>
       <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch"/>
-      <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull Changes..." icon="/actions/checkOut.png"/>
-      <action id="Git.Push" class="git4idea.actions.GitPush" text="Push Changes..." icon="/actions/commit.png"/>
-      <action id="Git.Push.Active.Branches" class="git4idea.actions.GitPushActiveBranches" text="Push Active Branches..."/>
+      <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull..." icon="/actions/checkOut.png"/>
+      <action id="Git.Push" class="git4idea.actions.GitPushActiveBranches" icon="/actions/commit.png" text="Push..."/>
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
