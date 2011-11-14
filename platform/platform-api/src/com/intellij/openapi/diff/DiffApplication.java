@@ -109,7 +109,7 @@ public class DiffApplication implements ApplicationStarterEx {
 
       final DirDiffSettings settings = new DirDiffSettings();
       settings.showInFrame = false;
-      diffManager.showDiff(d1, d2, settings);
+      diffManager.showDiff(d1, d2, settings, null);
     } else {
       SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, null);
       request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);

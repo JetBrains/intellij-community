@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ConcurrentTasks;
@@ -28,6 +29,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import java.util.Map;
 
 public class FirstInBranch implements Runnable {
+  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.FirstInBranch");
   private final SvnVcs myVcs;
   private final String myFullBranchUrl;
   private final String myFullTrunkUrl;
@@ -36,6 +38,10 @@ public class FirstInBranch implements Runnable {
   private final Consumer<CopyData> myConsumer;
 
   public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final Consumer<CopyData> consumer) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("FirstInBranch created with: repoRoot: " + repositoryRoot + " branchUrl: " + branchUrl +
+              " trunkUrl: " + trunkUrl);
+    }
     myVcs = vcs;
     myConsumer = consumer;
 
@@ -58,6 +64,7 @@ public class FirstInBranch implements Runnable {
       trunkURL = SVNURL.parseURIEncoded(myFullTrunkUrl);
     }
     catch (SVNException e) {
+      LOG.info(e);
       myConsumer.consume(null);
       return;
     }
@@ -86,7 +93,7 @@ public class FirstInBranch implements Runnable {
               }
             });
           } catch (SVNException e) {
-            //
+            LOG.info(e);
           }
         }
       }
@@ -106,7 +113,7 @@ public class FirstInBranch implements Runnable {
         });
     }
     catch (SVNException e) {
-      //
+      LOG.info(e);
     }
     return myRevisionCandidate.get();
   }
@@ -117,7 +124,10 @@ public class FirstInBranch implements Runnable {
       final SVNLogEntryPath path = (SVNLogEntryPath) o;
       final String localPath = path.getPath();
       final String copyPath = path.getCopyPath();
-
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("localPath: " + localPath + " copy path: " + copyPath);
+      }
+      
       if ('A' == path.getType()) {
         if ((myBranchUrl.equals(localPath) || SVNPathUtil.isAncestor(localPath, myBranchUrl)) &&
             ((myTrunkUrl.equals(copyPath)) || SVNPathUtil.isAncestor(copyPath, myTrunkUrl))) {

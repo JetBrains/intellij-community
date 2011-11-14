@@ -267,7 +267,11 @@ public class SvnChangeList implements CommittedChangeList {
   private FilePath getLocalPath(final String path, final NotNullFunction<File, Boolean> detector) {
     final String fullPath = myRepositoryRoot + path;
     if (myNonLocal) return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(fullPath, detector.fun(new File(fullPath)));
-    return myLocation.getLocalPath(fullPath, detector, myVcs);
+    final FilePath localPath = myLocation.getLocalPath(fullPath, detector, myVcs);
+    if (localPath == null) {
+      return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(fullPath, detector.fun(new File(fullPath)));
+    }
+    return localPath;
   }
 
   private long getRevision(final boolean isBeforeRevision) {
