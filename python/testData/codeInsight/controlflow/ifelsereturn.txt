@@ -2,7 +2,7 @@
 1(2) element: PyIfStatement
 2(3,13) READ ACCESS: markup
 3(4) element: PyStatementList. Condition: markup:true
-4(5) WRITETYPE ACCESS: markup
+4(5) ASSERTTYPE ACCESS: markup
 5(6) element: PyTryExceptStatement
 6(7,9) element: PyTryPart
 7(8,9) element: PyReturnStatement

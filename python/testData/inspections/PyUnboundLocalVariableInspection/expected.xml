@@ -12,6 +12,11 @@
   </problem>
   <problem>
     <file>test.py</file>
+    <line>15</line>
+    <description>"Name 'b' can be not defined"</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
     <line>51</line>
   <description>"Name 'i' can be not defined"</description>
   </problem>
