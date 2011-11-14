@@ -45,11 +45,11 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFacetConfiguration, AndroidFacetType> {
+public abstract class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFacetConfiguration, AndroidFacetType> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.maven.AndroidFacetImporter");
 
-  public AndroidFacetImporter() {
-    super("com.jayway.maven.plugins.android.generation2", "maven-android-plugin", FacetType.findInstance(AndroidFacetType.class), "Android");
+  public AndroidFacetImporter(@NotNull String pluginId) {
+    super("com.jayway.maven.plugins.android.generation2", pluginId, FacetType.findInstance(AndroidFacetType.class), "Android");
   }
 
   @Override
