@@ -45,6 +45,10 @@ public class PyWrapTest extends PyTestCase {
     doTest("=None");
   }
 
+  public void testWrapStringLiteral() {  // PY-4947
+    doTest(" AND field");
+  }
+
   private void doTest(final String textToType) {
     myFixture.configureByFile("wrap/" + getTestName(false) + ".py");
     myFixture.type(textToType);
