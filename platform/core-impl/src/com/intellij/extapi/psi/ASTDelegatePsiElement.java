@@ -32,10 +32,7 @@ import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
@@ -324,16 +321,21 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @Override
   public void delete() throws IncorrectOperationException {
-    if (getParent() instanceof ASTDelegatePsiElement) {
+    PsiElement parent = getParent();
+    if (parent instanceof ASTDelegatePsiElement) {
       CheckUtil.checkWritable(this);
-      ((ASTDelegatePsiElement) getParent()).deleteChildInternal(getNode());
+      ((ASTDelegatePsiElement)parent).deleteChildInternal(getNode());
     }
-    else if (getParent() instanceof PsiFile) {
+    else if (parent instanceof CompositePsiElement) {
       CheckUtil.checkWritable(this);
-      getParent().deleteChildRange(this, this);
+      ((CompositePsiElement)parent).deleteChildInternal(getNode());
+    }
+    else if (parent instanceof PsiFile) {
+      CheckUtil.checkWritable(this);
+      parent.deleteChildRange(this, this);
     }
     else {
-      throw new UnsupportedOperationException(getClass().getName() + " under " + (getParent() == null ? "null" : getParent().getClass().getName()));
+      throw new UnsupportedOperationException(getClass().getName() + " under " + (parent == null ? "null" : parent.getClass().getName()));
     }
   }
 
