@@ -717,7 +717,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public void synchronizeAll() {
     synchronized (myElements) {
-      for (DirDiffElement element : myElements) {
+      for (DirDiffElement element : myElements.toArray(new DirDiffElement[myElements.size()])) {
         syncElement(element);
       }
       selectFirstRow();
