@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -456,7 +457,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     setTitle1(data.getContentTitles()[0]);
     setTitle2(data.getContentTitles()[1]);
     setWindowTitle(myOwnerWindow, data.getWindowTitle());
-    if (data.getContents()[0].isBinary() || data.getContents()[1].isBinary()) {
+    if (isBinaryOrUIEditors(data)) {
       myPanel.removeStatusBar();
       myPanel.disableToolbar(true);
     } else {
@@ -479,6 +480,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
       myPanel.requestScrollEditors();
     }
+  }
+
+  private boolean isBinaryOrUIEditors(DiffRequest data) {
+    final DiffContent[] contents = data.getContents();
+    return contents[0].isBinary()
+           || contents[1].isBinary()
+           || contents[0].getContentType() instanceof UIBasedFileType
+           || contents[1].getContentType() instanceof UIBasedFileType;
   }
 
   private static void setWindowTitle(Window window, String title) {

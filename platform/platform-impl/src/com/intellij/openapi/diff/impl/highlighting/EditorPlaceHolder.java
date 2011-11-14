@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
     myContent = content;
     if (myContent != null) {
       Document document = myContent.getDocument();
-      if (myContent.isBinary() || document == null) {
+      if (myContent.isBinary() || document == null || myContent.getContentType() instanceof UIBasedFileType) {
         final VirtualFile file = myContent.getFile();
         if (file != null) {
           final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(getProject(), file);
