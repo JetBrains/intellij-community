@@ -16,8 +16,10 @@
 package git4idea.repo;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * <p>
@@ -58,12 +60,12 @@ import java.util.Collection;
 public final class GitRemote implements Comparable<GitRemote> {
 
   private final String myName;
-  private final Collection<String> myUrls;
+  private final List<String> myUrls;
   private final Collection<String> myPushUrls;
   private final String myFetchRefSpec;
   private final String myPushRefSpec;
 
-  GitRemote(@NotNull String name, @NotNull Collection<String> urls, @NotNull Collection<String> pushUrls, @NotNull String fetchRefSpec, @NotNull String pushRefSpec) {
+  GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls, @NotNull String fetchRefSpec, @NotNull String pushRefSpec) {
     myName = name;
     myUrls = urls;
     myPushUrls = pushUrls;
@@ -75,8 +77,21 @@ public final class GitRemote implements Comparable<GitRemote> {
     return myName;
   }
 
-  public Collection<String> getUrls() {
+  /**
+   * Returns all urls specified in gitconfig in {@code remote.<name>.url}.
+   * If you need url to fetch, use {@link #getFirstUrl()}, because only the first url is fetched by Git,
+   * others are ignored.
+   */
+  public List<String> getUrls() {
     return myUrls;
+  }
+
+  /**
+   * @return the first url (to fetch) or null if and only if there are no urls defined for the remote.
+   */
+  @Nullable
+  public String getFirstUrl() {
+    return myUrls.isEmpty() ? null : myUrls.get(0);
   }
 
   public Collection<String> getPushUrls() {

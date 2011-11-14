@@ -183,4 +183,8 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     return repository;
   }
 
+  @Override
+  public String toString() {
+    return "GitRepositoryManager{myRepositories: " + myRepositories + '}';
+  }
 }

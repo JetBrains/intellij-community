@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -167,7 +168,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
   }
 
   private static boolean fetch(Project project, VirtualFile root, ProgressIndicator indicator) {
-    return new GitFetcher(project, indicator).fetch(root);
+    return new GitFetcher(project, indicator).fetchRootsAndNotify(Collections.singleton(root), "Couldn't clone", false);
   }
 
   private static boolean checkout(Project project, VirtualFile root) {
