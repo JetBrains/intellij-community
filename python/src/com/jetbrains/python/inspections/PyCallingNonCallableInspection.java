@@ -109,6 +109,18 @@ public class PyCallingNonCallableInspection extends PyInspection {
         return true;
       }
     }
+    else if (type instanceof PyUnionType) {
+      for (PyType member : ((PyUnionType)type).getMembers()) {
+        final Boolean result = isCallable(member, anchor);
+        if (result == null) {
+          return null;
+        }
+        else if (!result) {
+          return false;
+        }
+      }
+      return true;
+    }
     else if (type instanceof PyCallableType) {
       return true;
     }

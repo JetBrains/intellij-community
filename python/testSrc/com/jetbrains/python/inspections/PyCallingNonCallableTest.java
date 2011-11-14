@@ -49,6 +49,11 @@ public class PyCallingNonCallableTest extends PyTestCase {
     doTest();
   }
 
+  // PY-4608
+  public void testUnionType() {
+    doTest();
+  }
+
   private void doTest() {
     setLanguageLevel(LanguageLevel.PYTHON27);
     try {
