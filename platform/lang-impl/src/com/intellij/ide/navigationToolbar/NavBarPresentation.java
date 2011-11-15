@@ -41,6 +41,7 @@ import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,12 +68,17 @@ public class NavBarPresentation {
     if (object instanceof Module) return ModuleType.get(((Module)object)).getNodeIcon(false);
     try {
       if (object instanceof PsiElement) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
+        Icon icon = ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
           public Icon compute() {
             return ((PsiElement)object).isValid() ? ((PsiElement)object)
               .getIcon(open ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED) : null;
           }
         });
+        
+        if (icon != null && (icon.getIconHeight() > 16 || icon.getIconWidth() > 16)) {
+          icon = IconUtil.cropIcon(icon, 16, 16);
+        }
+        return icon;
       }
     }
     catch (IndexNotReadyException e) {
