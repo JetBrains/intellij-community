@@ -58,20 +58,24 @@ public class PyPropertyAccessInspection extends PyInspection {
     }
 
     private void checkExpression(PyQualifiedExpression node) {
-      PyExpression qualifier = node.getQualifier();
+      final PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
-        PyType type = myTypeEvalContext.getType(qualifier);
+        final PyType type = myTypeEvalContext.getType(qualifier);
         if (type instanceof PyClassType) {
-          PyClass cls = ((PyClassType)type).getPyClass();
-          String name = node.getName();
+          final PyClass cls = ((PyClassType)type).getPyClass();
+          final String name = node.getName();
           if (cls != null && name != null) {
             final Pair<PyClass, String> key = new Pair<PyClass, String>(cls, name);
-            Property property;
-            if (myPropertyCache.containsKey(key)) property = myPropertyCache.get(key);
-            else property = cls.findProperty(name);
+            final Property property;
+            if (myPropertyCache.containsKey(key)) {
+              property = myPropertyCache.get(key);
+            }
+            else {
+              property = cls.findProperty(name);
+            }
             myPropertyCache.put(key, property); // we store nulls, too, to know that a property does not exist
             if (property != null) {
-              AccessDirection dir = AccessDirection.of(node);
+              final AccessDirection dir = AccessDirection.of(node);
               checkAccessor(node, name, dir, property);
               if (dir == AccessDirection.READ) {
                 final PsiElement parent = node.getParent();
@@ -86,12 +90,18 @@ public class PyPropertyAccessInspection extends PyInspection {
     }
 
     private void checkAccessor(PyExpression node, String name, AccessDirection dir, Property property) {
-      Maybe<PyFunction> accessor = property.getByDirection(dir);
+      final Maybe<PyFunction> accessor = property.getByDirection(dir);
       if (accessor.isDefined() && accessor.value() == null) {
-        String message;
-        if (dir == AccessDirection.WRITE) message = PyBundle.message("INSP.property.$0.cant.be.set", name);
-        else if (dir == AccessDirection.DELETE) message = PyBundle.message("INSP.property.$0.cant.be.deleted", name);
-        else message = PyBundle.message("INSP.property.$0.cant.be.read", name);
+        final String message;
+        if (dir == AccessDirection.WRITE) {
+          message = PyBundle.message("INSP.property.$0.cant.be.set", name);
+        }
+        else if (dir == AccessDirection.DELETE) {
+          message = PyBundle.message("INSP.property.$0.cant.be.deleted", name);
+        }
+        else {
+          message = PyBundle.message("INSP.property.$0.cant.be.read", name);
+        }
         registerProblem(node, message);
       }
     }
