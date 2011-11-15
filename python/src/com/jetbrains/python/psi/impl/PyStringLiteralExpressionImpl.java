@@ -342,29 +342,34 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public int getOffsetInHost(final int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
-      final Ref<Integer> offsetInDecodedRef = new Ref<Integer>(offsetInDecoded);
-      final Ref<Integer> result = new Ref<Integer>(-1);
-      myHost.iterateCharacterRanges(new TextRangeConsumer() {
-        public boolean process(int startOffset, int endOffset, String value) {
-          if (value.length() > offsetInDecodedRef.get()) {
-            result.set(startOffset + offsetInDecodedRef.get());
-            return false;
-          }
-          offsetInDecodedRef.set(offsetInDecodedRef.get() - value.length());
-          if (offsetInDecodedRef.get() == 0) {
-            result.set(endOffset);
-            return false;
-          }
-          return true;
-        }
-      });
-      return result.get();
+      return myHost.valueOffsetToTextOffset(offsetInDecoded);
     }
 
     @Override
     public boolean isOneLine() {
       return false;
     }
+  }
+
+  @Override
+  public int valueOffsetToTextOffset(int valueOffset) {
+    final Ref<Integer> offsetInDecodedRef = new Ref<Integer>(valueOffset);
+    final Ref<Integer> result = new Ref<Integer>(-1);
+    iterateCharacterRanges(new TextRangeConsumer() {
+      public boolean process(int startOffset, int endOffset, String value) {
+        if (value.length() > offsetInDecodedRef.get()) {
+          result.set(startOffset + offsetInDecodedRef.get());
+          return false;
+        }
+        offsetInDecodedRef.set(offsetInDecodedRef.get() - value.length());
+        if (offsetInDecodedRef.get() == 0) {
+          result.set(endOffset);
+          return false;
+        }
+        return true;
+      }
+    });
+    return result.get();
   }
 
   public boolean characterNeedsEscaping(char c) {
