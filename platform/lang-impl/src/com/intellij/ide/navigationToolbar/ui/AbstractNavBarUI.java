@@ -159,10 +159,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   @Override
-  public void doPaintWrapperPanelChildren(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible) {
-  }
-
-  @Override
   public Insets getWrapperPanelInsets(Insets insets) {
     return JBInsets.NONE;
   }
@@ -171,8 +167,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
     final Color startColor = UIUtil.getControlColor();
     final Color endColor = ColorUtil.shift(startColor, 7.0d / 8.0d);
-    g.setPaint(new GradientPaint(0, 0, startColor, 0, r.height, endColor));
-    g.fillRect(0, 0, r.width, r.height);
+    g.setPaint(new GradientPaint(0, 0, startColor, 0, r.height-1, endColor));
+    g.fillRect(0, 0, r.width, r.height-1);
 
     if (!undocked) {
       g.setColor(new Color(255, 255, 255, 220));
@@ -184,7 +180,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     g.drawLine(0, r.height-1, r.width, r.height-1);
 
     if (!mainToolbarVisible) {
-      UIUtil.drawDottedLine(g, r.width - 1, 0, r.width - 1, r.height, null, Color.GRAY);
+      UIUtil.drawDottedLine(g, r.width - 1, 0, r.width - 1, r.height-1, null, Color.GRAY);
     }
   }
 }

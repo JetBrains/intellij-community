@@ -161,7 +161,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private boolean doMacEnhancementsForMainToolbar() {
     return (UIUtil.isUnderAquaLookAndFeel() && ActionPlaces.MAIN_TOOLBAR.equals(myPlace)) 
-           || ActionPlaces.NAVIGATION_BAR.equals(myPlace);
+           || isInsideNavBar();
+  }
+
+  private boolean isInsideNavBar() {
+    return ActionPlaces.NAVIGATION_BAR.equals(myPlace);
   }
 
   @Override
@@ -187,7 +191,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   protected void paintComponent(final Graphics g) {
-    if (ActionPlaces.NAVIGATION_BAR.equals(myPlace)) {
+    if (isInsideNavBar()) {
       final Dimension size = getSize();
       g.setColor(UIUtil.getBorderColor());
       g.drawLine(0, size.height - 1, size.width, size.height - 1);
@@ -258,7 +262,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private Dimension getMinimumButtonSize() {
-    return ActionPlaces.NAVIGATION_BAR.equals(myPlace) ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
+    return isInsideNavBar() ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
   } 
 
   public ActionButton createToolbarButton(final AnAction action, final ActionButtonLook look, final String place, final Presentation presentation, final Dimension minimumSize) {
@@ -1178,9 +1182,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       setBorder(new EmptyBorder(0, 0, 0, 0));
       setOpaque(false);
     } else {
-      if (ActionPlaces.NAVIGATION_BAR.equals(myPlace)) {
+      if (isInsideNavBar()) {
         setMinimumButtonSize(NAVBAR_MINIMUM_BUTTON_SIZE);
-        setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 2));
+        setBorder(BorderFactory.createEmptyBorder(1, 3, 1, 3));
         setOpaque(true);
       } else {
         setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);

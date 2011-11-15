@@ -84,13 +84,8 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     if (myWrapperPanel == null) {
       myWrapperPanel = new JPanel(new BorderLayout()) {
         @Override
-        protected void paintChildren(Graphics g) {
-          super.paintChildren(g);
-          NavBarUIManager.getUI().doPaintWrapperPanelChildren((Graphics2D)g, getBounds(), isMainToolbarVisible());
-        }
-
-        @Override
         protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
           NavBarUIManager.getUI().doPaintWrapperPanel((Graphics2D)g, getBounds(), isMainToolbarVisible());
         }
 
