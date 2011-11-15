@@ -1,12 +1,12 @@
 package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -68,6 +68,27 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
           document.deleteString(cut_start, end + res.getCutIntoRight());
           document.insertString(cut_start, res.getInsert());
           return cut_start + res.getCursorOffset();
+        }
+      }
+
+      // single string case PY-4375
+      if (request.leftElem() == request.rightElem()) {
+        IElementType type = request.leftElem().getNode().getElementType();
+        if (PyTokenTypes.SINGLE_QUOTED_STRING == type || PyTokenTypes.SINGLE_QUOTED_UNICODE == type) {
+          PyExpression element = request.leftExpr();
+          if (element == null) return CANNOT_JOIN;
+          String[] substrings = element.getText().split("\n");
+          if (substrings.length != 1) {
+            StringBuilder replacement = new StringBuilder();
+            for (String string : substrings) {
+              if (string.trim().endsWith("\\"))
+                replacement.append(string.substring(0, string.length()-1));
+              else
+                replacement.append(string);
+            }
+            document.replaceString(element.getTextOffset(), element.getTextOffset()+element.getTextLength(), replacement);
+            return element.getTextOffset();
+          }
         }
       }
     }

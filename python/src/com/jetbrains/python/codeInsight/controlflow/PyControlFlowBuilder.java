@@ -30,10 +30,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
   private List<Pair<PsiElement, Instruction>> myPendindBackup = null;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//// Control flow builder staff
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
     return myBuilder.build(this, owner);
   }
@@ -99,9 +95,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression qualifier = node.getQualifier();
     if (qualifier != null) {
       qualifier.accept(this);
-      if (!isSelf(qualifier)) {
-        return;
-      }
+      return;
     }
     if (PyImportStatementNavigator.getImportStatementByElement(node) != null) {
       return;
@@ -113,23 +107,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
     myBuilder.addNode(readWriteInstruction);
     myBuilder.checkPending(readWriteInstruction);
-  }
-
-  public static boolean isSelf(PsiElement qualifier) {
-    PyFunction func = PsiTreeUtil.getParentOfType(qualifier, PyFunction.class);
-    if (func == null || PsiTreeUtil.getParentOfType(func, PyClass.class) == null) {
-      return false;
-    }
-    final PyParameter[] params = func.getParameterList().getParameters();
-    if (params.length == 0) {
-      return false;
-    }
-    final PyNamedParameter named = params[0].getAsNamed();
-    if (named == null) {
-      return false;
-    }
-    final String name = named.getName();
-    return name != null && name.equals(qualifier.getText());
   }
 
   @Override
@@ -158,7 +135,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyTargetExpression(final PyTargetExpression node) {
     final PsiElement[] children = node.getChildren();
     // Case of non qualified reference
-    if (children.length == 0 || (children.length == 1 && isSelf(children[0]))) {
+    if (children.length == 0) {
       final ReadWriteInstruction.ACCESS access = node.getParent() instanceof PySliceExpression
                                                  ? ReadWriteInstruction.ACCESS.READ : ReadWriteInstruction.ACCESS.WRITE;
       final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
@@ -341,27 +318,23 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (elsePart == null) {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-
     final PyStatementList list = forPart.getStatementList();
     if (list != null) {
-      Instruction bodyInstruction = myBuilder.startNode(list);
+      final Instruction bodyInstruction = myBuilder.startNode(list);
       final PyExpression target = forPart.getTarget();
       if (target != null) {
         target.accept(this);
       }
-
       list.accept(this);
-
       if (myBuilder.prevInstruction != null) {
         myBuilder.addEdge(myBuilder.prevInstruction, bodyInstruction);  //loop
-        myBuilder.addPendingEdge(node, myBuilder.prevInstruction); // exit
+        myBuilder.addPendingEdge(list, myBuilder.prevInstruction); // exit
       }
-      final Ref<Instruction> bodyInstRef = new Ref<Instruction>(bodyInstruction);
       myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
         public void process(final PsiElement pendingScope, final Instruction instruction) {
           if (pendingScope != null && PsiTreeUtil.isAncestor(list, pendingScope, false)) {
-            myBuilder.addEdge(instruction, bodyInstRef.get());  //loop
-            myBuilder.addPendingEdge(node, instruction); // exit
+            myBuilder.addEdge(instruction, bodyInstruction);  //loop
+            myBuilder.addPendingEdge(list, instruction); // exit
           }
           else {
             myBuilder.addPendingEdge(pendingScope, instruction);

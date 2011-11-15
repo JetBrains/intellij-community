@@ -198,6 +198,12 @@ public class PyEditingTest extends PyTestCase {
                 "\"string\"");
   }
 
+  public void testEnterAfterSlash() {
+    doTestEnter("a = 'some \\<caret> string'",
+                "a = 'some \\\n" +
+                " string'");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");

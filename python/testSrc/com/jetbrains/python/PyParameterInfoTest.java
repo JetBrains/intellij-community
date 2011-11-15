@@ -316,6 +316,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg_star>").getTextOffset()).check("a, b, c", new String[]{"a, ", "b, "});
   }
 
+  public void testTupleParam() {
+    // PY-3817
+    Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("a, b", new String[]{"a, "});
+  }
+
   public void testTupleAndNamedArg2() {
     // PY-1268
     Map<String, PsiElement> marks = loadTest(2);
