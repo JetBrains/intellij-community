@@ -211,6 +211,11 @@ public class PyQuickFixTest extends PyTestCase {
                           PyBundle.message("QFIX.augment.assignment"), true, true);
   }
 
+  public void testAugmentAssignment1() {  // PY-5037
+    doInspectionTest("AugmentAssignment1.py", PyAugmentAssignmentInspection.class,
+                          PyBundle.message("QFIX.augment.assignment"), true, true);
+  }
+
   public void testChainedComparisons() {  // PY-1020
     doInspectionTest("ChainedComparisons.py", PyChainedComparisonsInspection.class,
                           PyBundle.message("QFIX.chained.comparison"), true, true);

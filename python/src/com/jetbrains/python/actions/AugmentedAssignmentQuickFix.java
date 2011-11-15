@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -52,7 +53,8 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
           && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
         if (leftExpression.getText().equals(target.getText())) {
           if (rightExpression instanceof PyNumericLiteralExpression || rightExpression instanceof PyStringLiteralExpression
-            || rightExpression instanceof PyReferenceExpression || isPercentage(rightExpression) || isCompound(rightExpression) ) {
+            || rightExpression instanceof PyReferenceExpression || isPercentage(rightExpression) || isCompound(rightExpression)
+            || isMathOperation(rightExpression, expression.getOperator())) {
 
             PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
             StringBuilder stringBuilder = new StringBuilder();
@@ -80,5 +82,19 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
     return (rightExpression instanceof PyBinaryExpression &&
               ((PyBinaryExpression)rightExpression).getLeftExpression() instanceof PyStringLiteralExpression &&
               ((PyBinaryExpression)rightExpression).getOperator() == PyTokenTypes.PERC);
+  }
+
+  private boolean isMathOperation(PyExpression rightExpression, PyElementType mainOperator) {
+    TokenSet first = TokenSet.create(PyTokenTypes.EXP, PyTokenTypes.FLOORDIV);
+    TokenSet second = TokenSet.create(PyTokenTypes.MULT, PyTokenTypes.DIV, PyTokenTypes.PERC);
+    TokenSet third = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS);
+    if (rightExpression instanceof PyBinaryExpression){
+      PyElementType operator = ((PyBinaryExpression)rightExpression).getOperator();
+      if (third.contains(mainOperator) && (second.contains(operator) || first.contains(operator)))
+        return true;
+      else if (second.contains(mainOperator) && first.contains(operator))
+        return true;
+    }
+    return false;
   }
 }
