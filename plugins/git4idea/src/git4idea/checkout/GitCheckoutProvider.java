@@ -15,38 +15,32 @@
  */
 package git4idea.checkout;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.Git;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
-import git4idea.ui.GitUIUtil;
+import git4idea.jgit.GitHttpAdapter;
+import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Checkout provider for the Git
  */
 public class GitCheckoutProvider implements CheckoutProvider {
-
-  private static final Logger LOG = Logger.getInstance(GitCheckoutProvider.class);
 
   public String getVcsName() {
     return "_Git";
@@ -81,7 +75,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
     new Task.Backgroundable(project, GitBundle.message("cloning.repository", sourceRepositoryURL)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cloneResult.set(doClone(indicator, project, directoryName, parentDirectory, sourceRepositoryURL));
+        cloneResult.set(doClone(project, directoryName, parentDirectory, sourceRepositoryURL));
       }
 
       @Override
@@ -104,87 +98,25 @@ public class GitCheckoutProvider implements CheckoutProvider {
     }.queue();
   }
 
-  private static boolean doClone(ProgressIndicator indicator, Project project, String directoryName, String parentDirectory, String sourceRepositoryURL) {
-    File dir = mkdir(project, directoryName, parentDirectory);
-    if (dir == null) {
-      return false;
+  private static boolean doClone(@NotNull Project project, @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
+    if (GitHttpAdapter.isHttpUrl(sourceRepositoryURL)) {
+      GitFetchResult result = GitHttpAdapter.cloneRepository(project, new File(parentDirectory, directoryName), sourceRepositoryURL);
+      GitFetcher.displayFetchResult(project, result, "Clone failed", result.getErrors());
+      return result.isSuccess();
     }
-    VirtualFile root = VcsUtil.getVirtualFileWithRefresh(dir);
-    if (root != null &&
-        init(project, root) &&
-        addRemote(project, root, sourceRepositoryURL) &&
-        fetch(project, root, indicator) &&
-        checkout(project, root)) {
+    else {
+      return cloneNatively(project, new File(parentDirectory), sourceRepositoryURL, directoryName);
+    }
+  }
+
+  private static boolean cloneNatively(Project project, File directory, String url, String cloneDirectoryName) {
+    GitCommandResult result = Git.clone(project, directory, url, cloneDirectoryName);
+    if (result.success()) {
       return true;
     }
-    cleanup(dir);
+    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Clone failed", result.getErrorOutputAsHtmlString(), NotificationType.ERROR, null)
+      .notify(project.isDefault() ? null : project);
     return false;
-  }
-
-  private static void cleanup(@NotNull File dir) {
-    FileUtil.delete(dir);
-  }
-
-  private static @Nullable File mkdir(Project project, String directoryName, String parentDirectory) {
-    final File dir = new File(parentDirectory, directoryName);
-    if (dir.exists()) {
-      GitUIUtil.notifyError(project, "Couldn't clone", "Directory <code>" + dir + "</code> already exists.");
-      return null;
-    }
-    if (!dir.mkdir()) {
-      GitUIUtil.notifyError(project, "Couldn't clone", "Can't create directory <code>" + dir + "</code>");
-      return null;
-    }
-    return dir;
-  }
-
-  private static boolean init(Project project, VirtualFile root) {
-    try {
-      Git.init(project, root);
-    } catch (VcsException e) {
-      LOG.info("init ", e);
-      GitVcs vcs = GitVcs.getInstance(project);
-      if (vcs == null || vcs.getExecutableValidator().isExecutableValid()) { // invalid executable will be notified in GitHandler.start()
-        GitUIUtil.notifyError(project, "Couldn't clone", "Couldn't <code>git init</code> in <code>" + root.getPresentableUrl() + "</code>", true, e);
-      }
-      return false;
-    }
-    return true;
-  }
-
-  private static boolean addRemote(Project project, VirtualFile root, String remoteUrl) {
-    final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-    addRemoteHandler.setNoSSH(true);
-    addRemoteHandler.addParameters("add", "origin", remoteUrl);
-    try {
-      addRemoteHandler.run();
-      return true;
-    }
-    catch (VcsException e) {
-      LOG.info("addRemote ", e);
-      GitUIUtil.notifyError(project, "Couldn't clone", "Couldn't add remote <code>" + remoteUrl + "</code>", true, e);
-      return false;
-    }
-  }
-
-  private static boolean fetch(Project project, VirtualFile root, ProgressIndicator indicator) {
-    return new GitFetcher(project, indicator).fetchRootsAndNotify(Collections.singleton(root), "Couldn't clone", false);
-  }
-
-  private static boolean checkout(Project project, VirtualFile root) {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CHECKOUT);
-    h.setNoSSH(true);
-    h.addParameters("-b", "master", "origin/master");
-    try {
-      h.run();
-      return true;
-    }
-    catch (VcsException e) {
-      LOG.info("checkout ", e);
-      GitUIUtil.notifyError(project, "Clone not completed",
-                            "Couldn't checkout master branch. <br/>All changes were fetched to <code>" + root + "</code>.", true, e);
-      return false;
-    }
   }
 
 }

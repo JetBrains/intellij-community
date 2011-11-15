@@ -56,7 +56,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   }
 
   @NotNull
-  public XmlAttribute createXmlAttribute(@NotNull String name, String value) throws IncorrectOperationException {
+  public XmlAttribute createXmlAttribute(@NotNull String name, @NotNull String value) throws IncorrectOperationException {
     final char quoteChar;
     if (!value.contains("\"")) {
       quoteChar = '"';

@@ -65,7 +65,7 @@ public final class GitSimplePushResult {
 
   @NotNull
   public static GitSimplePushResult error(@NotNull String errorOutput) {
-    return new GitSimplePushResult(Type.REJECT, errorOutput, Collections.<String>emptyList());
+    return new GitSimplePushResult(Type.ERROR, errorOutput, Collections.<String>emptyList());
   }
 
   @NotNull

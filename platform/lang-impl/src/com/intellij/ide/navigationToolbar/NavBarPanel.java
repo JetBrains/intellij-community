@@ -29,6 +29,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.TransferableWrapper;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.Disposable;
@@ -244,6 +245,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   void updateItems() {
     for (NavBarItem item : myList) {
       item.update();
+    }
+    if (UISettings.getInstance().SHOW_NAVIGATION_BAR) {
+      JComponent parent = (JComponent)getParent().getParent().getParent().getParent().getParent().getParent();
+      parent.revalidate();
+      parent.repaint();
     }
   }
 

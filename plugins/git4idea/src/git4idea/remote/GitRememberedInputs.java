@@ -65,6 +65,15 @@ public class GitRememberedInputs implements PersistentStateComponent<GitRemember
   }
 
   public void addUrl(@NotNull String url, @NotNull String userName) {
+    for (UrlAndUserName visitedUrl : myState.visitedUrls) {
+      if (visitedUrl.url.equalsIgnoreCase(url)) {  // don't add multiple entries for a single url
+        if (!userName.isEmpty()) {                 // rewrite username, unless no username is specified
+          visitedUrl.userName = userName;
+        }
+        return;
+      }
+    }
+
     UrlAndUserName urlAndUserName = new UrlAndUserName();
     urlAndUserName.url = url;
     urlAndUserName.userName = userName;
