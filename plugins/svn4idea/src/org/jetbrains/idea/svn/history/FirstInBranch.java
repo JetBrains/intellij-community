@@ -15,73 +15,32 @@
  */
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.ConcurrentTasks;
 import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
-import java.util.Map;
-
-public class FirstInBranch implements Runnable {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.FirstInBranch");
-  private final SvnVcs myVcs;
-  private final String myFullBranchUrl;
-  private final String myFullTrunkUrl;
-  private final String myBranchUrl;
-  private final String myTrunkUrl;
-  private final Consumer<CopyData> myConsumer;
-
-  public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final Consumer<CopyData> consumer) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("FirstInBranch created with: repoRoot: " + repositoryRoot + " branchUrl: " + branchUrl +
-              " trunkUrl: " + trunkUrl);
-    }
-    myVcs = vcs;
-    myConsumer = consumer;
-
-    myFullBranchUrl = branchUrl;
-    myFullTrunkUrl = trunkUrl;
-    myBranchUrl = relativePath(repositoryRoot, branchUrl);
-    myTrunkUrl = relativePath(repositoryRoot, trunkUrl);
+public class FirstInBranch extends FirstInBranchAbstractBase {
+  public FirstInBranch(SvnVcs vcs,
+                        String repositoryRoot,
+                        String branchUrl,
+                        String trunkUrl,
+                        Consumer<CopyData> consumer) {
+    super(vcs, repositoryRoot, branchUrl, trunkUrl, consumer);
   }
 
-  private String relativePath(final String parent, final String child) {
-    String path = SVNPathUtil.getRelativePath(parent, child);
-    return path.startsWith("/") ? path : "/" + path;
-  }
-
-  public void run() {
-    final SVNURL branchURL;
-    final SVNURL trunkURL;
-    try {
-      branchURL = SVNURL.parseURIEncoded(myFullBranchUrl);
-      trunkURL = SVNURL.parseURIEncoded(myFullTrunkUrl);
-    }
-    catch (SVNException e) {
-      LOG.info(e);
-      myConsumer.consume(null);
-      return;
-    }
-
-    final ConcurrentTasks<CopyData> tasks =
-      new ConcurrentTasks<CopyData>(ProgressManager.getInstance().getProgressIndicator(), createTask(branchURL), createTask(trunkURL));
-    tasks.compute();
-    if (tasks.isResultKnown()) {
-      myConsumer.consume(tasks.getResult());
-    } else {
-      myConsumer.consume(null);
-    }
-  }
-
-  private Consumer<Consumer<CopyData>> createTask(final SVNURL branchURL) {
+  protected Consumer<Consumer<CopyData>> createTask(final SVNURL branchURL) {
     return new Consumer<Consumer<CopyData>>() {
       public void consume(final Consumer<CopyData> copyDataConsumer) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("FirstInBranch started for: " + branchURL.toString());
+        }
         final SVNLogClient logClient = myVcs.createLogClient();
         final long start1 = getStart(logClient, branchURL);
         if (start1 > 0) {
@@ -96,11 +55,17 @@ public class FirstInBranch implements Runnable {
             LOG.info(e);
           }
         }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("FirstInBranch finished for: " + branchURL.toString());
+        }
       }
     };
   }
 
   private static long getStart(final SVNLogClient logClient, final SVNURL url) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getting start revision for: " + url);
+    }
     final Ref<Long> myRevisionCandidate = new Ref<Long>(0L);
     try {
       logClient.doLog(url, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(0),
@@ -109,36 +74,18 @@ public class FirstInBranch implements Runnable {
             ProgressManager.checkCanceled();
 
             myRevisionCandidate.set(logEntry.getRevision());
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("setting in cycle start revision for: " + url + " as: " + myRevisionCandidate.get());
+            }
           }
         });
     }
     catch (SVNException e) {
       LOG.info(e);
     }
-    return myRevisionCandidate.get();
-  }
-
-  private void checkForCopy(final SVNLogEntry logEntry, final Consumer<CopyData> result) {
-    final Map map = logEntry.getChangedPaths();
-    for (Object o : map.values()) {
-      final SVNLogEntryPath path = (SVNLogEntryPath) o;
-      final String localPath = path.getPath();
-      final String copyPath = path.getCopyPath();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("localPath: " + localPath + " copy path: " + copyPath);
-      }
-      
-      if ('A' == path.getType()) {
-        if ((myBranchUrl.equals(localPath) || SVNPathUtil.isAncestor(localPath, myBranchUrl)) &&
-            ((myTrunkUrl.equals(copyPath)) || SVNPathUtil.isAncestor(copyPath, myTrunkUrl))) {
-          result.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), true));
-        } else {
-          if ((myBranchUrl.equals(copyPath) || SVNPathUtil.isAncestor(copyPath, myBranchUrl)) &&
-              ((myTrunkUrl.equals(localPath)) || SVNPathUtil.isAncestor(localPath, myTrunkUrl))) {
-            result.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), false));
-          }
-        }
-      }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("start revision for: " + url + " is: " + myRevisionCandidate.get());
     }
+    return myRevisionCandidate.get();
   }
 }
