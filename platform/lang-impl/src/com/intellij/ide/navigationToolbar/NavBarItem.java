@@ -119,7 +119,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     final Color bg = getBackground();
     append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
 
-    repaint();
+    //repaint();
   }
   
   public boolean isInactive() {

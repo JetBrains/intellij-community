@@ -42,7 +42,6 @@ public interface NavBarUI {
   Color getForeground(boolean selected, boolean focused, boolean inactive);
   
   void doPaintWrapperPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible);
-  void doPaintWrapperPanelChildren(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible);
 
   void doPaintNavBarPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible, boolean undocked);
 

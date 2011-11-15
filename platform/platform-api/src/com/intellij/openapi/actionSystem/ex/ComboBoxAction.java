@@ -99,6 +99,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setMargin(new Insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
         setBorder(IdeBorderFactory.createEmptyBorder(0));
+        setFont(UIUtil.getLabelFont().deriveFont(11.0f));
       }
       addActionListener(
         new ActionListener() {
@@ -292,7 +293,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           x += icon.getIconWidth() + 3;
         }
         if (!StringUtil.isEmpty(getText())) {
-          final Font font = UIUtil.getButtonFont();
+          final Font font = getFont();
           g2.setFont(font);
           g2.setColor(UIManager.getColor("Button.foreground"));
           g2.drawString(getText(), x, (size.height + font.getSize())/2 - 1);
