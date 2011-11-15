@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,9 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
 
     if (lParenth == null) return null;
     PsiElement afterLParen = lParenth.getNextSibling();
+    while (afterLParen != null && StringUtil.isEmptyOrSpaces(afterLParen.getText())) {
+      afterLParen = afterLParen.getNextSibling();
+    }
 
     if (afterLParen instanceof GrExpression) return (GrExpression)afterLParen;
 
