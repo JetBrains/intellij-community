@@ -19,7 +19,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.commands.*;
@@ -60,13 +59,8 @@ public class GitFetcher {
    */
   public GitFetchResult fetch(@NotNull VirtualFile root) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    boolean disposeRepository = false;
+    assert repository != null : "Repository can't be null for " + root + "\n" + myRepositoryManager;
     
-    if (repository == null) { // we are cloning => no repository is registered => making a fake repository
-      repository = GitRepository.getTempRepository(root, myProject);
-      disposeRepository = true;
-    }
-
     GitFetchResult result = GitFetchResult.success();
     for (GitRemote remote : repository.getRemotes()) {
       String url = remote.getFirstUrl();
@@ -88,9 +82,6 @@ public class GitFetcher {
       }
     }
     
-    if (disposeRepository) {
-      Disposer.dispose(repository);
-    }
     return result;
   }
 
@@ -126,11 +117,13 @@ public class GitFetcher {
     return myErrors;
   }
 
-  public void displayFetchResult(@NotNull GitFetchResult result, @Nullable String errorNotificationTitle) {
+  public static void displayFetchResult(@NotNull Project project,
+                                        @NotNull GitFetchResult result,
+                                        @Nullable String errorNotificationTitle, @NotNull Collection<? extends Exception> errors) {
     if (result.isSuccess()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetched successfully", NotificationType.WARNING).notify(myProject);
+      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetched successfully", NotificationType.WARNING).notify(project);
     } else if (result.isCancelled()) {
-      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetch cancelled by user", NotificationType.WARNING).notify(myProject);
+      GitVcs.NOTIFICATION_GROUP_ID.createNotification("Fetch cancelled by user", NotificationType.WARNING).notify(project);
     } else if (result.isNotAuthorized()) {
       String title;
       String description;
@@ -141,11 +134,11 @@ public class GitFetcher {
         title = "Fetch failed";
         description = "Couldn't authorize";
       }
-      GitUIUtil.notifyMessage(myProject, title, description, NotificationType.ERROR, true, null);
+      GitUIUtil.notifyMessage(project, title, description, NotificationType.ERROR, true, null);
     } else {
-      GitVcs instance = GitVcs.getInstance(myProject);
+      GitVcs instance = GitVcs.getInstance(project);
       if (instance != null && instance.getExecutableValidator().isExecutableValid()) {
-        GitUIUtil.notifyMessage(myProject, "Fetch failed", null, NotificationType.ERROR, true, getErrors());
+        GitUIUtil.notifyMessage(project, "Fetch failed", null, NotificationType.ERROR, true, errors);
       }
     }
   }
@@ -164,7 +157,7 @@ public class GitFetcher {
     for (VirtualFile root : roots) {
       GitFetchResult result = fetch(root);
       if (!result.isSuccess()) {
-        displayFetchResult(result, errorNotificationTitle);
+        displayFetchResult(myProject, result, errorNotificationTitle, getErrors());
         return false;
       }
     }

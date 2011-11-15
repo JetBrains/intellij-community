@@ -26,6 +26,7 @@ import git4idea.push.GitSimplePushResult;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitFetchResult;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -142,6 +143,34 @@ public final class GitHttpAdapter {
       LOG.info("Exception while pushing " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
       return makeErrorResultFromException(e);
     }
+  }
+  
+  @NotNull
+  public static GitFetchResult cloneRepository(@NotNull Project project, @NotNull final File directory, @NotNull final String url) {
+    GitFetchResult.Type resultType;
+    try {
+      final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(project, url);
+      GeneralResult result = callWithAuthRetry(new MyRunnable() {
+        @Override
+        public void run() throws InvalidRemoteException {
+          CloneCommand cloneCommand = Git.cloneRepository();
+          cloneCommand.setDirectory(directory);
+          cloneCommand.setURI(url);
+          cloneCommand.setCredentialsProvider(provider);
+          cloneCommand.call();
+        }
+      }, provider);
+      resultType = convertToFetchResultType(result);
+    }
+    catch (InvalidRemoteException e) {
+      LOG.info("Exception while cloning " + url + " to " + directory, e);
+      return GitFetchResult.error(e);
+    }
+    catch (IOException e) {
+      LOG.info("Exception while cloning " + url + " to " + directory, e);
+      return GitFetchResult.error(e);
+    }
+    return new GitFetchResult(resultType);
   }
 
   @NotNull
