@@ -38,65 +38,19 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 
+/**
+ * @author max
+ * @author Konstantin Bulenkov
+ */
 public class IconUtil {
-
-  private IconUtil() {
-  }
-
-  private static class FileIconKey {
-    private final VirtualFile myFile;
-    private final Project myProject;
-    private final int myFlags;
-
-    private FileIconKey(final VirtualFile file, final Project project, final int flags) {
-      myFile = file;
-      myProject = project;
-      myFlags = flags;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (!(o instanceof FileIconKey)) return false;
-
-      final FileIconKey that = (FileIconKey)o;
-
-      if (myFlags != that.myFlags) return false;
-      if (!myFile.equals(that.myFile)) return false;
-      if (myProject != null ? !myProject.equals(that.myProject) : that.myProject != null) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myFile.hashCode();
-      result = 31 * result + (myProject != null ? myProject.hashCode() : 0);
-      result = 31 * result + myFlags;
-      return result;
-    }
-
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    public Project getProject() {
-      return myProject;
-    }
-
-    public int getFlags() {
-      return myFlags;
-    }
-  }
-
-  private static Key<Boolean> PROJECT_WAS_EVER_INTIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
+  private static Key<Boolean> PROJECT_WAS_EVER_INITIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
 
   private static boolean wasEverInitialized(Project project) {
-    Boolean was = project.getUserData(PROJECT_WAS_EVER_INTIALIZED);
+    Boolean was = project.getUserData(PROJECT_WAS_EVER_INITIALIZED);
     if (was == null) {
       if (project.isInitialized()) {
         was = Boolean.valueOf(true);
-        project.putUserData(PROJECT_WAS_EVER_INTIALIZED, was);
+        project.putUserData(PROJECT_WAS_EVER_INITIALIZED, was);
       }
       else {
         was = Boolean.valueOf(false);
@@ -106,11 +60,41 @@ public class IconUtil {
     return was.booleanValue();
   }
 
+  public static Icon cropIcon(Icon icon, int maxWidth, int maxHeight) {
+    if (icon.getIconHeight() <= maxHeight && icon.getIconWidth() <= maxWidth) {
+      return icon;
+    }
+
+    final int w = Math.min(icon.getIconWidth(), maxWidth);
+    final int h = Math.min(icon.getIconHeight(), maxHeight);
+
+    final BufferedImage image = GraphicsEnvironment
+      .getLocalGraphicsEnvironment()
+      .getDefaultScreenDevice()
+      .getDefaultConfiguration()
+      .createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT);
+    final Graphics2D g = image.createGraphics();
+    icon.paintIcon(null, g, 0, 0);
+    g.dispose();
+
+    final BufferedImage img = new BufferedImage(w, h, Transparency.TRANSLUCENT);
+    final int offX = icon.getIconWidth() > maxWidth ? (icon.getIconWidth() - maxWidth) / 2 : 0;
+    final int offY = icon.getIconHeight() > maxHeight ? (icon.getIconHeight() - maxHeight) / 2 : 0;
+    for (int col = 0; col < w; col++) {
+      for (int row = 0; row < h; row++) {
+        img.setRGB(col, row, image.getRGB(col + offX, row + offY));
+      }
+    }
+
+    return new ImageIcon(img);
+  }
+  
   public static Icon getIcon(final VirtualFile file, final int flags, final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
+    final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file);
     return IconDeferrer.getInstance()
-      .defer(lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
+      .defer(base, new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
         @Override
         public Icon fun(final FileIconKey key) {
           VirtualFile file = key.getFile();
@@ -173,11 +157,11 @@ public class IconUtil {
   }
 
   private static class FileIconProviderHolder {
-    private static final FileIconProvider[] ourProviders = Extensions.getExtensions(FileIconProvider.EP_NAME);
+    private static final FileIconProvider[] myProviders = Extensions.getExtensions(FileIconProvider.EP_NAME);
   }
 
   private static FileIconProvider[] getProviders() {
-    return FileIconProviderHolder.ourProviders;
+    return FileIconProviderHolder.myProviders;
   }
 
   private static class FileIconPatcherHolder {

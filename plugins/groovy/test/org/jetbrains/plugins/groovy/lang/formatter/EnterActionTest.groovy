@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.formatter;
 
 
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -244,6 +245,7 @@ def c = { a ->
   }
 
   public void testGeese1() {
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings).USE_FLYING_GEESE_BRACES = true
     doTest '''[1, 2, 3, 4].
     toSet().
     findAllXxx {
@@ -261,6 +263,7 @@ def c = { a ->
   }
 
   public void testGeese2() {
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings).USE_FLYING_GEESE_BRACES = true
     doTest '''foo {
   bar {<caret>}
 }

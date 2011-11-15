@@ -401,5 +401,9 @@
       <keyboard-shortcut first-keystroke="control P" />
     </action>
 
+    <action id="UsageView.Include">
+      <keyboard-shortcut first-keystroke="shift BACK_SPACE"/>
+    </action>
+
   </keymap>
 </component>

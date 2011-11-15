@@ -96,7 +96,7 @@ public class InspectionProfileWrapper {
   }
 
   public void init(final Project project) {
-    final List<ToolsImpl> profileEntries = myProfile.getAllEnabledInspectionTools();
+    final List<ToolsImpl> profileEntries = myProfile.getAllEnabledInspectionTools(project);
     for (Tools profileEntry : profileEntries) {
       for (ScopeToolState toolState : profileEntry.getTools()) {
         toolState.getTool().projectOpened(project);

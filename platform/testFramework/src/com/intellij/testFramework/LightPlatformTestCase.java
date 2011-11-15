@@ -368,7 +368,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
 
       @Override
-      public List<ToolsImpl> getAllEnabledInspectionTools() {
+      public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
         List<ToolsImpl> result = new ArrayList<ToolsImpl>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
           result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));
@@ -396,7 +396,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
 
       @Override
-      public InspectionProfileEntry getToolById(String id, PsiElement element) {
+      public InspectionProfileEntry getToolById(String id, @NotNull PsiElement element) {
         if (availableInspectionTools.containsKey(id)) {
           return availableInspectionTools.get(id);
         }

@@ -246,8 +246,9 @@ public class StatementParser {
         final PsiBuilder.Marker declStatement = builder.mark();
         final PsiBuilder.Marker decl = myDeclarationParser.parse(builder, DeclarationParser.Context.CODE_BLOCK);
         if (decl == null) {
-          myReferenceParser.parseType(builder, 0);
+          PsiBuilder.Marker marker = myReferenceParser.parseType(builder, 0);
           error(builder, JavaErrorMessages.message("expected.identifier"));
+          if (marker == null) builder.advanceLexer();
         }
         done(declStatement, JavaElementType.DECLARATION_STATEMENT);
         return declStatement;
