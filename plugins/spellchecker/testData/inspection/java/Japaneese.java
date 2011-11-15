@@ -16,7 +16,7 @@
 /** CJK Compatibility Ideographs (F900 - FAFF)
  * 﨎鶴﨎鶴﨎鶴
  */
-
+/* 私は<TYPO>Jaba</TYPO>が好きです。私は<TYPO>Jaba</TYPO>が好きです。*/
 /**
  * プロセス毎に使われるコールスタックは一つだけ !!!
  */
