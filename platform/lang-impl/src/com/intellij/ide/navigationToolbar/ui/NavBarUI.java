@@ -22,28 +22,70 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
+ * NavBar painting is delegated to NavBarUI components. To change NavBar view you should
+ * implement NavBarUI interface or override some methods of  <code>AbstractNavBarUI</code>.
+ *
+ * If NavBar is visible on IdeFrame it's structure is the following:
+ *
+ * <pre>
+ * WrapperPanel____________________________________________________
+ * |   __NavBarPanel_____________________|                        |
+ * |  | NavBarItem \   NavBarItem\       | Toolbar (optional)     |
+ * |  |____________/_____________/_______|                        |
+ * |_____________________________________|________________________|
+ * </pre>
+ *
+ *
  * @author Konstantin Bulenkov
+ * @see NavBarUIManager
+ * @see AbstractNavBarUI
  */
 public interface NavBarUI {
   Insets getElementIpad(boolean isPopupElement);
   Insets getElementPadding();
+
   Font getElementFont(NavBarItem navBarItem);
 
+  Insets getWrapperPanelInsets(Insets insets);
+
+  /**
+   * NavBarItem uses standard selection color from LaF. However, sometimes it looks very aggressive.
+   * To handle this problem transparency is used. The selection color will be LaF list selection color with alpha
+   *
+   * @return alpha number from 0 to 255
+   */
   short getSelectionAlpha();
 
   boolean isDrawMacShadow(boolean selected, boolean focused);
 
-  void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar);
-  
+  /**
+   * NavBarItem offsets
+   * @param item NavBar element
+   * @return offsets
+   */
   Dimension getOffsets(NavBarItem item);
-  
+
+  /**
+   * Returns NavBarItem background
+   * @param selected is element selected
+   * @param focused is element focused (can be selected, but has no focus - while NavBarPopup showing)
+   * @return NavBarItem background
+   */
   Color getBackground(boolean selected, boolean focused);
+
+  /**
+   * Returns NavBarItem foreground
+   * @param selected is element selected
+   * @param focused is element focused (can be selected, but has no focus - while NavBarPopup showing)
+   * @return NavBarItem foreground
+   */
   @Nullable
   Color getForeground(boolean selected, boolean focused, boolean inactive);
-  
+
+
   void doPaintWrapperPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible);
 
-  void doPaintNavBarPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible, boolean undocked);
+  void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar);
 
-  Insets getWrapperPanelInsets(Insets insets);
+  void doPaintNavBarPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible, boolean undocked);
 }
