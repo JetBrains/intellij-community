@@ -129,6 +129,9 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
           }
         }
       }
+
+      wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
+
       if (!doQuickImport(virtualFile, wizardContext)) return null;
 
       if (wizardContext.getProjectName() == null) {
@@ -139,7 +142,6 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
           wizardContext.setProjectName(IdeBundle.message("project.import.default.name.dotIdea", getName()));
         }
       }
-      wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
 
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
       Sdk jdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
