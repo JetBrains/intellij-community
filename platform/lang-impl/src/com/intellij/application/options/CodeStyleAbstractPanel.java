@@ -620,5 +620,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       copyMenu.removeAll();
     }
   }
+  
+  public boolean isCopyFromMenuAvailable() {
+    return false;
+  }
 
 }

@@ -317,11 +317,7 @@ public class CodeStyleSchemesPanel{
   public void setCodeStyleSettingsPanel(NewCodeStyleSettingsPanel settingsPanel) {
     mySettingsPanel = settingsPanel;
     CodeStyleAbstractPanel selectedPanel = mySettingsPanel.getSelectedPanel();
-    if (selectedPanel != null) {
-      initCopyFromMenu();
-      selectedPanel.setupCopyFromMenu(myCopyFromMenu);
-    }
-    myCopyFromButton.setEnabled(myCopyFromMenu.getItemCount() > 0);
+    myCopyFromButton.setEnabled(selectedPanel != null && selectedPanel.isCopyFromMenuAvailable());
   }
 
   private void onSettingsTypeChange() {
@@ -343,6 +339,14 @@ public class CodeStyleSchemesPanel{
     if (myCopyFromMenu == null) {      
       myCopyFromMenu = new PopupMenu();
       myCopyFromButton.add(myCopyFromMenu);
+    }
+    CodeStyleAbstractPanel selectedPanel = mySettingsPanel.getSelectedPanel();
+    if (selectedPanel != null) {
+      selectedPanel.setupCopyFromMenu(myCopyFromMenu);
+      myCopyFromButton.setEnabled(myCopyFromMenu.getItemCount() > 0);
+    }
+    else {
+      myCopyFromButton.setEnabled(false);
     }
   }
 
