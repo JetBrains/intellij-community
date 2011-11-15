@@ -15,29 +15,21 @@
  */
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Path2D;
 
 /**
 * @author Konstantin Bulenkov
 */
-class NavBarItem extends SimpleColoredComponent implements Disposable {
-  private static Image SEPARATOR_ACTIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorActive.png"));
-  private static Image SEPARATOR_PASSIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorPassive.png"));
-  private static Image SEPARATOR_GRADIENT = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorGradient.png"));
+public class NavBarItem extends SimpleColoredComponent implements Disposable {
   //private static int count = 0;
 
   private final String myText;
@@ -47,12 +39,13 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final NavBarPanel myPanel;
   private Object myObject;
   private final boolean isPopupElement;
-  private JBInsets myPadding;
+  private final NavBarUI myUI;
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
     //count++;
     //System.out.println(count);
     myPanel = panel;
+    myUI = panel.getNavBarUI();
     myObject = object;
     myIndex = idx;
     isPopupElement = idx == -1;
@@ -77,17 +70,15 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     Disposer.register(parent == null ? panel : parent, this);
 
     setOpaque(false);
-    setFont(UIUtil.isUnderAquaLookAndFeel() ? UIUtil.getLabelFont().deriveFont(11.0f) : getFont());
-    if (isPopupElement || !NavBarPanel.isDecorated()) {
-      setIpad(new Insets(1,2,1,2));
-    } else {
-      setIpad(new Insets(0,0,0,0));
+    setFont(myUI.getElementFont(this));
+    setIpad(myUI.getElementIpad(isPopupElement));
+
+    if (!isPopupElement) {
       setMyBorder(null);
       setBorder(null);
       setPaintFocusBorder(false);
     }
     update();
-    myPadding = new JBInsets(3, 3, 3, 3);
   }
 
   /**
@@ -115,124 +106,52 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     clear();
 
     setIcon(myIcon);
-    final boolean focused = isFocusedOrPopupElement();
 
-    final NavBarModel model = myPanel.getModel();
+    final boolean focused = isFocusedOrPopupElement();
     final boolean selected = isSelected();
 
-    if (!NavBarPanel.isDecorated()) {
-      setPaintFocusBorder(selected && !isPopupElement && myPanel.isNodePopupActive());
-    }
     setFocusBorderAroundIcon(false);
+    setBackground(myUI.getBackground(selected, focused));
 
-    setBackground(selected && focused
-                  ? UIUtil.getListSelectionBackground()
-                  : (UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground()));
+    Color fg = myUI.getForeground(selected, focused, isInactive());
+    if (fg == null) fg = myAttributes.getFgColor();
 
-    final Color fg = selected && focused
-                     ? UIUtil.getListSelectionForeground()
-                     : model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1
-                       ? UIUtil.getInactiveTextColor()
-                       : myAttributes.getFgColor();
-
-    final Color bg = selected && focused ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
+    final Color bg = getBackground();
     append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
 
-    repaint();
+    //repaint();
+  }
+  
+  public boolean isInactive() {
+    final NavBarModel model = myPanel.getModel();
+    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1;
+  }
+
+  public boolean isPopupElement() {
+    return isPopupElement;
   }
 
   @Override
   protected void doPaint(Graphics2D g) {
-    if (isPopupElement || !NavBarPanel.isDecorated()) {
+    if (isPopupElement) {
       super.doPaint(g);
     } else {
-      doPaintDecorated(g);
+      myUI.doPaintNavBarItem(g, this, myPanel);
     }
   }
 
-  private void doPaintDecorated(Graphics2D g) {
-    Icon icon = myIcon;
-    final Color bg = isSelected() && isFocused()
-                      ? UIUtil.getListSelectionBackground()
-                      : (UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
-    final Color c = UIUtil.getListSelectionBackground();
-    final Color selBg = new Color(c.getRed(), c.getGreen(), c.getBlue(), getAlpha());
-    int w = getWidth();
-    int h = getHeight();
-    if (/*!UIUtil.isUnderAquaLookAndFeel() ||*/ myPanel.isInFloatingMode() || (isSelected() && myPanel.hasFocus())) {
-      g.setPaint(isSelected() && isFocused() ? selBg : bg);
-      g.fillRect(0, 0, w - (isLastElement() /*|| !UIUtil.isUnderAquaLookAndFeel()*/ ? 0 : getDecorationOffset()), h);
-    }
-    final int offset = isFirstElement() ? getFirstElementLeftOffset() : 0;
-    final int iconOffset = myPadding.left + offset;
-    icon.paintIcon(this, g, iconOffset, (h - icon.getIconHeight()) / 2);
-    final int textOffset = icon.getIconWidth() + myPadding.width() + offset;    
-    int x = doPaintText(g, textOffset, false);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    
-    g.translate(x, 0);
-    Path2D.Double path;
-    int off = getDecorationOffset();
-    if (isFocused()) {
-      if (isSelected() && !isLastElement()) {
-        path = new Path2D.Double();
-        g.translate(2, 0);
-        path.moveTo(0, 0);
-        path.lineTo(off, h / 2);              // |\
-        path.lineTo(0, h);                    // |/
-        path.lineTo(0, 0);
-        g.setColor(selBg);
-        g.fill(path);
-        g.translate(-2, 0);
-      }
 
-      if (/*!UIUtil.isUnderAquaLookAndFeel() || */myPanel.isInFloatingMode() || isNextSelected()) {
-        if (! isLastElement()) {
-          path = new Path2D.Double();
-          path.moveTo(0, 0);
-          path.lineTo(off, h / 2);                // ___
-          path.lineTo(0, h);                      // \ |
-          path.lineTo(off + 2, h);                // /_|
-          path.lineTo(off + 2, 0);
-          path.lineTo(0, 0);
-          g.setColor(isNextSelected() ? selBg : UIUtil.getListBackground());
-          //if (UIUtil.isUnderAquaLookAndFeel() && isNextSelected() || !UIUtil.isUnderAquaLookAndFeel()) {
-            g.fill(path);
-          //}
-        }
-      }
-    }
-    if (! isLastElement() && ((!isSelected() && !isNextSelected()) || !myPanel.hasFocus())) {
-      Image img = SEPARATOR_PASSIVE;
-      final UISettings settings = UISettings.getInstance();
-      if (settings.SHOW_NAVIGATION_BAR) {
-        img = SEPARATOR_GRADIENT;
-      }
-      g.drawImage(img, null, null);
-    }
+  public int doPaintText(Graphics2D g, int offset) {
+    return super.doPaintText(g, offset, false);
   }
 
-  private static short getAlpha() {
-    if ((UIUtil.isUnderAlloyLookAndFeel() && !UIUtil.isUnderAlloyIDEALookAndFeel())
-      || UIUtil.isUnderMetalLookAndFeel() || UIUtil.isUnderMetalLookAndFeel()){
-      return 255;
-    }
-    return 150;
-  }
 
-  private static int getDecorationOffset() {
-    return 11;
-  }
-  
-  private static int getFirstElementLeftOffset() {
-    return 6;
-  }
 
-  private boolean isLastElement() {
+  public boolean isLastElement() {
     return myIndex == myPanel.getModel().size() - 1;
   }
 
-  private boolean isFirstElement() {
+  public boolean isFirstElement() {
     return myIndex == 0;
   }
 
@@ -244,11 +163,8 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    if (! isPopupElement && NavBarPanel.isDecorated()) {
-      size.width += getDecorationOffset() + myPadding.width() + (isFirstElement() ? getFirstElementLeftOffset() : 0);
-      size.height += myPadding.height();
-    }
-    return size;
+    final Dimension offsets = myUI.getOffsets(this);
+    return new Dimension(size.width + offsets.width, size.height + offsets.height);
   }
 
   @Override
@@ -260,7 +176,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     return isFocused() || isPopupElement;
   }
 
-  private boolean isFocused() {
+  public boolean isFocused() {
     final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return focusOwner == myPanel && !myPanel.isNodePopupShowing();
   }
@@ -279,7 +195,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
 
   @Override
   protected boolean shouldDrawMacShadow() {
-    return UIUtil.isUnderAquaLookAndFeel() && !isSelected();
+    return myUI.isDrawMacShadow(isSelected(), isFocused());
   }
 
   @Override
@@ -315,7 +231,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
   }
     
 
-  private boolean isNextSelected() {
+  public boolean isNextSelected() {
     return myIndex == myPanel.getModel().getSelectedIndex() - 1;
   }
 }

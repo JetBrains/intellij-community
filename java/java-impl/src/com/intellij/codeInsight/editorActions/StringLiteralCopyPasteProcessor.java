@@ -126,8 +126,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
 
       StringBuilder buffer = new StringBuilder(text.length());
-      CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-      @NonNls String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
+      @NonNls String breaker = getLineBreaker(token);
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
@@ -141,6 +140,11 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return escapeCharCharacters(text, token);
     }
     return text;
+  }
+
+  protected String getLineBreaker(PsiElement token) {
+    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(token.getProject());
+    return codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
   }
 
   @Nullable

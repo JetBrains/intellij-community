@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -32,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -43,10 +45,10 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  */
 public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLanguageInjectionHost {
 
-  private static final Function<GrLiteralImpl,PsiType> TYPE_CALCULATOR = new Function<GrLiteralImpl, PsiType>() {
+  private static final Function<GrLiteralImpl,PsiType> TYPE_CALCULATOR = new NullableFunction<GrLiteralImpl, PsiType>() {
     @Override
     public PsiType fun(GrLiteralImpl grLiteral) {
-      IElementType elemType = grLiteral.getFirstChild().getNode().getElementType();
+      IElementType elemType = getLiteralType(grLiteral);
       return TypesUtil.getPsiType(grLiteral, elemType);
     }
   };
@@ -60,7 +62,7 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
   }
 
   public PsiType getType() {
-    if (getFirstChild().getNode().getElementType() == kNULL) return PsiType.NULL;
+    if (getLiteralType(this) == kNULL) return PsiType.NULL;
     return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
   }
 
@@ -114,7 +116,9 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
       if (text.endsWith("'")) {
         text = text.substring(0, text.length() - 1);
       }
-      return StringUtil.unescapeStringCharacters(text);
+      StringBuilder chars = new StringBuilder(text.length());
+      boolean result = GrStringUtil.parseStringCharacters(text, chars, null, true);
+      return result ? chars.toString() : null;
     }
     else if (elemType == mGSTRING_LITERAL) {
       if (!text.startsWith("\"")) return null;
@@ -124,12 +128,23 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
       else {
         text = StringUtil.trimEnd(text.substring(1), "\"");
       }
-      return StringUtil.unescapeStringCharacters(text);
+      StringBuilder chars = new StringBuilder(text.length());
+      boolean result = GrStringUtil.parseStringCharacters(text, chars, null, true);
+      return result ? chars.toString() : null;
     }
     else if (elemType == mREGEX_LITERAL) {
-      return StringUtil.trimStart(StringUtil.trimEnd(text, "/"), "/");
+      text = StringUtil.trimStart(StringUtil.trimEnd(text, "/"), "/");
+      StringBuilder chars = new StringBuilder(text.length());
+      boolean result = GrStringUtil.parseStringCharacters(text, chars, null, false);
+      return result ? chars.toString() : null;
     }
-    return null; //todo
+    return null;
+  }
+
+  private static IElementType getLiteralType(GrLiteral literal) {
+    PsiElement firstChild = literal.getFirstChild();
+    assert firstChild != null;
+    return firstChild.getNode().getElementType();
   }
 
   public boolean isStringLiteral() {

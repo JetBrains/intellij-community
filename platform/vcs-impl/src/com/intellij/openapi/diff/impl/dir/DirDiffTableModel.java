@@ -44,6 +44,7 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -62,7 +63,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private DiffElement mySrc;
   private DiffElement myTrg;
   private DTree myTree;
-  private final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
+  private final List<DirDiffElement> myElements = Collections.synchronizedList(new ArrayList<DirDiffElement>());
   private final AtomicBoolean myUpdating = new AtomicBoolean(false);
   private JBTable myTable;
   public String DECORATOR = "DIFF_TABLE_DECORATOR";
@@ -90,58 +91,65 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public void applyRemove() {
     final List<DirDiffElement> selectedElements = getSelectedElements();
     myUpdating.set(true);
-    final Iterator<DirDiffElement> i = myElements.iterator();
-    while(i.hasNext()) {
-      final DType type = i.next().getType();
-      switch (type) {
-        case SOURCE:
-          if (!mySettings.showNewOnSource) i.remove();
-          break;
-        case TARGET:
-          if (!mySettings.showNewOnTarget) i.remove();
-          break;
-        case SEPARATOR:
-          break;
-        case CHANGED:
-          if (!mySettings.showDifferent) i.remove();
-          break;
-        case EQUAL:
-          if (!mySettings.showEqual) i.remove();
-          break;
-      }
-    }
-
-    boolean sep = true;
-    for (int j = myElements.size() - 1; j >= 0; j--) {
-      if (myElements.get(j).isSeparator()) {
-        if (sep) {
-          myElements.remove(j);
-        } else {
-          sep = true;
+    synchronized (myElements) {
+      final Iterator<DirDiffElement> i = myElements.iterator();
+      while(i.hasNext()) {
+        final DType type = i.next().getType();
+        switch (type) {
+          case SOURCE:
+            if (!mySettings.showNewOnSource) i.remove();
+            break;
+          case TARGET:
+            if (!mySettings.showNewOnTarget) i.remove();
+            break;
+          case SEPARATOR:
+            break;
+          case CHANGED:
+            if (!mySettings.showDifferent) i.remove();
+            break;
+          case EQUAL:
+            if (!mySettings.showEqual) i.remove();
+            break;
         }
-      } else {
-        sep = false;
       }
+
+      boolean sep = true;
+      for (int j = myElements.size() - 1; j >= 0; j--) {
+        if (myElements.get(j).isSeparator()) {
+          if (sep) {
+            myElements.remove(j);
+          }
+          else {
+            sep = true;
+          }
+        }
+        else {
+          sep = false;
+        }
+      }
+      fireTableDataChanged();
+      myUpdating.set(false);
+      int index;
+      if (!selectedElements.isEmpty() && (index = myElements.indexOf(selectedElements.get(0))) != -1) {
+        myTable.getSelectionModel().setSelectionInterval(index, index);
+        TableUtil.scrollSelectionToVisible(myTable);
+      }
+      else {
+        selectFirstRow();
+      }
+      myPanel.focusTable();
+      myPanel.update(true);
     }
-    fireTableDataChanged();
-    myUpdating.set(false);
-    int index;
-    if (!selectedElements.isEmpty() && (index = myElements.indexOf(selectedElements.get(0))) != -1) {
-      myTable.getSelectionModel().setSelectionInterval(index, index);
-      TableUtil.scrollSelectionToVisible(myTable);
-    } else {
-      selectFirstRow();
-    }
-    myPanel.focusTable();
-    myPanel.update(true);
   }
 
   public void selectFirstRow() {
-    if (myElements.size() > 0) {
-      int row = myElements.get(0).isSeparator() ? 1 : 0;
-      if (row < myTable.getRowCount()) {
-        myTable.getSelectionModel().setSelectionInterval(row, row);
-        TableUtil.scrollSelectionToVisible(myTable);
+    synchronized (myElements) {
+      if (myElements.size() > 0) {
+        int row = myElements.get(0).isSeparator() ? 1 : 0;
+        if (row < myTable.getRowCount()) {
+          myTable.getSelectionModel().setSelectionInterval(row, row);
+          TableUtil.scrollSelectionToVisible(myTable);
+        }
       }
     }
   }
@@ -167,11 +175,14 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     String right;
     if (text == null) {
       right = EMPTY_STRING;
-    } else if (text.length() == LEN) {
+    }
+    else if (text.length() == LEN) {
       right = text;
-    } else if (text.length() < LEN) {
+    }
+    else if (text.length() < LEN) {
       right = text + EMPTY_STRING.substring(0, LEN - text.length());
-    } else {
+    }
+    else {
       right = "..." + text.substring(text.length() - LEN + 2);
     }
     return "Loading... " + right;
@@ -267,20 +278,22 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         fillElements(myTree, elements);
         final Runnable uiThread = new Runnable() {
           public void run() {
-            clear();
-            myElements.addAll(elements);
-            myUpdating.set(false);
-            fireTableDataChanged();
-            DirDiffTableModel.this.text.set("");
-            if (loadingPanel.isLoading()) {
-              loadingPanel.stopLoading();
+            synchronized (myElements) {
+              clear();
+              myElements.addAll(elements);
+              myUpdating.set(false);
+              fireTableDataChanged();
+              DirDiffTableModel.this.text.set("");
+              if (loadingPanel.isLoading()) {
+                loadingPanel.stopLoading();
+              }
+              if (mySelectionConfig == null) {
+                selectFirstRow();
+              } else {
+                mySelectionConfig.restore();
+              }
+              myPanel.update(true);
             }
-            if (mySelectionConfig == null) {
-              selectFirstRow();
-            } else {
-              mySelectionConfig.restore();
-            }
-            myPanel.update(true);
           }
         };
         if (myProject.isDefault()) {
@@ -328,10 +341,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void clear() {
-    if (!myElements.isEmpty()) {
-      final int size = myElements.size();
-      myElements.clear();
-      fireTableRowsDeleted(0, size - 1);
+    synchronized (myElements) {
+      if (!myElements.isEmpty()) {
+        final int size = myElements.size();
+        myElements.clear();
+        fireTableRowsDeleted(0, size - 1);
+      }
     }
   }
 
@@ -354,7 +369,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   @Nullable
   public DirDiffElement getElementAt(int index) {
-    return 0 <= index && index < myElements.size() ? myElements.get(index) : null;
+    synchronized (myElements) {
+      return 0 <= index && index < myElements.size() ? myElements.get(index) : null;
+    }
   }
 
   public DiffElement getSourceDir() {
@@ -508,6 +525,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         Runnable onFinish = new Runnable() {
           @Override
           public void run() {
+            ApplicationManager.getApplication().assertIsDispatchThread();
             if (!Disposer.isDisposed(DirDiffTableModel.this)) {
               DiffElement newElement = diff.get();
               refreshElementAfterCopyTo(newElement, element);
@@ -534,16 +552,18 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   private void refreshElementAfterCopyTo(DiffElement newElement, DirDiffElement element) {
     if (newElement != null) {
-      final DTree node = element.getNode();
-      final int row = myElements.indexOf(element);
-      if (getSettings().showEqual) {
-        node.setType(DType.EQUAL);
-        node.setTarget(newElement);
-        element.updateSourceFromTarget(newElement);
-        fireTableRowsUpdated(row, row);
-      }
-      else {
-        removeElement(element);
+      synchronized (myElements) {
+        final DTree node = element.getNode();
+        final int row = myElements.indexOf(element);
+        if (getSettings().showEqual) {
+          node.setType(DType.EQUAL);
+          node.setTarget(newElement);
+          element.updateSourceFromTarget(newElement);
+          fireTableRowsUpdated(row, row);
+        }
+        else {
+          removeElement(element);
+        }
       }
     }
   }
@@ -559,6 +579,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         Runnable onFinish = new Runnable() {
           @Override
           public void run() {
+            ApplicationManager.getApplication().assertIsDispatchThread();
             if (!Disposer.isDisposed(DirDiffTableModel.this)) {
               refreshElementAfterCopyFrom(element, diff.get());
               if (!errorMessage.isNull()) {
@@ -585,40 +606,45 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private void refreshElementAfterCopyFrom(DirDiffElement element, DiffElement newElement) {
     if (newElement != null) {
       final DTree node = element.getNode();
-      final int row = myElements.indexOf(element);
-      if (getSettings().showEqual) {
-        node.setType(DType.EQUAL);
-        node.setSource(newElement);
-        element.updateTargetFromSource(newElement);
-        fireTableRowsUpdated(row, row);
-      }
-      else {
-        removeElement(element);
+      synchronized (myElements) {
+        final int row = myElements.indexOf(element);
+        if (getSettings().showEqual) {
+          node.setType(DType.EQUAL);
+          node.setSource(newElement);
+          element.updateTargetFromSource(newElement);
+          fireTableRowsUpdated(row, row);
+        }
+        else {
+          removeElement(element);
+        }
       }
     }
   }
 
   private void removeElement(DirDiffElement element) {
-    int row = myElements.indexOf(element);
-    if (row != -1) {
-      final DTree node = element.getNode();
-      final DTree parentNode = element.getParentNode();
-      parentNode.remove(node);
-      myElements.remove(row);
-      int start = row;
+    synchronized (myElements) {
+      int row = myElements.indexOf(element);
+      if (row != -1) {
+        final DTree node = element.getNode();
+        final DTree parentNode = element.getParentNode();
+        parentNode.remove(node);
+        myElements.remove(row);
+        int start = row;
 
-      if (row > 0 && row == myElements.size() && myElements.get(row - 1).isSeparator()) {
-        final DirDiffElement el = myElements.get(row - 1);
-        el.getParentNode().remove(el.getNode());
-        myElements.remove(row - 1);
-        start = row - 1;
-      } else if (row != myElements.size() && myElements.get(row).isSeparator() && row > 0 && myElements.get(row - 1).isSeparator()) {
-        final DirDiffElement el = myElements.get(row - 1);
-        el.getParentNode().remove(el.getNode());
-        myElements.remove(row - 1);
-        start = row - 1;
+        if (row > 0 && row == myElements.size() && myElements.get(row - 1).isSeparator()) {
+          final DirDiffElement el = myElements.get(row - 1);
+          el.getParentNode().remove(el.getNode());
+          myElements.remove(row - 1);
+          start = row - 1;
+        }
+        else if (row != myElements.size() && myElements.get(row).isSeparator() && row > 0 && myElements.get(row - 1).isSeparator()) {
+          final DirDiffElement el = myElements.get(row - 1);
+          el.getParentNode().remove(el.getNode());
+          myElements.remove(row - 1);
+          start = row - 1;
+        }
+        fireTableRowsDeleted(start, row);
       }
-      fireTableRowsDeleted(start, row);
     }
   }
 
@@ -636,8 +662,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
               reportException(errorMessage.get());
             }
             else {
-              if (myElements.indexOf(element) != -1) {
-                removeElement(element);
+              synchronized (myElements) {
+                if (myElements.indexOf(element) != -1) {
+                  removeElement(element);
+                }
               }
             }
           }
@@ -651,8 +679,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       }
     }
     else {
-      if (myElements.indexOf(element) != -1) {
-        removeElement(element);
+      synchronized (myElements) {
+        if (myElements.indexOf(element) != -1) {
+          removeElement(element);
+        }
       }
       final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
       try {
@@ -670,12 +700,14 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeSelected() {
-    rememberSelection();
-    for (DirDiffElement element : getSelectedElements()) {
-      syncElement(element);
+    synchronized (myElements) {
+      rememberSelection();
+      for (DirDiffElement element : getSelectedElements()) {
+        syncElement(element);
+      }
+      restoreSelection();
     }
-    restoreSelection();
- }
+  }
 
   private void restoreSelection() {
     if (mySelectionConfig != null) {
@@ -684,10 +716,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeAll() {
-    for (DirDiffElement element : getElements()) {
-      syncElement(element);
+    synchronized (myElements) {
+      for (DirDiffElement element : myElements.toArray(new DirDiffElement[myElements.size()])) {
+        syncElement(element);
+      }
+      selectFirstRow();
     }
-    selectFirstRow();
   }
 
   private void syncElement(DirDiffElement element) {

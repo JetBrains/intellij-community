@@ -133,12 +133,12 @@ mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mSTRING_NL = {mONE_NL}
-mSTRING_ESC = \\ [^]
+mSTRING_ESC = \\ [^] | \\ ({WHITE_SPACE})+ (\n|\r)
 mREGEX_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | "\\" "\\" | \\ "$" | \\ \" | \\ \'
 | "\\""u"{mHEX_DIGIT}{4}
 | "\\" [0..3] ([0..7] ([0..7])?)?
 | "\\" [4..7] ([0..7])?
-| "\\" {mONE_NL}
+| "\\" ({WHITE_SPACE})* {mONE_NL}
 
 /// Regexes ////////////////////////////////////////////////////////////////
 
@@ -160,7 +160,7 @@ mDOLLAR_SLASHY_LITERAL = {mDOLLAR_SLASHY_LITERAL_3}
 mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
     | "\""
     | [^\\\'\r\n]
-    | "$" )*
+    | "$")*
 mSINGLE_QUOTED_STRING = {mSINGLE_QUOTED_STRING_BEGIN} \'
 mTRIPLE_QUOTED_STRING = "\'\'\'" ({mSTRING_ESC}
     | \"

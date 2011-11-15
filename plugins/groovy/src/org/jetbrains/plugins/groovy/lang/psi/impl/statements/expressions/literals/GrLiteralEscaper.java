@@ -16,17 +16,36 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-public class GrLiteralEscaper extends StringLiteralEscaper<GrLiteralImpl> {
+public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralImpl> {
+  private int[] outSourceOffsets;
 
   public GrLiteralEscaper(final GrLiteralImpl literal) {
     super(literal);
   }
 
   @Override
+  public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+    ProperTextRange.assertProperRange(rangeInsideHost);
+    String subText = rangeInsideHost.substring(myHost.getText());
+    outSourceOffsets = new int[subText.length() + 1];
+    return GrStringUtil.parseStringCharacters(subText, outChars, outSourceOffsets, isStrictBackSlash());
+  }
+
+  @Override
+  public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
+    int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
+    if (result == -1) return -1;
+    return (result <= rangeInsideHost.getLength() ? result : rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
+  }
+
   protected boolean isStrictBackSlash() {
     PsiElement child = myHost.getFirstChild();
     return child == null || child.getNode().getElementType() != GroovyTokenTypes.mREGEX_LITERAL;

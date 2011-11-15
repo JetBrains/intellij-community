@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -470,7 +471,7 @@ public class VariableInplaceRenamer {
     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     final Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     if (shortcuts.length > 0) {
-      setAdvertisementText("Press " + shortcuts[0] + " to show dialog");
+      setAdvertisementText("Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to show dialog");
     }
   }
 

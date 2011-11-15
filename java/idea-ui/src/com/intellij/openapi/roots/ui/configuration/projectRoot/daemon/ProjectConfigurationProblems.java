@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ui.configuration.ConfigurationError;
 import com.intellij.openapi.roots.ui.configuration.ConfigurationErrors;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,10 +29,6 @@ public class ProjectConfigurationProblems {
   private final MultiValuesMap<ProjectStructureElement, ConfigurationError> myErrors = new MultiValuesMap<ProjectStructureElement, ConfigurationError>();
   private final ProjectStructureDaemonAnalyzer myAnalyzer;
   private final StructureConfigurableContext myContext;
-
-  public static boolean isVisible() {
-    return Registry.is("ide.configuration.new.project.structure.errors");
-  }
 
   public ProjectConfigurationProblems(ProjectStructureDaemonAnalyzer analyzer, StructureConfigurableContext context) {
     myAnalyzer = analyzer;

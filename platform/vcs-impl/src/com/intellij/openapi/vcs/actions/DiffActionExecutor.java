@@ -99,7 +99,8 @@ public abstract class DiffActionExecutor {
     final Ref<SimpleDiffRequest> requestRef = new Ref<SimpleDiffRequest>();
 
     final Task.Backgroundable task = new Task.Backgroundable(myProject,
-        VcsBundle.message("show.diff.progress.title.detailed", mySelectedFile.getPath()), true, BackgroundFromStartOption.getInstance()) {
+        VcsBundle.message("show.diff.progress.title.detailed", mySelectedFile.getPresentableUrl()),
+        true, BackgroundFromStartOption.getInstance()) {
 
       public void run(@NotNull ProgressIndicator indicator) {
         final VcsRevisionNumber revisionNumber = getRevisionNumber();

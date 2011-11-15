@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.WindowListener;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -30,7 +32,7 @@ public abstract class DirDiffManager {
     return ServiceManager.getService(project, DirDiffManager.class);
   }
 
-  public abstract void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings);
+  public abstract void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings, WindowListener windowListener);
 
   public abstract boolean canShow(@NotNull DiffElement dir1, @NotNull DiffElement dir2);
 

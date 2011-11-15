@@ -76,6 +76,9 @@ public class GitPushDialog extends DialogWrapper {
         loadCommitsInBackground(myPushAllCheckbox.isSelected());
       }
     });
+    /* hidden: it may confuse users, the target is not clear, hidden until really needed,
+       not removed completely because it is default behavior for 'git push' in command line. */
+    myPushAllCheckbox.setVisible(false);
 
     myListPanel = new GitPushLog(myProject, myRepositories, new Consumer<Boolean>() {
       @Override public void consume(Boolean checked) {

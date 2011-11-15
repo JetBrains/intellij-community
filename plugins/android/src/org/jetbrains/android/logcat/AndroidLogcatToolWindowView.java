@@ -27,6 +27,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -222,7 +225,13 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
       public void valueChanged(ListSelectionEvent e) {
         final String filterName = (String)myFiltersList.getSelectedValue();
         final ConfiguredFilter filter = filterName != null ? compileConfiguredFilter(filterName) : null;
-        logFilterModel.updateConfiguredFilter(filter);
+
+        ProgressManager.getInstance().run(new Task.Backgroundable(myProject, LogConsoleBase.APPLYING_FILTER_TITLE) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            logFilterModel.updateConfiguredFilter(filter);
+          }
+        });
       }
     });
 

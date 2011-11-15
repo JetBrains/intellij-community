@@ -21,13 +21,13 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, DumbAware
     return
       file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM &&
       !StdFileTypes.GUI_DESIGNER_FORM.isBinary() &&
-      ModuleUtil.findModuleForFile(file, project) != null;
+      (ModuleUtil.findModuleForFile(file, project) != null || file instanceof LightVirtualFile);
   }
 
   @NotNull public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file){

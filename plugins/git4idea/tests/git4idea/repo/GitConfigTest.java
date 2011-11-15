@@ -83,7 +83,7 @@ public class GitConfigTest {
       }
       String[] info = remString.split("\n");
       String name = info[0];
-      Collection<String> urls = getUrls(info[1]);
+      List<String> urls = getUrls(info[1]);
       Collection<String> pushUrls = getUrls(info[2]);
       String fetchSpec = getOrEmpty(info, 3);
       String pushSpec = getOrEmpty(info, 4);
@@ -93,7 +93,7 @@ public class GitConfigTest {
     return remotes;
   }
 
-  private static Collection<String> getUrls(String line) {
+  private static List<String> getUrls(String line) {
     if (StringUtil.isEmptyOrSpaces(line)) {
       return Collections.emptyList();
     }

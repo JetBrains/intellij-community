@@ -49,7 +49,11 @@ public class ResourcesValidityState implements ValidityState {
     IAndroidTarget target = platform != null ? platform.getTarget() : null;
     myAndroidTargetName = target != null ? target.getFullName() : "";
 
-    VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
+    // we need to use getManifestFile, not getManifestFileForCompiler, because MavenResourceCompiler spoils filtered manifest and it
+    // becomes dirty in the next session. Actually we can pass filtered manifest to compiler ONLY after AndroidMavenResourcesCompiler
+    // performed task, but MavenResourceCompiler not yet
+
+    VirtualFile manifestFile = AndroidRootUtil.getManifestFile(facet.getModule());
     if (manifestFile != null) {
       myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
     }
@@ -75,6 +79,10 @@ public class ResourcesValidityState implements ValidityState {
 
   @Nullable
   private static VirtualFile getResourcesDir(Module module, AndroidFacet facet) {
+    // same as with manifest file we check timestamps of NOT filtered resources, because MavenResourceCompiler spoils
+    // filtered ones and it and they becomes dirty in the next session. Actually we can pass filtered resources to compiler ONLY after
+    // AndroidMavenResourcesCompiler performed task, but MavenResourceCompiler not yet
+
     VirtualFile dir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
     if (dir != null) {
       VirtualFile parent = dir.getParent();

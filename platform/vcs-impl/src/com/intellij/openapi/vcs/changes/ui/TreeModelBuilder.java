@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
@@ -29,6 +30,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -282,7 +284,10 @@ public class TreeModelBuilder {
     for (FilePath file : filePaths) {
       assert file != null;
       // whether a folder does not matter
-      final StaticFilePath pathKey = new StaticFilePath(false, new File(file.getIOFile().getPath().replace('\\', '/')).getAbsolutePath(), file.getVirtualFile());
+      final String path = file.getPath();
+      final StaticFilePath pathKey = (! FileUtil.isAbsolute(path) || VcsUtil.isPathRemote(path)) ?
+                                     new StaticFilePath(false, path, null) :
+                                     new StaticFilePath(false, new File(file.getIOFile().getPath().replace('\\', '/')).getAbsolutePath(), file.getVirtualFile());
       ChangesBrowserNode oldNode = myFoldersCache.get(pathKey.getKey());
       if (oldNode == null) {
         final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
@@ -436,6 +441,10 @@ public class TreeModelBuilder {
   }
 
   private static StaticFilePath staticFrom(final FilePath fp) {
+    final String path = fp.getPath();
+    if (fp.isNonLocal() && (! FileUtil.isAbsolute(path) || VcsUtil.isPathRemote(path))) {
+      return new StaticFilePath(fp.isDirectory(), fp.getIOFile().getPath().replace('\\', '/'), fp.getVirtualFile());
+    }
     return new StaticFilePath(fp.isDirectory(), new File(fp.getIOFile().getPath().replace('\\', '/')).getAbsolutePath(), fp.getVirtualFile());
   }
   

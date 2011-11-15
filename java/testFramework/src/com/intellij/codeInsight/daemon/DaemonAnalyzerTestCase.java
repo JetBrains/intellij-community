@@ -49,6 +49,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -136,7 +137,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
 
       @Override
-      public List<ToolsImpl> getAllEnabledInspectionTools() {
+      public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
         List<ToolsImpl> result = new ArrayList<ToolsImpl>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
           result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));

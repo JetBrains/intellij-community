@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +122,7 @@ public class GitTask {
     final AtomicBoolean completed = new AtomicBoolean();
 
     if (modal) {
-      ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
+      final ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
         @Override public void onSuccess() {
           commonOnSuccess(LOCK, resultHandler);
           completed.set(true);
@@ -131,7 +132,11 @@ public class GitTask {
           completed.set(true);
         }
       };
-      ProgressManager.getInstance().run(task);
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override public void run() {
+          ProgressManager.getInstance().run(task);
+        }
+      });
     } else {
       final BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
         @Override public void onSuccess() {

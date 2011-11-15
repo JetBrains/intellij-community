@@ -43,14 +43,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -136,7 +132,7 @@ public final class ExecutionHandler {
                                @NotNull GeneralCommandLine commandLine) {
     final Project project = buildFile.getProject();
 
-    final long startTime = new Date().getTime();
+    final long startTime = System.currentTimeMillis();
     LocalHistory.getInstance().putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
     JUnitProcessHandler handler;
     try {
@@ -163,7 +159,10 @@ public final class ExecutionHandler {
                                         final long startTime,
                                         final AntBuildListener antBuildListener) {
     final Project project = buildFile.getProject();
-    WindowManager.getInstance().getStatusBar(project).setInfo(AntBundle.message("ant.build.started.status.message"));
+    final StatusBar statusbar = WindowManager.getInstance().getStatusBar(project);
+    if (statusbar != null) {
+      statusbar.setInfo(AntBundle.message("ant.build.started.status.message"));
+    }
 
     final CheckCancelTask checkCancelTask = new CheckCancelTask(progress, handler);
     checkCancelTask.start(0);
@@ -182,15 +181,15 @@ public final class ExecutionHandler {
             ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
             if (toolWindow != null) { // can be null if project is closed
               toolWindow.activate(null, false);
-              long buildTime = new Date().getTime() - startTime;
+              final long buildTime = System.currentTimeMillis() - startTime;
               errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener);
             }
           }
         }, ModalityState.NON_MODAL);
       }
     });
-    handler.startNotify();
     errorView.startScrollerThread();
+    handler.startNotify();
   }
 
   static final class CheckCancelTask implements Runnable {

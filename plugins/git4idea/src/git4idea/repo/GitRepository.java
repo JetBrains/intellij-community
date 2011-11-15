@@ -168,6 +168,15 @@ public final class GitRepository implements Disposable {
     updateConfig();
   }
 
+  /**
+   * Returns the temporary instance of GitRepository.
+   * It may lack some of its functionality. And it should be disposed manually after usage.
+   */
+  @NotNull
+  public static GitRepository getTempRepository(@NotNull VirtualFile root, @NotNull Project project) {
+    return new GitRepository(root, project);
+  }
+
   @Override
   public void dispose() {
   }

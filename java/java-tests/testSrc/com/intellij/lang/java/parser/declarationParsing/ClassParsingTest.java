@@ -41,4 +41,15 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testErrors1() { doTest(true); }
   public void testErrors2() { doTest(true); }
   public void testErrors3() { doTest(true); }
+
+  public void testErrors4() {
+    String ext = myFileExt;
+    try {
+      myFileExt = ext + ".txt"; // TODO this test produces OOME so we use nondefault extension, the test could be simplified once the fix is in place
+      doTest(true);
+    }
+    finally {
+      myFileExt = ext;
+    }
+  }
 }

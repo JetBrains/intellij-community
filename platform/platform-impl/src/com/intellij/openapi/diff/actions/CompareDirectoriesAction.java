@@ -53,7 +53,7 @@ public class CompareDirectoriesAction extends AnAction {
       }
       final DirDiffManager mgr = DirDiffManager.getInstance(project);
       if (src != null && trg != null && mgr.canShow(src, trg)) {
-        mgr.showDiff(src, trg, new DirDiffSettings());
+        mgr.showDiff(src, trg, new DirDiffSettings(), null);
       }
     }
   }

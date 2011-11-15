@@ -24,6 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.event.WindowListener;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,14 +39,24 @@ public class DirDiffManagerImpl extends DirDiffManager {
   }
 
   @Override
-  public void showDiff(@NotNull final DiffElement dir1, @NotNull final DiffElement dir2, final DirDiffSettings settings) {
+  public void showDiff(@NotNull final DiffElement dir1,
+                       @NotNull final DiffElement dir2,
+                       final DirDiffSettings settings,
+                       @Nullable WindowListener windowListener) {
     final DirDiffTableModel model = new DirDiffTableModel(myProject, dir1, dir2, settings);
     if (settings.showInFrame) {
-      new DirDiffFrame(myProject, model).show();
+      DirDiffFrame frame = new DirDiffFrame(myProject, model);
+      if (windowListener != null) {
+        frame.getFrame().addWindowListener(windowListener);
+      }
+      frame.show();
     } else {
       final DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model);
       if (myProject == null || myProject.isDefault()) {
         dirDiffDialog.setModal(true);
+      }
+      if (windowListener != null) {
+        dirDiffDialog.getOwner().addWindowListener(windowListener);
       }
       dirDiffDialog.show();
     }

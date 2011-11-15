@@ -27,16 +27,17 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HotSwapManager extends AbstractProjectComponent {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<DebuggerSession, Long>();
@@ -140,8 +141,10 @@ public class HotSwapManager extends AbstractProjectComponent {
       }
     });
 
+    final Set<Project> projectsToRefresh = new HashSet<Project>();
     for (final DebuggerSession debuggerSession : sessions) {
       if (debuggerSession.isAttached()) {
+        projectsToRefresh.add(debuggerSession.getProject());
         scanClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
           protected void action() throws Exception {
             swapProgress.setDebuggerSession(debuggerSession);
@@ -156,7 +159,27 @@ public class HotSwapManager extends AbstractProjectComponent {
     }
 
     swapProgress.setTitle(DebuggerBundle.message("progress.hotswap.scanning.classes"));
-    scanClassesCommand.run();
+    if (!scanClassesCommand.isEmpty()) {
+      // have to refresh dirs first:
+      final Collection<VirtualFile> roots = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+        public Collection<VirtualFile> compute() {
+          final Set<VirtualFile> result = new HashSet<VirtualFile>();
+          for (Project project : projectsToRefresh) {
+            for (VirtualFile file : OrderEnumerator.orderEntries(project).withoutSdk().getPathsList().getRootDirs()) {
+              if (!file.getFileSystem().isReadOnly()) {
+                result.add(file);
+              }
+            }
+          }
+          return result;
+        }
+      });
+
+      if (!roots.isEmpty()) {
+        RefreshQueue.getInstance().refresh(false, true, null, roots.toArray(new VirtualFile[roots.size()]));
+      }
+      scanClassesCommand.run();
+    }
 
     return swapProgress.isCancelled() ? new HashMap<DebuggerSession, Map<String, HotSwapFile>>() : modifiedClasses;
   }

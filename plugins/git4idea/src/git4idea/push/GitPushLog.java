@@ -41,10 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -144,9 +141,17 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       myTreeModel.nodeStructureChanged(myRootNode);
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
       TreeUtil.expandAll(myTree);
+      selectFirstCommit();
     }
     finally {
       TREE_CONSTRUCTION_LOCK.writeLock().unlock();
+    }
+  }
+
+  private void selectFirstCommit() {
+    DefaultMutableTreeNode firstLeaf = myRootNode.getFirstLeaf();
+    if (firstLeaf != null) {
+      myTree.setSelectionPath(new TreePath(firstLeaf.getPath()));
     }
   }
 

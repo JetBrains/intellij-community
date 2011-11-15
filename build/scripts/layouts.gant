@@ -233,6 +233,11 @@ public def layoutCommunityPlugins(String home) {
         include(name: "ini4j*.jar")
         exclude(name: "ini4j*sources.jar")
       }
+      fileset(dir: "$home/plugins/git4idea/lib/jgit") {
+        include(name: "org.eclipse.jgit*.jar")
+        include(name: "jsch*.jar")
+        exclude(name: "*.zip")
+      }
     }
 
     layoutPlugin("svn4idea") {

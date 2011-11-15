@@ -106,8 +106,8 @@ public class VcsHistoryUtil {
       }
     }
     if (f1.isNull() || f2.isNull()) {
-      diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType),
-                           createContent(project, content2, revision2, doc, charset, fileType));
+      diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType, filePath.getPath()),
+                           createContent(project, content2, revision2, doc, charset, fileType, filePath.getPath()));
     } else {
       diffData.setContents(new FileContent(project, f1.get()), new FileContent(project, f2.get()));
     }
@@ -174,9 +174,9 @@ public class VcsHistoryUtil {
     return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
   }
 
-  private static DiffContent createContent(Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType) {
+  private static DiffContent createContent(Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType, String filePath) {
     if (isCurrent(revision) && (doc != null)) { return new DocumentContent(project, doc); }
-    return new BinaryContent(content1, charset, fileType);
+    return new BinaryContent(content1, charset, fileType, filePath);
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {

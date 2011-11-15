@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,11 +37,7 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
     ProperTextRange.assertProperRange(rangeInsideHost);
     String subText = rangeInsideHost.substring(myHost.getText());
     outSourceOffsets = new int[subText.length()+1];
-    return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, outSourceOffsets, isStrictBackSlash());
-  }
-
-  protected boolean isStrictBackSlash() {
-    return true;
+    return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, outSourceOffsets);
   }
 
   @Override

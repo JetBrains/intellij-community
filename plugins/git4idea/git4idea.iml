@@ -46,6 +46,29 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="jgit-1.1.0">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/jgit/org.eclipse.jgit-1.1.0.201109151100-r.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/jgit/org.eclipse.jgit-v1.1.0.201109151100-r_source.zip!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="JSch">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/jgit/jsch-0.1.44.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/jgit/jsch-0.1.44.zip!/jsch-0.1.44/src" />
+          <root url="jar://$MODULE_DIR$/lib/jgit/jsch-0.1.44.zip!/jsch-0.1.44/examples" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
 

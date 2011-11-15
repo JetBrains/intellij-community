@@ -229,16 +229,7 @@ public class PsiLiteralExpressionImpl
     return success ? outChars.toString() : null;
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars,
-                                              @NotNull StringBuilder outChars,
-                                              @Nullable int[] sourceOffsets) {
-    return parseStringCharacters(chars, outChars, sourceOffsets, true);
-  }
-
-  public static boolean parseStringCharacters(@NotNull String chars,
-                                              @NotNull StringBuilder outChars,
-                                              @Nullable int[] sourceOffsets,
-                                              final boolean strictBackSlash) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);
@@ -354,9 +345,6 @@ public class PsiLiteralExpressionImpl
           break;
 
         default:
-          if (!strictBackSlash) {
-            break;
-          }
           return false;
       }
       if (sourceOffsets != null) {

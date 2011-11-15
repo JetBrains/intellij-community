@@ -246,7 +246,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     return new PluginTableCellRenderer((PluginNode)o);
   }
 
-
   private static class PluginTableCellRenderer extends DefaultTableCellRenderer {
     private final JLabel myLabel = new JLabel();
     private final PluginNode myPluginDescriptor;
@@ -267,9 +266,11 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       if (column == COLUMN_DATE) {
         long date = myPluginDescriptor.getDate();
         myLabel.setText(date != 0 && date != Long.MAX_VALUE ? DateFormatUtil.formatDate(date) : "n/a");
+        myLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       } else if (column == COLUMN_DOWNLOADS) {
         String downloads = myPluginDescriptor.getDownloads();
         myLabel.setText(!StringUtil.isEmpty(downloads) ? downloads : "n/a");
+        myLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       } else if (column == COLUMN_CATEGORY) {
         String category = myPluginDescriptor.getCategory();
         if (StringUtil.isEmpty(category)) {
@@ -277,7 +278,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         }
         myLabel.setText(!StringUtil.isEmpty(category) ? category : "n/a");
       }
-      myLabel.setVerticalAlignment(SwingConstants.BOTTOM);
+      myLabel.setVerticalAlignment(SwingUtilities.CENTER);
       if (myPluginDescriptor.getStatus() == PluginNode.STATUS_INSTALLED) {
         PluginId pluginId = myPluginDescriptor.getPluginId();
         final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);

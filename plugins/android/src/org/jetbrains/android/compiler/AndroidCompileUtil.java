@@ -593,15 +593,15 @@ public class AndroidCompileUtil {
       return null;
     }
 
-    final VirtualFile projectOutputDirectory = extension.getCompilerOutput();
-    if (projectOutputDirectory == null) {
+    final String projectOutputDirUrl = extension.getCompilerOutputUrl();
+    if (projectOutputDirUrl == null) {
       if (context != null) {
         context.addMessage(CompilerMessageCategory.ERROR, "Cannot find output directory for project " + project.getName(), null, -1, -1);
       }
       return null;
     }
 
-    final String pngCacheDirPath = projectOutputDirectory.getPath() + '/' + RESOURCES_CACHE_DIR_NAME + '/' + module.getName();
+    final String pngCacheDirPath = VfsUtil.urlToPath(projectOutputDirUrl) + '/' + RESOURCES_CACHE_DIR_NAME + '/' + module.getName();
     final String pngCacheDirOsPath = FileUtil.toSystemDependentName(pngCacheDirPath);
     
     final File pngCacheDir = new File(pngCacheDirOsPath);

@@ -476,7 +476,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myConfigurable.reset();
     }
   }
-  
+
+  @Override
+  public boolean isCopyFromMenuAvailable() {
+    return true;
+  }
+
   //========================================================================================================================================
   
   private class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {

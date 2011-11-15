@@ -30,6 +30,7 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -120,6 +121,14 @@ public class Git {
     }
 
     return untrackedFiles;
+  }
+  
+  @NotNull
+  public static GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName) {
+    GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
+    handler.addParameters(url);
+    handler.addParameters(clonedDirectoryName);
+    return run(handler, true);
   }
 
   /**

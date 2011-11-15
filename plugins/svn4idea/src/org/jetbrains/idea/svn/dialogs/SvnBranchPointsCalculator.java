@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
+import org.jetbrains.idea.svn.history.FirstInBranchAccurate;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -248,7 +249,7 @@ public class SvnBranchPointsCalculator {
     public WrapperInvertor<BranchCopyData> convert(final KeyData keyData) {
       final Ref<WrapperInvertor<BranchCopyData>> result = new Ref<WrapperInvertor<BranchCopyData>>();
 
-      new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), new Consumer<CopyData>() {
+      final Consumer<CopyData> consumer = new Consumer<CopyData>() {
         public void consume(CopyData copyData) {
           if (copyData != null) {
             final boolean correct = copyData.isTrunkSupposedCorrect();
@@ -256,18 +257,28 @@ public class SvnBranchPointsCalculator {
             if (correct) {
               branchCopyData = new BranchCopyData(keyData.getSourceUrl(), copyData.getCopySourceRevision(), keyData.getTargetUrl(),
                                                   copyData.getCopyTargetRevision());
-            } else {
+            }
+            else {
               branchCopyData = new BranchCopyData(keyData.getTargetUrl(), copyData.getCopySourceRevision(), keyData.getSourceUrl(),
                                                   copyData.getCopyTargetRevision());
             }
-            result.set(new WrapperInvertor<BranchCopyData>(! correct, branchCopyData));
+            result.set(new WrapperInvertor<BranchCopyData>(!correct, branchCopyData));
           }
         }
-      }).run();
+      };
+      
+      new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), consumer).run();
 
-      final WrapperInvertor<BranchCopyData> invertor = result.get();
+      WrapperInvertor<BranchCopyData> invertor = result.get();
       if (LOG.isDebugEnabled()) {
         LOG.debug("Loader returned: for key: " + keyData.toString() + " result: " + (invertor == null ? null : invertor.toString()));
+      }
+      if (invertor == null) {
+        new FirstInBranchAccurate(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), consumer).run();
+        invertor = result.get();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Accurate Loader returned: for key: " + keyData.toString() + " result: " + (invertor == null ? null : invertor.toString()));
+        }
       }
       return invertor;
     }

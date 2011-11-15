@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ExternallyRenamedChange;
@@ -53,6 +54,7 @@ public class SvnChangeList implements CommittedChangeList {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history");
 
   private final SvnVcs myVcs;
+  private final boolean myNonLocal;
   private final SvnRepositoryLocation myLocation;
   private String myRepositoryRoot;
   private long myRevision;
@@ -76,6 +78,7 @@ public class SvnChangeList implements CommittedChangeList {
   private final CommonPathSearcher myCommonPathSearcher;
 
   public SvnChangeList(@NotNull final List<CommittedChangeList> lists, @NotNull final SvnRepositoryLocation location) {
+    myNonLocal = false;
 
     final SvnChangeList sample = (SvnChangeList) lists.get(0);
     myVcs = sample.myVcs;
@@ -97,6 +100,12 @@ public class SvnChangeList implements CommittedChangeList {
   }
 
   public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
+    this(vcs, location, logEntry, repositoryRoot, false);
+  }
+
+  public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot,
+                       final boolean isNonLocal) {
+    myNonLocal = isNonLocal;
     myVcs = vcs;
     myLocation = location;
     myRevision = logEntry.getRevision();
@@ -136,6 +145,7 @@ public class SvnChangeList implements CommittedChangeList {
 
   public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream, final boolean supportsCopyFromInfo,
                        final boolean supportsReplaced) throws IOException {
+    myNonLocal = false;
     myVcs = vcs;
     myLocation = location;
     readFromStream(stream, supportsCopyFromInfo, supportsReplaced);
@@ -256,7 +266,12 @@ public class SvnChangeList implements CommittedChangeList {
   @Nullable
   private FilePath getLocalPath(final String path, final NotNullFunction<File, Boolean> detector) {
     final String fullPath = myRepositoryRoot + path;
-    return myLocation.getLocalPath(fullPath, detector, myVcs);
+    if (myNonLocal) return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(fullPath, detector.fun(new File(fullPath)));
+    final FilePath localPath = myLocation.getLocalPath(fullPath, detector, myVcs);
+    if (localPath == null) {
+      return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(fullPath, detector.fun(new File(fullPath)));
+    }
+    return localPath;
   }
 
   private long getRevision(final boolean isBeforeRevision) {

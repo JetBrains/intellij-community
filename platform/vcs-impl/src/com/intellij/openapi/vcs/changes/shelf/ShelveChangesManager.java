@@ -327,8 +327,20 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     if (defaultPath.length() == 0) {
       defaultPath = "unnamed";
     }
-    return FileUtil.findSequentNonexistentFile(file, defaultPath,
-      extension == null ? VcsConfiguration.getInstance(project).getPatchFileExtension() : extension);
+    if (defaultPath.length() > (PatchNameChecker.MAX - 10)) {
+      defaultPath = defaultPath.substring(0, PatchNameChecker.MAX - 10);
+    }
+    while (true) {
+      final File nonexistentFile = FileUtil.findSequentNonexistentFile(file, defaultPath,
+                                                           extension == null
+                                                           ? VcsConfiguration.getInstance(project).getPatchFileExtension()
+                                                           : extension);
+      if (nonexistentFile.getName().length() >= PatchNameChecker.MAX) {
+        defaultPath = defaultPath.substring(0, defaultPath.length() - 1);
+        continue;
+      }
+      return nonexistentFile;
+    }
   }
 
   public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,

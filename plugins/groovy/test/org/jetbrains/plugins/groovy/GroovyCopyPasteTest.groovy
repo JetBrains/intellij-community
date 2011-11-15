@@ -78,4 +78,28 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
 Foo f'''
   }
 
+  public void testPasteMultilineIntoMultilineGString() throws Exception {
+    myFixture.configureByText 'a.txt', '<selection>a/b\nc/d</selection>'
+    myFixture.performEditorAction IdeActions.ACTION_COPY
+    myFixture.configureByText 'b.groovy', 'def x = """smth<caret>"""'
+    myFixture.performEditorAction IdeActions.ACTION_PASTE
+    myFixture.checkResult 'def x = """smtha/b\nc/d<caret>"""'
+  }
+
+  public void testPasteMultilineIntoString() throws Exception {
+    myFixture.configureByText 'a.txt', '<selection>a\nd</selection>'
+    myFixture.performEditorAction IdeActions.ACTION_COPY
+    myFixture.configureByText 'b.groovy', "def x = 'smth<caret>'"
+    myFixture.performEditorAction IdeActions.ACTION_PASTE
+    myFixture.checkResult "def x = 'smtha\\n' +\n        'd<caret>'"
+  }
+
+  public void testPasteMultilineIntoGString() throws Exception {
+    myFixture.configureByText 'a.txt', '<selection>a\nd</selection>'
+    myFixture.performEditorAction IdeActions.ACTION_COPY
+    myFixture.configureByText 'b.groovy', 'def x = "smth<caret>"'
+    myFixture.performEditorAction IdeActions.ACTION_PASTE
+    myFixture.checkResult 'def x = "smtha\\n" +\n        "d<caret>"'
+  }
+
 }

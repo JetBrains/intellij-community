@@ -315,8 +315,8 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
     }
 
     @Override
-    public boolean process(@NotNull VirtualFile resource, String outputPath) {
-      if (resource.isDirectory() != myDirectory) {
+    public boolean process(@NotNull VirtualFile resource, @NotNull String outputPath) {
+      if (!myDirectory && resource.isDirectory()) {
         return false;
       }
       if (outputPath.endsWith("/")) {
@@ -326,6 +326,36 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
         myResult = resource;
         return true;
       }
+
+      if (myDirectory) {
+        // we're looking for for resource directory
+
+        if (outputPath.toLowerCase().startsWith(myResourceOutputPath.toLowerCase())) {
+          final String parentPath = outputPath.substring(0, myResourceOutputPath.length());
+          if (FileUtil.pathsEqual(parentPath, myResourceOutputPath)) {
+
+            if (resource.isDirectory()) {
+              // copying of directory that is located in resource dir, so resource dir is parent
+              final VirtualFile parent = resource.getParent();
+              if (parent != null) {
+                myResult = parent;
+                return true;
+              }
+            }
+            else {
+              // copying of resource file, we have to skip resource-type specific directory
+              final VirtualFile parent = resource.getParent();
+              final VirtualFile gp = parent != null ? parent.getParent() : null;
+              if (gp != null) {
+                myResult = gp;
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+      
       return false;
     }
   }

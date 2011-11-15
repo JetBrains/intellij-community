@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.unwrap;
 
-import com.intellij.codeInsight.unwrap.JavaUnwrapDescriptor;
+import com.intellij.codeInsight.unwrap.UnwrapDescriptorBase;
 import com.intellij.codeInsight.unwrap.Unwrapper;
 
-public class GroovyUnwrapDescriptor extends JavaUnwrapDescriptor {
-
-  @Override
-  protected Unwrapper[] createUnwrappers() {
+public class GroovyUnwrapDescriptor extends UnwrapDescriptorBase {
+  public Unwrapper[] createUnwrappers() {
     return new Unwrapper[]{
       new GroovyIfUnwrapper(),
       new GroovyWhileUnwrapper(),

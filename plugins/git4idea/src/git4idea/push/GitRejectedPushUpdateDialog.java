@@ -24,6 +24,7 @@ import git4idea.GitUtil;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +57,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
 
   protected GitRejectedPushUpdateDialog(@NotNull Project project,
                                         @NotNull Collection<GitRepository> repositories,
-                                        GitPusher.UpdateSettings initialSettings) {
+                                        @NotNull GitPusher.UpdateSettings initialSettings) {
     super(project);
     myProject = project;
     myRepositories = repositories;
@@ -73,7 +74,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     setTitle("Push Rejected");
   }
 
-  private AbstractAction getDefaultAction(@NotNull UpdateMethod updateMethod) {
+  private AbstractAction getDefaultAction(@Nullable UpdateMethod updateMethod) {
     if (updateMethod == UpdateMethod.REBASE) {
       return myRebaseAction;
     }

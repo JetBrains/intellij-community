@@ -25,8 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -45,7 +45,6 @@ import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
-import java.io.PrintStream;
 
 public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction");
@@ -78,7 +77,16 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
   }
 
   public static void showSubmittedFiles(final Project project, final SvnFileRevision svnRevision, final VirtualFile file) {
-    final SvnChangeList changeList = loadRevisions(project, svnRevision, file);
+    final SvnChangeList changeList;
+    try {
+      changeList = loadRevisions(project, svnRevision, file);
+    }
+    catch (VcsException e) {
+      Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.version", svnRevision.getRevisionNumber().asString(),
+                                                 e.getMessage()),
+                               SvnBundle.message("message.title.error.fetching.affected.paths"));
+      return;
+    }
 
     if (changeList != null) {
       long revNumber = ((SvnRevisionNumber)svnRevision.getRevisionNumber()).getRevision().getNumber();
@@ -90,22 +98,22 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
     return SvnBundle.message("dialog.title.affected.paths", revisionNumber);
   }
 
+  @CalledInBackground
   @Nullable
-  public static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision, @Nullable final VirtualFile file) {
-    return loadRevisions(project, svnRevision, file, true);
+  public static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision, @Nullable final VirtualFile file)
+    throws VcsException {
+    return loadRevisions(project, file, (SvnRevisionNumber)svnRevision.getRevisionNumber(), svnRevision.getURL());
   }
 
   @Nullable
-  public static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision, @Nullable final VirtualFile file, boolean underProgress) {
+  public static SvnChangeList loadRevisions(final Project project, @Nullable final VirtualFile file, final SvnRevisionNumber number, final String url)
+    throws VcsException {
     final Ref<SvnChangeList> result = new Ref<SvnChangeList>();
-    final SvnRevisionNumber number = ((SvnRevisionNumber)svnRevision.getRevisionNumber());
-
-    final SVNRevision targetRevision = ((SvnRevisionNumber)svnRevision.getRevisionNumber()).getRevision();
+    final SVNRevision targetRevision = number.getRevision();
     final SvnVcs vcs = SvnVcs.getInstance(project);
 
     try {
       final Exception[] ex = new Exception[1];
-      final String url = svnRevision.getURL();
       final SVNLogEntry[] logEntry = new SVNLogEntry[1];
       final SvnRepositoryLocation location = new SvnRepositoryLocation(url);
 
@@ -128,43 +136,21 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
         }
       }
 
-      final Runnable process = new Runnable() {
-        public void run() {
-          try {
-
-            ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.loading.log"));
-            client.doLog(repositoryUrl, null, targetRevision, targetRevision, targetRevision, false, true, 0, new ISVNLogEntryHandler() {
-              public void handleLogEntry(final SVNLogEntry currentLogEntry) throws SVNException {
-                logEntry[0] = currentLogEntry;
-              }
-            });
-            if (logEntry[0] == null) {
-              throw new VcsException(SvnBundle.message("exception.text.cannot.load.version", number));
-            }
-
-            ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.processing.changes"));
-            result.set(new SvnChangeList(vcs, location, logEntry[0], repositoryUrl.toString()));
-          }
-          catch (Exception e) {
-            ex[0] = e;
-          }
+      ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.loading.log"));
+      client.doLog(repositoryUrl, null, targetRevision, targetRevision, targetRevision, false, true, 0, new ISVNLogEntryHandler() {
+        public void handleLogEntry(final SVNLogEntry currentLogEntry) throws SVNException {
+          logEntry[0] = currentLogEntry;
         }
-      };
-      if (underProgress) {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(process, getTitle(targetRevision.getNumber()), false, project);
-      } else {
-        process.run();
+      });
+      if (logEntry[0] == null) {
+        throw new VcsException(SvnBundle.message("exception.text.cannot.load.version", number));
       }
-      if (ex[0] != null) throw ex[0];
-    }
-    catch (Exception e1) {
-      final BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream();
-      e1.printStackTrace(new PrintStream(baos));
-      LOG.info("For url: " + svnRevision.getURL() + "Exception: " + new String(baos.getInternalBuffer(), 0, baos.size()));
 
-      Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.version", number, e1.getLocalizedMessage()),
-                               SvnBundle.message("message.title.error.fetching.affected.paths"));
-      return null;
+      ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.processing.changes"));
+      result.set(new SvnChangeList(vcs, location, logEntry[0], repositoryUrl.toString(), true));
+    }
+    catch (SVNException e1) {
+      throw new VcsException(e1);
     }
 
     return result.get();

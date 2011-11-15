@@ -39,7 +39,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
    *     } }
    * </pre>
    */
-  public boolean USE_FLYING_GEESE_BRACES = true;
+  public boolean USE_FLYING_GEESE_BRACES = false;
 
   public boolean SPACE_IN_NAMED_ARGUMENT = true;
 

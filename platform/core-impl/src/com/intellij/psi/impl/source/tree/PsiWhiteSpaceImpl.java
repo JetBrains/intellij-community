@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
@@ -41,8 +40,7 @@ public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
   @Override
   @NotNull
   public Language getLanguage() {
-    PsiElement master = getNextSibling();
-    if (master == null || master instanceof OuterLanguageElement) master = getParent();
-    return master.getLanguage();
+    final PsiElement master = getParent();
+    return master != null ?  master.getLanguage() : Language.ANY;
   }
 }

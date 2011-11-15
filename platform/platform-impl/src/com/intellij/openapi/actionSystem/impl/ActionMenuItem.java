@@ -268,7 +268,8 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     if (isToggleable() && myPresentation.getIcon() == null) {
       action.update(myEvent);
       myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
-      if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
+      if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu ||
+          UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()) {
         setState(myToggled);
       }
       else if (!(getUI() instanceof GtkMenuItemUI)) {

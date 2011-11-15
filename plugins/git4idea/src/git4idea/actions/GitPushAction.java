@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.checkin.GitPushActiveBranchesDialog;
-import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,12 +28,12 @@ import java.util.Set;
 /**
  * The action that pushes active branches
  */
-public class GitPushActiveBranches extends GitRepositoryAction {
+public class GitPushAction extends GitRepositoryAction {
 
   @Override
   @NotNull
   protected String getActionName() {
-    return GitPusher.useNewPush() ? "Push" : GitBundle.getString("push.active.action.name");
+    return "Push";
   }
 
   protected void perform(@NotNull final Project project,

@@ -44,6 +44,10 @@ public class MultiProcessCommand implements Runnable{
     }
   }
 
+  public boolean isEmpty() {
+    return myCommands.isEmpty();
+  }
+
   public void addCommand(DebugProcessImpl debugProcess, DebuggerCommandImpl command) {
     myCommands.add(new Pair<DebugProcessImpl, DebuggerCommandImpl>(debugProcess, command));
   }
