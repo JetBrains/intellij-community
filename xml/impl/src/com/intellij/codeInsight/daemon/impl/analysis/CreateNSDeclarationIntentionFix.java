@@ -90,7 +90,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   public CreateNSDeclarationIntentionFix(final PsiElement element,
                                          final String namespacePrefix,
-                                         final XmlToken token,
+                                         @Nullable final XmlToken token,
                                          XmlFile containingFile) {
     myNamespacePrefix = namespacePrefix;
     myElement = element;
@@ -151,10 +151,12 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
               return;
             } else {
               prefix = ExtendedTagInsertHandler.suggestPrefix(xmlFile, namespace);
-              if (StringUtil.isNotEmpty(prefix)) {
-                ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+              if (StringUtil.isEmpty(prefix)) {
+                HintManager.getInstance().showInformationHint(editor, "Namespace not found");
+                return;
               }
+              ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
+              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
             }
           }
           final int offset = editor.getCaretModel().getOffset();
