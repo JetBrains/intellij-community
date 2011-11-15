@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ProxySelector;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
@@ -229,29 +230,40 @@ public final class GitHttpAdapter {
    * If user enters incorrect data, he has 2 more attempts to go before failure.
    */
   private static GeneralResult callWithAuthRetry(@NotNull MyRunnable command, GitHttpCredentialsProvider provider) throws InvalidRemoteException, IOException {
-    for (int i = 0; i < 3; i++) {
-      try {
-        AuthData authData = getUsernameAndPassword(provider.getProject(), provider.getUrl());
-        if (authData != null) {
-          provider.fillAuthDataIfNotFilled(authData.getLogin(), authData.getPassword());
-        }
-        if (i == 0) {
-          provider.setAlwaysShowDialog(false);   // if username and password are supplied, no need to show the dialog
-        } else {
-          provider.setAlwaysShowDialog(true);    // unless these values fail authentication
-        }
-        command.run();
-        rememberPassword(provider);
-        return GeneralResult.SUCCESS;
-      } catch (JGitInternalException e) {
-        if (!authError(e)) {
-          throw e;
-        } else if (provider.wasCancelled()) {  // if user cancels the dialog, just return
-          return GeneralResult.CANCELLED;
+    ProxySelector defaultProxySelector = ProxySelector.getDefault();
+    if (GitHttpProxySupport.shouldUseProxy()) {
+      ProxySelector.setDefault(GitHttpProxySupport.newProxySelector());
+      GitHttpProxySupport.init(provider.getUrl());
+    }
+
+    try {
+      for (int i = 0; i < 3; i++) {
+        try {
+          AuthData authData = getUsernameAndPassword(provider.getProject(), provider.getUrl());
+          if (authData != null) {
+            provider.fillAuthDataIfNotFilled(authData.getLogin(), authData.getPassword());
+          }
+          if (i == 0) {
+            provider.setAlwaysShowDialog(false);   // if username and password are supplied, no need to show the dialog
+          } else {
+            provider.setAlwaysShowDialog(true);    // unless these values fail authentication
+          }
+          command.run();
+          rememberPassword(provider);
+          return GeneralResult.SUCCESS;
+        } catch (JGitInternalException e) {
+          if (!authError(e)) {
+            throw e;
+          } else if (provider.wasCancelled()) {  // if user cancels the dialog, just return
+            return GeneralResult.CANCELLED;
+          }
         }
       }
+      return GeneralResult.NOT_AUTHORIZED;
     }
-    return GeneralResult.NOT_AUTHORIZED;
+    finally {
+      ProxySelector.setDefault(defaultProxySelector);
+    }
   }
 
   private static void rememberPassword(@NotNull GitHttpCredentialsProvider credentialsProvider) {
