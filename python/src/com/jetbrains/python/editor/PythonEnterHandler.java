@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -12,6 +13,7 @@ import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -48,6 +50,12 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull Ref<Integer> caretAdvance,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
+    int offset = caretOffset.get();
+    if (editor instanceof EditorWindow) {
+      file = InjectedLanguageUtil.getTopLevelFile(file);
+      editor = InjectedLanguageUtil.getTopLevelEditor(editor);
+      offset = editor.getCaretModel().getOffset();
+    }
     if (!(file instanceof PyFile)) {
       return Result.Continue;
     }
@@ -57,14 +65,14 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
     Document doc = editor.getDocument();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
-    final int offset = caretOffset.get();
     final PsiElement element = file.findElementAt(offset);
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     if (codeInsightSettings.JAVADOC_STUB_ON_ENTER) {
       PsiElement comment = element;
-      if (comment == null && offset != 0)
-        comment = file.findElementAt(offset-1);
-      int expectedStringStart = editor.getCaretModel().getOffset()-3; // """ or '''
+      if (comment == null && offset != 0) {
+        comment = file.findElementAt(offset - 1);
+      }
+      int expectedStringStart = editor.getCaretModel().getOffset() - 3; // """ or '''
       if (PythonDocCommentUtil.atDocCommentStart(comment, expectedStringStart)) {
         insertDocStringStub(editor, comment);
         return Result.Continue;
@@ -76,24 +84,26 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     if (offset > 0 && !(PyTokenTypes.STRING_NODES.contains(element.getNode().getElementType()))) {
-      final PsiElement prevElement = file.findElementAt(offset-1);
+      final PsiElement prevElement = file.findElementAt(offset - 1);
       if (prevElement == element) return Result.Continue;
     }
 
     if (PyTokenTypes.TRIPLE_NODES.contains(element.getNode().getElementType()) ||
-      element.getNode().getElementType() == PyTokenTypes.DOCSTRING)
+        element.getNode().getElementType() == PyTokenTypes.DOCSTRING) {
       return Result.Continue;
+    }
 
     PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
     if (string != null && string.getTextOffset() < offset) {
       String stringText = element.getText();
       int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
-      if (string.getTextOffset()+prefixLength >=offset)
+      if (string.getTextOffset() + prefixLength >= offset) {
         return Result.Continue;
-      if ("\\".equals(doc.getText(TextRange.create(offset-1, offset)))) return Result.Continue;
+      }
+      if ("\\".equals(doc.getText(TextRange.create(offset - 1, offset)))) return Result.Continue;
       String quote = element.getText().substring(prefixLength, prefixLength + 1);
-      doc.insertString(offset, quote+" \\"+quote);
-      caretOffset.set(offset+3);
+      doc.insertString(offset, quote + " \\" + quote);
+      caretOffset.set(caretOffset.get() + 3);
       return Result.Continue;
     }
 
@@ -101,7 +111,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
     if (offset > 0) {
-      final PsiElement beforeCaret = file.findElementAt(offset-1);
+      final PsiElement beforeCaret = file.findElementAt(offset - 1);
       if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') > 0) {
         // we've got a backslash at EOL already, don't need another one
         return Result.Continue;
@@ -117,7 +127,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     if (PsiTreeUtil.hasErrorElements(statementBefore)) {
-      final Boolean autoWrapping = DataManager.getInstance().loadFromDataContext(dataContext, AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY);
+      final Boolean autoWrapping =
+        DataManager.getInstance().loadFromDataContext(dataContext, AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY);
       if (autoWrapping == null) {
         // code is already bad, don't mess it up even further
         return Result.Continue;
@@ -154,7 +165,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
     if (wrappableAfter == null || wrappableBefore != wrappableAfter) {
       doc.insertString(offset, "\\");
-      caretOffset.set(offset+1);
+      caretOffset.set(caretOffset.get() + 1);
     }
     return Result.Continue;
   }

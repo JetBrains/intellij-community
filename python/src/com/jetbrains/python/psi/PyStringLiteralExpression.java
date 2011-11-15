@@ -12,4 +12,6 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, PsiLangu
   List<TextRange> getStringValueTextRanges();
 
   List<ASTNode> getStringNodes();
+
+  int valueOffsetToTextOffset(int valueOffset);
 }

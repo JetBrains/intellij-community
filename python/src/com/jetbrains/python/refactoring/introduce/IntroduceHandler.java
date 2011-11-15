@@ -396,11 +396,36 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   public PyAssignmentStatement createDeclaration(IntroduceOperation operation) {
     final Project project = operation.getProject();
     final PyExpression initializer = operation.getInitializer();
-    String assignmentText = operation.getName() + " = " + initializer.getText().replace("\n", " ");
+    InitializerTextBuilder builder = new InitializerTextBuilder();
+    initializer.accept(builder);
+    String assignmentText = operation.getName() + " = " + builder.result();
     PsiElement anchor = operation.isReplaceAll()
                         ? findAnchor(operation.getOccurrences())
                         : PsiTreeUtil.getParentOfType(initializer, PyStatement.class);
     return createDeclaration(project, assignmentText, anchor);
+  }
+  
+  private static class InitializerTextBuilder extends PyRecursiveElementVisitor {
+    private final StringBuilder myResult = new StringBuilder();
+    
+    @Override
+    public void visitWhiteSpace(PsiWhiteSpace space) {
+      myResult.append(space.getText().replace('\n', ' '));
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (element.getChildren().length == 0) {
+        myResult.append(element.getText());
+      }
+      else {
+        super.visitElement(element);
+      }
+    }
+
+    public String result() {
+      return myResult.toString();
+    }
   }
 
   protected abstract String getHelpId();

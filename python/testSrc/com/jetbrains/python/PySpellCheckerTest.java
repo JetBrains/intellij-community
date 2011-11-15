@@ -19,6 +19,10 @@ public class PySpellCheckerTest extends PyTestCase {
     doTest();
   }
 
+  public void testTypoAfterEscapeSequence() {  // PY-4440
+    doTest();
+  }
+
   private void doTest() {
     myFixture.enableInspections(SpellCheckingInspection.class);
     myFixture.configureByFile("inspections/spelling/" + getTestName(true) + ".py");

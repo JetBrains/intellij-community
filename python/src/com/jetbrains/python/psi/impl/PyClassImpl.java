@@ -474,7 +474,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     NameFinder<PyFunction> proc;
     if (isNewStyleClass()) proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW);
     else proc = new NameFinder<PyFunction>(PyNames.INIT);
-    visitMethods(proc, inherited);
+    visitMethods(proc, inherited, true);
     return proc.getResult();
   }
 
@@ -721,10 +721,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public boolean visitMethods(Processor<PyFunction> processor, boolean inherited) {
+    return visitMethods(processor, inherited, false);
+  }
+
+  public boolean visitMethods(Processor<PyFunction> processor,
+                              boolean inherited,
+                              boolean skipClassObj) {
     PyFunction[] methods = getMethods();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : iterateAncestorClasses()) {
+        if (skipClassObj && PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
+          continue;
+        }
         if (!ancestor.visitMethods(processor, false)) {
           return false;
         }

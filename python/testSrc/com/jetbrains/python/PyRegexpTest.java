@@ -43,8 +43,12 @@ public class PyRegexpTest extends PyTestCase {
     PyLexerTestCase.doLexerTest("# abc", lexer, "COMMENT", "COMMENT");
   }
 
+  public void testRedundantEscapeSingleQuote() {  // PY-5027
+    doTestHighlighting();
+  }
+
   private void doTestHighlighting() {
-    myFixture.testHighlighting(true, false, false, "regexp/" + getTestName(true) + ".py");
+    myFixture.testHighlighting(true, false, true, "regexp/" + getTestName(true) + ".py");
   }
 
   private void doTestLexer(final String text, String... expectedTokens) {

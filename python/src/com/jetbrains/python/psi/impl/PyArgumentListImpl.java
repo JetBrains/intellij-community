@@ -130,9 +130,8 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   private void addArgumentLastWithoutComma(PyExpression arg) {
-    ASTNode node = getNode();
-    ASTNode[] pars = node.getChildren(TokenSet.create(PyTokenTypes.RPAR));
-    if (pars.length == 0) {
+    ASTNode par = getClosingParen();
+    if (par == null) {
       // there's no ending paren
       try {
         add(arg);
@@ -143,8 +142,15 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
     }
     else {
-      node.addChild(arg.getNode(), pars[pars.length - 1]);
+      getNode().addChild(arg.getNode(), par);
     }
+  }
+
+  @Nullable
+  public ASTNode getClosingParen() {
+    ASTNode node = getNode();
+    final ASTNode[] children = node.getChildren(TokenSet.create(PyTokenTypes.RPAR));
+    return children.length == 0 ? null : children[children.length-1];
   }
 
   private void addArgumentNode(PyExpression arg, ASTNode beforeThis, boolean commaFirst) {
@@ -244,6 +250,4 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     }
     return ret;
   }
-
-
 }

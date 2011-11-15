@@ -488,17 +488,6 @@ public class PyBlock implements ASTBlock {
     }
 
     return Indent.getNoneIndent();
-    //return null;
-
-/*
-        Indent indent;
-        if (isIncomplete()) {
-            indent = Indent.getContinuationIndent();
-        } else {
-            indent = Indent.getNoneIndent();
-        }
-        return indent;
-*/
   }
 
   @Nullable
@@ -540,6 +529,11 @@ public class PyBlock implements ASTBlock {
       if (statementListPrev != null && statementListPrev.getText().indexOf('\n') >= 0) {
         return true;
       }
+    }
+
+    if (_node.getPsi() instanceof PyArgumentList) {
+      final PyArgumentList argumentList = (PyArgumentList)_node.getPsi();
+      return argumentList.getClosingParen() == null;
     }
 
     return false;
