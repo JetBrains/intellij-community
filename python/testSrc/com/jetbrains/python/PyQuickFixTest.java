@@ -287,6 +287,11 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.add.super"), true, true);
   }
 
+  public void testAddEncoding() {                      //PY-491
+    doInspectionTest("AddEncoding.py", PyByteLiteralInspection.class,
+                     PyBundle.message("QFIX.add.encoding"), true, true);
+  }
+
   public void testRemoveDecorator() {                      //PY-3348
     doInspectionTest("RemoveDecorator.py", PyDecoratorInspection.class,
                      PyBundle.message("QFIX.remove.decorator"), true, true);

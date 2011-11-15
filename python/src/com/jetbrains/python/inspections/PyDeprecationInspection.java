@@ -40,7 +40,7 @@ public class PyDeprecationInspection extends PyInspection {
 
     @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
-      PsiElement resolveResult = node.getReference(PyResolveContext.noImplicits()).resolve();
+      PsiElement resolveResult = node.getReference(resolveWithoutImplicits()).resolve();
       String deprecationMessage = null;
       if (resolveResult instanceof PyFunction) {
         deprecationMessage = ((PyFunction) resolveResult).getDeprecationMessage();
