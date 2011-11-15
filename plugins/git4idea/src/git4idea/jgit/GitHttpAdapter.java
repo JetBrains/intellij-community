@@ -22,6 +22,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import git4idea.push.GitSimplePushResult;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.repo.GitRepository;
@@ -90,7 +91,7 @@ public final class GitHttpAdapter {
           fetchCommand.setCredentialsProvider(provider);
           fetchCommand.call();
         }
-      }, provider);
+      }, provider, null);
       resultType = convertToFetchResultType(result);
     } catch (IOException e) {
       LOG.info("Exception while fetching " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
@@ -129,7 +130,7 @@ public final class GitHttpAdapter {
           Iterable<PushResult> results = pushCommand.call();
           pushResult.set(analyzeResults(results));
         }
-      }, provider);
+      }, provider, null);
       if (pushResult.get() == null) {
         return convertToPushResultType(result);
       } else {
@@ -160,7 +161,14 @@ public final class GitHttpAdapter {
           cloneCommand.setCredentialsProvider(provider);
           cloneCommand.call();
         }
-      }, provider);
+      }, provider, new MyRunnable() {
+        @Override
+        public void run() throws IOException, InvalidRemoteException {
+          if (directory.exists()) {
+            FileUtil.delete(directory);
+          }
+        }
+      });
       resultType = convertToFetchResultType(result);
     }
     catch (InvalidRemoteException e) {
@@ -228,8 +236,11 @@ public final class GitHttpAdapter {
    * Calls the given runnable.
    * If user cancels the authentication dialog, returns.
    * If user enters incorrect data, he has 2 more attempts to go before failure.
+   * 
+   * @param cleanup executed after each incorrect attempt to enter password, and after other retriable actions.
    */
-  private static GeneralResult callWithAuthRetry(@NotNull MyRunnable command, GitHttpCredentialsProvider provider) throws InvalidRemoteException, IOException {
+  private static GeneralResult callWithAuthRetry(@NotNull MyRunnable command, @NotNull GitHttpCredentialsProvider provider,
+                                                 @Nullable MyRunnable cleanup) throws InvalidRemoteException, IOException {
     ProxySelector defaultProxySelector = ProxySelector.getDefault();
     if (GitHttpProxySupport.shouldUseProxy()) {
       ProxySelector.setDefault(GitHttpProxySupport.newProxySelector());
@@ -252,10 +263,17 @@ public final class GitHttpAdapter {
           rememberPassword(provider);
           return GeneralResult.SUCCESS;
         } catch (JGitInternalException e) {
-          if (!authError(e)) {
+          if (authError(e)) {
+            if (provider.wasCancelled()) {  // if user cancels the dialog, just return
+              return GeneralResult.CANCELLED;
+            }
+            // otherwise give more tries to enter password
+            if (cleanup != null) {
+              cleanup.run();
+            }
+          }
+          else {
             throw e;
-          } else if (provider.wasCancelled()) {  // if user cancels the dialog, just return
-            return GeneralResult.CANCELLED;
           }
         }
       }
