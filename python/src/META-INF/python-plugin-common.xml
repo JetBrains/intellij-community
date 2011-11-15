@@ -906,6 +906,10 @@
       <separator/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
+
+    <action id="MarkTemplateDirectory" class="com.jetbrains.python.templateLanguages.MarkTemplateDirectoryAction" text="Template Directory">
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
