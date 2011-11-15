@@ -286,4 +286,19 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$stringMethodCall1() {doTest()}
   void testpath$stringMethodCall2() {doTest()}
   void testpath$stringMethodCall3() {doTest()}
+  
+  void testSpacesInStringAfterSlash() {
+    checkParsing '''
+print 'abc \\ \ncde' ''', '''
+Groovy script
+  PsiElement(new line)(\'\\n\')
+  Call expression
+    Reference expression
+      PsiElement(identifier)(\'print\')
+    PsiWhiteSpace(\' \')
+    Command arguments
+      Literal
+        PsiElement(string)(\'\'abc \\ \\ncde\'\')
+  PsiWhiteSpace(\' \')'''
+  }
 }
