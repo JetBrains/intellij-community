@@ -233,7 +233,8 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyPropertyAccessInspection() {
-    doTestWithLanguageLevel(getTestName(false), new PyPropertyAccessInspection(), LanguageLevel.PYTHON26);
+    setLanguageLevel(LanguageLevel.PYTHON26);
+    doHighlightingTest(PyPropertyAccessInspection.class);
   }
 
   public void testPyPropertyDefinitionInspection25() {
