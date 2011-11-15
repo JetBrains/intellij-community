@@ -157,7 +157,10 @@ public class FormatterTest extends GroovyFormatterTestCase {
     doTest();
   }
   public void testAlignClosureBraceWithCall() throws Throwable { doTest(); }
-  public void testFlyingGeese() throws Throwable { doTest(); }
+  public void testFlyingGeese() throws Throwable {
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true;
+    doTest();
+  }
   public void testSpaceAfterTypeCast() throws Throwable {
     getGroovySettings().SPACE_AFTER_TYPE_CAST = false;
     getGroovySettings().SPACE_WITHIN_CAST_PARENTHESES = true;
