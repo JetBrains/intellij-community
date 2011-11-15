@@ -14,7 +14,7 @@ public class JythonProcessHandler extends PythonProcessHandler {
 
   @Override
   protected void doDestroyProcess() {
-    // force "kill -9" because jython makes are threaddump on "SIGINT" signal
+    // force "kill -9" because jython makes threaddump on "SIGINT" signal
     killProcessTree(getProcess());
   }
 
