@@ -410,6 +410,8 @@ public class GraphGutter {
     }
 
     private void drawConnectors(Graphics graphics, int lastIdx, int upBound, int idx, HashSet<Integer> selected, List<Integer> wiresGroups) {
+      ((Graphics2D) graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
       final Map<VirtualFile,WireEventsIterator> groupIterators = myModel.getGroupIterators(idx);
       for (Map.Entry<VirtualFile, WireEventsIterator> entry : groupIterators.entrySet()) {
         final WireEventsIterator eventsIterator = entry.getValue();
@@ -458,6 +460,8 @@ public class GraphGutter {
         drawConnectorsFragment(graphics, idxFrom, yOff, used, new WireEvent(lastIdx, ArrayUtil.EMPTY_INT_ARRAY), selected, wiresGroups,
                                grey, wireModificationSet);
       }
+
+      ((Graphics2D) graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
     private void drawRepoBounds(Graphics graphics, int height, List<Integer> wiresGroups) {

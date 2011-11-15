@@ -409,14 +409,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       return ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file);
     }
 
-    final List<FileNameMatcher> matchers = getAssociations(type);
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0, size = matchers.size(); i < size; i++) {
-      final FileNameMatcher matcher = matchers.get(i);
-      if (matcher.accept(file.getName())) return true;
-    }
-
-    return false;
+    return getFileTypeByFileName(file.getName()) == type;
   }
 
   @NotNull

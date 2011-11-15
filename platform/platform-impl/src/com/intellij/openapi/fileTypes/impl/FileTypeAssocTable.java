@@ -168,7 +168,7 @@ public class FileTypeAssocTable<T> {
     }
 
     //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myMatchingMappings.size(); i++) {
+    for (int i = 0, n = myMatchingMappings.size(); i < n; i++) {
       final Pair<FileNameMatcher, T> mapping = myMatchingMappings.get(i);
       if (mapping.getFirst().accept(fileName)) return mapping.getSecond();
     }

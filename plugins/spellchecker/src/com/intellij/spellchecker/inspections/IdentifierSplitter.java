@@ -84,7 +84,7 @@ public class IdentifierSplitter extends BaseSplitter {
   }
 
   @NotNull
-  public static List<TextRange> splitByCase(@NotNull String text, @NotNull TextRange range) {
+  private static List<TextRange> splitByCase(@NotNull String text, @NotNull TextRange range) {
     //System.out.println("text = " + text + " range = " + range);
     List<TextRange> result = new ArrayList<TextRange>();
     int i = range.getStartOffset();
@@ -92,6 +92,21 @@ public class IdentifierSplitter extends BaseSplitter {
     int prevType = Character.MATH_SYMBOL;
     while (i < range.getEndOffset()) {
       final char ch = text.charAt(i);
+      if (ch >= '\u3040' && ch <= '\u309f' || // Hiragana
+          ch >= '\u30A0' && ch <= '\u30ff' || // Katakana
+          ch >= '\u4E00' && ch <= '\u9FFF' || // CJK Unified ideographs
+          ch >= '\uF900' && ch <= '\uFAFF' || // CJK Compatibility Ideographs
+          ch >= '\uFF00' && ch <= '\uFFEF' //Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
+         ) {
+        if (s >= 0) {
+          add(text, result, i, s);
+          s = -1;
+        }
+        prevType = Character.MATH_SYMBOL;
+        ++i;
+        continue;
+      }
+
       final int type = Character.getType(ch);
       if (type == Character.LOWERCASE_LETTER ||
           type == Character.UPPERCASE_LETTER ||

@@ -23,6 +23,8 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.DnDActionInfo;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.navigationToolbar.ui.NavBarUI;
+import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -42,7 +44,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +66,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -102,7 +102,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private RelativePoint myLocationCache;
 
   public NavBarPanel(final Project project) {
-    super(new FlowLayout(FlowLayout.LEFT, isDecorated() ? 0 : 5, 0));
+    super(new FlowLayout(FlowLayout.LEFT, 0 , 0));
     myProject = project;
     myModel = new NavBarModel(myProject);
     myIdeView = new NavBarIdeView(this);
@@ -110,10 +110,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue = new NavBarUpdateQueue(this);
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR);
-
-    if (!isDecorated()) {
-      setBorder(/*new NavBarBorder(false, -1)*/ new EmptyBorder(1,0,1,4));
-    }
     setOpaque(false);
 
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
@@ -127,10 +123,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
     Disposer.register(project, this);
-  }
-
-  public static boolean isDecorated() {
-    return Registry.is("navbar.is.decorated");
   }
 
   public boolean isNodePopupActive() {
@@ -300,7 +292,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return null;
   }
 
-  boolean isInFloatingMode() {
+  public boolean isInFloatingMode() {
     return myHint != null && myHint.isVisible();
   }
 
@@ -832,5 +824,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
       info.put("navBarPopup", popupText.toString());
     }
+  }
+
+  @SuppressWarnings("MethodMayBeStatic")
+  @NotNull
+  public NavBarUI getNavBarUI() {
+    return NavBarUIManager.getUI();
   }
 }

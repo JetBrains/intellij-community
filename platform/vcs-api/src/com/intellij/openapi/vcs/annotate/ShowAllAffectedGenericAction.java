@@ -60,7 +60,7 @@ public class ShowAllAffectedGenericAction extends AnAction {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
 
-    final String title = "Paths affected in revision " + revision.asString();
+    final String title = VcsBundle.message("paths.affected.in.revision", revision.asString());
     final CommittedChangeList[] list = new CommittedChangeList[1];
     final VcsException[] exc = new VcsException[1];
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {

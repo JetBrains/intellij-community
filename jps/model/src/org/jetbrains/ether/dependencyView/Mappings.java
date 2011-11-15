@@ -788,8 +788,37 @@ public class Mappings {
         }
 
         for (MethodRepr m : diff.methods().added()) {
-          if ((it.access & Opcodes.ACC_INTERFACE) > 0 || (m.access & Opcodes.ACC_ABSTRACT) > 0) {
+          if (it.isAnnotation()) {
+            continue;
+          }
+
+          if ((it.access & Opcodes.ACC_INTERFACE) > 0 ||
+              (it.access & Opcodes.ACC_ABSTRACT) > 0 ||
+              (m.access & Opcodes.ACC_ABSTRACT) > 0) {
             u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
+          }
+
+          if ((m.access & Opcodes.ACC_PRIVATE) == 0 && !myContext.getValue(m.name).equals("<init>")) {
+            final ClassRepr oldIt = getReprByName(it.name);
+
+            if (oldIt != null && self.findOverridenMethods(m, oldIt).size() > 0) { //  oldIt.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
+
+            }
+            else {
+              final UsageRepr.Usage usage = it.createUsage();
+
+              affectedUsages.add(usage);
+
+              if ((m.access & Opcodes.ACC_PUBLIC) > 0) {
+
+              }
+              else if (isPackageLocal(m.access)) {
+                usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
+              }
+              else if ((m.access & Opcodes.ACC_PROTECTED) > 0) {
+                usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
+              }
+            }
           }
 
           if ((m.access & Opcodes.ACC_PRIVATE) == 0) {

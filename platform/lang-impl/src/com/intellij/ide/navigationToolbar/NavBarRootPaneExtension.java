@@ -20,6 +20,7 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -27,13 +28,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +41,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-//TODO[kb]: cleanup
 public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
-  private static final Icon CROSS_ICON = IconLoader.getIcon("/actions/cross.png");
-
   private JComponent myWrapperPanel;
   @NonNls public static final String NAV_BAR = "NavBar";
   private Project myProject;
@@ -54,7 +49,6 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private JPanel myRunPanel;
   private boolean myNavToolbarGroupExist;
   private JScrollPane myScrollPane;
-  private JLabel myCloseIcon;
 
   public NavBarRootPaneExtension(Project project) {
     myProject = project;
@@ -92,46 +86,17 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         @Override
         protected void paintChildren(Graphics g) {
           super.paintChildren(g);
-          if (UIUtil.isUnderAquaLookAndFeel() && !isMainToolbarVisible()) {
-            final Rectangle r = getBounds();
-            //g.setColor(new Color(0,0,0, 90));
-            //g.drawLine(0, r.height - 4, r.width, r.height - 4);
-              g.setColor(new Color(0, 0, 0, 90));
-              g.drawLine(0, r.height - 2, r.width, r.height - 2);
-              g.setColor(new Color(0, 0, 0, 20));
-              g.drawLine(0, r.height - 1, r.width, r.height - 1);
-          }
+          NavBarUIManager.getUI().doPaintWrapperPanelChildren((Graphics2D)g, getBounds(), isMainToolbarVisible());
         }
 
         @Override
         protected void paintComponent(Graphics g) {
-          //if (!UIUtil.isUnderAquaLookAndFeel()) {
-          //  super.paintComponent(g);
-          //  return;
-          //}
-
-          final Rectangle r = getBounds();
-          if (isMainToolbarVisible()) {
-            g.setColor(new Color(200, 200, 200));
-            g.fillRect(0, 0, r.width, r.height);
-          }
-          else {
-            final Color startColor = UIUtil.isUnderAquaLookAndFeel() ? new Color(240, 240, 240) : UIUtil.getControlColor();
-            final Color endColor = ColorUtil.shift(startColor, 7.0d / 8.0d);
-            ((Graphics2D)g).setPaint(new GradientPaint(0, 0, startColor, 0, r.height, endColor));
-            g.fillRect(0, 0, r.width, r.height);
-            //UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
-          }
+          NavBarUIManager.getUI().doPaintWrapperPanel((Graphics2D)g, getBounds(), isMainToolbarVisible());
         }
 
         @Override
         public Insets getInsets() {
-          final Insets i = super.getInsets();
-          if (!UIUtil.isUnderAquaLookAndFeel()) {
-            return new Insets(0, 0, 0, 0);
-          }
-
-          return new Insets(i.top, i.left, i.bottom + 1, i.right);
+          return NavBarUIManager.getUI().getWrapperPanelInsets(super.getInsets());
         }
       };
       myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
@@ -149,7 +114,6 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         final DefaultActionGroup group = (DefaultActionGroup)toolbarRunGroup;
         final boolean needGap = isNeedGap(group);
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR, group, true);
-        //actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
         final JComponent component = actionToolbar.getComponent();
         component.setOpaque(false);
         myRunPanel = new JPanel(new BorderLayout());
@@ -208,7 +172,6 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         laf = LafManager.getInstance().getCurrentLookAndFeel().getName();
         panel.get().removeAll();
         myScrollPane = null;
-        myCloseIcon = null;
         if (myNavigationBar != null && !Disposer.isDisposed(myNavigationBar)) {
           Disposer.dispose(myNavigationBar);
         }
@@ -220,25 +183,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         myScrollPane.setHorizontalScrollBar(null);
         myScrollPane.setBorder(null);
-
         myScrollPane.setOpaque(false);
         myScrollPane.getViewport().setOpaque(false);
-
-        //panel.get().setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
-        panel.get().setOpaque(true);//!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
+        panel.get().setOpaque(true);
         panel.get().setBorder(new NavBarBorder(true, 0));
         myNavigationBar.setBorder(null);
         panel.get().add(myScrollPane, BorderLayout.CENTER);
-        //if (!SystemInfo.isMac) {
-        //  myCloseIcon = new JLabel(CROSS_ICON);
-        //  myCloseIcon.addMouseListener(new MouseAdapter() {
-        //    public void mouseClicked(final MouseEvent e) {
-        //      UISettings.getInstance().SHOW_NAVIGATION_BAR = false;
-        //      uiSettingsChanged(UISettings.getInstance());
-        //    }
-        //  });
-        //  panel.get().add(myCloseIcon, BorderLayout.EAST);
-        //}
       }
     };
 
@@ -254,42 +204,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        //if (UIUtil.isUnderAquaLookAndFeel()) {
-        final Rectangle r = getBounds();
-        final Graphics2D g2d = (Graphics2D)g;
-        //if (!isMainToolbarVisible() && UIUtil.isUnderAquaLookAndFeel()) {
-          //if (UIUtil.isUnderAquaLookAndFeel()) {
-          //  final Dimension d = getPreferredSize();
-          //  final int topOffset = UIUtil.isUnderAquaLookAndFeel() ? (r.height - d.height) / 2 + 2 : 0;
-          //  UIUtil.drawDoubleSpaceDottedLine(g2d, topOffset, topOffset + d.height - 1, r.width - 1, Color.GRAY, false);
-          //} else {
-          //  g2d.setPaint(getBackground());
-          //  g2d.fillRect(0,0, r.width, r.height);
-          //}
-        //}
-        //else {
-          final boolean undocked = isUndocked();
-          final Color startColor = UIUtil.isUnderAquaLookAndFeel() ? new Color(240, 240, 240) : UIUtil.getControlColor();
-          final Color endColor = ColorUtil.shift(startColor, 7.0d / 8.0d);
-          g2d.setPaint(new GradientPaint(0, 0, startColor, 0, r.height, endColor));
-          g.fillRect(0, 0, r.width, r.height);
-
-          if (!undocked) {
-            g.setColor(new Color(255, 255, 255, 220));
-            g.drawLine(0, 1, r.width, 1);
-          }
-
-          g.setColor(UIUtil.getBorderColor());
-          if (!undocked) g.drawLine(0, 0, r.width, 0);
-          g.drawLine(0, r.height-1, r.width, r.height-1);
-          
-          if (!isMainToolbarVisible()) {
-            UIUtil.drawDottedLine(g2d, r.width - 1, 0, r.width - 1, r.height, null, Color.GRAY);
-          }
-        //}
-        //} else {
-        //  super.paintComponent(g);
-        //}
+        NavBarUIManager.getUI().doPaintNavBarPanel((Graphics2D)g, getBounds(), isMainToolbarVisible(), isUndocked());
       }
 
       @Override
@@ -300,19 +215,11 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         int x = insets.left;
         if (myScrollPane == null) return;
         final Component navBar = myScrollPane;
-        final Component closeLabel = myCloseIcon;
 
         final Dimension preferredSize = navBar.getPreferredSize();
-        final Dimension closePreferredSize = closeLabel == null ? new Dimension() : closeLabel.getPreferredSize();
 
         navBar.setBounds(x, insets.top + ((r.height - preferredSize.height - insets.top - insets.bottom) / 2),
-                         r.width - insets.left - insets.right - closePreferredSize.width, preferredSize.height);
-
-        if (closeLabel != null) {
-          closeLabel.setBounds(x + r.width - insets.left - insets.right - closePreferredSize.width,
-                               insets.top + ((r.height - closePreferredSize.height - insets.top - insets.bottom) / 2),
-                               closePreferredSize.width, closePreferredSize.height);
-        }
+                         r.width - insets.left - insets.right, preferredSize.height);
       }
     });
 
@@ -331,7 +238,6 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       if (myWrapperPanel.getComponentCount() > 0) {
         final Component c = myWrapperPanel.getComponent(0);
         if (c instanceof JComponent) ((JComponent)c).setOpaque(false);
-        //!UIUtil.isUnderAquaLookAndFeel() || isMainToolbarVisible());
       }
     }
   }

@@ -52,17 +52,17 @@ public class PlainTextSplitter extends BaseSplitter {
     if (Verifier.checkCharacterData(substring) != null) {
       return;
     }
-    for(int i = 0; i < text.length(); ++i) {
-      final char ch = text.charAt(i);
-      if (ch >= '\u3040' && ch <= '\u309f' || // Hiragana
-          ch >= '\u30A0' && ch <= '\u30ff' || // Katakana
-          ch >= '\u4E00' && ch <= '\u9FFF' || // CJK Unified ideographs
-          ch >= '\uF900' && ch <= '\uFAFF' || // CJK Compatibility Ideographs
-          ch >= '\uFF00' && ch <= '\uFFEF' //Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
-         ) {
-        return;
-      }
-    }
+    //for(int i = 0; i < text.length(); ++i) {
+    //  final char ch = text.charAt(i);
+    //  if (ch >= '\u3040' && ch <= '\u309f' || // Hiragana
+    //      ch >= '\u30A0' && ch <= '\u30ff' || // Katakana
+    //      ch >= '\u4E00' && ch <= '\u9FFF' || // CJK Unified ideographs
+    //      ch >= '\uF900' && ch <= '\uFAFF' || // CJK Compatibility Ideographs
+    //      ch >= '\uFF00' && ch <= '\uFFEF' //Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
+    //     ) {
+    //    return;
+    //  }
+    //}
 
     List<TextRange> toCheck;
     if (text.indexOf('@')>0) {

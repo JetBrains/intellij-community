@@ -32,9 +32,9 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectStructureElementConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DetailsComponent;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
@@ -44,9 +44,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -73,7 +71,6 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   private JPanel myPanel;
 
-  private final JLabel myWarningLabel = new JLabel("");
   private final StructureConfigurableContext myContext;
   private final ModulesConfigurator myModulesConfigurator;
   private JPanel myWholePanel;
@@ -97,29 +94,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
         daemonAnalyzer.queueUpdate(mySettingsElement);
       }
     });
-    daemonAnalyzer.addListener(new ProjectStructureDaemonAnalyzerListener() {
-      @Override
-      public void problemsChanged(@NotNull ProjectStructureElement element) {
-        if (element instanceof GeneralProjectSettingsElement) {
-          updateCircularDependencyWarning();
-        }
-      }
-    });
     init(model);
-  }
-
-  private void updateCircularDependencyWarning() {
-    ProjectStructureProblemsHolderImpl holder = myContext.getDaemonAnalyzer().getProblemsHolder(mySettingsElement);
-    final ProjectStructureProblemDescription item = holder != null ? ContainerUtil.getFirstItem(holder.getProblemDescriptions()) : null;
-    if (item instanceof GeneralProjectSettingsElement.CircularDependencyProblemDescription) {
-      myWarningLabel.setIcon(Messages.getWarningIcon());
-      myWarningLabel.setText(((GeneralProjectSettingsElement.CircularDependencyProblemDescription)item).getFullDescription());
-    }
-    else {
-      myWarningLabel.setIcon(null);
-      myWarningLabel.setText("");
-    }
-    myWarningLabel.repaint();
   }
 
   @Override
@@ -176,9 +151,6 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
 
-    //myWarningLabel.setUI(new MultiLineLabelUI());
-    myPanel.add(myWarningLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                       GridBagConstraints.BOTH, new Insets(10, 6, 10, 0), 0, 0));
 
     myProjectCompilerOutput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
