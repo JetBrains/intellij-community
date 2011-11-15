@@ -1,0 +1,28 @@
+YAML file
+  YAML document
+    YAML key value
+      PsiElement(scalar key)('server:')
+      PsiElement(Eol)('\n')
+      YAML compound value
+        YAML sequence
+          PsiElement(-)('-')
+          PsiElement(text)('a')
+        PsiElement(Eol)('\n')
+        YAML sequence
+          PsiElement(-)('-')
+          PsiElement(text)('b')
+          PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
+    YAML key value
+      PsiElement(scalar key)('server:')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML compound value
+        YAML sequence
+          PsiElement(-)('-')
+          PsiElement(text)('a')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML sequence
+          PsiElement(-)('-')
+          PsiElement(text)('b')

@@ -51,9 +51,15 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   }
 
   private void parseStatements(int indent) {
-    while (!eof() && (isJunk() || !eolSeen || myIndent >= indent)) {
+    final boolean sequencesOnTheSameIndent = isSequenceStart(indent);
+    while (!eof() && (isJunk() || !eolSeen || myIndent > indent ||
+                      myIndent == indent && (!sequencesOnTheSameIndent || isSequenceStart(indent)))) {
       parseSingleStatement(indent);
     }
+  }
+
+  private boolean isSequenceStart(final int indent) {
+    return myIndent == indent && getTokenType() == SEQUENCE_MARKER;
   }
 
   private void parseSingleStatement(int indent) {
@@ -114,7 +120,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       if (!eolSeen) {
         parseSingleStatement(myIndent);
       } else {
-        while (!eof() && (isJunk() || (myIndent > indent))) {
+        while (!eof() && (isJunk() || (myIndent > indent) || isSequenceStart(indent))) {
           parseStatements(myIndent);
         }
       }
