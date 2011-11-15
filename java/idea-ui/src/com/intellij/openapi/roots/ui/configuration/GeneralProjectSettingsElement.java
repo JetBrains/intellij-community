@@ -64,20 +64,10 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     if (count > 0) {
       @NonNls final String leftBrace = "<html>";
       @NonNls final String rightBrace = "</html>";
-      final String fullDescription = leftBrace + ProjectBundle.message("module.circular.dependency.warning", cycles, count) + rightBrace;
+      final String warningMessage = leftBrace + ProjectBundle.message("module.circular.dependency.warning", cycles, count) + rightBrace;
       final Project project = myContext.getProject();
-      for (Chunk<ModifiableRootModel> chunk : chunks) {
-        final Set<ModifiableRootModel> nodes = chunk.getNodes();
-        if (nodes.size() > 1) {
-          final PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulesPlace(), this);
-          StringBuilder names = new StringBuilder();
-          for (ModifiableRootModel model : nodes) {
-            if (names.length() > 0) names.append(", ");
-            names.append(model.getModule().getName());
-          }
-          problemsHolder.registerProblem(new CircularDependencyProblemDescription("Circular dependency between modules " + names, fullDescription, place));
-        }
-      }
+      final PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulesPlace(), this);
+      problemsHolder.registerProblem(new CircularDependencyProblemDescription("Circular dependencies", warningMessage, place));
     }
   }
 
@@ -107,7 +97,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     public CircularDependencyProblemDescription(@NotNull String message,
                                                 @NotNull String fullDescription,
                                                 @NotNull PlaceInProjectStructure place) {
-      super(message, null, place, ProjectStructureProblemType.warning("module-circular-dependency"),
+      super(message, fullDescription, place, ProjectStructureProblemType.warning("module-circular-dependency"),
             Collections.<ConfigurationErrorQuickFix>emptyList());
       myFullDescription = fullDescription;
     }
