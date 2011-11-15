@@ -113,6 +113,10 @@ public class Mappings {
     return new Mappings(myContext);
   }
 
+  public void clearMemoryCaches() {
+    myContext.clearMemoryCaches();
+  }
+
   private void compensateRemovedContent(final Collection<File> compiled) {
     for (File file : compiled) {
       final DependencyContext.S key = myContext.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));

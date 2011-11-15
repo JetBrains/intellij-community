@@ -139,6 +139,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) {
     myFilesCache.clear();
+    myMappings.clearMemoryCaches();
     for (Module module : chunk.getModules()) {
       final Collection<File> roots = myTempSourceRoots.remove(module);
       if (roots != null) {
