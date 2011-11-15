@@ -86,5 +86,5 @@ public abstract class XmlElementFactory {
    * @throws IncorrectOperationException if either <code>name</code> or <code>value</code> are not valid.
    */
   @NotNull
-  public abstract XmlAttribute createXmlAttribute(@NotNull @NonNls String name, String value) throws IncorrectOperationException;
+  public abstract XmlAttribute createXmlAttribute(@NotNull @NonNls String name, @NotNull String value) throws IncorrectOperationException;
 }
