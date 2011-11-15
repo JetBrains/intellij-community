@@ -45,7 +45,7 @@ public class PyWrapTest extends PyTestCase {
     doTest("=None");
   }
 
-  public void testWrapStringLiteral() {  // PY-4947
+  public void testWrapInStringLiteral() {  // PY-4947
     doTest(" AND field");
   }
 
