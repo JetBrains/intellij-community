@@ -29,13 +29,10 @@ public class SimpleDataContext implements DataContext {
   private final Map<String, Object> myDataId2Data;
   private final DataContext myParent;
 
-  private WeakReference<Component> myContextComponent;
-  
   private SimpleDataContext(String dataId, Object data, DataContext parent) {
     myDataId2Data = new HashMap<String, Object>(1);
     myDataId2Data.put(dataId, data);
     myParent = parent;
-    myContextComponent = new WeakReference<Component>(IdeFocusManager.getGlobalInstance().getFocusOwner());
   }
   
   private SimpleDataContext(Map<String, Object> dataid2data, DataContext parent) {
@@ -48,9 +45,9 @@ public class SimpleDataContext implements DataContext {
            myParent == null ? null : myParent.getData(dataId);
     
     if (result == null && PlatformDataKeys.CONTEXT_COMPONENT.getName().equals(dataId)) {
-      result = myContextComponent.get();  
+      result = IdeFocusManager.getGlobalInstance().getFocusOwner();
     }
-    
+
     return result;
   }
 
