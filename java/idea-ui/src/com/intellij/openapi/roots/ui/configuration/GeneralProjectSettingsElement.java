@@ -21,15 +21,13 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -46,28 +44,41 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
   @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
-    final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myContext.getModulesConfigurator().createGraphGenerator());
+    final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(
+      myContext.getModulesConfigurator().createGraphGenerator());
     final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
-    String cycles = "";
-    int count = 0;
+    List<String> cycles = new ArrayList<String>();
     for (Chunk<ModifiableRootModel> chunk : chunks) {
       final Set<ModifiableRootModel> modules = chunk.getNodes();
-      String cycle = "";
+      List<String> names = new ArrayList<String>();
       for (ModifiableRootModel model : modules) {
-        cycle += ", " + model.getModule().getName();
+        names.add(model.getModule().getName());
       }
       if (modules.size() > 1) {
-        @NonNls final String br = "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
-        cycles += br + (++count) + ". " + cycle.substring(2);
+        cycles.add(StringUtil.join(names, ", "));
       }
     }
-    if (count > 0) {
-      @NonNls final String leftBrace = "<html>";
-      @NonNls final String rightBrace = "</html>";
-      final String warningMessage = leftBrace + ProjectBundle.message("module.circular.dependency.warning", cycles, count) + rightBrace;
+    if (!cycles.isEmpty()) {
       final Project project = myContext.getProject();
       final PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulesPlace(), this);
-      problemsHolder.registerProblem(new CircularDependencyProblemDescription("Circular dependencies", warningMessage, place));
+      final String message;
+      final String description;
+      if (cycles.size() > 1) {
+        message = "Circular dependencies";
+        @NonNls final String br = "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
+        StringBuilder cyclesString = new StringBuilder();
+        for (int i = 0; i < cycles.size(); i++) {
+          cyclesString.append(br).append(i + 1).append(". ").append(cycles.get(i));
+        }
+        description = ProjectBundle.message("module.circular.dependency.warning.description", cyclesString);
+      }
+      else {
+        message = ProjectBundle.message("module.circular.dependency.warning.short", cycles.get(0));
+        description = null;
+      }
+      problemsHolder.registerProblem(new ProjectStructureProblemDescription(message, description, place,
+                                                                            ProjectStructureProblemType.warning("module-circular-dependency"),
+                                                                            Collections.<ConfigurationErrorQuickFix>emptyList()));
     }
   }
 
@@ -89,22 +100,5 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
   @Override
   public int hashCode() {
     return 0;
-  }
-
-  public static class CircularDependencyProblemDescription extends ProjectStructureProblemDescription {
-    @NotNull private final String myFullDescription;
-
-    public CircularDependencyProblemDescription(@NotNull String message,
-                                                @NotNull String fullDescription,
-                                                @NotNull PlaceInProjectStructure place) {
-      super(message, fullDescription, place, ProjectStructureProblemType.warning("module-circular-dependency"),
-            Collections.<ConfigurationErrorQuickFix>emptyList());
-      myFullDescription = fullDescription;
-    }
-
-    @NotNull
-    public String getFullDescription() {
-      return myFullDescription;
-    }
   }
 }

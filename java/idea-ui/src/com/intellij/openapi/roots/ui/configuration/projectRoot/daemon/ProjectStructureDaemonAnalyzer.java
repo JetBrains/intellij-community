@@ -31,15 +31,11 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   private final MergingUpdateQueue myAnalyzerQueue;
   private final EventDispatcher<ProjectStructureDaemonAnalyzerListener> myDispatcher = EventDispatcher.create(ProjectStructureDaemonAnalyzerListener.class);
   private final AtomicBoolean myStopped = new AtomicBoolean(false);
-  private ProjectConfigurationProblems myProjectConfigurationProblems;
-  private final StructureConfigurableContext myContext;
+  private final ProjectConfigurationProblems myProjectConfigurationProblems;
 
   public ProjectStructureDaemonAnalyzer(StructureConfigurableContext context) {
-    myContext = context;
     Disposer.register(context, this);
-    if (ProjectConfigurationProblems.isVisible()) {
-      myProjectConfigurationProblems = new ProjectConfigurationProblems(this, context);
-    }
+    myProjectConfigurationProblems = new ProjectConfigurationProblems(this, context);
     myAnalyzerQueue = new MergingUpdateQueue("Project Structure Daemon Analyzer", 300, false, null, this, null, false);
   }
 
@@ -250,9 +246,6 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
   public void reset() {
     LOG.debug("analyzer started");
-    if (ProjectConfigurationProblems.isVisible() && myProjectConfigurationProblems == null) {
-      myProjectConfigurationProblems = new ProjectConfigurationProblems(this, myContext);
-    }
     myAnalyzerQueue.activate();
     myAnalyzerQueue.queue(new Update("reset") {
       public void run() {
