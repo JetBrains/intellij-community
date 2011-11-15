@@ -117,7 +117,32 @@ public class ActivityMonitorTest extends UsefulTestCase {
   }
 
   public void testReadyWithWatchActivities() throws Exception {
+    final UiActivity root = new UiActivity("root");
 
+    final UiActivity op1 = new UiActivity("root", "operation1");
+    final UiActivity op2 = new UiActivity("root", "operation2");
+
+    final UiActivity op12 = new UiActivity("root", "operation1", "operation12");
+    final UiActivity op121 = new UiActivity("root", "operation1", "operation12", "operation121");
+
+
+    myMonitor.addActivity(op1);
+    assertBusy(null);
+    assertReady(null, op2);
+    assertBusy(null, op1);
+    assertBusy(null, root);
+
+    myMonitor.removeActivity(op1);
+    assertReady(null);
+    assertReady(null, op2);
+    assertReady(null, op1);
+    assertReady(null, root);
+
+    myMonitor.addActivity(op12);
+    assertBusy(null);
+    assertBusy(null, root);
+    assertBusy(null, op12);
+    assertReady(null, op121);
   }
 
   public void testModalityState() {
@@ -159,9 +184,9 @@ public class ActivityMonitorTest extends UsefulTestCase {
     assertFalse(new UiActivity("root", "folder2").isSameOrGeneralFor(new UiActivity("anotherRoot")));
   }
   
-  private void assertReady(@Nullable Project key) {
-    BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key) : myMonitor.getBusy());
-    assertTrue(busy.isReady());
+  private void assertReady(@Nullable Project key, UiActivity ... activities) {
+    BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key, activities) : myMonitor.getBusy(activities));
+    assertTrue("Must be READY, but was: BUSY", busy.isReady());
     
     final boolean[] done = new boolean[] {false};
     busy.getReady(this).doWhenDone(new Runnable() {
@@ -174,9 +199,9 @@ public class ActivityMonitorTest extends UsefulTestCase {
     assertTrue(done[0]);
   }
 
-  private void assertBusy(@Nullable Project key) {
-    BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key) : myMonitor.getBusy());
-    assertFalse(busy.isReady());
+  private void assertBusy(@Nullable Project key, UiActivity ... activities) {
+    BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key, activities) : myMonitor.getBusy(activities));
+    assertFalse("Must be BUSY, but was: READY", busy.isReady());
   }
 
 }

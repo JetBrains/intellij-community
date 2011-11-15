@@ -44,6 +44,11 @@ public class UiActivity implements ComparableObject{
   }
 
   @Override
+  public String toString() {
+    return "UiActivity: " + myElements;
+  }
+
+  @Override
   public int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }
