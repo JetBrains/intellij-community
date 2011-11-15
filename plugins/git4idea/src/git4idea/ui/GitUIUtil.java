@@ -81,7 +81,7 @@ public class GitUIUtil {
             errorMessages.add(message.replace("\n", "<br/>"));
           }
         } else {
-          errorMessages.add(error.getMessage().replace("\n", "<br/>"));
+          errorMessages.add(error.toString().replace("\n", "<br/>"));
         }
       }
     }
