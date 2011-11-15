@@ -685,6 +685,9 @@
                     implementationClass="com.jetbrains.mako.formatter.MakoFormattingModelBuilder"/>
     <lang.psiStructureViewFactory language="Mako" implementationClass="com.jetbrains.mako.structureView.MakoStructureViewFactory"/>
 
+    <lang.elementManipulator forClass="com.jetbrains.mako.psi.impl.MakoTagAttribute"
+                             implementationClass="com.jetbrains.mako.psi.MakoTagAttributeManipulator"/>
+
     <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
                     serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
 
