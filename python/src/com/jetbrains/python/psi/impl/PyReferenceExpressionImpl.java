@@ -204,7 +204,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           return PyNoneType.INSTANCE;
         }
       }
-      else {
+      PyType type = getTypeFromProviders(context);
+      if (type != null) {
+        return type;
+      }
+      if (qualifier != null) {
         PyType maybe_type = PyUtil.getSpecialAttributeType(this, context);
         if (maybe_type != null) return maybe_type;
         Ref<PyType> typeOfProperty = getTypeOfProperty(context);
@@ -212,11 +216,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           return typeOfProperty.get();
         }
       }
-      PyType type = getTypeFromProviders(context);
-      if (type != null) {
-        return type;
-      }
-
       ResolveResult[] targets = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context)).multiResolve(false);
       if (targets.length == 0) return null;
       for (ResolveResult resolveResult : targets) {
@@ -254,7 +253,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             PsiElement resolved = this.getReference().resolve(); // to a correct accessor
             if (resolved instanceof Callable) {
               PyType type = ((Callable)resolved).getReturnType(context, this);
-              if (type != null) return Ref.create(type);
+              return Ref.create(type);
             }
           }
         }
