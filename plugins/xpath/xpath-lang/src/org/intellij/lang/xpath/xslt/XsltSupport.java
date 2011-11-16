@@ -342,7 +342,7 @@ public class XsltSupport {
         public static final ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> INSTANCE = new XsltSupportProvider();
 
         public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
-            if (psiFile instanceof PsiFileEx) {
+            if (psiFile instanceof PsiFileEx && psiFile instanceof XmlFile) {
                 if (((PsiFileEx)psiFile).isContentsLoaded()) {
                     final XmlDocument doc = ((XmlFile)psiFile).getDocument();
                     if (doc != null) {
