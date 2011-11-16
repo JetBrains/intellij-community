@@ -16,9 +16,12 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -212,11 +215,26 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
     fillMap(ATTRIBUTES, tBRACKETS, DefaultHighlighter.BRACKETS);
     fillMap(ATTRIBUTES, tPARENTHESES, DefaultHighlighter.PARENTHESES);
+    fillMap(ATTRIBUTES, DefaultHighlighter.VALID_STRING_ESCAPE, StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN);
+    fillMap(ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
+    fillMap(ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
   }
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new GroovyLexer();
+    return new GroovyHighlightingLexer();
+  }
+
+  private static class GroovyHighlightingLexer extends LayeredLexer {
+    private GroovyHighlightingLexer() {
+      super(new GroovyLexer());
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mSTRING_LITERAL, true, ""),
+                                new IElementType[]{GroovyTokenTypes.mSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mGSTRING_LITERAL, true, ""),
+                                new IElementType[]{GroovyTokenTypes.mGSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mGSTRING_CONTENT, true, ""),
+                                new IElementType[]{GroovyTokenTypes.mGSTRING_CONTENT}, IElementType.EMPTY_ARRAY);
+    }
   }
 
   @NotNull
