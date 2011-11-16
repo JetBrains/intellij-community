@@ -270,7 +270,8 @@
     <localInspection language="Python" shortName="PyDecoratorInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.decorator.outside.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDecoratorInspection"/>
     <localInspection language="Python" shortName="PyTypeCheckerInspection" displayName="Type checker" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeCheckerInspection"/>
     <localInspection language="Python" shortName="PyDeprecationInspection" displayName="Deprecated function, class or module" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDeprecationInspection"/>
-    
+    <localInspection language="Python" shortName="PyMandatoryEncodingInspection" displayName="No encoding specified for file" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMandatoryEncodingInspection"/>
+
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.PythonTemplateContextType"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.CollectionElementNameMacro"/>
 
