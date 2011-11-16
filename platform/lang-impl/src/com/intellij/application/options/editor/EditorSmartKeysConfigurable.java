@@ -64,6 +64,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   private JCheckBox myCbInsertPairCurlyBraceOnEnter;
   private JCheckBox myCbInsertJavadocStubOnEnter;
   private JCheckBox myCbSurroundSelectionOnTyping;
+  private boolean myAddonsInitialized = false;
 
   private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
   private static final String INDENT_BLOCK = ApplicationBundle.message("combobox.paste.reformat.indent.block");
@@ -111,9 +112,13 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   }
 
   public JComponent createComponent() {
-    for (UnnamedConfigurable provider : getConfigurables()) {
-      myAddonPanel.add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                                            GridBagConstraints.NONE, new Insets(0,0,15,0), 0,0));
+    if (!myAddonsInitialized) {
+      myAddonsInitialized = true;
+      for (UnnamedConfigurable provider : getConfigurables()) {
+        myAddonPanel
+          .add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                                  GridBagConstraints.NONE, new Insets(0, 0, 15, 0), 0, 0));
+      }
     }
     return myRootPanel;
   }
