@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
-import com.intellij.util.JarClasspathHelper;
 import com.intellij.util.PathsList;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -215,8 +214,6 @@ public class ModuleChunk extends Chunk<Module> {
     for (final Module module : modules) {
       Collections.addAll(cpFiles, orderEnumerator(module, exportedOnly, new AfterJdkOrderEntryCondition()).getClassesRoots());
     }
-    cpFiles = JarClasspathHelper.patchFiles(cpFiles, myContext.getProject());
-
     return cpFiles;
   }
 
