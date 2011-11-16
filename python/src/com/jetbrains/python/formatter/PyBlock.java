@@ -153,7 +153,9 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = Indent.getNormalIndent();
+        childIndent = parentType == PyElementTypes.PARAMETER_LIST 
+                      ? Indent.getContinuationIndent()
+                      : Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION) {
@@ -483,6 +485,9 @@ public class PyBlock implements ASTBlock {
     }
 
     // constructs that imply indent for their children
+    if (_node.getElementType().equals(PyElementTypes.PARAMETER_LIST)) {
+      return Indent.getContinuationIndent();
+    }
     if (ourListElementTypes.contains(_node.getElementType()) || _node.getPsi() instanceof PyStatementPart) {
       return Indent.getNormalIndent();
     }
