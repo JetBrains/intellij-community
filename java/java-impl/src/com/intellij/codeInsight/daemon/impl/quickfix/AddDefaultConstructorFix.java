@@ -23,16 +23,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddDefaultConstructorFix extends AddMethodFix {
   public AddDefaultConstructorFix(PsiClass aClass) {
-    super(generateConstructor(aClass), aClass);
-    setText(QuickFixBundle.message("add.default.constructor.text", aClass.getName()));
+    this(aClass, GenerateConstructorHandler.getConstructorModifier(aClass));
   }
 
-  private static String generateConstructor(PsiClass aClass) {
-    String constructorModifier = GenerateConstructorHandler.getConstructorModifier(aClass);
-    if (constructorModifier == PsiModifier.PACKAGE_LOCAL) {
+  public AddDefaultConstructorFix(PsiClass aClass, final String modifier) {
+    super(generateConstructor(aClass, modifier), aClass);
+    setText(QuickFixBundle.message("add.default.constructor.text", modifier, aClass.getName()));
+  }
+
+  private static String generateConstructor(PsiClass aClass, final String modifier) {
+    if (modifier == PsiModifier.PACKAGE_LOCAL) {
       return aClass.getName() + "() {}";
     }
-    return constructorModifier + " " + aClass.getName() + "() {}";
+    return modifier + " " + aClass.getName() + "() {}";
   }
 
   @Override

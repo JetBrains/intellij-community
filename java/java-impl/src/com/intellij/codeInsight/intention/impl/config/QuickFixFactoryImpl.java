@@ -80,6 +80,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new AddDefaultConstructorFix(aClass);
   }
 
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAddConstructorFix(@NotNull PsiClass aClass, String modifier) {
+    return new AddDefaultConstructorFix(aClass, modifier);
+  }
+
   public LocalQuickFixAndIntentionActionOnPsiElement createMethodParameterTypeFix(@NotNull PsiMethod method,
                                                                                   int index,
                                                                                   @NotNull PsiType newType,
