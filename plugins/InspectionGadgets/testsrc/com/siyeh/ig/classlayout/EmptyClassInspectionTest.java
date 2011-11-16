@@ -5,6 +5,8 @@ import com.siyeh.ig.IGInspectionTestCase;
 public class EmptyClassInspectionTest extends IGInspectionTestCase {
 
   public void test() throws Exception {
-    doTest("com/siyeh/igtest/classlayout/emptyclass", new EmptyClassInspection());
+    final EmptyClassInspection tool = new EmptyClassInspection();
+    tool.ignoreClassWithParameterization = true;
+    doTest("com/siyeh/igtest/classlayout/emptyclass", tool);
   }
 }
