@@ -63,6 +63,16 @@ public class DirDiffManagerImpl extends DirDiffManager {
   }
 
   @Override
+  public void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings) {
+    showDiff(dir1, dir2, settings, null);
+  }
+
+  @Override
+  public void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2) {
+    showDiff(dir1, dir2, new DirDiffSettings());
+  }
+
+  @Override
   public boolean canShow(@NotNull DiffElement dir1, @NotNull DiffElement dir2) {
     return dir1.isContainer() && dir2.isContainer();
   }
