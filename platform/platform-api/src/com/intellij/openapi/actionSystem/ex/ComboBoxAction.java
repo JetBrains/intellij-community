@@ -39,7 +39,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
   
-  private boolean mySmallVariant = false;
+  private boolean mySmallVariant = true;
   private DataContext myDataContext;
 
   protected ComboBoxAction() { }

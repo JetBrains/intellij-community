@@ -226,7 +226,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
 
       if (action instanceof ComboBoxAction) {
-        ((ComboBoxAction)action).setSmallVariant(isNavBar());
+        ((ComboBoxAction)action).setSmallVariant(true);
       }
 
       if (layoutSecondaries) {
