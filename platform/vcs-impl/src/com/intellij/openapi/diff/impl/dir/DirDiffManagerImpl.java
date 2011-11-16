@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -49,33 +48,27 @@ public class DirDiffManagerImpl extends DirDiffManager {
     final DirDiffTableModel model = new DirDiffTableModel(myProject, dir1, dir2, settings);
     if (settings.showInFrame) {
       DirDiffFrame frame = new DirDiffFrame(myProject, model);
-      if (onWindowClose != null) {
-        final JFrame jFrame = frame.getFrame();
-        jFrame.addWindowListener(new WindowAdapter() {
-          @Override
-          public void windowClosed(WindowEvent e) {
-            onWindowClose.run();
-            jFrame.removeWindowListener(this);
-          }
-        });
-      }
+      setWindowListener(onWindowClose, frame.getFrame());
       frame.show();
     } else {
       DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model);
       if (myProject == null || myProject.isDefault()) {
         dirDiffDialog.setModal(true);
       }
-      if (onWindowClose != null) {
-        final Window owner = dirDiffDialog.getOwner();
-        owner.addWindowListener(new WindowAdapter() {
-          @Override
-          public void windowClosed(WindowEvent e) {
-            onWindowClose.run();
-            owner.removeWindowListener(this);
-          }
-        });
-      }
+      setWindowListener(onWindowClose, dirDiffDialog.getOwner());
       dirDiffDialog.show();
+    }
+  }
+
+  private void setWindowListener(final Runnable onWindowClose, final Window window) {
+    if (onWindowClose != null) {
+      window.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent e) {
+          onWindowClose.run();
+          window.removeWindowListener(this);
+        }
+      });
     }
   }
 
@@ -100,7 +93,7 @@ public class DirDiffManagerImpl extends DirDiffManager {
     if (obj instanceof VirtualFile) {
       final VirtualFile file = (VirtualFile)obj;
       return JarFileSystem.PROTOCOL.equalsIgnoreCase(file.getExtension())
-        ? new JarFileDiffElement(file) : new VirtualFileDiffElement(file);
+             ? new JarFileDiffElement(file) : new VirtualFileDiffElement(file);
     }
     return null;
   }
