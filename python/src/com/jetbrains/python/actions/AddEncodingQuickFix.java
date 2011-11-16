@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.PyEncodingUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.NonNls;
@@ -21,9 +22,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddEncodingQuickFix implements LocalQuickFix {
 
-  String myDefaultEncoding;
-  public AddEncodingQuickFix(String defaultEncoding) {
+  private String myDefaultEncoding;
+  private int myEncodingFormatIndex;
+
+  public AddEncodingQuickFix(String defaultEncoding, int encodingFormatIndex) {
     myDefaultEncoding = defaultEncoding;
+    myEncodingFormatIndex = encodingFormatIndex;
   }
 
   @NotNull
@@ -44,7 +48,8 @@ public class AddEncodingQuickFix implements LocalQuickFix {
     if (firstLine instanceof PsiComment && firstLine.getText().startsWith("#!")) {
       firstLine = firstLine.getNextSibling();
     }
-    PsiComment encodingLine = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.forElement(file), PsiComment.class, "# -*- coding: "+ myDefaultEncoding + " -*-");
+    PsiComment encodingLine = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.forElement(file), PsiComment.class,
+                                                                                     String.format(PyEncodingUtil.ENCODING_FORMAT_PATTERN[myEncodingFormatIndex], myDefaultEncoding));
     file.addBefore(encodingLine, firstLine);
   }
 }
