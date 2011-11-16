@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * User: catherine
  */
-public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultProjectConfigurable {
+public class PyIntegratedToolsConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable {
   private JPanel myMainPanel;
   private JComboBox myTestRunnerComboBox;
   private JComboBox myDocstringFormatComboBox;
@@ -126,6 +127,17 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
 
   @Override
   public void disposeUIResources() {
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "PyIntegratedToolsConfigurable";
+  }
+
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }
 
