@@ -967,4 +967,19 @@ public class AndroidUtils {
            ? result 
            : getPropertyValue(module, DEFAULT_PROPERTIES_FILE_NAME, propertyName); 
   }
+
+  public static void collectFiles(@NotNull VirtualFile root, @NotNull Set<VirtualFile> visited, @NotNull Set<VirtualFile> result) {
+    if (!visited.add(root)) {
+      return;
+    }
+
+    if (root.isDirectory()) {
+      for (VirtualFile child : root.getChildren()) {
+        collectFiles(child, visited, result);
+      }
+    }
+    else {
+      result.add(root);
+    }
+  }
 }

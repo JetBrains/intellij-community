@@ -274,7 +274,7 @@ public class AndroidCompileUtil {
       });
     }
   }
-  
+
   @Nullable
   private static Module setUpGenModule(@NotNull Module libModule) {
     final ModuleRootManager libRootManager = ModuleRootManager.getInstance(libModule);
@@ -541,7 +541,7 @@ public class AndroidCompileUtil {
   }
 
   @NotNull
-  public static String[] collectResourceDirs(AndroidFacet facet, boolean collectResCacheDirs) {
+  public static String[] collectResourceDirs(AndroidFacet facet, boolean collectResCacheDirs, @Nullable CompileContext context) {
     final Project project = facet.getModule().getProject();
     final IntermediateOutputCompiler pngFilesCachingCompiler =
       collectResCacheDirs ? Extensions.findExtension(Compiler.EP_NAME, project, AndroidPngFilesCachingCompiler.class) : null;
@@ -552,15 +552,15 @@ public class AndroidCompileUtil {
     
     final List<String> result = new ArrayList<String>();
 
-    doCollectResourceDirs(facet, collectResCacheDirs, result);
+    doCollectResourceDirs(facet, collectResCacheDirs, result, context);
     
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
-      doCollectResourceDirs(depFacet, collectResCacheDirs, result);
+      doCollectResourceDirs(depFacet, collectResCacheDirs, result, context);
     }
     return ArrayUtil.toStringArray(result);
   }
 
-  private static void doCollectResourceDirs(AndroidFacet facet, boolean collectResCacheDirs, List<String> result) {
+  private static void doCollectResourceDirs(AndroidFacet facet, boolean collectResCacheDirs, List<String> result, CompileContext context) {
     final Module module = facet.getModule();
 
     if (collectResCacheDirs) {
@@ -569,7 +569,7 @@ public class AndroidCompileUtil {
 
       if (platformToolsRevision < 0 || platformToolsRevision > 7) {
         // png cache is supported since platform-tools-r8
-        final String resCacheDirOsPath = findResourcesCacheDirectory(module, false, null);
+        final String resCacheDirOsPath = findResourcesCacheDirectory(module, false, context);
         if (resCacheDirOsPath != null) {
           result.add(resCacheDirOsPath);
         }
@@ -588,7 +588,7 @@ public class AndroidCompileUtil {
   @Nullable
   public static String findResourcesCacheDirectory(@NotNull Module module, boolean createIfNotFound, @Nullable CompileContext context) {
     final Project project = module.getProject();
-    
+
     final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
     if (extension == null) {
       if (context != null) {
@@ -607,7 +607,7 @@ public class AndroidCompileUtil {
 
     final String pngCacheDirPath = VfsUtil.urlToPath(projectOutputDirUrl) + '/' + RESOURCES_CACHE_DIR_NAME + '/' + module.getName();
     final String pngCacheDirOsPath = FileUtil.toSystemDependentName(pngCacheDirPath);
-    
+
     final File pngCacheDir = new File(pngCacheDirOsPath);
     if (pngCacheDir.exists()) {
       if (pngCacheDir.isDirectory()) {
@@ -621,18 +621,18 @@ public class AndroidCompileUtil {
         return null;
       }
     }
-    
+
     if (!createIfNotFound) {
       return null;
     }
-    
+
     if (!pngCacheDir.mkdirs()) {
       if (context != null) {
         context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + pngCacheDirOsPath, null, -1, -1);
       }
       return null;
     }
-    
+
     return pngCacheDirOsPath;
   }
 
