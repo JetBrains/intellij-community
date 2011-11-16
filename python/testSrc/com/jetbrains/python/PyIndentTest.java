@@ -192,6 +192,16 @@ public class PyIndentTest extends PyTestCase {
            "    <caret>params=1)");
   }
 
+  public void testEnterInNonClosedArgList() {   // PY-4863
+    doTest("class C:\n" +
+           "    def new_method(self):\n" +
+           "        variable = self._stats.get('outer_key', 'inner_key',<caret>",
+           "class C:\n" +
+                      "    def new_method(self):\n" +
+                      "        variable = self._stats.get('outer_key', 'inner_key',\n" +
+                      "            <caret>");
+  }
+
   public void testEnterInSet() {  // PY-1947
     doTest("test_set = {<caret>'some_value'}",
            "test_set = {\n" +

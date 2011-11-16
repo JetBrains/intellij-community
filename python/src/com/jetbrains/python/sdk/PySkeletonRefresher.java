@@ -107,10 +107,14 @@ public class PySkeletonRefresher {
    * Creates if needed all path(s) used to store skeletons of its SDK.
    * @return path name of skeleton dir for the SDK, guaranteed to be already created.
    */
-  public @NotNull String getSkeletonPath() {
+  @NotNull
+  public String getSkeletonPath() {
     if (mySkeletonsPath == null) {
       mySkeletonsPath = PythonSdkType.getSkeletonsPath(mySdk.getHomePath());
-      if (! new File(mySkeletonsPath).mkdirs()) throw new InvalidSdkException("Can't create skeleton dir "+String.valueOf(mySkeletonsPath));
+      final File skeletonsDir = new File(mySkeletonsPath);
+      if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
+        throw new InvalidSdkException("Can't create skeleton dir "+String.valueOf(mySkeletonsPath));
+      }
     }
     return  mySkeletonsPath;
   }

@@ -26,14 +26,14 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     myTypeEvalContext = TypeEvalContext.fastStubOnly(holder == null ? null : holder.getFile());
   }
 
-  public PyInspectionVisitor(@Nullable ProblemsHolder problemsHolder,
+  public PyInspectionVisitor(@Nullable ProblemsHolder holder,
                              @NotNull LocalInspectionToolSession session) {
-    myHolder = problemsHolder;
+    myHolder = holder;
     TypeEvalContext context;
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
       if (context == null) {
-        context = TypeEvalContext.fastStubOnly();
+        context = TypeEvalContext.fastStubOnly(holder == null ? null : holder.getFile());
         session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
       }
     }

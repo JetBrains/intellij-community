@@ -41,16 +41,15 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
   private static class FormatStringTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
     public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
-      // TODO this doesn't work correctly for a string with escaped characters
       String stringValue = element.getStringValue();
-      List<TextRange> valueTextRanges = element.getStringValueTextRanges();
       List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser(stringValue).parse();
       Splitter splitter = PlainTextSplitter.getInstance();
       for (PyStringFormatParser.FormatStringChunk chunk : chunks) {
         if (chunk instanceof PyStringFormatParser.ConstantChunk) {
-          String text = stringValue.substring(chunk.getStartIndex(), chunk.getEndIndex());
-          final int startOffset = valueTextRanges.get(0).getStartOffset() + chunk.getStartIndex();
-          consumer.consumeToken(element, text, false, startOffset, TextRange.allOf(text), splitter);
+          int startIndex = element.valueOffsetToTextOffset(chunk.getStartIndex());
+          int endIndex = element.valueOffsetToTextOffset(chunk.getEndIndex());
+          String text = element.getText().substring(startIndex, endIndex);
+          consumer.consumeToken(element, text, false, startIndex, TextRange.allOf(text), splitter);
         }
       }
     }

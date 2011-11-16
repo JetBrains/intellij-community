@@ -81,7 +81,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
-    getNode().replaceChild(getNameNode(), nameElement);
+    final ASTNode node = getNameNode();
+    if (node != null) {
+      getNode().replaceChild(node, nameElement);
+    }
     return this;
   }
 
@@ -155,7 +158,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     }
-    return PsiUtilBase.toPsiElementArray(superClasses);
+    return PsiUtilCore.toPsiElementArray(superClasses);
   }
 
   /* The implementation is manifestly lazy wrt psi scanning and uses stack rather sparingly.
@@ -474,33 +477,32 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     NameFinder<PyFunction> proc;
     if (isNewStyleClass()) proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW);
     else proc = new NameFinder<PyFunction>(PyNames.INIT);
-    visitMethods(proc, inherited);
+    visitMethods(proc, inherited, true);
     return proc.getResult();
   }
 
-  private final static Maybe<PyFunction> unknown_call = new Maybe<PyFunction>(); // denotes _not_ a PyFunction, actually
-  private final static Maybe<PyFunction> none = new Maybe<PyFunction>(null); // denotes an explicit None
-
+  private final static Maybe<PyFunction> UNKNOWN_CALL = new Maybe<PyFunction>(); // denotes _not_ a PyFunction, actually
+  private final static Maybe<PyFunction> NONE = new Maybe<PyFunction>(null); // denotes an explicit None
 
   /**
-   * @param name_filter returns true if property's name is acceptable
+   * @param name name of the property
    * @param property_filter returns true if the property is acceptable
    * @param advanced is @foo.setter syntax allowed
    * @return the first property that both filters accepted.
    */
   @Nullable
-  private Property findPropertyLocally(@Nullable Processor<String> name_filter, @Nullable Processor<Property> property_filter, boolean advanced) {
+  private Property findPropertyLocally(@Nullable String name, @Nullable Processor<Property> property_filter, boolean advanced) {
     // NOTE: fast enough to be rerun every time
-    Property prop = lookInDecoratedProperties(name_filter, property_filter, advanced);
+    Property prop = lookInDecoratedProperties(name, property_filter, advanced);
     if (prop != null) return prop;
     if (getStub() != null) {
-      prop = lookInStubProperties(name_filter, property_filter);
+      prop = lookInStubProperties(name, property_filter);
       if (prop != null) return prop;
     }
     else {
       // name = property(...) assignments from PSI
       for (PyTargetExpression target : getClassAttributes()) {
-        if (name_filter == null || name_filter.process(target.getName())) {
+        if (name == null || name.equals(target.getName())) {
           prop = PropertyImpl.fromTarget(target);
           if (prop != null) {
             if (property_filter == null || property_filter.process(prop)) return prop;
@@ -512,50 +514,50 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
-  private Property lookInDecoratedProperties(@Nullable Processor<String> name_filter, @Nullable Processor<Property> property_filter, boolean advanced) {
+  private Property lookInDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean useAdvancedSyntax) {
     // look at @property decorators
     Map<String, List<PyFunction>> grouped = new HashMap<String, List<PyFunction>>();
     // group suitable same-named methods, each group defines a property
     for (PyFunction method : getMethods()) {
-      final String name = method.getName();
-      if (name_filter == null || name_filter.process(name)) {
-        List<PyFunction> bucket = grouped.get(name);
+      final String methodName = method.getName();
+      if (name == null || name.equals(methodName)) {
+        List<PyFunction> bucket = grouped.get(methodName);
         if (bucket == null) {
           bucket = new SmartList<PyFunction>();
-          grouped.put(name, bucket);
+          grouped.put(methodName, bucket);
         }
         bucket.add(method);
       }
     }
     for (Map.Entry<String, List<PyFunction>> entry: grouped.entrySet()) {
-      Maybe<PyFunction> getter = none;
-      Maybe<PyFunction> setter = none;
-      Maybe<PyFunction> deleter = none;
+      Maybe<PyFunction> getter = NONE;
+      Maybe<PyFunction> setter = NONE;
+      Maybe<PyFunction> deleter = NONE;
       String doc = null;
-      final String name = entry.getKey();
+      final String decoratorName = entry.getKey();
       for (PyFunction method : entry.getValue()) {
         PyDecoratorList decolist = method.getDecoratorList();
         if (decolist != null) {
           for (PyDecorator deco : decolist.getDecorators()) {
-            PyQualifiedName deco_name = deco.getQualifiedName();
-            if (deco_name != null) {
-              if (deco_name.matches(PyNames.PROPERTY)) {
+            final PyQualifiedName qname = deco.getQualifiedName();
+            if (qname != null) {
+              if (qname.matches(PyNames.PROPERTY)) {
                 getter = new Maybe<PyFunction>(method);
               }
-              else if (advanced && deco_name.matches(name, "setter")) {
+              else if (useAdvancedSyntax && qname.matches(decoratorName, "setter")) {
                 setter = new Maybe<PyFunction>(method);
               }
-              else if (advanced && deco_name.matches(name, "deleter")) {
+              else if (useAdvancedSyntax && qname.matches(decoratorName, "deleter")) {
                 deleter = new Maybe<PyFunction>(method);
               }
             }
           }
         }
-        if (getter != none && setter != none && deleter != none) break; // can't improve
+        if (getter != NONE && setter != NONE && deleter != NONE) break; // can't improve
       }
-      if (getter != none || setter != none || deleter != none) {
+      if (getter != NONE || setter != NONE || deleter != NONE) {
         final PropertyImpl prop = new PropertyImpl(getter, setter, deleter, doc, null);
-        if (property_filter == null || property_filter.process(prop)) return prop;
+        if (filter == null || filter.process(prop)) return prop;
       }
     }
     return null;
@@ -566,14 +568,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       PyFunction method = findMethodByName(maybe_name.value(), true);
       if (method != null) return new Maybe<PyFunction>(method);
     }
-    return unknown_call;
+    return UNKNOWN_CALL;
   }
 
   @Nullable
-  private Property lookInStubProperties(@Nullable Processor<String> name_filter, @Nullable Processor<Property> property_filter) {
-    Maybe<PyFunction> getter = none;
-    Maybe<PyFunction> setter = none;
-    Maybe<PyFunction> deleter = none;
+  private Property lookInStubProperties(@Nullable String name, @Nullable Processor<Property> property_filter) {
+    Maybe<PyFunction> getter = NONE;
+    Maybe<PyFunction> setter = NONE;
+    Maybe<PyFunction> deleter = NONE;
     String doc = null;
     final PyClassStub stub = getStub();
     if (stub != null) {
@@ -581,7 +583,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         if (substub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub target_stub = (PyTargetExpressionStub)substub;
           PropertyStubStorage prop = target_stub.getCustomStub(PropertyStubStorage.class);
-          if (prop != null && (name_filter == null || name_filter.process(target_stub.getName()))) {
+          if (prop != null && (name == null || name.equals(target_stub.getName()))) {
             getter = fromPacked(prop.getGetter());
             setter = fromPacked(prop.getSetter());
             deleter = fromPacked(prop.getDeleter());
@@ -589,7 +591,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           }
         }
       }
-      if (getter != none || setter != none || deleter != none) {
+      if (getter != NONE || setter != NONE || deleter != NONE) {
         final PropertyImpl prop = new PropertyImpl(getter, setter, deleter, doc, null);
         if (property_filter == null || property_filter.process(prop)) return prop;
       }
@@ -597,50 +599,48 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return null;
   }
 
+  @Nullable
+  @Override
   public Property findProperty(@NotNull final String name) {
-    LanguageLevel level = LanguageLevel.getDefault();
-    final PsiFile containing_file = getContainingFile();
-    if (containing_file != null) {
-      final VirtualFile vfile = containing_file.getVirtualFile();
-      if (vfile != null) level = LanguageLevel.forFile(vfile);
-    }
-    boolean use_advanced_syntax = level.isAtLeast(LanguageLevel.PYTHON26);
-    Processor<String> name_filer = new Processor<String>() {
-      @Override public boolean process(String s) { return name.equals(s); }
-    };
-    Property prop = findPropertyLocally(name_filer, null, use_advanced_syntax);
-    if (prop != null) return prop;
-    for (PyClass cls : iterateAncestorClasses()) {
-      prop = ((PyClassImpl)cls).findPropertyLocally(name_filer, null, use_advanced_syntax);
-      if (prop != null) return prop;
-    }
-    return null;
+    return scanProperties(name, null, true);
   }
 
-
-  // NOTE: we might accept a name filter, too
   @Nullable
-  public Property scanProperties(Processor<Property> processor, boolean inherited) {
+  @Override
+  public Property scanProperties(@Nullable Processor<Property> filter, boolean inherited) {
+    return scanProperties(null, filter, inherited);
+  }
+
+  @Nullable
+  private Property scanProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
     LanguageLevel level = LanguageLevel.getDefault();
-    final PsiFile containing_file = getContainingFile();
-    if (containing_file != null) {
-      final VirtualFile vfile = containing_file.getVirtualFile();
-      if (vfile != null) level = LanguageLevel.forFile(vfile);
+    final PsiFile file = getContainingFile();
+    if (file != null) {
+      final VirtualFile vfile = file.getVirtualFile();
+      if (vfile != null) {
+        level = LanguageLevel.forFile(vfile);
+      }
     }
-    boolean use_advanced_syntax = level.isAtLeast(LanguageLevel.PYTHON26);
-    Property property = findPropertyLocally(null, processor, use_advanced_syntax);
-    if (property != null) return property;
+    final boolean useAdvancedSyntax = level.isAtLeast(LanguageLevel.PYTHON26);
+    final Property local = findPropertyLocally(name, filter, useAdvancedSyntax);
+    if (local != null) {
+      return local;
+    }
     if (inherited) {
+      if (name != null && (findMethodByName(name, false) != null || findClassAttribute(name, false) != null)) {
+        return null;
+      }
       for (PyClass cls : iterateAncestorClasses()) {
-        property = ((PyClassImpl)cls).findPropertyLocally(null, processor, use_advanced_syntax);
-        if (property != null) return property;
+        final Property property = ((PyClassImpl)cls).findPropertyLocally(name, filter, useAdvancedSyntax);
+        if (property != null) {
+          return property;
+        }
       }
     }
     return null;
   }
 
   private static class PropertyImpl extends PropertyBunch<PyFunction> implements Property {
-
     private PropertyImpl(Maybe<PyFunction> getter, Maybe<PyFunction> setter, Maybe<PyFunction> deleter, String doc, PyTargetExpression site) {
       myDeleter = deleter;
       myGetter = getter;
@@ -721,10 +721,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public boolean visitMethods(Processor<PyFunction> processor, boolean inherited) {
+    return visitMethods(processor, inherited, false);
+  }
+
+  public boolean visitMethods(Processor<PyFunction> processor,
+                              boolean inherited,
+                              boolean skipClassObj) {
     PyFunction[] methods = getMethods();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : iterateAncestorClasses()) {
+        if (skipClassObj && PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
+          continue;
+        }
         if (!ancestor.visitMethods(processor, false)) {
           return false;
         }
@@ -841,8 +850,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (params.length == 0) {
       return;
     }
-    final String selfName = params [0].getName();
-
     final PyFunctionStub methodStub = method.getStub();
     if (methodStub != null) {
       final PyTargetExpression[] targets = methodStub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);

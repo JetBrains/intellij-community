@@ -80,19 +80,6 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
     return "PyOperatorReferenceImpl(" + myElement + "," + myContext + ")";
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    final PyOperatorReferenceImpl other = (PyOperatorReferenceImpl)o;
-    return myElement.equals(other.myElement) && myContext.equals(myContext);
-  }
-
-  @Override
-  public int hashCode() {
-    return myElement.hashCode();
-  }
-
   public String getReadableOperatorName() {
     final String name = myElement.getReferencedName();
     if (PyNames.SUBCRIPTION_OPERATORS.contains(name)) {

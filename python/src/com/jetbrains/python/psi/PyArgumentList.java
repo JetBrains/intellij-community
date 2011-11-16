@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,4 +33,7 @@ public interface PyArgumentList extends PyElement {
    */
   @NotNull
   CallArgumentsMapping analyzeCall(PyResolveContext resolveContext);
+
+  @Nullable
+  ASTNode getClosingParen();
 }

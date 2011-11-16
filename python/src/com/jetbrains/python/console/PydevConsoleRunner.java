@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -63,6 +64,8 @@ import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
  * @author oleg
  */
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonConsoleView> {
+  private static final Logger LOG = Logger.getInstance(PydevConsoleRunner.class.getName());
+
   private Sdk mySdk;
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
@@ -138,6 +141,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           initAndRun(statements2execute);
         }
         catch (ExecutionException e) {
+          LOG.error("Error running console", e);
           ExecutionHelper.showErrors(getProject(), Arrays.<Exception>asList(e), getTitle(), null);
         }
       }
