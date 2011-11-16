@@ -72,6 +72,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     myAllRepositories = repositories;
 
     myRootNode = new CheckedTreeNode(null);
+    myRootNode.add(new DefaultMutableTreeNode(new FakeCommit()));
+
     myTreeModel = new DefaultTreeModel(myRootNode);
     myTreeCellRenderer = new MyTreeCellRenderer();
     myTree = new CheckboxTree(myTreeCellRenderer, myRootNode) {
@@ -301,6 +303,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
         renderer.append(fromBranch.getName() + " -> " + dest.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
+      else if (userObject instanceof FakeCommit) {
+        int spaces = 6 + 15 + 3 + 30;
+        String s = String.format("%" + spaces + "s", " ");
+        renderer.append(s, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, renderer.getBackground()));
+      }
       else {
         renderer.append(userObject == null ? "" : userObject.toString());
       }
@@ -320,6 +327,9 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
       return repositoryPath.isEmpty() ? "<Project>" : "." + File.separator + repositoryPath;
     }
+  }
+  
+  private static class FakeCommit {
   }
 
 }
