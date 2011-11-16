@@ -26,10 +26,13 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
@@ -43,6 +46,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -280,13 +284,14 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       if (userObject instanceof GitCommit) {
         GitCommit commit = (GitCommit)userObject;
         SimpleTextAttributes small = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground());
-        renderer.append(commit.getShortHash().toString(), small);
-        renderer.append(String.format(" %" + myDateMaxWidth + "s  ", getDateString(commit)), small);
+        SimpleTextAttributes smallGrey = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor());
+        renderer.append(commit.getShortHash().toString(), smallGrey);
+        renderer.append(String.format(" %" + myDateMaxWidth + "s  ", getDateString(commit)), smallGrey);
         renderer.append(commit.getSubject(), small);
-        
       }
       else if (userObject instanceof GitRepository) {
-        renderer.append(((GitRepository)userObject).getPresentableUrl());
+        String repositoryPath = calcRootPath((GitRepository)userObject);
+        renderer.append(repositoryPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
       else if (userObject instanceof GitBranchPair) {
         GitBranchPair branchPair = (GitBranchPair) userObject;
@@ -294,12 +299,26 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         GitBranch dest = branchPair.getDest();
         assert dest != null : "Destination branch can't be null for branch " + fromBranch;
 
-        SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        renderer.append(fromBranch.getName() + " -> " + dest.getName(), attrs);
+        renderer.append(fromBranch.getName() + " -> " + dest.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else {
         renderer.append(userObject == null ? "" : userObject.toString());
       }
+    }
+
+    @NotNull
+    private static String calcRootPath(@NotNull GitRepository repository) {
+      VirtualFile projectDir = repository.getProject().getBaseDir();
+
+      String repositoryPath = repository.getPresentableUrl();
+      if (projectDir != null) {
+        String relativePath = VfsUtilCore.getRelativePath(repository.getRoot(), projectDir, File.separatorChar);
+        if (relativePath != null) {
+          repositoryPath = relativePath;
+        }
+      }
+
+      return repositoryPath.isEmpty() ? "<Project>" : "." + File.separator + repositoryPath;
     }
   }
 
