@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.WindowListener;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -42,21 +45,35 @@ public class DirDiffManagerImpl extends DirDiffManager {
   public void showDiff(@NotNull final DiffElement dir1,
                        @NotNull final DiffElement dir2,
                        final DirDiffSettings settings,
-                       @Nullable WindowListener windowListener) {
+                       @Nullable final Runnable onWindowClose) {
     final DirDiffTableModel model = new DirDiffTableModel(myProject, dir1, dir2, settings);
     if (settings.showInFrame) {
       DirDiffFrame frame = new DirDiffFrame(myProject, model);
-      if (windowListener != null) {
-        frame.getFrame().addWindowListener(windowListener);
+      if (onWindowClose != null) {
+        final JFrame jFrame = frame.getFrame();
+        jFrame.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent e) {
+            onWindowClose.run();
+            jFrame.removeWindowListener(this);
+          }
+        });
       }
       frame.show();
     } else {
-      final DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model);
+      DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model);
       if (myProject == null || myProject.isDefault()) {
         dirDiffDialog.setModal(true);
       }
-      if (windowListener != null) {
-        dirDiffDialog.getOwner().addWindowListener(windowListener);
+      if (onWindowClose != null) {
+        final Window owner = dirDiffDialog.getOwner();
+        owner.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent e) {
+            onWindowClose.run();
+            owner.removeWindowListener(this);
+          }
+        });
       }
       dirDiffDialog.show();
     }
