@@ -101,10 +101,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         if (node != null) {
           Object nodeInfo = node.getUserObject();
           if (nodeInfo instanceof GitCommit) {
+            myChangesBrowser.getViewer().setEmptyText("No differences");
             myChangesBrowser.setChangesToDisplay(((GitCommit)nodeInfo).getChanges());
             return;
           }
         }
+        setDefaultEmptyText();
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
     });
@@ -112,7 +114,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
     myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
-    myChangesBrowser.getViewer().setEmptyText("No commits selected");
+    setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
@@ -120,6 +122,10 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     
     setLayout(new BorderLayout());
     add(splitter);
+  }
+
+  private void setDefaultEmptyText() {
+    myChangesBrowser.getViewer().setEmptyText("No commits selected");
   }
 
   // Make changes available for diff action
