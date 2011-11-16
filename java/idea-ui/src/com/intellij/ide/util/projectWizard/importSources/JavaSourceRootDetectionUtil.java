@@ -78,43 +78,6 @@ public class JavaSourceRootDetectionUtil {
 
 
   @Nullable
-  public static Pair<File,String> suggestRootForJavaFile(File javaFile, File topmostPossibleRoot, NullableFunction<CharSequence, String> packageNameFetcher) {
-    if (!javaFile.isFile()) return null;
-
-    final CharSequence chars;
-    try {
-      chars = new CharArrayCharSequence(FileUtil.loadFileText(javaFile));
-    }
-    catch(IOException e){
-      return null;
-    }
-
-    String packageName = packageNameFetcher.fun(chars);
-    if (packageName != null) {
-      File root = javaFile.getParentFile();
-      int index = packageName.length();
-      while (index > 0) {
-        int index1 = packageName.lastIndexOf('.', index - 1);
-        String token = packageName.substring(index1 + 1, index);
-        String dirName = root.getName();
-        final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
-        if (!equalsToToken || root.equals(topmostPossibleRoot)) {
-          return Pair.create(root, packageName.substring(0, index));
-        }
-        String parent = root.getParent();
-        if (parent == null) {
-          return null;
-        }
-        root = new File(parent);
-        index = index1;
-      }
-      return Pair.create(root, "");
-    }
-
-    return null;
-  }
-
-  @Nullable
   public static String getPackageName(CharSequence text) {
     Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
     lexer.start(text);

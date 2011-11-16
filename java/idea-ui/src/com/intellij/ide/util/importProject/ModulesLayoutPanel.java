@@ -107,7 +107,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   protected String getStepDescriptionText() {
-    return "Please review suggested module structure for the project. At this stage you may set module names,\n" +
+    return "Please review suggested module structure for the project. At this stage you can set module names,\n" +
            "exclude particular modules from the project, merge or split individual modules.\n" +
            "All dependencies between the modules as well as dependencies on the libraries will be automatically updated.";
   }
