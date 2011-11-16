@@ -61,10 +61,10 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
 
   protected String createCode(String codeBefore) {
     return "public class A {\n" +
-    "    void foo() {\n" +
-    indentTwice(codeBefore) +
-    "    }\n" +
-    "}";
+           "    void foo() {\n" +
+           indentTwice(codeBefore) +
+           "    }\n" +
+           "}";
   }
 
   protected String indentTwice(String code) {
