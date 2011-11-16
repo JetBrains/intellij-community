@@ -168,7 +168,7 @@ public class FragmentedDiffPanelState extends DiffPanelState {
   }
 
   @Override
-  public void drawOnDivider(Graphics g, JComponent component) {
+  public void drawOnDivider(Graphics gr, JComponent component) {
     if (myAppender1.getEditor() == null || myAppender2.getEditor() == null) return;
 
     final int startLeft = getStartVisibleLine(myAppender1.getEditor());
@@ -182,30 +182,38 @@ public class FragmentedDiffPanelState extends DiffPanelState {
     final int leftScrollOffset = myAppender1.getEditor().getScrollingModel().getVerticalScrollOffset();
     final int rightScrollOffset = myAppender2.getEditor().getScrollingModel().getVerticalScrollOffset();
 
-    for (Map.Entry<Integer, FragmentSeparatorsPositionConsumer.TornSeparator> entry : left.entrySet()) {
-      final FragmentSeparatorsPositionConsumer.TornSeparator tornSeparator = entry.getValue();
-      if (tornSeparator.getLeftLine() >= startLeft || tornSeparator.getRightLine() >= startRight) {
-        final int leftOffset = tornSeparator.getLeftOffset();
-        int leftBaseY = myAppender1.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getLeftLine(), 0)).y - lineHeight/2 -
-          leftScrollOffset;
+    final Graphics g = gr.create();
 
-        final int rightOffset = tornSeparator.getRightOffset();
-        int rightBaseY = myAppender2.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getRightLine(), 0)).y - lineHeight/2 -
-          rightScrollOffset;
+    try {
+      ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      for (Map.Entry<Integer, FragmentSeparatorsPositionConsumer.TornSeparator> entry : left.entrySet()) {
+        final FragmentSeparatorsPositionConsumer.TornSeparator tornSeparator = entry.getValue();
+        if (tornSeparator.getLeftLine() >= startLeft || tornSeparator.getRightLine() >= startRight) {
+          final int leftOffset = tornSeparator.getLeftOffset();
+          int leftBaseY = myAppender1.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getLeftLine(), 0)).y - lineHeight/2 -
+                          leftScrollOffset;
 
-        g.setColor(FragmentBoundRenderer.darkerBorder());
-        g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark - 1, width, rightBaseY + rightOffset + TornLineParams.ourDark + 1);
-        g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark + 1, width, rightBaseY + rightOffset + TornLineParams.ourDark - 1);
-        g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark - 1, width, rightBaseY + rightOffset - TornLineParams.ourDark + 1);
-        g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark + 1, width, rightBaseY + rightOffset - TornLineParams.ourDark - 1);
-        g.setColor(FragmentBoundRenderer.darkerBorder().darker());
-        // +- 2
-        g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark, width, rightBaseY + rightOffset + TornLineParams.ourDark);
-        g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourDark, width, rightBaseY + rightOffset - TornLineParams.ourDark);
+          final int rightOffset = tornSeparator.getRightOffset();
+          int rightBaseY = myAppender2.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getRightLine(), 0)).y - lineHeight/2 -
+                           rightScrollOffset;
+
+          g.setColor(FragmentBoundRenderer.darkerBorder());
+          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark - 1, width, rightBaseY + rightOffset + TornLineParams.ourDark + 1);
+          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark + 1, width, rightBaseY + rightOffset + TornLineParams.ourDark - 1);
+          g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark - 1, width, rightBaseY + rightOffset - TornLineParams.ourDark + 1);
+          g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark + 1, width, rightBaseY + rightOffset - TornLineParams.ourDark - 1);
+
+          g.setColor(FragmentBoundRenderer.darkerBorder().darker());
+          // +- 2
+          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark, width, rightBaseY + rightOffset + TornLineParams.ourDark);
+          g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourDark, width, rightBaseY + rightOffset - TornLineParams.ourDark);
+        }
       }
+    } finally {
+      g.dispose();
     }
   }
-  
+
   private int getStartVisibleLine(final Editor editor) {
     int offset = editor.getScrollingModel().getVerticalScrollOffset();
      LogicalPosition logicalPosition = editor.xyToLogicalPosition(new Point(0, offset));
