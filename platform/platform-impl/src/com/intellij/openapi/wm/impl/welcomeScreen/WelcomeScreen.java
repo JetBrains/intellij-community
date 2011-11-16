@@ -86,8 +86,8 @@ public class WelcomeScreen implements Disposable {
 
   private static final Color WELCOME_PANEL_BACKGROUND = Color.WHITE;
   private static final Color MAIN_PANEL_BACKGROUND = WELCOME_PANEL_BACKGROUND;
-  private static final Color PLUGINS_PANEL_BACKGROUND = new Color(248, 248, 248);
-  private static final Color PLUGINS_PANEL_BORDER = new Color(234, 234, 234);
+  private static final Color PLUGINS_PANEL_BACKGROUND = Gray._248;
+  private static final Color PLUGINS_PANEL_BORDER = Gray._234;
   private static final Color CAPTION_COLOR = new Color(47, 67, 96);
   public static final SimpleTextAttributes CAPTION_BOLD_UNDERLINE_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE | SimpleTextAttributes.STYLE_BOLD, CAPTION_COLOR);
@@ -95,8 +95,8 @@ public class WelcomeScreen implements Disposable {
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, CAPTION_COLOR);
   private static final Color DISABLED_CAPTION_COLOR = UIUtil.getInactiveTextColor();
   private static final Color ACTION_BUTTON_COLOR = WELCOME_PANEL_BACKGROUND;
-  private static final Color BUTTON_POPPED_COLOR = new Color(241, 241, 241);
-  private static final Color BUTTON_PUSHED_COLOR = new Color(228, 228, 228);
+  private static final Color BUTTON_POPPED_COLOR = Gray._241;
+  private static final Color BUTTON_PUSHED_COLOR = Gray._228;
 
   @NonNls private static final String HTML_PREFIX = "<html>";
   @NonNls private static final String HTML_SUFFIX = "</html>";

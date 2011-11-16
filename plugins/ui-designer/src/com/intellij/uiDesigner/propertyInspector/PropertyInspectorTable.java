@@ -81,8 +81,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   public static final DataKey<PropertyInspectorTable> DATA_KEY = DataKey.create(PropertyInspectorTable.class.getName());
 
-  private static final Color SYNTETIC_PROPERTY_BACKGROUND = new Color(230,230,230);
-  private static final Color SYNTETIC_SUBPROPERTY_BACKGROUND = new Color(240,240,240);
+  private static final Color SYNTETIC_PROPERTY_BACKGROUND = Gray._230;
+  private static final Color SYNTETIC_SUBPROPERTY_BACKGROUND = Gray._240;
 
   private final ComponentTree myComponentTree;
   private final ArrayList<Property> myProperties;

@@ -27,11 +27,11 @@ import java.awt.event.MouseEvent;
  * @author max
  */
 public class CaptionPanel extends JPanel {
-  private static final Color CNT_COLOR = new Color(240, 240, 240);
-  private static final Color BND_COLOR = new Color(240, 240, 240);
+  private static final Color CNT_COLOR = Gray._240;
+  private static final Color BND_COLOR = Gray._240;
 
-  public static final Color CNT_ACTIVE_COLOR = new Color(0xcacaca);
-  public static final Color BND_ACTIVE_COLOR = new Color(0xefefef);
+  public static final Color CNT_ACTIVE_COLOR = Gray._202;
+  public static final Color BND_ACTIVE_COLOR = Gray._239;
 
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;

@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
           g.fillRect(0, 0, dimension.width, dimension.height);
         }
       } else if (state == ActionButtonComponent.POPPED) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(235, 235, 235), 0, dimension.height, new Color(200, 200, 200)));
+        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, Gray._235, 0, dimension.height, Gray._200));
         g.fillRect(1, 1, dimension.width - 3, dimension.height - 3);
       }
     }

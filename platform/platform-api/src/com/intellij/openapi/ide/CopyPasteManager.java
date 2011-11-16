@@ -17,6 +17,7 @@ package com.intellij.openapi.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.awt.datatransfer.Transferable;
 import java.util.EventListener;
 
 public abstract class CopyPasteManager {
-  public static final Color CUT_COLOR = new Color(160, 160, 160);
+  public static final Color CUT_COLOR = Gray._160;
 
   public static CopyPasteManager getInstance() {
     return ServiceManager.getService(CopyPasteManager.class);

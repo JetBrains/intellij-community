@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.ui.Gray;
 
 import java.awt.*;
 
@@ -24,7 +25,7 @@ public interface FileStatus {
   Color COLOR_NOT_CHANGED = null; // deliberately null, do not use hardcoded Color.BLACK
   Color COLOR_MERGE = new Color(117, 3, 220);
   Color COLOR_MODIFIED = new Color(0, 50, 160);
-  Color COLOR_MISSING = new Color(97, 97, 97);
+  Color COLOR_MISSING = Gray._97;
   Color COLOR_ADDED = new Color(10, 119, 0);
   Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
   Color COLOR_HIJACKED = Color.ORANGE.darker();

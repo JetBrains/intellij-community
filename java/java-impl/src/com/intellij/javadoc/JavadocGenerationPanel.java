@@ -18,6 +18,7 @@ package com.intellij.javadoc;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -95,7 +96,7 @@ final class JavadocGenerationPanel extends JPanel {
     for (Enumeration enumeration = labelTable.keys();  enumeration.hasMoreElements();) {
       Integer key = (Integer)enumeration.nextElement();
       JLabel label = (JLabel)labelTable.get(key);
-      label.setForeground(key.intValue() <= value ? Color.black : new Color(100, 100, 100));
+      label.setForeground(key.intValue() <= value ? Color.black : Gray._100);
     }
   }
 

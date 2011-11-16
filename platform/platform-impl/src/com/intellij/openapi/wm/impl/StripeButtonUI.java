@@ -16,7 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.util.ui.SameColor;
+import com.intellij.ui.Gray;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -112,7 +112,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
 
       if (toFill) {
-        g2.setColor(new SameColor(210));
+        g2.setColor(Gray._210);
         g2.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 7, 5, 5);
       }
 

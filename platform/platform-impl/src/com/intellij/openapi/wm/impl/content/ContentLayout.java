@@ -16,10 +16,10 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.util.ui.SameColor;
 
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -29,10 +29,10 @@ abstract class ContentLayout {
   static final Color TAB_BORDER_ACTIVE_WINDOW = new Color(38, 63, 106);
   static final Color TAB_BORDER_PASSIVE_WINDOW = new Color(130, 120, 111);
 
-  static final Color TAB_BG_ACTIVE_WND_SELECTED_FROM = new SameColor(111);
-  static final Color TAB_BG_ACTIVE_WND_SELECTED_TO = new SameColor(164);
-  static final Color TAB_BG_ACTIVE_WND_UNSELECTED_FROM = new Color(130, 130, 130);
-  static final Color TAB_BG_ACTIVE_WND_UNSELECTED_TO = new Color(85, 85, 85);
+  static final Color TAB_BG_ACTIVE_WND_SELECTED_FROM = Gray._111;
+  static final Color TAB_BG_ACTIVE_WND_SELECTED_TO = Gray._164;
+  static final Color TAB_BG_ACTIVE_WND_UNSELECTED_FROM = Gray._130;
+  static final Color TAB_BG_ACTIVE_WND_UNSELECTED_TO = Gray._85;
   static final Color TAB_BG_PASSIVE_WND_FROM = new Color(152, 143, 134);
   static final Color TAB_BG_PASSIVE_WND_TO = new Color(165, 157, 149);
 

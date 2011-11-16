@@ -602,7 +602,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
         g.drawString((String) info[3], (Integer) info[0], (Integer) info[2] + 1);
       }
 
-      g.setColor(new Color(50, 50, 50));
+      g.setColor(Gray._50);
       g.drawString((String) info[3], (Integer) info[0], (Integer) info[2]);
     }
     return offset;

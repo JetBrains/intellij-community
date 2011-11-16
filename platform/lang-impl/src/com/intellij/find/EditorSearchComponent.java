@@ -38,6 +38,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.Gray;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -104,7 +105,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final Color GRADIENT_C1;
   private final Color GRADIENT_C2;
 
-  private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+  private static final Color BORDER_COLOR = Gray._135;
   public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
   private static final Color FOCUS_CATCHER_COLOR = new Color(0x9999ff);
 

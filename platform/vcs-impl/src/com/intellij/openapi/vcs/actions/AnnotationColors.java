@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.ui.Gray;
+
 import java.awt.*;
 
 /**
@@ -35,6 +37,6 @@ public interface AnnotationColors {
     new Color(255, 251, 207),
     new Color(217, 222, 229),
     new Color(255, 204, 238),
-    new Color(236, 236, 236)
+    Gray._236
   };
 }

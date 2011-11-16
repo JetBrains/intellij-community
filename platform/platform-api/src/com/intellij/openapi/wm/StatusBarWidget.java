@@ -18,6 +18,7 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -85,14 +86,14 @@ public interface StatusBarWidget extends Disposable {
   class WidgetBorder implements Border {
     public static final WidgetBorder INSTANCE = new WidgetBorder();
 
-    private static final Color TOP = new Color(227, 227, 227);
-    private static final Color LEFT1_FROM = new Color(161, 161, 161);
-    private static final Color LEFT1_TO = new Color(133, 133, 133);
-    private static final Color LEFT2_FROM = new Color(220, 220, 220);
-    private static final Color LEFT2_TO = new Color(184, 184, 184);
-    private static final Color LEFT1_FROM_INACTIVE = new Color(190, 190, 190);
+    private static final Color TOP = Gray._227;
+    private static final Color LEFT1_FROM = Gray._161;
+    private static final Color LEFT1_TO = Gray._133;
+    private static final Color LEFT2_FROM = Gray._220;
+    private static final Color LEFT2_TO = Gray._184;
+    private static final Color LEFT1_FROM_INACTIVE = Gray._190;
     private static final Color PIXEL = LEFT1_FROM_INACTIVE;
-    private static final Color LEFT1_TO_INACTIVE = new Color(180, 180, 180);
+    private static final Color LEFT1_TO_INACTIVE = Gray._180;
 
     private static final Color SEPARATOR_COLOR = UIUtil.getPanelBackground().darker();
 

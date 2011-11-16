@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +99,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       Insets margins = getMargin();
       setMargin(new Insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
-        setBorder(IdeBorderFactory.createEmptyBorder(0));
+        setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 2));
         setFont(UIUtil.getLabelFont().deriveFont(11.0f));
       }
       addActionListener(
@@ -279,15 +280,17 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         g2.setColor(UIUtil.getControlColor());
         final int w = getWidth();
         final int h = getHeight();
+        g2.setPaint(new GradientPaint(0,0, Gray._230, 0, h, Gray._200));
         g2.fillRect(2, 0, w-2, h);
         if (getMousePosition() == null ) {
-          g2.setColor(UIUtil.getBorderColor());
+          g2.setPaint(new GradientPaint(0,0, Gray._180, 0, h, UIUtil.getBorderColor().darker().darker()));
+          //g2.setColor(UIUtil.getBorderColor());
         } else {
           g2.setColor(UIUtil.isUnderAquaLookAndFeel() ? new Color(0, 0, 0, 30) : new Color(8, 36, 107));
         }
-        g2.drawRect(0,0, w-1, h-1);
+        g2.drawRect(2,0, w-3, h-1);
         final Icon icon = getIcon();
-        int x = 5;
+        int x = 7;
         if (icon != null) {
           icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
           x += icon.getIconWidth() + 3;

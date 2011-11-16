@@ -39,6 +39,7 @@ import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.Gray;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
@@ -108,7 +109,7 @@ public class HectorComponent extends JPanel {
           int value = slider.getValue();
           for (Enumeration<Integer> enumeration = sliderLabels.keys(); enumeration.hasMoreElements();) {
             Integer key = enumeration.nextElement();
-            sliderLabels.get(key).setForeground(key.intValue() <= value ? Color.black : new Color(100, 100, 100));
+            sliderLabels.get(key).setForeground(key.intValue() <= value ? Color.black : Gray._100);
           }
         }
       });

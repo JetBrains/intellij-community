@@ -23,5 +23,5 @@ public interface Colors {
   Color DARK_GREEN = new Color(0, 140, 0);
   Color DARK_BLUE = new Color(0, 0, 140);
 
-  Color DISABLED_COLOR = new Color(150, 150, 150);
+  Color DISABLED_COLOR = Gray._150;
 }

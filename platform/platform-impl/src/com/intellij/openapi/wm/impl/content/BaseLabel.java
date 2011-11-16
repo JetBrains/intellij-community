@@ -17,8 +17,8 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
+import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
-import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
 
@@ -29,7 +29,7 @@ class BaseLabel extends JLabel {
 
   protected static final int TAB_SHIFT = 1;
   private static final Color DEFAULT_ACTIVE_FORE = Color.black;
-  private static final SameColor DEFAULT_PASSIVE_FORE = new SameColor(50);
+  private static final Color DEFAULT_PASSIVE_FORE = Gray._50;
 
   protected ToolWindowContentUi myUi;
 

@@ -334,7 +334,7 @@ public class AbstractPopup implements JBPopup {
       JPanel wrapper = new JPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(Graphics g) {
-          g.setColor(new Color(135, 135, 135));
+          g.setColor(Gray._135);
           g.drawLine(0, 0, getWidth(), 0);
           super.paintComponent(g);
         }

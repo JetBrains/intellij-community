@@ -65,7 +65,7 @@ public class DuplicateNodeRenderer {
         node = (DefaultMutableTreeNode)accumPath.getLastPathComponent();
         accumRect = union(accumRect, getExpandedNodesRect(tree, node, accumPath));
 
-        g.setColor(new Color(230, 230, 230));
+        g.setColor(Gray._230);
         g.fillRoundRect(accumRect.x, accumRect.y, accumRect.width, accumRect.height, 10, 10);
         g.setColor(Color.lightGray);
         g.drawRoundRect(accumRect.x, accumRect.y, accumRect.width, accumRect.height, 10, 10);

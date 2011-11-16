@@ -23,7 +23,7 @@ import java.awt.*;
 public class SeparatorComponent extends JComponent {
   private int myVGap = 3;
   private Color myColor = Color.lightGray;
-  private Color myShadow = new Color(240, 240, 240);
+  private Color myShadow = Gray._240;
   private int myHGap = 1;
   private SeparatorOrientation myOrientation = SeparatorOrientation.HORIZONTAL;
 
