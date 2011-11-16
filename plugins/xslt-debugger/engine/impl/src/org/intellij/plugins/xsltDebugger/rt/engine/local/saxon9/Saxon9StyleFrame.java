@@ -17,6 +17,7 @@
 package org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9;
 
 import net.sf.saxon.expr.Expression;
+import net.sf.saxon.expr.ExpressionVisitor;
 import net.sf.saxon.expr.StackFrame;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.expr.instruct.GlobalVariable;
@@ -28,6 +29,8 @@ import net.sf.saxon.om.ValueRepresentation;
 import net.sf.saxon.style.StyleElement;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.type.ItemType;
+import net.sf.saxon.type.Type;
+import net.sf.saxon.type.TypeHierarchy;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
@@ -58,7 +61,10 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
 
   public Value eval(String expr) throws Debugger.EvaluationException {
     try {
-      final Expression expression = myElement.makeExpression(expr);
+      Expression expression = myElement.makeExpression(expr);
+      final TypeHierarchy typeHierarchy = myXPathContext.getConfiguration().getTypeHierarchy();
+      expression = expression.typeCheck(ExpressionVisitor.make(myElement.getStaticContext(), expression.getExecutable()), Type.ITEM_TYPE);
+      final ItemType itemType = expression.getItemType(typeHierarchy);
       final Item evaluate = expression.evaluateItem(myXPathContext);
       return new Value() {
         @Override
@@ -68,7 +74,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
 
         @Override
         public Type getType() {
-          return new ObjectType(expression.getItemType(myXPathContext.getConfiguration().getTypeHierarchy()).toString());
+          return new ObjectType(itemType.toString());
         }
       };
     } catch (IllegalArgumentException e) {

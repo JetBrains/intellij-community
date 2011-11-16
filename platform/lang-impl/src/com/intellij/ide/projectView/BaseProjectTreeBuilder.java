@@ -16,6 +16,7 @@
 
 package com.intellij.ide.projectView;
 
+import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -182,13 +183,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     final FocusRequestor requestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
 
-    UiActivityMonitor.getInstance().addActivity(myProject, "projectViewSelect", getUpdater().getModalityState());
+    UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), getUpdater().getModalityState());
     cancelUpdate().doWhenDone(new Runnable() {
       public void run() {
         batch(new Progressive() {
           public void run(@NotNull ProgressIndicator indicator) {
             _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
-            UiActivityMonitor.getInstance().removeActivity(myProject, "projectViewSelect");
+            UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
           }
         });
       }

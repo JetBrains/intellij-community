@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.update;
 
+import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,7 +57,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private boolean myRestartOnAdd;
 
   private boolean myTrackUiActivity;
-  
+  private UiActivity myUiActivity;
+
   public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent) {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, null);
   }
@@ -456,8 +458,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     UiActivityMonitor.getInstance().removeActivity(getActivityId());    
   }
 
-  protected String getActivityId() {
-    return myName + " " + hashCode();
+  protected UiActivity getActivityId() {
+    if (myUiActivity == null) {
+      myUiActivity = new UiActivity.AsyncBgOperation("UpdateQueue:" + myName + hashCode());
+    }
+    
+    return myUiActivity;
   }
 
 }

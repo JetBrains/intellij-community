@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ public final class TitlePanel extends JPanel {
     int height = getSize().height;
     Object oldAntialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2.setPaint(new Color(247, 247, 247));
+    g2.setPaint(Gray._247);
     RoundRectangle2D rect = new RoundRectangle2D.Double(0, 0, width - 1, height - 1, 0, 0);
     g2.fill(rect);
     g2.setPaint(Color.GRAY);

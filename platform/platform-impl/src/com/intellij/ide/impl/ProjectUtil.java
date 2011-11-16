@@ -19,6 +19,8 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,10 +34,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
 import org.jdom.JDOMException;
@@ -119,7 +118,22 @@ public class ProjectUtil {
 
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if (provider != null) {
-      return provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
+      final Project project = provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
+
+      if (project != null) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (!project.isDisposed()) {
+              final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+              if (toolWindow != null) {
+                toolWindow.activate(null);
+              }
+            }
+          }
+        }, ModalityState.NON_MODAL);
+      }
+
+      return project;
     }
     return null;
   }

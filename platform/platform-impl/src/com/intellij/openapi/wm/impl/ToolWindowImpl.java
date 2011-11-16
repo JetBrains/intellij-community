@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -122,7 +123,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public void activate(@Nullable final Runnable runnable, boolean autoFocusContents, boolean forced) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final String activity = "toolWindow:" + getId();
+    final UiActivity activity = new UiActivity.Focus("toolWindow:" + myId);
     UiActivityMonitor.getInstance().addActivity(myToolWindowManager.getProject(), activity, ModalityState.NON_MODAL);
 
     myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);

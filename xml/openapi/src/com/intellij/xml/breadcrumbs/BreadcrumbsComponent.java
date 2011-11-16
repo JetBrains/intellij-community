@@ -1,9 +1,9 @@
-
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -565,7 +565,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   abstract static class PainterSettings {
-    private static final Color DEFAULT_FOREGROUND_COLOR = new Color(50, 50, 50);
+    private static final Color DEFAULT_FOREGROUND_COLOR = Gray._50;
 
     @Nullable
     Color getBackgroundColor(@NotNull final Crumb c) {
@@ -589,15 +589,15 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   static class ButtonSettings extends PainterSettings {
-    protected static final Color DEFAULT_BG_COLOR = new Color(245, 245, 245);
-    private static final Color LIGHT_BG_COLOR = new Color(253, 253, 253);
+    protected static final Color DEFAULT_BG_COLOR = Gray._245;
+    private static final Color LIGHT_BG_COLOR = Gray._253;
     private static final Color CURRENT_BG_COLOR = new Color(250, 250, 220);
-    protected static final Color HOVERED_BG_COLOR = new Color(220, 220, 220);
+    protected static final Color HOVERED_BG_COLOR = Gray._220;
 
-    private static final Color LIGHT_TEXT_COLOR = new Color(170, 170, 170);
+    private static final Color LIGHT_TEXT_COLOR = Gray._170;
 
-    protected static final Color DEFAULT_BORDER_COLOR = new Color(90, 90, 90);
-    private static final Color LIGHT_BORDER_COLOR = new Color(170, 170, 170);
+    protected static final Color DEFAULT_BORDER_COLOR = Gray._90;
+    private static final Color LIGHT_BORDER_COLOR = Gray._170;
 
     static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
       if (hovered) {

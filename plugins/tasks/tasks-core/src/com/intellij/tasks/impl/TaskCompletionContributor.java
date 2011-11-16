@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -30,7 +31,7 @@ public class TaskCompletionContributor extends CompletionContributor {
   private static final Key<Consumer<Task>> KEY = Key.create("task completion available");
   private static final Key<Boolean> AUTO_POPUP_KEY = Key.create("task completion auto-popup");
 
-  public static void installCompletion(Document document, Project project, Consumer<Task> consumer, boolean autoPopup) {
+  public static void installCompletion(Document document, Project project, @Nullable Consumer<Task> consumer, boolean autoPopup) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile != null) {
       //noinspection unchecked

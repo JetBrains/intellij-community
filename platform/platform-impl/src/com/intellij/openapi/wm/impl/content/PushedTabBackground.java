@@ -20,7 +20,7 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ui.SameColor;
+import com.intellij.ui.Gray;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,7 +58,7 @@ public class PushedTabBackground {
       cur += ourMiddle.getIconWidth();
     }
 
-    g.setColor(new SameColor(110));
+    g.setColor(Gray._110);
 
     if (isLast) {
       ourRightRound.paintIcon(c, g, cur, y);

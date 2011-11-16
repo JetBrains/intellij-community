@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ui.Gray;
 import com.intellij.ui.LightweightHint;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
 import org.jdom.Element;
@@ -190,7 +191,7 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
     public static void showEditorHint(final String info, final Editor editor) {
         final JLabel label = new JLabel(info);
         label.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, new Color(128, 128, 128)),
+                BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, Gray._128),
                 BorderFactory.createEmptyBorder(3, 5, 3, 5)));
         label.setForeground(Color.BLACK);
         label.setBackground(new Color(253, 254, 226));

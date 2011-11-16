@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -33,6 +32,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.Gray;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -49,7 +49,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 
 public abstract class BaseShowRecentFilesAction extends AnAction implements DumbAware {
-  private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+  private static final Color BORDER_COLOR = Gray._135;
   private JBPopup myPopup;
 
   public void actionPerformed(AnActionEvent e) {

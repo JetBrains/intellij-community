@@ -26,6 +26,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -47,7 +48,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   private boolean myHasMarked = false;
   private boolean myEquals;
   protected Color myColor = null;
-  protected static final Color NOT_CHANGED = new Color(0, 0, 0);
+  protected static final Color NOT_CHANGED = Gray._0;
   protected Project myProject;
   private boolean mySorted;
 

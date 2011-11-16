@@ -87,7 +87,7 @@
 
     <editChangelistSupport implementation="com.intellij.tasks.impl.TaskChangelistSupport"/>
 
-    <completion.contributor language="TEXT" implementationClass="com.intellij.tasks.impl.TaskCompletionContributor"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.tasks.impl.TaskCompletionContributor" order="first, before commitCompletion"/>
 
     <projectService serviceInterface="com.intellij.tasks.impl.TaskProjectConfiguration"
                     serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>

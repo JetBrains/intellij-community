@@ -16,6 +16,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -202,6 +203,7 @@ public class AbstractTreeUi {
     }
   };
   private UiActivityMonitor myActivityMonitor;
+  private UiActivity myActivityId;
 
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
@@ -213,6 +215,7 @@ public class AbstractTreeUi {
     myTree = tree;
     myTreeModel = treeModel;
     myActivityMonitor = UiActivityMonitor.getInstance();
+    myActivityId = new UiActivity.AsyncBgOperation("TreeUi" + this);
     addModelListenerToDianoseAccessOutsideEdt();
     TREE_NODE_WRAPPER = getBuilder().createSearchingTreeNodeWrapper();
     myTree.setModel(myTreeModel);
@@ -4600,13 +4603,13 @@ public class AbstractTreeUi {
 
   public void addActivity() {
     if (myActivityMonitor != null) {
-      myActivityMonitor.addActivity(this, getUpdater().getModalityState());
+      myActivityMonitor.addActivity(myActivityId, getUpdater().getModalityState());
     }
   }
 
   public void removeActivity() {
     if (myActivityMonitor != null) {
-      myActivityMonitor.removeActivity(this);
+      myActivityMonitor.removeActivity(myActivityId);
     }
   }
 

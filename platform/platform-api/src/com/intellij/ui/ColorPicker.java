@@ -645,19 +645,19 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
         g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, 0f, getHeight(), Color.BLACK));
         g.fillRect(7, 10, 12, getHeight() - 20);
   
-        g.setColor(new Color(150, 150, 150));
+        g.setColor(Gray._150);
         g.drawRect(7, 10, 12, getHeight() - 20);
   
-        g.setColor(new Color(250, 250, 250));
+        g.setColor(Gray._250);
         g.drawRect(8, 11, 10, getHeight() - 22);
       } else {
         g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, getWidth(), 0f, Color.BLACK));
         g.fillRect(10, 7, getWidth() - 20 , 12);
   
-        g.setColor(new Color(150, 150, 150));
+        g.setColor(Gray._150);
         g.drawRect(10, 7, getWidth() - 20, 12);
   
-        g.setColor(new Color(250, 250, 250));
+        g.setColor(Gray._250);
         g.drawRect(11, 8, getWidth() - 22, 10);
       }
 

@@ -33,7 +33,10 @@ public class MissingMethodBodyFixer implements Fixer {
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiMethod)) return;
     PsiMethod method = (PsiMethod) psiElement;
-    if (method.getContainingClass().isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null || containingClass.isInterface()
+        || method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.NATIVE)) return;
+
     final PsiCodeBlock body = method.getBody();
     final Document doc = editor.getDocument();
     if (body != null) {
@@ -44,7 +47,7 @@ public class MissingMethodBodyFixer implements Fixer {
         if (statements.length > 0) {
           if (statements[0] instanceof PsiDeclarationStatement) {
             if (PsiTreeUtil.getDeepestLast(statements[0]) instanceof PsiErrorElement) {
-              if (method.getContainingClass().getRBrace() == null) {
+              if (containingClass.getRBrace() == null) {
                 doc.insertString(body.getTextRange().getStartOffset() + 1, "\n}");
               }
             }

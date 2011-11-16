@@ -15,6 +15,8 @@
  */
 package com.intellij.notification.impl.ui;
 
+import com.intellij.ui.Gray;
+
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 import java.awt.*;
@@ -74,7 +76,7 @@ public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonU
   }
 
   protected Color getFocusColor(B button) {
-    return new Color(100, 100, 100);
+    return Gray._100;
   }
 
   protected Color getSelectionColor(final B button) {

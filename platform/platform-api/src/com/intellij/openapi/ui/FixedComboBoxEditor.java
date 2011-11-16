@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -284,16 +285,16 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
       Color bottomColor;
 
       if (myDisabled) {
-        topColor = new Color(200, 200, 200);
-        secondTopColor = new Color(250, 250, 250);
-        leftRightColor = new Color(205, 205, 205);
-        bottomColor = new Color(220, 220, 220);
+        topColor = Gray._200;
+        secondTopColor = Gray._250;
+        leftRightColor = Gray._205;
+        bottomColor = Gray._220;
       }
       else {
-        topColor = new Color(150, 150, 150);
-        secondTopColor = new Color(230, 230, 230);
-        leftRightColor = new Color(175, 175, 175);
-        bottomColor = new Color(200, 200, 200);
+        topColor = Gray._150;
+        secondTopColor = Gray._230;
+        leftRightColor = Gray._175;
+        bottomColor = Gray._200;
       }
 
       int _y = y + MacUIUtil.MAC_COMBO_BORDER_V_OFFSET;

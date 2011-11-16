@@ -508,6 +508,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   @Override
   public void dispose() {
     myListeners.clear();
+    myElements.clear();
+    mySrc = null;
+    myTrg = null;
+    myTree = null;
   }
 
   public DirDiffSettings getSettings() {

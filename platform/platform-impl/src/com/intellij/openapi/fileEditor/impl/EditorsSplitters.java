@@ -21,7 +21,10 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -35,6 +38,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -148,11 +152,11 @@ public class EditorsSplitters extends JPanel {
     if (showEmptyText()) {
       final boolean darkerColors = UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderGTKLookAndFeel();
       UIUtil.applyRenderingHints(g);
-      g.setColor(darkerColors ? new Color(100, 100, 100) : Color.LIGHT_GRAY);
+      g.setColor(darkerColors ? Gray._100 : Color.LIGHT_GRAY);
       g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.4f);
-      painter.appendLine("No files are open").underlined(darkerColors ? new Color(150, 150, 150) : Color.LIGHT_GRAY)
+      painter.appendLine("No files are open").underlined(darkerColors ? Gray._150 : Color.LIGHT_GRAY)
         .appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
           KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet()
         .appendLine("Open Recent files with " + getActionShortcutText("RecentFiles")).smaller().withBullet()

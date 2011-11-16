@@ -33,21 +33,21 @@ import java.util.*;
 
 public abstract class UiActivityMonitor implements ApplicationComponent {
 
-  public abstract BusyObject getBusy(@NotNull Project project);
+  public abstract BusyObject getBusy(@NotNull Project project, UiActivity ... toWatch);
 
-  public abstract BusyObject getBusy();
+  public abstract BusyObject getBusy(UiActivity ... toWatch);
 
-  public abstract void addActivity(@NotNull Project project, @NotNull Object activity);
+  public abstract void addActivity(@NotNull Project project, @NotNull UiActivity activity);
 
-  public abstract void addActivity(@NotNull Project project, @NotNull Object activity, @NotNull ModalityState effectiveModalityState);
+  public abstract void addActivity(@NotNull Project project, @NotNull UiActivity activity, @NotNull ModalityState effectiveModalityState);
 
-  public abstract void addActivity(@NotNull Object activity);
+  public abstract void addActivity(@NotNull UiActivity activity);
 
-  public abstract void addActivity(@NotNull Object activity, @NotNull ModalityState effectiveModalityState);
+  public abstract void addActivity(@NotNull UiActivity activity, @NotNull ModalityState effectiveModalityState);
 
-  public abstract void removeActivity(@NotNull Project project, @NotNull Object activity);
+  public abstract void removeActivity(@NotNull Project project, @NotNull UiActivity activity);
 
-  public abstract void removeActivity(@NotNull Object activity);
+  public abstract void removeActivity(@NotNull UiActivity activity);
 
   public abstract void clear();
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -68,11 +69,11 @@ public class StatusBarUI extends ComponentUI {
   }
 
   private static final class BackgroundPainter implements Border {
-    private static final Color BORDER_TOP_COLOR = new Color(145, 145, 145);
-    private static final Color BORDER2_TOP_COLOR = new Color(255, 255, 255);
-    private static final Color BORDER_BOTTOM_COLOR = new Color(255, 255, 255);
+    private static final Color BORDER_TOP_COLOR = Gray._145;
+    private static final Color BORDER2_TOP_COLOR = Gray._255;
+    private static final Color BORDER_BOTTOM_COLOR = Gray._255;
 
-    private static final Color BG_COLOR = new Color(238, 238, 238);
+    private static final Color BG_COLOR = Gray._238;
 
     private static final Insets INSETS = new Insets(0, 0, 0, 0);
 

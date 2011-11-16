@@ -1,5 +1,6 @@
 package org.jetbrains.jps.server;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jboss.netty.channel.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
@@ -18,6 +19,8 @@ import java.util.concurrent.ExecutorService;
  *         Date: 8/11/11
  */
 class ServerMessageHandler extends SimpleChannelHandler {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.server.ServerMessageHandler");
+
   private final ConcurrentHashMap<String, CompilationTask> myBuildsInProgress = new ConcurrentHashMap<String, CompilationTask>();
   private final ExecutorService myBuildsExecutor;
   private final Server myServer;
@@ -127,7 +130,10 @@ class ServerMessageHandler extends SimpleChannelHandler {
   }
 
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    super.exceptionCaught(ctx, e);
+    if (this == ctx.getPipeline().getLast()) {
+      LOG.error(e);
+    }
+    ctx.sendUpstream(e);
   }
 
   private class CompilationTask implements Runnable {

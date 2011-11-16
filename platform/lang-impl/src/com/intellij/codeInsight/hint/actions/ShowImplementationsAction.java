@@ -186,7 +186,10 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       final VirtualFile virtualFile = file.getVirtualFile();
       final PsiFile containingFile = impls[0].getContainingFile();
       if (virtualFile != null && containingFile != null && virtualFile.equals(containingFile.getVirtualFile())) {
-        index = 1;
+        final PsiFile secondContainingFile = impls[1].getContainingFile();
+        if (secondContainingFile != containingFile) {
+          index = 1;
+        }
       }
     }
 
