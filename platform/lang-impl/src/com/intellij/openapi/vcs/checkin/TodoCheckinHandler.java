@@ -94,7 +94,7 @@ public class TodoCheckinHandler extends CheckinHandler {
             setFilterText(name);
           }
         };
-        final LinkLabel linkLabel = new LinkLabel("Configure Filters", null);
+        final LinkLabel linkLabel = new LinkLabel("Configure", null);
         linkLabel.setListener(new LinkListener() {
           @Override
           public void linkSelected(LinkLabel aSource, Object aLinkData) {
