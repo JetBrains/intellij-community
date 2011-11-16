@@ -18,11 +18,12 @@ package com.intellij.openapi.module;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.util.Comparing;
 
 public class WebModuleConfigurationEditorProvider implements ModuleConfigurationEditorProvider {
   public ModuleConfigurationEditor[] createEditors(final ModuleConfigurationState state) {
     Module module = state.getRootModel().getModule();
-    if (ModuleType.get(module) != WebModuleType.getInstance()) {
+    if (!Comparing.equal(ModuleType.get(module).getId(), WebModuleTypeBase.WEB_MODULE)) {
       return ModuleConfigurationEditor.EMPTY;
     }
     return new ModuleConfigurationEditor[]{new CommonContentEntriesEditor(module.getName(), state, false, false)};
