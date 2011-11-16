@@ -61,6 +61,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   private final DefaultTreeModel myTreeModel;
   private final CheckedTreeNode myRootNode;
   private final ReentrantReadWriteLock TREE_CONSTRUCTION_LOCK = new ReentrantReadWriteLock();
+  private final MyTreeCellRenderer myTreeCellRenderer;
 
   GitPushLog(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull final Consumer<Boolean> checkboxListener) {
     myProject = project;
@@ -68,7 +69,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
     myRootNode = new CheckedTreeNode(null);
     myTreeModel = new DefaultTreeModel(myRootNode);
-    myTree = new CheckboxTree(new MyTreeCellRenderer(), myRootNode) {
+    myTreeCellRenderer = new MyTreeCellRenderer();
+    myTree = new CheckboxTree(myTreeCellRenderer, myRootNode) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
         Object userObject = node.getUserObject();
@@ -140,6 +142,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       createNodes(commits);
       myTreeModel.nodeStructureChanged(myRootNode);
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
+      myTreeCellRenderer.recalculateWidth(commits.getAllCommits());
       TreeUtil.expandAll(myTree);
       selectFirstCommit();
     }
@@ -243,6 +246,21 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+    
+    private int myDateMaxWidth;
+    
+    void recalculateWidth(@NotNull Collection<GitCommit> commits) {
+      for (GitCommit commit : commits) {
+        int len = getDateString(commit).length();
+        if (len > myDateMaxWidth) {
+          myDateMaxWidth = len;
+        }
+      }
+    }
+
+    private static String getDateString(GitCommit commit) {
+      return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
+    }
 
     @Override
     public void customizeRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
@@ -263,7 +281,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         GitCommit commit = (GitCommit)userObject;
         SimpleTextAttributes small = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground());
         renderer.append(commit.getShortHash().toString(), small);
-        renderer.append(String.format("%15s  ", DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime())), small);
+        renderer.append(String.format(" %" + myDateMaxWidth + "s  ", getDateString(commit)), small);
         renderer.append(commit.getSubject(), small);
         
       }
