@@ -112,6 +112,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
     myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
+    myChangesBrowser.getViewer().setEmptyText("No commits selected");
 
     Splitter splitter = new Splitter(false, 0.7f);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
