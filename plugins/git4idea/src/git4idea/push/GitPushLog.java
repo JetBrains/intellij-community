@@ -276,7 +276,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         GitBranch dest = branchPair.getDest();
         assert dest != null : "Destination branch can't be null for branch " + fromBranch;
 
-        SimpleTextAttributes attrs = fromBranch.isActive() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         renderer.append(fromBranch.getName() + " -> " + dest.getName(), attrs);
       }
       else {
