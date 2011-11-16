@@ -83,6 +83,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -97,6 +98,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -834,28 +836,66 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private void checkStringLiteral(PsiElement literal, String text) {
-    if (text.startsWith("'''")) {
-      if (text.length() < 6 || !text.endsWith("'''")) {
+
+    StringBuilder builder = new StringBuilder(text.length());
+    String quote = GrStringUtil.getStartQuote(text);
+    if (quote.isEmpty()) return;
+
+    String substring = text.substring(quote.length());
+
+    String[] parts;
+    IElementType elementType = literal.getFirstChild().getNode().getElementType();
+    boolean isSimpleString = elementType == GroovyTokenTypes.mSTRING_LITERAL ||
+                             elementType == GroovyTokenTypes.mGSTRING_LITERAL ||
+                             elementType == GroovyTokenTypes.mREGEX_LITERAL;
+    if (isSimpleString) {
+      parts = new String[]{substring};
+    }
+    else if (literal instanceof GrString) {
+      parts = ((GrString)literal).getTextParts();
+    }
+    else {
+      return;
+    }
+
+    for (String part : parts) {            
+      if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(text.length()), null, true)) {
+        myHolder.createErrorAnnotation(literal, GroovyBundle.message("illegal.escape.character.in.string.literal"));
+        return;
+      }
+    }
+
+    
+    if (isSimpleString) {
+      int[] offsets = new int[substring.length() + 1];
+      boolean result = GrStringUtil.parseStringCharacters(substring, builder, offsets, !quote.equals("/"));
+      LOG.assertTrue(result);
+      if (!builder.toString().endsWith(quote) || substring.charAt(offsets[builder.length() - quote.length()]) == '\\') {
         myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
+        return;
       }
     }
-    else if (text.startsWith("'")) {
-      if (text.length() < 2 || !text.endsWith("'")) {
-        myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
-      }
+    else {
+      LOG.assertTrue(literal instanceof GrString);
+      //absence of closing quote is registered by lexer
     }
-    else if (literal instanceof GrRegex) {
-      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
-        myHolder.createErrorAnnotation(literal, GroovyBundle
-          .message("slashy.strings.with.injections.are.not.allowed.in.groovy.0", GroovyConfigUtils.getInstance().getSDKVersion(literal)));
-      }
-    }
-    else if (text.startsWith("/")) {
+
+
+    if (quote.equals("/")) {
       if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
         if (text.contains("\n") || text.contains("\r")) {
-          myHolder.createErrorAnnotation(literal, GroovyBundle
-            .message("multiline.slashy.strings.are.not.allowed.in.groovy.0", GroovyConfigUtils.getInstance().getSDKVersion(literal)));
+          myHolder.createErrorAnnotation(literal, GroovyBundle.message("multiline.slashy.strings.are.not.allowed.in.groovy.0",
+                                                                       GroovyConfigUtils.getInstance().getSDKVersion(literal)));
+          return;
         }
+      }
+    }
+
+    if (literal instanceof GrRegex) {
+      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
+        myHolder.createErrorAnnotation(literal, GroovyBundle.message("slashy.strings.with.injections.are.not.allowed.in.groovy.0",
+                                                                     GroovyConfigUtils.getInstance().getSDKVersion(literal)));
+        return;
       }
     }
   }

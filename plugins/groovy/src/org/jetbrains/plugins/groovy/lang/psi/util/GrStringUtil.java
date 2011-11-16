@@ -28,6 +28,7 @@ public class GrStringUtil {
   private static final String QUOTE = "'";
   private static final String DOUBLE_QUOTES = "\"";
   private static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
+  private static final String SLASH = "/";
 
   private GrStringUtil() {
   }
@@ -175,21 +176,11 @@ public class GrStringUtil {
   }
 
   public static String removeQuotes(@NotNull String s) {
-    if (s.startsWith(TRIPLE_QUOTES) || s.startsWith(TRIPLE_DOUBLE_QUOTES)) {
-      if (s.endsWith(s.substring(0, 3))) {
-        return s.substring(3, s.length() - 3);
-      }
-      else {
-        return s.substring(3);
-      }
-    }
-    else if (s.startsWith(QUOTE) || s.startsWith(DOUBLE_QUOTES)) {
-      if (s.length() >= 2 && s.endsWith(s.substring(0, 1))) {
-        return s.substring(1, s.length() - 1);
-      }
-      else {
-        return s.substring(1);
-      }
+    String quote = getStartQuote(s);
+    int sL = s.length();
+    int qL = quote.length();
+    if (sL >= qL * 2 && s.endsWith(quote)) {
+      return s.substring(qL, sL - qL);
     }
     return s;
   }
@@ -347,6 +338,7 @@ public class GrStringUtil {
     if (text.startsWith(QUOTE)) return QUOTE;
     if (text.startsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
     if (text.startsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
+    if (text.startsWith(SLASH)) return SLASH;
     return "";
   }
 
@@ -470,15 +462,18 @@ public class GrStringUtil {
             return false;
           }
           break;
-        
-        default:
+        case '\n':
+          //do nothing
+          break;
+        case ' ':
           int newIndex = index;
-          while (chars.charAt(newIndex) == ' ') newIndex++;
-          if (chars.charAt(newIndex) == '\n') {
+          while (newIndex < chars.length() && chars.charAt(newIndex) == ' ') newIndex++;
+          if (newIndex < chars.length() && chars.charAt(newIndex) == '\n') {
             index = newIndex;
             break;
           }
-
+          //throw flow is correct
+        default:
           if (!strictBackSlash) {
             break;
           }
