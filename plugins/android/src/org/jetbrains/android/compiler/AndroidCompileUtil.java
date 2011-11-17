@@ -369,11 +369,11 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  private static ContentEntry findContentEntryForRoot(@NotNull ModifiableRootModel model, @NotNull VirtualFile root) {
+  public static ContentEntry findContentEntryForRoot(@NotNull ModifiableRootModel model, @NotNull VirtualFile root) {
     ContentEntry contentEntry = null;
     for (ContentEntry candidate : model.getContentEntries()) {
       VirtualFile contentRoot = candidate.getFile();
-      if (contentRoot != null && VfsUtil.isAncestor(contentRoot, root, false)) {
+      if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, root, false)) {
         contentEntry = candidate;
       }
     }
