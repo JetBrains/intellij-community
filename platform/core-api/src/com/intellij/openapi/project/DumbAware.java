@@ -29,6 +29,7 @@ package com.intellij.openapi.project;
  * <li> {@link com.intellij.codeHighlighting.TextEditorHighlightingPass}es
  * <li> {@link com.intellij.codeInspection.LocalInspectionTool}s
  * <li> {@link com.intellij.openapi.wm.ToolWindowFactory}s
+ * <li> {@link com.intellij.lang.injection.MultiHostInjector}s
  *
  * @see com.intellij.openapi.project.DumbService
  * @see com.intellij.openapi.project.DumbAwareRunnable
