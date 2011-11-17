@@ -98,10 +98,14 @@ public class XDebuggerTestUtil {
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression) throws InterruptedException {
+    return evaluate(session, expression, TIMEOUT);
+  }
+
+  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout) throws InterruptedException {
     XDebuggerEvaluator evaluator = session.getCurrentStackFrame().getEvaluator();
     XTestEvaluationCallback callback = new XTestEvaluationCallback();
     evaluator.evaluate(expression, callback, session.getCurrentPosition());
-    return callback.waitFor(TIMEOUT);
+    return callback.waitFor(timeout);
   }
 
   public static void waitForSwing() throws InterruptedException, InvocationTargetException {
