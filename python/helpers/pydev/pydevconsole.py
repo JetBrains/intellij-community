@@ -260,6 +260,8 @@ def StartServer(host, port, client_port):
     server_thread.setDaemon(True)
     server_thread.start()
 
+    if not IPYTHON:
+        sys.stderr.write('PyDev console: starting.\n')
     process_exec_queue(interpreter)
 
 
