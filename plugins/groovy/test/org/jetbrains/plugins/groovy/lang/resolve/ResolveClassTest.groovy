@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 
 /**
  * @author ven
@@ -78,18 +77,12 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   }
 
   public void testGrvy641() throws Exception {
-    JavaFullClassNameIndex.DEBUG = true
-    try {
-      PsiReference ref = configureByFile("grvy641/A.groovy")
-      PsiClass resolved = assertInstanceOf(ref.resolve(), PsiClass)
-      if (!"List".equals(resolved.qualifiedName)) {
-        println(myFixture.file.virtualFile.parent.children as List);
-        println JavaPsiFacade.getInstance(project).findClass("List")
-        fail(resolved.qualifiedName);
-      }
-    }
-    finally {
-      JavaFullClassNameIndex.DEBUG = false
+    PsiReference ref = configureByFile("grvy641/A.groovy")
+    PsiClass resolved = assertInstanceOf(ref.resolve(), PsiClass)
+    if (!"List".equals(resolved.qualifiedName)) {
+      println(myFixture.file.virtualFile.parent.children as List);
+      println JavaPsiFacade.getInstance(project).findClass("List")
+      fail(resolved.qualifiedName);
     }
   }
 
