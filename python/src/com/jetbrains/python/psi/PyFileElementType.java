@@ -51,7 +51,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   public ASTNode parseContents(ASTNode chameleon) {
     final FileElement node = (FileElement)chameleon;
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
-    if (PydevConsoleRunner.isInPydevConsole(node)) {
+    if (PydevConsoleRunner.isIPythonConsole(node)) {
       return parseConsoleCode(node, languageLevel);
     }
     final PsiElement psi = node.getPsi();

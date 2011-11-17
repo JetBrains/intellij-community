@@ -1,6 +1,8 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
@@ -92,8 +94,8 @@ public class PyConsoleUtil {
     return isMultilineStarts(line, DOUBLE_QUOTE_MULTILINE);
   }
 
-  public static boolean detectIPythonImported(@NotNull String text) {
-    return text.contains("<--<ipython_imported>-->");
+  public static boolean detectIPythonImported(@NotNull String text, final ConsoleViewContentType outputType) {
+    return text.contains("PyDev console: using IPython 0.1") && outputType == ConsoleViewContentType.ERROR_OUTPUT;
   }
 
   public static boolean detectSourcePrinting(@NotNull String text) {
@@ -101,11 +103,11 @@ public class PyConsoleUtil {
   }
 
   public static boolean detectIPythonStart(@NotNull String text) {
-    return text.contains("<--<ipython_output_starts>-->");
+    return text.contains("IPython-->");
   }
 
   public static boolean detectIPythonEnd(@NotNull String text) {
-    return text.contains("<--<ipython_output_ends>-->");
+    return text.contains("<--IPython");
   }
   
   public static boolean isIPythonDetected(VirtualFile file) {

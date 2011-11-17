@@ -29,7 +29,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
   protected void textAvailable(final String text, final Key attributes) {
     final String string = PyConsoleUtil.processPrompts(getConsole(), StringUtil.convertLineSeparators(text));
 
-    myConsoleView.printText(string, attributes);
+    myConsoleView.print(string, attributes);
   }
 
   @Override

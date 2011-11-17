@@ -38,7 +38,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
 
   private Project myProject;
   private PydevConsoleExecuteActionHandler myExecuteActionHandler;
-  private ConsoleSourceHighlighter mySourceHighlighter;
+  private PyConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput = false;
   private PyHighlighter myPyHighlighter;
   private EditorColorsScheme myScheme;
@@ -114,15 +114,21 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   }
 
   public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
-    printText(statement, attributes);
+    print(statement, outputTypeForAttributes(attributes));
     myExecuteActionHandler.processLine(statement, true);
   }
 
-  public void printText(String text, final Key attributes) {
-    if (PyConsoleUtil.detectIPythonImported(text)) {
-      setIPythonDetected();
-    }
-    else if (PyConsoleUtil.detectIPythonEnd(text)) {
+  public void print(String text,  @NotNull final Key attributes) {
+    print(text, outputTypeForAttributes(attributes));
+  }
+
+  public void printText(String text, final ConsoleViewContentType outputType) {
+    super.print(text, outputType);
+  }
+
+  public void print(String text, final ConsoleViewContentType outputType) {
+    detectIPython(text, outputType);
+    if (PyConsoleUtil.detectIPythonEnd(text)) {
       myIsIPythonOutput = false;
       mySourceHighlighter = null;
     }
@@ -130,17 +136,17 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
       myIsIPythonOutput = true;
     }
     else {
-      if (mySourceHighlighter == null || attributes == ProcessOutputTypes.STDERR) {
+      if (mySourceHighlighter == null || outputType == ConsoleViewContentType.ERROR_OUTPUT) {
         if (myHyperlink) {
-          printHyperlink(text, attributes);
+          printHyperlink(text, outputType);
         }
         else {
           //Print text normally with converted attributes
-          print(text, outputTypeForAttributes(attributes));
+          super.print(text, outputType);
         }
-        myHyperlink = detectHyperlink(text, attributes);
+        myHyperlink = detectHyperlink(text);
         if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
-          mySourceHighlighter = new ConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
+          mySourceHighlighter = new PyConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
         }
       }
       else {
@@ -154,6 +160,12 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     }
   }
 
+  public void detectIPython(String text, final ConsoleViewContentType outputType) {
+    if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
+      setIPythonDetected();
+    }
+  }
+
   private void setIPythonDetected() {
     VirtualFile file = getConsole().getFile().getVirtualFile();
     if (file != null) {
@@ -161,11 +173,11 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     }
   }
 
-  private boolean detectHyperlink(@NotNull String text, @NotNull Key attributes) {
+  private boolean detectHyperlink(@NotNull String text) {
     return myIsIPythonOutput && text.startsWith("File:");
   }
 
-  private void printHyperlink(@NotNull String text, @NotNull Key attributes) {
+  private void printHyperlink(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
     if (!StringUtil.isEmpty(text)) {
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(text.trim());
 
@@ -175,7 +187,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
         printHyperlink(text, hyperlink);
       }
       else {
-        print(text, outputTypeForAttributes(attributes));
+        super.print(text, contentType);
       }
     }
   }

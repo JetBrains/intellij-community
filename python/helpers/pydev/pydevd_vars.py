@@ -7,6 +7,7 @@ from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 from code import compile_command
 from code import InteractiveInterpreter
+from console import pydevconsole
 
 try:
     from StringIO import StringIO
@@ -464,6 +465,9 @@ def consoleExec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
+    if pydevconsole.IPYTHON:
+        return pydevconsole.exec_expression(expression, updated_globals, frame.f_locals)
+
     interpreter = ConsoleWriter()
 
     try:
@@ -477,7 +481,8 @@ def consoleExec(thread_id, frame_id, expression):
         # Case 2
         return True
 
-    # Case 3
+    #Case 3
+
     try:
         Exec(code, updated_globals, frame.f_locals)
 
