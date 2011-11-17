@@ -544,5 +544,15 @@ public class ArtifactUtil {
     }
     return modules;
   }
+
+  public static List<Artifact> getArtifactWithOutputPaths(Project project) {
+    final List<Artifact> result = new ArrayList<Artifact>();
+    for (Artifact artifact : ArtifactManager.getInstance(project).getSortedArtifacts()) {
+      if (!StringUtil.isEmpty(artifact.getOutputPath())) {
+        result.add(artifact);
+      }
+    }
+    return result;
+  }
 }
 
