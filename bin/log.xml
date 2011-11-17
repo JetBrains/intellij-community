@@ -52,14 +52,14 @@
     </layout>
   </appender>
 
-  <category name="#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator">
+  <!-- <category name="#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier">
   <level value="DEBUG"/>
   <appender-ref ref="FILE"/>
   </category>
-  <category name="#org.jetbrains.idea.svn.history.FirstInBranch">
+  <category name="#com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase">
   <level value="DEBUG"/>
   <appender-ref ref="FILE"/>
-  </category>
+  </category> -->
 
   <root>
     <priority value="INFO"/>
