@@ -15,10 +15,6 @@
  */
 package org.intellij.plugins.intelliLang;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
@@ -27,6 +23,7 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
@@ -44,6 +41,7 @@ import com.intellij.util.containers.Convertor;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
@@ -191,7 +189,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
 
   public void loadState(final Element element) {
     final THashMap<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
-    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
+    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       supports.put(support.getId(), support);
     }
     loadStateOld(element, supports.get(LanguageInjectionSupport.XML_SUPPORT_ID), supports.get(LanguageInjectionSupport.JAVA_SUPPORT_ID));
@@ -238,27 +236,15 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
 
   private static List<BaseInjection> loadDefaultInjections() {
     final ArrayList<Configuration> cfgList = new ArrayList<Configuration>();
-    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-      final String config = support.getDefaultConfigUrl();
-      final URL url = config == null? null : support.getClass().getResource(config);
-      if (url != null) {
-        try {
-          cfgList.add(load(url.openStream()));
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-      }
-    }
     final THashSet<Object> visited = new THashSet<Object>();
-    for (IdeaPluginDescriptor pluginDescriptor : PluginManager.getPlugins()) {
-      if (pluginDescriptor instanceof IdeaPluginDescriptorImpl && !((IdeaPluginDescriptorImpl)pluginDescriptor).isEnabled()) continue;
-      final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
-      if (!visited.add(loader)) continue;
-      if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty()) continue;
+    for (LanguageInjectionConfigBean configBean : Extensions.getExtensions(LanguageInjectionSupport.CONFIG_EP_NAME)) {
+      PluginDescriptor descriptor = configBean.getPluginDescriptor();
+      final ClassLoader loader = descriptor.getPluginClassLoader();
       try {
-        final Enumeration<URL> enumeration = loader.getResources("META-INF/languageInjections.xml");
-        if (enumeration == null) continue;
+        final Enumeration<URL> enumeration = loader.getResources(configBean.getConfigUrl());
+        if (enumeration == null || !enumeration.hasMoreElements()) {
+          LOG.warn(descriptor.getPluginId() +": " + configBean.getConfigUrl() + " was not found");
+        }
         while (enumeration.hasMoreElements()) {
           URL url = enumeration.nextElement();
           if (!visited.add(url.getFile())) continue; // for DEBUG mode

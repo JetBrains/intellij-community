@@ -3,8 +3,8 @@
 <idea-plugin version="2">
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">
-    <languageSupport implementation="com.intellij.plugins.intelliLang.inject.JSLanguageInjectionSupport"
-                     config="/resources/jsInjections.xml"/>
+    <languageSupport implementation="com.intellij.plugins.intelliLang.inject.JSLanguageInjectionSupport"/>
+    <injectionConfig config="resources/jsInjections.xml"/>
   </extensions>
 
 </idea-plugin>

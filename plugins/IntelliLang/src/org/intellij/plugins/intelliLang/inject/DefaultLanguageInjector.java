@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.util.ArrayUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
 
   public DefaultLanguageInjector(Configuration configuration) {
     myInjectionConfiguration = configuration;
-    mySupports = InjectorUtils.getActiveInjectionSupports();
+    mySupports = ArrayUtil.toObjectArray(InjectorUtils.getActiveInjectionSupports(), LanguageInjectionSupport.class);
   }
 
   @NotNull
@@ -62,6 +63,9 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
           for (TextRange range : injection.getInjectedArea(host)) {
             list.add(Trinity.create((PsiLanguageInjectionHost)host, injectedLanguage, range));
           }
+          //if (host.getChildren().length > 0) {
+          //  host.putUserData(LanguageInjectionSupport.HAS_UNPARSABLE_FRAGMENTS, Boolean.TRUE);
+          //}
           InjectorUtils.registerInjection(language, list, host.getContainingFile(), registrar);
           InjectorUtils.registerSupport(support, true, registrar);
           break;
