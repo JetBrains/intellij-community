@@ -33,7 +33,8 @@ public class CommonSourceRootDetectionUtil {
   @Nullable
   public static Pair<File,String> suggestRootForFileWithPackageStatement(File file,
                                                                          File topmostPossibleRoot,
-                                                                         NullableFunction<CharSequence, String> packageNameFetcher) {
+                                                                         NullableFunction<CharSequence, String> packageNameFetcher,
+                                                                         boolean packagePrefixSupported) {
     if (!file.isFile()) return null;
 
     final CharSequence chars;
@@ -54,7 +55,11 @@ public class CommonSourceRootDetectionUtil {
         String dirName = root.getName();
         final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
         if (!equalsToToken || root.equals(topmostPossibleRoot)) {
-          return Pair.create(root, packageName.substring(0, index));
+          String packagePrefix = packageName.substring(0, index);
+          if (!packagePrefixSupported && packagePrefix.length() > 0) {
+            return null;
+          }
+          return Pair.create(root, packagePrefix);
         }
         String parent = root.getParent();
         if (parent == null) {
