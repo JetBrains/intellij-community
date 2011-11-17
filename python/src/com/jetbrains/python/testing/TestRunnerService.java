@@ -102,4 +102,13 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
   public Set getSdks() {
     return PROCESSED_SDK;
   }
+
+  public void testInstalled(boolean installed, String sdkHome, String name) {
+    if (name.equals("nosetest"))
+      noseTestInstalled(installed, sdkHome);
+    else if (name.equals("pytest"))
+      pyTestInstalled(installed, sdkHome);
+    else if (name.equals("attest"))
+      atTestInstalled(installed, sdkHome);
+  }
 }
