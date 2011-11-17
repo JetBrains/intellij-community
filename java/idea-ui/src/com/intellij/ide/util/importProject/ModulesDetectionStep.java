@@ -19,7 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
-import com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
@@ -35,7 +35,7 @@ import java.util.*;
  *         Date: Jul 18, 2007
  */
 public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDescriptor>> {
-  private final JavaProjectStructureDetector myDetector;
+  private final ProjectStructureDetector myDetector;
   private final ProjectFromSourcesBuilder myBuilder;
   private final ProjectDescriptor myProjectDescriptor;
   private final ModuleInsight myInsight;
@@ -43,7 +43,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   private final String myHelpId;
   private ModulesLayoutPanel myModulesLayoutPanel;
 
-  public ModulesDetectionStep(JavaProjectStructureDetector detector,
+  public ModulesDetectionStep(ProjectStructureDetector detector,
                               ProjectFromSourcesBuilder builder,
                               ProjectDescriptor projectDescriptor, final ModuleInsight insight,
                               Icon icon,

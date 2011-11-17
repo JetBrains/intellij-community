@@ -25,6 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,6 +218,8 @@ public abstract class ModuleInsight {
       myProgress.popState();
     }
   }
+
+  public abstract boolean isApplicableRoot(final DetectedProjectRoot root);
 
   private static String suggestUniqueName(Set<String> existingNames, String baseName) {
     String name = baseName;
@@ -416,7 +419,7 @@ public abstract class ModuleInsight {
     myProgress.setText2(file.getName());
     try {
       final char[] chars = FileUtil.loadFileText(file);
-      scanSourceFileForImportedPackages(chars, new Consumer<String>() {
+      scanSourceFileForImportedPackages(new CharArrayCharSequence(chars), new Consumer<String>() {
         public void consume(final String s) {
           usedPackages.add(myInterner.intern(s));
         }
@@ -427,7 +430,7 @@ public abstract class ModuleInsight {
     }
   }
 
-  protected abstract void scanSourceFileForImportedPackages(final char[] chars, Consumer<String> result);
+  protected abstract void scanSourceFileForImportedPackages(final CharSequence chars, Consumer<String> result);
 
   private void scanRootForLibraries(File fromRoot) {
     if (myIgnoredNames.contains(fromRoot.getName())) {

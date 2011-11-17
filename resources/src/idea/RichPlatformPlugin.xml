@@ -333,6 +333,10 @@
                         serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
     <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettingsImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.GlobalProjectStructureProblemsSettings"/>
   </extensions>
 
   <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/root/*)"/>
