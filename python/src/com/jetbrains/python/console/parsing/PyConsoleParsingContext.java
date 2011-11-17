@@ -1,8 +1,12 @@
 package com.jetbrains.python.console.parsing;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.ParsingScope;
@@ -17,7 +21,10 @@ public class PyConsoleParsingContext extends ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;
 
-  public PyConsoleParsingContext(final PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  public PyConsoleParsingContext(final PsiBuilder builder,
+                                 LanguageLevel languageLevel,
+                                 StatementParsing.FUTURE futureFlag,
+                                 PsiElement psi) {
     super(builder, languageLevel, futureFlag);
     stmtParser = new ConsoleStatementParsing(this, futureFlag);
     expressionParser = new ConsoleExpressionParsing(this);
@@ -34,6 +41,7 @@ public class PyConsoleParsingContext extends ParsingContext {
   }
 
   private static class ConsoleStatementParsing extends StatementParsing {
+
     protected ConsoleStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
       super(context, futureFlag);
     }
@@ -69,7 +77,6 @@ public class PyConsoleParsingContext extends ParsingContext {
   }
 
   private static class ConsoleExpressionParsing extends ExpressionParsing {
-
     public ConsoleExpressionParsing(ParsingContext context) {
       super(context);
     }

@@ -12,7 +12,7 @@ import com.jetbrains.python.highlighting.PyHighlighter;
 /**
 * @author traff
 */
-class ConsoleSourceHighlighter {
+class PyConsoleSourceHighlighter {
   private final Lexer myLexer;
 
   private final EditorColorsScheme myScheme;
@@ -21,7 +21,7 @@ class ConsoleSourceHighlighter {
   private int myLexerState;
   private PythonConsoleView myPythonConsoleView;
 
-  ConsoleSourceHighlighter(PythonConsoleView pythonConsoleView, EditorColorsScheme scheme, PyHighlighter pyHighlighter) {
+  PyConsoleSourceHighlighter(PythonConsoleView pythonConsoleView, EditorColorsScheme scheme, PyHighlighter pyHighlighter) {
     myPythonConsoleView = pythonConsoleView;
     myScheme = scheme;
     myPyHighlighter = pyHighlighter;
@@ -32,7 +32,7 @@ class ConsoleSourceHighlighter {
     myLexer.start(text, 0, text.length(), getLexerState());
     while (hasNext()) {
       Pair<String, ConsoleViewContentType> pair = next();
-      myPythonConsoleView.print(pair.first, pair.second);
+      myPythonConsoleView.printText(pair.first, pair.second);
     }
   }
 

@@ -51,7 +51,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   public ASTNode parseContents(ASTNode chameleon) {
     final FileElement node = (FileElement)chameleon;
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
-    if (PydevConsoleRunner.isInPydevConsole(node)) {
+    if (PydevConsoleRunner.isIPythonConsole(node)) {
       return parseConsoleCode(node, languageLevel);
     }
     final PsiElement psi = node.getPsi();
@@ -85,7 +85,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       final PyParser parser = new PyParser() {
         @Override
         protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
-          return new PyConsoleParsingContext(builder, languageLevel, futureFlag);
+          return new PyConsoleParsingContext(builder, languageLevel, futureFlag, psi);
         }
       };
       return parser.parse(this, builder).getFirstChildNode();
