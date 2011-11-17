@@ -52,6 +52,15 @@
     </layout>
   </appender>
 
+  <category name="#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator">
+  <level value="DEBUG"/>
+  <appender-ref ref="FILE"/>
+  </category>
+  <category name="#org.jetbrains.idea.svn.history.FirstInBranch">
+  <level value="DEBUG"/>
+  <appender-ref ref="FILE"/>
+  </category>
+
   <root>
     <priority value="INFO"/>
     <appender-ref ref="DIALOG"/>

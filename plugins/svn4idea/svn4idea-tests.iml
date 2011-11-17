@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/../../../out/classes/production/svn4idea-tests17" />
+    <output-test url="file://$MODULE_DIR$/../../../out/classes/test/svn4idea-tests17" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/testSource">
       <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="true" />

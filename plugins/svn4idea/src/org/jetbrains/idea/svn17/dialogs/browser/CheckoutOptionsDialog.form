@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn17.dialogs.browser.CheckoutOptionsDialog">
+  <grid id="c0dc8" binding="myTopPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="10" y="10" width="437" height="149"/>
+    </constraints>
+    <properties/>
+    <border type="none">
+      <size top="8" left="8" bottom="8" right="8"/>
+    </border>
+    <children>
+      <grid id="a4d4a" layout-manager="GridBagLayout">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="ae8b2" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkout.options.checkout.label"/>
+            </properties>
+          </component>
+          <component id="ce44e" class="javax.swing.JLabel" binding="myUrlLabel">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <font style="1"/>
+            </properties>
+          </component>
+          <component id="1f691" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkout.options.destination.label"/>
+            </properties>
+          </component>
+          <component id="a1fdf" class="javax.swing.JCheckBox" binding="myExternalsCheckbox">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkout.options.externals.label"/>
+            </properties>
+          </component>
+          <component id="c374f" class="javax.swing.JSeparator">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties/>
+          </component>
+          <nested-form id="20d59" form-file="org/jetbrains/idea/svn17/revision/SvnSelectRevisionPanel.form" binding="svnSelectRevisionPanel">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+            </constraints>
+          </nested-form>
+          <component id="13941" class="org.jetbrains.idea.svn17.DepthCombo" binding="myDepthCombo" custom-create="true">
+            <constraints>
+              <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="63e0b" class="javax.swing.JLabel" binding="myDepthLabel">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.text"/>
+              <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.description"/>
+            </properties>
+          </component>
+          <scrollpane id="cd7a3" class="com.intellij.ui.components.JBScrollPane">
+            <constraints>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="53228" class="com.intellij.ui.components.JBList" binding="myLocalTargetList">
+                <constraints/>
+                <properties>
+                  <selectionMode value="0"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
+          <component id="2c58d" class="com.intellij.openapi.ui.FixedSizeButton" binding="mySelectTarget" custom-create="true">
+            <constraints>
+              <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

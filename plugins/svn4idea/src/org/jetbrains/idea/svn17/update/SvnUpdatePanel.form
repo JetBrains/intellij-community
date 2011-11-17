@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn17.update.SvnUpdatePanel">
+  <grid id="56dff" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="19" y="24" width="434" height="132"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <vspacer id="d36da">
+        <constraints>
+          <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <xy id="9013a" binding="myConfigureRootsPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </xy>
+      <component id="3f0c3" class="org.jetbrains.idea.svn17.DepthCombo" binding="myDepthCombo" custom-create="true">
+        <constraints>
+          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="e151" class="javax.swing.JLabel" binding="myDepthLabel">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.text"/>
+          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.description"/>
+        </properties>
+      </component>
+      <component id="1abb2" class="javax.swing.JCheckBox" binding="myForceBox">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="&amp;Force update"/>
+        </properties>
+      </component>
+      <component id="e86c1" class="javax.swing.JCheckBox" binding="myLockOnDemand" custom-create="true">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="action.Subversion.update.use.locks.on.demand.text"/>
+          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="action.Subversion.update.use.locks.on.demand.description"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

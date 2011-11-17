@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/../../../out/classes/production/svn4idea17" />
+    <output-test url="file://$MODULE_DIR$/../../../out/classes/test/svn4idea17" />
     <exclude-output />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$">
@@ -50,6 +52,50 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/sequence-library.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/sqljet.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/httpclient-4.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/httpcomponents-client-4.0.1-src.zip!/httpcomponents-client-4.0.1/httpclient/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/httpcomponents-client-4.0.1-src.zip!/httpcomponents-client-4.0.1/httpclient/src/examples" />
+          <root url="jar://$MODULE_DIR$/lib/httpcomponents-client-4.0.1-src.zip!/httpcomponents-client-4.0.1/httpclient/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/httpcomponents-client-4.0.1-src.zip!/httpcomponents-client-4.0.1/httpmime/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/httpcomponents-client-4.0.1-src.zip!/httpcomponents-client-4.0.1/httpmime/src/examples" />
+          <root url="jar://$MODULE_DIR$/lib/httpcomponents-client-4.0.1-src.zip!/httpcomponents-client-4.0.1/httpmime/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/httpcomponents-client-4.0.1-src.zip!/httpcomponents-client-4.0.1/httpclient-benchmark/src/main/java" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/httpcore-4.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/antlr.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
