@@ -35,6 +35,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
 
