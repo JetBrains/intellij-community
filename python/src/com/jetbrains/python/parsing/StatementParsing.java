@@ -551,7 +551,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker ifPart = myBuilder.mark();
     myBuilder.advanceLexer();
     getExpressionParser().parseExpression();
-    if (checkMatches(PyTokenTypes.COLON, "colon expected")) {
+    if (expectColon()) {
       parseSuite(scope);
     }
     ifPart.done(PyElementTypes.IF_PART_IF);
@@ -559,8 +559,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     while (myBuilder.getTokenType() == elifKeyword) {
       myBuilder.advanceLexer();
       getExpressionParser().parseExpression();
-      checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(scope);
+      if (expectColon()) {
+        parseSuite(scope);
+      }
       elifPart.done(PyElementTypes.IF_PART_ELIF);
       elifPart = myBuilder.mark();
     }
@@ -568,12 +569,26 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker elsePart = myBuilder.mark();
     if (myBuilder.getTokenType() == elseKeyword) {
       myBuilder.advanceLexer();
-      checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(scope);
+      if (expectColon()) {
+        parseSuite(scope);
+      }
       elsePart.done(PyElementTypes.ELSE_PART);
     }
     else elsePart.drop();
     ifStatement.done(elementType);
+  }
+
+  private boolean expectColon() {
+    if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
+      myBuilder.advanceLexer();
+      return true;
+    }
+    final PsiBuilder.Marker marker = myBuilder.mark();
+    if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+      myBuilder.advanceLexer();
+    }
+    marker.error("colon expected");
+    return false;
   }
 
   private void parseForStatement(ParsingScope scope) {
@@ -583,8 +598,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker elsePart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       myBuilder.advanceLexer();
-      checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(scope);
+      if (expectColon()) {
+        parseSuite(scope);
+      }
       elsePart.done(PyElementTypes.ELSE_PART);
     }
     else elsePart.drop();
@@ -597,8 +613,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     getExpressionParser().parseExpression(true, true);
     checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
     getExpressionParser().parseExpression();
-    checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(scope);
+    if (expectColon()) {
+      parseSuite(scope);
+    }
     forPart.done(PyElementTypes.FOR_PART);
   }
 
@@ -610,14 +627,16 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     if (!getExpressionParser().parseSingleExpression(false)) {
       myBuilder.error("expression expected");
     }
-    checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(scope);
+    if (expectColon()) {
+      parseSuite(scope);
+    }
     whilePart.done(PyElementTypes.WHILE_PART);
     final PsiBuilder.Marker elsePart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       myBuilder.advanceLexer();
-      checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(scope);
+      if (expectColon()) {
+        parseSuite(scope);
+      }
       elsePart.done(PyElementTypes.ELSE_PART);
     }
     else elsePart.drop();
@@ -629,8 +648,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker statement = myBuilder.mark();
     final PsiBuilder.Marker tryPart = myBuilder.mark();
     myBuilder.advanceLexer();
-    checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(scope);
+    if (expectColon()) {
+      parseSuite(scope);
+    }
     tryPart.done(PyElementTypes.TRY_PART);
     boolean haveExceptClause = false;
     if (myBuilder.getTokenType() == PyTokenTypes.EXCEPT_KEYWORD) {
@@ -650,15 +670,17 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
             }
           }
         }
-        checkMatches(PyTokenTypes.COLON, "colon expected");
-        parseSuite(scope);
+        if (expectColon()) {
+          parseSuite(scope);
+        }
         exceptBlock.done(PyElementTypes.EXCEPT_PART);
       }
       final PsiBuilder.Marker elsePart = myBuilder.mark();
       if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
         myBuilder.advanceLexer();
-        checkMatches(PyTokenTypes.COLON, "colon expected");
-        parseSuite(scope);
+        if (expectColon()) {
+          parseSuite(scope);
+        }
         elsePart.done(PyElementTypes.ELSE_PART);
       }
       else elsePart.drop();
@@ -666,8 +688,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker finallyPart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.FINALLY_KEYWORD) {
       myBuilder.advanceLexer();
-      checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(scope);
+      if (expectColon()) {
+        parseSuite(scope);
+      }
       finallyPart.done(PyElementTypes.FINALLY_PART);
     }
     else {
@@ -698,8 +721,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         break;
       }
     }
-    checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(scope);
+    if (expectColon()) {
+      parseSuite(scope);
+    }
     statement.done(PyElementTypes.WITH_STATEMENT);
   }
 
@@ -719,8 +743,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final PsiBuilder.Marker inheritMarker = myBuilder.mark();
       inheritMarker.done(PyElementTypes.ARGUMENT_LIST);
     }
-    checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(scope.withClass(true));
+    if (expectColon()) {
+      parseSuite(scope.withClass(true));
+    }
+    else {
+      final PsiBuilder.Marker mark = myBuilder.mark();
+      mark.done(PyElementTypes.STATEMENT_LIST);
+    }
     classMarker.done(PyElementTypes.CLASS_DECLARATION);
   }
 
