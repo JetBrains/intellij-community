@@ -1,8 +1,12 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,12 +14,12 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class PyConsoleUtil {
-  public static final String ORDINARY_PROMPT =      ">>> ";
-  public static final String INPUT_PROMPT =      ">? ";
-  public static final String INDENT_PROMPT =        "... ";
-  static final String HELP_PROMPT =                 "help> ";
-  public static final String EXECUTING_PROMPT =      "";
-  
+  public static final String ORDINARY_PROMPT = ">>> ";
+  public static final String INPUT_PROMPT = ">? ";
+  public static final String INDENT_PROMPT = "... ";
+  static final String HELP_PROMPT = "help> ";
+  public static final String EXECUTING_PROMPT = "";
+
   private static final String IPYTHON_PAGING_PROMPT = "---Return to continue, q to quit---";
 
   static final String[] PROMPTS = new String[]{
@@ -26,6 +30,7 @@ public class PyConsoleUtil {
   };
   public static final String DOUBLE_QUOTE_MULTILINE = "\"\"\"";
   public static final String SINGLE_QUOTE_MULTILINE = "'''";
+  static final Key<Boolean> IPYTHON = Key.create("ipython");
 
   private PyConsoleUtil() {
   }
@@ -89,16 +94,27 @@ public class PyConsoleUtil {
     return isMultilineStarts(line, DOUBLE_QUOTE_MULTILINE);
   }
 
+  public static boolean detectIPythonImported(@NotNull String text, final ConsoleViewContentType outputType) {
+    return text.contains("PyDev console: using IPython 0.1") && outputType == ConsoleViewContentType.ERROR_OUTPUT;
+  }
+
   public static boolean detectSourcePrinting(@NotNull String text) {
     return text.contains("Source:");
   }
 
   public static boolean detectIPythonStart(@NotNull String text) {
-    return text.contains("<--<ipython_output_starts>-->");
+    return text.contains("IPython-->");
   }
 
   public static boolean detectIPythonEnd(@NotNull String text) {
-    return text.contains("<--<ipython_output_ends>-->");
+    return text.contains("<--IPython");
   }
-
+  
+  public static boolean isIPythonDetected(VirtualFile file) {
+    if (file == null) {
+      return false;
+    }
+    Boolean detected = file.getUserData(IPYTHON);
+    return detected != null && detected.booleanValue();
+  }
 }

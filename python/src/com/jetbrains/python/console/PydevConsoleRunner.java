@@ -33,7 +33,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.net.NetUtils;
@@ -42,6 +44,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -241,7 +244,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           myProcessHandler.addProcessListener(new ProcessAdapter() {
             @Override
             public void onTextAvailable(ProcessEvent event, Key outputType) {
-              consoleView.printText(event.getText(), outputType);
+              consoleView.print(event.getText(), outputType);
             }
           });
 
@@ -258,7 +261,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       });
     }
     else {
-      getConsoleView().printText("Couldn't connect to console process.", ProcessOutputTypes.STDERR);
+      getConsoleView().print("Couldn't connect to console process.", ProcessOutputTypes.STDERR);
       myProcessHandler.destroyProcess();
       finishConsole();
     }
@@ -269,7 +272,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       @Override
       public void actionPerformed(final AnActionEvent e) {
         if (myPydevConsoleCommunication.isExecuting()) {
-          getConsoleView().printText("^C", ProcessOutputTypes.SYSTEM);
+          getConsoleView().print("^C", ProcessOutputTypes.SYSTEM);
         }
         myPydevConsoleCommunication.interrupt();
       }
@@ -417,18 +420,24 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return file.getName().contains("Python Console");
   }
 
-  public static boolean isInPydevConsole(final FileElement element) {
+  public static boolean isIPythonConsole(final FileElement element) {
     //noinspection ConstantConditions
     if (element.getPsi() == null || element.getPsi().getContainingFile() == null) {
       return false;
     }
-    //noinspection ConstantConditions
-    if ("Python Console".equals(element.getPsi().getContainingFile().getName())) {
-      return true;
-    }
-    return false;
+
+    VirtualFile file = getConsoleFile(element.getPsi().getContainingFile());
+
+    return PyConsoleUtil.isIPythonDetected(file);
   }
 
+  private static VirtualFile getConsoleFile(PsiFile psiFile) {
+    VirtualFile file = psiFile.getViewProvider().getVirtualFile();
+    if (file instanceof LightVirtualFile) {
+      file = ((LightVirtualFile)file).getOriginalFile();
+    }
+    return file;
+  }
 
   @Nullable
   public static ConsoleCommunication getConsoleCommunication(final PsiElement element) {

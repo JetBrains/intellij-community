@@ -3,11 +3,13 @@ package com.jetbrains.python.testing;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * User: catherine
@@ -26,13 +28,13 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
   public Map <String, Boolean> SDK_TO_NOSETEST;
   public Map <String, Boolean> SDK_TO_ATTEST;
 
-  public List <String> PROCESSED_SDK;
+  public Set<String> PROCESSED_SDK;
 
   public TestRunnerService() {
     SDK_TO_PYTEST = new HashMap<String, Boolean>();
     SDK_TO_NOSETEST = new HashMap<String, Boolean>();
     SDK_TO_ATTEST = new HashMap<String, Boolean>();
-    PROCESSED_SDK = new ArrayList<String>();
+    PROCESSED_SDK = new HashSet<String>();
     myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
     myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME);
     myConfigurations.add(PythonTestConfigurationsModel.PY_TEST_NAME);
@@ -97,7 +99,7 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
     PROCESSED_SDK.add(sdkHome);
   }
 
-  public List getSdks() {
+  public Set getSdks() {
     return PROCESSED_SDK;
   }
 }

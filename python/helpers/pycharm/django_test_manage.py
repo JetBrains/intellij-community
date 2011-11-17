@@ -38,8 +38,11 @@ class PycharmTestCommand(Command):
         # tests should always be up to date with the most recent model structure
         management._commands['syncdb'] = 'django.core'
     else:
+      try:
         from south.management.commands.test import MigrateAndSyncCommand
         management._commands['syncdb'] = MigrateAndSyncCommand()
+      except ImportError:
+        management._commands['syncdb'] = 'django.core'
 
     verbosity = int(options.get('verbosity', 1))
     interactive = options.get('interactive', True)
