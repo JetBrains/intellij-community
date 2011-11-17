@@ -75,7 +75,7 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
     TextFieldWithBrowseButton result = new TextFieldWithBrowseButton();
     String title = GradleBundle.message("gradle.import.structure.settings.title.module.config.location");
     result.addBrowseFolderListener(title, "", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    builder.add("gradle.import.structure.settings.title.module.config.location", result);
+    builder.add("gradle.import.structure.settings.label.module.config.location", result);
     return result;
   }
   
