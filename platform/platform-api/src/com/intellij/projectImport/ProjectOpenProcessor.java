@@ -37,6 +37,11 @@ public abstract class ProjectOpenProcessor {
   @Nullable
   public abstract Icon getIcon();
 
+  @Nullable
+  public Icon getIcon(final VirtualFile file) {
+    return getIcon();
+  }
+
   public abstract boolean canOpenProject(VirtualFile file);
 
   public boolean isProjectFile(VirtualFile file) {
