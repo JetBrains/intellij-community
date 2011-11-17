@@ -1,8 +1,12 @@
 package com.jetbrains.python.console.parsing;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.ParsingScope;
@@ -16,11 +20,24 @@ import org.jetbrains.annotations.Nullable;
 public class PyConsoleParsingContext extends ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;
+  private final VirtualFile myConsoleFile;
 
-  public PyConsoleParsingContext(final PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  public PyConsoleParsingContext(final PsiBuilder builder,
+                                 LanguageLevel languageLevel,
+                                 StatementParsing.FUTURE futureFlag,
+                                 PsiElement psi) {
     super(builder, languageLevel, futureFlag);
-    stmtParser = new ConsoleStatementParsing(this, futureFlag);
-    expressionParser = new ConsoleExpressionParsing(this);
+    myConsoleFile = getConsoleFile(psi);
+    stmtParser = new ConsoleStatementParsing(this, futureFlag, myConsoleFile);
+    expressionParser = new ConsoleExpressionParsing(this, myConsoleFile);
+  }
+
+  private static VirtualFile getConsoleFile(PsiElement psi) {
+    VirtualFile file = psi.getContainingFile().getViewProvider().getVirtualFile();
+    if (file instanceof LightVirtualFile) {
+      file = ((LightVirtualFile)file).getOriginalFile();
+    }
+    return file;
   }
 
   @Override
@@ -34,72 +51,87 @@ public class PyConsoleParsingContext extends ParsingContext {
   }
 
   private static class ConsoleStatementParsing extends StatementParsing {
-    protected ConsoleStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
+    private final VirtualFile myConsoleFile;
+
+    protected ConsoleStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag, VirtualFile file) {
       super(context, futureFlag);
+      myConsoleFile = file;
     }
 
     protected void checkEndOfStatement(ParsingScope scope) {
-      PsiBuilder builder = myContext.getBuilder();
-      if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-        builder.advanceLexer();
-      }
-      else if (builder.getTokenType() == PyTokenTypes.SEMICOLON) {
-        if (!scope.isSuite()) {
-          builder.advanceLexer();
-          if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-            builder.advanceLexer();
-          }
-        }
-      }
-      else if (builder.eof()) {
-        return;
+      if (!PyConsoleUtil.isIPythonDetected(myConsoleFile)) {
+        super.checkEndOfStatement(scope);
       }
       else {
-        if (builder.getTokenType() == PyConsoleTokenTypes.PLING || builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+        PsiBuilder builder = myContext.getBuilder();
+        if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
           builder.advanceLexer();
-          if (builder.getTokenType() == PyConsoleTokenTypes.PLING || builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+        }
+        else if (builder.getTokenType() == PyTokenTypes.SEMICOLON) {
+          if (!scope.isSuite()) {
             builder.advanceLexer();
+            if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+              builder.advanceLexer();
+            }
           }
-
+        }
+        else if (builder.eof()) {
           return;
         }
-        builder.error("end of statement expected");
+        else {
+          if (builder.getTokenType() == PyConsoleTokenTypes.PLING || builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+            builder.advanceLexer();
+            if (builder.getTokenType() == PyConsoleTokenTypes.PLING || builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+              builder.advanceLexer();
+            }
+
+            return;
+          }
+          builder.error("end of statement expected");
+        }
       }
     }
   }
 
   private static class ConsoleExpressionParsing extends ExpressionParsing {
+    private final VirtualFile myConsoleFile;
 
-    public ConsoleExpressionParsing(ParsingContext context) {
+    public ConsoleExpressionParsing(ParsingContext context, VirtualFile file) {
       super(context);
+      myConsoleFile = file;
     }
 
     @Override
     public boolean parseExpressionOptional() {
-      if (myBuilder.getTokenType() == PyTokenTypes.PERC || myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
-        PsiBuilder.Marker expr = myBuilder.mark();
-        PsiBuilder.Marker command = myBuilder.mark();
-
-        myBuilder.advanceLexer();
-
-        if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-          myBuilder.advanceLexer();
-          command.done(PyElementTypes.REFERENCE_EXPRESSION);
-        }
-        else {
-          expr.drop();
-          command.drop();
-          myBuilder.error("Identifier expected.");
-          return false;
-        }
-        while (myBuilder.getTokenType() != null) {
-          myBuilder.advanceLexer();
-        }
-        expr.done(PyElementTypes.EMPTY_EXPRESSION);
-        return true;
+      if (!PyConsoleUtil.isIPythonDetected(myConsoleFile)) {
+        return super.parseExpressionOptional();
       }
       else {
-        return super.parseExpressionOptional();
+        if (myBuilder.getTokenType() == PyTokenTypes.PERC || myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
+          PsiBuilder.Marker expr = myBuilder.mark();
+          PsiBuilder.Marker command = myBuilder.mark();
+
+          myBuilder.advanceLexer();
+
+          if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
+            myBuilder.advanceLexer();
+            command.done(PyElementTypes.REFERENCE_EXPRESSION);
+          }
+          else {
+            expr.drop();
+            command.drop();
+            myBuilder.error("Identifier expected.");
+            return false;
+          }
+          while (myBuilder.getTokenType() != null) {
+            myBuilder.advanceLexer();
+          }
+          expr.done(PyElementTypes.EMPTY_EXPRESSION);
+          return true;
+        }
+        else {
+          return super.parseExpressionOptional();
+        }
       }
     }
   }

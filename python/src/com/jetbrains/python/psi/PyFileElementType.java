@@ -85,7 +85,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       final PyParser parser = new PyParser() {
         @Override
         protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
-          return new PyConsoleParsingContext(builder, languageLevel, futureFlag);
+          return new PyConsoleParsingContext(builder, languageLevel, futureFlag, psi);
         }
       };
       return parser.parse(this, builder).getFirstChildNode();

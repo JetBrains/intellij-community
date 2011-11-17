@@ -42,6 +42,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -428,7 +429,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
     return false;
   }
-
 
   @Nullable
   public static ConsoleCommunication getConsoleCommunication(final PsiElement element) {

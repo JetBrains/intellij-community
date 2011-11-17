@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
+
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
 
   private Project myProject;
@@ -50,7 +51,8 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     setUpdateFoldingsEnabled(false);
     myProject = project;
     //noinspection ConstantConditions
-    myPyHighlighter = new PyHighlighter(sdk != null && sdk.getVersionString() != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
+    myPyHighlighter = new PyHighlighter(
+      sdk != null && sdk.getVersionString() != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
     myScheme = getPythonLanguageConsole().getConsoleEditor().getColorsScheme();
   }
 
@@ -68,6 +70,10 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
 
   private PythonLanguageConsole getPythonLanguageConsole() {
     return ((PythonLanguageConsole)myConsole);
+  }
+
+  public LanguageConsoleImpl getLanguageConsole() {
+    return myConsole;
   }
 
   @Override
@@ -113,7 +119,10 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   }
 
   public void printText(String text, final Key attributes) {
-    if (PyConsoleUtil.detectIPythonEnd(text)) {
+    if (PyConsoleUtil.detectIPythonImported(text)) {
+      setIPythonDetected();
+    }
+    else if (PyConsoleUtil.detectIPythonEnd(text)) {
       myIsIPythonOutput = false;
       mySourceHighlighter = null;
     }
@@ -142,6 +151,13 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
           LOG.error(e);
         }
       }
+    }
+  }
+
+  private void setIPythonDetected() {
+    VirtualFile file = getConsole().getFile().getVirtualFile();
+    if (file != null) {
+      file.putUserData(PyConsoleUtil.IPYTHON, Boolean.TRUE);
     }
   }
 
