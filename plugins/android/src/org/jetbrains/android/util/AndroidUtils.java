@@ -807,14 +807,19 @@ public class AndroidUtils {
     Module module = rootModel.getModule();
     final FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel model = facetManager.createModifiableModel();
-    AndroidFacet facet = facetManager.createFacet(AndroidFacet.getFacetType(), "Android", null);
-    AndroidFacetConfiguration configuration = facet.getConfiguration();
-    configuration.init(module, contentRoot);
-    if (library) {
-      configuration.LIBRARY_PROJECT = true;
+    AndroidFacet facet = model.getFacetByType(AndroidFacet.ID);
+
+    if (facet == null) {
+      facet = facetManager.createFacet(AndroidFacet.getFacetType(), "Android", null);
+      AndroidFacetConfiguration configuration = facet.getConfiguration();
+      configuration.init(module, contentRoot);
+      if (library) {
+        configuration.LIBRARY_PROJECT = true;
+      }
+      model.addFacet(facet);
     }
-    model.addFacet(facet);
     model.commit();
+
     return facet;
   }
 
@@ -966,5 +971,20 @@ public class AndroidUtils {
     return result != null 
            ? result 
            : getPropertyValue(module, DEFAULT_PROPERTIES_FILE_NAME, propertyName); 
+  }
+
+  public static void collectFiles(@NotNull VirtualFile root, @NotNull Set<VirtualFile> visited, @NotNull Set<VirtualFile> result) {
+    if (!visited.add(root)) {
+      return;
+    }
+
+    if (root.isDirectory()) {
+      for (VirtualFile child : root.getChildren()) {
+        collectFiles(child, visited, result);
+      }
+    }
+    else {
+      result.add(root);
+    }
   }
 }

@@ -78,7 +78,13 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (owner == null || !(SwingUtilities.getWindowAncestor(owner) instanceof IdeFrame)) {
+    if (owner == null) {
+      setDisabled(e);
+      return;
+    }
+
+    final Window windowAncestor = SwingUtilities.getWindowAncestor(owner);
+    if (!(windowAncestor instanceof IdeFrame) || windowAncestor instanceof IdeFrame.Child) {
       setDisabled(e);
       return;
     }

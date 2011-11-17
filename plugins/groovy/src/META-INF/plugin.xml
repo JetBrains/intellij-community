@@ -1097,10 +1097,6 @@
       <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.mvc.projectView.MvcViewManager</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>
   </project-components>

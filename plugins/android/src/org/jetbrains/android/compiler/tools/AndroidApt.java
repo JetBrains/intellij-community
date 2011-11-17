@@ -56,6 +56,13 @@ public final class AndroidApt {
                                                                    @NotNull String[] resourceDirsOsPaths,
                                                                    @NotNull String[] libPackages,
                                                                    boolean isLibrary) throws IOException {
+    final File outOsDir = new File(outDirOsPath);
+    if (!outOsDir.exists()) {
+      if (!outOsDir.mkdirs()) {
+        LOG.error("Unable to create directory " + outDirOsPath);
+      }
+    }
+
     final String packageFolderOsPath = FileUtil.toSystemDependentName(outDirOsPath + '/' + aPackage.replace('.', '/'));
 
     /* We actually need to delete the manifest.java as it may become empty and

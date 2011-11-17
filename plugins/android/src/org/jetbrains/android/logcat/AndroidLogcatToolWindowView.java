@@ -118,6 +118,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     return myProject;
   }
 
+  @NotNull
   public LogConsoleBase getLogConsole() {
     return myLogConsole;
   }
@@ -336,6 +337,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
           }
         }
         if (device != null) {
+          myLogConsole.getConsole().clear();
           final Pair<Reader, Writer> pair = AndroidLogcatUtil.startLoggingThread(myProject, device, false, myLogConsole);
           if (pair != null) {
             myCurrentReader = pair.first;

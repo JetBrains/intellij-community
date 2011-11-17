@@ -624,7 +624,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
           nativeProject.add(nativeMavenProject);
         }
       });
-      myTree.resolve(project,
+      myTree.resolve(myProject, project,
                      getMavenGeneralSettings(),
                      embeddersManager,
                      NULL_MAVEN_CONSOLE,
@@ -674,7 +674,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
           nativeProject[0] = nativeMavenProject;
         }
       });
-      myTree.resolve(parentProject,
+      myTree.resolve(myProject, parentProject,
                      getMavenGeneralSettings(),
                      embeddersManager,
                      NULL_MAVEN_CONSOLE,
@@ -1854,7 +1854,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myTree.resolve(parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myTree.resolve(myProject, parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
     }
     finally {
       embeddersManager.releaseInTests();
@@ -1927,7 +1927,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myTree.resolve(myTree.getRootProjects().get(0),
+      myTree.resolve(myProject, myTree.getRootProjects().get(0),
                      getMavenGeneralSettings(),
                      embeddersManager,
                      NULL_MAVEN_CONSOLE,
@@ -2032,7 +2032,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myTree.resolve(project,
+      myTree.resolve(myProject, project,
                      getMavenGeneralSettings(),
                      embeddersManager,
                      NULL_MAVEN_CONSOLE,
@@ -2171,7 +2171,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
-      myTree.resolve(project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myTree.resolve(myProject, project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
     }
     finally {
       embeddersManager.releaseInTests();
