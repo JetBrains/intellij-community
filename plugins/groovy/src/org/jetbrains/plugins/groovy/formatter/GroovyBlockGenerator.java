@@ -496,7 +496,9 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       ASTNode childNode = children.get(i);
       if (canBeCorrectBlock(childNode)) {
         IElementType type = childNode.getElementType();
-        Indent indent = topLevel || NESTED.contains(type) || type == mIDENT ? Indent.getContinuationWithoutFirstIndent() : Indent.getNoneIndent();
+        Indent indent = topLevel || NESTED.contains(type) || type == mIDENT || TokenSets.DOTS.contains(type) ?
+                        Indent.getContinuationWithoutFirstIndent() :
+                        Indent.getNoneIndent();
         Alignment alignmentToUse = TokenSets.DOTS.contains(type) ? alignment : myInnerAlignments.get(childNode.getPsi());
         list.add(new GroovyBlock(childNode, alignmentToUse, indent, myWrap, mySettings, myGroovySettings, myInnerAlignments));
       }
