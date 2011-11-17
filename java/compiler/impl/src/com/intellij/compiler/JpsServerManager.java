@@ -318,18 +318,18 @@ public class JpsServerManager implements ApplicationComponent{
     cmdLine.addParameter("-ea");
     cmdLine.addParameter("-XX:MaxPermSize=150m");
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
+    cmdLine.addParameter("-Djava.awt.headless=true");
     // todo: get xmx value from settings
     if (SystemInfo.is64Bit) {
-      cmdLine.addParameter("-Xmx1024m");
+      cmdLine.addParameter("-Xmx700m");
     }
     else {
       cmdLine.addParameter("-Xmx512m");
     }
 
     // debugging
-    cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
-
+    //cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");
