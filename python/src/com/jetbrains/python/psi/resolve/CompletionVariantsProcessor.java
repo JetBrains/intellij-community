@@ -108,13 +108,10 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         }
       }
     }
-    if (definer instanceof PyAssignmentStatement) {
-      PyExpression value = ((PyAssignmentStatement)definer).getAssignedValue();
-      if (value != null) {
-        PyType type = value.getType(TypeEvalContext.fast());
-        if (type != null) {
-          lookupItem = lookupItem.setTypeText(type.getName());
-        }
+    if (definer instanceof PyAssignmentStatement && expr instanceof PyExpression) {
+      PyType type = ((PyExpression) expr).getType(TypeEvalContext.fast());
+      if (type != null) {
+        lookupItem = lookupItem.setTypeText(type.getName());
       }
     }
     myVariants.put(referencedName, lookupItem);

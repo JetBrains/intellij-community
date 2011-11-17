@@ -117,6 +117,17 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
       super.visitPyReferenceExpression(node);
       final PsiElement result = node.getReference().resolve();
       if (result != null && PsiTreeUtil.getParentOfType(result, ScopeOwner.class) == myScope) {
+        if (result instanceof PyParameter && myScope instanceof PyFunction) {
+          final PyFunction function = (PyFunction)myScope;
+          final PyParameter[] parameters = function.getParameterList().getParameters();
+          if (parameters.length > 0 && result == parameters[0]) {
+            final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(function);
+            if (!(flags.contains(PyFunction.Flag.STATICMETHOD))) {
+              // 'self' is not a local scope dependency
+              return;
+            }
+          }
+        }
         hasLocalScopeDependencies = true;
       }
     }
