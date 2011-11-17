@@ -342,30 +342,35 @@ public class XsltSupport {
         public static final ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> INSTANCE = new XsltSupportProvider();
 
         public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
-            if (psiFile instanceof PsiFileEx) {
-                if (((PsiFileEx)psiFile).isContentsLoaded()) {
-                    final XmlDocument doc = ((XmlFile)psiFile).getDocument();
-                    if (doc != null) {
-                        final XmlTag rootTag = doc.getRootTag();
-                        if (rootTag != null) {
-                            XmlAttribute v;
-                            XsltChecker.LanguageLevel level;
-                            if (isXsltRootTag(rootTag)) {
-                                v = rootTag.getAttribute("version");
-                                level = v != null ? XsltChecker.getLanguageLevel(v.getValue()) : XsltChecker.LanguageLevel.NONE;
-                            } else {
-                                v = rootTag.getAttribute("version", XSLT_NS);
-                                level = v != null ? XsltChecker.getLanguageLevel(v.getValue()) : XsltChecker.LanguageLevel.NONE;
-                            }
-                            return CachedValueProvider.Result.create(level, rootTag);
-                       }
-                    }
-                }
-            }
+          if (!(psiFile instanceof XmlFile)) {
+            return CachedValueProvider.Result.create(XsltChecker.LanguageLevel.NONE);
+          }
 
-            final XsltChecker xsltChecker = new XsltChecker();
-            NanoXmlUtil.parseFile(psiFile, xsltChecker);
-            return CachedValueProvider.Result.create(xsltChecker.getLanguageLevel(), psiFile);
+          final XmlFile xmlFile = (XmlFile)psiFile;
+          if (psiFile instanceof PsiFileEx) {
+            if (((PsiFileEx)psiFile).isContentsLoaded()) {
+              final XmlDocument doc = xmlFile.getDocument();
+              if (doc != null) {
+                final XmlTag rootTag = doc.getRootTag();
+                if (rootTag != null) {
+                  XmlAttribute v;
+                  XsltChecker.LanguageLevel level;
+                  if (isXsltRootTag(rootTag)) {
+                    v = rootTag.getAttribute("version");
+                    level = v != null ? XsltChecker.getLanguageLevel(v.getValue()) : XsltChecker.LanguageLevel.NONE;
+                  } else {
+                    v = rootTag.getAttribute("version", XSLT_NS);
+                    level = v != null ? XsltChecker.getLanguageLevel(v.getValue()) : XsltChecker.LanguageLevel.NONE;
+                  }
+                  return CachedValueProvider.Result.create(level, rootTag);
+                }
+              }
+            }
+          }
+
+          final XsltChecker xsltChecker = new XsltChecker();
+          NanoXmlUtil.parseFile(psiFile, xsltChecker);
+          return CachedValueProvider.Result.create(xsltChecker.getLanguageLevel(), psiFile);
         }
     }
 }

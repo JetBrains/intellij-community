@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -16,6 +15,7 @@
  */
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -174,7 +174,7 @@ public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCel
         color = getSelectionBackground();
       }
       else{
-        color = new Color(223, 223, 223);
+        color = Gray._223;
       }
     }
     else{

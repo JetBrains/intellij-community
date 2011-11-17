@@ -440,7 +440,7 @@
 
   <completion.skip implementation="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor$Skipper" id="skipLiveTemplate"/>
 
-  <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" order="first, before liveTemplates"/>
+  <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" id="commitCompletion" order="first, before liveTemplates"/>
 
   <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings" serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
   <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>

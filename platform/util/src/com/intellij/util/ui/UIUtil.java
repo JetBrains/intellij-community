@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
@@ -117,13 +118,13 @@ public class UIUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
 
-  private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
+  private static final Color UNFOCUSED_SELECTION_COLOR = Gray._212;
   private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
-  private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
+  private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
-  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new Color(190, 190, 190);
-  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new Color(240, 240, 240);
+  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = Gray._190;
+  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = Gray._240;
   public static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
 
   public static final int DEFAULT_HGAP = 10;
@@ -1093,7 +1094,7 @@ public class UIUtil {
 
   public static void drawGradientHToolbarBackground(final Graphics g, final int width, final int height) {
     final Graphics2D g2d = (Graphics2D)g;
-    final GradientPaint gradientPaint = new GradientPaint(0, 0, new Color(220, 220, 220), 0, height, new Color(200, 200, 200));
+    final GradientPaint gradientPaint = new GradientPaint(0, 0, Gray._220, 0, height, Gray._200);
     g2d.setPaint(gradientPaint);
     g2d.fillRect(0, 0, width, height);
   }
@@ -2269,11 +2270,11 @@ public class UIUtil {
 
 
     public TextPainter() {
-      this(true, new Color(220, 220, 220), 1.0f);
+      this(true, Gray._220, 1.0f);
     }
 
     public TextPainter(final float lineSpacing) {
-      this(true, new Color(220, 220, 220), lineSpacing);
+      this(true, Gray._220, lineSpacing);
     }
 
     public TextPainter(final boolean drawMacShadow, final Color shadowColor, final float lineSpacing) {

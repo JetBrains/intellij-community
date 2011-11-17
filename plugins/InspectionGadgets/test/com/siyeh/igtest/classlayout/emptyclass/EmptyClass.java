@@ -6,3 +6,4 @@ public class EmptyClass {
         System.out.println("");
     }
 }
+class MyList extends java.util.ArrayList<String> {}

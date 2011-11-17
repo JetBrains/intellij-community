@@ -1572,7 +1572,7 @@ public class GitLogUI implements Disposable {
     Color local = new Color(117,238,199);
     Color ownThisBranch = new Color(198,255,226);
     Color commonThisBranch = new Color(223,223,255);
-    Color stashed = new Color(225,225,225);
+    Color stashed = Gray._225;
     Color highlighted = new Color(210,255,233);
     //Color highlighted = new Color(204,255,230);
   }

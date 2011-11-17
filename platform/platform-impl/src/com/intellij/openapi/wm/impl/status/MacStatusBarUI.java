@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -112,16 +113,16 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
   }
 
   private static final class MacBackgroundPainter implements Border {
-    private static final Color ACTIVE_TOP_COLOR = new Color(202, 202, 202);
-    private static final Color ACTIVE_BOTTOM_COLOR = new Color(167, 167, 167);
+    private static final Color ACTIVE_TOP_COLOR = Gray._202;
+    private static final Color ACTIVE_BOTTOM_COLOR = Gray._167;
     private static final Color INACTIVE_TOP_COLOR = new Color(0xe3e3e3);
     private static final Color INACTIVE_BOTTOM_COLOR = new Color(0xcfcfcf);
 
-    private static final Color ACTIVE_BORDER_TOP_COLOR = new Color(81, 81, 81);
-    private static final Color ACTIVE_BORDER2_TOP_COLOR = new Color(227, 227, 227);
+    private static final Color ACTIVE_BORDER_TOP_COLOR = Gray._81;
+    private static final Color ACTIVE_BORDER2_TOP_COLOR = Gray._227;
 
-    private static final Color INACTIVE_BORDER_TOP_COLOR = new Color(153, 153, 153);
-    private static final Color INACTIVE_BORDER2_TOP_COLOR = new Color(251, 251, 251);
+    private static final Color INACTIVE_BORDER_TOP_COLOR = Gray._153;
+    private static final Color INACTIVE_BORDER2_TOP_COLOR = Gray._251;
 
     private static final Insets INSETS = new Insets(0, 0, 0, 0);
     

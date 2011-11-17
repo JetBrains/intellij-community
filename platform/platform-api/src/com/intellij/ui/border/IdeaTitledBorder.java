@@ -1,10 +1,13 @@
 package com.intellij.ui.border;
 
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 /**
@@ -60,8 +63,8 @@ public class IdeaTitledBorder extends TitledBorder {
     }
     //under GTK+ L&F colors setted hard
     if (UIUtil.isUnderGTKLookAndFeel()) {
-      foregroundColor = new Color(215, 215, 215);
-      backgroundColor = new Color(250, 250, 250);
+      foregroundColor = Gray._215;
+      backgroundColor = Gray._250;
     }
 
     Border lineBorder = BorderFactory.createCompoundBorder(

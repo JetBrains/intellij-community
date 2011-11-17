@@ -127,6 +127,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   };
   private PropertyChangeListener myFocusListener;
 
+  public boolean isToolWindowRegistered(String id) {
+    return myLayout.isToolWindowRegistered(id);
+  }
+
   private enum KeyState {
     waiting, pressed, released, hold
   }

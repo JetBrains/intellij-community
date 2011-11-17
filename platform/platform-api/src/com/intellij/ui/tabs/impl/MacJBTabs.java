@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.Gray;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.UIUtil;
@@ -249,7 +250,7 @@ public class MacJBTabs extends JBTabsImpl {
       //g2d.draw(shape.transformLine(rigthX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rigthX - shape.deltaX(1), bottomY));
     }
 
-    g2d.setColor(new Color(130, 130, 130));
+    g2d.setColor(Gray._130);
     g2d.draw(shape.getShape());
   }
   
@@ -338,8 +339,8 @@ public class MacJBTabs extends JBTabsImpl {
 
       if (tabColor == null) {
         g2d.setPaint(new GradientPaint((float)gradientLine.getX1(), (float)gradientLine.getY1(),
-                                       shapeInfo.fillPath.transformY1(new Color(255, 255, 255), new Color(230, 230, 230)), (float)gradientLine.getX2(),
-                                       (float)gradientLine.getY2(), shapeInfo.fillPath.transformY1(new Color(230, 230, 230), new Color(255, 255, 255))));
+                                       shapeInfo.fillPath.transformY1(Gray._255, Gray._230), (float)gradientLine.getX2(),
+                                       (float)gradientLine.getY2(), shapeInfo.fillPath.transformY1(Gray._230, Gray._255)));
       } else {
         tabColor = new Color(tabColor.getRed() * tabColor.getRed() / 275, tabColor.getGreen() * tabColor.getGreen() / 275, tabColor.getBlue() * tabColor.getBlue() / 275);
 
@@ -367,11 +368,11 @@ public class MacJBTabs extends JBTabsImpl {
     g2d.setColor(borderColor);
 
     if (!isHideTabs()) {
-      g2d.setColor(new Color(130, 130, 130));
+      g2d.setColor(Gray._130);
       g2d.draw(shapeInfo.path.getShape());
     }
 
-    paintBorder2(g2d, shapeInfo, tabColor == null ? new Color(230, 230, 230) : tabColor);
+    paintBorder2(g2d, shapeInfo, tabColor == null ? Gray._230 : tabColor);
   }
   
   protected void paintBorder2(Graphics2D g2d, ShapeInfo shape, final Color borderColor) {

@@ -17,10 +17,7 @@ package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.DelegatingProgressIndicator;
-import com.intellij.ide.util.importProject.LibrariesDetectionStep;
-import com.intellij.ide.util.importProject.ModuleInsight;
-import com.intellij.ide.util.importProject.ModulesDetectionStep;
-import com.intellij.ide.util.importProject.ProjectDescriptor;
+import com.intellij.ide.util.importProject.*;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
@@ -55,7 +52,7 @@ public class JavaProjectStructureDetector extends JavaSourceRootDetector {
                                                   ProjectDescriptor projectDescriptor,
                                                   Icon stepIcon) {
     final List<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    final ModuleInsight moduleInsight = new ModuleInsight(new DelegatingProgressIndicator(), builder.getExistingModuleNames(), builder.getExistingProjectLibraryNames());
+    final ModuleInsight moduleInsight = new JavaModuleInsight(new DelegatingProgressIndicator(), builder.getExistingModuleNames(), builder.getExistingProjectLibraryNames());
     steps.add(new LibrariesDetectionStep(this, builder, projectDescriptor, moduleInsight, stepIcon, "reference.dialogs.new.project.fromCode.page1"));
     steps.add(new ModulesDetectionStep(this, builder, projectDescriptor, moduleInsight, stepIcon, "reference.dialogs.new.project.fromCode.page2"));
     steps.add(ProjectWizardStepFactory.getInstance().createProjectJdkStep(builder.getContext()));

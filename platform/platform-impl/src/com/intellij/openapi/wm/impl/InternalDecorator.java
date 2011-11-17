@@ -35,13 +35,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.ui.Gray;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -385,7 +385,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     add(contentPane, BorderLayout.CENTER);
     setBorder(new InnerPanelBorder(myToolWindow));
     if (SystemInfo.isMac) {
-      setBackground(new SameColor(200));
+      setBackground(Gray._200);
     }
 
     // Add listeners
@@ -436,6 +436,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       UISettings settings = UISettings.getInstance();
 
       ToolWindowManagerImpl mgr = ((ToolWindowImpl)myWindow).getToolWindowManager();
+      if (!mgr.isToolWindowRegistered(((ToolWindowImpl)myWindow).getId())) return new Insets(0, 0, 0, 0);
 
       List<String> topIds = mgr.getIdsOn(ToolWindowAnchor.TOP);
       boolean topButtons = !settings.HIDE_TOOL_STRIPES && !topIds.isEmpty();

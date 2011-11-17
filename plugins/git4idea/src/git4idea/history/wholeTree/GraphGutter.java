@@ -17,6 +17,7 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.Gray;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -95,7 +96,7 @@ public class GraphGutter {
     myComponent.repaint();
   }
 
-  public static final Color OUTLINE_NOT_INCLUDED = new Color(180, 180, 180);
+  public static final Color OUTLINE_NOT_INCLUDED = Gray._180;
 
   // will lay near but not inside scroll pane
   class MyComponent extends JPanel {
@@ -357,7 +358,7 @@ public class GraphGutter {
       final Color darker = new Color(35,107,178);
       //final Color fill = new Color(176,230,255);
       final Color fill = new Color(166,220,255);
-      final Color fillNotIncluded = new Color(200,200,200);
+      final Color fillNotIncluded = Gray._200;
 
       while (idx <= lastIdx && idx < myModel.getRowCount()) {
         CommitI commitAt = myModel.getCommitAt(idx);

@@ -16,8 +16,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -29,11 +29,11 @@ import java.awt.*;
  * @author max
  */
 public class TitlePanel extends JPanel {
-  private static final Color CNT_COLOR = new SameColor(adjustBackgroundToSystem(194));
+  private static final Color CNT_COLOR = new Gray(adjustBackgroundToSystem(194));
   private static final Color BND_COLOR = CNT_COLOR;
 
-  public static final Color CNT_ACTIVE_COLOR = new SameColor(adjustBackgroundToSystem(148));
-  public static final Color BND_ACTIVE_COLOR = new SameColor(adjustBackgroundToSystem(188));
+  public static final Color CNT_ACTIVE_COLOR = new Gray(adjustBackgroundToSystem(148));
+  public static final Color BND_ACTIVE_COLOR = new Gray(adjustBackgroundToSystem(188));
 
   private static int adjustBackgroundToSystem(int mac_value) {
     if (SystemInfo.isMac) return mac_value;

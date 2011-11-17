@@ -16,6 +16,7 @@
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.ide.navigationToolbar.NavBarItem;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -37,13 +38,13 @@ public class AquaNavBarUI extends AbstractNavBarUI {
   @Override
   public void doPaintWrapperPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible) {
     if (mainToolbarVisible) {
-      g.setColor(new Color(200, 200, 200));
+      g.setColor(Gray._200);
       g.fillRect(0, 0, bounds.width, bounds.height);
     } else {
       UIUtil.drawGradientHToolbarBackground(g, bounds.width, bounds.height);
-      g.setColor(new Color(0, 0, 0, 90));
+      g.setColor(new Gray(0, 90));
       g.drawLine(0, bounds.height - 1, bounds.width, bounds.height - 1);
-      g.setColor(new Color(0, 0, 0, 20));
+      g.setColor(new Gray(0, 20));
       g.drawLine(0, bounds.height, bounds.width, bounds.height);
     }
   }
@@ -56,13 +57,13 @@ public class AquaNavBarUI extends AbstractNavBarUI {
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
     if (mainToolbarVisible) {
-      g.setPaint(new GradientPaint(0, 0, new Color(240, 240, 240), 0, r.height, new Color(210, 210, 210)));
+      g.setPaint(new GradientPaint(0, 0, Gray._240, 0, r.height, Gray._210));
       g.fillRect(0, 0, r.width, r.height);
     } else {
       UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
     }
     if (!undocked) {
-      g.setColor(new Color(255, 255, 255, 220));
+      g.setColor(new Gray(255, 220));
       g.drawLine(0, 1, r.width, 1);
     }
 

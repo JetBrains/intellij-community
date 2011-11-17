@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -50,7 +51,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   public static final Color BACKGROUND_COLOR = new Color(235, 244, 254);
   private static final Color FOREGROUND_COLOR = Color.black;
-  private static final Color GRAYED_FOREGROUND_COLOR = new Color(160, 160, 160);
+  private static final Color GRAYED_FOREGROUND_COLOR = Gray._160;
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
   private static final Color SELECTED_FOREGROUND_COLOR = Color.white;
   private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = Color.white;

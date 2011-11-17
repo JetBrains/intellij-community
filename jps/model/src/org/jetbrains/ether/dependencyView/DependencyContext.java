@@ -19,15 +19,16 @@ import java.util.Map;
  */
 class DependencyContext {
   private final static String stringTableName = "strings.tab";
-  private final PersistentStringEnumerator enumerator;
-  private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> typeMap = new HashMap<TypeRepr.AbstractType, TypeRepr.AbstractType>();
-  private final Map<UsageRepr.Usage, UsageRepr.Usage> usageMap = new HashMap<UsageRepr.Usage, UsageRepr.Usage>();
+  private final PersistentStringEnumerator myEnumerator;
+
+  private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<TypeRepr.AbstractType, TypeRepr.AbstractType>();
+  private final Map<UsageRepr.Usage, UsageRepr.Usage> myUsageMap = new HashMap<UsageRepr.Usage, UsageRepr.Usage>();
 
    UsageRepr.Usage getUsage(final UsageRepr.Usage u) {
-     final UsageRepr.Usage r = usageMap.get(u);
+     final UsageRepr.Usage r = myUsageMap.get(u);
 
      if (r == null) {
-       usageMap.put(u, u);
+       myUsageMap.put(u, u);
        return u;
      }
 
@@ -35,15 +36,20 @@ class DependencyContext {
    }
 
   TypeRepr.AbstractType getType(final TypeRepr.AbstractType t) {
-    final TypeRepr.AbstractType r = typeMap.get(t);
+    final TypeRepr.AbstractType r = myTypeMap.get(t);
 
     if (r != null) {
       return r;
     }
 
-    typeMap.put(t, t);
+    myTypeMap.put(t, t);
 
     return t;
+  }
+
+  void clearMemoryCaches() {
+    myTypeMap.clear();
+    myUsageMap.clear();
   }
 
   static File getTableFile (final File rootDir, final String name) {
@@ -55,7 +61,7 @@ class DependencyContext {
   DependencyContext(final File rootDir) throws IOException {
     final File file = getTableFile(rootDir, stringTableName);
 
-    enumerator = new PersistentStringEnumerator(file, true);
+    myEnumerator = new PersistentStringEnumerator(file, true);
   }
 
   static KeyDescriptor<S> descriptorS = new InlineKeyDescriptor<S>() {
@@ -124,12 +130,6 @@ class DependencyContext {
       }
     }
     
-    public static final RW.Reader<S> reader = new RW.Reader<S>() {
-      public S read(final BufferedReader r) {
-        return new S(RW.readInt(r));
-      }
-    };
-
     @Override
     public String toString() {
       return Integer.toString(index);
@@ -138,7 +138,7 @@ class DependencyContext {
 
   public String getValue(final S s) {
     try {
-      return enumerator.valueOf(s.index);
+      return myEnumerator.valueOf(s.index);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -147,7 +147,7 @@ class DependencyContext {
 
   public S get(final String s) {
     try {
-      final int i = s == null ? enumerator.enumerate("") : enumerator.enumerate(s);
+      final int i = s == null ? myEnumerator.enumerate("") : myEnumerator.enumerate(s);
 
       return new S(i);
     }
@@ -156,15 +156,9 @@ class DependencyContext {
     }
   }
 
-  public RW.Reader<S> reader = new RW.Reader<S>() {
-    public S read(final BufferedReader r) {
-      return new S(RW.readInt(r));
-    }
-  };
-
   public void close() {
     try {
-      enumerator.close();
+      myEnumerator.close();
     }
     catch (IOException e) {
       throw new RuntimeException(e);

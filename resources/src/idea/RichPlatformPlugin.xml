@@ -215,9 +215,6 @@
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesSettings"/>
 
-    <compiler.buildParticipantProvider implementation="com.intellij.compiler.impl.jarr.JarBuildParticipantProvider"/>
-    <java.programPatcher implementation="com.intellij.execution.impl.JarProgramPatcher"/>
-
     <daemon.highlightInfoFilter implementation="com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
 

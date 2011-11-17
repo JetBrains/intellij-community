@@ -683,7 +683,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
       catch (Exception e) {
         myBadRepositories.add(repository);
-        LOG.warn(e);
         Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
         Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
                                                   "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,

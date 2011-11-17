@@ -103,7 +103,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return new ListToolbarDecorator(list).initPositionAndBorder();
   }
 
-  public static <T> ToolbarDecorator  createDecorator(@NotNull TableView<T> table, ElementProducer<T> producer) {
+  public static <T> ToolbarDecorator  createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
     return new TableToolbarDecorator(table, producer).initPositionAndBorder();
   }
 

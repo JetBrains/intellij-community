@@ -16,13 +16,13 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.tabs.impl.singleRow.MoreIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.SameColor;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -303,7 +303,7 @@ class TabContentLayout extends ContentLayout {
       }
 
       if (!isLast) {
-        g.setColor(new SameColor(80));
+        g.setColor(Gray._80);
         g.drawLine(bounds.x + bounds.width, 2, bounds.x + bounds.width, 18);
       }
       

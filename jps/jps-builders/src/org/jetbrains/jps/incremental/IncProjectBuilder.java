@@ -175,7 +175,13 @@ public class IncProjectBuilder {
         }
         if (okToDelete) {
           context.processMessage(new ProgressMessage("Cleaning " + outputRoot.getPath()));
-          FileUtil.delete(outputRoot);
+          // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
+          final File[] children = outputRoot.listFiles();
+          if (children != null) {
+            for (File child : children) {
+              FileUtil.delete(child);
+            }
+          }
         }
         else {
           context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));

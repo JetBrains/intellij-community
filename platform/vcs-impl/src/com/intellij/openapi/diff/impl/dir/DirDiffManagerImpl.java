@@ -26,7 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.WindowListener;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -42,24 +44,42 @@ public class DirDiffManagerImpl extends DirDiffManager {
   public void showDiff(@NotNull final DiffElement dir1,
                        @NotNull final DiffElement dir2,
                        final DirDiffSettings settings,
-                       @Nullable WindowListener windowListener) {
+                       @Nullable final Runnable onWindowClose) {
     final DirDiffTableModel model = new DirDiffTableModel(myProject, dir1, dir2, settings);
     if (settings.showInFrame) {
       DirDiffFrame frame = new DirDiffFrame(myProject, model);
-      if (windowListener != null) {
-        frame.getFrame().addWindowListener(windowListener);
-      }
+      setWindowListener(onWindowClose, frame.getFrame());
       frame.show();
     } else {
-      final DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model);
+      DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model);
       if (myProject == null || myProject.isDefault()) {
         dirDiffDialog.setModal(true);
       }
-      if (windowListener != null) {
-        dirDiffDialog.getOwner().addWindowListener(windowListener);
-      }
+      setWindowListener(onWindowClose, dirDiffDialog.getOwner());
       dirDiffDialog.show();
     }
+  }
+
+  private void setWindowListener(final Runnable onWindowClose, final Window window) {
+    if (onWindowClose != null) {
+      window.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent e) {
+          onWindowClose.run();
+          window.removeWindowListener(this);
+        }
+      });
+    }
+  }
+
+  @Override
+  public void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings) {
+    showDiff(dir1, dir2, settings, null);
+  }
+
+  @Override
+  public void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2) {
+    showDiff(dir1, dir2, new DirDiffSettings());
   }
 
   @Override
@@ -73,7 +93,7 @@ public class DirDiffManagerImpl extends DirDiffManager {
     if (obj instanceof VirtualFile) {
       final VirtualFile file = (VirtualFile)obj;
       return JarFileSystem.PROTOCOL.equalsIgnoreCase(file.getExtension())
-        ? new JarFileDiffElement(file) : new VirtualFileDiffElement(file);
+             ? new JarFileDiffElement(file) : new VirtualFileDiffElement(file);
     }
     return null;
   }

@@ -20,6 +20,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.Gray;
 import com.intellij.ui.LightColors;
 
 import javax.swing.*;
@@ -28,11 +29,11 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
-  public static final Color GRADIENT_LIGHT = new Color(0xfb,0xfb,0xfb);
-  public static final Color GRADIENT_DARK = new Color(0xd7,0xd7,0xd7);
-  public static final Color GRADIENT_THUMB_BORDER = new Color(0xc9,0xc9,0xc9);
+  public static final Color GRADIENT_LIGHT = Gray._251;
+  public static final Color GRADIENT_DARK = Gray._215;
+  public static final Color GRADIENT_THUMB_BORDER = Gray._201;
   public static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
-  public static final Color TRACK_BORDER = new Color(230,230,230);
+  public static final Color TRACK_BORDER = Gray._230;
 
   private final AdjustmentListener myAdjustmentListener;
   private final MouseMotionAdapter myMouseMotionListener;
@@ -233,7 +234,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   protected Color adjustColor(Color c) {
     if (myAnimationColorShift == 0) return c;
-    return new SameColor(c.getRed() - myAnimationColorShift);
+    return new Gray(c.getRed() - myAnimationColorShift);
   }
 
   private boolean isVertical() {

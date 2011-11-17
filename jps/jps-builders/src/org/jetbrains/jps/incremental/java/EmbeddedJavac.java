@@ -17,9 +17,7 @@ import java.util.concurrent.ExecutorService;
  *         Date: 9/23/11
  */
 public class EmbeddedJavac {
-  private final JavaCompiler myCompiler;
   private final ExecutorService myTaskRunner;
-  //private final SequentialTaskExecutor mySequentialTaskExecutor;
   private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
@@ -39,8 +37,6 @@ public class EmbeddedJavac {
 
   public EmbeddedJavac(ExecutorService taskRunner) {
     myTaskRunner = taskRunner;
-    //mySequentialTaskExecutor = new SequentialTaskExecutor(taskRunner);
-    myCompiler = ToolProvider.getSystemJavaCompiler();
   }
 
   public void addClassProcessor(ClassPostProcessor processor) {
@@ -56,7 +52,8 @@ public class EmbeddedJavac {
                          CompileContext compileContext,
                          final DiagnosticOutputConsumer outConsumer,
                          final OutputFileConsumer outputSink) {
-    final FileManagerContext context = new FileManagerContext(compileContext, outConsumer, outputSink); // todo
+    final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    final FileManagerContext context = new FileManagerContext(compileContext, compiler, outConsumer, outputSink);
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
@@ -90,7 +87,7 @@ public class EmbeddedJavac {
     };
 
     try {
-      final JavaCompiler.CompilationTask task = myCompiler.getTask(
+      final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, outConsumer, filterOptionList(options), null, fileManager.toJavaFileObjects(sources)
       );
       return task.call();
@@ -129,7 +126,9 @@ public class EmbeddedJavac {
     private int myTasksInProgress = 0;
     private final Object myCounterLock = new Object();
 
-    public FileManagerContext(CompileContext compileContext, DiagnosticOutputConsumer outConsumer, OutputFileConsumer sink) {
+    public FileManagerContext(CompileContext compileContext,
+                              JavaCompiler compiler, DiagnosticOutputConsumer outConsumer,
+                              OutputFileConsumer sink) {
       myCompileContext = compileContext;
       myOutConsumer = outConsumer;
       myOutputFileSink = sink != null? sink : new OutputFileConsumer() {
@@ -153,7 +152,7 @@ public class EmbeddedJavac {
         myStdManager = stdManager;
       }
       else {
-        myStdManager = myCompiler.getStandardFileManager(outConsumer, Locale.US, null);
+        myStdManager = compiler.getStandardFileManager(outConsumer, Locale.US, null);
       }
     }
 

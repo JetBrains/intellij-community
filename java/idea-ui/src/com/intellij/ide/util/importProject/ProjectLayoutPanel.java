@@ -16,7 +16,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
@@ -263,11 +263,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           builder.append(")");
         }
 
-        final Collection<? extends JavaModuleSourceRoot> sourceRoots = moduleDescriptor.getSourceRoots();
+        final Collection<? extends DetectedProjectRoot> sourceRoots = moduleDescriptor.getSourceRoots();
         if (sourceRoots.size() > 0) {
           builder.append(" [");
-          for (Iterator<? extends JavaModuleSourceRoot> it = sourceRoots.iterator(); it.hasNext();) {
-            JavaModuleSourceRoot root = it.next();
+          for (Iterator<? extends DetectedProjectRoot> it = sourceRoots.iterator(); it.hasNext();) {
+            DetectedProjectRoot root = it.next();
             builder.append(root.getDirectory().getName());
             if (it.hasNext()) {
               builder.append(",");

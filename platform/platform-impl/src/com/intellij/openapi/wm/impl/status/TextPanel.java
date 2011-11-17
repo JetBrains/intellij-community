@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,7 @@ public class TextPanel extends JComponent {
 
     final int y = UIUtil.getStringY(s, bounds, g2);
     if (SystemInfo.isMac && myDecorate) {
-      g2.setColor(new Color(215, 215, 215));
+      g2.setColor(Gray._215);
       g2.drawString(s, x, y + 1);
     }
 

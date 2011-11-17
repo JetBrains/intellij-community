@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.ui.Gray;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +39,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @NonNls
   private static final String SAMPLE_STRING = "0000M of 0000M";
   private static final int MEGABYTE = 1024 * 1024;
-  private static final Color ourColorFree = new Color(240, 240, 240);
+  private static final Color ourColorFree = Gray._240;
   private static final Color ourColorUsed = new Color(112, 135, 214);
   private static final Color ourColorUsed2 = new Color(166, 181, 230);
 
@@ -131,13 +132,13 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int yOffset = (size.height - barHeight) / 2;
       final int xOffset = insets.left + (SystemInfo.isMac ? 0 : 0);
 
-      g2.setPaint(new GradientPaint(0, 0, new Color(190, 190, 190), 0, size.height - 1, new Color(230, 230, 230)));
+      g2.setPaint(new GradientPaint(0, 0, Gray._190, 0, size.height - 1, Gray._230));
       g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
 
-      g2.setPaint(new GradientPaint(0, 0, new Color(200, 200, 200, 100), 0, size.height - 1, new Color(150, 150, 150, 130)));
+      g2.setPaint(new GradientPaint(0, 0, new Gray(200, 100), 0, size.height - 1, new Gray(150, 130)));
       g2.fillRect(xOffset + 1, yOffset, allocatedBarWidth, barHeight);
 
-      g2.setColor(new Color(175, 175, 175));
+      g2.setColor(Gray._175);
       g2.drawLine(xOffset + allocatedBarWidth, yOffset + 1, xOffset + allocatedBarWidth, yOffset + barHeight - 1);
 
       if (pressed) {
@@ -154,7 +155,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       }
 
       if (SystemInfo.isMac) {
-        g2.setColor(new Color(110, 110, 110));
+        g2.setColor(Gray._110);
         g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
       }
 

@@ -41,6 +41,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.ui.Gray;
 import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
 import com.intellij.xml.breadcrumbs.BreadcrumbsXmlWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -242,7 +243,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   private static Color[] toColorsForLineMarkers(Color[] baseColors) {
     final Color[] colors = new Color[baseColors.length];
-    final Color tagBackground = new Color(239, 239, 239);
+    final Color tagBackground = Gray._239;
     final double transparency = 0.4;
     final double factor = 0.8;
 

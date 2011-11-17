@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -24,7 +25,7 @@ import java.util.Map;
 
 public final class ColorKey implements Comparable<ColorKey> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.ColorKey");
-  private static final Color NULL_COLOR = new Color(0, 0, 0);
+  private static final Color NULL_COLOR = Gray._0;
 
   private final String myExternalName;
   private Color myDefaultColor = NULL_COLOR;

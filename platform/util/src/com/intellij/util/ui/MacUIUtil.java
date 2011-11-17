@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -71,7 +72,7 @@ public class MacUIUtil {
       g.setColor(new Color(212, 212, 212, 200));
       g.drawLine(x1, y1 + 1, x1 + width1 - 1, y1 + 1);
 
-      g.setColor(new Color(225, 225, 225));
+      g.setColor(Gray._225);
       g.drawLine(x1 + 1, y1 + height1 - 1, x1 + width1 - 2, y1 + height1 - 1);
 
       g.setColor(new Color(30, 30, 30, 70));

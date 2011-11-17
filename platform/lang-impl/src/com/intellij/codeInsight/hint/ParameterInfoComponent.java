@@ -20,6 +20,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.Gray;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.ui.UIUtil;
@@ -41,9 +42,9 @@ class ParameterInfoComponent extends JPanel{
   private final OneElementComponent[] myPanels;
 
   private static final Color BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
-  private static final Color FOREGROUND_COLOR = new Color(0, 0, 0);
+  private static final Color FOREGROUND_COLOR = Gray._0;
 //  private static final Color DISABLED_BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
-  private static final Color DISABLED_FOREGROUND_COLOR = new Color(128, 128, 128);
+  private static final Color DISABLED_FOREGROUND_COLOR = Gray._128;
   private static final Color HIGHLIGHTED_BORDER_COLOR = new Color(231, 254, 234);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;

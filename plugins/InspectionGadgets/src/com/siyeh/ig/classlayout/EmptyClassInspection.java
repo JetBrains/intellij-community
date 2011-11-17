@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.*;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,12 +27,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class EmptyClassInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
-  public final ExternalizableStringSet ignorableAnnotations =
-    new ExternalizableStringSet();
+  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
+
+  public boolean ignoreClassWithParameterization = false;
 
   @Override
   @NotNull
@@ -44,24 +47,23 @@ public class EmptyClassInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     final Object element = infos[0];
     if (element instanceof PsiAnonymousClass) {
-      return InspectionGadgetsBundle.message(
-        "empty.anonymous.class.problem.descriptor");
+      return InspectionGadgetsBundle.message("empty.anonymous.class.problem.descriptor");
     }
     else if (element instanceof PsiClass) {
-      return InspectionGadgetsBundle.message(
-        "empty.class.problem.descriptor");
+      return InspectionGadgetsBundle.message("empty.class.problem.descriptor");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "empty.class.file.without.class.problem.descriptor");
+      return InspectionGadgetsBundle.message("empty.class.file.without.class.problem.descriptor");
     }
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations,
-      InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+    final JPanel panel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+    panel.add(new CheckBox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"),
+                           this, "ignoreClassWithParameterization"), BorderLayout.SOUTH);
+    return panel;
   }
 
   @Override
@@ -93,8 +95,7 @@ public class EmptyClassInspection extends BaseInspection {
       if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
         return;
       }
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {
@@ -116,10 +117,35 @@ public class EmptyClassInspection extends BaseInspection {
       if (initializers.length > 0) {
         return;
       }
+      if (ignoreClassWithParameterization) {
+        final PsiReferenceList extendsList = aClass.getExtendsList();
+        final PsiReferenceList implementsList = aClass.getImplementsList();
+        if (isSuperParameterization(extendsList) || isSuperParameterization(implementsList)) {
+          return;
+        }
+      }
       if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
         return;
       }
       registerClassError(aClass, aClass);
+    }
+
+    private boolean isSuperParameterization(PsiReferenceList extendsList) {
+      if (extendsList == null) {
+        return false;
+      }
+      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList == null) {
+          continue;
+        }
+        final PsiType[] typeArguments = parameterList.getTypeArguments();
+        if (typeArguments.length != 0) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

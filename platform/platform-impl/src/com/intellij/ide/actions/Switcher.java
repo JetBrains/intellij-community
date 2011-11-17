@@ -44,6 +44,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -72,7 +73,7 @@ import static java.awt.event.KeyEvent.*;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "SSBasedInspection"})
 public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
-  private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+  private static final Color BORDER_COLOR = Gray._135;
   private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
   private static final Color ON_MOUSE_OVER_BG_COLOR = new Color(231, 242, 249);

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.ide.diff.DiffElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -79,6 +80,15 @@ public class BinaryDiffTool implements DiffTool {
             }
           }.show();
           return;
+        } else {
+          final DirDiffManager diffManager = DirDiffManager.getInstance(project);
+          final DiffElement before = diffManager.createDiffElement(src);
+          final DiffElement after  = diffManager.createDiffElement(trg);
+          
+          if (before != null && after != null && diffManager.canShow(after, before)) {
+            diffManager.showDiff(before, after);
+            return;
+          }
         }
       }
     }
@@ -111,6 +121,10 @@ public class BinaryDiffTool implements DiffTool {
   }
 
   public static boolean canShow(@NotNull Project project, VirtualFile file) {
-    return file != null && FileEditorProviderManager.getInstance().getProviders(project, file).length > 0;
+    if (file == null) return false;
+    if (FileEditorProviderManager.getInstance().getProviders(project, file).length > 0) return true;
+    
+    final DirDiffManager diffManager = DirDiffManager.getInstance(project);
+    return diffManager.createDiffElement(file) != null; 
   }
 }

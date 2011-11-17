@@ -23,7 +23,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -115,9 +114,6 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
 
   public JComponent createCustomComponent(final Presentation presentation) {
     final ComboBoxButton comboBoxButton = new ComboBoxButton(presentation) {
-      {
-        setSmallVariant(!UISettings.getInstance().SHOW_MAIN_TOOLBAR);
-      }
       public void addNotify() {
         super.addNotify();    //To change body of overriden methods use Options | File Templates.;
         final IdeFrame frame = findFrame(this);
@@ -126,16 +122,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
       }
     };
 
-    final JPanel panel = new JPanel(new BorderLayout()) {
-      @Override
-      protected void paintChildren(Graphics g) {
-        super.paintChildren(g);
-        //if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
-        //  g.setColor(UIUtil.getBorderColor());
-        //  g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1); //fix for navbar
-        //}
-      }
-    };
+    final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
     panel.add(comboBoxButton);
     panel.setOpaque(false);

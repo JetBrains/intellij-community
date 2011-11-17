@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -37,6 +38,7 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
@@ -64,7 +66,7 @@ public class JBTabsImpl extends JComponent
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   
   public static final String EDITOR_TABS = "main.editor.tabs";
-  public static final Color MAC_AQUA_BG_COLOR = new Color(200, 200, 200);
+  public static final Color MAC_AQUA_BG_COLOR = Gray._200;
 
   ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
@@ -75,7 +77,7 @@ public class JBTabsImpl extends JComponent
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<TabInfo, Toolbar>();
   public Dimension myHeaderFitSize;
 
-  private Insets myInnerInsets = new Insets(0, 0, 0, 0);
+  private Insets myInnerInsets = JBInsets.NONE;
 
   private final List<EventListener> myTabMouseListeners = new ArrayList<EventListener>();
   private final List<TabsListener> myTabListeners = new ArrayList<TabsListener>();

@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.ui.Gray;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.util.ui.Table;
@@ -35,7 +36,7 @@ import java.beans.PropertyChangeListener;
  */
 public class StripeTable extends Table {
   private static final Color EVEN_ROW_COLOR = new Color(241, 245, 250);
-  private static final Color GRID_COLOR = new Color(217, 217, 217);
+  private static final Color GRID_COLOR = Gray._217;
   private static final CellRendererPane RENDER_PANE = new CellRendererPane();
 
   public StripeTable(TableModel model) {

@@ -30,6 +30,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.IJSwingUtilities;
@@ -189,7 +190,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           int value = slider.getValue();
           options.ACCESS_JAVADOC_REQUIRED_FOR = modifiers[value - 1];
           for (Integer key : sliderLabels.keySet()) {
-            sliderLabels.get(key).setForeground(key.intValue() <= value ? Color.black : new Color(100, 100, 100));
+            sliderLabels.get(key).setForeground(key.intValue() <= value ? Color.black : Gray._100);
           }
         }
       });
@@ -200,7 +201,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
         if (modifiers[i].equals(options.ACCESS_JAVADOC_REQUIRED_FOR)) {
           slider.setValue(i + 1);
-          fore = new Color(100, 100, 100);
+          fore = Gray._100;
         }
       }
 

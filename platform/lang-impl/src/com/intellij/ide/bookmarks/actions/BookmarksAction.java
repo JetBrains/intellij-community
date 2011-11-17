@@ -47,10 +47,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.FileColorManager;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
@@ -72,7 +69,7 @@ import java.util.List;
 // TODO: remove duplication with BaseShowRecentFilesAction, there's quite a bit of it
 
 public class BookmarksAction extends AnAction implements DumbAware {
-  private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+  private static final Color BORDER_COLOR = Gray._135;
 
   private final Alarm myPreviewUpdateAlarm = new Alarm();
 

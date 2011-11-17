@@ -2,10 +2,13 @@ package com.intellij.tasks;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskCompletionContributor;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.Arrays;
@@ -55,7 +58,10 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
 
   private void configureFile(String text) {
     PsiFile psiFile = myFixture.configureByText("test.txt", text);
-    TaskCompletionContributor.installCompletion(myFixture.getDocument(psiFile), getProject(), null, false);
+    Document document = myFixture.getDocument(psiFile);
+    TaskCompletionContributor.installCompletion(document, getProject(), null, false);
+    document.putUserData(CommitMessage.DATA_CONTEXT_KEY, new MapDataContext());
+
   }
 
   private void configureRepository(LocalTaskImpl... tasks) {

@@ -17,6 +17,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.Gray;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +166,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   public Color getHighlightColor() {
-    return new Color(245, 245, 245);
+    return Gray._245;
   }
 
   public static class ColoredFragment {

@@ -512,7 +512,7 @@ public class FileBasedIndex implements ApplicationComponent {
       public Collection<K> read(DataInput in) throws IOException {
         try {
           final int size = DataInputOutputUtil.readINT(in);
-          final List<K> list = new ArrayList<K>();
+          final List<K> list = new ArrayList<K>(size);
           for (int idx = 0; idx < size; idx++) {
             list.add(keyDescriptor.read(in));
           }
