@@ -36,7 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchPair;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -208,7 +207,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private static DefaultMutableTreeNode createBranchNode(@NotNull GitBranch branch, @NotNull GitPushBranchInfo branchInfo) {
-    DefaultMutableTreeNode branchNode = new DefaultMutableTreeNode(new GitBranchPair(branch, branchInfo.getDestBranch()));
+    DefaultMutableTreeNode branchNode = new DefaultMutableTreeNode(branchInfo);
     for (GitCommit commit : branchInfo.getCommits()) {
       branchNode.add(new DefaultMutableTreeNode(commit));
     }
@@ -290,10 +289,10 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN); // using probable monospace font to emulate table
       renderer.setFont(font);
 
+      SimpleTextAttributes smallGrey = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor());
       if (userObject instanceof GitCommit) {
         GitCommit commit = (GitCommit)userObject;
         SimpleTextAttributes small = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground());
-        SimpleTextAttributes smallGrey = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor());
         renderer.append(commit.getShortHash().toString(), smallGrey);
         renderer.append(String.format(" %" + myDateMaxWidth + "s  ", getDateString(commit)), smallGrey);
         renderer.append(commit.getSubject(), small);
@@ -302,13 +301,20 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         String repositoryPath = calcRootPath((GitRepository)userObject);
         renderer.append(repositoryPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
-      else if (userObject instanceof GitBranchPair) {
-        GitBranchPair branchPair = (GitBranchPair) userObject;
-        GitBranch fromBranch = branchPair.getBranch();
-        GitBranch dest = branchPair.getDest();
-        assert dest != null : "Destination branch can't be null for branch " + fromBranch;
+      else if (userObject instanceof GitPushBranchInfo) {
+        GitPushBranchInfo branchInfo = (GitPushBranchInfo) userObject;
+        GitBranch fromBranch = branchInfo.getSourceBranch();
+        GitBranch dest = branchInfo.getDestBranch();
 
-        renderer.append(fromBranch.getName() + " -> " + dest.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        String text = fromBranch.getName() + " -> ";
+        if (branchInfo.isNewBranchCreated()) {
+          text += "+";
+        }
+        text +=  dest.getName();
+        renderer.append(text, branchInfo.isNewBranchCreated() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        if (branchInfo.isNewBranchCreated()) {
+          renderer.append(" new branch will be created, showing last 10 commits on the current branch", smallGrey);
+        }
       }
       else if (userObject instanceof FakeCommit) {
         int spaces = 6 + 15 + 3 + 30;

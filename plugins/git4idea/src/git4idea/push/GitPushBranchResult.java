@@ -15,6 +15,9 @@
  */
 package git4idea.push;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Result of pushing a single branch.
  * 
@@ -24,28 +27,35 @@ final class GitPushBranchResult {
 
   private final Type myType;
   private final int myNumberOfPushedCommits;
+  private final String myTargetBranchName;
 
   enum Type {
     SUCCESS,
+    NEW_BRANCH,
     REJECTED,
     ERROR
   }
 
-  private GitPushBranchResult(Type type, int numberOfPushedCommits) {
+  private GitPushBranchResult(Type type, int numberOfPushedCommits, @Nullable String targetBranchName) {
     myType = type;
     myNumberOfPushedCommits = numberOfPushedCommits;
+    myTargetBranchName = targetBranchName;
   }
   
   static GitPushBranchResult success(int numberOfPushedCommits) {
-    return new GitPushBranchResult(Type.SUCCESS, numberOfPushedCommits);
+    return new GitPushBranchResult(Type.SUCCESS, numberOfPushedCommits, null);
+  }
+  
+  static GitPushBranchResult newBranch(String targetBranchName) {
+    return new GitPushBranchResult(Type.NEW_BRANCH, 0, targetBranchName);
   }
   
   static GitPushBranchResult rejected() {
-    return new GitPushBranchResult(Type.REJECTED, 0);
+    return new GitPushBranchResult(Type.REJECTED, 0, null);
   }
   
   static GitPushBranchResult error() {
-    return new GitPushBranchResult(Type.ERROR, 0);
+    return new GitPushBranchResult(Type.ERROR, 0, null);
   }
   
   int getNumberOfPushedCommits() {
@@ -62,6 +72,15 @@ final class GitPushBranchResult {
   
   boolean isError() {
     return myType == Type.ERROR;
+  }
+
+  boolean isNewBranch() {
+    return myType == Type.NEW_BRANCH;
+  }
+  
+  @NotNull
+  String getTargetBranchName() {
+    return myTargetBranchName != null ? myTargetBranchName : "";
   }
 
 }

@@ -168,14 +168,26 @@ public final class GitPusher {
       GitBranch dest = sourceDest.getDest();
       assert dest != null : "Destination branch can't be null here for branch " + source;
 
-      List<GitCommit> commits = collectCommitsToPush(repository, source.getName(), dest.getName());
-      if (!commits.isEmpty()) {
-        commitsByBranch.put(source, new GitPushBranchInfo(dest, commits));
+      List<GitCommit> commits;
+      boolean newBranch;
+      if (GitUtil.repoContainsRemoteBranch(repository, dest)) {
+        commits = collectCommitsToPush(repository, source.getName(), dest.getName());
+        newBranch = false;
+      } 
+      else {
+        commits = collectRecentCommitsOnBranch(repository, source);
+        newBranch = true;
       }
-      
+      if (!commits.isEmpty()) {
+        commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, newBranch));
+      }
     }
 
     return new GitCommitsByBranch(commitsByBranch);
+  }
+
+  private List<GitCommit> collectRecentCommitsOnBranch(GitRepository repository, GitBranch source) throws VcsException {
+    return GitHistoryUtils.history(myProject, repository.getRoot(), "--max-count=10", source.getName());
   }
 
   @NotNull
@@ -350,7 +362,11 @@ public final class GitPusher {
 
   @NotNull
   private static GitPushBranchResult successfulResultForBranch(@NotNull GitCommitsByBranch commitsByBranch, @NotNull GitBranch branch) {
-    return GitPushBranchResult.success(commitsByBranch.get(branch).getCommits().size());
+    GitPushBranchInfo branchInfo = commitsByBranch.get(branch);
+    if (branchInfo.isNewBranchCreated()) {
+      return GitPushBranchResult.newBranch(branchInfo.getDestBranch().getName());
+    } 
+    return GitPushBranchResult.success(branchInfo.getCommits().size());
   }
 
   private static boolean branchInRejected(@NotNull GitBranch branch, @NotNull Collection<String> rejectedBranches) {

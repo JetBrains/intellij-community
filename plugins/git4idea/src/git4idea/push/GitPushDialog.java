@@ -59,6 +59,7 @@ public class GitPushDialog extends DialogWrapper {
   private final JBLoadingPanel myLoadingPanel;
   private final JCheckBox myPushAllCheckbox;
   private final Object COMMITS_LOADING_LOCK = new Object();
+  private final GitManualPushToBranch myRefspecPanel;
 
   public GitPushDialog(@NotNull Project project) {
     super(project);
@@ -73,28 +74,16 @@ public class GitPushDialog extends DialogWrapper {
     myPushAllCheckbox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        loadCommitsInBackground(myPushAllCheckbox.isSelected());
+        loadCommitsInBackground();
       }
     });
     /* hidden: it may confuse users, the target is not clear, hidden until really needed,
        not removed completely because it is default behavior for 'git push' in command line. */
     myPushAllCheckbox.setVisible(false);
 
-    myListPanel = new GitPushLog(myProject, myRepositories, new Consumer<Boolean>() {
-      @Override public void consume(Boolean checked) {
-        if (checked) {
-          setOKActionEnabled(true);
-        } else {
-          Collection<GitRepository> repositories = myListPanel.getSelectedRepositories();
-          if (repositories.isEmpty()) {
-            setOKActionEnabled(false);
-          } else {
-            setOKActionEnabled(true);
-          }
-        }
-      }
-    });
-
+    myListPanel = new GitPushLog(myProject, myRepositories, new RepositoryCheckboxListener());
+    myRefspecPanel = new GitManualPushToBranch(myRepositories, new RefreshButtonListener());
+    
     init();
     setOKButtonText("Push");
     setTitle("Git Push");
@@ -103,31 +92,33 @@ public class GitPushDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel(new BorderLayout());
-    optionsPanel.add(myPushAllCheckbox);
+    optionsPanel.add(myPushAllCheckbox, BorderLayout.NORTH);
+    optionsPanel.add(myRefspecPanel);
 
-    myRootPanel = new JPanel(new BorderLayout());
+    myRootPanel = new JPanel(new BorderLayout(0, 15));
     myRootPanel.add(createCommitListPanel(), BorderLayout.CENTER);
     myRootPanel.add(optionsPanel, BorderLayout.SOUTH);
     return myRootPanel;
   }
-  
+
+
   private JComponent createCommitListPanel() {
     myLoadingPanel.add(myListPanel, BorderLayout.CENTER);
-    loadCommitsInBackground(false);
+    loadCommitsInBackground();
 
     JPanel commitListPanel = new JPanel(new BorderLayout());
     commitListPanel.add(myLoadingPanel, BorderLayout.CENTER);
     return commitListPanel;
   }
 
-  private void loadCommitsInBackground(final boolean pushAll) {
+  private void loadCommitsInBackground() {
     myLoadingPanel.startLoading();
     
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         final AtomicReference<String> error = new AtomicReference<String>();
         synchronized (COMMITS_LOADING_LOCK) {
-          error.set(collectInfoToPush(pushAll));
+          error.set(collectInfoToPush());
         }
         
         UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -138,17 +129,50 @@ public class GitPushDialog extends DialogWrapper {
             } else {
               myListPanel.setCommits(myGitCommitsToPush);
             }
+            myRefspecPanel.setBranchToPushIfNotSet(getTrackedCurrentBranchName());
             myLoadingPanel.stopLoading();
           }
         });
       }
     });
   }
-  
+
+  @NotNull
+  private String getTrackedCurrentBranchName() {
+    if (myGitCommitsToPush != null) {
+      Collection<GitRepository> repositories = myGitCommitsToPush.getRepositories();
+      if (!repositories.isEmpty()) {
+        GitRepository repository = repositories.iterator().next();
+        GitBranch currentBranch = repository.getCurrentBranch();
+        assert currentBranch != null;
+        return getNameWithoutRemote(myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch());
+      }
+    }
+    return "";
+  }
+
+  @NotNull
+  private String getNameWithoutRemote(@NotNull GitBranch remoteBranch) {
+    String remoteName = myRefspecPanel.getSelectedRemote().getName() + "/";
+    String branchName = remoteBranch.getName();
+    if (branchName.startsWith(remoteName)) {
+      return branchName.substring(remoteName.length());
+    }
+    else {
+      // we are taking the current branch of the first repository
+      // it is possible (though unlikely), that this branch has other remote than the common remote selected in the refspec panel
+      // then we return the full branch name.
+      // the push won't work absolutely correct, if the remote doesn't have this branch, but it is not our problem in the case of 
+      // several repositories with different remotes sets and different branches.
+      return remoteBranch.getFullName();
+    }
+  }
+
   @Nullable
-  private String collectInfoToPush(boolean pushAll) {
+  private String collectInfoToPush() {
     try {
-      myPushSpecs = pushAll ? pushSpecsForPushAll() : pushSpecsForCurrentBranches();
+      boolean pushAll = myPushAllCheckbox.isSelected();
+      myPushSpecs = pushAll ? pushSpecsForPushAll() : pushSpecsForCurrentOrEnteredBranches();
       myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
       return null;
     }
@@ -159,7 +183,7 @@ public class GitPushDialog extends DialogWrapper {
     }
   }
   
-  private Map<GitRepository, GitPushSpec> pushSpecsForCurrentBranches() throws VcsException {
+  private Map<GitRepository, GitPushSpec> pushSpecsForCurrentOrEnteredBranches() throws VcsException {
     Map<GitRepository, GitPushSpec> defaultSpecs = new HashMap<GitRepository, GitPushSpec>();
     for (GitRepository repository : myRepositories) {
       GitBranch currentBranch = repository.getCurrentBranch();
@@ -178,6 +202,19 @@ public class GitPushDialog extends DialogWrapper {
         remote = remoteAndBranch.getFirst();
         tracked = remoteAndBranch.getSecond();
       }
+
+      if (myRefspecPanel.canBeUsed()) {
+        String manualBranchName = myRefspecPanel.getBranchToPush();
+        GitBranch manualBranch = findRemoteBranchByName(repository, remote, manualBranchName);
+        if (manualBranch == null) {
+          if (!manualBranchName.startsWith("refs/remotes/")) {
+            manualBranchName = myRefspecPanel.getSelectedRemote().getName() + "/" + manualBranchName;
+          }
+          manualBranch = new GitBranch(manualBranchName, false, true);
+        }
+        tracked = manualBranch;
+      }
+      
       GitPushSpec pushSpec = new GitPushSpec(remote, currentBranch, tracked);
       defaultSpecs.put(repository, pushSpec);
     }
@@ -227,7 +264,7 @@ public class GitPushDialog extends DialogWrapper {
     synchronized (COMMITS_LOADING_LOCK) {
       GitCommitsByRepoAndBranch selectedCommits;
       if (myGitCommitsToPush == null) {
-        collectInfoToPush(myPushAllCheckbox.isSelected());
+        collectInfoToPush();
         selectedCommits = myGitCommitsToPush;
       } else {
         Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
@@ -236,4 +273,27 @@ public class GitPushDialog extends DialogWrapper {
       return new GitPushInfo(selectedCommits, myPushSpecs);
     }
   }
+
+  private class RepositoryCheckboxListener implements Consumer<Boolean> {
+    @Override public void consume(Boolean checked) {
+      if (checked) {
+        setOKActionEnabled(true);
+      } else {
+        Collection<GitRepository> repositories = myListPanel.getSelectedRepositories();
+        if (repositories.isEmpty()) {
+          setOKActionEnabled(false);
+        } else {
+          setOKActionEnabled(true);
+        }
+      }
+    }
+  }
+
+  private class RefreshButtonListener implements Runnable {
+    @Override
+    public void run() {
+      loadCommitsInBackground();
+    }
+  }
+
 }
