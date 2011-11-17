@@ -847,7 +847,7 @@ class InternalGetCompletions(InternalThreadCommand):
         try:
             remove_path = None
             try:
-                import console._completer
+                import _completer
             except:
                 try:
                     path = os.environ['PYDEV_COMPLETER_PYTHONPATH']
@@ -856,7 +856,7 @@ class InternalGetCompletions(InternalThreadCommand):
                 sys.path.append(path)
                 remove_path = path
                 try:
-                    import console._completer
+                    import _completer
                 except :
                     pass
             
@@ -873,7 +873,7 @@ class InternalGetCompletions(InternalThreadCommand):
                     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
                 try:
-                    completer = console._completer.Completer(updated_globals, None)
+                    completer = _completer.Completer(updated_globals, None)
                     #list(tuple(name, descr, parameters, type))
                     completions = completer.complete(self.act_tok)
                 except :

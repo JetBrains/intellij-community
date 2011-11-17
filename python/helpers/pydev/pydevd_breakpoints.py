@@ -58,7 +58,7 @@ class LineBreakpoint:
 def get_exception_full_qname(exctype):
     if not exctype:
         return None
-    return exctype.__module__ + '.' + exctype.__name__
+    return str(exctype.__module__) + '.' + exctype.__name__
 
 def get_exception_name(exctype):
     if not exctype:

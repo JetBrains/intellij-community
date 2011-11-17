@@ -7,7 +7,7 @@ from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 from code import compile_command
 from code import InteractiveInterpreter
-from console import pydevconsole
+import pydevconsole
 
 try:
     from StringIO import StringIO
