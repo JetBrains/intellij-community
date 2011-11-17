@@ -182,7 +182,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
 
-  private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("should.not.perform.access.check") == null;
+  private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
   private static final boolean IS_UNIT_TESTS = ApplicationManager.getApplication().isUnitTestMode();
 
