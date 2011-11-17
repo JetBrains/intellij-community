@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.PatchLine;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CompositeIterator;
@@ -35,6 +37,7 @@ import java.util.*;
  * Time: 3:59 PM
  */
 public class GenericPatchApplier {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier");
   private final static int ourMaxWalk = 1000;
   
   private final TreeMap<TextRange, MyAppliedData> myTransformations;
@@ -45,8 +48,15 @@ public class GenericPatchApplier {
   private final ArrayList<SplitHunk> myNotBound;
   private final ArrayList<SplitHunk> myNotExact;
   private boolean mySuppressNewLineInEnd;
+  
+  private void debug(final String s) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(s);
+    }
+  }
 
   public GenericPatchApplier(final CharSequence text, List<PatchHunk> hunks) {
+    debug("GenericPatchApplier created, hunks: " + hunks.size());
     myLines = new ArrayList<String>();
     Collections.addAll(myLines, LineTokenizer.tokenize(text, false));
     myHunks = hunks;
@@ -80,7 +90,27 @@ public class GenericPatchApplier {
     }
   }
 
+  private void printTransformations(final String comment) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(comment + " GenericPatchApplier.printTransformations ---->");
+      int cnt = 0;
+      for (Map.Entry<TextRange, MyAppliedData> entry : myTransformations.entrySet()) {
+        final TextRange key = entry.getKey();
+        final MyAppliedData value = entry.getValue();
+        LOG.info(String.valueOf(cnt) +
+                 " lines " +
+                 key.getStartOffset() +
+                 ":" +
+                 key.getEndOffset() +
+                 " will replace into: " +
+                 StringUtil.join(value.getList(), "\n"));
+      }
+      LOG.debug("<------ GenericPatchApplier.printTransformations");
+    }
+  }
+
   public boolean execute() {
+    debug("GenericPatchApplier execute started");
     if (! myHunks.isEmpty()) {
       mySuppressNewLineInEnd = myHunks.get(myHunks.size() - 1).isNoNewLineAtEnd();
     }
@@ -94,6 +124,7 @@ public class GenericPatchApplier {
         iterator.remove();
       }
     }
+    printTransformations("after exact match");
     /*for (SplitHunk hunk : myNotExact) {
       complementInsertAndDelete(hunk);
     }*/
@@ -106,6 +137,7 @@ public class GenericPatchApplier {
         iterator.remove();
       }
     }
+    printTransformations("after exact but without context");
     for (SplitHunk hunk : myNotExact) {
       complementInsertAndDelete(hunk);
     }
@@ -116,6 +148,7 @@ public class GenericPatchApplier {
         iterator.remove();
       }
     }
+    printTransformations("after variable place match");
 
     return myNotExact.isEmpty();
   }

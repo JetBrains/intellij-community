@@ -52,6 +52,15 @@
     </layout>
   </appender>
 
+  <!-- <category name="#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier">
+  <level value="DEBUG"/>
+  <appender-ref ref="FILE"/>
+  </category>
+  <category name="#com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase">
+  <level value="DEBUG"/>
+  <appender-ref ref="FILE"/>
+  </category> -->
+
   <root>
     <priority value="INFO"/>
     <appender-ref ref="DIALOG"/>

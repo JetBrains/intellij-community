@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFilePatch {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase");
   protected final T myPatch;
 
   public ApplyFilePatchBase(T patch) {
@@ -52,6 +54,9 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
                       final Project project,
                       FilePath pathBeforeRename,
                       Getter<CharSequence> baseContents, CommitContext commitContext) throws IOException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("apply patch called for : " + fileToPatch.getPath());
+    }
     context.addAffectedFile(getTarget(fileToPatch));
     if (myPatch.isNewFile()) {
       applyCreate(fileToPatch, commitContext);

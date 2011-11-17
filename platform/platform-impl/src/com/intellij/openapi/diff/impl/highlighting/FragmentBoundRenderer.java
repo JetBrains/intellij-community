@@ -59,46 +59,53 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
 
   @Override
   public void paint(Editor editor, Graphics g, Rectangle r) {
-    g.setColor(getColor());
-    int y = r.y;
-    final int width = ((EditorEx)editor).getGutterComponentEx().getWidth();
-    final int editorWidth = editor.getScrollingModel().getVisibleArea().width;
-    myShoeneLine.ensureLastX(editorWidth + width + width);
+    final Graphics gr = g.create();
+    try {
+      ((Graphics2D) gr).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    if (((EditorImpl) editor).isMirrored()) {
-      // continue
-      List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
-      int i = 0;
-      for (; i < points.size(); i++) {
-        Pair<Integer, Integer> integerIntegerPair = points.get(i);
-        if (integerIntegerPair.getFirst() - width >= editorWidth) {
-          break;
+      gr.setColor(getColor());
+      int y = r.y;
+      final int width = ((EditorEx)editor).getGutterComponentEx().getWidth();
+      final int editorWidth = editor.getScrollingModel().getVisibleArea().width;
+      myShoeneLine.ensureLastX(editorWidth + width + width);
+
+      if (((EditorImpl) editor).isMirrored()) {
+        // continue
+        List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
+        int i = 0;
+        for (; i < points.size(); i++) {
+          Pair<Integer, Integer> integerIntegerPair = points.get(i);
+          if (integerIntegerPair.getFirst() - width >= editorWidth) {
+            break;
+          }
         }
+        // take previous
+        i = i == 0 ? 0 : i - 1;
+        points = points.subList(i, points.size());
+
+        drawCurved(gr, 0, r.y, TornLineParams.ourDark, points, width + editorWidth, true,width);
+        gr.setColor(getColor().darker());
+        drawCurved(gr, 0, r.y, TornLineParams.ourLight, points, width + editorWidth, true,width);
+
+        int j = points.size() - 1;
+        final int finalX = width + editorWidth + width;
+        for (; j > 0; j--) {
+          if (points.get(j).getFirst() >= finalX) break;
+        }
+        j = j == 0 ? 0 : j - 1;
+        myOffsetsConsumer.consume(points.get(j).getSecond());
+
+      } else {
+        List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
+        drawCurved(gr, 0, r.y, TornLineParams.ourDark, points, 0, false,0);
+        gr.setColor(getColor().darker());
+        drawCurved(gr, 0, r.y, TornLineParams.ourLight, points, 0, false,0);
+
+        int i = getLastPointInBeforeGutter(width, points);
+        myOffsetsConsumer.consume(points.get(i).getSecond());
       }
-      // take previous
-      i = i == 0 ? 0 : i - 1;
-      points = points.subList(i, points.size());
-
-      drawCurved(g, 0, r.y, TornLineParams.ourDark, points, width + editorWidth, true,width);
-      g.setColor(getColor().darker());
-      drawCurved(g, 0, r.y, TornLineParams.ourLight, points, width + editorWidth, true,width);
-      
-      int j = points.size() - 1;
-      final int finalX = width + editorWidth + width;
-      for (; j > 0; j--) {
-        if (points.get(j).getFirst() >= finalX) break;
-      }
-      j = j == 0 ? 0 : j - 1;
-      myOffsetsConsumer.consume(points.get(j).getSecond());
-
-    } else {
-      List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
-      drawCurved(g, 0, r.y, TornLineParams.ourDark, points, 0, false,0);
-      g.setColor(getColor().darker());
-      drawCurved(g, 0, r.y, TornLineParams.ourLight, points, 0, false,0);
-
-      int i = getLastPointInBeforeGutter(width, points);
-      myOffsetsConsumer.consume(points.get(i).getSecond());
+    } finally {
+      gr.dispose();
     }
   }
 
@@ -115,13 +122,21 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
     final int width = ((EditorEx) myEditor).getGutterComponentEx().getWidth();
 
     myShoeneLine.ensureLastX(length + width);
-    g.setColor(getColor());
-    List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
-    int i = getLastPointInBeforeGutter(width, points);
-    points = points.subList(i, points.size());
-    drawCurved(g, x1, y, TornLineParams.ourDark, points, width, false,0);
-    g.setColor(getColor().darker());
-    drawCurved(g, x1, y, TornLineParams.ourLight, points, width, false,0);
+
+    final Graphics gr = g.create();
+
+    try {
+      ((Graphics2D) gr).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      gr.setColor(getColor());
+      List<Pair<Integer, Integer>> points = myShoeneLine.getPoints();
+      int i = getLastPointInBeforeGutter(width, points);
+      points = points.subList(i, points.size());
+      drawCurved(gr, x1, y, TornLineParams.ourDark, points, width, false,0);
+      gr.setColor(getColor().darker());
+      drawCurved(gr, x1, y, TornLineParams.ourLight, points, width, false,0);
+    } finally {
+      gr.dispose();
+    }
   }
 
   private int getLastPointInBeforeGutter(int width, List<Pair<Integer, Integer>> points) {

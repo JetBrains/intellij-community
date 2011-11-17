@@ -22,6 +22,6 @@ package com.intellij.openapi.diff.impl.highlighting;
  * Time: 1:57 PM
  */
 public class TornLineParams {
-  public static final int ourDark = 4;
-  public static final int ourLight = 3;
+  public static final int ourDark = 3;
+  public static final int ourLight = 2;
 }

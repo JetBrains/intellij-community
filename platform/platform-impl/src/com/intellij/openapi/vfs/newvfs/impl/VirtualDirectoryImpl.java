@@ -182,7 +182,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
 
-  private static final boolean SHOULD_NOT_PERFORM_ACCESS_CHECK = System.getProperty("should.not.perform.access.check") != null;
+  private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getProperty("should.not.perform.access.check") == null;
 
   private static final boolean IS_UNIT_TESTS = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -201,7 +201,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         ApplicationManager.getApplication() instanceof ApplicationImpl &&
         ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()
         &&
-        !SHOULD_NOT_PERFORM_ACCESS_CHECK) {
+        SHOULD_PERFORM_ACCESS_CHECK) {
       NewVirtualFileSystem fileSystem = child.getFileSystem();
       if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
         return;

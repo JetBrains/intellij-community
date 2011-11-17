@@ -185,8 +185,8 @@ public class GotoRelatedFileAction extends AnAction {
       }
     };
     popup.setMinimumSize(new Dimension(200, -1));
-    for (GotoRelatedItem item : itemsMap.values()) {
-      final int mnemonic = item.getMnemonic();
+    for (Object item : elements) {
+      final int mnemonic = getMnemonic(item, itemsMap);
       if (mnemonic != -1) {
         final Action action = createNumberAction(mnemonic, popup, itemsMap, processor);
         popup.registerAction(mnemonic + "Action", KeyStroke.getKeyStroke(String.valueOf(mnemonic)), action);
