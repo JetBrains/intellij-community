@@ -57,6 +57,9 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
   @NotNull
   GrField[] getCodeFields();
 
+  @NotNull
+  GrMethod[] getCodeConstructors();
+
   @Nullable
   PsiField findCodeFieldByName(String name, boolean checkBases);
 
