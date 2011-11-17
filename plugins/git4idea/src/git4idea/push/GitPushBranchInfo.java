@@ -29,16 +29,24 @@ import java.util.List;
  */
 final class GitPushBranchInfo {
 
+  private final GitBranch mySourceBranch;
   private final GitBranch myDestBranch;
+  private final boolean myNewBranch;
   private final List<GitCommit> myCommits;
 
-  GitPushBranchInfo(@NotNull GitBranch destBranch, @NotNull List<GitCommit> commits) {
+  GitPushBranchInfo(@NotNull GitBranch sourceBranch, @NotNull GitBranch destBranch, @NotNull List<GitCommit> commits, boolean newBranch) {
+    mySourceBranch = sourceBranch;
     myCommits = commits;
     myDestBranch = destBranch;
+    myNewBranch = newBranch;
   }
 
   GitPushBranchInfo(@NotNull GitPushBranchInfo pushBranchInfo) {
-    this(pushBranchInfo.getDestBranch(), pushBranchInfo.getCommits());
+    this(pushBranchInfo.getSourceBranch(), pushBranchInfo.getDestBranch(), pushBranchInfo.getCommits(), pushBranchInfo.isNewBranchCreated());
+  }
+
+  boolean isNewBranchCreated() {
+    return myNewBranch;
   }
 
   @NotNull
@@ -49,5 +57,10 @@ final class GitPushBranchInfo {
   @NotNull
   List<GitCommit> getCommits() {
     return new ArrayList<GitCommit>(myCommits);
+  }
+
+  @NotNull
+  public GitBranch getSourceBranch() {
+    return mySourceBranch;
   }
 }
