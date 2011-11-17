@@ -21,7 +21,6 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
@@ -104,7 +103,7 @@ public class InjectLanguageAction implements IntentionAction {
     if (defaultFunctionalityWorked(host, languageId)) return;
     final Language language = InjectedLanguage.findLanguageById(languageId);
     try {
-      for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
+      for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         if (support.addInjectionInPlace(language, host)) return;
       }
       TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host);

@@ -38,7 +38,7 @@ public abstract class JavaSourceRootDetector extends ProjectStructureDetector {
         String extension = FileUtil.getExtension(child.getName());
         if (extension.equals(fileExtension)) {
           Pair<File, String> root = CommonSourceRootDetectionUtil.suggestRootForFileWithPackageStatement(child, base,
-                                                                                                         getPackageNameFetcher());
+                                                                                                         getPackageNameFetcher(), true);
           if (root != null) {
             result.add(new JavaModuleSourceRoot(root.getFirst(), root.getSecond(), getLanguageName()));
             return DirectoryProcessingResult.skipChildrenAndParentsUpTo(root.getFirst());

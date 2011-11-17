@@ -28,6 +28,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
@@ -36,12 +37,17 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowEP;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.groovy.mvc.projectView.MvcToolWindowDescriptor;
 
 import java.util.*;
 
@@ -81,6 +87,8 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         queue(SyncAction.UpdateProjectStructure, myProject);
         queue(SyncAction.EnsureRunConfigurationExists, myProject);
         myModificationCount++;
+
+        updateProjectViewVisibility();
       }
     });
 
@@ -353,4 +361,39 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
     abstract void doAction(Module module, MvcFramework framework);
   }
+
+  private void updateProjectViewVisibility() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (myProject.isDisposed()) return;
+
+            for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
+              if (MvcToolWindowDescriptor.class.isAssignableFrom(ep.getFactoryClass())) {
+                MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory();
+                String id = descriptor.getToolWindowId();
+                boolean shouldShow = MvcModuleStructureUtil.hasModulesWithSupport(myProject, descriptor.getFramework());
+
+                ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+
+                ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
+
+                if (shouldShow && toolWindow == null) {
+                  toolWindow = toolWindowManager.registerToolWindow(id, true, ToolWindowAnchor.LEFT, myProject, true);
+                  descriptor.createToolWindowContent(myProject, toolWindow);
+                }
+                else if (!shouldShow && toolWindow != null) {
+                  toolWindowManager.unregisterToolWindow(id);
+                  Disposer.dispose(toolWindow.getContentManager());
+                }
+              }
+            }
+          }
+        });
+      }
+    });
+  }
+
 }

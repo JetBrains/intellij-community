@@ -26,7 +26,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.Consumer;
-import com.intellij.util.xmlb.annotations.Attribute;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jdom.Element;
@@ -38,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class LanguageInjectionSupport {
   public static final ExtensionPointName<LanguageInjectionSupport> EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.languageSupport");
+  public static final ExtensionPointName<LanguageInjectionConfigBean> CONFIG_EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.injectionConfig");
+
 
   public static Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
   public static Key<LanguageInjectionSupport> INJECTOR_SUPPORT = Key.create("INJECTOR_SUPPORT");
@@ -45,13 +46,6 @@ public abstract class LanguageInjectionSupport {
 
   @NonNls public static final String XML_SUPPORT_ID = "xml";
   @NonNls public static final String JAVA_SUPPORT_ID = "java";
-
-  @Attribute("config")
-  public String myConfigUrl;
-
-  public String getDefaultConfigUrl() {
-    return myConfigUrl;
-  }
 
   @NonNls
   @NotNull

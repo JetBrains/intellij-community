@@ -22,36 +22,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class JavaModuleSourceRoot extends DetectedProjectRoot {
+public class JavaModuleSourceRoot extends DetectedSourceRoot {
   private List<String> myLanguages;
-  private String myPackagePrefix;
 
   public JavaModuleSourceRoot(File directory, @Nullable String packagePrefix, @NotNull String language) {
-    super(directory);
+    super(directory, packagePrefix);
     myLanguages = new ArrayList<String>();
     myLanguages.add(language);
-    myPackagePrefix = packagePrefix;
-  }
-
-  public JavaModuleSourceRoot(File directory, String packagePrefix, Collection<String> languages) {
-    this(directory, packagePrefix, new ArrayList<String>(languages));
   }
 
   private JavaModuleSourceRoot(File directory, String packagePrefix, List<String> languages) {
-    super(directory);
+    super(directory, packagePrefix);
     myLanguages = languages;
-    myPackagePrefix = packagePrefix;
-  }
-
-  @NotNull
-  public String getPackagePrefix() {
-    return StringUtil.notNullize(myPackagePrefix);
   }
 
   @NotNull
@@ -70,6 +57,6 @@ public class JavaModuleSourceRoot extends DetectedProjectRoot {
 
   @NotNull
   public JavaModuleSourceRoot combineWith(@NotNull JavaModuleSourceRoot root) {
-    return new JavaModuleSourceRoot(getDirectory(), myPackagePrefix, ContainerUtil.concat(myLanguages, root.myLanguages));
+    return new JavaModuleSourceRoot(getDirectory(), getPackagePrefix(), ContainerUtil.concat(myLanguages, root.myLanguages));
   }
 }

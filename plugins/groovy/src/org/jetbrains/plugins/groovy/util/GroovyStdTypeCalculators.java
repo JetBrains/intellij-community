@@ -21,6 +21,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.PairFunction;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -61,6 +62,20 @@ public class GroovyStdTypeCalculators {
           return returnType;
         }
       });
+    }
+  }
+
+  public static class TypeSameAsFirstArgument implements PairFunction<GrMethodCall, PsiMethod, PsiType> {
+
+    @Override
+    public PsiType fun(GrMethodCall methodCall, PsiMethod method) {
+      GrArgumentList argumentList = methodCall.getArgumentList();
+      if (argumentList == null) return null;
+
+      GrExpression[] arguments = argumentList.getExpressionArguments();
+      if (arguments.length == 0) return null;
+
+      return arguments[0].getType();
     }
   }
 

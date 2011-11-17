@@ -92,6 +92,6 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 
   protected String getStepDescriptionText() {
     return "Please review libraries found. At this stage you can set library names that will be used in the project,\n" +
-           "exclude particular libraries from the project, or move jar files between the libraries.";
+           "exclude particular libraries from the project, or move individual files between the libraries.";
   }
 }

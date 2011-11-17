@@ -23,7 +23,9 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.compiler.PatternCompiler;
+import com.intellij.patterns.compiler.PatternCompilerImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -114,6 +116,17 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     if (sb.length() > 0) {
       final String text = sb.toString();
       places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
+    }
+    for (InjectionPlace place : places) {
+      ElementPattern<PsiElement> pattern = place.getElementPattern();
+      if (pattern instanceof PatternCompilerImpl.LazyPresentablePattern) {
+        try {
+          ((PatternCompilerImpl.LazyPresentablePattern)pattern).compile();
+        }
+        catch (Throwable ex) {
+          throw (RuntimeException)new IllegalArgumentException("Pattern failed to compile:").initCause(ex);
+        }
+      }
     }
     other.setInjectionPlaces(places.toArray(new InjectionPlace[places.size()]));
   }

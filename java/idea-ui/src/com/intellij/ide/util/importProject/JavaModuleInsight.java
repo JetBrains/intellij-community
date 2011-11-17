@@ -16,6 +16,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
@@ -26,7 +27,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.util.Consumer;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -58,8 +58,8 @@ public class JavaModuleInsight extends ModuleInsight {
   }
 
   @Override
-  protected void scanSourceFileForImportedPackages(final char[] chars, final Consumer<String> result) {
-    myLexer.start(new CharArrayCharSequence(chars));
+  protected void scanSourceFileForImportedPackages(final CharSequence chars, final Consumer<String> result) {
+    myLexer.start(chars);
 
     JavaSourceRootDetectionUtil.skipWhiteSpaceAndComments(myLexer);
     if (myLexer.getTokenType() == JavaTokenType.PACKAGE_KEYWORD) {
@@ -111,14 +111,14 @@ public class JavaModuleInsight extends ModuleInsight {
   }
 
   @Nullable
-  private static String readPackageName(final char[] text, final Lexer lexer) {
+  private static String readPackageName(final CharSequence text, final Lexer lexer) {
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
       while (true) {
         if (lexer.getTokenType() != JavaTokenType.IDENTIFIER && lexer.getTokenType() != JavaTokenType.ASTERISK) {
           break;
         }
-        buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
+        buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
 
         advanceLexer(lexer);
         if (lexer.getTokenType() != JavaTokenType.DOT) {
@@ -168,5 +168,9 @@ public class JavaModuleInsight extends ModuleInsight {
 
   protected ModuleDescriptor createModuleDescriptor(final File moduleContentRoot, final Collection<DetectedProjectRoot> sourceRoots) {
     return new ModuleDescriptor(moduleContentRoot, StdModuleTypes.JAVA, sourceRoots);
+  }
+
+  public boolean isApplicableRoot(final DetectedProjectRoot root) {
+    return root instanceof JavaModuleSourceRoot;
   }
 }

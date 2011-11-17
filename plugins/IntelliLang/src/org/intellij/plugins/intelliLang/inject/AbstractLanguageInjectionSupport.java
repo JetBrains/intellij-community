@@ -19,6 +19,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -31,12 +32,13 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Gregory.Shrago
@@ -95,7 +97,8 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   public static AnAction createDefaultAddAction(final Project project,
                                                 final Consumer<BaseInjection> consumer,
                                                 final AbstractLanguageInjectionSupport support) {
-    return new AnAction("Generic "+ StringUtil.capitalize(support.getId()), null, PlatformIcons.FILE_ICON) {
+    Icon icon = FileTypeManager.getInstance().getFileTypeByExtension(support.getId()).getIcon();
+    return new AnAction("Generic "+ StringUtil.capitalize(support.getId()), null, icon) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final BaseInjection injection = new BaseInjection(support.getId());
@@ -136,5 +139,15 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
       return injection;
     }
     return null;
+  }
+
+  @Override
+  public int hashCode() {
+    return getId().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof LanguageInjectionSupport && getId().equals(((LanguageInjectionSupport)obj).getId());
   }
 }

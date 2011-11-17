@@ -18,6 +18,7 @@ package org.jetbrains.android;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.android.compiler.AndroidPostcompileTask;
 import org.jetbrains.android.compiler.AndroidPrecompileTask;
 
 /**
@@ -30,6 +31,8 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
 
   @Override
   public void projectOpened() {
-    CompilerManager.getInstance(myProject).addBeforeTask(new AndroidPrecompileTask());
+    final CompilerManager manager = CompilerManager.getInstance(myProject);
+    manager.addBeforeTask(new AndroidPrecompileTask());
+    manager.addAfterTask(new AndroidPostcompileTask());
   }
 }

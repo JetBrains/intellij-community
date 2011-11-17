@@ -19,7 +19,6 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -28,16 +27,12 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -79,34 +74,31 @@ public class InjectorUtils {
     }
   }
 
-  @NotNull
-  public static Set<String> getActiveInjectionSupportIds() {
-    return ContainerUtil.map2Set(getActiveInjectionSupports(), new NotNullFunction<LanguageInjectionSupport, String>() {
-      @NotNull
-      public String fun(final LanguageInjectionSupport support) {
-        return support.getId();
-      }
-    });
+  private static final Map<String, LanguageInjectionSupport> ourSupports;
+  static {
+    ourSupports = new LinkedHashMap<String, LanguageInjectionSupport>();
+    for (LanguageInjectionSupport support : Arrays.asList(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME))) {
+      ourSupports.put(support.getId(), support);
+    }
   }
 
-  public static LanguageInjectionSupport[] getActiveInjectionSupports() {
-    return Extensions.getExtensions(LanguageInjectionSupport.EP_NAME);
+  @NotNull
+  public static Collection<String> getActiveInjectionSupportIds() {
+    return ourSupports.keySet();
+  }
+  public static Collection<LanguageInjectionSupport> getActiveInjectionSupports() {
+    return ourSupports.values();
+  }
+
+  @Nullable
+  public static LanguageInjectionSupport findInjectionSupport(final String id) {
+    return ourSupports.get(id);
   }
 
   @NotNull
   public static Class[] getPatternClasses(final String supportId) {
     final LanguageInjectionSupport support = findInjectionSupport(supportId);
     return support == null ? ArrayUtil.EMPTY_CLASS_ARRAY : support.getPatternClasses();
-  }
-
-
-  @Nullable
-  public static LanguageInjectionSupport findInjectionSupport(final String id) {
-    return ContainerUtil.find(getActiveInjectionSupports(), new Condition<LanguageInjectionSupport>() {
-      public boolean value(final LanguageInjectionSupport support) {
-        return support.getId().equals(id);
-      }
-    });
   }
 
   @NotNull
