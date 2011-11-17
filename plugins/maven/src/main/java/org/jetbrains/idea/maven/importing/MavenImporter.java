@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +71,10 @@ public abstract class MavenImporter {
     return null;
   }
 
-  public void resolve(MavenProject project, NativeMavenProjectHolder nativeMavenProject, MavenEmbedderWrapper embedder)
+  public void resolve(Project project,
+                      MavenProject mavenProject,
+                      NativeMavenProjectHolder nativeMavenProject,
+                      MavenEmbedderWrapper embedder)
     throws MavenProcessCanceledException {
   }
 

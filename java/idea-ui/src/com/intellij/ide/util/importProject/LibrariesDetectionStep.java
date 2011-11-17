@@ -17,7 +17,6 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.importSources.*;
-import com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,7 +29,6 @@ import java.util.*;
  *         Date: Jan 6, 2004
  */
 public class LibrariesDetectionStep extends AbstractStepWithProgress<List<LibraryDescriptor>> {
-  private final JavaProjectStructureDetector myDetector;
   private final ProjectFromSourcesBuilder myBuilder;
   private final ProjectDescriptor myProjectDescriptor;
   private final ModuleInsight myInsight;
@@ -38,13 +36,11 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
   private final String myHelpId;
   private LibrariesLayoutPanel myLibrariesPanel;
 
-  public LibrariesDetectionStep(JavaProjectStructureDetector detector,
-                                ProjectFromSourcesBuilder builder,
+  public LibrariesDetectionStep(ProjectFromSourcesBuilder builder,
                                 ProjectDescriptor projectDescriptor, final ModuleInsight insight,
                                 Icon icon,
                                 @NonNls String helpId) {
     super("Stop library analysis?");
-    myDetector = detector;
     myBuilder = builder;
     myProjectDescriptor = projectDescriptor;
     myInsight = insight;
@@ -78,14 +74,14 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
 
   private int calcStateHashCode() {
     int hash = myBuilder.getBaseProjectPath().hashCode();
-    for (DetectedProjectRoot root : getJavaSourceRoots()) {
+    for (DetectedSourceRoot root : getSourceRoots()) {
       hash = 31 * hash + root.getDirectory().hashCode();
     }
     return hash;
   }
 
   protected List<LibraryDescriptor> calculate() {
-    final List<JavaModuleSourceRoot> sourceRoots = getJavaSourceRoots();
+    final List<DetectedSourceRoot> sourceRoots = getSourceRoots();
 
     final HashSet<String> ignored = new HashSet<String>();
     final StringTokenizer tokenizer = new StringTokenizer(FileTypeManager.getInstance().getIgnoredFilesList(), ";", false);
@@ -99,14 +95,12 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     return myInsight.getSuggestedLibraries();
   }
 
-  private List<JavaModuleSourceRoot> getJavaSourceRoots() {
-    final List<JavaModuleSourceRoot> sourceRoots = new ArrayList<JavaModuleSourceRoot>();
+  private List<DetectedSourceRoot> getSourceRoots() {
+    final List<DetectedSourceRoot> sourceRoots = new ArrayList<DetectedSourceRoot>();
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
-      if (detector instanceof JavaSourceRootDetector) {
-        for (DetectedProjectRoot root : myBuilder.getProjectRoots(detector)) {
-          if (root instanceof JavaModuleSourceRoot) {
-            sourceRoots.add((JavaModuleSourceRoot)root);
-          }
+      for (DetectedProjectRoot root : myBuilder.getProjectRoots(detector)) {
+        if (myInsight.isApplicableRoot(root)) {
+          sourceRoots.add((DetectedSourceRoot)root);
         }
       }
     }

@@ -30,6 +30,7 @@
     </action>
     <action id="$Cut">
       <keyboard-shortcut first-keystroke="control X"/>
+      <keyboard-shortcut first-keystroke="shift DELETE"/>
     </action>
     <action id="Compile">
       <keyboard-shortcut first-keystroke="control F7"/>
@@ -48,6 +49,7 @@
     </action>
     <action id="$Paste">
       <keyboard-shortcut first-keystroke="control V"/>
+      <keyboard-shortcut first-keystroke="shift INSERT"/>
     </action>
     <action id="CommentByBlockComment">
       <keyboard-shortcut first-keystroke="shift control SLASH"/>
@@ -71,6 +73,7 @@
     </action>
     <action id="$Copy">
       <keyboard-shortcut first-keystroke="control C"/>
+      <keyboard-shortcut first-keystroke="control INSERT"/>
     </action>
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="control G"/>

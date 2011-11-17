@@ -53,7 +53,7 @@ class DetectedRootData {
       final DetectedProjectRoot combined = oldRoot.combineWith(root);
       if (combined != null) {
         myRoots.remove(oldRoot);
-        final List<ProjectStructureDetector> values = new ArrayList<ProjectStructureDetector>(entry.getValue());
+        final Set<ProjectStructureDetector> values = new HashSet<ProjectStructureDetector>(entry.getValue());
         values.add(detector);
         myRoots.put(combined, values);
         if (mySelectedRoot == oldRoot) {

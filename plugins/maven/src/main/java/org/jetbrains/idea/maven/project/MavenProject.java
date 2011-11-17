@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -389,7 +390,8 @@ public class MavenProject {
   }
 
   @NotNull
-  public Pair<MavenProjectChanges, NativeMavenProjectHolder> resolve(@NotNull MavenGeneralSettings generalSettings,
+  public Pair<MavenProjectChanges, NativeMavenProjectHolder> resolve(@NotNull Project project,
+                                                                     @NotNull MavenGeneralSettings generalSettings,
                                                                      @NotNull MavenEmbedderWrapper embedder,
                                                                      @NotNull MavenProjectReader reader,
                                                                      @NotNull MavenProjectReaderProjectLocator locator)
@@ -403,7 +405,7 @@ public class MavenProject {
 
     if (result.nativeMavenProject != null) {
       for (MavenImporter eachImporter : getSuitableImporters()) {
-        eachImporter.resolve(this, result.nativeMavenProject, embedder);
+        eachImporter.resolve(project, this, result.nativeMavenProject, embedder);
       }
     }
     return Pair.create(changes, result.nativeMavenProject);

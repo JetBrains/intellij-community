@@ -76,7 +76,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
           
           if (platform != null) {
             String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
-            String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet, true);
+            String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet, true, context);
             final IAndroidTarget target = platform.getTarget();
             final int platformToolsRevision = platform.getSdk().getPlatformToolsRevision();
 

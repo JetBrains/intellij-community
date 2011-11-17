@@ -92,6 +92,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   private volatile PsiClass[] myInnerClasses;
   private volatile GrMethod[] myGroovyMethods;
   private volatile PsiMethod[] myConstructors;
+  private volatile GrMethod[] myCodeConstructors;
 
   Key<CachedValue<PsiMethod[]>> CACHED_METHODS = Key.create("cached.type.definition.methods");
 
@@ -420,6 +421,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   public void subtreeChanged() {
     myInnerClasses = null;
     myConstructors = null;
+    myCodeConstructors = null;
     myGroovyMethods = null;
     super.subtreeChanged();
   }
@@ -439,6 +441,26 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       cached = result.toArray(new PsiMethod[result.size()]);
       if (stamp.mayCacheNow()) {
         myConstructors = cached;
+      }
+    }
+    return cached;
+  }
+
+  @NotNull
+  public GrMethod[] getCodeConstructors() {
+    GrMethod[] cached = myCodeConstructors;
+    if (cached == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      List<GrMethod> result = new ArrayList<GrMethod>();
+      for (final GrMethod method : getGroovyMethods()) {
+        if (method.isConstructor()) {
+          result.add(method);
+        }
+      }
+
+      cached = result.toArray(new GrMethod[result.size()]);
+      if (stamp.mayCacheNow()) {
+        myCodeConstructors = cached;
       }
     }
     return cached;

@@ -31,7 +31,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   private static final Icon ourProjectIcon = IconLoader.getIcon(ApplicationInfoImpl.getInstanceEx().getSmallIconUrl());
 
   public OpenProjectFileChooserDescriptor(final boolean chooseFiles) {
-    super(chooseFiles, true, false, false, false, false);
+    super(chooseFiles, true, chooseFiles, chooseFiles, false, false);
   }
 
   public boolean isFileSelectable(final VirtualFile file) {
@@ -60,7 +60,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   public static Icon getImporterIcon(final VirtualFile virtualFile, final boolean open) {
     final ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if(provider!=null) {
-      return virtualFile.isDirectory() && provider.lookForProjectsInDirectory() ? ourProjectIcon : provider.getIcon();
+      return virtualFile.isDirectory() && provider.lookForProjectsInDirectory() ? ourProjectIcon : provider.getIcon(virtualFile);
     }
     return null;
   }
