@@ -675,6 +675,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
     // avoid documents piling up during batch processing
     if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        try {
+          LOG.error("Too many uncommitted documents for "+myProject + ":\n"+myUncommittedDocuments);
+        }
+        finally {
+          clearUncommitedDocuments();
+        }
+      }
       commitAllDocuments();
     }
   }

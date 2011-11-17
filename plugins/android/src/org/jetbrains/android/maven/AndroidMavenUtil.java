@@ -15,20 +15,90 @@
  */
 package org.jetbrains.android.maven;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenProject;
+
+import java.util.Collection;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidMavenUtil {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.maven.AndroidMavenUtil");
+
   @NonNls public static final String APKSOURCES_DEPENDENCY_TYPE = "apksources";
   @NonNls public static final String APKLIB_DEPENDENCY_AND_PACKAGING_TYPE = "apklib";
+  @NonNls public static final String APK_PACKAGING_TYPE = "apk";
+
+  @NonNls public static final String APK_LIB_ARTIFACT_SOURCE_ROOT = "src";
+  @NonNls public static final String APK_LIB_ARTIFACT_RES_DIR = "res";
+  public static final String APK_LIB_ARTIFACT_NATIVE_LIBS_DIR = "libs";
+  public static final String APK_LIB_ARTIFACT_MANIFEST_FILE = "AndroidManifest.xml";
+  @NonNls private static final String APKLIB_MODULE_PREFIX = "~apklib-";
 
   private AndroidMavenUtil() {
+  }
+
+  @Nullable
+  public static String computePathToUnpackExtApklibArtifact(@NotNull MavenId mavenId,
+                                                            @NotNull MavenProject project,
+                                                            @NotNull Collection<MavenProject> allProjects) {
+    String path = null;
+    boolean resultUnderApp = false;
+
+    for (MavenProject p : allProjects) {
+      if (p.findDependencies(mavenId).size() > 0) {
+        final VirtualFile projectDir = p.getDirectoryFile();
+        final boolean app = APK_PACKAGING_TYPE.equals(p.getPackaging());
+        if (path == null || !resultUnderApp && app) {
+          path = projectDir.getPath() + '/' + getDirNameToUnpackExtApklibArtifact(mavenId);
+          resultUnderApp = app;
+        }
+      }
+    }
+    
+    if (path == null) {
+      path = project.getDirectoryFile().getPath() + '/' + getDirNameToUnpackExtApklibArtifact(mavenId);
+    }
+    return path;
+  }
+
+  @NotNull
+  private static String getDirNameToUnpackExtApklibArtifact(@NotNull MavenId mavenId) {
+    return "gen-external-apklibs/" + getMavenIdStringForFileName(mavenId);
+  }
+
+  @NotNull
+  public static String getModuleNameForExtApklibArtifact(MavenId mavenId) {
+    return APKLIB_MODULE_PREFIX + getMavenIdStringForFileName(mavenId);
+  }
+  
+  @Nullable
+  public static String getMavenIdStringByExtApklibModule(@NotNull Module module) {
+    final String moduleName = module.getName();
+    
+    if (!moduleName.startsWith(APKLIB_MODULE_PREFIX)) {
+      return null;
+    }
+    
+    return moduleName.substring(APKLIB_MODULE_PREFIX.length());
+  }
+
+  public static boolean isExtApklibModule(@NotNull Module module) {
+    return module.getName().startsWith(APKLIB_MODULE_PREFIX);
+  }
+
+  @NotNull
+  public static String getMavenIdStringForFileName(@NotNull MavenId mavenId) {
+    final String artifactId = mavenId.getKey().replace(':', '_');
+    return artifactId != null ? artifactId : "null";
   }
 
   public static boolean isMavenizedModule(@NotNull Module module) {

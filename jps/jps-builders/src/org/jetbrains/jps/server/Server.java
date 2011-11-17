@@ -25,7 +25,7 @@ import java.util.concurrent.Executors;
 public class Server {
   public static final int DEFAULT_SERVER_PORT = 7777;
   private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS = Math.max(2, Runtime.getRuntime().availableProcessors());
-  public static final String SERVER_SUCCESS_START_MESSAGE = "JPS Server started successfully. Listening on port port: ";
+  public static final String SERVER_SUCCESS_START_MESSAGE = "JPS Server started successfully. Listening on port: ";
   public static final String SERVER_ERROR_START_MESSAGE = "Error starting JPS Server: ";
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("jps-server");
@@ -97,6 +97,7 @@ public class Server {
           server.stop();
         }
       });
+      System.out.println("Server classpath: " + System.getProperty("java.class.path"));
       System.err.println(SERVER_SUCCESS_START_MESSAGE + port);
     }
     catch (Throwable e) {

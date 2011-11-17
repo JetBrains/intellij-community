@@ -19,7 +19,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.*;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -225,9 +228,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         continue;
       }
 
-      if (action instanceof ComboBoxAction) {
-        ((ComboBoxAction)action).setSmallVariant(true);
-      }
+      //if (action instanceof ComboBoxAction) {
+      //  ((ComboBoxAction)action).setSmallVariant(true);
+      //}
 
       if (layoutSecondaries) {
         if (!myActionGroup.isPrimary(action)) {

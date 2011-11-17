@@ -17,10 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -33,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -240,7 +238,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setText("Show: " + ((InstalledPluginsTableModel)pluginsModel).getEnabledFilter());
+      e.getPresentation().setText(((InstalledPluginsTableModel)pluginsModel).getEnabledFilter());
     }
 
     @NotNull
@@ -257,6 +255,22 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         });
       }
       return gr;
+    }
+
+    @Override
+    public JComponent createCustomComponent(Presentation presentation) {
+      final JComponent component = super.createCustomComponent(presentation);
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.setOpaque(false);
+      panel.add(component, BorderLayout.CENTER);
+      final JLabel comp = new JLabel("Show:");
+      comp.setIconTextGap(0);
+      comp.setHorizontalTextPosition(SwingConstants.RIGHT);
+      comp.setVerticalTextPosition(SwingConstants.CENTER);
+      comp.setAlignmentX(Component.RIGHT_ALIGNMENT);
+      panel.add(comp, BorderLayout.WEST);
+      panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 0));
+      return panel;
     }
   }
 

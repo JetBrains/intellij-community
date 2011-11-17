@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -90,6 +93,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private final Presentation myPresentation;
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
+    private boolean myMouseInside = false;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -118,6 +122,19 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       //noinspection HardCodedStringLiteral
       putClientProperty("Quaqua.Button.style", "placard");
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          myMouseInside = true;
+          repaint();
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          myMouseInside = false;
+          repaint();
+        }
+      });
     }
 
     public void showPopup() {
@@ -138,7 +155,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       ListPopup popup = createPopup(onDispose);
 
-      popup.showUnderneathOf(this);
+      popup.show(new RelativePoint(this, new Point(0, this.getHeight() - 1)));
     }
 
     @Nullable
@@ -280,10 +297,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         g2.setColor(UIUtil.getControlColor());
         final int w = getWidth();
         final int h = getHeight();
-        g2.setPaint(new GradientPaint(0,0, Gray._230, 0, h, Gray._200));
+        g2.setPaint(new GradientPaint(0,0, new Gray(250, 180), 0, h, new Gray(220, 180)));
         g2.fillRect(2, 0, w-2, h);
-        if (getMousePosition() == null ) {
-          g2.setPaint(new GradientPaint(0,0, Gray._180, 0, h, UIUtil.getBorderColor().darker()));
+        if (!myMouseInside) {
+          g2.setPaint(new GradientPaint(0,0, Gray._180, 0, h, Gray._150));
           //g2.setColor(UIUtil.getBorderColor());
         } else {
           g2.setColor(UIUtil.isUnderAquaLookAndFeel() ? new Color(0, 0, 0, 30) : new Color(8, 36, 107));

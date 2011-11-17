@@ -186,6 +186,12 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     return myRootPanel;
   }
 
+  @Override
+  public void disposeUIResources() {
+    myAddonPanel.removeAll();
+    super.disposeUIResources();
+  }
+
   protected List<UnnamedConfigurable> createConfigurables() {
     return AbstractConfigurableEP.createConfigurables(EP_NAME);
   }

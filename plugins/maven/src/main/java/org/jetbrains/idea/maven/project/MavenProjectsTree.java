@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
@@ -989,7 +990,8 @@ public class MavenProjectsTree {
     return result;
   }
 
-  public void resolve(@NotNull MavenProject mavenProject,
+  public void resolve(@NotNull Project project,
+                      @NotNull MavenProject mavenProject,
                       @NotNull MavenGeneralSettings generalSettings,
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
@@ -1001,10 +1003,8 @@ public class MavenProjectsTree {
       process.checkCanceled();
       process.setText(ProjectBundle.message("maven.resolving.pom", mavenProject.getDisplayName()));
       process.setText2("");
-      Pair<MavenProjectChanges, NativeMavenProjectHolder> resolveResult = mavenProject.resolve(generalSettings,
-                                                                                               embedder,
-                                                                                               new MavenProjectReader(),
-                                                                                               myProjectLocator);
+      Pair<MavenProjectChanges, NativeMavenProjectHolder> resolveResult =
+        mavenProject.resolve(project, generalSettings, embedder, new MavenProjectReader(), myProjectLocator);
 
       fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second);
     }
