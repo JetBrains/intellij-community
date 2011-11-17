@@ -225,8 +225,12 @@ class GitPushResult {
       }
       notificationType = NotificationType.WARNING;
     } else {
-      title = "Pushed " + pushedCommitsNumber + " " + StringUtil.pluralize("commit", pushedCommitsNumber);
       notificationType = NotificationType.INFORMATION;
+      if (pushedCommitsNumber == 0) {  // happens on new branch creation
+        title = "Pushed successfully";
+      } else {
+        title = "Pushed " + pushedCommitsNumber + " " + StringUtil.pluralize("commit", pushedCommitsNumber);
+      }
     }
     
     String errorReport = reportForGroup(groupedResult.myErrorResults, GroupedResult.Type.ERROR);
@@ -291,7 +295,7 @@ class GitPushResult {
         sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
       }
       if (resultType == GroupedResult.Type.SUCCESS || resultType == GroupedResult.Type.REJECT) {
-        sb.append(result.getPerBranchesReport());
+        sb.append(result.getPerBranchesNonErrorReport());
       } else {
         sb.append(result.getOutput());
       }

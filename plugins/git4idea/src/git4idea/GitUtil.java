@@ -619,4 +619,8 @@ public class GitUtil {
     }
     return null;
   }
+
+  public static boolean repoContainsRemoteBranch(@NotNull GitRepository repository, @NotNull GitBranch dest) {
+    return repository.getBranches().getRemoteBranches().contains(dest);
+  }
 }
