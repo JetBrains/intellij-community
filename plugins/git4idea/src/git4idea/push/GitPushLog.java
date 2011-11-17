@@ -26,10 +26,13 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
@@ -43,6 +46,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -61,14 +65,18 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   private final DefaultTreeModel myTreeModel;
   private final CheckedTreeNode myRootNode;
   private final ReentrantReadWriteLock TREE_CONSTRUCTION_LOCK = new ReentrantReadWriteLock();
+  private final MyTreeCellRenderer myTreeCellRenderer;
 
   GitPushLog(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull final Consumer<Boolean> checkboxListener) {
     myProject = project;
     myAllRepositories = repositories;
 
     myRootNode = new CheckedTreeNode(null);
+    myRootNode.add(new DefaultMutableTreeNode(new FakeCommit()));
+
     myTreeModel = new DefaultTreeModel(myRootNode);
-    myTree = new CheckboxTree(new MyTreeCellRenderer(), myRootNode) {
+    myTreeCellRenderer = new MyTreeCellRenderer();
+    myTree = new CheckboxTree(myTreeCellRenderer, myRootNode) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
         Object userObject = node.getUserObject();
@@ -93,10 +101,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         if (node != null) {
           Object nodeInfo = node.getUserObject();
           if (nodeInfo instanceof GitCommit) {
+            myChangesBrowser.getViewer().setEmptyText("No differences");
             myChangesBrowser.setChangesToDisplay(((GitCommit)nodeInfo).getChanges());
             return;
           }
         }
+        setDefaultEmptyText();
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
     });
@@ -104,6 +114,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
     myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
+    setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
@@ -111,6 +122,10 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     
     setLayout(new BorderLayout());
     add(splitter);
+  }
+
+  private void setDefaultEmptyText() {
+    myChangesBrowser.getViewer().setEmptyText("No commits selected");
   }
 
   // Make changes available for diff action
@@ -140,6 +155,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       createNodes(commits);
       myTreeModel.nodeStructureChanged(myRootNode);
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
+      myTreeCellRenderer.recalculateWidth(commits.getAllCommits());
       TreeUtil.expandAll(myTree);
       selectFirstCommit();
     }
@@ -243,6 +259,21 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+    
+    private int myDateMaxWidth;
+    
+    void recalculateWidth(@NotNull Collection<GitCommit> commits) {
+      for (GitCommit commit : commits) {
+        int len = getDateString(commit).length();
+        if (len > myDateMaxWidth) {
+          myDateMaxWidth = len;
+        }
+      }
+    }
+
+    private static String getDateString(GitCommit commit) {
+      return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
+    }
 
     @Override
     public void customizeRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
@@ -262,13 +293,14 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       if (userObject instanceof GitCommit) {
         GitCommit commit = (GitCommit)userObject;
         SimpleTextAttributes small = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground());
-        renderer.append(commit.getShortHash().toString(), small);
-        renderer.append(String.format("%15s  ", DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime())), small);
+        SimpleTextAttributes smallGrey = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor());
+        renderer.append(commit.getShortHash().toString(), smallGrey);
+        renderer.append(String.format(" %" + myDateMaxWidth + "s  ", getDateString(commit)), smallGrey);
         renderer.append(commit.getSubject(), small);
-        
       }
       else if (userObject instanceof GitRepository) {
-        renderer.append(((GitRepository)userObject).getPresentableUrl());
+        String repositoryPath = calcRootPath((GitRepository)userObject);
+        renderer.append(repositoryPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
       else if (userObject instanceof GitBranchPair) {
         GitBranchPair branchPair = (GitBranchPair) userObject;
@@ -276,13 +308,35 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         GitBranch dest = branchPair.getDest();
         assert dest != null : "Destination branch can't be null for branch " + fromBranch;
 
-        SimpleTextAttributes attrs = fromBranch.isActive() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        renderer.append(fromBranch.getName() + " -> " + dest.getName(), attrs);
+        renderer.append(fromBranch.getName() + " -> " + dest.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+      else if (userObject instanceof FakeCommit) {
+        int spaces = 6 + 15 + 3 + 30;
+        String s = String.format("%" + spaces + "s", " ");
+        renderer.append(s, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, renderer.getBackground()));
       }
       else {
         renderer.append(userObject == null ? "" : userObject.toString());
       }
     }
+
+    @NotNull
+    private static String calcRootPath(@NotNull GitRepository repository) {
+      VirtualFile projectDir = repository.getProject().getBaseDir();
+
+      String repositoryPath = repository.getPresentableUrl();
+      if (projectDir != null) {
+        String relativePath = VfsUtilCore.getRelativePath(repository.getRoot(), projectDir, File.separatorChar);
+        if (relativePath != null) {
+          repositoryPath = relativePath;
+        }
+      }
+
+      return repositoryPath.isEmpty() ? "<Project>" : "." + File.separator + repositoryPath;
+    }
+  }
+  
+  private static class FakeCommit {
   }
 
 }

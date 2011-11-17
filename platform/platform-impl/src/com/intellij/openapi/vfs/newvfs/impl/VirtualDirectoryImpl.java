@@ -181,13 +181,27 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
 
   private static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
+
+  private static final boolean SHOULD_NOT_PERFORM_ACCESS_CHECK = System.getProperty("should.not.perform.access.check") != null;
+
   private static final boolean IS_UNIT_TESTS = ApplicationManager.getApplication().isUnitTestMode();
+
+
   private static final Collection<String> additionalRoots = new THashSet<String>();
+
   @TestOnly
-  public static void allowToAccess(@NotNull String root) { additionalRoots.add(FileUtil.toSystemIndependentName(root)); }
+  public static void allowToAccess(@NotNull String root) {
+    additionalRoots.add(FileUtil.toSystemIndependentName(root));
+  }
+
   @TestOnly
   private static void assertAccessInTests(VirtualFileSystemEntry child) {
-    if (IS_UNIT_TESTS && IS_UNDER_TEAMCITY && ApplicationManager.getApplication() instanceof ApplicationImpl && ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()) {
+    if (IS_UNIT_TESTS &&
+        IS_UNDER_TEAMCITY &&
+        ApplicationManager.getApplication() instanceof ApplicationImpl &&
+        ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()
+        &&
+        !SHOULD_NOT_PERFORM_ACCESS_CHECK) {
       NewVirtualFileSystem fileSystem = child.getFileSystem();
       if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
         return;
@@ -218,7 +232,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       if (!isUnder) {
         if (!allowed.isEmpty()) {
-          assert false : "File accessed outside allowed roots: " + child +";\n Allowed roots: "+new ArrayList(allowed);
+          assert false : "File accessed outside allowed roots: " + child + ";\n Allowed roots: " + new ArrayList(allowed);
         }
       }
     }
@@ -271,6 +285,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private static boolean insideGettingRoots;
+
   private static VirtualFile[] getAllRoots(Project project) {
     insideGettingRoots = true;
     Set<VirtualFile> roots = new THashSet<VirtualFile>();
@@ -366,7 +381,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     for (String name : names) {
       findChild(name, false, false, delegate);
     }
-    
+
     // important: should return a copy here for safe iterations
     return new ArrayList<VirtualFile>(ensureAsMap().values());
   }
@@ -378,7 +393,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return (VirtualFileSystemEntry[])myChildren;
     }
 
-    Pair<String[],int[]> pair = PersistentFS.listAll(this);
+    Pair<String[], int[]> pair = PersistentFS.listAll(this);
     final int[] childrenIds = pair.second;
     VirtualFileSystemEntry[] children;
     if (childrenIds.length == 0) {
@@ -417,7 +432,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (loaded != null) {
       return loaded;
     }
-    
+
     String name = ourPersistence.getName(id);
     return findChild(name, false, false, getFileSystem());
   }

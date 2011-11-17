@@ -206,6 +206,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
     setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
+    setEmptyText(emptyText);
+  }
+
+  public void setEmptyText(@NotNull String emptyText) {
     myTree.getEmptyText().setText(emptyText);
     myList.getEmptyText().setText(emptyText);
   }

@@ -16,12 +16,10 @@
 package git4idea.push;
 
 import git4idea.GitBranch;
+import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Holds Git commits made in a single repository grouped by branches.
@@ -75,4 +73,12 @@ final class GitCommitsByBranch {
     return new GitCommitsByBranch(res);
   }
 
+  @NotNull
+  public Collection<GitCommit> getAllCommits() {
+    Collection<GitCommit> commits = new ArrayList<GitCommit>();
+    for (GitPushBranchInfo branchInfo : myCommitsByBranch.values()) {
+      commits.addAll(branchInfo.getCommits());
+    }
+    return commits;
+  }
 }

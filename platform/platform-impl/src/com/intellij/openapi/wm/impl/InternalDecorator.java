@@ -436,6 +436,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       UISettings settings = UISettings.getInstance();
 
       ToolWindowManagerImpl mgr = ((ToolWindowImpl)myWindow).getToolWindowManager();
+      if (!mgr.isToolWindowRegistered(((ToolWindowImpl)myWindow).getId())) return new Insets(0, 0, 0, 0);
 
       List<String> topIds = mgr.getIdsOn(ToolWindowAnchor.TOP);
       boolean topButtons = !settings.HIDE_TOOL_STRIPES && !topIds.isEmpty();

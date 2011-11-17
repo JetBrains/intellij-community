@@ -26,6 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
+
+  private static final int UNDEFINED_OFFSET = -1;
+
   private final Project myProject;
   private final VirtualFile myFile;
   private final int myDocumentLine;
@@ -49,7 +52,7 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
 
   public OpenFileDescriptor getDescriptor() {
     int offset = calculateOffset(myFile, myDocumentLine, myDocumentColumn);
-    if (offset != -1) {
+    if (offset != UNDEFINED_OFFSET) {
       return new OpenFileDescriptor(myProject, myFile, offset);
     }
     // although document position != logical position, it seems better than returning 'null'
@@ -67,6 +70,14 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
     });
   }
 
+  /**
+   * Calculates an offset, that matches given line and column of the document.
+   *
+   * @param file           VirtualFile instance
+   * @param documentLine   zero-based line of the document
+   * @param documentColumn zero-based column of the document
+   * @return calculated offset or UNDEFINED_OFFSET if it's impossible to calculate
+   */
   private static int calculateOffset(@NotNull final VirtualFile file,
                                      final int documentLine, final int documentColumn) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
@@ -83,7 +94,7 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
             return lineStartOffset + fixedColumn;
           }
         }
-        return -1;
+        return UNDEFINED_OFFSET;
       }
     });
   }

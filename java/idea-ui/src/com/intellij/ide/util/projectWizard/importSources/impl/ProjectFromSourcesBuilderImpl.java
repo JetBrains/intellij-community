@@ -290,12 +290,12 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
       VirtualFile moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(contentRoot.getPath()));
       if (moduleContentRoot != null) {
         final ContentEntry contentEntry = rootModel.addContentEntry(moduleContentRoot);
-        final Collection<JavaModuleSourceRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
-        for (JavaModuleSourceRoot srcRoot : sourceRoots) {
+        final Collection<DetectedProjectRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
+        for (DetectedProjectRoot srcRoot : sourceRoots) {
           final String srcpath = FileUtil.toSystemIndependentName(srcRoot.getDirectory().getPath());
           final VirtualFile sourceRoot = lfs.refreshAndFindFileByPath(srcpath);
           if (sourceRoot != null) {
-            contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot.getDirectory()), srcRoot.getPackagePrefix());
+            contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot.getDirectory()), getPackagePrefix(srcRoot));
           }
         }
       }
@@ -319,6 +319,11 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
       }
     }
 
+  }
+
+  public static String getPackagePrefix(final DetectedProjectRoot srcRoot) {
+    // TODO we can introduce DetectedProjectRootWithPackagePrefix interface
+    return srcRoot instanceof JavaModuleSourceRoot ? ((JavaModuleSourceRoot)srcRoot).getPackagePrefix() : "";
   }
 
   @NotNull

@@ -22,6 +22,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -63,7 +65,18 @@ public class PathMacroListEditor {
       }
     });
 
+    myPathMacroTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        updateButtons();
+      }
+    });
+
     fillIgnoredVariables();
+  }
+
+  private void updateButtons() {
+    myEditButton.setEnabled(myPathMacroTable.getSelectedRowCount() == 1);
+    myRemoveButton.setEnabled(myPathMacroTable.getSelectedRowCount() > 0);
   }
 
   private void fillIgnoredVariables() {
@@ -106,6 +119,7 @@ public class PathMacroListEditor {
   public void reset() {
     myPathMacroTable.reset();
     fillIgnoredVariables();
+    updateButtons();
   }
 
   public boolean isModified() {

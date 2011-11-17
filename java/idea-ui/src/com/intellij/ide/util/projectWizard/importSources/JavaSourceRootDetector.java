@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard.importSources;
 
+import com.intellij.ide.util.projectWizard.importSources.util.CommonSourceRootDetectionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.NullableFunction;
@@ -36,7 +37,8 @@ public abstract class JavaSourceRootDetector extends ProjectStructureDetector {
       if (child.isFile()) {
         String extension = FileUtil.getExtension(child.getName());
         if (extension.equals(fileExtension)) {
-          Pair<File, String> root = JavaSourceRootDetectionUtil.suggestRootForJavaFile(child, base, getPackageNameFetcher());
+          Pair<File, String> root = CommonSourceRootDetectionUtil.suggestRootForFileWithPackageStatement(child, base,
+                                                                                                         getPackageNameFetcher());
           if (root != null) {
             result.add(new JavaModuleSourceRoot(root.getFirst(), root.getSecond(), getLanguageName()));
             return DirectoryProcessingResult.skipChildrenAndParentsUpTo(root.getFirst());
