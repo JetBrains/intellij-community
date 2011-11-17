@@ -169,6 +169,13 @@ libraryLicense(name: "Apache Sanselan", libraryName: "Sanselan", version: "0.98"
 libraryLicense(name: "Automaton", libraryName: "automaton.jar", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
 libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
 libraryLicense(name: "Ganymed", version: "bundled with SVNKit", libraryName: "svnkit.jar", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
+libraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "GPLv2", url: "http://sqljet.com", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
+libraryLicense(name: "Apache Commons HTTPClient", libraryName: "httpclient-4.1.1.jar", version:"4.1.1", license: "Apache 2.0",
+               url: "http://hc.apache.org/httpcomponents-client-ga/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "Apache Commons HTTPCore", libraryName: "httpcore-4.1.jar", version: "4.1", license: "Apache 2.0",
+               url: "http://hc.apache.org/httpcomponents-core-ga/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "Antlr", libraryName: "antlr.jar", version: "3.1.3", license: "BSD", url: "http://www.antlr.org",
+               licenseUrl: "http://www.antlr.org/license.html")
 libraryLicense(name: "Guava", version: "R8", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Groovy", version: "1.7.3", license: "Apache 2.0", url: "http://groovy.codehaus.org/")
 libraryLicense(name: "Gson", libraryName: "gson-1.3.jar", license: "Apache 2.0", url: "http://code.google.com/p/google-gson/")
