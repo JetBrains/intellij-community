@@ -116,7 +116,7 @@ public class GradleConfigurable implements SearchableConfigurable {
         myShowBalloonIfNecessary = false;
         MessageType messageType = null;
         switch (myGradleHomeSettingType) {
-          case DEDUCED: messageType = MessageType.WARNING; break;
+          case DEDUCED: messageType = MessageType.INFO; break;
           case EXPLICIT_INCORRECT:
           case UNKNOWN: messageType = MessageType.ERROR; break;
           default:
