@@ -320,7 +320,7 @@ public class MavenRootModelAdapter {
     return result.get();
   }
 
-  private static String makeLibraryName(@NotNull MavenArtifact artifact) {
+  public static String makeLibraryName(@NotNull MavenArtifact artifact) {
     return MAVEN_LIB_PREFIX + artifact.getDisplayStringForLibraryName();
   }
 
