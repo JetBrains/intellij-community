@@ -606,7 +606,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       if (myCompiledPattern == null) {
         Object result;
         try {
-          result = myNode.target == ERROR_NODE? ALWAYS_FALSE : execute(myNode);
+          result = compile();
         }
         catch (Throwable throwable) {
           LOG.error(toString(), throwable);
@@ -615,6 +615,10 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         myCompiledPattern = (ElementPattern<T>)result;
       }
       return myCompiledPattern;
+    }
+
+    public ElementPattern<?> compile() throws Throwable {
+      return myNode.target == ERROR_NODE? ALWAYS_FALSE : (ElementPattern<?>)execute(myNode);
     }
 
     @Override

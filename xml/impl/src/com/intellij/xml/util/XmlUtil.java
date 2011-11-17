@@ -35,6 +35,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -1059,10 +1060,10 @@ public class XmlUtil {
       xhtmlSchemaLocationURL = htmlSchemaLocationURL;
     }
 
-    HTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(htmlSchemaLocationURL.toExternalForm()));
+    HTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(FileUtil.unquote(htmlSchemaLocationURL.toExternalForm())));
     LOG.info("HTML5_SCHEMA_LOCATION = " + HTML5_SCHEMA_LOCATION);
     
-    XHTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(xhtmlSchemaLocationURL.toExternalForm()));
+    XHTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(FileUtil.unquote(xhtmlSchemaLocationURL.toExternalForm())));
     LOG.info("XHTML5_SCHEMA_LOCATION = " + XHTML5_SCHEMA_LOCATION);
   }
   

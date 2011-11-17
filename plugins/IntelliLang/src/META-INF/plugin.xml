@@ -12,8 +12,8 @@
   <depends optional="true" config-file="intellilang-js-support.xml">JavaScript</depends>
 
   <extensionPoints>
-    <extensionPoint name="languageSupport"
-                    interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport"/>
+    <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport"/>
+    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />

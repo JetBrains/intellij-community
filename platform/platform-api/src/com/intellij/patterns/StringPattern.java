@@ -15,7 +15,6 @@
  */
 package com.intellij.patterns;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ProcessingContext;
 import dk.brics.automaton.Automaton;
@@ -29,13 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * @author peter
  */
 public class StringPattern extends ObjectPattern<String, StringPattern> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.patterns.StringPattern");
   private static final InitialPatternCondition<String> CONDITION = new InitialPatternCondition<String>(String.class) {
     public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
       return o instanceof String;
@@ -97,20 +94,8 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     if (escaped.equals(s)) {
       return equalTo(s);
     }
-    final Pattern pattern;
-    try {
-      pattern = Pattern.compile(s);
-    }
-    catch (PatternSyntaxException e) {
-      LOG.error(e);
-      return with(new PatternCondition<String>("neverMatches") {
-        @Override
-        public boolean accepts(@NotNull String s, ProcessingContext context) {
-          return false;
-        }
-      });
-    }
-
+    // may throw PatternSyntaxException here
+    final Pattern pattern = Pattern.compile(s);
     return with(new ValuePatternCondition<String>("matches") {
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         return pattern.matcher(str).matches();

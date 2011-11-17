@@ -20,7 +20,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -388,7 +387,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
   public Configurable[] getConfigurables() {
     if (myConfigurables == null) {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-      for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
+      for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
       }
       Collections.sort(configurables, new Comparator<Configurable>() {
