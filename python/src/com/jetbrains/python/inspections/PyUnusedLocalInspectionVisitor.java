@@ -1,7 +1,6 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -63,33 +62,33 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   @Override
   public void visitPyFunction(final PyFunction node) {
-    processScope(node, node);
+    processScope(node);
   }
 
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
-    processScope(node, node);
+    processScope(node);
   }
 
-  static class DontPerformException extends RuntimeException {}
+  @Override
+  public void visitPyClass(PyClass node) {
+    processScope(node);
+  }
 
-  private void processScope(final ScopeOwner owner, final PyElement node) {
-    if (CythonLanguageDialect._isDisabledFor(node)) {
+  private void processScope(final ScopeOwner owner) {
+    if (CythonLanguageDialect._isDisabledFor(owner) ||
+        (owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)) ||
+        callsLocals(owner)) {
       return;
     }
-
-    if (owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)){
-      return;
+    if (!(owner instanceof PyClass)) {
+      collectAllWrites(owner);
     }
+    collectUsedReads(owner);
+  }
 
-    if (callsLocals(owner)) return;
-
-    // If method overrides others or is overridden, do not mark parameters as unused if they are
-    final Scope scope = ControlFlowCache.getScope(owner);
-    final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
-    final Instruction[] instructions = flow.getInstructions();
-
-    // Iteration over write accesses
+  private void collectAllWrites(ScopeOwner owner) {
+    final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (Instruction instruction : instructions) {
       final PsiElement element = instruction.getElement();
       if (element instanceof PyFunction && owner instanceof PyFunction) {
@@ -105,18 +104,16 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
         final String name = readWriteInstruction.getName();
         // Ignore empty, wildcards, global and nonlocal names
+        final Scope scope = ControlFlowCache.getScope(owner);
         if (name == null || "_".equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
           continue;
         }
         // Ignore elements out of scope
-        if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
+        if (element == null || !PsiTreeUtil.isAncestor(owner, element, false)) {
           continue;
         }
         // Ignore arguments of import statement
         if (PyImportStatementNavigator.getImportStatementByElement(element) != null) {
-          continue;
-        }
-        if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
           continue;
         }
         if (!myUsedElements.contains(element)) {
@@ -124,8 +121,10 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
 
-    // Iteration over read accesses
+  private void collectUsedReads(final ScopeOwner owner) {
+    final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (int i = 0; i < instructions.length; i++) {
       final Instruction instruction = instructions[i];
       if (instruction instanceof ReadWriteInstruction) {
@@ -140,7 +139,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
         final PsiElement element = instruction.getElement();
         // Ignore elements out of scope
-        if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
+        if (element == null || !PsiTreeUtil.isAncestor(owner, element, false)) {
           continue;
         }
         final int startInstruction;
@@ -179,7 +178,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
               if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
                 // For elements in scope
-                if (element != null && PsiTreeUtil.isAncestor(node, element, false)) {
+                if (element != null && PsiTreeUtil.isAncestor(owner, element, false)) {
                   myUsedElements.add(element);
                   myUnusedElements.remove(element);
                 }
@@ -192,6 +191,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       }
     }
   }
+
+  static class DontPerformException extends RuntimeException {}
 
   private static boolean callsLocals(final ScopeOwner owner) {
     try {
