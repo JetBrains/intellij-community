@@ -161,15 +161,27 @@ public class XDebuggerTestUtil {
     assertVariableValue(findVar(vars, name), name, value);
   }
 
-  public static void assertVariableValueMatches(Collection<XValue> vars, @Nullable String name, String valuePattern)
-    throws InterruptedException {
+  public static void assertVariableValueMatches(Collection<XValue> vars,
+                                                @Nullable String name,
+                                                @Nullable String valuePattern) throws InterruptedException {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 
-  public static void assertVariableValueMatches(XValue var, String name, String valuePattern) throws InterruptedException {
+  public static void assertVariableValueMatches(XValue var,
+                                                @Nullable String name,
+                                                @Nullable String valuePattern) throws InterruptedException {
+    assertVariableValueMatches(var, name, null, valuePattern);
+  }
+
+  public static void assertVariableValueMatches(XValue var,
+                                                @Nullable String name,
+                                                @Nullable String type,
+                                                @Nullable String valuePattern) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
-    Assert.assertEquals(name, node.myName);
-    Assert.assertTrue("Expected value" + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
+    if (name != null) Assert.assertEquals(name, node.myName);
+    if (type != null) Assert.assertEquals(type, node.myType);
+    if (valuePattern != null)
+      Assert.assertTrue("Expected value" + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
   }
 
   public static void assertVariableFullValue(XValue var, @Nullable String value) throws InterruptedException {
