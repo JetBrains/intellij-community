@@ -314,6 +314,7 @@ public class JpsServerManager implements ApplicationComponent{
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
+    cmdLine.addParameter("-server");
     cmdLine.addParameter("-ea");
     cmdLine.addParameter("-XX:MaxPermSize=150m");
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
@@ -322,7 +323,7 @@ public class JpsServerManager implements ApplicationComponent{
       cmdLine.addParameter("-Xmx1024m");
     }
     else {
-      cmdLine.addParameter("-Xmx640m");
+      cmdLine.addParameter("-Xmx512m");
     }
 
     // debugging
