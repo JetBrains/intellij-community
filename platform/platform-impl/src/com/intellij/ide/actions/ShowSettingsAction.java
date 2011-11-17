@@ -48,7 +48,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
 
     ConfigurableGroup[] group = {
       new ProjectConfigurablesGroup(project),
-      IdeConfigurablesGroup.getInstance()
+      new IdeConfigurablesGroup()
     };
 
     final long startTime = System.nanoTime();

@@ -99,7 +99,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
 
           ConfigurableGroup[] group = new ConfigurableGroup[]{
             new ProjectConfigurablesGroup(project),
-            IdeConfigurablesGroup.getInstance()
+            new IdeConfigurablesGroup()
           };
 
           ShowSettingsUtil.getInstance().showSettingsDialog(project, group);
