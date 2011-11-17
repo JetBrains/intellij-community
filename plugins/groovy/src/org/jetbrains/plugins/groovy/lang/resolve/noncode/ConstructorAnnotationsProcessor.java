@@ -27,10 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -55,7 +52,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     }
 
     if (tupleConstructor != null &&
-        typeDefinition.getConstructors().length > 0 &&
+        typeDefinition.getCodeConstructors().length > 0 &&
         !PsiUtil.getAnnoAttributeValue(tupleConstructor, "force", false)) {
       return;
     }

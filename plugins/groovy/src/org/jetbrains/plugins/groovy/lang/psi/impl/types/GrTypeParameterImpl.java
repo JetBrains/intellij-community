@@ -197,6 +197,12 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return GrField.EMPTY_ARRAY;
   }
 
+  @NotNull
+  @Override
+  public GrMethod[] getCodeConstructors() {
+    return GrMethod.EMPTY_ARRAY;
+  }
+
   @Override
   public PsiField findCodeFieldByName(String name, boolean checkBases) {
     return null;
