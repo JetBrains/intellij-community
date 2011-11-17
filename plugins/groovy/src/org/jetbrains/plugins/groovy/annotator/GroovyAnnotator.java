@@ -16,10 +16,13 @@
 
 package org.jetbrains.plugins.groovy.annotator;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -27,6 +30,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -245,6 +249,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
 
       registerReferenceFixes(referenceExpression, annotation);
+      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(referenceExpression, new QuickFixActionRegistrarAdapter(annotation));
+
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
   }
@@ -1537,6 +1543,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (refElement.getQualifier() == null) {
         registerCreateClassByTypeFix(refElement, annotation);
         registerAddImportFixes(refElement, annotation);
+        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(refElement, new QuickFixActionRegistrarAdapter(annotation));
       }
     }
     else if (!resolveResult.isAccessible()) {
@@ -1649,6 +1656,29 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         myBorderPassed = true;
       }
       super.handleEvent(event, associated);
+    }
+  }
+
+  private static class QuickFixActionRegistrarAdapter implements QuickFixActionRegistrar {
+    private final Annotation myAnnotation;
+
+    public QuickFixActionRegistrarAdapter(Annotation annotation) {
+      myAnnotation = annotation;
+    }
+
+    @Override
+    public void register(IntentionAction action) {
+      myAnnotation.registerFix(action);
+    }
+
+    @Override
+    public void register(TextRange fixRange, IntentionAction action, HighlightDisplayKey key) {
+      myAnnotation.registerFix(action, fixRange, key);
+    }
+
+    @Override
+    public void unregister(Condition<IntentionAction> condition) {
+      throw new UnsupportedOperationException();
     }
   }
 }
