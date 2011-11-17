@@ -79,7 +79,7 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     if (!PyTestFrameworksUtil.isNoseTestInstalled(getProject(), getSdkHome()))
-      throw new RuntimeConfigurationError("No nosetest runner found in selected interpreter");
+      throw new RuntimeConfigurationWarning("No nosetest runner found in selected interpreter");
   }
 
   public boolean useParam() {

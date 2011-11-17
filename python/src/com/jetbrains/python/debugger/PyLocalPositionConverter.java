@@ -9,6 +9,8 @@ import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 
 public class PyLocalPositionConverter implements PyPositionConverter {
 
@@ -25,13 +27,14 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @NotNull
-  final public PySourcePosition create(@NotNull final String file, final int line) {
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(file);
-    if (vFile != null) {
-      return new PyLocalSourcePosition(vFile.getPath(), line);
+  final public PySourcePosition create(@NotNull final String filePath, final int line) {
+    File file = new File(filePath);
+
+    if (file.exists()) {
+      return new PyLocalSourcePosition(file.getPath(), line);
     }
     else {
-      return new PyRemoteSourcePosition(file, line);
+      return new PyRemoteSourcePosition(filePath, line);
     }
   }
 

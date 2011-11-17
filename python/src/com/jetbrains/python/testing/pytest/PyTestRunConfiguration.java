@@ -115,7 +115,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
       throw new RuntimeConfigurationError("Please specify target folder or script");
     }
     if (!PyTestFrameworksUtil.isPyTestInstalled(getProject(), getSdkHome()))
-      throw new RuntimeConfigurationError("No py.test runner found in selected interpreter");
+      throw new RuntimeConfigurationWarning("No py.test runner found in selected interpreter");
   }
 
   @Override
