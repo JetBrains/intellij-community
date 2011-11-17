@@ -465,4 +465,8 @@ public class PythonCompletionTest extends PyTestCase {
   public void testPrivateMemberType() {  // PY-4589
     doTest();
   }
+  
+  public void testCompleteBeforeSyntaxError() { // PY-3792
+    doTest();
+  }
 }

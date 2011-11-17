@@ -72,10 +72,11 @@ PyFile:WithStatement2.py
     PyWithItem
       PsiErrorElement:expression expected
         <empty list>
-    PyStatementList
-      PsiElement(Py:EQ)('=')
-      PsiErrorElement:statement expected, found Py:EQ
-        <empty list>
+    PsiErrorElement:colon expected
+      <empty list>
+  PsiElement(Py:EQ)('=')
+  PsiErrorElement:statement expected, found Py:EQ
+    <empty list>
   PsiWhiteSpace(' ')
   PyExpressionStatement
     PyNumericLiteralExpression

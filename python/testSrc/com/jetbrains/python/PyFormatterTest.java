@@ -156,10 +156,10 @@ public class PyFormatterTest extends PyTestCase {
 
     String expected =
       "def method_name(\n" +
-      "    desired_impulse_response,\n" +
-      "    desired_response_parameters,\n" +
-      "    inverse_filter_length,\n" +
-      "    observed_impulse_response):\n" +
+      "        desired_impulse_response,\n" +
+      "        desired_response_parameters,\n" +
+      "        inverse_filter_length,\n" +
+      "        observed_impulse_response):\n" +
       "#  Extract from here to ...\n" +
       "    desired_impulse_response = {'dirac, '\n" +
       "    gaussian\n" +
@@ -167,8 +167,8 @@ public class PyFormatterTest extends PyTestCase {
       "    return desired, o";
     assertEquals(expected, reformatted.getText());
   }
-  
-  private void doTest() {
+
+ private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
