@@ -44,7 +44,6 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -179,7 +178,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     if (versionString == null || !versionString.toLowerCase().contains("jython")) {
       args.add("-u");
     }
-    args.add(FileUtil.toSystemDependentName(PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
+    args.add(FileUtil.toSystemDependentName(PythonHelpersLocator.getHelperPath("pydev/pydevconsole.py")));
     for (int port : ports) {
       args.add(String.valueOf(port));
     }
