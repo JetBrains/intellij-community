@@ -200,7 +200,7 @@ try:
         sys.exitfunc = ExitPass
 except:
     IPYTHON = False
-    #sys.stderr.write('PyDev console: using default backend (IPython not available).\n')
+    sys.stderr.write('PyDev console: started.\n')
     pass #IPython not available, proceed as usual.
 
 #=======================================================================================================================
