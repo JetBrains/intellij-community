@@ -11,7 +11,7 @@ class StartClass {
   def static main(args) {
     def connector = GradleConnector.newConnector();
     connector.useInstallation(new File('/home/denis/dev/gradle/gradle-1.0-milestone-3'))
-    .forProjectDirectory(new File('/home/denis/dev/gradle/gradle-1.0-milestone-3/samples/java/quickstart'))
+        .forProjectDirectory(new File('/home/denis/dev/gradle/gradle-1.0-milestone-3/samples/java/quickstart'))
 
   }
 }
