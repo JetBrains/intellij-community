@@ -100,7 +100,14 @@ class GitManualPushToBranch extends JPanel {
     panel.add(myRefreshButton, g.next());
     g.nextLine();
     if (myRepositories.size() > 1) {
-      panel.add(myComment, g.insets(0, 20, 0, 0).next());
+      GridBagConstraints constraints = new GridBagConstraints();
+      constraints.gridwidth = GridBagConstraints.REMAINDER;
+      constraints.anchor = GridBagConstraints.LINE_START;
+      constraints.gridx = 0;
+      constraints.gridy = 1;
+      constraints.insets = new Insets(0, 28, 0, 0);
+      //panel.add(myComment, g.insets(0, 20, 0, 0).coverLine().next());
+      panel.add(myComment, constraints);
     }
 
     setLayout(new BorderLayout());
