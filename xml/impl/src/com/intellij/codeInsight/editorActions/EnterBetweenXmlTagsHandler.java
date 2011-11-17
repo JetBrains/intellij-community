@@ -17,29 +17,36 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset, @NotNull final Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
-    if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset.get().intValue())) {
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    
+    if (file instanceof XmlFile && isBetweenXmlTags(project, editor, file, caretOffset.get().intValue())) {
       originalHandler.execute(editor, dataContext);
       return Result.DefaultForceIndent;
     }
     return Result.Continue;
   }
 
-  private static boolean isBetweenXmlTags(Editor editor, int offset) {
+  private static boolean isBetweenXmlTags(Project project, Editor editor, PsiFile file, int offset) {
     if (offset == 0) return false;
     CharSequence chars = editor.getDocument().getCharsSequence();
     if (chars.charAt(offset - 1) != '>') return false;
@@ -47,6 +54,11 @@ public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     if (iterator.getTokenType() != XmlTokenType.XML_TAG_END) return false;
+    
+    if (isAtTheEndOfEmptyTag(project, editor, file, iterator)) {
+      return false;
+    }
+    
     iterator.retreat();
 
     int retrieveCount = 1;
@@ -61,5 +73,22 @@ public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
     for(int i = 0; i < retrieveCount; ++i) iterator.advance();
     iterator.advance();
     return !iterator.atEnd() && iterator.getTokenType() == XmlTokenType.XML_END_TAG_START;
+  }
+
+  private static boolean isAtTheEndOfEmptyTag(Project project, Editor editor, PsiFile file, HighlighterIterator iterator) {
+    if (iterator.getTokenType() != XmlTokenType.XML_TAG_END) {
+      return false;
+    }
+
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    final PsiElement element = file.findElementAt(iterator.getStart());
+
+    if (element == null) {
+      return false;
+    }
+
+    final PsiElement parent = element.getParent();
+    return parent instanceof XmlTag &&
+           parent.getTextRange().getEndOffset() == iterator.getEnd();
   }
 }
