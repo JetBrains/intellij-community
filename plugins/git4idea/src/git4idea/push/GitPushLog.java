@@ -313,7 +313,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         text +=  dest.getName();
         renderer.append(text, branchInfo.isNewBranchCreated() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         if (branchInfo.isNewBranchCreated()) {
-          renderer.append(" new branch is created, showing last 10 commits on the current branch", smallGrey);
+          renderer.append(" new branch will be created, showing last 10 commits on the current branch", smallGrey);
         }
       }
       else if (userObject instanceof FakeCommit) {

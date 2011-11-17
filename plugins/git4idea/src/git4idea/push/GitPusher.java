@@ -362,7 +362,11 @@ public final class GitPusher {
 
   @NotNull
   private static GitPushBranchResult successfulResultForBranch(@NotNull GitCommitsByBranch commitsByBranch, @NotNull GitBranch branch) {
-    return GitPushBranchResult.success(commitsByBranch.get(branch).getCommits().size());
+    GitPushBranchInfo branchInfo = commitsByBranch.get(branch);
+    if (branchInfo.isNewBranchCreated()) {
+      return GitPushBranchResult.newBranch(branchInfo.getDestBranch().getName());
+    } 
+    return GitPushBranchResult.success(branchInfo.getCommits().size());
   }
 
   private static boolean branchInRejected(@NotNull GitBranch branch, @NotNull Collection<String> rejectedBranches) {
