@@ -27,6 +27,6 @@ public class SubversionGroup extends StandardVcsGroup {
 
   @Override
   public String getVcsName(final Project project) {
-    return "svn";
+    return "svn17";
   }
 }

@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="490f7"/>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.set.property.property.name"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.set.property.property.name"/>
         </properties>
       </component>
       <component id="490f7" class="javax.swing.JComboBox" binding="myPropertyNameBox">
@@ -34,7 +34,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="radio.set.property.set.property.value"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="radio.set.property.set.property.value"/>
         </properties>
       </component>
       <scrollpane class="com.intellij.ui.components.JBScrollPane" id="17a49">
@@ -61,7 +61,7 @@
           <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="radio.set.property.delete.property"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="radio.set.property.delete.property"/>
         </properties>
       </component>
       <component id="fdc8d" class="javax.swing.JSeparator">
@@ -79,7 +79,7 @@
           <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkbox.set.property.update.properties.recursively"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkbox.set.property.update.properties.recursively"/>
         </properties>
       </component>
     </children>

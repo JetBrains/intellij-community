@@ -186,7 +186,7 @@
         </constraints>
         <properties>
           <labelFor value="cdd55"/>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.copy.comment"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.copy.comment"/>
         </properties>
       </component>
     </children>

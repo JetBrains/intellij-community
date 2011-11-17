@@ -13,7 +13,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkbox.changes.filter.filter.by.author"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkbox.changes.filter.filter.by.author"/>
         </properties>
       </component>
       <component id="ef757" class="javax.swing.JTextField" binding="myAuthorField">
@@ -39,7 +39,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="browse.changes.settings.stop.on.copy"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="browse.changes.settings.stop.on.copy"/>
         </properties>
       </component>
     </children>

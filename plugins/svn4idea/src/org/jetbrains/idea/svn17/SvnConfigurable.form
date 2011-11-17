@@ -20,7 +20,7 @@
           </grid>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.configuration.configuration.directory"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.configuration.configuration.directory"/>
         </properties>
       </component>
       <component id="212b3" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myConfigurationDirectoryText">
@@ -40,7 +40,7 @@
           </grid>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkbox.configure.use.system.default.configuration.directory"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkbox.configure.use.system.default.configuration.directory"/>
         </properties>
       </component>
       <component id="1283d" class="javax.swing.JCheckBox" binding="myUseCommonProxy">
@@ -58,7 +58,7 @@
           <grid row="13" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="button.text.edit.proxies"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="button.text.edit.proxies"/>
         </properties>
       </component>
       <component id="decc5" class="javax.swing.JButton" binding="myClearAuthButton">
@@ -66,7 +66,7 @@
           <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="button.text.clear.authentication.cache"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="button.text.clear.authentication.cache"/>
         </properties>
       </component>
       <component id="23675" class="javax.swing.JLabel" binding="myClearCacheLabel">
@@ -77,7 +77,7 @@
           <enabled value="true"/>
           <font/>
           <foreground color="-10066330"/>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.text.delete.stored.credentials"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.text.delete.stored.credentials"/>
         </properties>
       </component>
       <component id="a9606" class="javax.swing.JLabel" binding="myUseCommonProxyLabel">
@@ -87,7 +87,7 @@
         <properties>
           <enabled value="true"/>
           <foreground color="-10066330"/>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="use.idea.proxy.as.default.label.text"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="use.idea.proxy.as.default.label.text"/>
         </properties>
       </component>
       <component id="a353c" class="javax.swing.JLabel" binding="myEditProxyLabel">
@@ -97,7 +97,7 @@
         <properties>
           <enabled value="true"/>
           <foreground color="-10066330"/>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.text.edit.proxies"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.text.edit.proxies"/>
         </properties>
       </component>
       <component id="27350" class="com.intellij.ui.TitledSeparator">
@@ -123,8 +123,8 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="action.Subversion.update.use.locks.on.demand.text.configurable"/>
-          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="action.Subversion.update.use.locks.on.demand.description"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="action.Subversion.update.use.locks.on.demand.text.configurable"/>
+          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="action.Subversion.update.use.locks.on.demand.description"/>
         </properties>
       </component>
       <component id="c2f81" class="javax.swing.JCheckBox" binding="myDetectNestedWorkingCopiesCheckBox" default-binding="true">
@@ -132,7 +132,7 @@
           <grid row="15" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="detect.nested.working.copies"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="detect.nested.working.copies"/>
         </properties>
       </component>
       <component id="f2afc" class="javax.swing.JCheckBox" binding="myIgnoreWhitespaceDifferenciesInCheckBox" default-binding="true">
@@ -140,7 +140,7 @@
           <grid row="19" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="svn.option.ignore.whitespace.in.annotate"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="svn.option.ignore.whitespace.in.annotate"/>
         </properties>
       </component>
       <component id="cd5ae" class="javax.swing.JCheckBox" binding="myShowMergeSourceInAnnotate" default-binding="true">
@@ -148,7 +148,7 @@
           <grid row="18" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="annotation.show.merge.sources.default.text"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="annotation.show.merge.sources.default.text"/>
         </properties>
       </component>
       <grid id="fa93d" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -263,7 +263,7 @@
         </constraints>
         <properties>
           <foreground color="-65536"/>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="svn17.plugin.not.ready"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="svn17.plugin.not.ready"/>
         </properties>
       </component>
       <component id="f7ade" class="com.intellij.ui.HyperlinkLabel" binding="myLinkLabel">

@@ -20,7 +20,7 @@
               <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkout.options.checkout.label"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkout.options.checkout.label"/>
             </properties>
           </component>
           <component id="ce44e" class="javax.swing.JLabel" binding="myUrlLabel">
@@ -38,7 +38,7 @@
               <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkout.options.destination.label"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkout.options.destination.label"/>
             </properties>
           </component>
           <component id="a1fdf" class="javax.swing.JCheckBox" binding="myExternalsCheckbox">
@@ -48,7 +48,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkout.options.externals.label"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkout.options.externals.label"/>
             </properties>
           </component>
           <component id="c374f" class="javax.swing.JSeparator">
@@ -77,8 +77,8 @@
               <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.text"/>
-              <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.description"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.depth.text"/>
+              <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.depth.description"/>
             </properties>
           </component>
           <scrollpane id="cd7a3" class="com.intellij.ui.components.JBScrollPane">

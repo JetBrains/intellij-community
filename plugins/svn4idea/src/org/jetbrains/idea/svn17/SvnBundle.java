@@ -26,7 +26,7 @@ import java.util.ResourceBundle;
 public class SvnBundle {
   private static Reference<ResourceBundle> ourBundle;
 
-  @NonNls private static final String BUNDLE = "org.jetbrains.idea.svn17.SvnBundle";
+  @NonNls private static final String BUNDLE = "org.jetbrains.idea.svn17.SvnBundle17";
 
   private SvnBundle() {
   }

@@ -3,11 +3,15 @@
   <id>Subversion 1.7</id>
   <version>1.0</version>
   <category>VCS Integration</category>
-
+  <description>This plugin provides only basic support for Subversion 1.7.
+       Many operations are not implemented.
+       Subversion 1.7 integration is not ready yet.
+       We do NOT guarantee data safety and consistency.
+       Also, we do NOT guarantee that plugin correctly works with Subversion 1.6 and lower working copies!</description>
   <depends>com.intellij.modules.vcs</depends>
 
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <resource-bundle>org.jetbrains.idea.svn17.SvnBundle</resource-bundle>
+  <resource-bundle>org.jetbrains.idea.svn17.SvnBundle17</resource-bundle>
 
   <project-components>
     <component>

@@ -37,7 +37,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkbox.update.switch.configurable.try.merge.without.changes"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkbox.update.switch.configurable.try.merge.without.changes"/>
             </properties>
           </component>
           <component id="70f72" class="javax.swing.JCheckBox" binding="myIgnoreWhitespacesCheckBox" default-binding="true">
@@ -45,7 +45,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkbox.ignore.whitespace.when.merge.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkbox.ignore.whitespace.when.merge.text"/>
             </properties>
           </component>
         </children>
@@ -55,7 +55,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="action.Subversion.integrate.changes.select.working.copy.text"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="action.Subversion.integrate.changes.select.working.copy.text"/>
         </properties>
       </component>
       <component id="bf860" class="javax.swing.JComponent" binding="myToolbar" custom-create="true">

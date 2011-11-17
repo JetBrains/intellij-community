@@ -19,7 +19,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
         </clientProperties>
-        <border type="line" title-resource-bundle="org/jetbrains/idea/svn17/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.proxy.title"/>
+        <border type="line" title-resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" title-key="dialog.edit.http.proxies.settings.panel.proxy.title"/>
         <children>
           <component id="e6880" class="javax.swing.JLabel">
             <constraints>
@@ -27,7 +27,7 @@
             </constraints>
             <properties>
               <labelFor value="29d0b"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.patterns.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.patterns.text"/>
             </properties>
           </component>
           <component id="1bd1" class="javax.swing.JLabel">
@@ -36,7 +36,7 @@
             </constraints>
             <properties>
               <labelFor value="ffaac"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.exceptions.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.exceptions.text"/>
             </properties>
           </component>
           <component id="bad8b" class="javax.swing.JLabel">
@@ -45,7 +45,7 @@
             </constraints>
             <properties>
               <labelFor value="a392a"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.server.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.server.text"/>
             </properties>
           </component>
           <component id="a392a" class="javax.swing.JTextField" binding="myServerField">
@@ -62,7 +62,7 @@
             </constraints>
             <properties>
               <labelFor value="ca2e5"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.port.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.port.text"/>
             </properties>
           </component>
           <component id="ca2e5" class="javax.swing.JTextField" binding="myPortField">
@@ -80,7 +80,7 @@
             <properties>
               <labelFor value="131ae"/>
               <requestFocusEnabled value="false"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.password.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.password.text"/>
             </properties>
           </component>
           <component id="131ae" class="javax.swing.JPasswordField" binding="myPasswordField">
@@ -97,7 +97,7 @@
             </constraints>
             <properties>
               <labelFor value="4edaf"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.user.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.user.text"/>
             </properties>
           </component>
           <component id="4edaf" class="javax.swing.JTextField" binding="myUserField">
@@ -114,7 +114,7 @@
             </constraints>
             <properties>
               <labelFor value="13021"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.connection.timeout.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.connection.timeout.text"/>
             </properties>
           </component>
           <component id="13021" class="javax.swing.JTextField" binding="myTimeoutField">
@@ -162,7 +162,7 @@
               <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.seconds.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.seconds.text"/>
             </properties>
           </component>
         </children>
@@ -181,7 +181,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
         </clientProperties>
-        <border type="line" title-resource-bundle="org/jetbrains/idea/svn17/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.ssl.title"/>
+        <border type="line" title-resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" title-key="dialog.edit.http.proxies.settings.panel.ssl.title"/>
         <children>
           <component id="23c81" class="javax.swing.JLabel">
             <constraints>
@@ -189,7 +189,7 @@
             </constraints>
             <properties>
               <labelFor value="ee552"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.paths.to.authority.certificates.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.paths.to.authority.certificates.text"/>
             </properties>
           </component>
           <component id="d2ab2" class="javax.swing.JLabel">
@@ -197,7 +197,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.ssl.client.certificate.file.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.ssl.client.certificate.file.text"/>
             </properties>
           </component>
           <component id="c9225" class="javax.swing.JLabel">
@@ -206,7 +206,7 @@
             </constraints>
             <properties>
               <labelFor value="82eaa"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.client.certificate.passphrase.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.client.certificate.passphrase.text"/>
             </properties>
           </component>
           <component id="d6581" class="javax.swing.JLabel">
@@ -231,7 +231,7 @@
               <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.trust.default.cas.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.trust.default.cas.text"/>
             </properties>
           </component>
           <component id="61468" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myClientCertificatePathField">
@@ -266,7 +266,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithoutIndent"/>
         </clientProperties>
-        <border type="line" title-resource-bundle="org/jetbrains/idea/svn17/SvnBundle" title-key="dialog.edit.http.proxies.settings.panel.repositories.title"/>
+        <border type="line" title-resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" title-key="dialog.edit.http.proxies.settings.panel.repositories.title"/>
         <children>
           <component id="e003d" class="javax.swing.JButton" binding="myTestConnectionButton">
             <constraints>
@@ -274,7 +274,7 @@
             </constraints>
             <properties>
               <label value="Test connection"/>
-              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="dialog.edit.http.proxies.settings.test.connection.button.text"/>
+              <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="dialog.edit.http.proxies.settings.test.connection.button.text"/>
             </properties>
           </component>
           <scrollpane id="e8cb0" class="com.intellij.ui.components.JBScrollPane">

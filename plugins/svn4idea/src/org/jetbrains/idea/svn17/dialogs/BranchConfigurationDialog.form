@@ -13,7 +13,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="configure.branches.trunk.location"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="configure.branches.trunk.location"/>
         </properties>
       </component>
       <component id="c5128" class="javax.swing.JLabel">
@@ -21,7 +21,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="configure.branches.branch.locations"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="configure.branches.branch.locations"/>
         </properties>
       </component>
       <scrollpane class="com.intellij.ui.components.JBScrollPane" id="31cc0">

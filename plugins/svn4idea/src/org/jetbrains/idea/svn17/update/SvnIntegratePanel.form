@@ -13,7 +13,7 @@
           <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="checkbox.update.switch.configurable.try.merge.without.changes"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="checkbox.update.switch.configurable.try.merge.without.changes"/>
         </properties>
       </component>
       <xy id="ef0c1" binding="myRootOptionsPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
@@ -30,7 +30,7 @@
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="action.Subversion.integrate.difference.option.use.ancestry.text"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="action.Subversion.integrate.difference.option.use.ancestry.text"/>
         </properties>
       </component>
       <component id="31e75" class="org.jetbrains.idea.svn17.DepthCombo" binding="myDepthCombo" custom-create="true">
@@ -44,8 +44,8 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.text"/>
-          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.description"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.depth.text"/>
+          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.depth.description"/>
         </properties>
       </component>
     </children>

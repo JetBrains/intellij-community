@@ -33,8 +33,8 @@
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.text"/>
-          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="label.depth.description"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.depth.text"/>
+          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="label.depth.description"/>
         </properties>
       </component>
       <component id="1abb2" class="javax.swing.JCheckBox" binding="myForceBox">
@@ -50,8 +50,8 @@
           <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="action.Subversion.update.use.locks.on.demand.text"/>
-          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle" key="action.Subversion.update.use.locks.on.demand.description"/>
+          <text resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="action.Subversion.update.use.locks.on.demand.text"/>
+          <toolTipText resource-bundle="org/jetbrains/idea/svn17/SvnBundle17" key="action.Subversion.update.use.locks.on.demand.description"/>
         </properties>
       </component>
     </children>
