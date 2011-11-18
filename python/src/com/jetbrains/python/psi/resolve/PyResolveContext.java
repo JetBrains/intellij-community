@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -46,7 +47,7 @@ public class PyResolveContext {
     return ourNoPropertiesContext;
   }
 
-  public PyResolveContext withTypeEvalContext(TypeEvalContext context) {
+  public PyResolveContext withTypeEvalContext(@NotNull TypeEvalContext context) {
     return new PyResolveContext(myAllowImplicits, myAllowProperties, context);
   }
 

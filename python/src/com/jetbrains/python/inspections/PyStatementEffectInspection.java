@@ -109,7 +109,7 @@ public class PyStatementEffectInspection extends PyInspection {
           PyType type = myTypeEvalContext.getType(binary.getLeftExpression());
           if (type != null &&
               !type.isBuiltin(myTypeEvalContext) &&
-              type.resolveMember(method, null, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
+              type.resolveMember(method, null, AccessDirection.READ, resolveWithoutImplicits()) != null) {
             return true;
           }
           final PyExpression rhs = binary.getRightExpression();
@@ -117,7 +117,7 @@ public class PyStatementEffectInspection extends PyInspection {
             type = myTypeEvalContext.getType(rhs);
             if (type != null) {
               String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
-              if (!type.isBuiltin(myTypeEvalContext) && type.resolveMember(rmethod, null, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
+              if (!type.isBuiltin(myTypeEvalContext) && type.resolveMember(rmethod, null, AccessDirection.READ, resolveWithoutImplicits()) != null) {
                 return true;
               }
             }
@@ -134,7 +134,7 @@ public class PyStatementEffectInspection extends PyInspection {
       }
       else if (expression instanceof PyReferenceExpression) {
         PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
-        ResolveResult[] results = referenceExpression.getReference().multiResolve(true);
+        ResolveResult[] results = referenceExpression.getReference(resolveWithoutImplicits()).multiResolve(true);
         for (ResolveResult res : results) {
           if (res.getElement() instanceof PyFunction) {
             registerProblem(expression, "Statement seems to have no effect and can be replaced with function call to have effect", new StatementEffectFunctionCallQuickFix());

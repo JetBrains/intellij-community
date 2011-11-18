@@ -32,7 +32,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     if (LOG.isDebugEnabled()) {
       session.putUserData(TIME_KEY, System.nanoTime());
     }
-    return new PyInspectionVisitor(holder) {
+    return new PyInspectionVisitor(holder, session) {
       // TODO: Visit decorators with arguments
       @Override
       public void visitPyCallExpression(PyCallExpression node) {

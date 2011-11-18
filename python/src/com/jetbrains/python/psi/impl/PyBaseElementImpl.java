@@ -147,8 +147,10 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
     final PsiReference[] references;
     if (element instanceof PyReferenceOwner) {
-      final PyResolveContext context = PyResolveContext.defaultContext()
-        .withTypeEvalContext(TypeEvalContext.fast(element.getContainingFile()));
+      final PsiFile file = element.getContainingFile();
+      final PyResolveContext context = file != null ?
+                                       PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.fast(file)) :
+                                       PyResolveContext.defaultContext();
       final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(context);
       references = reference == null ? PsiReference.EMPTY_ARRAY : new PsiReference[] {reference};
     }
