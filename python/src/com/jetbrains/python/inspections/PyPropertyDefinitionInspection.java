@@ -132,7 +132,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       assert argument != null : "Parameter mapped to null argument";
       Callable callable = null;
       if (argument instanceof PyReferenceExpression) {
-        PsiElement resolved = ((PyReferenceExpression)argument).getReference().resolve();
+        PsiElement resolved = ((PyReferenceExpression)argument).getReference(resolveWithoutImplicits()).resolve();
         if (resolved instanceof PyFunction) callable = (PyFunction)resolved;
         else if (resolved instanceof PyLambdaExpression) callable = (PyLambdaExpression)resolved;
         else {

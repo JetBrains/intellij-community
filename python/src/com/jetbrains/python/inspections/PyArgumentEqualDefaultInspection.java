@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -8,9 +9,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RemoveArgumentEqualDefaultQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -34,14 +35,20 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return false;
   }
 
   private static class Visitor extends PyInspectionVisitor {
-
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -87,7 +94,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       }
     }
 
-    private static boolean isEqual(PyExpression key, PyExpression defaultValue) {
+    private boolean isEqual(PyExpression key, PyExpression defaultValue) {
       if (key instanceof PyNumericLiteralExpression && defaultValue instanceof PyNumericLiteralExpression) {
         if (key.getText().equals(defaultValue.getText()))
           return true;
@@ -98,10 +105,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       }
       else {
         PsiReference keyRef = key instanceof PyReferenceExpression 
-                              ? ((PyReferenceExpression) key).getReference(PyResolveContext.noImplicits()) 
+                              ? ((PyReferenceExpression) key).getReference(resolveWithoutImplicits())
                               : key.getReference();
         PsiReference defRef = defaultValue instanceof PyReferenceExpression
-                              ? ((PyReferenceExpression) defaultValue).getReference(PyResolveContext.noImplicits())
+                              ? ((PyReferenceExpression) defaultValue).getReference(resolveWithoutImplicits())
                               : defaultValue.getReference();
         if (keyRef != null && defRef != null) {
           PsiElement keyResolve = keyRef.resolve();

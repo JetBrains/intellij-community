@@ -3,10 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
@@ -48,11 +45,12 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final HashSet<PsiElement> myUnusedElements;
   private final HashSet<PsiElement> myUsedElements;
 
-  public PyUnusedLocalInspectionVisitor(final ProblemsHolder holder,
+  public PyUnusedLocalInspectionVisitor(@NotNull ProblemsHolder holder,
+                                        @NotNull LocalInspectionToolSession session,
                                         boolean ignoreTupleUnpacking,
                                         boolean ignoreLambdaParameters,
                                         boolean ignoreRangeIterationVariables) {
-    super(holder);
+    super(holder, session);
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myIgnoreLambdaParameters = ignoreLambdaParameters;
     myIgnoreRangeIterationVariables = ignoreRangeIterationVariables;

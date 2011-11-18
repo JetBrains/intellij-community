@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -7,6 +8,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexey.Ivanov
@@ -21,14 +23,15 @@ public class PyExceptionInheritInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   private static class Visitor extends PyInspectionVisitor {
-
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -41,7 +44,7 @@ public class PyExceptionInheritInspection extends PyInspection {
       if (expression instanceof PyCallExpression) {
         PyExpression callee = ((PyCallExpression)expression).getCallee();
         if (callee instanceof PyReferenceExpression) {
-          PsiElement psiElement = ((PyReferenceExpression)callee).getReference().resolve();
+          PsiElement psiElement = ((PyReferenceExpression)callee).getReference(resolveWithoutImplicits()).resolve();
           if (psiElement instanceof PyClass) {
             PyClass aClass = (PyClass) psiElement;
             for (PyClassRef pyClass : aClass.iterateAncestors()) {

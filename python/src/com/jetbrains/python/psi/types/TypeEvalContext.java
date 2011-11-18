@@ -31,16 +31,17 @@ public class TypeEvalContext {
     myOrigin = origin;
   }
 
+  @Override
+  public String toString() {
+    return String.format("TypeEvalContext(%b, %b, %s)", myAllowDataFlow, myAllowStubToAST, myOrigin);
+  }
+
   public boolean allowDataFlow(PsiElement element) {
     return myAllowDataFlow || element.getContainingFile() == myOrigin;
   }
 
   public boolean allowReturnTypes(PsiElement element) {
     return myAllowDataFlow || element.getContainingFile() == myOrigin;
-  }
-
-  public boolean allowStubToAST() {
-    return myAllowStubToAST;
   }
 
   public static TypeEvalContext slow() {
@@ -50,7 +51,7 @@ public class TypeEvalContext {
   public static TypeEvalContext fast() {
     return new TypeEvalContext(false, true, null);
   }
-  
+
   /**
    * Creates a TypeEvalContext for performing analysis operations on the specified file which is currently open in the editor.
    * For such a file, additional slow operations are allowed.
@@ -58,12 +59,8 @@ public class TypeEvalContext {
    * @param origin the file open in the editor
    * @return the type eval context for the file.
    */
-  public static TypeEvalContext fast(@Nullable PsiFile origin) {
+  public static TypeEvalContext fast(@NotNull PsiFile origin) {
     return new TypeEvalContext(false, true, origin);
-  }
-
-  public static TypeEvalContext fastStubOnly() {
-    return new TypeEvalContext(false, false, null);
   }
 
   /**

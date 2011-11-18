@@ -1,8 +1,7 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -10,9 +9,9 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
@@ -27,14 +26,15 @@ public class PyInitNewSignatureInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   public static class Visitor extends PyInspectionVisitor {
-
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
