@@ -169,7 +169,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   private void setIPythonDetected() {
     VirtualFile file = getConsole().getFile().getVirtualFile();
     if (file != null) {
-      file.putUserData(PyConsoleUtil.IPYTHON, Boolean.TRUE);
+      PyConsoleUtil.markIPython(file);
     }
   }
 
