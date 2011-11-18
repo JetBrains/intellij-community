@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
@@ -93,8 +94,8 @@ public class SelectBranchPopup {
     }
 
     final List<String> items = new ArrayList<String>();
-    if (configuration.getTrunkUrl() != null) {
-      items.add(configuration.getTrunkUrl());
+    if (! StringUtil.isEmptyOrSpaces(configuration.getTrunkUrl())) {
+      items.add(getTrunkString(configuration));
     }
     for (String url : configuration.getBranchUrls()) {
       items.add(url);
@@ -104,6 +105,10 @@ public class SelectBranchPopup {
     BranchBasesPopupStep step = new BranchBasesPopupStep(project, vcsRoot, configuration, callback, items, title, component);
     final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
     step.showPopupAt(listPopup);
+  }
+  
+  private static String getTrunkString(final SvnBranchConfigurationNew configuration) {
+    return configuration.getTrunkUrl() + " (trunk)";
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
@@ -115,6 +120,7 @@ public class SelectBranchPopup {
     private final Component myComponent;
 
     private static final String REFRESH_MESSAGE = SvnBundle.message("refresh.branches.item");
+    private String myTrunkString;
 
     protected BranchBasesPopupStep(final Project project,
                                    final VirtualFile vcsRoot,
@@ -125,6 +131,7 @@ public class SelectBranchPopup {
       myProject = project;
       myVcsRoot = vcsRoot;
       myConfiguration = configuration;
+      myTrunkString = getTrunkString(configuration);
       myTopLevel = topLevel;
       myCallback = callback;
       myComponent = component;
@@ -170,6 +177,13 @@ public class SelectBranchPopup {
         return doFinalStep(new Runnable() {
           public void run() {
             BranchConfigurationDialog.configureBranches(myProject, myVcsRoot, true);
+          }
+        });
+      }
+      else if (myTrunkString.equals(selectedValue)) {
+        return doFinalStep(new Runnable() {
+          public void run() {
+            myCallback.branchSelected(myProject, myConfiguration, myConfiguration.getTrunkUrl(), -1);
           }
         });
       }
