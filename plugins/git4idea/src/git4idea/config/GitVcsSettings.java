@@ -153,6 +153,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     s.SSH_EXECUTABLE = mySshExecutable;
     s.UPDATE_CHANGES_POLICY = myUpdateChangesPolicy;
     s.UPDATE_TYPE = myUpdateType;
+    s.PUSH_AUTO_UPDATE = myAutoUpdateIfPushRejected;;
     return s;
   }
 
@@ -168,6 +169,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
       myUpdateChangesPolicy = UpdateChangesPolicy.STASH;
     }
     myUpdateType = s.UPDATE_TYPE;
+    myAutoUpdateIfPushRejected = s.PUSH_AUTO_UPDATE;
   }
 
   /**
@@ -252,6 +254,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
      * The policy used in push active branches dialog
      */
     public UpdateChangesPolicy PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = UpdateChangesPolicy.STASH;
+    
+    public boolean PUSH_AUTO_UPDATE = false;
   }
 
   /**
