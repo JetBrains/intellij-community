@@ -37,7 +37,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
       if (myProblemDescriptions != null) {
         int problems = 0;
         for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
-          buf.append(XmlStringUtil.escapeString(problemDescription.getMessage())).append("<br>");
+          buf.append(XmlStringUtil.escapeString(problemDescription.getMessage(false))).append("<br>");
           problems++;
           if (problems >= 10 && myProblemDescriptions.size() > 12) {
             buf.append(myProblemDescriptions.size() - problems).append(" more problems...<br>");

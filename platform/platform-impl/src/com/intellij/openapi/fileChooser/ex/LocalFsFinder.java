@@ -35,9 +35,13 @@ import java.util.List;
 
 public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
+  private File myBaseDir = new File(System.getProperty("user.home"));
+
   public LookupFile find(@NotNull final String path) {
     final VirtualFile byUrl = VirtualFileManager.getInstance().findFileByUrl(path);
-    if (byUrl != null) return getLookupFile(path, byUrl);
+    if (byUrl != null) {
+      return new VfsFile(this, byUrl);
+    }
 
     String toFind = normalize(path);
     if (toFind.length() == 0) {
@@ -47,22 +51,29 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       }
     }
     final File file = new File(toFind);
-    return file.isAbsolute() ? getLookupFile(path, LocalFileSystem.getInstance().findFileByIoFile(file)) : null;
-  }
-
-  private LookupFile getLookupFile(final String path, final VirtualFile vFile) {
-    return vFile != null ? new VfsFile(this, vFile) : new IoFile(new File(path));
+    // '..' and '.' path components will be eliminated
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    if (vFile != null) {
+      return new VfsFile(this, vFile);
+    } else if (file.isAbsolute()) {
+      return new IoFile(new File(path));
+    }
+    return null;
   }
 
   public String normalize(@NotNull final String path) {
     final File file = new File(path);
     if (file.isAbsolute()) return file.getAbsolutePath();
 
-    return new File(System.getProperty("user.home"), path).getAbsolutePath();
+    return new File(myBaseDir, path).getAbsolutePath();
   }
 
   public String getSeparator() {
     return File.separator;
+  }
+
+  public void setBaseDir(@NotNull File baseDir) {
+    myBaseDir = baseDir;
   }
 
   public static class FileChooserFilter implements LookupFilter {
@@ -99,7 +110,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     }
 
     public boolean isDirectory() {
-      return myFile != null ? myFile.isDirectory() : false;
+      return myFile != null && myFile.isDirectory();
     }
 
     public void setMacro(final String macro) {
@@ -125,8 +136,8 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
       VirtualFile[] kids = myFile.getChildren();
       for (VirtualFile each : kids) {
-        LookupFile eachFile = myFinder.getLookupFile(each.getPath(), each);
-        if (eachFile != null && filter.isAccepted(eachFile)) {
+        LookupFile eachFile = new VfsFile(myFinder, each);
+        if (filter.isAccepted(eachFile)) {
           result.add(eachFile);
         }
       }
@@ -181,7 +192,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     }
 
     public boolean isDirectory() {
-      return myIoFile != null ? myIoFile.isDirectory() : false;
+      return myIoFile != null && myIoFile.isDirectory();
     }
 
     public LookupFile getParent() {

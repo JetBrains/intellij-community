@@ -64,7 +64,8 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
                                                               ? ProjectStructureProblemDescription.ProblemLevel.PROJECT : ProjectStructureProblemDescription.ProblemLevel.GLOBAL;
       problemsHolder.registerProblem(new ProjectStructureProblemDescription(message, description, place,
                                                                             problemType, level,
-                                                                            Collections.singletonList(new RemoveInvalidRootsQuickFix(library, type, invalidUrls))));
+                                                                            Collections.singletonList(new RemoveInvalidRootsQuickFix(library, type, invalidUrls)),
+                                                                            true));
     }
   }
 
@@ -129,8 +130,8 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix());
     return new ProjectStructureProblemDescription(getPresentableName() + " is not used", null, createPlace(),
-                                                  ProjectStructureProblemType.unused("unused-library"), fixes
-    );
+                                                  ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
+                                                  fixes, false);
   }
 
   @Override

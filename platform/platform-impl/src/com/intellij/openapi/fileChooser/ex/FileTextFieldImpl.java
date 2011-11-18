@@ -839,6 +839,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     return myPathTextField;
   }
 
+  public Finder getFinder() {
+    return myFinder;
+  }
+
   private boolean isPopupShowing() {
     return myCurrentPopup != null && myList != null && myList.isShowing();
   }

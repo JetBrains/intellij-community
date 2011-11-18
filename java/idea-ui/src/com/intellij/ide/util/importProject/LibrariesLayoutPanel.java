@@ -78,8 +78,9 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
     return "Library contents";
   }
 
-  protected String getSplitDialogTitle() {
-    return "Split Library";
+  @Override
+  protected String getElementTypeName() {
+    return "library";
   }
 
   protected String getSplitDialogChooseFilesPrompt() {

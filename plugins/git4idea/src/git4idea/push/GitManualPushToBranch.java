@@ -15,6 +15,9 @@
  */
 package git4idea.push;
 
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
@@ -40,7 +43,8 @@ class GitManualPushToBranch extends JPanel {
   private final JCheckBox myManualPush;
   private final JTextField myDestBranchTextField;
   private final JBLabel myComment;
-  private final JButton myRefreshButton;
+  private final GitPushLogRefreshAction myRefreshAction;
+  private final JComponent myRefreshButton;
   private final RemoteSelector myRemoteSelector;
   private final JComponent myRemoteSelectorComponent;
 
@@ -49,22 +53,22 @@ class GitManualPushToBranch extends JPanel {
     super();
     myRepositories = repositories;
 
-    myManualPush = new JCheckBox("Push current branch to: ", false);
+    myManualPush = new JCheckBox("Push current branch to alternative branch: ", false);
     myManualPush.setMnemonic('b');
 
     myDestBranchTextField = new JTextField(15);
     
     myComment = new JBLabel("This will apply to all selected repositories", UIUtil.ComponentStyle.SMALL);
     
-    myRefreshButton = new JButton(IconLoader.getIcon("/actions/sync.png"));
-    myRefreshButton.setToolTipText("Refresh commit list");
-
-    myRefreshButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
+    myRefreshAction = new GitPushLogRefreshAction() {
+      @Override public void actionPerformed(AnActionEvent e) {
         performOnRefresh.run();
       }
-    });
+    };
+    myRefreshButton = new ActionButton(myRefreshAction,  myRefreshAction.getTemplatePresentation(), myRefreshAction.getTemplatePresentation().getText(), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    myRefreshButton.setFocusable(true);
+    final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH).getShortcutSet();
+    myRefreshAction.registerCustomShortcutSet(shortcutSet, myRefreshButton);
 
     myRemoteSelector = new RemoteSelector(getRemotesWithCommonNames(repositories));
     myRemoteSelectorComponent = myRemoteSelector.createComponent();
@@ -75,6 +79,10 @@ class GitManualPushToBranch extends JPanel {
       public void actionPerformed(ActionEvent e) {
         boolean isManualPushSelected = myManualPush.isSelected();
         setDefaultComponentsEnabledState(isManualPushSelected);
+        if (isManualPushSelected) {
+          myDestBranchTextField.requestFocus();
+          myDestBranchTextField.selectAll();
+        }
       }
     });
 
@@ -82,7 +90,9 @@ class GitManualPushToBranch extends JPanel {
   }
 
   private void setDefaultComponentsEnabledState(boolean selected) {
-    setComponentsEnabledState(selected, myRemoteSelectorComponent,  myDestBranchTextField, myRefreshButton, myComment);
+    myDestBranchTextField.setEnabled(selected);
+    myComment.setEnabled(selected);
+    myRemoteSelector.setEnabled(selected);
   }
 
   private void layoutComponents() {
@@ -91,23 +101,17 @@ class GitManualPushToBranch extends JPanel {
     panel.setLayout(layout);
     GridBag g = new GridBag()
       .setDefaultFill(GridBagConstraints.NONE)
-      .setDefaultAnchor(GridBagConstraints.LINE_START)
-      .setDefaultWeightX(1, 1);
+      .setDefaultAnchor(GridBagConstraints.BASELINE_LEADING)
+      .setDefaultWeightX(1, 1)
+      .setDefaultInsets(new Insets(0, 0, UIUtil.DEFAULT_VGAP, 5))
+    ;
 
     panel.add(myManualPush, g.nextLine().next());
     panel.add(myRemoteSelectorComponent, g.next());
     panel.add(myDestBranchTextField, g.next());
     panel.add(myRefreshButton, g.next());
-    g.nextLine();
     if (myRepositories.size() > 1) {
-      GridBagConstraints constraints = new GridBagConstraints();
-      constraints.gridwidth = GridBagConstraints.REMAINDER;
-      constraints.anchor = GridBagConstraints.LINE_START;
-      constraints.gridx = 0;
-      constraints.gridy = 1;
-      constraints.insets = new Insets(0, 28, 0, 0);
-      //panel.add(myComment, g.insets(0, 20, 0, 0).coverLine().next());
-      panel.add(myComment, constraints);
+      panel.add(myComment, g.nextLine().insets(0, 28, 0, 0).coverLine());
     }
 
     setLayout(new BorderLayout());
@@ -132,12 +136,6 @@ class GitManualPushToBranch extends JPanel {
   @NotNull
   GitRemote getSelectedRemote() {
     return myRemoteSelector.getSelectedValue();
-  }
-
-  private static void setComponentsEnabledState(boolean enabled, JComponent... components) {
-    for (JComponent component : components) {
-      component.setEnabled(enabled);
-    }
   }
 
   @NotNull
@@ -171,7 +169,7 @@ class GitManualPushToBranch extends JPanel {
 
   /**
    * Component to select remotes.
-   * If there is only one remote, JLabel is used instead of JCombobox.
+   * Just a JCombobox actually, but more flexible: if there is only one remote, we could use JLabel or something like that.
    */
   private static class RemoteSelector {
 
@@ -184,27 +182,27 @@ class GitManualPushToBranch extends JPanel {
 
     @NotNull
     JComponent createComponent() {
-      //if (myRemotes.size() == 1) {
-      //  JBLabel label = new JBLabel(myRemotes.iterator().next().getName());
-      //  label.setToolTipText("Remote");
-      //  return label;
-      //} else {
-        myRemoteCombobox = new JComboBox();
-        myRemoteCombobox.setRenderer(new RemoteCellRenderer());
-        for (GitRemote remote : myRemotes) {
-          myRemoteCombobox.addItem(remote);
-        }
-        myRemoteCombobox.setToolTipText("Select remote");
-        return myRemoteCombobox;
-      //}
+      myRemoteCombobox = new JComboBox();
+      myRemoteCombobox.setRenderer(new RemoteCellRenderer());
+      for (GitRemote remote : myRemotes) {
+        myRemoteCombobox.addItem(remote);
+      }
+      myRemoteCombobox.setToolTipText("Select remote");
+      if (myRemotes.size() == 1) {
+        myRemoteCombobox.setEnabled(false);
+      }
+      return myRemoteCombobox;
     }
 
     @NotNull
     GitRemote getSelectedValue() {
-      //if (myRemotes.size() == 1) {
-      //  return myRemotes.iterator().next();
-      //}
       return (GitRemote)myRemoteCombobox.getSelectedItem();
+    }
+
+    void setEnabled(boolean selected) {
+      if (myRemotes.size() > 1) {
+        myRemoteCombobox.setEnabled(selected);
+      }
     }
 
     private static class RemoteCellRenderer implements ListCellRenderer {
@@ -223,4 +221,11 @@ class GitManualPushToBranch extends JPanel {
 
   }
 
+  private abstract static class GitPushLogRefreshAction extends DumbAwareAction {
+    
+    GitPushLogRefreshAction() {
+      super("Refresh commit list", "Refresh commit list", IconLoader.getIcon("/actions/sync.png"));
+    }
+  }
+  
 }
