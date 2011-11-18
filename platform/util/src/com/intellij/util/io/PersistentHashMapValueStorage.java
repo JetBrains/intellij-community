@@ -137,6 +137,7 @@ public class PersistentHashMapValueStorage {
 
     try {
       while (chunk != 0) {
+        if (chunk < 0 || chunk > mySize) throw new PersistentEnumeratorBase.CorruptedException(myFile);
         int len = (int)Math.min(myBuffer.length, mySize - chunk);
         reader.get(chunk, myBuffer, 0, len);
 
