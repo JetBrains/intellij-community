@@ -6,13 +6,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBTabbedPane;
 import com.jetbrains.django.facet.DjangoFacet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -20,6 +18,10 @@ import java.util.List;
  */
 public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.Abstract {
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE = "reference.project.settings.console";
+  public static final String CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON = "reference.project.settings.console.python";
+  public static final String CONSOLE_SETTINGS_HELP_REFERENCE_DJANGO = "reference.project.settings.console.django";
+
+
   private PyConsoleOptionsPanel myPanel;
   private PyConsoleSpecificOptionsPanel myPythonConsoleOptionsPanel;
   private PyConsoleSpecificOptionsPanel myDjangoConsoleOptionsPanel;
@@ -49,12 +51,13 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
     myPythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
     result.add(createConsoleChildConfigurable("Python console", myPythonConsoleOptionsPanel,
-                                              myOptionsProvider.getPythonConsoleSettings()));
+                                              myOptionsProvider.getPythonConsoleSettings(), CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON));
 
     if (DjangoFacet.isPresentInAnyModule(myProject)) {
       myDjangoConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
       result.add(createConsoleChildConfigurable("Django console",
-                                                myDjangoConsoleOptionsPanel, myOptionsProvider.getDjangoConsoleSettings()));
+                                                myDjangoConsoleOptionsPanel, myOptionsProvider.getDjangoConsoleSettings(),
+                                                CONSOLE_SETTINGS_HELP_REFERENCE_DJANGO));
     }
 
 
@@ -63,7 +66,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
   private Configurable createConsoleChildConfigurable(final String name,
                                                       final PyConsoleSpecificOptionsPanel panel,
-                                                      final PyConsoleOptionsProvider.PyConsoleSettings settings) {
+                                                      final PyConsoleOptionsProvider.PyConsoleSettings settings, final String helpReference) {
     return new SearchableConfigurable() {
 
       @NotNull
@@ -90,7 +93,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
       @Override
       public String getHelpTopic() {
-        return CONSOLE_SETTINGS_HELP_REFERENCE;
+        return helpReference;
       }
 
       @Override
