@@ -15,8 +15,7 @@
  */
 package git4idea.push;
 
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.IconLoader;
@@ -66,7 +65,10 @@ class GitManualPushToBranch extends JPanel {
         performOnRefresh.run();
       }
     };
-    myRefreshButton = new ActionButton(myRefreshAction,  myRefreshAction.getTemplatePresentation(), "Refresh commit list", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    myRefreshButton = new ActionButton(myRefreshAction,  myRefreshAction.getTemplatePresentation(), myRefreshAction.getTemplatePresentation().getText(), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    myRefreshButton.setFocusable(true);
+    final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH).getShortcutSet();
+    myRefreshAction.registerCustomShortcutSet(shortcutSet, myRefreshButton);
 
     myRemoteSelector = new RemoteSelector(getRemotesWithCommonNames(repositories));
     myRemoteSelectorComponent = myRemoteSelector.createComponent();
@@ -99,23 +101,17 @@ class GitManualPushToBranch extends JPanel {
     panel.setLayout(layout);
     GridBag g = new GridBag()
       .setDefaultFill(GridBagConstraints.NONE)
-      .setDefaultAnchor(GridBagConstraints.LINE_START)
-      .setDefaultWeightX(1, 1);
+      .setDefaultAnchor(GridBagConstraints.BASELINE_LEADING)
+      .setDefaultWeightX(1, 1)
+      .setDefaultInsets(new Insets(0, 0, UIUtil.DEFAULT_VGAP, 5))
+    ;
 
     panel.add(myManualPush, g.nextLine().next());
     panel.add(myRemoteSelectorComponent, g.next());
     panel.add(myDestBranchTextField, g.next());
     panel.add(myRefreshButton, g.next());
-    g.nextLine();
     if (myRepositories.size() > 1) {
-      GridBagConstraints constraints = new GridBagConstraints();
-      constraints.gridwidth = GridBagConstraints.REMAINDER;
-      constraints.anchor = GridBagConstraints.LINE_START;
-      constraints.gridx = 0;
-      constraints.gridy = 1;
-      constraints.insets = new Insets(0, 28, 0, 0);
-      //panel.add(myComment, g.insets(0, 20, 0, 0).coverLine().next());
-      panel.add(myComment, constraints);
+      panel.add(myComment, g.nextLine().insets(0, 28, 0, 0).coverLine());
     }
 
     setLayout(new BorderLayout());
