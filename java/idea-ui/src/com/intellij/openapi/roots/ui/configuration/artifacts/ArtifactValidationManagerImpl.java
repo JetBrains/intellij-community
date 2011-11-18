@@ -72,7 +72,7 @@ public class ArtifactValidationManagerImpl implements Disposable {
       final List<ProjectStructureProblemDescription> problemDescriptions = holder.getProblemDescriptions();
       if (problemDescriptions != null) {
         for (ProjectStructureProblemDescription description : problemDescriptions) {
-          final String message = description.getMessage();
+          final String message = description.getMessage(false);
           List<? extends ConfigurationErrorQuickFix> quickFixes = Collections.emptyList();
           if (description instanceof ArtifactProblemDescription) {
             final ArtifactProblemDescription artifactProblem = (ArtifactProblemDescription)description;
