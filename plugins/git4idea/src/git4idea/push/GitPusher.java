@@ -241,6 +241,7 @@ public final class GitPusher {
         break;
       }
     }
+    GitRepositoryManager.getInstance(myProject).updateAllRepositories(GitRepository.TrackedTopic.BRANCHES); // new remote branch may be created
     return pushResult;
   }
 
