@@ -129,7 +129,7 @@ public class GrStringUtil {
     return buffer;
   }
 
-  public static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
+  private static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
     for (int i = 0; i < builder.length(); i++) {
       if (builder.charAt(i) != '\\') continue;
       if (i + 1 == builder.length()) break;
@@ -329,10 +329,6 @@ public class GrStringUtil {
     }
   }
 
-  public static boolean isPlainString(@NotNull GrLiteral literal) {
-    return literal.getText().startsWith("'");
-  }
-
   public static String getStartQuote(String text) {
     if (text.startsWith(TRIPLE_QUOTES)) return TRIPLE_QUOTES;
     if (text.startsWith(QUOTE)) return QUOTE;
@@ -375,35 +371,18 @@ public class GrStringUtil {
       c = chars.charAt(index++);
       switch (c) {
         case'b':
-          outChars.append('\b');
-          break;
-
         case't':
-          outChars.append('\t');
-          break;
-
         case'n':
-          outChars.append('\n');
-          break;
-
         case'f':
-          outChars.append('\f');
-          break;
-
         case'r':
-          outChars.append('\r');
-          break;
-
         case'"':
-          outChars.append('"');
-          break;
-
         case'\'':
-          outChars.append('\'');
-          break;
-
+        case'$':
         case'\\':
-          outChars.append('\\');
+          outChars.append(c);
+          break;
+        case '\n':
+          //do nothing
           break;
 
         case'0':
@@ -462,17 +441,6 @@ public class GrStringUtil {
             return false;
           }
           break;
-        case '\n':
-          //do nothing
-          break;
-        case ' ':
-          int newIndex = index;
-          while (newIndex < chars.length() && chars.charAt(newIndex) == ' ') newIndex++;
-          if (newIndex < chars.length() && chars.charAt(newIndex) == '\n') {
-            index = newIndex;
-            break;
-          }
-          //throw flow is correct
         default:
           if (!strictBackSlash) {
             break;

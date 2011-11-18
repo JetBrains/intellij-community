@@ -10,4 +10,6 @@ print <error descr="Illegal escape character in string literal">'''\y'''</error>
 print """\n\a${x}\t"""
 ptint """""\n\a\t"""
 print """\n${x}\t"""
+print "dfg\$fg"
+print 'fg\$fg'
 print """\n${x}\"""<EOLError descr="String end expected"></EOLError>

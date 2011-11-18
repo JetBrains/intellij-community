@@ -859,7 +859,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     for (String part : parts) {            
-      if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(text.length()), null, true)) {
+      if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(text.length()), null, !quote.equals("/"))) {
         myHolder.createErrorAnnotation(literal, GroovyBundle.message("illegal.escape.character.in.string.literal"));
         return;
       }
