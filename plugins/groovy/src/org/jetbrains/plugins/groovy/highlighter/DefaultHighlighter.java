@@ -87,6 +87,8 @@ public class DefaultHighlighter {
   static final String UNRESOLVED_ACCESS_ID = "Unresolved reference access";
   static final String LITERAL_CONVERSION_ID = "List/map to object conversion";
 
+  static final String VALID_STRING_ESCAPE_ID = "Valid string escape";
+  static final String INVALID_STRING_ESCAPE_ID = "Invalid string escape";
 
   public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID,
       SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes());
@@ -193,6 +195,11 @@ public class DefaultHighlighter {
   public static TextAttributesKey LITERAL_CONVERSION = TextAttributesKey.createTextAttributesKey(LITERAL_CONVERSION_ID, LITERAL_CONVERSION_ATTRIBUTES);
 
   public static TextAttributesKey MAP_KEY = TextAttributesKey.createTextAttributesKey(MAP_KEY_ID, MAP_KEY_ATTRIBUTES);
+
+  public static final TextAttributesKey VALID_STRING_ESCAPE =
+    TextAttributesKey.createTextAttributesKey(VALID_STRING_ESCAPE_ID, SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes());
+  public static final TextAttributesKey INVALID_STRING_ESCAPE = TextAttributesKey
+    .createTextAttributesKey(INVALID_STRING_ESCAPE_ID, SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes());
 
   private DefaultHighlighter() {
   }

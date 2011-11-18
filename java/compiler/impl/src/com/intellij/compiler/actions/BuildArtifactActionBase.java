@@ -22,11 +22,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
 import com.intellij.packaging.impl.ui.ChooseArtifactsDialog;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,7 +47,7 @@ public abstract class BuildArtifactActionBase extends AnAction {
     if (project == null) {
       return;
     }
-    final List<Artifact> artifacts = getArtifactWithOutputPaths(project);
+    final List<Artifact> artifacts = ArtifactUtil.getArtifactWithOutputPaths(project);
     if (artifacts.isEmpty()) {
       return;
     }
@@ -66,7 +65,7 @@ public abstract class BuildArtifactActionBase extends AnAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
 
-    final List<Artifact> artifacts = getArtifactWithOutputPaths(project);
+    final List<Artifact> artifacts = ArtifactUtil.getArtifactWithOutputPaths(project);
     if (artifacts.isEmpty()) return;
 
     if (artifacts.size() == 1) {
@@ -92,14 +91,4 @@ public abstract class BuildArtifactActionBase extends AnAction {
   protected abstract String getDescription();
 
   protected abstract void performAction(Project project, List<Artifact> artifacts);
-
-  private static List<Artifact> getArtifactWithOutputPaths(Project project) {
-    final List<Artifact> result = new ArrayList<Artifact>();
-    for (Artifact artifact : ArtifactManager.getInstance(project).getSortedArtifacts()) {
-      if (!StringUtil.isEmpty(artifact.getOutputPath())) {
-        result.add(artifact);
-      }
-    }
-    return result;
-  }
 }

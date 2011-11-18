@@ -72,6 +72,11 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.impl.artifacts.ArtifactImpl;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
@@ -179,7 +184,8 @@ public class CompileDriver {
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    final ProjectCompileScope projectScope = new ProjectCompileScope(myProject);
+    CompileScope projectScope = ArtifactCompileScope.createScopeWithArtifacts(new ProjectCompileScope(myProject),
+                                                                              ArtifactUtil.getArtifactWithOutputPaths(myProject));
     final CompileScope compileScope = useCompileServer() ? projectScope : addAdditionalRoots(projectScope, ALL_EXCEPT_SOURCE_PROCESSING);
     doRebuild(callback, null, true, compileScope);
   }
@@ -1015,16 +1021,16 @@ public class CompileDriver {
     final Set<Module> affectedModules = new HashSet<Module>(Arrays.asList(context.getCompileScope().getAffectedModules()));
     final List<File> scopeOutputs = new ArrayList<File>(affectedModules.size() * 2);
     for (File output : outputToModulesMap.keySet()) {
-      final Collection<Module> modules = outputToModulesMap.get(output);
-      boolean shouldInclude = true;
-      for (Module module : modules) {
-        if (!affectedModules.contains(module)) {
-          shouldInclude = false;
-          break;
-        }
-      }
-      if (shouldInclude) {
+      if (affectedModules.containsAll(outputToModulesMap.get(output))) {
         scopeOutputs.add(output);
+      }
+    }
+
+    final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(myProject, context.getCompileScope(), true);
+    for (Artifact artifact : artifactsToBuild) {
+      final String outputFilePath = ((ArtifactImpl)artifact).getOutputDirectoryPathToCleanOnRebuild();
+      if (outputFilePath != null) {
+        scopeOutputs.add(new File(FileUtil.toSystemDependentName(outputFilePath)));
       }
     }
     if (scopeOutputs.size() > 0) {
@@ -1565,6 +1571,12 @@ public class CompileDriver {
             outputDirs.add(new File(path));
           }
         }
+      }
+    }
+    for (Artifact artifact : ArtifactManager.getInstance(myProject).getArtifacts()) {
+      final String path = ((ArtifactImpl)artifact).getOutputDirectoryPathToCleanOnRebuild();
+      if (path != null) {
+        outputDirs.add(new File(FileUtil.toSystemDependentName(path)));
       }
     }
     return outputDirs;
@@ -2306,11 +2318,9 @@ public class CompileDriver {
         dropScopesCaches();
       }
 
-      if (checkOutputAndSourceIntersection) {
-        if (myShouldClearOutputDirectory) {
-          if (!validateOutputAndSourcePathsIntersection()) {
-            return false;
-          }
+      if (checkOutputAndSourceIntersection && myShouldClearOutputDirectory) {
+        if (!validateOutputAndSourcePathsIntersection()) {
+          return false;
         }
       }
       final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
@@ -2473,12 +2483,16 @@ public class CompileDriver {
 
   private boolean validateOutputAndSourcePathsIntersection() {
     final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
-    final VirtualFile[] outputPaths = CompilerPathsEx.getOutputDirectories(allModules);
+    List<VirtualFile> allOutputs = new ArrayList<VirtualFile>();
+    ContainerUtil.addAll(allOutputs, CompilerPathsEx.getOutputDirectories(allModules));
+    for (Artifact artifact : ArtifactManager.getInstance(myProject).getArtifacts()) {
+      ContainerUtil.addIfNotNull(artifact.getOutputFile(), allOutputs);
+    }
     final Set<VirtualFile> affectedOutputPaths = new HashSet<VirtualFile>();
-    for (Module allModule : allModules) {
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(allModule);
+    for (Module module : allModules) {
+      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       final VirtualFile[] sourceRoots = rootManager.getSourceRoots();
-      for (final VirtualFile outputPath : outputPaths) {
+      for (final VirtualFile outputPath : allOutputs) {
         for (VirtualFile sourceRoot : sourceRoots) {
           if (VfsUtil.isAncestor(outputPath, sourceRoot, true) || VfsUtil.isAncestor(sourceRoot, outputPath, false)) {
             affectedOutputPaths.add(outputPath);
@@ -2486,6 +2500,7 @@ public class CompileDriver {
         }
       }
     }
+
     if (!affectedOutputPaths.isEmpty()) {
       final StringBuilder paths = new StringBuilder();
       for (final VirtualFile affectedOutputPath : affectedOutputPaths) {
