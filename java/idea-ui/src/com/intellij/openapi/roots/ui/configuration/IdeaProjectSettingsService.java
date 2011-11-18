@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.compiler.actions.ArtifactAwareProjectSettingsService;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.module.Module;
@@ -25,13 +26,14 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class IdeaProjectSettingsService extends ProjectSettingsService {
+public class IdeaProjectSettingsService extends ProjectSettingsService implements ArtifactAwareProjectSettingsService {
   private final Project myProject;
 
   public IdeaProjectSettingsService(final Project project) {
@@ -129,5 +131,10 @@ public class IdeaProjectSettingsService extends ProjectSettingsService {
   @Override
   public Sdk chooseAndSetSdk() {
     return JdkChooserPanel.chooseAndSetJDK(myProject);
+  }
+
+  @Override
+  public void openArtifactSettings(@Nullable Artifact artifact) {
+    ModulesConfigurator.showArtifactSettings(myProject, artifact);
   }
 }

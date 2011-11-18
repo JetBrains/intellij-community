@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.keymap;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
@@ -27,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -359,5 +357,16 @@ public class KeymapUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static KeyStroke getKeyStroke(final @NotNull ShortcutSet shortcutSet) {
+    final Shortcut[] shortcuts = shortcutSet.getShortcuts();
+    if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut)) return null;
+    final KeyboardShortcut shortcut = (KeyboardShortcut)shortcuts[0];
+    if (shortcut.getSecondKeyStroke() != null) {
+      return null;
+    }
+    return shortcut.getFirstKeyStroke();
   }
 }

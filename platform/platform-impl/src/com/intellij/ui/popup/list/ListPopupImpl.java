@@ -373,6 +373,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED, true);
   }
 
+  public Object getSelectedValue() {
+    return myList.getSelectedValue();
+  }
+
   private class MyMouseListener extends MouseAdapter {
 
     @Override
