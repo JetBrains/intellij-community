@@ -261,7 +261,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     } else {
       if (doUsualMove(vcs, src)) return true;
       final SVNCopyClient copyClient = vcs.createCopyClient();
-      final SVNCopySource svnCopySource = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.BASE, src);
+      final SVNCopySource svnCopySource = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
       copyClient.doCopy(new SVNCopySource[]{svnCopySource}, dst, true, false, true);
     }
     return false;
