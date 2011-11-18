@@ -16,6 +16,7 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.table.JBTable;
@@ -284,8 +285,9 @@ public class GraphGutter {
       //g.drawLine(x1 - 1,y1,x2 - 1,y2);
       //g.setColor(Color.gray.brighter());
       g.drawLine(x1,y1,x2,y2);
-      //g.setColor(Color.gray.brighter());
       g.drawLine(x1 + 1, y1, x2 + 1, y2);
+      //g.setColor(Gray._200);
+      //g.drawLine(x1 + 2, y1, x2 + 2, y2);
       g.setColor(color);
     }
 
@@ -369,41 +371,34 @@ public class GraphGutter {
           int correctedWire = myModel.getCorrectedWire(commitAt);
           int startXPoint = startPoint(correctedWire, wiresGroups);
           final boolean inCurrentBranch = myCurrentBranchColored ? myModel.isInCurrentBranch(idx) : true;
+          final Icon icon;
           if (inCurrentBranch) {
-            //myStyle.getColorForWire(startXPoint)
-            if (PresentationStyle.calm.equals(myStyle)) {
-              graphics.setColor(fill);
-            } else {
-              graphics.setColor(myStyle.getColorForWire(correctedWire).brighter());
-            }
+            icon = myStyle.getNodeIcon(correctedWire);
           } else {
-            graphics.setColor(fillNotIncluded);
+            icon = ourGrey;
           }
-          graphics.fillArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
 
-          //graphics.setColor(contains ? Color.white : UIUtil.getTableSelectionBackground());
-          /*if (contains) {
-            graphics.setColor(Color.white);
+          icon.paintIcon(this, graphics, startXPoint + 1, upBound + myRowHeight/2 - 3);
+
+/*          graphics.fillArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
+
+          if (inCurrentBranch) {
+            if (PresentationStyle.calm.equals(myStyle)) {
+              graphics.setColor(darker);
+            } else {
+              graphics.setColor(myStyle.getColorForWire(correctedWire));
+            }
           }
-          else {*/
-            if (inCurrentBranch) {
-              if (PresentationStyle.calm.equals(myStyle)) {
-                graphics.setColor(darker);
-              } else {
-                graphics.setColor(myStyle.getColorForWire(correctedWire));
-              }
-            }
-            else {
-              graphics.setColor(OUTLINE_NOT_INCLUDED);
-            }
-          //}
+          else {
+            graphics.setColor(OUTLINE_NOT_INCLUDED);
+          }
           graphics.drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
           graphics.drawArc(startXPoint + ourLineWidth / 2 - 4, upBound + myRowHeight / 2 - 4, diameter, diameter, 0, 360);
 
           if (inCurrentBranch) {
             graphics.setColor(Color.white);
             graphics.drawArc(startXPoint + ourLineWidth / 2 - 4 + 1, upBound + myRowHeight / 2 - 4 + 1, diameter - 1, diameter - 1, 100, 90);
-          }
+          }*/
         }
         ++ idx;
         upBound += myRowHeight;
@@ -484,6 +479,11 @@ public class GraphGutter {
     }
   }
 
+  private final static Icon[] ourIcons = new Icon[] {IconLoader.getIcon("/icons/ball0.png"), IconLoader.getIcon("/icons/ball1.png"),
+    IconLoader.getIcon("/icons/ball2.png"), IconLoader.getIcon("/icons/ball3.png"), IconLoader.getIcon("/icons/ball4.png"),
+    IconLoader.getIcon("/icons/ball5.png"), IconLoader.getIcon("/icons/ball6.png"), IconLoader.getIcon("/icons/ball7.png")};
+  private final static Icon ourGrey = IconLoader.getIcon("/icons/greyball.png");
+
   public static enum PresentationStyle {
     multicolour() {
       final Color[] ourColors = {new Color(255,128,0), new Color(0,102,204), new Color(0, 130,130), new Color(255,45,45), new Color(64,64,255),
@@ -491,6 +491,11 @@ public class GraphGutter {
       @Override
       public Color getColorForWire(int wire) {
         return ourColors[wire % ourColors.length];
+      }
+
+      @Override
+      public Icon getNodeIcon(int wire) {
+        return ourIcons[wire%ourIcons.length];
       }
     },
     calm() {
@@ -501,9 +506,15 @@ public class GraphGutter {
       public Color getColorForWire(int wire) {
         return (wire/2 % 2 == 1 ? darker : darker2);
       }
+
+      @Override
+      public Icon getNodeIcon(int wire) {
+        return (wire/2 % 2 == 1 ? ourIcons[0] : ourIcons[1]);
+      }
     };
 
     public abstract Color getColorForWire(int wire);
+    public abstract Icon getNodeIcon(int wire);
   }
 
   public boolean isCurrentBranchColored() {
