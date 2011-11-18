@@ -82,7 +82,9 @@ class GitManualPushToBranch extends JPanel {
   }
 
   private void setDefaultComponentsEnabledState(boolean selected) {
-    setComponentsEnabledState(selected, myRemoteSelectorComponent,  myDestBranchTextField, myComment);
+    myDestBranchTextField.setEnabled(selected);
+    myComment.setEnabled(selected);
+    myRemoteSelector.setEnabled(selected);
   }
 
   private void layoutComponents() {
@@ -134,12 +136,6 @@ class GitManualPushToBranch extends JPanel {
     return myRemoteSelector.getSelectedValue();
   }
 
-  private static void setComponentsEnabledState(boolean enabled, JComponent... components) {
-    for (JComponent component : components) {
-      component.setEnabled(enabled);
-    }
-  }
-
   @NotNull
   private static Collection<GitRemote> getRemotesWithCommonNames(@NotNull Collection<GitRepository> repositories) {
     if (repositories.isEmpty()) {
@@ -171,7 +167,7 @@ class GitManualPushToBranch extends JPanel {
 
   /**
    * Component to select remotes.
-   * If there is only one remote, JLabel is used instead of JCombobox.
+   * Just a JCombobox actually, but more flexible: if there is only one remote, we could use JLabel or something like that.
    */
   private static class RemoteSelector {
 
@@ -184,27 +180,27 @@ class GitManualPushToBranch extends JPanel {
 
     @NotNull
     JComponent createComponent() {
-      //if (myRemotes.size() == 1) {
-      //  JBLabel label = new JBLabel(myRemotes.iterator().next().getName());
-      //  label.setToolTipText("Remote");
-      //  return label;
-      //} else {
-        myRemoteCombobox = new JComboBox();
-        myRemoteCombobox.setRenderer(new RemoteCellRenderer());
-        for (GitRemote remote : myRemotes) {
-          myRemoteCombobox.addItem(remote);
-        }
-        myRemoteCombobox.setToolTipText("Select remote");
-        return myRemoteCombobox;
-      //}
+      myRemoteCombobox = new JComboBox();
+      myRemoteCombobox.setRenderer(new RemoteCellRenderer());
+      for (GitRemote remote : myRemotes) {
+        myRemoteCombobox.addItem(remote);
+      }
+      myRemoteCombobox.setToolTipText("Select remote");
+      if (myRemotes.size() == 1) {
+        myRemoteCombobox.setEnabled(false);
+      }
+      return myRemoteCombobox;
     }
 
     @NotNull
     GitRemote getSelectedValue() {
-      //if (myRemotes.size() == 1) {
-      //  return myRemotes.iterator().next();
-      //}
       return (GitRemote)myRemoteCombobox.getSelectedItem();
+    }
+
+    void setEnabled(boolean selected) {
+      if (myRemotes.size() > 1) {
+        myRemoteCombobox.setEnabled(selected);
+      }
     }
 
     private static class RemoteCellRenderer implements ListCellRenderer {
