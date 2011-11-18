@@ -236,6 +236,10 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   protected PsiFile createFile(@NonNls String name, String text) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    return createFile(virtualFile);
+  }
+
+  protected PsiFile createFile(LightVirtualFile virtualFile) {
     return myFileFactory.trySetupPsiForFile(virtualFile, myLanguage, true, false);
   }
 
