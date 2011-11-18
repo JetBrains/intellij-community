@@ -107,6 +107,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private JPanel myDetailsPanel;
   private final AdjustComponentWhenShown myAdjustWhenShown;
   private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
+  private String myOkActionText;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -414,7 +415,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myAdditionalOptionsPanel.add(optionsBox, BorderLayout.NORTH);
     }
 
-    setOKButtonText(actionName);
+    myOkActionText = actionName;
 
     if (myShowVcsCommit) {
       setTitle(myActionName);
@@ -506,15 +507,79 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myHelpId;
   }
 
+
+
+
+  private class CommitAction extends AbstractAction implements OptionAction {
+
+    private Action[] myOptions = new Action[0];
+
+    private CommitAction() {
+      super(myOkActionText);
+      putValue(DEFAULT_ACTION, Boolean.TRUE);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (!saveDialogState()) return;
+      saveComments(true);
+      final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+
+      final Runnable callCommit = new Runnable() {
+        public void run() {
+          try {
+            runBeforeCommitHandlers(new Runnable() {
+                public void run() {
+                  CommitChangeListDialog.super.doOKAction();
+                  doCommit();
+                }
+              }, null);
+
+            defaultListCleaner.clean();
+          }
+          catch (InputException ex) {
+            ex.show();
+          }
+        }
+      };
+      if (myBrowser.isDataIsDirty()) {
+        ensureDataIsActual(callCommit);
+      } else {
+        callCommit.run();
+      }
+    }
+
+    @NotNull
+    @Override
+    public Action[] getOptions() {
+      return myOptions;
+    }
+
+    public void setOptions(Action[] actions) {
+      myOptions = actions;
+    }
+  }
+
+  @Override
+  protected Action getOKAction() {
+    return new CommitAction();
+  }
+
   protected Action[] createActions() {
     final List<Action> actions = new ArrayList<Action>();
 
+    CommitAction commitAction = null;
     if (myShowVcsCommit) {
-      actions.add(getOKAction());
+      commitAction = new CommitAction();
+      actions.add(commitAction);
       myHelpId = outCommitHelpId;
     }
     if (myExecutors != null) {
-      actions.addAll(Arrays.asList(myExecutorActions));
+      if (commitAction != null) {
+        commitAction.setOptions(myExecutorActions);        
+      } else {
+        actions.addAll(Arrays.asList(myExecutorActions));
+      }
       for (CommitExecutor executor : myExecutors) {
         if (myHelpId != null) break;
         if (executor instanceof CommitExecutorWithHelp) {
@@ -764,35 +829,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
     runnable.run();
-  }
-
-  protected void doOKAction() {
-    if (!saveDialogState()) return;
-    saveComments(true);
-    final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-
-    final Runnable callCommit = new Runnable() {
-      public void run() {
-        try {
-          runBeforeCommitHandlers(new Runnable() {
-              public void run() {
-                CommitChangeListDialog.super.doOKAction();
-                doCommit();
-              }
-            }, null);
-
-          defaultListCleaner.clean();
-        }
-        catch (InputException ex) {
-          ex.show();
-        }
-      }
-    };
-    if (myBrowser.isDataIsDirty()) {
-      ensureDataIsActual(callCommit);
-    } else {
-      callCommit.run();
-    }
   }
 
   private boolean saveDialogState() {
