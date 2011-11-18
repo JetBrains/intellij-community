@@ -50,7 +50,7 @@ public class ShowPropertiesDiffWithLocalAction extends AbstractShowPropertiesDif
 
   @Nullable
   protected SVNRevision getBeforeRevisionValue(final Change change, final SvnVcs17 vcs) throws SVNException {
-    return SVNRevision.HEAD;
+    return SVNRevision.BASE;
   }
 
   @Nullable

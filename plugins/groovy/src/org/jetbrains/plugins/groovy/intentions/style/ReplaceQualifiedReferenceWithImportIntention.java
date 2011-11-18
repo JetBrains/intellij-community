@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -66,6 +67,7 @@ public class ReplaceQualifiedReferenceWithImportIntention extends Intention {
 
     final GrReferenceElement ref = (GrReferenceElement)element;
     if (ref.getQualifier() == null) return false;
+    if (!(ref.getContainingFile() instanceof GroovyFileBase)) return false;
 
     final PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiClass)) return false;
