@@ -31,22 +31,33 @@ final class GitPushBranchInfo {
 
   private final GitBranch mySourceBranch;
   private final GitBranch myDestBranch;
-  private final boolean myNewBranch;
+  private final Type myType;
   private final List<GitCommit> myCommits;
 
-  GitPushBranchInfo(@NotNull GitBranch sourceBranch, @NotNull GitBranch destBranch, @NotNull List<GitCommit> commits, boolean newBranch) {
+  enum Type {
+    STANDARD,             // the branch this branch is targeted, exists (and is either the tracked/matched branch or manually specified)
+    NEW_BRANCH,           // the source branch will be pushed to a new branch
+    NO_TRACKED_OR_TARGET  // the branch has no tracked/matched, and target was not manually specified
+  }
+
+  GitPushBranchInfo(@NotNull GitBranch sourceBranch, @NotNull GitBranch destBranch, @NotNull List<GitCommit> commits, Type type) {
     mySourceBranch = sourceBranch;
     myCommits = commits;
     myDestBranch = destBranch;
-    myNewBranch = newBranch;
+    myType = type;
   }
 
   GitPushBranchInfo(@NotNull GitPushBranchInfo pushBranchInfo) {
-    this(pushBranchInfo.getSourceBranch(), pushBranchInfo.getDestBranch(), pushBranchInfo.getCommits(), pushBranchInfo.isNewBranchCreated());
+    this(pushBranchInfo.getSourceBranch(), pushBranchInfo.getDestBranch(), pushBranchInfo.getCommits(), pushBranchInfo.getType());
   }
 
+  @NotNull
+  Type getType() {
+    return myType;
+  }
+  
   boolean isNewBranchCreated() {
-    return myNewBranch;
+    return myType == Type.NEW_BRANCH;
   }
 
   @NotNull

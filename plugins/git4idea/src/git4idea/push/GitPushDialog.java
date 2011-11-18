@@ -60,6 +60,7 @@ public class GitPushDialog extends DialogWrapper {
   private final JCheckBox myPushAllCheckbox;
   private final Object COMMITS_LOADING_LOCK = new Object();
   private final GitManualPushToBranch myRefspecPanel;
+  private final AtomicReference<String> myDestBranchInfoOnRefresh = new AtomicReference<String>();
 
   public GitPushDialog(@NotNull Project project) {
     super(project);
@@ -145,6 +146,9 @@ public class GitPushDialog extends DialogWrapper {
         GitRepository repository = repositories.iterator().next();
         GitBranch currentBranch = repository.getCurrentBranch();
         assert currentBranch != null;
+        if (myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch() == GitPusher.NO_TARGET_BRANCH) { // push to branch with the same name
+          return currentBranch.getName();
+        }
         return getNameWithoutRemote(myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch());
       }
     }
@@ -197,13 +201,15 @@ public class GitPushDialog extends DialogWrapper {
       if (remote == null || tracked == null) {
         Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, currentBranch);
         if (remoteAndBranch == null) {
-          continue;
+          remote = myRefspecPanel.getSelectedRemote();
+          tracked = GitPusher.NO_TARGET_BRANCH;
+        } else {
+          remote = remoteAndBranch.getFirst();
+          tracked = remoteAndBranch.getSecond();
         }
-        remote = remoteAndBranch.getFirst();
-        tracked = remoteAndBranch.getSecond();
       }
 
-      if (myRefspecPanel.canBeUsed()) {
+      if (myRefspecPanel.turnedOn()) {
         String manualBranchName = myRefspecPanel.getBranchToPush();
         GitBranch manualBranch = findRemoteBranchByName(repository, remote, manualBranchName);
         if (manualBranch == null) {
@@ -261,17 +267,31 @@ public class GitPushDialog extends DialogWrapper {
   public GitPushInfo getPushInfo() {
     // waiting for commit list loading, because this information is needed to correctly handle rejected push situation and correctly
     // notify about pushed commits
+    // TODO optimize: don't refresh: information about pushed commits can be achieved from the successful push output
     synchronized (COMMITS_LOADING_LOCK) {
       GitCommitsByRepoAndBranch selectedCommits;
       if (myGitCommitsToPush == null) {
         collectInfoToPush();
         selectedCommits = myGitCommitsToPush;
-      } else {
+      }
+      else {
+        if (refreshNeeded()) {
+          collectInfoToPush();
+        }
         Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
         selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
       }
       return new GitPushInfo(selectedCommits, myPushSpecs);
     }
+  }
+
+  private boolean refreshNeeded() {
+    String currentDestBranchValue = myRefspecPanel.turnedOn() ? myRefspecPanel.getBranchToPush(): null;
+    String savedValue = myDestBranchInfoOnRefresh.get();
+    if (savedValue == null) {
+      return currentDestBranchValue != null;
+    }
+    return !savedValue.equals(myDestBranchInfoOnRefresh.get());
   }
 
   private class RepositoryCheckboxListener implements Consumer<Boolean> {
@@ -292,6 +312,7 @@ public class GitPushDialog extends DialogWrapper {
   private class RefreshButtonListener implements Runnable {
     @Override
     public void run() {
+      myDestBranchInfoOnRefresh.set(myRefspecPanel.turnedOn() ? myRefspecPanel.getBranchToPush(): null);
       loadCommitsInBackground();
     }
   }

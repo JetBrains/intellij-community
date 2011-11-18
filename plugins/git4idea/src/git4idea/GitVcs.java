@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -88,7 +89,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup("Git Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = NotificationGroup.balloonGroup("Git Important Errors");
+  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup("Git Important Errors", NotificationDisplayType.STICKY_BALLOON, true);
 
   static {
     NotificationsConfigurationImpl.remove("Git");
