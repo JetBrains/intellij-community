@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
@@ -83,7 +84,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     final JScrollPane entriesPane = ScrollPaneFactory.createScrollPane(myEntriesChooser);
     final JPanel entriesPanel = new JPanel(new BorderLayout());
     entriesPanel.add(entriesPane, BorderLayout.CENTER);
-    entriesPanel.setBorder(IdeBorderFactory.createTitledBorder(getEntriesChooserTitle(), false, false, true));
+    entriesPanel.setBorder(IdeBorderFactory.createTitledBorder(StringUtil.capitalize(StringUtil.pluralize(getElementTypeName())), false, false, true));
     splitter.setFirstComponent(entriesPanel);
 
     final JScrollPane depsPane = ScrollPaneFactory.createScrollPane(myDependenciesList);
@@ -301,8 +302,6 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected abstract void setElementName(T entry, String name);
 
-  protected abstract String getSplitDialogTitle();
-
   protected abstract String getSplitDialogChooseFilesPrompt();
 
   protected abstract String getNameAlreadyUsedMessage(final String name);
@@ -313,6 +312,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   
   protected abstract String getDependenciesTitle();
   
+  protected abstract String getElementTypeName();
+
   private boolean isNameAlreadyUsed(String entryName) {
     final Set<T> itemsToIgnore = new HashSet<T>(myEntriesChooser.getSelectedElements());
     for (T entry : getEntries()) {
@@ -417,10 +418,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       if (elements.size() == 1) {
         final T element = elements.get(0);
-        final String newName = Messages.showInputDialog(
-          ProjectLayoutPanel.this,
-          "Enter new name for " + getElementText(element),
-          "Rename",
+        final String newName = Messages.showInputDialog(ProjectLayoutPanel.this, "New name for " + getElementTypeName() + " '" + getElementName(element) + "':",
+          "Rename " + StringUtil.capitalize(getElementTypeName()),
           Messages.getQuestionIcon(),
           getElementName(element),
           new InputValidator() {
@@ -466,7 +465,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     private SplitDialog(final Collection<File> files) {
       super(myEntriesChooser, true);
-      setTitle(getSplitDialogTitle());
+      setTitle("Split " + StringUtil.capitalize(getElementTypeName()));
 
       myNameField = new JTextField();
       myChooser = new ElementsChooser<File>(true) {
