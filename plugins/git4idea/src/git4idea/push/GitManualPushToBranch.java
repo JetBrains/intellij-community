@@ -15,6 +15,10 @@
  */
 package git4idea.push;
 
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
@@ -40,7 +44,8 @@ class GitManualPushToBranch extends JPanel {
   private final JCheckBox myManualPush;
   private final JTextField myDestBranchTextField;
   private final JBLabel myComment;
-  private final JButton myRefreshButton;
+  private final GitPushLogRefreshAction myRefreshAction;
+  private final JComponent myRefreshButton;
   private final RemoteSelector myRemoteSelector;
   private final JComponent myRemoteSelectorComponent;
 
@@ -56,15 +61,12 @@ class GitManualPushToBranch extends JPanel {
     
     myComment = new JBLabel("This will apply to all selected repositories", UIUtil.ComponentStyle.SMALL);
     
-    myRefreshButton = new JButton(IconLoader.getIcon("/actions/sync.png"));
-    myRefreshButton.setToolTipText("Refresh commit list");
-
-    myRefreshButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
+    myRefreshAction = new GitPushLogRefreshAction() {
+      @Override public void actionPerformed(AnActionEvent e) {
         performOnRefresh.run();
       }
-    });
+    };
+    myRefreshButton = new ActionButton(myRefreshAction,  myRefreshAction.getTemplatePresentation(), "Refresh commit list", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
 
     myRemoteSelector = new RemoteSelector(getRemotesWithCommonNames(repositories));
     myRemoteSelectorComponent = myRemoteSelector.createComponent();
@@ -223,4 +225,11 @@ class GitManualPushToBranch extends JPanel {
 
   }
 
+  private abstract static class GitPushLogRefreshAction extends DumbAwareAction {
+    
+    GitPushLogRefreshAction() {
+      super("Refresh commit list", "Refresh commit list", IconLoader.getIcon("/actions/sync.png"));
+    }
+  }
+  
 }
