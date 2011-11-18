@@ -25,6 +25,7 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -156,6 +157,8 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
 
   @Override
   public String getOutputFilePath() {
+    if (StringUtil.isEmpty(myOutputPath)) return null;
+
     String filePath;
     if (myRootElement instanceof ArchivePackagingElement) {
       filePath = myOutputPath + "/" + ((ArchivePackagingElement)myRootElement).getArchiveFileName();
@@ -164,6 +167,14 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
       filePath = myOutputPath;
     }
     return filePath;
+  }
+
+  @Nullable
+  public String getOutputDirectoryPathToCleanOnRebuild() {
+    if (myRootElement instanceof ArchivePackagingElement || StringUtil.isEmpty(myOutputPath)) {
+      return null;
+    }
+    return myOutputPath;
   }
 
   public void copyFrom(ArtifactImpl modified) {

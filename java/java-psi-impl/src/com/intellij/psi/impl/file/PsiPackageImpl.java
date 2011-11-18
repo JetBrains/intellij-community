@@ -37,12 +37,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
+  public static boolean DEBUG = false;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile Set<String> myPublicClassNamesCache;

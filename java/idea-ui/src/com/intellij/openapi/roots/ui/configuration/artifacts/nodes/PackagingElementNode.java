@@ -108,7 +108,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
       buffer.append("<html>");
       for (ArtifactProblemDescription problem : problems) {
         isError |= problem.getSeverity() == ProjectStructureProblemType.Severity.ERROR;
-        buffer.append(problem.getMessage()).append("<br>");
+        buffer.append(problem.getMessage(false)).append("<br>");
       }
       buffer.append("</html>");
       tooltip = buffer.toString();

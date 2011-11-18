@@ -20,8 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -40,22 +38,6 @@ import java.io.File;
  * @author peter
  */
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
-  public static final LightProjectDescriptor JAVA_1_4 = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk14();
-    }
-
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-    }
-  };
-  public static final LightProjectDescriptor JAVA_1_5 = new DefaultLightProjectDescriptor() {
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
-    }
-  };
   public static final LightProjectDescriptor JAVA_1_6 = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
@@ -68,6 +50,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected LightCodeInsightFixtureTestCase() {
     IdeaTestCase.initPlatformPrefix();
   }

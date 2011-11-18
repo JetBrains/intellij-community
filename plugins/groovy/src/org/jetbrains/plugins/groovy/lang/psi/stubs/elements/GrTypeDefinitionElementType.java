@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -101,9 +100,6 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
       }
       final String fqn = stub.getQualifiedName();
       if (fqn != null) {
-        if (JavaFullClassNameIndex.DEBUG) {
-          System.out.println("GrTypeDefinitionElementType.indexStub: fqn = " + fqn + ", fqn.hashCode() = " + fqn.hashCode());
-        }
         sink.occurrence(GrFullClassNameIndex.KEY, fqn.hashCode());
         sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn.hashCode());
       }

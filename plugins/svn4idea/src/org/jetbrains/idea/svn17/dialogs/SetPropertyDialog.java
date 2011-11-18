@@ -172,7 +172,6 @@ public class SetPropertyDialog extends DialogWrapper {
       public void stateChanged(ChangeEvent e) {
         if (mySetPropertyButton.isSelected()) {
           myValueText.setEnabled(true);
-          myValueText.requestFocus();
         }
         else {
           myValueText.setEnabled(false);

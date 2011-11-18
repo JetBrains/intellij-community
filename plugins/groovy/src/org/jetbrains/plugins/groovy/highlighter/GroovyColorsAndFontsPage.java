@@ -76,6 +76,8 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor("Map key accessed as a property", DefaultHighlighter.MAP_KEY),
       new AttributesDescriptor("Instance property reference", DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE),
       new AttributesDescriptor("Static property reference", DefaultHighlighter.STATIC_PROPERTY_REFERENCE),
+      new AttributesDescriptor("Valid string escape", DefaultHighlighter.VALID_STRING_ESCAPE),
+      new AttributesDescriptor("Invalid string escape", DefaultHighlighter.INVALID_STRING_ESCAPE),
     };
 
   @NotNull
@@ -116,7 +118,9 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "def x=1 + <unresolved>unresolved</unresolved>\n" +
            "def f1 = []\n" +
            "<classref>File</classref> f=<literal>[</literal>'path'<literal>]</literal>\n" +
-           "print new <classref>Demo</classref>().<prop>property</prop>"
+           "print new <classref>Demo</classref>().<prop>property</prop>\n" +
+           "print '<validescape>\\n</validescape> <invalidescape>\\x</invalidescape>'"
+
       ;
   }
 
@@ -135,6 +139,8 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("mapkey", DefaultHighlighter.MAP_KEY);
     map.put("prop", DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
     map.put("staticprop", DefaultHighlighter.STATIC_PROPERTY_REFERENCE);
+    map.put("validescape", DefaultHighlighter.VALID_STRING_ESCAPE);
+    map.put("invalidescape", DefaultHighlighter.INVALID_STRING_ESCAPE);
     return map;
   }
 }

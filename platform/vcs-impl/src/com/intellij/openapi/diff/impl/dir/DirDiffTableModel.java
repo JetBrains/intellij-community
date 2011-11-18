@@ -539,7 +539,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             }
           }
         };
-        ((BackgroundOperatingDiffElement)source).copyTo(myTrg, errorMessage, diff, onFinish, element.getTarget() != null, path);
+        ((BackgroundOperatingDiffElement)source).copyTo(myTrg, errorMessage, diff, onFinish, element.getTarget(), path);
       }
       else {
         final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
@@ -593,7 +593,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             }
           }
         };
-        ((BackgroundOperatingDiffElement)target).copyTo(mySrc, errorMessage, diff, onFinish, element.getSource() != null, path);
+        ((BackgroundOperatingDiffElement)target).copyTo(mySrc, errorMessage, diff, onFinish, element.getSource(), path);
       }
       else {
         final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());

@@ -129,9 +129,13 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     }
     if (!errors.isEmpty()) {
       final int answer = Messages.showYesNoCancelDialog(getComponent(),
-                                                        IdeBundle.message("warning.text.0.do.you.want.to.continue",
-                                                                          StringUtil.join(errors.keySet(), "\n")),
-                                                        IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
+                                                        IdeBundle.message("warning.text.0.do.you.want.to.overwrite.these.files",
+                                                                          StringUtil.join(errors.keySet(), "\n"), errors.size()),
+                                                        IdeBundle.message("title.file.already.exists"), "Overwrite", "Reuse", "Cancel", Messages.getQuestionIcon());
+      if (answer == 2) {
+        return false;
+      }
+
       if (answer != 0) {
         for (ModuleDescriptor moduleDescriptor : errors.values()) {
           moduleDescriptor.reuseExisting(true);

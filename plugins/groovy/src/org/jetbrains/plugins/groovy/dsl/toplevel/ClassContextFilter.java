@@ -10,7 +10,6 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 import java.util.Map;
 
@@ -73,7 +72,7 @@ public class ClassContextFilter implements ContextFilter {
       if (psiClass != null) {
         final int i = typeText.indexOf("<");
         String rawName = i > 0 ? typeText.substring(0, i) : typeText;
-        if (!NonCodeMembersContributor.getParentClassNames(psiClass).contains(rawName)) {
+        if (!TypesUtil.getSuperClassesWithCache(psiClass).containsKey(rawName)) {
           return false;
         }
       }

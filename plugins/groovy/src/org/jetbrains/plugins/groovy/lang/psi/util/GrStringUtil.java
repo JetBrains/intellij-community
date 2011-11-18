@@ -28,6 +28,7 @@ public class GrStringUtil {
   private static final String QUOTE = "'";
   private static final String DOUBLE_QUOTES = "\"";
   private static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
+  private static final String SLASH = "/";
 
   private GrStringUtil() {
   }
@@ -128,7 +129,7 @@ public class GrStringUtil {
     return buffer;
   }
 
-  public static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
+  private static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
     for (int i = 0; i < builder.length(); i++) {
       if (builder.charAt(i) != '\\') continue;
       if (i + 1 == builder.length()) break;
@@ -175,21 +176,11 @@ public class GrStringUtil {
   }
 
   public static String removeQuotes(@NotNull String s) {
-    if (s.startsWith(TRIPLE_QUOTES) || s.startsWith(TRIPLE_DOUBLE_QUOTES)) {
-      if (s.endsWith(s.substring(0, 3))) {
-        return s.substring(3, s.length() - 3);
-      }
-      else {
-        return s.substring(3);
-      }
-    }
-    else if (s.startsWith(QUOTE) || s.startsWith(DOUBLE_QUOTES)) {
-      if (s.length() >= 2 && s.endsWith(s.substring(0, 1))) {
-        return s.substring(1, s.length() - 1);
-      }
-      else {
-        return s.substring(1);
-      }
+    String quote = getStartQuote(s);
+    int sL = s.length();
+    int qL = quote.length();
+    if (sL >= qL * 2 && s.endsWith(quote)) {
+      return s.substring(qL, sL - qL);
     }
     return s;
   }
@@ -338,15 +329,12 @@ public class GrStringUtil {
     }
   }
 
-  public static boolean isPlainString(@NotNull GrLiteral literal) {
-    return literal.getText().startsWith("'");
-  }
-
   public static String getStartQuote(String text) {
     if (text.startsWith(TRIPLE_QUOTES)) return TRIPLE_QUOTES;
     if (text.startsWith(QUOTE)) return QUOTE;
     if (text.startsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
     if (text.startsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
+    if (text.startsWith(SLASH)) return SLASH;
     return "";
   }
 
@@ -383,35 +371,18 @@ public class GrStringUtil {
       c = chars.charAt(index++);
       switch (c) {
         case'b':
-          outChars.append('\b');
-          break;
-
         case't':
-          outChars.append('\t');
-          break;
-
         case'n':
-          outChars.append('\n');
-          break;
-
         case'f':
-          outChars.append('\f');
-          break;
-
         case'r':
-          outChars.append('\r');
-          break;
-
         case'"':
-          outChars.append('"');
-          break;
-
         case'\'':
-          outChars.append('\'');
-          break;
-
+        case'$':
         case'\\':
-          outChars.append('\\');
+          outChars.append(c);
+          break;
+        case '\n':
+          //do nothing
           break;
 
         case'0':
@@ -470,15 +441,7 @@ public class GrStringUtil {
             return false;
           }
           break;
-        
         default:
-          int newIndex = index;
-          while (chars.charAt(newIndex) == ' ') newIndex++;
-          if (chars.charAt(newIndex) == '\n') {
-            index = newIndex;
-            break;
-          }
-
           if (!strictBackSlash) {
             break;
           }

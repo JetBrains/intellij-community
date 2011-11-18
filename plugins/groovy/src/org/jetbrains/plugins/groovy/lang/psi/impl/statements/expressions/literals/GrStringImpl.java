@@ -18,15 +18,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.litera
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.List;
 
 /**
  * @author ilyas
@@ -63,6 +67,18 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
   @Override
   public GrStringInjection[] getInjections() {
     return findChildrenByClass(GrStringInjection.class);
+  }
+
+  @Override
+  public String[] getTextParts() {
+    List<PsiElement> parts = findChildrenByType(GroovyTokenTypes.mGSTRING_CONTENT);
+
+    String[] result = new String[parts.size()];
+    int i = 0;
+    for (PsiElement part : parts) {
+      result[i++] = part.getText();
+    }
+    return result;
   }
 
   public void accept(GroovyElementVisitor visitor) {

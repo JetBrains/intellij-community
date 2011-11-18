@@ -94,8 +94,9 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return "Module dependencies";
   }
 
-  protected String getSplitDialogTitle() {
-    return "Split Module";
+  @Override
+  protected String getElementTypeName() {
+    return "module";
   }
 
   protected String getSplitDialogChooseFilesPrompt() {

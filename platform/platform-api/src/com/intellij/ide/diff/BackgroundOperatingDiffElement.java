@@ -27,7 +27,7 @@ public interface BackgroundOperatingDiffElement {
               Ref<String> errorMessage,
               Ref<DiffElement> diffElement,
               Runnable onFinish,
-              boolean targetExists,
+              DiffElement target,
               String relativePath);
 
   void delete(Ref<String> errorMessage, Runnable onFinish);

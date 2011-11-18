@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -77,5 +78,11 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     final PsiPackage aPackage = getJavaFacade().findPackage(name);
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();// drop all caches
+    super.tearDown();
   }
 }

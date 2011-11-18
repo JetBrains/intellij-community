@@ -24,7 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.ElementBase;
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
+import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
@@ -273,13 +273,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }, state, lastParent, place)) {
       return false;
-    }
-    if (aPackage != null && JavaFullClassNameIndex.DEBUG) {
-      System.out.println("GroovyFileImpl.processDeclarationsInPackage: " + aPackage.getQualifiedName());
-      System.out.println("place = " + place + "; " + place.getText());
-      for (PsiClass aClass : aPackage.getClasses()) {
-        System.out.println("aClass = " + aClass + "; " + aClass.getQualifiedName());
-      }
     }
     return true;
   }

@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ui.configuration.ConfigurationError;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ class ProjectConfigurationProblem extends ConfigurationError {
   private final Project myProject;
 
   public ProjectConfigurationProblem(ProjectStructureProblemDescription description, Project project) {
-    super(computeMessage(description), computeDescription(description),
+    super(description.getMessage(true), computeDescription(description),
           getSettings(project, description.getProblemLevel()).isIgnored(description));
     myDescription = description;
     myProject = project;
@@ -48,11 +47,7 @@ class ProjectConfigurationProblem extends ConfigurationError {
 
   private static String computeDescription(ProjectStructureProblemDescription description) {
     final String descriptionString = description.getDescription();
-    return descriptionString != null ? descriptionString : computeMessage(description);
-  }
-
-  private static String computeMessage(ProjectStructureProblemDescription description) {
-    return description.getPlace().getContainingElement().getPresentableName() + ": " + StringUtil.decapitalize(description.getMessage());
+    return descriptionString != null ? descriptionString : description.getMessage(true);
   }
 
   @Override

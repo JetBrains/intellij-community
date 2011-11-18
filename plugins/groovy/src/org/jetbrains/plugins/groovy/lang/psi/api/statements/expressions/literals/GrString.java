@@ -24,4 +24,6 @@ public interface GrString extends GrLiteral {
   boolean isPlainString();
 
   GrStringInjection[] getInjections();
+
+  String[] getTextParts();
 }

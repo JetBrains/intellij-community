@@ -70,7 +70,7 @@ public class SvnConfigurable implements Configurable {
 
   public SvnConfigurable(Project project) {
     myProject = project;
-    myLinkLabel.setHyperlinkTarget("http://youtrack.jetbrains.net/issue/IDEA-72400");
+    myLinkLabel.setHyperlinkTarget("http://confluence.jetbrains.net/display/IDEADEV/Subversion+1.7+in+IntelliJ+IDEA+11");
     myLinkLabel.setHyperlinkText("More information");
 
     myUseDefaultCheckBox.addActionListener(new ActionListener() {

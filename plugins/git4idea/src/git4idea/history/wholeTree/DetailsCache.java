@@ -113,7 +113,8 @@ public class DetailsCache {
       myBranches.clear();
       myStash.clear();
       // will be cleared by itself; commits are not changed while they have same hash
-      //myCache.clear();
+      // uncommented because of reference caching
+      myCache.clear();
     }
   }
 
