@@ -146,6 +146,9 @@ public class GitPushDialog extends DialogWrapper {
         GitRepository repository = repositories.iterator().next();
         GitBranch currentBranch = repository.getCurrentBranch();
         assert currentBranch != null;
+        if (myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch() == GitPusher.NO_TARGET_BRANCH) { // push to branch with the same name
+          return currentBranch.getName();
+        }
         return getNameWithoutRemote(myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch());
       }
     }
@@ -198,13 +201,15 @@ public class GitPushDialog extends DialogWrapper {
       if (remote == null || tracked == null) {
         Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, currentBranch);
         if (remoteAndBranch == null) {
-          continue;
+          remote = myRefspecPanel.getSelectedRemote();
+          tracked = GitPusher.NO_TARGET_BRANCH;
+        } else {
+          remote = remoteAndBranch.getFirst();
+          tracked = remoteAndBranch.getSecond();
         }
-        remote = remoteAndBranch.getFirst();
-        tracked = remoteAndBranch.getSecond();
       }
 
-      if (myRefspecPanel.canBeUsed()) {
+      if (myRefspecPanel.turnedOn()) {
         String manualBranchName = myRefspecPanel.getBranchToPush();
         GitBranch manualBranch = findRemoteBranchByName(repository, remote, manualBranchName);
         if (manualBranch == null) {
@@ -281,7 +286,7 @@ public class GitPushDialog extends DialogWrapper {
   }
 
   private boolean refreshNeeded() {
-    String currentDestBranchValue = myRefspecPanel.canBeUsed() ? myRefspecPanel.getBranchToPush(): null;
+    String currentDestBranchValue = myRefspecPanel.turnedOn() ? myRefspecPanel.getBranchToPush(): null;
     String savedValue = myDestBranchInfoOnRefresh.get();
     if (savedValue == null) {
       return currentDestBranchValue != null;
@@ -307,7 +312,7 @@ public class GitPushDialog extends DialogWrapper {
   private class RefreshButtonListener implements Runnable {
     @Override
     public void run() {
-      myDestBranchInfoOnRefresh.set(myRefspecPanel.canBeUsed() ? myRefspecPanel.getBranchToPush(): null);
+      myDestBranchInfoOnRefresh.set(myRefspecPanel.turnedOn() ? myRefspecPanel.getBranchToPush(): null);
       loadCommitsInBackground();
     }
   }

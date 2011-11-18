@@ -322,17 +322,30 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         GitBranch fromBranch = branchInfo.getSourceBranch();
         GitBranch dest = branchInfo.getDestBranch();
 
-        String text = fromBranch.getName() + " -> ";
-        if (branchInfo.isNewBranchCreated()) {
-          text += "+";
+        GitPushBranchInfo.Type type = branchInfo.getType();
+        final String showingRecentCommits = ", showing " + GitPusher.RECENT_COMMITS_NUMBER + " recent commits";
+        String text = fromBranch.getName();
+        SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        String additionalText = "";
+        switch (type) {
+          case STANDARD:
+            text += " -> " + dest.getName();
+            if (branchInfo.getCommits().isEmpty()) {
+              additionalText = " nothing to push";
+            }
+            break;
+          case NEW_BRANCH:
+            text += " -> +" + dest.getName();
+            attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+            additionalText = " new branch will be created" + showingRecentCommits;
+            break;
+          case NO_TRACKED_OR_TARGET:
+            attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+            additionalText = " no tracked branch. Use checkbox below to push branch to manually specified" + showingRecentCommits;
+            break;
         }
-        text +=  dest.getName();
-        renderer.append(text, branchInfo.isNewBranchCreated() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        if (branchInfo.isNewBranchCreated()) {
-          renderer.append(" new branch will be created, showing last " + GitPusher.RECENT_COMMITS_NUMBER + " commits on the current branch", smallGrey);
-        } else if (branchInfo.getCommits().isEmpty()) {
-          renderer.append(" nothing to push", smallGrey);
-        }
+        renderer.append(text, attrs);
+        renderer.append(additionalText, smallGrey);
       }
       else if (userObject instanceof FakeCommit) {
         int spaces = 6 + 15 + 3 + 30;

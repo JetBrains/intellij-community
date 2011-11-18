@@ -118,7 +118,7 @@ class GitManualPushToBranch extends JPanel {
     add(panel, BorderLayout.WEST);
   }
 
-  boolean canBeUsed() {
+  boolean turnedOn() {
     return myManualPush.isSelected() && !myDestBranchTextField.getText().isEmpty();
   }
 

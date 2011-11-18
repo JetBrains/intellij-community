@@ -32,7 +32,8 @@ import static git4idea.ui.GitUIUtil.code;
  */
 final class GitPushRepoResult {
 
-  private enum Type {
+  enum Type {
+    NOT_PUSHING,
     SUCCESS,
     SOME_REJECTED,
     ERROR,
@@ -75,20 +76,18 @@ final class GitPushRepoResult {
     return new GitPushRepoResult(Type.NOT_AUTHORIZED, Collections.<GitBranch, GitPushBranchResult>emptyMap(), output);
   }
 
-  boolean isError() {
-    return myType == Type.ERROR;
+  @NotNull
+  static GitPushRepoResult notPushed() {
+    return new GitPushRepoResult(Type.NOT_PUSHING, Collections.<GitBranch, GitPushBranchResult>emptyMap(), "");
+  }
+
+  @NotNull
+  Type getType() {
+    return myType;
   }
   
-  boolean isSuccess() {
-    return myType == Type.SUCCESS;
-  }
-
-  public boolean isCancel() {
-    return myType == Type.CANCEL;
-  }
-
-  public boolean isNotAuthorized() {
-    return myType == Type.NOT_AUTHORIZED;
+  boolean isOneOfErrors() {
+    return myType == Type.ERROR || myType == Type.CANCEL || myType == Type.NOT_AUTHORIZED;
   }
 
   @NotNull
