@@ -403,8 +403,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
     }
     public void update(final AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
+      final List<T> elements = myEntriesChooser.getSelectedElements();
+      e.getPresentation().setEnabled(elements.size() == 1 && getContent(elements.get(0)).size() > 1);
     }
   }
 
