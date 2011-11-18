@@ -75,6 +75,10 @@ class GitManualPushToBranch extends JPanel {
       public void actionPerformed(ActionEvent e) {
         boolean isManualPushSelected = myManualPush.isSelected();
         setDefaultComponentsEnabledState(isManualPushSelected);
+        if (isManualPushSelected) {
+          myDestBranchTextField.requestFocus();
+          myDestBranchTextField.selectAll();
+        }
       }
     });
 
