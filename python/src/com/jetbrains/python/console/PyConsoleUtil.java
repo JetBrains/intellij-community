@@ -117,4 +117,8 @@ public class PyConsoleUtil {
     Boolean detected = file.getUserData(IPYTHON);
     return detected != null && detected.booleanValue();
   }
+
+  public static void markIPython(@NotNull VirtualFile file) {
+    file.putUserData(IPYTHON, Boolean.TRUE);
+  }
 }

@@ -83,7 +83,7 @@ public class PyConsoleParsingContext extends ParsingContext {
 
     @Override
     public boolean parseExpressionOptional() {
-      if (myBuilder.getTokenType() == PyTokenTypes.PERC || myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
+      if (myBuilder.getTokenType() == PyTokenTypes.PERC || myBuilder.getTokenType() == PyConsoleTokenTypes.PLING || myBuilder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
         PsiBuilder.Marker expr = myBuilder.mark();
         PsiBuilder.Marker command = myBuilder.mark();
 
