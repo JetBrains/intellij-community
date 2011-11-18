@@ -32,8 +32,8 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -187,6 +187,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       super.visitAssignmentExpression(assignment);
 
       GrExpression lValue = assignment.getLValue();
+      if (lValue instanceof GrIndexProperty) return;
       if (!PsiUtil.mightBeLValue(lValue)) return;
 
       IElementType opToken = assignment.getOperationToken();
@@ -218,7 +219,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         // new instance initializing e.g.: X x; x = [1, 2]
         return;
       }
-      if (lValue instanceof GrIndexProperty) return;
+
       if (lType != null && rType != null) {
         checkAssignability(lType, rValue, rValue);
       }

@@ -38,10 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -622,5 +619,18 @@ public class TypesUtil {
 
     return superClassNames;
   }
-  
+
+  @Nullable
+  public static PsiType substituteBoxAndNormalizeType(@Nullable PsiType type,
+                                                      @NotNull PsiSubstitutor substitutor,
+                                                      @NotNull GrExpression expression) {
+    if (type == null) return null;
+    GlobalSearchScope resolveScope = expression.getResolveScope();
+    PsiManager manager = expression.getManager();
+    type = substitutor.substitute(type);
+    type = boxPrimitiveType(type, manager, resolveScope);
+    if (type == null) return null;
+    return PsiImplUtil.normalizeWildcardTypeByPosition(type, expression);
+  }
+
 }

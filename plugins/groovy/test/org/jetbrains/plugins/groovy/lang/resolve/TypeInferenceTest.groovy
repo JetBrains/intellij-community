@@ -291,4 +291,8 @@ List<Integer> l2
   void testWildCardsNormalized() {
     assertTypeEquals(Object.canonicalName, 'a.groovy')
   }
+  
+  void testIndexPropertyInLHS() {
+    assertTypeEquals("java.util.Map", 'a.groovy')
+  }
 }

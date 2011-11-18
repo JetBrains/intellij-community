@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -43,13 +42,14 @@ import java.util.Set;
  * @author sergey.evdokimov
  */
 public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCalculator {
+  private static final Logger LOG = Logger.getInstance(DefaultCallExpressionTypeCalculator.class);
+
   @Override
   public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, GroovyResolveResult[] resolveResults) {
     GrExpression invoked = callExpression.getInvokedExpression();
     if (invoked instanceof GrReferenceExpression) {
       GrReferenceExpression refExpr = (GrReferenceExpression) invoked;
       PsiManager manager = callExpression.getManager();
-      GlobalSearchScope scope = callExpression.getResolveScope();
       PsiType result = null;
       for (GroovyResolveResult resolveResult : resolveResults) {
         PsiElement resolved = resolveResult.getElement();
@@ -72,9 +72,8 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         }
         if (returnType == null) return null;
         if (!(returnType instanceof GrLiteralClassType)) {
-          returnType = resolveResult.getSubstitutor().substitute(returnType);
-          returnType = TypesUtil.boxPrimitiveType(returnType, manager, scope);
-          returnType = PsiImplUtil.normalizeWildcardTypeByPosition(returnType, callExpression);
+          returnType = TypesUtil.substituteBoxAndNormalizeType(returnType, resolveResult.getSubstitutor(), callExpression);
+          LOG.assertTrue(returnType != null);
         }
 
         if (result == null || returnType.isAssignableFrom(result)) result = returnType;
