@@ -919,8 +919,8 @@ public class FileBasedIndex implements ApplicationComponent {
       scheduleRebuild(indexId, e);
     }
     catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException || cause instanceof IndexOutOfBoundsException) {
+      final Throwable cause = getCauseToRebuildIndex(e);
+      if (cause != null) {
         scheduleRebuild(indexId, cause);
       }
       else {
@@ -928,6 +928,12 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
     return true;
+  }
+
+  public static @Nullable Throwable getCauseToRebuildIndex(RuntimeException e) {
+    Throwable cause = e.getCause();
+    if (cause instanceof StorageException || cause instanceof IOException || cause instanceof IllegalArgumentException) return cause;
+    return null;
   }
 
   public <K, V> boolean getFilesWithKey(final ID<K, V> indexId, final Set<K> dataKeys, Processor<VirtualFile> processor, GlobalSearchScope filter) {

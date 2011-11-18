@@ -133,7 +133,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
     public CorruptedException(File file) {
-      super("PersistentStringEnumerator storage corrupted " + file.getPath());
+      super("PersistentEnumerator storage corrupted " + file.getPath());
     }
   }
 
