@@ -1,8 +1,10 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.run.PythonCommandLineState;
 
 import java.io.File;
 import java.util.Collection;
@@ -41,7 +43,9 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
     final String jythonPath = StringUtil.join(path, File.pathSeparator);
     addToEnv(cmd, JYTHONPATH, appendSystemJythonPath(jythonPath));
-    cmd.getParametersList().add(getPythonPathCmdLineArgument(path));
+    ParamsGroup param_group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
+    assert param_group != null;
+    param_group.addParameter(getPythonPathCmdLineArgument(path));
   }
 
   public static String getPythonPathCmdLineArgument(Collection<String> path) {
