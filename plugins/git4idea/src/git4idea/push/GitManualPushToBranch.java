@@ -53,7 +53,7 @@ class GitManualPushToBranch extends JPanel {
     super();
     myRepositories = repositories;
 
-    myManualPush = new JCheckBox("Push current branch to: ", false);
+    myManualPush = new JCheckBox("Push current branch to alternative branch: ", false);
     myManualPush.setMnemonic('b');
 
     myDestBranchTextField = new JTextField(15);
