@@ -431,8 +431,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     // Process except parts
     final ArrayList<Instruction> exceptInstructions = new ArrayList<Instruction>();
-    storeAndClearPending();
+    resetPendingBackup();
     for (PyExceptPart exceptPart : node.getExceptParts()) {
+      backupAndClearPending();
       myBuilder.flowAbrupted();
       final Instruction exceptInstrcution = myBuilder.startNode(exceptPart);
       exceptPart.accept(this);
@@ -530,7 +531,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       final Instruction finallyInstruction;
       if (!normalExits.isEmpty()) {
         // Finally-success part handling
-        storeAndClearPending();
+        resetPendingBackup();
+        backupAndClearPending();
         myBuilder.flowAbrupted();
         Instruction finallySuccessInstruction = myBuilder.startNode(finallyPart);
         finallyPart.accept(this);
@@ -548,8 +550,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
   }
 
-  private void storeAndClearPending() {
-    myPendindBackup = myBuilder.pending;
+  private void resetPendingBackup() {
+    myPendindBackup = new ArrayList<Pair<PsiElement, Instruction>>();
+  }
+
+  private void backupAndClearPending() {
+    myPendindBackup.addAll(myBuilder.pending);
     myBuilder.pending = new ArrayList<Pair<PsiElement, Instruction>>();
   }
 
