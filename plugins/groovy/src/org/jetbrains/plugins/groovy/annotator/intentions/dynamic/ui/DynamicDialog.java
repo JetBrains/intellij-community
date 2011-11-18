@@ -154,31 +154,23 @@ public abstract class DynamicDialog extends DialogWrapper {
     pack();
   }
 
-  @Nullable
-  public PsiClass getTargetClass() {
-    return JavaPsiFacade.getInstance(myProject).findClass(mySettings.getContainingClassName(), GlobalSearchScope.allScope(myProject));
-  }
-
   private void setUpContainingClassComboBox() {
-    PsiClass targetClass = getTargetClass();
+    String containingClassName = mySettings.getContainingClassName();
+    PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(containingClassName, GlobalSearchScope.allScope(myProject));
     if (targetClass == null || targetClass instanceof SyntheticElement) {
-      try {
-        final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement("java.lang.Object");
-        if (typeElement == null) return;
-
-        final PsiType type = typeElement.getType();
-
-        if (!(type instanceof PsiClassType)) LOG.error("Type java.lang.Object doesn't resolve");
-        targetClass = ((PsiClassType) type).resolve();
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
+      if (containingClassName.length() > 0) {
+        myClassComboBox.addItem(containingClassName);
       }
+
+      if (!containingClassName.equals(CommonClassNames.JAVA_LANG_OBJECT)) {
+        myClassComboBox.addItem(CommonClassNames.JAVA_LANG_OBJECT);
+      }
+
+      return;
     }
 
-    if (targetClass == null) return;
-
     for (PsiClass aClass : PsiUtil.iterateSupers(targetClass, true)) {
-      myClassComboBox.addItem(new ContainingClassItem(aClass));
+      myClassComboBox.addItem(aClass.getQualifiedName());
     }
 
     myPanel.registerKeyboardAction(new ActionListener() {
@@ -286,14 +278,6 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   }
 
-  @Nullable
-  public ContainingClassItem getEnteredContainingClass() {
-    final Object item = myClassComboBox.getSelectedItem();
-    if (!(item instanceof ContainingClassItem)) return null;
-
-    return ((ContainingClassItem) item);
-  }
-
   protected void fireDataChanged() {
     Object[] list = myListenerList.getListenerList();
     for (Object aList : list) {
@@ -311,7 +295,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
 
-    mySettings.setContainingClassName(getEnteredContainingClass().getContainingClass().getQualifiedName());
+    mySettings.setContainingClassName((String)myClassComboBox.getSelectedItem());
     mySettings.setStatic(myStaticCheckBox.isSelected());
     GrTypeElement typeElement = getEnteredTypeName();
 
@@ -389,22 +373,6 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
 
     myDynamicManager.fireChange();
-  }
-
-  static class ContainingClassItem {
-    private final PsiClass myContainingClass;
-
-    ContainingClassItem(PsiClass containingClass) {
-      myContainingClass = containingClass;
-    }
-
-    public String toString() {
-      return myContainingClass.getName();
-    }
-
-    public PsiClass getContainingClass() {
-      return myContainingClass;
-    }
   }
 
   public void doCancelAction() {
