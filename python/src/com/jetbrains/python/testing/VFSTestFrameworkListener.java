@@ -56,7 +56,7 @@ public class VFSTestFrameworkListener implements BulkFileListener {
   public void after(List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       VirtualFile vFile = event.getFile();
-      if (vFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isInLibraryClasses(vFile)) {
+      if (vFile != null && !myProject.isDisposed() && ProjectRootManager.getInstance(myProject).getFileIndex().isInLibraryClasses(vFile)) {
         String path = vFile.getPath();
         if (path.contains("nose") || path.contains("py-1") || path.contains("pytest") || path.contains("attest")) {
           updateTestFrameworks(ourService);
