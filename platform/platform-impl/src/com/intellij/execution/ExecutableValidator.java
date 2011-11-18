@@ -124,7 +124,7 @@ public abstract class ExecutableValidator {
 
   private void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
     Configurable configurable = getConfigurable();
-    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable);
+    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable.getDisplayName());
     if (isExecutableValid(getCurrentExecutable())) {
       notification.expire();
     }

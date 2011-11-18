@@ -47,7 +47,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,6 +58,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -214,7 +214,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
                                    HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT,true);
 
-    List<Pair<LocalInspectionTool, String>> tools = getToolsForElements(toolWrappers, checkDumbAwareness, inside, outside);
+    MultiMap<LocalInspectionTool, String> tools = getToolsForElements(toolWrappers, checkDumbAwareness, inside, outside);
 
     setProgressLimit(1L * tools.size() * 2);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
@@ -229,7 +229,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     addHighlightsFromResults(myInfos, indicator);
   }
 
-  private static List<Pair<LocalInspectionTool, String>> getToolsForElements(List<LocalInspectionToolWrapper> toolWrappers,
+  private static MultiMap<LocalInspectionTool, String> getToolsForElements(List<LocalInspectionToolWrapper> toolWrappers,
                                                                boolean checkDumbAwareness,
                                                                List<PsiElement> inside, List<PsiElement> outside) {
     Set<Language> languages = new HashSet<Language>();
@@ -239,9 +239,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (PsiElement element : outside) {
       languages.add(element.getLanguage());
     }
-    Set<String> langIds = new HashSet<String>();
+    Map<String, Language> langIds = new HashMap<String, Language>();
     for (Language language : languages) {
-      langIds.add(language.getID());
+      langIds.put(language.getID(), language);
     }
     Set<String> dialects = new HashSet<String>();
     for (Language language : languages) {
@@ -249,20 +249,37 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         dialects.add(dialect.getID());
       }
     }
-    ArrayList<Pair<LocalInspectionTool, String>> pairs = new ArrayList<Pair<LocalInspectionTool, String>>();
+    MultiMap<LocalInspectionTool, String> map = new MultiMap<LocalInspectionTool, String>();
     for (LocalInspectionToolWrapper wrapper : toolWrappers) {
       String language = wrapper.getLanguage();
-      if (language == null || langIds.contains(language) || wrapper.applyToDialects() && dialects.contains(language)) {
+      if (language == null) {
         LocalInspectionTool tool = wrapper.getTool();
         if (!checkDumbAwareness || tool instanceof DumbAware) {
-          pairs.add(Pair.create(tool, language));
+          map.put(tool, null);
+        }
+        continue;
+      }
+      Language lang = langIds.get(language);
+      if (lang != null) {
+        LocalInspectionTool tool = wrapper.getTool();
+        if (!checkDumbAwareness || tool instanceof DumbAware) {
+          map.putValue(tool, language);
+          for (Language dialect : lang.getDialects()) {
+            map.putValue(tool, dialect.getID());
+          }
+        }
+      }
+      else if (wrapper.applyToDialects() && dialects.contains(language)) {
+        LocalInspectionTool tool = wrapper.getTool();
+        if (!checkDumbAwareness || tool instanceof DumbAware) {
+          map.putValue(tool, language);
         }
       }
     }
-    return pairs;
+    return map;
   }
 
-  private void visitPriorityElementsAndInit(@NotNull List<Pair<LocalInspectionTool, String>> tools,
+  private void visitPriorityElementsAndInit(@NotNull MultiMap<LocalInspectionTool, String> tools,
                                             @NotNull final InspectionManagerEx iManager,
                                             final boolean isOnTheFly,
                                             @NotNull final ProgressIndicator indicator,
@@ -270,13 +287,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                             @NotNull final LocalInspectionToolSession session,
                                             @NotNull final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init,
                                             List<LocalInspectionToolWrapper> wrappers, boolean checkDumbAwareness) {
-    boolean result = JobUtil.invokeConcurrentlyUnderProgress(tools, indicator, myFailFastOnAcquireReadAction, new Processor<Pair<LocalInspectionTool, String>>() {
+
+    List<Map.Entry<LocalInspectionTool, Collection<String>>> entries = new ArrayList<Map.Entry<LocalInspectionTool, Collection<String>>>(tools.entrySet());
+    boolean result = JobUtil.invokeConcurrentlyUnderProgress(entries, indicator, myFailFastOnAcquireReadAction, new Processor<Map.Entry<LocalInspectionTool, Collection<String>>>() {
       @Override
-      public boolean process(final Pair<LocalInspectionTool, String> pair) {
+      public boolean process(final Map.Entry<LocalInspectionTool, Collection<String>> pair) {
         indicator.checkCanceled();
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        final LocalInspectionTool tool = pair.getFirst();
+        final LocalInspectionTool tool = pair.getKey();
         final boolean[] applyIncrementally = {isOnTheFly};
         ProblemsHolder holder = new ProblemsHolder(iManager, myFile, isOnTheFly) {
           @Override
@@ -287,7 +306,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
           }
         };
-        PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, pair.second);
+        PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, pair.getValue());
 
         synchronized (init) {
           init.add(Trinity.create(tool, holder, visitor));
@@ -310,7 +329,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                   boolean isOnTheFly,
                                                                   @NotNull LocalInspectionToolSession session,
                                                                   @NotNull List<PsiElement> elements,
-                                                                  @Nullable String language) {
+                                                                  @Nullable Collection<String> languages) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
     if(visitor == null) {
@@ -320,7 +339,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
 
     tool.inspectionStarted(session, isOnTheFly);
-    acceptElements(elements, visitor, language);
+    acceptElements(elements, visitor, languages);
     return visitor;
   }
 
@@ -363,11 +382,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private static void acceptElements(@NotNull List<PsiElement> elements,
                                      @NotNull PsiElementVisitor elementVisitor,
-                                     @Nullable String language) {
+                                     @Nullable Collection<String> languages) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
       PsiElement element = elements.get(i);
-      if (language == null || language.equals(element.getLanguage().getID())) {
+      if (languages == null || languages.contains(element.getLanguage().getID())) {
         element.accept(elementVisitor);
       }
       ProgressManager.checkCanceled();
@@ -695,11 +714,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (elements.isEmpty()) {
       return;
     }
-    List<Pair<LocalInspectionTool, String>> tools =
+    MultiMap<LocalInspectionTool, String> tools =
       getToolsForElements(wrappers, checkDumbAwareness, elements, Collections.<PsiElement>emptyList());
-    for (final Pair<LocalInspectionTool, String> pair : tools) {
+    for (final Map.Entry<LocalInspectionTool, Collection<String>> pair : tools.entrySet()) {
       indicator.checkCanceled();
-      final LocalInspectionTool tool = pair.getFirst();
+      final LocalInspectionTool tool = pair.getKey();
       if (host != null && myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(host, tool)) {
         continue;
       }
@@ -714,7 +733,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       };
 
       LocalInspectionToolSession injSession = new LocalInspectionToolSession(injectedPsi, 0, injectedPsi.getTextLength());
-      createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements, pair.second);
+      createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements, pair.getValue());
       tool.inspectionFinished(injSession, holder);
       List<ProblemDescriptor> problems = holder.getResults();
       if (!problems.isEmpty()) {

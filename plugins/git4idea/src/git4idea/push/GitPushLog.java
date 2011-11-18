@@ -165,9 +165,22 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   private void selectFirstCommit() {
     DefaultMutableTreeNode firstLeaf = myRootNode.getFirstLeaf();
-    if (firstLeaf != null) {
-      myTree.setSelectionPath(new TreePath(firstLeaf.getPath()));
+    if (firstLeaf == null) {
+      return;
     }
+
+    Enumeration enumeration = myRootNode.depthFirstEnumeration();
+    DefaultMutableTreeNode node = null;
+    while (enumeration.hasMoreElements()) {
+      node = (DefaultMutableTreeNode) enumeration.nextElement();
+      if (node.isLeaf() && node.getUserObject() instanceof GitCommit) {
+        break;
+      }
+    }
+    if (node == null) {
+      node = firstLeaf;
+    }
+    myTree.setSelectionPath(new TreePath(node.getPath()));
   }
 
   private void createNodes(@NotNull GitCommitsByRepoAndBranch commits) {
@@ -210,6 +223,9 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     DefaultMutableTreeNode branchNode = new DefaultMutableTreeNode(branchInfo);
     for (GitCommit commit : branchInfo.getCommits()) {
       branchNode.add(new DefaultMutableTreeNode(commit));
+    }
+    if (branchInfo.isNewBranchCreated()) {
+      branchNode.add(new DefaultMutableTreeNode(new MoreCommitsToShow()));
     }
     return branchNode;
   }
@@ -313,13 +329,18 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         text +=  dest.getName();
         renderer.append(text, branchInfo.isNewBranchCreated() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         if (branchInfo.isNewBranchCreated()) {
-          renderer.append(" new branch will be created, showing last 10 commits on the current branch", smallGrey);
+          renderer.append(" new branch will be created, showing last " + GitPusher.RECENT_COMMITS_NUMBER + " commits on the current branch", smallGrey);
+        } else if (branchInfo.getCommits().isEmpty()) {
+          renderer.append(" nothing to push", smallGrey);
         }
       }
       else if (userObject instanceof FakeCommit) {
         int spaces = 6 + 15 + 3 + 30;
         String s = String.format("%" + spaces + "s", " ");
         renderer.append(s, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, renderer.getBackground()));
+      }
+      else if (userObject instanceof MoreCommitsToShow) {
+        renderer.append("...");
       }
       else {
         renderer.append(userObject == null ? "" : userObject.toString());
@@ -345,4 +366,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   private static class FakeCommit {
   }
 
+  private static class MoreCommitsToShow {
+  }
 }

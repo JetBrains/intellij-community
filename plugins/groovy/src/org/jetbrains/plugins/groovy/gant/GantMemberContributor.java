@@ -28,11 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-
-import java.util.Arrays;
 
 /**
  * @author peter
@@ -44,7 +43,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
                                      PsiScopeProcessor processor,
                                      GroovyPsiElement place,
                                      ResolveState state) {
-    if (aClass != null && getParentClassNames(aClass).contains("groovy.util.AntBuilder")) {
+    if (aClass != null && TypesUtil.getSuperClassesWithCache(aClass).containsKey("groovy.util.AntBuilder")) {
       processAntTasks(processor, place, state);
       return;
     }

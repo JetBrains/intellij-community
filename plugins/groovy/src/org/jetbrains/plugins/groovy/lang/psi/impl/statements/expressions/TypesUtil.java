@@ -45,9 +45,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -59,6 +59,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  * @author ven
  */
 public class TypesUtil {
+  
+  private static final LightCacheKey<Map<String, PsiClass>> PARENT_CACHE_KEY = LightCacheKey.create();
+  
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
   public static final PsiPrimitiveType[] PRIMITIVES =
@@ -602,4 +605,22 @@ public class TypesUtil {
     return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_SET, resolveScope);
   }
 
+  public static Map<String, PsiClass> getSuperClassesWithCache(@NotNull PsiClass aClass) {
+    Map<String, PsiClass> superClassNames = PARENT_CACHE_KEY.getCachedValue(aClass);
+    if (superClassNames == null) {
+      Set<PsiClass> superClasses = new HashSet<PsiClass>();
+      superClasses.add(aClass);
+      InheritanceUtil.getSuperClasses(aClass, superClasses, true);
+
+      superClassNames = new LinkedHashMap<String, PsiClass>();
+      for (PsiClass superClass : superClasses) {
+        superClassNames.put(superClass.getQualifiedName(), superClass);
+      }
+
+      superClassNames = PARENT_CACHE_KEY.putCachedValue(aClass, superClassNames);
+    }
+
+    return superClassNames;
+  }
+  
 }

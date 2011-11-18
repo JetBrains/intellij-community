@@ -23,16 +23,15 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.*;
+import java.util.Collection;
 
 /**
  * @author peter
@@ -40,8 +39,6 @@ import java.util.*;
 public abstract class NonCodeMembersContributor {
   private static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
 
-  private static final LightCacheKey<Set<String>> KEY = LightCacheKey.create();
-  
   private static volatile MultiMap<String, NonCodeMembersContributor> ourClassSpecifiedContributors;
   private static NonCodeMembersContributor[] ourAllTypeContributors;
   
@@ -91,7 +88,7 @@ public abstract class NonCodeMembersContributor {
     final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
 
     if (aClass != null) {
-      for (String superClassName : getParentClassNames(aClass)) {
+      for (String superClassName : TypesUtil.getSuperClassesWithCache(aClass).keySet()) {
         for (NonCodeMembersContributor enhancer : ourClassSpecifiedContributors.get(superClassName)) {
           enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
           if (!delegatingProcessor.wantMore) {
@@ -111,24 +108,6 @@ public abstract class NonCodeMembersContributor {
     return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
   }
 
-  public static Set<String> getParentClassNames(@NotNull PsiClass aClass) {
-    Set<String> superClassNames = KEY.getCachedValue(aClass);
-    if (superClassNames == null) {
-      Set<PsiClass> superClasses = new HashSet<PsiClass>();
-      superClasses.add(aClass);
-      InheritanceUtil.getSuperClasses(aClass, superClasses, true);
-
-      superClassNames = new HashSet<String>();
-      for (PsiClass superClass : superClasses) {
-        superClassNames.add(superClass.getQualifiedName());
-      }
-
-      superClassNames = KEY.putCachedValue(aClass, superClassNames);
-    }
-
-    return superClassNames;
-  }
-  
   private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor {
     public boolean wantMore = true;
 

@@ -158,6 +158,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void initializeOptionsPanel(final FrameworkSupportNode node) {
     if (!myInitializedOptionsComponents.containsKey(node)) {
+      final FrameworkSupportNode parentNode = node.getParentNode();
+      if (parentNode != null) {
+        initializeOptionsPanel(parentNode);
+      }
+
       FrameworkSupportOptionsComponent optionsComponent = new FrameworkSupportOptionsComponent(myModel, myLibrariesContainer, this,
                                                                                                node.getConfigurable(),
                                                                                                node.getTitle() + " Settings");
