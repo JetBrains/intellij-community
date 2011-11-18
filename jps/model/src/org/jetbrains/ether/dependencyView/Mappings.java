@@ -555,7 +555,7 @@ public class Mappings {
           dependents.addAll(deps);
         }
 
-        affectedUsages.add(method.createUsage(myContext, p));
+        affectedUsages.add(rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p));
       }
     }
 
@@ -805,10 +805,14 @@ public class Mappings {
           if ((m.access & Opcodes.ACC_PRIVATE) == 0 && !myContext.getValue(m.name).equals("<init>")) {
             final ClassRepr oldIt = getReprByName(it.name);
 
-            if (oldIt != null && self.findOverridenMethods(m, oldIt).size() > 0) { //  oldIt.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
+            if (oldIt != null && self.findOverridenMethods(m, oldIt).size() > 0) {
 
             }
             else {
+              final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
+              u.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), affectedUsages, dependants);
+              
+              /*
               final UsageRepr.Usage usage = it.createUsage();
 
               affectedUsages.add(usage);
@@ -822,6 +826,7 @@ public class Mappings {
               else if ((m.access & Opcodes.ACC_PROTECTED) > 0) {
                 usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
               }
+              */
             }
           }
 

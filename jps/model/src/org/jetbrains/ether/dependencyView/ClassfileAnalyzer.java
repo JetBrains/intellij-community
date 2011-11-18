@@ -37,10 +37,6 @@ class ClassfileAnalyzer {
     }
   }
 
-  //private static String denullify (final String s) {
-  //  return s == null ? "" : s;
-  //}
-
   private class ClassCrawler extends EmptyVisitor {
     private class AnnotationRetentionPolicyCrawler implements AnnotationVisitor {
       public void visit(String name, Object value) {
@@ -140,14 +136,25 @@ class ClassfileAnalyzer {
       }
 
       public void visit(String name, Object value) {
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createMethodUsage(context, context.get(name), type.className, getMethodDescr(
-          value)));
-        usedArguments.add(context.get(name));
+        final DependencyContext.S residence = context.get(classNameHolder.get());
+        final String methodDescr = getMethodDescr(value);
+        final DependencyContext.S methodName = context.get(name);
+
+        usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, type.className, methodDescr));
+        usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, type.className, methodDescr));
+
+        usedArguments.add(methodName);
       }
 
       public void visitEnum(String name, String desc, String value) {
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createMethodUsage(context, context.get(name), type.className, "()" + desc));
-        usedArguments.add(context.get(name));
+        final DependencyContext.S residence = context.get(classNameHolder.get());
+        final DependencyContext.S methodName = context.get(name);
+        final String methodDescr = "()" + desc;
+
+        usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, type.className, methodDescr));
+        usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, type.className, methodDescr));
+
+        usedArguments.add(methodName);
       }
 
       public AnnotationVisitor visitAnnotation(String name, String desc) {
@@ -466,8 +473,13 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-          usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createMethodUsage(context, context.get(name), context.get(owner),
-                                                                                          desc));
+          final DependencyContext.S residence = context.get(classNameHolder.get());
+          final DependencyContext.S methodName = context.get(name);
+          final DependencyContext.S methodOwner = context.get(owner);
+
+          usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, methodOwner, desc));
+          usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, methodOwner, desc));
+
           super.visitMethodInsn(opcode, owner, name, desc);
         }
       };
