@@ -34,7 +34,16 @@ import javax.swing.*;
 import java.util.*;
 
 public class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
+
   private final Map<Object, BusyContainer> myObjects = new HashMap<Object, BusyContainer>();
+  private boolean myActive;
+
+  private BusyObject myEmptyBusy = new BusyObject.Impl() {
+    @Override
+    public boolean isReady() {
+      return true;
+    }
+  };
 
   public UiActivityMonitorImpl(Application application) {
     myObjects.put(null, new BusyContainer() {
@@ -106,11 +115,15 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   @Override
   public BusyObject getBusy(@NotNull Project project, UiActivity... toWatch) {
+    if (!isActive()) return myEmptyBusy;
+
     return _getBusy(project, toWatch);
   }
 
   @Override
   public BusyObject getBusy(UiActivity... toWatch) {
+    if (!isActive()) return myEmptyBusy;
+
     return _getBusy(null, toWatch);
   }
 
@@ -123,6 +136,9 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   public void addActivity(@NotNull final Project project,
                           @NotNull final UiActivity activity,
                           @NotNull final ModalityState effectiveModalityState) {
+    if (!isActive()) return;
+
+
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -143,6 +159,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   @Override
   public void removeActivity(@NotNull final Project project, @NotNull final UiActivity activity) {
+    if (!isActive()) return;
+
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -162,6 +180,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   @Override
   public void addActivity(@NotNull final UiActivity activity, @NotNull final ModalityState effectiveModalityState) {
+    if (!isActive()) return;
+
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -172,6 +192,8 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   @Override
   public void removeActivity(@NotNull final UiActivity activity) {
+    if (!isActive()) return;
+
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -210,6 +232,20 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
   }
 
+  @Override
+  public void setActive(boolean active) {
+    if (myActive == active) return;
+
+    if (myActive && !active) {
+      clear();
+    }
+
+    myActive = active;
+  }
+
+  public boolean isActive() {
+    return myActive;
+  }
 
   @Override
   public void disposeComponent() {
@@ -423,7 +459,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
 
     public void clear() {
-      final UiActivity[] activities = (UiActivity[])myActivities.toArray();
+      final UiActivity[] activities = myActivities.toArray(new UiActivity[myActivities.size()]);
       for (UiActivity each : activities) {
         removeActivity(each);
       }

@@ -212,7 +212,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  protected VirtualFile configureByFiles(final File rawProjectRoot, final VirtualFile... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(@Nullable final File rawProjectRoot, final VirtualFile... vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 

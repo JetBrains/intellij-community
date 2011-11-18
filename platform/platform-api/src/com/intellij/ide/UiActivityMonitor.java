@@ -51,6 +51,8 @@ public abstract class UiActivityMonitor implements ApplicationComponent {
 
   public abstract void clear();
 
+  public abstract void setActive(boolean active);
+
   public static UiActivityMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(UiActivityMonitor.class);
   }
