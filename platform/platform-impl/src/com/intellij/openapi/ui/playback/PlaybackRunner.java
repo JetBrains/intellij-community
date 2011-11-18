@@ -97,7 +97,9 @@ public class PlaybackRunner {
     myStopRequested = false;
 
     myRegistryValues.clear();
-    UiActivityMonitor.getInstance().clear();
+    final UiActivityMonitor activityMonitor = UiActivityMonitor.getInstance();
+    activityMonitor.clear();
+    activityMonitor.setActive(true);
     myCurrentStageDepth.clear();
     myPassedStages.clear();
     myContextTimestamp++;
@@ -114,6 +116,7 @@ public class PlaybackRunner {
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+              activityMonitor.setActive(false);
               restoreRegistryValues();
             }
           });
