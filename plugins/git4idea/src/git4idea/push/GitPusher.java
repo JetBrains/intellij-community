@@ -56,6 +56,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class GitPusher {
 
   public static final String INDICATOR_TEXT = "Pushing";
+  /**
+   * if diff-log is not available (new branch is created, for example), we show a few recent commits made on the branch
+   */
+  static final int RECENT_COMMITS_NUMBER = 5;
+
   private static final Logger LOG = Logger.getInstance(GitPusher.class);
 
   private final Project myProject;
@@ -187,7 +192,7 @@ public final class GitPusher {
   }
 
   private List<GitCommit> collectRecentCommitsOnBranch(GitRepository repository, GitBranch source) throws VcsException {
-    return GitHistoryUtils.history(myProject, repository.getRoot(), "--max-count=10", source.getName());
+    return GitHistoryUtils.history(myProject, repository.getRoot(), "--max-count=" + RECENT_COMMITS_NUMBER, source.getName());
   }
 
   @NotNull
