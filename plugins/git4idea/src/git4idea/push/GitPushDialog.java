@@ -60,6 +60,7 @@ public class GitPushDialog extends DialogWrapper {
   private final JCheckBox myPushAllCheckbox;
   private final Object COMMITS_LOADING_LOCK = new Object();
   private final GitManualPushToBranch myRefspecPanel;
+  private final AtomicReference<String> myDestBranchInfoOnRefresh = new AtomicReference<String>();
 
   public GitPushDialog(@NotNull Project project) {
     super(project);
@@ -261,17 +262,31 @@ public class GitPushDialog extends DialogWrapper {
   public GitPushInfo getPushInfo() {
     // waiting for commit list loading, because this information is needed to correctly handle rejected push situation and correctly
     // notify about pushed commits
+    // TODO optimize: don't refresh: information about pushed commits can be achieved from the successful push output
     synchronized (COMMITS_LOADING_LOCK) {
       GitCommitsByRepoAndBranch selectedCommits;
       if (myGitCommitsToPush == null) {
         collectInfoToPush();
         selectedCommits = myGitCommitsToPush;
-      } else {
+      }
+      else {
+        if (refreshNeeded()) {
+          collectInfoToPush();
+        }
         Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
         selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
       }
       return new GitPushInfo(selectedCommits, myPushSpecs);
     }
+  }
+
+  private boolean refreshNeeded() {
+    String currentDestBranchValue = myRefspecPanel.canBeUsed() ? myRefspecPanel.getBranchToPush(): null;
+    String savedValue = myDestBranchInfoOnRefresh.get();
+    if (savedValue == null) {
+      return currentDestBranchValue != null;
+    }
+    return !savedValue.equals(myDestBranchInfoOnRefresh.get());
   }
 
   private class RepositoryCheckboxListener implements Consumer<Boolean> {
@@ -292,6 +307,7 @@ public class GitPushDialog extends DialogWrapper {
   private class RefreshButtonListener implements Runnable {
     @Override
     public void run() {
+      myDestBranchInfoOnRefresh.set(myRefspecPanel.canBeUsed() ? myRefspecPanel.getBranchToPush(): null);
       loadCommitsInBackground();
     }
   }
