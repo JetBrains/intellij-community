@@ -82,7 +82,7 @@ class GitManualPushToBranch extends JPanel {
   }
 
   private void setDefaultComponentsEnabledState(boolean selected) {
-    setComponentsEnabledState(selected, myRemoteSelectorComponent,  myDestBranchTextField, myRefreshButton, myComment);
+    setComponentsEnabledState(selected, myRemoteSelectorComponent,  myDestBranchTextField, myComment);
   }
 
   private void layoutComponents() {
