@@ -147,18 +147,16 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
             final XmlFile xmlFile = extension.getContainingFile(myElement);
             prefix = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
             if (StringUtil.isNotEmpty(prefix)) {
+              // namespace already declared
               ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
               return;
-            } else {
+            }
+            else {
               prefix = ExtendedTagInsertHandler.suggestPrefix(xmlFile, namespace);
-              if (StringUtil.isEmpty(prefix)) {
-                if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                  HintManager.getInstance().showInformationHint(editor, "Namespace not found");
-                }
-                return;
+              if (!StringUtil.isEmpty(prefix)) {
+                ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
               }
-              ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
-              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
             }
           }
           final int offset = editor.getCaretModel().getOffset();
