@@ -320,21 +320,4 @@ public class PythonInspectionsTest extends PyTestCase {
     // TODO: Add a Py3K test. Setting a language level is not enough, setting up a Py3K SDK is required
     doHighlightingTest(PyTypeCheckerInspection.class);
   }
-
-  public void test1() {
-    myFixture.configureByText("a.py",
-                              "def test_property_override_assignment():\n" +
-                              "    class B(object):\n" +
-                              "        @property\n" +
-                              "        def foo(self):\n" +
-                              "            return \"\"\n" +
-                              "\n" +
-                              "    class C(B):\n" +
-                              "        foo = None\n" +
-                              "\n" +
-                              "        def f(self, x):\n" +
-                              "            self.foo = x\n");
-    myFixture.enableInspections(PyPropertyAccessInspection.class);
-    myFixture.checkHighlighting(true, false, false);
-  }
 }

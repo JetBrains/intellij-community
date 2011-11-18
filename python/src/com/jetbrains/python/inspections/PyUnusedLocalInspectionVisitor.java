@@ -1,7 +1,6 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -63,34 +62,34 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   @Override
   public void visitPyFunction(final PyFunction node) {
-    processScope(node, node);
+    processScope(node);
   }
 
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
-    processScope(node, node);
+    processScope(node);
   }
 
-  static class DontPerformException extends RuntimeException {}
+  @Override
+  public void visitPyClass(PyClass node) {
+    processScope(node);
+  }
 
-  private void processScope(final ScopeOwner owner, final PyElement node) {
-    if (CythonLanguageDialect._isDisabledFor(node)) {
+  private void processScope(final ScopeOwner owner) {
+    if (CythonLanguageDialect._isDisabledFor(owner) ||
+        (owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)) ||
+        callsLocals(owner)) {
       return;
     }
-
-    if (owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)){
-      return;
+    if (!(owner instanceof PyClass)) {
+      collectAllWrites(owner);
     }
+    collectUsedReads(owner);
+  }
 
-    if (callsLocals(owner)) return;
-
-    // If method overrides others or is overridden, do not mark parameters as unused if they are
-    final Scope scope = ControlFlowCache.getScope(owner);
-    final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
-    final Instruction[] instructions = flow.getInstructions();
-
-    // Iteration over write accesses
-    for (final Instruction instruction : instructions) {
+  private void collectAllWrites(ScopeOwner owner) {
+    final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
+    for (Instruction instruction : instructions) {
       final PsiElement element = instruction.getElement();
       if (element instanceof PyFunction && owner instanceof PyFunction) {
         if (!myUsedElements.contains(element)) {
@@ -98,108 +97,102 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
       else if (instruction instanceof ReadWriteInstruction) {
-        final String name = ((ReadWriteInstruction)instruction).getName();
+        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+        final ReadWriteInstruction.ACCESS access = readWriteInstruction.getAccess();
+        if (!access.isWriteAccess()) {
+          continue;
+        }
+        final String name = readWriteInstruction.getName();
         // Ignore empty, wildcards, global and nonlocal names
+        final Scope scope = ControlFlowCache.getScope(owner);
         if (name == null || "_".equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
           continue;
         }
         // Ignore elements out of scope
-        if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
+        if (element == null || !PsiTreeUtil.isAncestor(owner, element, false)) {
           continue;
         }
         // Ignore arguments of import statement
         if (PyImportStatementNavigator.getImportStatementByElement(element) != null) {
           continue;
         }
-        if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
-          continue;
-        }
-        // Ignore self references assignments
-        if (element instanceof PyTargetExpression && element.getChildren().length != 0) {
-          continue;
-        }
-        final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
-        // Write access excluding WRITETYPE, because it's element is a type reference, not a variable of this type
-        if (access == ReadWriteInstruction.ACCESS.WRITE || access == ReadWriteInstruction.ACCESS.READWRITE) {
-          if (!myUsedElements.contains(element)) {
-            myUnusedElements.add(element);
-          }
+        if (!myUsedElements.contains(element)) {
+          myUnusedElements.add(element);
         }
       }
     }
+  }
 
-    // Iteration over read accesses
+  private void collectUsedReads(final ScopeOwner owner) {
+    final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (int i = 0; i < instructions.length; i++) {
       final Instruction instruction = instructions[i];
       if (instruction instanceof ReadWriteInstruction) {
-        final String name = ((ReadWriteInstruction)instruction).getName();
+        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+        final ReadWriteInstruction.ACCESS access = readWriteInstruction.getAccess();
+        if (!access.isReadAccess()) {
+          continue;
+        }
+        final String name = readWriteInstruction.getName();
         if (name == null) {
           continue;
         }
         final PsiElement element = instruction.getElement();
         // Ignore elements out of scope
-        if (element == null || !PsiTreeUtil.isAncestor(node, element, false)){
+        if (element == null || !PsiTreeUtil.isAncestor(owner, element, false)) {
           continue;
         }
-        final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
-        // Read or self assign access
-        if (access.isReadAccess()) {
-          int number = i;
-          if (access == ReadWriteInstruction.ACCESS.READWRITE) {
-            final PyAugAssignmentStatement augAssignmentStatement = PyAugAssignmentStatementNavigator.getStatementByTarget(element);
-            number = ControlFlowUtil.findInstructionNumberByElement(instructions, augAssignmentStatement);
-          }
-
-          // Check if the element is declared out of scope, mark all out of scope write accesses as used
-          if (element instanceof PyReferenceExpression) {
-            final PyReferenceExpression ref = (PyReferenceExpression)element;
-            final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref, ref.getName());
-            if (declOwner != null && declOwner != owner) {
-              Collection<PsiElement> writeElements = ScopeUtil.getReadWriteElements(name, declOwner, false, true);
-              for (PsiElement e : writeElements) {
-                myUsedElements.add(e);
-                myUnusedElements.remove(e);
-              }
+        final int startInstruction;
+        if (access.isWriteAccess()) {
+          final PyAugAssignmentStatement augAssignmentStatement = PyAugAssignmentStatementNavigator.getStatementByTarget(element);
+          startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, augAssignmentStatement);
+        }
+        else {
+          startInstruction = i;
+        }
+        // Check if the element is declared out of scope, mark all out of scope write accesses as used
+        if (element instanceof PyReferenceExpression) {
+          final PyReferenceExpression ref = (PyReferenceExpression)element;
+          final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref, name);
+          if (declOwner != null && declOwner != owner) {
+            Collection<PsiElement> writeElements = ScopeUtil.getReadWriteElements(name, declOwner, false, true);
+            for (PsiElement e : writeElements) {
+              myUsedElements.add(e);
+              myUnusedElements.remove(e);
             }
           }
-
-          ControlFlowUtil
-            .iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
-              public ControlFlowUtil.Operation fun(final Instruction inst) {
-                final PsiElement element = inst.getElement();
-                // Mark function as used
-                if (element instanceof PyFunction){
-                  if (name.equals(((PyFunction)element).getName())){
-                    myUsedElements.add(element);
-                    myUnusedElements.remove(element);
-                    return ControlFlowUtil.Operation.CONTINUE;
-                  }
-                }
-                // Mark write access as used
-                else if (inst instanceof ReadWriteInstruction) {
-                  final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
-                  if (!name.equals(rwInstruction.getName()) || !rwInstruction.getAccess().isWriteAccess()) {
-                    return ControlFlowUtil.Operation.NEXT;
-                  }
-                  // Ignore elements out of scope
-                  if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
-                    return ControlFlowUtil.Operation.CONTINUE;
-                  }
-                  // Ignore self references assignments
-                  if (element instanceof PyTargetExpression && element.getChildren().length != 0){
-                    return ControlFlowUtil.Operation.NEXT;
-                  }
+        }
+        ControlFlowUtil.iteratePrev(startInstruction, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
+          public ControlFlowUtil.Operation fun(final Instruction inst) {
+            final PsiElement element = inst.getElement();
+            // Mark function as used
+            if (element instanceof PyFunction) {
+              if (name.equals(((PyFunction)element).getName())){
+                myUsedElements.add(element);
+                myUnusedElements.remove(element);
+                return ControlFlowUtil.Operation.CONTINUE;
+              }
+            }
+            // Mark write access as used
+            else if (inst instanceof ReadWriteInstruction) {
+              final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
+              if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
+                // For elements in scope
+                if (element != null && PsiTreeUtil.isAncestor(owner, element, false)) {
                   myUsedElements.add(element);
                   myUnusedElements.remove(element);
-                  return ControlFlowUtil.Operation.CONTINUE;
                 }
-                return ControlFlowUtil.Operation.NEXT;
+                return ControlFlowUtil.Operation.CONTINUE;
               }
-            });
-        }
+            }
+            return ControlFlowUtil.Operation.NEXT;
+          }
+        });
       }
     }
   }
+
+  static class DontPerformException extends RuntimeException {}
 
   private static boolean callsLocals(final ScopeOwner owner) {
     try {
@@ -385,7 +378,9 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              psiElement.replace(target);
+              if (target != null) {
+                psiElement.replace(target);
+              }
             }
           });
         }
