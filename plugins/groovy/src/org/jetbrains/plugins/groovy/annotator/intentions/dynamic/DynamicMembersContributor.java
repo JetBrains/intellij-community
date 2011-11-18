@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -21,7 +22,7 @@ public class DynamicMembersContributor extends NonCodeMembersContributor {
 
     final DynamicManager manager = DynamicManager.getInstance(place.getProject());
 
-    for (String qName : getParentClassNames(aClass)) {
+    for (String qName : TypesUtil.getSuperClassesWithCache(aClass).keySet()) {
       for (PsiMethod method : manager.getMethods(qName)) {
         if (!ResolveUtil.processElement(processor, method, state)) return;
       }
