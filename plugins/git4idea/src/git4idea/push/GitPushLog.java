@@ -165,9 +165,22 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   private void selectFirstCommit() {
     DefaultMutableTreeNode firstLeaf = myRootNode.getFirstLeaf();
-    if (firstLeaf != null) {
-      myTree.setSelectionPath(new TreePath(firstLeaf.getPath()));
+    if (firstLeaf == null) {
+      return;
     }
+
+    Enumeration enumeration = myRootNode.depthFirstEnumeration();
+    DefaultMutableTreeNode node = null;
+    while (enumeration.hasMoreElements()) {
+      node = (DefaultMutableTreeNode) enumeration.nextElement();
+      if (node.isLeaf() && node.getUserObject() instanceof GitCommit) {
+        break;
+      }
+    }
+    if (node == null) {
+      node = firstLeaf;
+    }
+    myTree.setSelectionPath(new TreePath(node.getPath()));
   }
 
   private void createNodes(@NotNull GitCommitsByRepoAndBranch commits) {
@@ -317,6 +330,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         renderer.append(text, branchInfo.isNewBranchCreated() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         if (branchInfo.isNewBranchCreated()) {
           renderer.append(" new branch will be created, showing last " + GitPusher.RECENT_COMMITS_NUMBER + " commits on the current branch", smallGrey);
+        } else if (branchInfo.getCommits().isEmpty()) {
+          renderer.append(" nothing to push", smallGrey);
         }
       }
       else if (userObject instanceof FakeCommit) {

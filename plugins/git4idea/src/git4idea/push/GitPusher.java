@@ -139,9 +139,7 @@ public final class GitPusher {
         continue;
       }
       GitCommitsByBranch commitsByBranch = collectsCommitsToPush(repository, branchPairs);
-      if (!commitsByBranch.isEmpty()) {
-        commitsByRepoAndBranch.put(repository, commitsByBranch);
-      }
+      commitsByRepoAndBranch.put(repository, commitsByBranch);
     }
     return new GitCommitsByRepoAndBranch(commitsByRepoAndBranch);
   }
@@ -183,9 +181,7 @@ public final class GitPusher {
         commits = collectRecentCommitsOnBranch(repository, source);
         newBranch = true;
       }
-      if (!commits.isEmpty()) {
-        commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, newBranch));
-      }
+      commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, newBranch));
     }
 
     return new GitCommitsByBranch(commitsByBranch);
@@ -226,6 +222,9 @@ public final class GitPusher {
     
     GitCommitsByRepoAndBranch commits = pushInfo.getCommits();
     for (GitRepository repository : commits.getRepositories()) {
+      if (commits.get(repository).getAllCommits().size() == 0) {  // don't push repositories where there is nothing to push. Note that when a branch is created, several recent commits are stored in the pushInfo.
+        continue;
+      }
       GitPushRepoResult repoResult = pushRepository(pushInfo, commits, repository);
       pushResult.append(repository, repoResult);
       if (repoResult.isCancel() || repoResult.isNotAuthorized()) { // don't proceed if user has cancelled or couldn't login
