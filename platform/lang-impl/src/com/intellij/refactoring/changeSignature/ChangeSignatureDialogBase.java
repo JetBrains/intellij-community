@@ -195,7 +195,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
 
     myNamePanel = new JPanel(new BorderLayout(0,2));
-    myNamePanel.setBorder(new EmptyBorder(0,8,0,0));
     myNameField = new EditorTextField(myMethod.getName());
     final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     nameLabel.setLabelFor(myNameField);
@@ -221,7 +220,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
     if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
       JPanel typePanel = new JPanel(new BorderLayout(0,2));
-      typePanel.setBorder(new EmptyBorder(0,0,0,0));
+      typePanel.setBorder(new EmptyBorder(0,0,0,8));
       final JLabel typeLabel = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
