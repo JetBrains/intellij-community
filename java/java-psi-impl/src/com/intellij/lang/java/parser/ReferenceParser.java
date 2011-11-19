@@ -33,7 +33,6 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class ReferenceParser {
-  public static final ReferenceParser INSTANCE = new ReferenceParser();
   private final DeclarationParser myDeclarationParser;
 
   public static final int EAT_LAST_DOT = 0x01;

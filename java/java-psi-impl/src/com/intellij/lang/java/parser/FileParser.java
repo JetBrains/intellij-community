@@ -42,7 +42,7 @@ public class FileParser {
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
   private FileParser() {
-    this(DeclarationParser.INSTANCE, ReferenceParser.INSTANCE);
+    this(JavaParsers.DECLARATION_PARSER, JavaParsers.REFERENCE_PARSER);
   }
 
   protected FileParser(DeclarationParser declarationParser, ReferenceParser referenceParser) {

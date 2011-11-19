@@ -17,7 +17,6 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -35,7 +34,6 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class StatementParser {
-  public static final StatementParser INSTANCE = new StatementParser();
   private final ExpressionParser myExpressionParser;
   private final DeclarationParser myDeclarationParser;
   private final ReferenceParser myReferenceParser;

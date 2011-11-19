@@ -18,7 +18,6 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -33,7 +32,6 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class ExpressionParser {
-  public static final ExpressionParser INSTANCE = new ExpressionParser();
   private final DeclarationParser myDeclarationParser;
   private final ReferenceParser myReferenceParser;
 

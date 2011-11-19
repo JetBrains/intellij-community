@@ -16,8 +16,8 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.JavaParsers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -40,7 +40,7 @@ public class ClsParsingUtil {
   private static final JavaParserUtil.ParserWrapper ANNOTATION_VALUE = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.INSTANCE.parseAnnotationValue(builder);
+      JavaParsers.DECLARATION_PARSER.parseAnnotationValue(builder);
     }
   };
 

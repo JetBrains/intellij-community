@@ -35,7 +35,6 @@ import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
 
 
 public class DeclarationParser {
-  public static final DeclarationParser INSTANCE = new DeclarationParser();
   private final ExpressionParser myExpressionParser;
   private final StatementParser myStatementParser;
   private final ReferenceParser myReferenceParser;

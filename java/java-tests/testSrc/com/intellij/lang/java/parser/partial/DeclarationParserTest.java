@@ -16,7 +16,7 @@
 package com.intellij.lang.java.parser.partial;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParsers;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.pom.java.LanguageLevel;
 
@@ -117,7 +117,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
 
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.INSTANCE.parseClassBodyWithBraces(builder, myAnnotation, myAnEnum);
+      JavaParsers.DECLARATION_PARSER.parseClassBodyWithBraces(builder, myAnnotation, myAnEnum);
     }
   }
 }
