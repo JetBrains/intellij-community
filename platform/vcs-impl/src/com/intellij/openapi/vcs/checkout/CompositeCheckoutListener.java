@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -35,12 +36,14 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
   private final Project myProject;
   private boolean myFoundProject = false;
   private File myFirstDirectory;
+  private VcsKey myVcsKey;
 
   public CompositeCheckoutListener(final Project project) {
     myProject = project;
   }
 
-  public void directoryCheckedOut(final File directory) {
+  public void directoryCheckedOut(final File directory, VcsKey vcs) {
+    myVcsKey = vcs;
     if (!myFoundProject) {
       final VirtualFile virtualFile = refreshVFS(directory);
       if (virtualFile != null) {
@@ -73,10 +76,17 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
   }
 
   private void notifyCheckoutListeners(final File directory, final ExtensionPointName<CheckoutListener> epName) {
-    final CheckoutListener[] listeners = Extensions.getExtensions(epName);
-    for (CheckoutListener listener: listeners) {
-      myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
+    final VcsAwareCheckoutListener[] vcsAwareExtensions = Extensions.getExtensions(VcsAwareCheckoutListener.EP_NAME);
+    for (VcsAwareCheckoutListener extension : vcsAwareExtensions) {
+      myFoundProject = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);
       if (myFoundProject) break;
+    }
+    final CheckoutListener[] listeners = Extensions.getExtensions(epName);
+    if (! myFoundProject) {
+      for (CheckoutListener listener: listeners) {
+        myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
+        if (myFoundProject) break;
+      }
     }
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0){

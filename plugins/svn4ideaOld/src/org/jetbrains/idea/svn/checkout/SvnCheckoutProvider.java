@@ -134,7 +134,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         notifyRootManagerIfUnderProject(project, target);
         if (listener != null) {
           if (!checkoutSuccessful.isNull()) {
-            listener.directoryCheckedOut(target);
+            listener.directoryCheckedOut(target, SvnVcs.getKey());
           }
           listener.checkoutCompleted();
         }

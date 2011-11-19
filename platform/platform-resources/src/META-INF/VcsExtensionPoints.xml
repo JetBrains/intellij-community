@@ -3,6 +3,8 @@
                   interface="com.intellij.openapi.vcs.CheckoutProvider"/>
   <extensionPoint name="checkoutListener"
                   interface="com.intellij.openapi.vcs.checkout.CheckoutListener"/>
+  <extensionPoint name="vcsAwareCheckoutListener"
+                  interface="com.intellij.openapi.vcs.checkout.VcsAwareCheckoutListener"/>
   <extensionPoint name="checkoutCompletedListener"
                   interface="com.intellij.openapi.vcs.checkout.CheckoutListener"/>
 
