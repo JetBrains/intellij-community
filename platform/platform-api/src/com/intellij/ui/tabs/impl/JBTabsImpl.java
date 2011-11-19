@@ -1902,11 +1902,16 @@ public class JBTabsImpl extends JComponent
   protected TableLayout getTableLayout() {
     return myTableLayout;
   }
-  
+
   protected DragHelper getDragHelper() {
     return myDragHelper;
   }
-  
+
+  @Override
+  public Color getBackground() {
+    return UIUtil.isUnderNimbusLookAndFeel() ? UIUtil.getPanelBackground() : super.getBackground();
+  }
+
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
                                  TabLabel label,
