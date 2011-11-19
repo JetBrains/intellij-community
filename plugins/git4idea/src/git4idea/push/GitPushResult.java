@@ -90,7 +90,7 @@ class GitPushResult {
 
   boolean wasErrorCancelOrNotAuthorized() {
     for (GitPushRepoResult repoResult : myResults.values()) {
-      if (repoResult.isError() || repoResult.isCancel() || repoResult.isNotAuthorized()) {
+      if (repoResult.isOneOfErrors()) {
         return true;
       }
     }
@@ -106,12 +106,20 @@ class GitPushResult {
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : myResults.entrySet()) {
       GitRepository repository = entry.getKey();
       GitPushRepoResult repoResult = entry.getValue();
-      if (repoResult.isSuccess()) {
-        successfulResults.put(repository, repoResult);
-      } else if (repoResult.isError() || repoResult.isCancel() || repoResult.isNotAuthorized()) {
-        errorResults.put(repository, repoResult);
-      } else {
-        rejectedResults.put(repository, repoResult);
+      switch (repoResult.getType()) {
+        case SUCCESS:
+          successfulResults.put(repository, repoResult);
+          break;
+        case ERROR:
+        case CANCEL:
+        case NOT_AUTHORIZED:
+          errorResults.put(repository, repoResult);
+          break;
+        case NOT_PUSHING:
+          break;
+        case SOME_REJECTED:
+          rejectedResults.put(repository, repoResult);
+          break;
       }
     }
     return new GroupedResult(successfulResults, errorResults, rejectedResults);

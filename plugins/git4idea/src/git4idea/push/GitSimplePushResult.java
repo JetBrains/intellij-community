@@ -30,6 +30,7 @@ public final class GitSimplePushResult {
   private final Collection<String> myRejectedBranches;
 
   public enum Type {
+    NOT_PUSHED,
     SUCCESS,
     REJECT,
     CANCEL,
@@ -48,6 +49,11 @@ public final class GitSimplePushResult {
     return new GitSimplePushResult(Type.SUCCESS, "", Collections.<String>emptyList());
   }
   
+  @NotNull
+  public static GitSimplePushResult notPushed() {
+    return new GitSimplePushResult(Type.NOT_PUSHED, "", Collections.<String>emptyList());
+  }
+
   @NotNull
   public static GitSimplePushResult cancel() {
     return new GitSimplePushResult(Type.CANCEL, "Cancelled by user", Collections.<String>emptyList());

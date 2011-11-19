@@ -19,8 +19,8 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.JavaParsers;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +49,7 @@ public class JavaTreeGenerator implements TreeGenerator {
   private static final JavaParserUtil.ParserWrapper MOD_LIST = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.INSTANCE.parseModifierList(builder);
+      JavaParsers.DECLARATION_PARSER.parseModifierList(builder);
     }
   };
 

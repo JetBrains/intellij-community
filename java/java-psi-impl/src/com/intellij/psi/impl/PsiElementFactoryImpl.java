@@ -17,7 +17,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.lang.java.parser.StatementParser;
+import com.intellij.lang.java.parser.JavaParsers;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -693,7 +693,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   private static final JavaParserUtil.ParserWrapper CATCH_SECTION = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      StatementParser.INSTANCE.parseCatchBlock(builder);
+      JavaParsers.STATEMENT_PARSER.parseCatchBlock(builder);
     }
   };
 

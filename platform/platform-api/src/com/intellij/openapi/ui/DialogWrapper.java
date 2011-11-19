@@ -19,11 +19,15 @@ import com.intellij.CommonBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
@@ -32,6 +36,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
@@ -81,6 +86,8 @@ public abstract class DialogWrapper {
   @NonNls public static final String DEFAULT_ACTION = "DefaultAction";
 
   @NonNls public static final String FOCUSED_ACTION = "FocusedAction";
+  
+  private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_MASK);
 
   private final DialogWrapperPeer myPeer;
   private int myExitCode = CANCEL_EXIT_CODE;
@@ -127,6 +134,8 @@ public abstract class DialogWrapper {
       DialogWrapper.this.dispose();
     }
   };
+  private List<JBOptionButton> myOptionsButtons = new ArrayList<JBOptionButton>();
+  private int myCurrentOptionsButtonIndex = -1;
 
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -520,7 +529,17 @@ public abstract class DialogWrapper {
    * @see com.intellij.openapi.ui.DialogWrapper#DEFAULT_ACTION
    */
   protected JButton createJButtonForAction(Action action) {
-    JButton button = new JButton(action);
+    JButton button;
+    if (action instanceof OptionAction) {
+      final Action[] options = ((OptionAction)action).getOptions();
+      button = new JBOptionButton(action, options);
+      final JBOptionButton jbOptionButton = (JBOptionButton)button;
+      jbOptionButton.setOptionTooltipText("Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand");
+      myOptionsButtons.add(jbOptionButton);
+    } else {
+      button = new JButton(action);
+    }
+
     String text = button.getText();
 
     if (SystemInfo.isMac) {
@@ -960,6 +979,15 @@ public abstract class DialogWrapper {
     //};
     myPeer.setContentPane(root);
 
+    final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
+    final AnAction toggleShowOptions = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        expandNextOptionButton();
+      }
+    };
+    toggleShowOptions.registerCustomShortcutSet(sc, root);
+
     final JPanel northSection = new JPanel(new BorderLayout());
     root.add(northSection, BorderLayout.NORTH);
 
@@ -1000,6 +1028,20 @@ public abstract class DialogWrapper {
     if (!postponeValidation()) {
       startTrackingValidation();
     }
+  }
+
+  private void expandNextOptionButton() {
+    if (myCurrentOptionsButtonIndex > 0) {
+      myOptionsButtons.get(myCurrentOptionsButtonIndex).closePopup();
+      myCurrentOptionsButtonIndex++;
+    } else if (myOptionsButtons.size() > 0) {
+      myCurrentOptionsButtonIndex = 0;
+    }
+
+    if (myCurrentOptionsButtonIndex >= 0 && myCurrentOptionsButtonIndex < myOptionsButtons.size()) {
+      myOptionsButtons.get(myCurrentOptionsButtonIndex).showPopup();
+    }
+
   }
 
   void startTrackingValidation() {
@@ -1635,6 +1677,36 @@ public abstract class DialogWrapper {
 
     public ValidationInfo(@NotNull String message) {
       this(message, null);
+    }
+  }
+  
+  public interface OptionAction extends Action {
+
+    @NotNull
+    Action[] getOptions();
+    
+    abstract class Impl extends AbstractAction implements OptionAction {
+      
+      private Action[] myOptions;
+      
+      public Impl(@NotNull Action[] options) {
+        myOptions = options;
+      }
+
+      public Impl(String name, @NotNull Action[] options) {
+        super(name);
+        myOptions = options;
+      }
+
+      public Impl(String name, Icon icon, @NotNull Action[] options) {
+        super(name, icon);
+        myOptions = options;
+      }
+
+      @Override
+      public Action[] getOptions() {
+        return myOptions;
+      }
     }
   }
 }

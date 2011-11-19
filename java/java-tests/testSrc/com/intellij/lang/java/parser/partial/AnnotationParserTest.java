@@ -16,7 +16,7 @@
 package com.intellij.lang.java.parser.partial;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParsers;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
 
@@ -45,7 +45,7 @@ public class AnnotationParserTest extends JavaParsingTestCase {
   private static class MyTestParser1 implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.INSTANCE.parseAnnotations(builder);
+      JavaParsers.DECLARATION_PARSER.parseAnnotations(builder);
     }
   }
 }

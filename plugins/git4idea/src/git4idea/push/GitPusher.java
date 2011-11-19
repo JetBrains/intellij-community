@@ -55,13 +55,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class GitPusher {
 
-  public static final String INDICATOR_TEXT = "Pushing";
   /**
    * if diff-log is not available (new branch is created, for example), we show a few recent commits made on the branch
    */
   static final int RECENT_COMMITS_NUMBER = 5;
+  
+  static final GitBranch NO_TARGET_BRANCH = new GitBranch("", false, true);
 
   private static final Logger LOG = Logger.getInstance(GitPusher.class);
+  private static final String INDICATOR_TEXT = "Pushing";
 
   private final Project myProject;
   private final ProgressIndicator myProgressIndicator;
@@ -172,16 +174,20 @@ public final class GitPusher {
       assert dest != null : "Destination branch can't be null here for branch " + source;
 
       List<GitCommit> commits;
-      boolean newBranch;
-      if (GitUtil.repoContainsRemoteBranch(repository, dest)) {
+      GitPushBranchInfo.Type type;
+      if (dest == NO_TARGET_BRANCH) {
+        commits = collectRecentCommitsOnBranch(repository, source);
+        type = GitPushBranchInfo.Type.NO_TRACKED_OR_TARGET;
+      }
+      else if (GitUtil.repoContainsRemoteBranch(repository, dest)) {
         commits = collectCommitsToPush(repository, source.getName(), dest.getName());
-        newBranch = false;
+        type = GitPushBranchInfo.Type.STANDARD;
       } 
       else {
         commits = collectRecentCommitsOnBranch(repository, source);
-        newBranch = true;
+        type = GitPushBranchInfo.Type.NEW_BRANCH;
       }
-      commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, newBranch));
+      commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, type));
     }
 
     return new GitCommitsByBranch(commitsByBranch);
@@ -226,11 +232,16 @@ public final class GitPusher {
         continue;
       }
       GitPushRepoResult repoResult = pushRepository(pushInfo, commits, repository);
+      if (repoResult.getType() == GitPushRepoResult.Type.NOT_PUSHING) {
+        continue;
+      }
       pushResult.append(repository, repoResult);
-      if (repoResult.isCancel() || repoResult.isNotAuthorized()) { // don't proceed if user has cancelled or couldn't login
+      GitPushRepoResult.Type resultType = repoResult.getType();
+      if (resultType == GitPushRepoResult.Type.CANCEL || resultType == GitPushRepoResult.Type.NOT_AUTHORIZED) { // don't proceed if user has cancelled or couldn't login
         break;
       }
     }
+    GitRepositoryManager.getInstance(myProject).updateAllRepositories(GitRepository.TrackedTopic.BRANCHES); // new remote branch may be created
     return pushResult;
   }
 
@@ -238,7 +249,8 @@ public final class GitPusher {
   private static GitPushRepoResult pushRepository(@NotNull GitPushInfo pushInfo,
                                                   @NotNull GitCommitsByRepoAndBranch commits,
                                                   @NotNull GitRepository repository) {
-    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushInfo.getPushSpecs().get(repository), commits.get(repository));
+    GitPushSpec pushSpec = pushInfo.getPushSpecs().get(repository);
+    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushSpec, commits.get(repository));
     String output = simplePushResult.getOutput();
     switch (simplePushResult.getType()) {
       case SUCCESS:
@@ -251,6 +263,8 @@ public final class GitPusher {
         return GitPushRepoResult.notAuthorized(output);
       case CANCEL:
         return GitPushRepoResult.cancelled(output);
+      case NOT_PUSHED:
+        return GitPushRepoResult.notPushed();
       default:
         return GitPushRepoResult.cancelled(output);
     }
@@ -287,6 +301,10 @@ public final class GitPusher {
 
   @NotNull
   private static GitSimplePushResult pushAndGetSimpleResult(GitRepository repository, GitPushSpec pushSpec, GitCommitsByBranch commitsByBranch) {
+    if (pushSpec.getDest() == NO_TARGET_BRANCH) {
+      return GitSimplePushResult.notPushed();
+    }
+
     if (pushSpec.isPushAll()) {
       // TODO support pushing to different branches with http remotes from one and ssh from other.
       // Currently it is a hack - get just one remote url and hope that others are the same type and the same server.
@@ -311,7 +329,8 @@ public final class GitPusher {
 
       if (remoteUrl == null) {
         return pushNatively(repository, pushSpec);
-      } else {
+      }
+      else {
         return GitHttpAdapter.isHttpUrl(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl) : pushNatively(repository, pushSpec);
       }
     }
@@ -326,8 +345,9 @@ public final class GitPusher {
         }
       }
       if (httpUrl != null) {
-        return GitHttpAdapter.push(repository,  remote.getName(), httpUrl);
-      } else {
+        return GitHttpAdapter.push(repository, remote.getName(), httpUrl);
+      }
+      else {
         return pushNatively(repository, pushSpec);
       }
     }
