@@ -281,20 +281,33 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         else {
           final GrExpression[] expressionArguments = constructorCall.getExpressionArguments();
           final GrClosableBlock[] closureArguments = constructorCall.getClosureArguments();
-          if (expressionArguments.length + closureArguments.length > 0) {
+          final GrNamedArgument[] namedArgs = constructorCall.getNamedArguments();
+          if (closureArguments.length > 0 ||
+              namedArgs.length > 0 && expressionArguments.length > 0 ||
+              namedArgs.length == 0 && expressionArguments.length > 0 && !isOnlyOneMapParam(expressionArguments)) {
             final GroovyResolveResult[] resolveResults = constructorCall.multiResolveClass();
             if (resolveResults.length == 1) {
               final PsiElement element = resolveResults[0].getElement();
               if (element instanceof PsiClass) {
                 registerError(getElementToHighlight(refElement, argList),
                               GroovyBundle.message("cannot.apply.default.constructor", ((PsiClass)element).getName()));
+                return;
               }
             }
           }
+          
         }
       }
 
       checkNamedArgumentsType(constructorCall);
+    }
+
+    private static boolean isOnlyOneMapParam(GrExpression[] exprs) {
+      if (!(exprs.length == 1)) return false;
+
+      final GrExpression e = exprs[0];
+      return TypesUtil.isAssignable(TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, e), e.getType(), e.getManager(),
+                                    e.getResolveScope());
     }
 
     private static PsiElement getElementToHighlight(PsiElement refElement, GrArgumentList argList) {
