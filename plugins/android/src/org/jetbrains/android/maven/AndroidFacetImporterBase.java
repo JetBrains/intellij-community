@@ -71,7 +71,6 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.maven.AndroidFacetImporterBase");
   
   private static final Key<Boolean> MODULE_IMPORTED = Key.create("ANDROID_NEWLY_CREATED_KEY");
-  private static final Key<Boolean> NEED_TO_DELETE_OBSOLETE_MODULES_KEY = Key.create("NEED_TO_DELETE_OBSOLETE_MODULES_KEY");
 
   public AndroidFacetImporterBase(@NotNull String pluginId) {
     super("com.jayway.maven.plugins.android.generation2", pluginId, FacetType.findInstance(AndroidFacetType.class), "Android");
