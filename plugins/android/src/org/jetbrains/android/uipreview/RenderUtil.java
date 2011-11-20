@@ -67,12 +67,12 @@ class RenderUtil {
 
     final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
     if (data == null) {
-      throw new RenderingException(AndroidBundle.message("sdk.broken.error"));
+      throw new AndroidSdkNotConfiguredException();
     }
 
     final AndroidPlatform platform = data.getAndroidPlatform();
     if (platform == null) {
-      throw new RenderingException(AndroidBundle.message("sdk.broken.error"));
+      throw new AndroidSdkNotConfiguredException();
     }
 
     config.setVersionQualifier(new VersionQualifier(target.getVersion().getApiLevel()));
