@@ -20,7 +20,6 @@
  */
 package com.intellij.execution.junit2.inspection;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +56,11 @@ public class JUnitEntryPoint extends EntryPoint {
         }
       }
       else if (psiElement instanceof PsiMethod) {
-        if (JUnitUtil.isTestMethodOrConfig((PsiMethod)psiElement)) return true;
+        final PsiMethod method = (PsiMethod)psiElement;
+        if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
+          return JUnitUtil.isTestClass(method.getContainingClass());
+        }
+        if (JUnitUtil.isTestMethodOrConfig(method)) return true;
       }
     }
     return false;
