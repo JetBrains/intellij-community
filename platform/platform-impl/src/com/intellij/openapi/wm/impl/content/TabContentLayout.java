@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -85,7 +84,12 @@ class TabContentLayout extends ContentLayout {
   public void init() {
     reset();
 
-    myIdLabel = new BaseLabel(myUi, false);
+    myIdLabel = new BaseLabel(myUi, false) {
+      @Override
+      protected boolean allowEngravement() {
+        return myUi.myWindow.isActive();
+      }
+    };
     for (int i = 0; i < myUi.myManager.getContentCount(); i++) {
       contentAdded(new ContentManagerEvent(this, myUi.myManager.getContent(i), i));
     }
@@ -204,14 +208,12 @@ class TabContentLayout extends ContentLayout {
         if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {
           each.setBounds(data.eachX, data.eachY, eachSize.width, bounds.height - data.eachY);
           data.eachX += eachSize.width;
-          data.eachX++;
         }
         else {
           if (!reachedBounds) {
             final int width = bounds.width - data.eachX - data.moreRectWidth;
             each.setBounds(data.eachX, data.eachY, width, bounds.height - data.eachY);
             data.eachX += width;
-            data.eachX++;
           }
           else {
             each.setBounds(0, 0, 0, 0);
@@ -290,23 +292,68 @@ class TabContentLayout extends ContentLayout {
     final GraphicsConfig c = new GraphicsConfig(g);
     c.setAntialiasing(true);
 
-    for (ContentTabLabel tab : myTabs) {
-      boolean isFirst = myTabs.indexOf(tab) == 0;
-      boolean isLast = myTabs.indexOf(tab) == myTabs.size() - 1;
+    boolean prevSelected = false;
+    for (int i = 0; i < myTabs.size(); i++) {
+      boolean last = i == myTabs.size() - 1;
+      ContentTabLabel each = myTabs.get(i);
+      Rectangle r = each.getBounds();
+      
+      if (each.isSelected()) {
+        g2d.setColor(new Color(0, 0, 0, 150));
+        g2d.fillRect(r.x, r.y, r.width, r.height);
 
-      final Rectangle bounds = tab.getBounds();
-      if (tab.isSelected()) {
-        PushedTabBackground.paintPushed(tab, g2d, bounds.x, bounds.width, 2, isFirst, isLast);
+        g2d.setColor(new Color(0, 0, 0, 90));
+        g2d.drawLine(r.x, r.y, r.x + r.width - 1, r.y);
+        g2d.drawLine(r.x, r.y + 1, r.x, r.y + r.height - 1);
+        
+        g2d.setColor(new Color(0, 0, 0, 20));
+        g2d.drawLine(r.x + 1, r.y + 1, r.x + r.width - 1, r.y + 1);
+        g2d.drawLine(r.x + 1, r.y + 2, r.x + 1, r.y + r.height - 2);
+        
+        g2d.setColor(new Color(0, 0, 0, 20));
+        g2d.drawLine(r.x + r.width - 1, r.y + 2, r.x + r.width - 1, r.y + r.height - 2);
+        g2d.drawLine(r.x + 1, r.y + r.height - 1, r.x + r.width - 1, r.y + r.height - 1);
+        
+        if (myUi.myWindow.isActive()) {
+          g2d.setColor(new Color(100, 150, 230, 50));
+          g2d.fill(r);
+        }
       }
       else {
-        PushedTabBackground.paintPulled(tab, g2d, bounds.x, bounds.width, 2, isFirst, isLast);
-      }
+        g2d.setPaint(new GradientPaint(r.x, r.y, new Color(0, 0, 0, 10), r.x, r.y + r.height, new Color(0, 0, 0, 30)));
+        g2d.fillRect(r.x, r.y, r.width, r.height);
+        
+        if (last) {
+          if (prevSelected) {
+            g2d.setColor(new Color(255, 255, 255, 80));
+            g2d.drawRect(r.x, r.y, r.width - 1, r.height - 1);
 
-      if (!isLast) {
-        g.setColor(Gray._80);
-        g.drawLine(bounds.x + bounds.width, 2, bounds.x + bounds.width, 18);
+          } else {
+            g2d.setColor(new Color(255, 255, 255, 80));
+            g2d.drawRect(r.x + 1, r.y, r.width - 2, r.height - 1);
+
+            g2d.setColor(new Color(0, 0, 0, 60));
+            g2d.drawLine(r.x, r.y, r.x, r.y + r.height);
+          }
+
+          g2d.setColor(new Color(0, 0, 0, 60));
+          g2d.drawLine(r.x + r.width, r.y, r.x + r.width, r.y + r.height);
+        } else {
+          if (prevSelected) {
+            g2d.setColor(new Color(255, 255, 255, 80));
+            g2d.drawRect(r.x, r.y, r.width - 1, r.height - 1);
+          }
+          else {
+            g2d.setColor(new Color(255, 255, 255, 80));
+            g2d.drawRect(r.x + 1, r.y, r.width - 2, r.height - 1);
+
+            g2d.setColor(new Color(0, 0, 0, 60));
+            g2d.drawLine(r.x, r.y, r.x, r.y + r.height);
+          }
+        }
       }
       
+      prevSelected = each.isSelected();
     }
 
     c.restore();

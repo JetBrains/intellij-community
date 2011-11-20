@@ -16,7 +16,6 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
 import java.awt.*;
@@ -34,40 +33,40 @@ class NavBarBorder implements Border {
   }
 
   public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-    if (!myDocked || UIUtil.isUnderAquaLookAndFeel()) return;
+    if (!myDocked) return;
+    
+    if (UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+      g.setColor(new Color(255, 255, 255, 120));
+      g.drawLine(x, y, x + width, y);
 
-    g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
-
-    boolean drawTopBorder = true;
-    if (myDocked) {
-      if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
-        drawTopBorder = false;
-        return;
-      }
+      g.setColor(new Color(0, 0, 0, 50));
+      g.drawLine(x, y + 1, x + width, y + 1);
+    } else if (NavBarRootPaneExtension.runToolbarExists()) {
+      g.setColor(new Color(0, 0, 0, 50));
+      g.drawLine(x, y, x + width, y);
     }
-
-    if (myRightOffset == -1) {
-      if (drawTopBorder) {
-        g.drawLine(0, 0, width - 1, 0);
-      }
+    
+    if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR && NavBarRootPaneExtension.runToolbarExists()) {
+      g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
+      g.drawLine(x, y + height - 1, x + width - 1, y + height - 1);
     }
-    else {
-      if (drawTopBorder) {
-        g.drawLine(0, 0, width - myRightOffset + 3, 0);
-      } else {
-        g.drawLine(width - 1, 0, width - 1, height);
-      }
-    }
-    g.drawLine(0, height - 1, width, height - 1);
-
-    if (myRightOffset == -1) {
-      g.drawLine(0, 0, 0, height);
-      g.drawLine(width - 1, 0, width - 1, height - 1);
-    }
+    
   }
 
   public Insets getBorderInsets(final Component c) {
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR ? new Insets(1, 0, 1, 4) : new Insets(0, 0, 0, 4);
+    if (myDocked) {
+      if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+        if (NavBarRootPaneExtension.runToolbarExists()) {
+          return new Insets(1, 0, 1, 4);
+        }
+        
+        return new Insets(0, 0, 0, 4);
+      }
+      
+      return new Insets(2, 0, 0, 4);
+    }
+
+    return new Insets(1, 0, 1, 4);
   }
 
   public boolean isBorderOpaque() {

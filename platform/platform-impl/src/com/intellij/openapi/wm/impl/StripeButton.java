@@ -123,6 +123,47 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     });
   }
 
+  
+  public boolean isFirst() {
+    return is(true);
+  }
+  
+  public boolean isLast() {
+    return is(false);
+  }
+  
+  public boolean isOppositeSide() {
+    return getWindowInfo().isSplit();
+  }
+  
+  private boolean is(boolean first) {
+    Container parent = getParent();
+    if (parent == null) return false;
+    
+    int max = first ? Integer.MAX_VALUE : 0;
+    ToolWindowAnchor anchor = getAnchor();
+    Component c = null;
+    int count = parent.getComponentCount();
+    for (int i = 0; i < count; i++) {
+      Component component = parent.getComponent(i);
+      if (!component.isVisible()) continue;
+      Rectangle r = component.getBounds();
+      if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
+        if (first && (max > r.y) || (!first && max < r.y)) {
+          max = r.y;
+          c = component;
+        }
+      } else {
+        if (first && (max > r.x) || (!first && max < r.x)) {
+          max = r.x;
+          c = component;
+        }
+      }
+    }
+    
+    
+    return c == this;
+  }
 
   public InternalDecorator getDecorator() {
     return myDecorator;

@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -52,14 +53,75 @@ final class Stripe extends JPanel{
   private boolean myFinishingDrop;
   static final int DROP_DISTANCE_SENSIVITY = 20;
   private final Disposable myDisposable = Disposer.newDisposable();
+  private BufferedImage myCachedBg;
 
   Stripe(final int anchor, ToolWindowManagerImpl manager){
     super(new GridBagLayout());
-    //setBackground(new Color(247, 243, 239));
+    setOpaque(true);
     myManager = manager;
     myAnchor = anchor;
     myWeakKeymapManagerListener=new WeakKeymapManagerListener(KeymapManagerEx.getInstanceEx(), new MyKeymapManagerListener());
     myUISettingsListener=new MyUISettingsListener();
+    setBorder(new AdaptiveBorder());
+  }
+
+  private static class AdaptiveBorder implements Border {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      Insets insets = ((JComponent)c).getInsets();
+
+      g.setColor(UIUtil.getPanelBackground());
+      drawBorder(g, x, y, width, height, insets);
+      g.setColor(new Color(0, 0, 0, 90));
+      drawBorder(g, x, y, width, height, insets);
+    }
+
+    private static void drawBorder(Graphics g, int x, int y, int width, int height, Insets insets) {
+      if (insets.top == 1) {
+        g.drawLine(x, y, x + width, y);
+      }
+
+      if (insets.right == 1) {
+        g.drawLine(x + width - 1, y, x + width - 1, y + height);
+      }
+    
+      if (insets.left == 1) {
+        g.drawLine(x, y, x, y + height);
+      }
+
+      if (insets.bottom == 1) {
+        g.drawLine(x, y + height - 1, x + width, y + height - 1);
+      }
+      
+    }
+    
+    @Override
+    public Insets getBorderInsets(Component c) {
+      Stripe stripe = (Stripe)c;
+      ToolWindowAnchor anchor = stripe.getAnchor();
+
+      Insets result = new Insets(0, 0, 0, 0);
+      if (anchor == ToolWindowAnchor.LEFT) {
+        result.top = 1;
+        result.right = 1;
+      } else if (anchor == ToolWindowAnchor.RIGHT) {
+        result.left = 1;
+        result.top = 1;
+      } else if (anchor == ToolWindowAnchor.TOP) {
+        result.bottom = 0;
+        //result.bottom = 1;
+        result.top = 1;
+      } else {
+        result.top = 1;
+      }
+
+      return result;
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return true;
+    }
   }
 
   /**
@@ -122,11 +184,11 @@ final class Stripe extends JPanel{
 
     data.eachY = 0;
     data.size = new Dimension();
-    data.gap = 1;
+    data.gap = 0;
     data.horizontal = isHorizontal();
     data.dragInsertPosition = -1;
     if (data.horizontal) {
-      data.eachX = horizontaloffset;
+      data.eachX = horizontaloffset - 1;
     } else {
       data.eachX = 0;
     }
@@ -335,6 +397,8 @@ final class Stripe extends JPanel{
 
   public void setOverlayed(boolean overlayed) {
     Color bg = UIUtil.getPanelBackground();
+    float[] result = Color.RGBtoHSB(bg.getRed(), bg.getGreen(), bg.getBlue(), new float[3]);
+    bg = new Color(Color.HSBtoRGB(result[0], result[1], result[2] - 0.08f > 0 ? result[2] - 0.08f : result[2]));
     if (overlayed) {
      setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 190));
     } else {
@@ -475,12 +539,47 @@ final class Stripe extends JPanel{
     return getClass().getName() + " " + anchor;
   }
 
+  private BufferedImage getCachedImage() {
+    if (myCachedBg == null) {
+      ToolWindowAnchor anchor = getAnchor();
+      Rectangle bounds = getBounds();
+      BufferedImage bg;
+      if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
+        bg = (BufferedImage) createImage(bounds.width, 50);
+        Graphics2D graphics = bg.createGraphics();
+        graphics.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), bounds.width, 0, new Color(0, 0, 0, 0)));
+        graphics.fillRect(0, 0, bounds.width, 50);
+        graphics.dispose();
+      } else {
+        bg = (BufferedImage) createImage(50, bounds.height);
+        Graphics2D graphics = bg.createGraphics();
+        graphics.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), 0, bounds.height, new Color(0, 0, 0, 10)));
+        graphics.fillRect(0, 0, 50, bounds.height);
+        graphics.dispose();
+      }
+      
+      myCachedBg = bg;
+    }
+    
+    return myCachedBg;
+  }
 
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
     if (!myFinishingDrop && isDroppingButton() && myDragButton.getParent() != this) {
       g.setColor(getBackground().brighter());
       g.fillRect(0, 0, getWidth(), getHeight());
+    }
+
+    ToolWindowAnchor anchor = getAnchor();
+    g.setColor(new Color(255, 255, 255, 40));
+    Rectangle r = getBounds();
+    if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
+      g.drawLine(0, 0, 0, r.height);
+      g.drawLine(r.width - 2, 0, r.width - 2, r.height);
+    } else {
+      g.drawLine(0, 1, r.width, 1);
+      g.drawLine(0, r.height - 1, r.width, r.height - 1);
     }
   }
 }

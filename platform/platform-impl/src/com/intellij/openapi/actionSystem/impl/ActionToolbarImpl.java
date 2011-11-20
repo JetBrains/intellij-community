@@ -163,8 +163,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private boolean doMacEnhancementsForMainToolbar() {
-    return (UIUtil.isUnderAquaLookAndFeel() && ActionPlaces.MAIN_TOOLBAR.equals(myPlace)) 
-           || isInsideNavBar();
+    return (UIUtil.isUnderAquaLookAndFeel() && ActionPlaces.MAIN_TOOLBAR.equals(myPlace));
   }
 
   private boolean isInsideNavBar() {
@@ -183,7 +182,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   public int getLayoutPolicy() {
-    return myLayoutPolicy;
+    return myLayoutPolicy;                                             
   }
 
   public void setLayoutPolicy(final int layoutPolicy) {
@@ -194,12 +193,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   protected void paintComponent(final Graphics g) {
-    if (isInsideNavBar()) {
-      final Dimension size = getSize();
-      g.setColor(UIUtil.getBorderColor());
-      g.drawLine(0, size.height - 1, size.width, size.height - 1);
-      return;
-    }
     if (doMacEnhancementsForMainToolbar()) {
       final Rectangle r = getBounds();
       UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
@@ -1185,15 +1178,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       setBorder(new EmptyBorder(0, 0, 0, 0));
       setOpaque(false);
     } else {
-      if (isInsideNavBar()) {
-        setMinimumButtonSize(NAVBAR_MINIMUM_BUTTON_SIZE);
-        setBorder(BorderFactory.createEmptyBorder(1, 3, 1, 3));
-        setOpaque(true);
-      } else {
-        setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
-        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-        setOpaque(true);
-      }
+      setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
+      setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }
 

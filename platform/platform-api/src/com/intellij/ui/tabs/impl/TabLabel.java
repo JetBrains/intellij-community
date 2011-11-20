@@ -68,7 +68,7 @@ public class TabLabel extends JPanel {
     myInfo = info;
     myLabel.setOpaque(false);
     myLabel.setBorder(null);
-    myLabel.setIconTextGap(tabs instanceof MacJBTabs && ((MacJBTabs)tabs).isNewTabsActive() ? 2 : new JLabel().getIconTextGap());
+    myLabel.setIconTextGap(tabs instanceof JBEditorTabs && ((JBEditorTabs)tabs).isNewTabsActive() ? 2 : new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
     setOpaque(false);
@@ -210,17 +210,11 @@ public class TabLabel extends JPanel {
   }
 
   private int getNonSelectedOffset() {
-    return 2;
+    return myTabs.isEditorTabs() ? 0 : 2;
   }
 
   private int getSelectedOffset() {
-    if (myTabs.getPresentation().getTabsPosition() == JBTabsPosition.top) {
-      if (myTabs instanceof MacJBTabs && ((MacJBTabs)myTabs).isNewTabsActive()) {
-        return 2;
-      }
-    }
-    
-    return  1;
+    return  myTabs.isEditorTabs() ? 0 : 1;
   }
 
   @Override

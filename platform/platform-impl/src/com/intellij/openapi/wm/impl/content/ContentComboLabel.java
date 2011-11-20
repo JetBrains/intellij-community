@@ -29,7 +29,7 @@ public class ContentComboLabel extends BaseLabel {
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
-      return new Rectangle(getWidth() - getIconWidth(), 0, getIconWidth(), getHeight());
+      return new Rectangle(getWidth() - getIconWidth() - 3, 0, getIconWidth(), getHeight());
     }
 
     @Override
@@ -67,12 +67,27 @@ public class ContentComboLabel extends BaseLabel {
   @Override
   protected void paintComponent(Graphics g) {
     if (isToDrawCombo()) {
-      g.translate(0, -TAB_SHIFT);
+      //g.translate(0, -TAB_SHIFT);
       super.paintComponent(g);
-      g.translate(0, TAB_SHIFT);
+      //g.translate(0, TAB_SHIFT);
     } else {
       super.paintComponent(g);
     }
+  }
+
+  @Override
+  protected boolean allowEngravement() {
+    return myUi == null || myUi.myWindow.isActive();
+  }
+
+  @Override
+  protected Color getActiveFg(boolean selected) {
+    return super.getActiveFg(selected);
+  }
+
+  @Override
+  protected Color getPassiveFg(boolean selected) {
+    return super.getPassiveFg(selected);
   }
 
   @Override
@@ -110,11 +125,6 @@ public class ContentComboLabel extends BaseLabel {
     if (isToDrawCombo()) {
       myComboIcon.paintIcon(this, g);
       g.setColor(new Color(255, 255, 255, 100));
-      int x = myComboIcon.getIconRec().x - 3;
-      int yTop = myComboIcon.getIconRec().y;
-      int yBottom = yTop + myComboIcon.getIconHeight();
-      g.drawLine(x, yTop + 1, x, yBottom - 3);
-
     }
   }
 

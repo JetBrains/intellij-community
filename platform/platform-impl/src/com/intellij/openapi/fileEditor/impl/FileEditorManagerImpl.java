@@ -236,8 +236,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     @Override
     public Insets getBorderInsets(Component c) {
-      boolean filesOpen = mySplitters != null && mySplitters.getOpenFiles().length > 0;
-      return new Insets(filesOpen ? 1 : 0, 0, 0, 0);
+      return new Insets(0, 0, 0, 0);
     }
 
     @Override

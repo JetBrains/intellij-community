@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.navigationToolbar.ui;
+package com.intellij.ui.tabs;
 
-import java.awt.*;
+import javax.swing.*;
 
 /**
- * @author Konstantin Bulenkov
+ * @author pegov
  */
-public class CommonNavBarUI extends AbstractNavBarUI {
-  @Override
-  public void doPaintWrapperPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible) {
+public class TabsUtil {
+  
+  
+  public static final int TAB_VERTICAL_PADDING = 3;
+  public static final int TABS_BORDER = 1;  
+
+  private TabsUtil() {
   }
+
+  public static int getTabsHeight() {
+    return TAB_VERTICAL_PADDING * 2 + new JLabel("XXX").getPreferredSize().height + 1 /* +1 ??? */; 
+  }
+  
 }

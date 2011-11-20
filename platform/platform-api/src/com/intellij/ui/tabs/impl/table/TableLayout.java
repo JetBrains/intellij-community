@@ -23,6 +23,7 @@ import com.intellij.ui.tabs.impl.TabLayout;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TableLayout extends TabLayout {
 
@@ -34,7 +35,7 @@ public class TableLayout extends TabLayout {
     myTabs = tabs;
   }
 
-  private TablePassInfo computeLayoutTable(java.util.List<TabInfo> visibleInfos) {
+  private TablePassInfo computeLayoutTable(List<TabInfo> visibleInfos) {
     final TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
 
     final Insets insets = myTabs.getLayoutInsets();
@@ -54,10 +55,9 @@ public class TableLayout extends TabLayout {
         eachX = data.toFitRec.x;
       }
       myTabs.layout(eachLabel, eachX, 0, size.width, 1);
-      eachX += size.width;
-      data.requiredWidth += size.width;
+      eachX += size.width + myTabs.getInterTabSpaceLength();
+      data.requiredWidth += size.width + myTabs.getInterTabSpaceLength();
     }
-
 
     int selectedRow = -1;
     eachX = data.toFitRec.x;
@@ -83,7 +83,7 @@ public class TableLayout extends TabLayout {
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
         }
-        eachX += size.width;
+        eachX += size.width + myTabs.getInterTabSpaceLength();
       }
       else {
         eachTableRow = new TableRow(data);
@@ -97,7 +97,7 @@ public class TableLayout extends TabLayout {
       }
     }
 
-    java.util.List<TableRow> toMove = new ArrayList<TableRow>();
+    List<TableRow> toMove = new ArrayList<TableRow>();
     for (int i = selectedRow + 1; i < data.table.size(); i++) {
       toMove.add(data.table.get(i));
     }
@@ -112,7 +112,7 @@ public class TableLayout extends TabLayout {
   }
 
 
-  public LayoutPassInfo layoutTable(java.util.List<TabInfo> visibleInfos) {
+  public LayoutPassInfo layoutTable(List<TabInfo> visibleInfos) {
     myTabs.resetLayout(true);
     final TablePassInfo data = computeLayoutTable(visibleInfos);
     final Insets insets = myTabs.getLayoutInsets();
@@ -139,16 +139,17 @@ public class TableLayout extends TabLayout {
           width = label.getPreferredSize().width + deltaToFit;
         }
         else {
-          width = data.toFitRec.width + insets.left - eachX - 1;
+          width = data.toFitRec.width + insets.left - eachX;
         }
 
 
         myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
         label.setAligmentToCenter(deltaToFit > 0);
 
-        eachX += width;
+        boolean lastCell = i == eachRow.myColumns.size() - 1;
+        eachX += width + (lastCell ? 0 : myTabs.getInterTabSpaceLength());
       }
-      eachY += myTabs.myHeaderFitSize.height - 1;
+      eachY += myTabs.myHeaderFitSize.height - 1 + myTabs.getInterTabSpaceLength();
     }
 
     if (myTabs.getSelectedInfo() != null) {
@@ -160,7 +161,7 @@ public class TableLayout extends TabLayout {
         myTabs.layout(selectedToolbar, insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, myTabs.getHeight() - eachY - insets.bottom - 2);
       }
 
-      myTabs.layoutComp(xAddin, eachY + 2 - myTabs.getLayoutInsets().top, myTabs.getSelectedInfo().getComponent(), 0, 0);
+      myTabs.layoutComp(xAddin, eachY + (myTabs.isEditorTabs() ? 0 : 2) - myTabs.getLayoutInsets().top, myTabs.getSelectedInfo().getComponent(), 0, 0);
     }
 
     myLastTableLayout = data;

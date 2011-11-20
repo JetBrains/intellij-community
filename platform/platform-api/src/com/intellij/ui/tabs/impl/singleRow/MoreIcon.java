@@ -28,9 +28,9 @@ public abstract class MoreIcon {
   private final ActiveIcon myRight =
     new ActiveIcon(IconLoader.getIcon("/general/comboArrowRight.png"), IconLoader.getIcon("/general/comboArrowRightPassive.png"));
 
-  private final int myGap = 2;
-  private boolean myLeftPainted;
-  private boolean myRightPainted;
+  protected final int myGap = 2;
+  protected boolean myLeftPainted;
+  protected boolean myRightPainted;
 
   public void paintIcon(final Component c, final Graphics g) {
     myLeft.setActive(isActive());
