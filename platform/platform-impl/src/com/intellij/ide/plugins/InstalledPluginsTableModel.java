@@ -267,12 +267,20 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
     updatePluginDependencies();
     warnAboutMissedDependencies(value, ideaPluginDescriptors);
-    if (!value && ENABLED.equals(myEnabledFilter)) {
-      for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
-        view.remove(ideaPluginDescriptor);
-        filtered.add(ideaPluginDescriptor);
-      }
-      fireTableDataChanged();
+    hideNotApplicablePlugins(value, ideaPluginDescriptors);
+  }
+
+  private void hideNotApplicablePlugins(Boolean value, final IdeaPluginDescriptor... ideaPluginDescriptors) {
+    if (!value && ENABLED.equals(myEnabledFilter) || (value && DISABLED.equals(myEnabledFilter))) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
+            view.remove(ideaPluginDescriptor);
+            filtered.add(ideaPluginDescriptor);
+          }
+          fireTableDataChanged();
+        }
+      });
     }
   }
 
@@ -356,11 +364,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       myEnabled.put(currentPluginId, enabled);
       updatePluginDependencies();
       warnAboutMissedDependencies(enabled, ideaPluginDescriptor);
-      if (!value && ENABLED.equals(myEnabledFilter)) {
-        view.remove(ideaPluginDescriptor);
-        filtered.add(ideaPluginDescriptor);
-        fireTableDataChanged();
-      }
+      hideNotApplicablePlugins(value, ideaPluginDescriptor);
     }
 
     public Comparator<IdeaPluginDescriptor> getComparator() {
