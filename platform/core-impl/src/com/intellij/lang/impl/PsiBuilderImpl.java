@@ -221,6 +221,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
           sb.append("\n  prev: '").append(myText.subSequence(prevStart, offset)).append("' (").append(myLexTypes[i - 1]).append(':')
             .append(myLexTypes[i - 1].getLanguage()).append(") ").append(prevStart).append(":").append(offset);
         }
+        final int quoteStart = Math.max(tokenStart - 256, 0);
+        final int quoteEnd = Math.min(tokenStart + 256, myText.length());
+        sb.append("\n  quote: [").append(quoteStart).append(':').append(quoteEnd)
+          .append("] '").append(myText.subSequence(quoteStart, quoteEnd)).append('\'');
         LOG.error(sb);
       }
       myLexStarts[i] = offset = tokenStart;
