@@ -203,13 +203,13 @@ public class CommandMerger {
     UndoRedo undoRedo;
     while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
       if (!undoRedo.isTransparent()) break;
-      if (!undoRedo.execute(true)) return;
+      if (!undoRedo.execute(true, false)) return;
       if (!undoRedo.hasMoreActions()) break;
     }
 
     boolean isInsideStopFinishGroup = false;
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
-      if (!undoRedo.execute(false)) return;
+      if (!undoRedo.execute(false, isInsideStopFinishGroup)) return;
       isInsideStopFinishGroup = undoRedo.myUndoableGroup.isInsideStopFinishGroup(isUndo, isInsideStopFinishGroup);
       if (isInsideStopFinishGroup) continue;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();
