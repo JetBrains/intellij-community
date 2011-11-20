@@ -58,7 +58,6 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
   private final ChangeListManager myChangeListManager;
 
   public String PATCH_PATH = "";
-  public boolean REVERSE_PATCH = false;
 
   public static CreatePatchCommitExecutor getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, CreatePatchCommitExecutor.class);
@@ -133,7 +132,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         PATCH_PATH = myProject.getBaseDir() == null ? PathManager.getHomePath() : myProject.getBaseDir().getPresentableUrl();
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
-      myPanel.setReversePatch(REVERSE_PATCH);
+      myPanel.setReversePatch(false);
 
       boolean dvcsIsUsed = false;
 
@@ -193,9 +192,9 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         final File file = new File(fileName).getAbsoluteFile();
         VcsConfiguration.getInstance(myProject).acceptLastCreatedPatchName(file.getName());
         PATCH_PATH = file.getParent();
-        REVERSE_PATCH = myPanel.isReversePatch();
-        
-        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
+        final boolean reversePatch = myPanel.isReversePatch();
+
+        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), reversePatch);
         PatchWriter.writePatches(myProject, fileName, patches, myCommitContext, myPanel.getEncoding());
         final String message;
         if (binaryCount == 0) {
