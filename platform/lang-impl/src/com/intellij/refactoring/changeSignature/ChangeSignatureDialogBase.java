@@ -173,7 +173,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   public JComponent getPreferredFocusedComponent() {
     final JTable table = getTableComponent();
 
-    if (table.getRowCount() > 0) {
+    if (table != null && table.getRowCount() > 0) {
       if (table.getColumnModel().getSelectedColumnCount() == 0) {
         table.getSelectionModel().setSelectionInterval(0, 0);
         table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
@@ -195,7 +195,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
 
     myNamePanel = new JPanel(new BorderLayout(0,2));
-    myNamePanel.setBorder(new EmptyBorder(0,8,0,0));
     myNameField = new EditorTextField(myMethod.getName());
     final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     nameLabel.setLabelFor(myNameField);
@@ -210,9 +209,18 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
     createVisibilityPanel();
 
-    final JPanel typePanel = new JPanel(new BorderLayout(0,2));
-    typePanel.setBorder(new EmptyBorder(0,0,0,0));
+    if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
+      ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
+      myVisibilityPanel.setBorder(new EmptyBorder(0,0,0,8));
+      panel.add(myVisibilityPanel, gbc);
+      gbc.gridx++;
+    }
+
+    gbc.weightx = 1;
+
     if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
+      JPanel typePanel = new JPanel(new BorderLayout(0,2));
+      typePanel.setBorder(new EmptyBorder(0,0,0,8));
       final JLabel typeLabel = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
@@ -230,19 +238,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       typePanel.add(typeLabel, BorderLayout.NORTH);
       IJSwingUtilities.adjustComponentsOnMac(typeLabel, myReturnTypeField);
       typePanel.add(myReturnTypeField, BorderLayout.SOUTH);
+      panel.add(typePanel, gbc);
+      gbc.gridx++;
     }
 
-    if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
-      ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
-      myVisibilityPanel.setBorder(new EmptyBorder(0,0,0,8));
-      panel.add(myVisibilityPanel, gbc);
-    }
-
-    gbc.weightx = 1;
-    gbc.gridx++;
-    panel.add(typePanel, gbc);
-
-    gbc.gridx++;
     panel.add(myNamePanel, gbc);
 
     return panel;
