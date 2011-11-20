@@ -308,31 +308,42 @@ public class VariableInplaceRenamer {
 
               @Override
               public void templateFinished(Template template, final boolean brokenOff) {
-                super.templateFinished(template, brokenOff);
-                moveOffsetAfter(!brokenOff);
-                if (myNewName != null && !brokenOff) {
-                  final Runnable runnable = new Runnable() {
-                    public void run() {
-                      performRefactoringRename(myNewName, context, markAction);
+                boolean bind = false;
+                try {
+                  super.templateFinished(template, brokenOff);
+                  moveOffsetAfter(!brokenOff);
+                  if (myNewName != null && !brokenOff) {
+                    bind = true;
+                    final Runnable runnable = new Runnable() {
+                      public void run() {
+                        performRefactoringRename(myNewName, context, markAction);
+                      }
+                    };
+                    if (ApplicationManager.getApplication().isUnitTestMode()){
+                      runnable.run();
+                    } else {
+                      ApplicationManager.getApplication().invokeLater(runnable);
                     }
-                  };
-                  if (ApplicationManager.getApplication().isUnitTestMode()){
-                    runnable.run();
-                  } else {
-                    ApplicationManager.getApplication().invokeLater(runnable);
                   }
-                } else {
-                  FinishMarkAction.finish(myProject, myEditor, markAction);
+                }
+                finally {
+                  if (!bind) {
+                    FinishMarkAction.finish(myProject, myEditor, markAction);
+                  }
                 }
               }
 
               public void templateCancelled(Template template) {
-                final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-                documentManager.commitAllDocuments();
-                finish();
-                moveOffsetAfter(false);
-                documentManager.doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-                FinishMarkAction.finish(myProject, myEditor, markAction);
+                try {
+                  final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+                  documentManager.commitAllDocuments();
+                  finish();
+                  moveOffsetAfter(false);
+                  documentManager.doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                }
+                finally {
+                  FinishMarkAction.finish(myProject, myEditor, markAction);
+                }
               }
             });
 
@@ -464,13 +475,7 @@ public class VariableInplaceRenamer {
       }
     }
     finally {
-      if (markAction != null) {
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            FinishMarkAction.finish(myProject, myEditor, markAction);
-          }
-        }, RENAME_TITLE, null);
-      }
+      FinishMarkAction.finish(myProject, myEditor, markAction);
     }
   }
 
