@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidDxWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -145,7 +144,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
             outputDir = getOutputDirectoryForDex(module);
 
-            items.add(new DexItem(module, outputDir, platform.getTarget(), files, Collections.<String>emptySet()));
+            items.add(new DexItem(module, outputDir, platform.getTarget(), files));
           }
         }
       }
@@ -189,7 +188,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           }
 
           Map<CompilerMessageCategory, List<String>> messages = AndroidDxWrapper
-            .execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files, ArrayUtil.toStringArray(dexItem.myExcludedFiles));
+            .execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files);
 
           addMessages(messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
@@ -215,18 +214,15 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     final VirtualFile myClassDir;
     final IAndroidTarget myAndroidTarget;
     final Collection<VirtualFile> myFiles;
-    final Set<String> myExcludedFiles;
 
     public DexItem(@NotNull Module module,
                    @NotNull VirtualFile classDir,
                    @NotNull IAndroidTarget target,
-                   Collection<VirtualFile> files,
-                   Set<String> excludedFiles) {
+                   Collection<VirtualFile> files) {
       myModule = module;
       myClassDir = classDir;
       myAndroidTarget = target;
       myFiles = files;
-      this.myExcludedFiles = excludedFiles;
     }
 
     @NotNull
@@ -236,31 +232,29 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myFiles, myExcludedFiles);
+      return new MyValidityState(myFiles);
     }
   }
 
   private static class MyValidityState implements ValidityState {
     private Map<String, Long> myFiles;
 
-    private void fillMap(VirtualFile file, Set<VirtualFile> visited, Set<String> excludedFiles) {
+    private void fillMap(VirtualFile file, Set<VirtualFile> visited) {
       if (file.isDirectory() && visited.add(file)) {
         for (VirtualFile child : file.getChildren()) {
-          fillMap(child, visited, excludedFiles);
+          fillMap(child, visited);
         }
       }
       else if (StdFileTypes.CLASS.equals(file.getFileType()) || file.getFileType() instanceof ArchiveFileType) {
-        if (!excludedFiles.contains(file.getPath())) {
-          myFiles.put(file.getPath(), file.getTimeStamp());
-        }
+        myFiles.put(file.getPath(), file.getTimeStamp());
       }
     }
 
-    public MyValidityState(Collection<VirtualFile> files, Set<String> excludedFiles) {
+    public MyValidityState(Collection<VirtualFile> files) {
       myFiles = new HashMap<String, Long>();
       Set<VirtualFile> visited = new HashSet<VirtualFile>();
       for (VirtualFile file : files) {
-        fillMap(file, visited, excludedFiles);
+        fillMap(file, visited);
       }
     }
 

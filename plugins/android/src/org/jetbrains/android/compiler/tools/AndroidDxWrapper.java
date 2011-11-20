@@ -62,8 +62,7 @@ public class AndroidDxWrapper {
   public static Map<CompilerMessageCategory, List<String>> execute(@NotNull Module module,
                                                                    @NotNull IAndroidTarget target,
                                                                    @NotNull String outputDir,
-                                                                   @NotNull String[] compileTargets,
-                                                                   @NotNull String[] excluded) {
+                                                                   @NotNull String[] compileTargets) {
     String outFile = outputDir + File.separatorChar + "classes.dex";
 
     final Map<CompilerMessageCategory, List<String>> messages = new HashMap<CompilerMessageCategory, List<String>>(2);
@@ -94,7 +93,6 @@ public class AndroidDxWrapper {
     programParamList.add(outFile);
     programParamList.addAll(compileTargets);
     programParamList.add("--exclude");
-    programParamList.addAll(excluded);
 
     ParametersList vmParamList = parameters.getVMParametersList();
 
