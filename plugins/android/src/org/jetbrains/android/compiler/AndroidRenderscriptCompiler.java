@@ -139,7 +139,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
 
     for (GenerationItem item : generationItems) {
       final MyGenerationItem genItem = (MyGenerationItem)item;
-      final File genDir = new File(genItem.myGenRootPath, genItem.myPackageName.replace('.', File.separatorChar));
+      final File genDir = new File(genItem.myGenRootPath);
       CompilerUtil.refreshIOFile(genDir);
       final VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(genDir);
       if (generatedVFile != null) {
@@ -324,7 +324,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(mySourceFile, myFileExists, myRawDirPath);
+      return new MyValidityState(mySourceFile, myFileExists);
     }
 
     public Module getModule() {
@@ -338,19 +338,16 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
   
   private static class MyValidityState implements ValidityState {
     private final long myTimestamp;
-    private final long myRawDirTimestamp;
     private final boolean myFileExists;
     
     public MyValidityState(@NotNull DataInput in) throws IOException {
       myTimestamp = in.readLong();
-      myRawDirTimestamp = in.readLong();
       myFileExists = true;
     }
 
-    public MyValidityState(@NotNull VirtualFile file, boolean fileExists, @NotNull String rawDirPath) {
+    public MyValidityState(@NotNull VirtualFile file, boolean fileExists) {
       myTimestamp = file.getTimeStamp();
       myFileExists = fileExists;
-      myRawDirTimestamp = new File(rawDirPath).lastModified();
     }
 
     @Override
@@ -361,14 +358,12 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
 
       final MyValidityState st = (MyValidityState)otherState;
       return myTimestamp == st.myTimestamp &&
-             myRawDirTimestamp == st.myRawDirTimestamp &&
              myFileExists == st.myFileExists;
     }
 
     @Override
     public void save(DataOutput out) throws IOException {
       out.writeLong(myTimestamp);
-      out.writeLong(myRawDirTimestamp);
     }
   }
 }
