@@ -155,27 +155,31 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       final Boolean enabled = myEnabled.get(pluginId);
       if (enabled == null || enabled.booleanValue()) {
         PluginManager.checkDependants(descriptor, new Function<PluginId, IdeaPluginDescriptor>() {
-          @Nullable
-          public IdeaPluginDescriptor fun(final PluginId pluginId) {
-            return PluginManager.getPlugin(pluginId);
-          }
-        }, new Condition<PluginId>() {
-          public boolean value(final PluginId pluginId) {
-            final Boolean enabled = myEnabled.get(pluginId);
+                                        @Nullable
+                                        public IdeaPluginDescriptor fun(final PluginId pluginId) {
+                                          return PluginManager.getPlugin(pluginId);
+                                        }
+                                      }, new Condition<PluginId>() {
+          public boolean value(final PluginId dependantPluginId) {
+            final Boolean enabled = myEnabled.get(dependantPluginId);
             if (enabled == null || !enabled.booleanValue()) {
-              Set<PluginId> required = myDependentToRequiredListMap.get(descriptor.getPluginId());
+              Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
               if (required == null) {
                 required = new HashSet<PluginId>();
-                myDependentToRequiredListMap.put(descriptor.getPluginId(), required);
+                myDependentToRequiredListMap.put(pluginId, required);
               }
 
-              required.add(pluginId);
+              required.add(dependantPluginId);
               //return false;
             }
 
             return true;
           }
-        });
+        }
+        );
+        if (enabled == null && !myDependentToRequiredListMap.containsKey(pluginId)) {
+          myEnabled.put(pluginId, true);
+        }
       }
     }
   }
