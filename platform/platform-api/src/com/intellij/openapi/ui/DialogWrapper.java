@@ -87,7 +87,7 @@ public abstract class DialogWrapper {
 
   @NonNls public static final String FOCUSED_ACTION = "FocusedAction";
   
-  private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_MASK);
+  private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
 
   private final DialogWrapperPeer myPeer;
   private int myExitCode = CANCEL_EXIT_CODE;
