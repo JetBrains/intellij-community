@@ -48,6 +48,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
@@ -388,12 +389,19 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     }
     catch (AndroidSdkNotConfiguredException e) {
       LOG.debug(e);
-      errorMessage = new RenderingErrorMessage("Please ", "configure", " Android SDK", new Runnable() {
-        @Override
-        public void run() {
-          AndroidSdkUtils.openModuleDependenciesConfigurable(facet.getModule());
-        }
-      });
+
+      if (!AndroidMavenUtil.isMavenizedModule(facet.getModule())) {
+        errorMessage = new RenderingErrorMessage("Please ", "configure", " Android SDK", new Runnable() {
+          @Override
+          public void run() {
+            AndroidSdkUtils.openModuleDependenciesConfigurable(facet.getModule());
+          }
+        });
+      }
+      else {
+        errorMessage = new RenderingErrorMessage(AndroidBundle.message("android.maven.cannot.parse.android.sdk.error",
+                                                                       facet.getModule().getName()));
+      }
     }
 
     final RenderingErrorMessage finalErrorMessage = errorMessage;
