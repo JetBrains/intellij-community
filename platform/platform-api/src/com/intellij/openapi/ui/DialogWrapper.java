@@ -1509,7 +1509,12 @@ public abstract class DialogWrapper {
     }
   }
 
+  private Dimension mySizeBeforeError = null;
   protected final void setErrorText(@Nullable final String text) {
+    if (mySizeBeforeError == null && !StringUtil.isEmpty(text)) {
+      mySizeBeforeError = getSize();
+    }
+
     myErrorTextAlarm.cancelAllRequests();
     myErrorTextAlarm.addRequest(new Runnable() {
       public void run() {
@@ -1528,6 +1533,10 @@ public abstract class DialogWrapper {
           updateHeightForErrorText();
         }
         myErrorText.repaint();
+        if (StringUtil.isEmpty(text) && mySizeBeforeError != null) {
+          setSize(mySizeBeforeError.width, mySizeBeforeError.height);
+          myMaxErrorTextLength = 0;
+        }
       }
     }, 300, null);
   }
