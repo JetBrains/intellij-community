@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -68,10 +69,14 @@ public class FinishMarkAction extends BasicUndoableAction {
     return myReference;
   }
 
-  public static void finish(Project project, Editor editor, @Nullable StartMarkAction startAction) {
+  public static void finish(final Project project, final Editor editor, @Nullable final StartMarkAction startAction) {
     if (startAction == null) return;
-    DocumentReference reference = DocumentReferenceManager.getInstance().create(editor.getDocument());
-    UndoManager.getInstance(project).undoableActionPerformed(new FinishMarkAction(reference, startAction));
-    StartMarkAction.markFinished();
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        DocumentReference reference = DocumentReferenceManager.getInstance().create(editor.getDocument());
+        UndoManager.getInstance(project).undoableActionPerformed(new FinishMarkAction(reference, startAction));
+        StartMarkAction.markFinished();
+      }
+    }, "finish", null);
   }
 }

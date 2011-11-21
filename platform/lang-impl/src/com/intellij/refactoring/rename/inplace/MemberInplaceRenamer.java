@@ -149,11 +149,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       }
     }
     finally {
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          FinishMarkAction.finish(myProject, myEditor, markAction);
-        }
-      }, RENAME_TITLE, null);
+      FinishMarkAction.finish(myProject, myEditor, markAction);
     }
   }
 

@@ -156,6 +156,9 @@ public class RunnerMediator {
       super(process, commandLine.getCommandLineString());
     }
 
+    protected boolean shouldDestroyProcessRecursively(){
+      return true;
+    }
     @Override
     protected void destroyProcessImpl() {
       if (!RunnerMediator.destroyProcess(getProcess())) {

@@ -92,7 +92,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
             }
           }
         });
-        listener.directoryCheckedOut(new File(parentDirectory, directoryName));
+        listener.directoryCheckedOut(new File(parentDirectory, directoryName), GitVcs.getKey());
         listener.checkoutCompleted();
       }
     }.queue();

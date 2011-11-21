@@ -15,8 +15,13 @@
  */
 package com.theoryinpractice.testng;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.testIntegration.JavaTestFramework;
@@ -93,8 +98,29 @@ public class TestNGFramework extends JavaTestFramework {
 
     final PsiManager manager = clazz.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    PsiMethod patternMethod =
-      factory.createMethodFromText("@org.testng.annotations.BeforeMethod\n protected void setUp() throws Exception {}", null);
+    String setUpName = "setUp";
+    PsiMethod patternMethod = factory.createMethodFromText("@" + BeforeMethod.class.getName() + "\n protected void " + setUpName + "() throws Exception {}", null);
+    PsiMethod inClass = clazz.findMethodBySignature(patternMethod, false);
+    if (inClass != null) {
+      int exit = ApplicationManager.getApplication().isUnitTestMode() ?
+                 DialogWrapper.OK_EXIT_CODE :
+                 Messages.showYesNoDialog("Method \'" + setUpName + "\' already exist but is not annotated as @BeforeMethod.",
+                                          CommonBundle.getWarningTitle(),
+                                          "Annotate",
+                                          "Create new method",
+                                          Messages.getWarningIcon());
+      if (exit == DialogWrapper.OK_EXIT_CODE) {
+        new AddAnnotationFix(BeforeMethod.class.getName(), inClass).invoke(inClass.getProject(), null, inClass.getContainingFile());
+        return inClass;
+      } else if (exit == DialogWrapper.CANCEL_EXIT_CODE) {
+        inClass = null;
+        int i = 0;
+        while (clazz.findMethodBySignature(patternMethod, false) != null) {
+          patternMethod.setName(setUpName + (++i));
+        }
+        setUpName = patternMethod.getName();
+      }
+    }
 
     final PsiClass superClass = clazz.getSuperClass();
     if (superClass != null) {
@@ -102,20 +128,20 @@ public class TestNGFramework extends JavaTestFramework {
       if (methods.length > 0) {
         final PsiModifierList modifierList = methods[0].getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) { //do not override private method
-          @NonNls String pattern = "@org.testng.annotations.BeforeMethod\n";
+          @NonNls String pattern = "@" + BeforeMethod.class.getName() + "\n";
           if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
             pattern += "protected ";
           }
           else if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
             pattern += "public ";
           }
-          patternMethod = factory.createMethodFromText(pattern + "void setUp() throws Exception {\nsuper.setUp();\n}", null);
+          patternMethod = factory.createMethodFromText(pattern + "void " + setUpName + "() throws Exception {\nsuper." + setUpName + "();\n}", null);
         }
       }
     }
 
     final PsiMethod[] psiMethods = clazz.getMethods();
-    PsiMethod inClass = null;
+
     PsiMethod testMethod = null;
     for (PsiMethod psiMethod : psiMethods) {
       if (inClass == null && AnnotationUtil.isAnnotated(psiMethod, BeforeMethod.class.getName(), false)) {

@@ -194,8 +194,14 @@ public class ValueHint extends AbstractValueHint {
                               public void threadAction() {
                                 descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
                                 final InspectDebuggerTree tree = getInspectTree(descriptor);
-                                showTreePopup(tree, debuggerContext, myCurrentExpression.getText(),
-                                              new ValueHintTreeComponent(ValueHint.this, tree, myCurrentExpression.getText()));
+                                final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+                                  @Override
+                                  public String compute() {
+                                    return myCurrentExpression.getText();
+                                  }
+                                });
+                                showTreePopup(tree, debuggerContext, expressionText,
+                                              new ValueHintTreeComponent(ValueHint.this, tree, expressionText));
                               }
                             });
               }

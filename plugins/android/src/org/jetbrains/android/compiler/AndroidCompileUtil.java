@@ -424,6 +424,10 @@ public class AndroidCompileUtil {
       @Override
       public void run() {
         for (Module module : affectedModules) {
+          if (module.isDisposed() || module.getProject().isDisposed()) {
+            continue;
+          }
+          
           final AndroidFacet facet = AndroidFacet.getInstance(module);
           if (facet != null) {
             AndroidCompileUtil.createGenModulesAndSourceRoots(facet);

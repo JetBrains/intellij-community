@@ -17,28 +17,55 @@ package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author yole
  */
-public class NewProjectCheckoutListener implements CheckoutListener {
-  public boolean processCheckedOutDirectory(final Project project, final File directory) {
+public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
+  @Override
+  public boolean processCheckedOutDirectory(Project project, File directory, VcsKey vcsKey) {
     int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt",
                                                                  ProjectCheckoutListener.getProductNameWithArticle(),
                                                                  directory.getAbsolutePath()),
                                       VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
     if (rc == 0) {
+      final ProjectManager pm = ProjectManager.getInstance();
+      final Project[] projects = pm.getOpenProjects();
+      final Set<VirtualFile> files = projectsLocationSet(projects);
+      files.remove(project.getBaseDir());
       NewProjectUtil.createNewProject(project, directory.getAbsolutePath());
+      final Project[] projectsAfter = pm.getOpenProjects();
+      final Set<VirtualFile> filesAfter = projectsLocationSet(projectsAfter);
+      filesAfter.removeAll(files);
+
+      for (Project project1 : projectsAfter) {
+        if (project1.getBaseDir() != null && filesAfter.contains(project1.getBaseDir())) {
+          final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project1);
+          vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", vcsKey.getName())));
+          break;
+        }
+      }
       return true;
     }
     return false;
   }
 
-  @Override
-  public void processOpenedProject(Project lastOpenedProject) {
+  private Set<VirtualFile> projectsLocationSet(Project[] projects) {
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    for (Project project1 : projects) {
+      if (project1.getBaseDir() != null) {
+        files.add(project1.getBaseDir());
+      }
+    }
+    return files;
   }
 }

@@ -301,7 +301,7 @@ public class AndroidSdkUtils {
   }
 
   private static boolean tryToImportFromPropertyFiles(@NotNull Module module) {
-    final String targetHashString = AndroidUtils.getProjectPropertyValue(module, "target");
+    final String targetHashString = AndroidUtils.getProjectPropertyValue(module, AndroidUtils.ANDROID_TARGET_PROPERTY);
     if (targetHashString == null) {
       return false;
     }

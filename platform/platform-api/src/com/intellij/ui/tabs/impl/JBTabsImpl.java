@@ -167,6 +167,7 @@ public class JBTabsImpl extends JComponent
 
   private TabInfo myOldSelection;
   private SelectionChangeHandler mySelectionChangeHandler;
+  private boolean myEditorTabs;
 
   private Runnable myDeferredFocusRequest;
   
@@ -292,6 +293,14 @@ public class JBTabsImpl extends JComponent
     }
 
     return this;
+  }
+  
+  public void setEditorTabs(boolean b) {
+    myEditorTabs = b;
+  }
+
+  public boolean isEditorTabs() {
+    return myEditorTabs;
   }
 
   public JBTabs setNavigationActionsEnabled(boolean enabled) {
@@ -1492,6 +1501,16 @@ public class JBTabsImpl extends JComponent
     return myPosition;
   }
   
+  protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
+    if (isEditorTabs() && UIUtil.isUnderAquaLookAndFeel()) {
+      g2d.setColor(MAC_AQUA_BG_COLOR);
+    } else {
+      g2d.setColor(getBackground());
+    }
+    
+    g2d.fill(clip);
+  }
+  
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
@@ -1502,14 +1521,9 @@ public class JBTabsImpl extends JComponent
     final GraphicsConfig config = new GraphicsConfig(g2d);
     config.setAntialiasing(true);
 
-
-    if (getClientProperty(EDITOR_TABS) != null && UIUtil.isUnderAquaLookAndFeel()) {
-      g2d.setColor(MAC_AQUA_BG_COLOR);
-    } else {
-      g2d.setColor(getBackground());
-    }
     final Rectangle clip = g2d.getClipBounds();
-    g2d.fillRect(clip.x, clip.y, clip.width, clip.height);
+    
+    doPaintBackground(g2d, clip);
 
     final TabInfo selected = getSelectedInfo();
 
@@ -1768,7 +1782,7 @@ public class JBTabsImpl extends JComponent
     g2d.setColor(getBoundsColor());
     g2d.draw(path.getShape());
 
-    g2d.setColor(getTopBlickColor());
+    g2d.setColor(getTopBlockColor());
     g2d.drawLine(topX + path.deltaX(1), topY + path.deltaY(1), bottomX - path.deltaX(getArcSize()), topY + path.deltaY(1));
 
     g2d.setColor(getRightBlockColor());
@@ -1801,7 +1815,7 @@ public class JBTabsImpl extends JComponent
     g2d.setColor(getBoundsColor());
     g2d.draw(path.getShape());
 
-    g2d.setColor(getTopBlickColor());
+    g2d.setColor(getTopBlockColor());
     g2d.drawLine(topX, topY + path.deltaY(1), bottomX - path.deltaX(getCurveArc()), topY + path.deltaY(1));
   }
 
@@ -1817,7 +1831,7 @@ public class JBTabsImpl extends JComponent
     return Color.lightGray;
   }
 
-  protected Color getTopBlickColor() {
+  protected Color getTopBlockColor() {
     return Color.white;
   }
   
@@ -1902,11 +1916,16 @@ public class JBTabsImpl extends JComponent
   protected TableLayout getTableLayout() {
     return myTableLayout;
   }
-  
+
   protected DragHelper getDragHelper() {
     return myDragHelper;
   }
-  
+
+  @Override
+  public Color getBackground() {
+    return UIUtil.isUnderNimbusLookAndFeel() ? UIUtil.getPanelBackground() : super.getBackground();
+  }
+
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
                                  TabLabel label,
@@ -1915,7 +1934,7 @@ public class JBTabsImpl extends JComponent
     int tabIndex = myVisibleInfos.indexOf(label.getInfo());
 
     final int arc = getArcSize();
-    Color topBlickColor = getTopBlickColor();
+    Color topBlockColor = getTopBlockColor();
     Color rightBlockColor = getRightBlockColor();
     Color boundsColor = getBoundsColor();
     Color backgroundColor = getBackground();
@@ -1924,7 +1943,7 @@ public class JBTabsImpl extends JComponent
     if (tabColor != null) {
       backgroundColor = tabColor;
       boundsColor = tabColor.darker();
-      topBlickColor = tabColor.brighter().brighter();
+      topBlockColor = tabColor.brighter().brighter();
       rightBlockColor = tabColor;
     }
 
@@ -1953,7 +1972,7 @@ public class JBTabsImpl extends JComponent
 
     int leftX = firstShowing ? shape.getX() : shape.getX() - shape.deltaX(arc + 1);
     int topY = shape.getY() + shape.deltaY(selectionTabVShift);
-    int rigthX = !lastShowing && leftFromSelection ? shape.getMaxX() + shape.deltaX(arc + 1) : shape.getMaxX();
+    int rightX = !lastShowing && leftFromSelection ? shape.getMaxX() + shape.deltaX(arc + 1) : shape.getMaxX();
     int bottomY = shape.getMaxY() + shape.deltaY(1);
 
     Insets border = myBorder.getEffectiveBorder();
@@ -1971,15 +1990,15 @@ public class JBTabsImpl extends JComponent
 
     boolean rightEdge = false;
     if (border.right > 0 || rightGhostExists || !lastShowing || !Boolean.TRUE.equals(label.getClientProperty(STRETCHED_BY_WIDTH))) {
-      shape.lineTo(rigthX - shape.deltaX(arc), topY);
-      shape.quadTo(rigthX, topY, rigthX, topY + shape.deltaY(arc));
-      shape.lineTo(rigthX, bottomY);
+      shape.lineTo(rightX - shape.deltaX(arc), topY);
+      shape.quadTo(rightX, topY, rightX, topY + shape.deltaY(arc));
+      shape.lineTo(rightX, bottomY);
     } else {
       if (lastShowing) {
-        shape.lineTo(rigthX - shape.deltaX(arc), topY);
-        shape.quadTo(rigthX + 1, topY, rigthX + 1, topY + shape.deltaY(arc));
+        shape.lineTo(rightX - shape.deltaX(arc), topY);
+        shape.quadTo(rightX + 1, topY, rightX + 1, topY + shape.deltaY(arc));
 
-        shape.lineTo(rigthX + 1, bottomY);
+        shape.lineTo(rightX + 1, bottomY);
         rightEdge = true;
       }
     }
@@ -1987,7 +2006,7 @@ public class JBTabsImpl extends JComponent
     if (!isSingleRow()) {
       final TablePassInfo info = myTableLayout.myLastTableLayout;
       if (!info.isInSelectionRow(label.getInfo())) {
-        shape.lineTo(rigthX, bottomY + shape.deltaY(getArcSize()));
+        shape.lineTo(rightX, bottomY + shape.deltaY(getArcSize()));
         shape.lineTo(leftX, bottomY + shape.deltaY(getArcSize()));
         shape.lineTo(leftX, bottomY);
       }
@@ -2015,13 +2034,13 @@ public class JBTabsImpl extends JComponent
     g2d.fill(shape.getShape());
     g2d.setPaint(old);
 
-    g2d.setColor(topBlickColor);
+    g2d.setColor(topBlockColor);
     g2d.draw(
-      shape.transformLine(leftX + shape.deltaX(arc + 1), topY + shape.deltaY(1), rigthX - shape.deltaX(arc - 1), topY + shape.deltaY(1)));
+      shape.transformLine(leftX + shape.deltaX(arc + 1), topY + shape.deltaY(1), rightX - shape.deltaX(arc - 1), topY + shape.deltaY(1)));
 
     if (!rightEdge) {
       g2d.setColor(rightBlockColor);
-      g2d.draw(shape.transformLine(rigthX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rigthX - shape.deltaX(1), bottomY));
+      g2d.draw(shape.transformLine(rightX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rightX - shape.deltaX(1), bottomY));
     }
 
     g2d.setColor(boundsColor);
@@ -2916,7 +2935,7 @@ public class JBTabsImpl extends JComponent
   private static class DefautDecorator implements UiDecorator {
     @NotNull
     public UiDecoration getDecoration() {
-      return new UiDecoration(null, new Insets(1, 4, 1, 5));
+      return new UiDecoration(null, new Insets(0, 4, 0, 5));
     }
   }
 

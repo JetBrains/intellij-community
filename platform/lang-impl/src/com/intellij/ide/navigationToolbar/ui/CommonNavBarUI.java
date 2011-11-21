@@ -15,10 +15,6 @@
  */
 package com.intellij.ide.navigationToolbar.ui;
 
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.util.ui.UIUtil;
-
 import java.awt.*;
 
 /**
@@ -27,14 +23,5 @@ import java.awt.*;
 public class CommonNavBarUI extends AbstractNavBarUI {
   @Override
   public void doPaintWrapperPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible) {
-    if (mainToolbarVisible) {
-      g.setColor(Gray._200);
-      g.fillRect(0, 0, bounds.width, bounds.height);
-    } else {
-      final Color startColor = UIUtil.getControlColor();
-      final Color endColor = ColorUtil.shift(startColor, 7.0d / 8.0d);
-      g.setPaint(new GradientPaint(0, 0, startColor, 0, bounds.height, endColor));
-      g.fillRect(0, 0, bounds.width, bounds.height);
-    }
   }
 }

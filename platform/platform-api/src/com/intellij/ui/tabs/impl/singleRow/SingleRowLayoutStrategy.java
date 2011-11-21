@@ -24,6 +24,7 @@ import java.awt.*;
 
 public abstract class SingleRowLayoutStrategy {
 
+  private static final int MIN_TAB_WIDTH = 120;
   SingleRowLayout myLayout;
   JBTabsImpl myTabs;
 
@@ -98,7 +99,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public int getLengthIncrement(final Dimension labelPrefSize) {
-      return labelPrefSize.width;
+      return myTabs.isEditorTabs() ? labelPrefSize.width < MIN_TAB_WIDTH ? MIN_TAB_WIDTH : labelPrefSize.width : labelPrefSize.width;
     }
 
     public int getMaxPosition(final Rectangle bounds) {
@@ -139,7 +140,13 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
-      final int x = data.position + (data.lastGhostVisible ? data.lastGhost.width : 0);
+      int x;
+      if (myTabs.isEditorTabs()) {
+        x = data.layoutSize.width - data.moreRectAxisSize - 1;
+      }
+      else {
+        x = data.position + (data.lastGhostVisible ? data.lastGhost.width : 0);
+      }
       return new Rectangle(x, data.insets.top + myTabs.getSelectionTabVShift(),
                                             data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height - 1);
     }
@@ -151,7 +158,7 @@ public abstract class SingleRowLayoutStrategy {
         myTabs.layoutComp(data, 0, 0, 0, 0);
       } else {
         final int x = data.vToolbar != null ? data.vToolbar.getPreferredSize().width + 1 : 0;
-        final int y = data.compPosition + myTabs.myHeaderFitSize.height + 1;
+        final int y = data.compPosition + myTabs.myHeaderFitSize.height + (myTabs.isEditorTabs() ? 0 : 1);
 
         if (data.hToolbar != null) {
           myTabs.layoutComp(x, y, data.comp, 0, 0);
@@ -248,7 +255,8 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public int getMaxPosition(final Rectangle bounds) {
-      return (int)bounds.getMaxY();
+      int maxY = (int)bounds.getMaxY();
+      return myTabs.isEditorTabs() ? maxY - 1 : maxY;
     }
 
     public int getFixedFitLength(final SingleRowPassInfo data) {

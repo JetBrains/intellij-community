@@ -29,6 +29,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -37,6 +39,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.SequentialTask;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -139,7 +144,11 @@ public class QuickFixAction extends AnAction {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              applyFix(project, descriptors, ignoredElements);
+              final SequentialModalProgressTask progressTask =
+                new SequentialModalProgressTask(project, getTemplatePresentation().getText(), false);
+              progressTask.setMinIterationTime(200);
+              progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask));
+              ProgressManager.getInstance().run(progressTask);
             }
           });
         }
@@ -274,5 +283,53 @@ public class QuickFixAction extends AnAction {
       if (operationStatus.hasReadonlyFiles()) return false;
     }
     return true;
+  }
+
+  private class PerformFixesTask implements SequentialTask {
+    private final Project myProject;
+    private final CommonProblemDescriptor[] myDescriptors;
+    private final Set<PsiElement> myIgnoredElements;
+    private final SequentialModalProgressTask myTask;
+    private int myCount = 0;
+
+    public PerformFixesTask(Project project,
+                            CommonProblemDescriptor[] descriptors,
+                            Set<PsiElement> elements,
+                            SequentialModalProgressTask task) {
+      myProject = project;
+      myDescriptors = descriptors;
+      myIgnoredElements = elements;
+      myTask = task;
+    }
+
+    @Override
+    public void prepare() {
+    }
+
+    @Override
+    public boolean isDone() {
+      return myCount > myDescriptors.length - 1;
+    }
+
+    @Override
+    public boolean iteration() {
+      final CommonProblemDescriptor descriptor = myDescriptors[myCount++];
+      ProgressIndicator indicator = myTask.getIndicator();
+      if (indicator != null) {
+        indicator.setFraction(((double)myCount) / myDescriptors.length);
+        if (descriptor instanceof ProblemDescriptor) {
+          final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+          if (psiElement != null) {
+            indicator.setText("Processing " + SymbolPresentationUtil.getSymbolPresentableText(psiElement));
+          }
+        }
+      }
+      applyFix(myProject, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
+      return isDone();
+    }
+
+    @Override
+    public void stop() {
+    }
   }
 }

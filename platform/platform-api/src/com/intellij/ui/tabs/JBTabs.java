@@ -22,7 +22,6 @@ import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +29,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 public interface JBTabs extends SwitchProvider {
 
@@ -113,6 +112,8 @@ public interface JBTabs extends SwitchProvider {
   void sortTabs(Comparator<TabInfo> comparator);
 
   void requestFocus();
+  
+  boolean isEditorTabs();
 
   JBTabs setNavigationActiondBinding(String prevActiobId, String nextActionId);
   JBTabs setNavigationActionsEnabled(boolean enabled);

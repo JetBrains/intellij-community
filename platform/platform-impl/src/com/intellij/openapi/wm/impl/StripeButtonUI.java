@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.ui.Gray;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -106,26 +105,36 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     final Color background = button.getBackground();
 
-    boolean toFill = true;
-    Color toBorder = model.isRollover() ? Color.gray : null;
-
-    if (model.isArmed() && model.isPressed() || model.isSelected()) {
-
-      if (toFill) {
-        g2.setColor(Gray._210);
-        g2.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 7, 5, 5);
-      }
-
-      toBorder = toBorder != null ? toBorder.darker() : Color.gray;
+    boolean toFill = model.isArmed() && model.isPressed() || model.isSelected();
+    if (toFill) {
+      g2.setColor(new Color(0, 0, 0, 30));
+      g2.fillRect(0, 0, button.getWidth(), button.getHeight());
     }
 
-    if (toBorder != null) {
-      g.setColor(toBorder);
-      g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 7, 5, 5);
-    }
+    g.setColor(new Color(0, 0, 0, 90));
+    StripeButton stripeButton = (StripeButton)c;
 
     AffineTransform tr=null;
     if(ToolWindowAnchor.RIGHT==anchor||ToolWindowAnchor.LEFT==anchor){
+      boolean oppositeSide = stripeButton.isOppositeSide();
+      if (oppositeSide) {
+        g.drawLine(0, 0, button.getWidth() - 1, 0);
+      } else {
+        g.drawLine(0, button.getHeight() - 1, button.getWidth() - 1, button.getHeight() - 1);
+      }
+      
+      if (toFill) {
+        if (anchor == ToolWindowAnchor.LEFT) {
+          g2.setColor(new Color(0, 0, 0, 30));
+          g2.drawRect(0, stripeButton.isFirst() || oppositeSide ? 1 : 0, button.getWidth() - 2,
+                      button.getHeight() - (oppositeSide ? 2 : stripeButton.isFirst() ? 3 : 2));
+        } else {
+          g2.setColor(new Color(0, 0, 0, 30));
+          g2.drawRect(1, stripeButton.isFirst() || oppositeSide ? 1 : 0, button.getWidth() - 2,
+                      button.getHeight() - (oppositeSide ? 2 : stripeButton.isFirst() ? 3 : 2));
+        }
+      }
+      
       tr=g2.getTransform();
       if(ToolWindowAnchor.RIGHT==anchor){
         if(icon != null){ // do not rotate icon
@@ -142,6 +151,25 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       }
     }
     else{
+      boolean oppositeSide = stripeButton.isOppositeSide();
+      if (oppositeSide) {
+        g.drawLine(0, 0, 0, button.getHeight() - 1);
+        if (stripeButton.isLast()) {
+          g.drawLine(button.getWidth() - 1, 0, button.getWidth() - 1, button.getHeight() - 1);
+        }
+      } else {
+        g.drawLine(button.getWidth() - 1, 0, button.getWidth() - 1, button.getHeight() - 1);
+        if (stripeButton.isFirst()) {
+          g.drawLine(0, 0, 0, button.getHeight() - 1);
+        }
+      }
+      
+      if (toFill) {
+        g2.setColor(new Color(0, 0, 0, 30));
+        g2.drawRect(oppositeSide || stripeButton.isFirst() ? 1 : 0, 1,
+                    button.getWidth() - (stripeButton.isLast() || stripeButton.isFirst() ? 3 : 2), button.getHeight() - 2);
+      }
+
       if(icon!=null){
         icon.paintIcon(c,g2,ourIconRect.x,ourIconRect.y);
       }

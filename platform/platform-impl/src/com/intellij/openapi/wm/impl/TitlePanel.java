@@ -42,7 +42,7 @@ public class TitlePanel extends JPanel {
 
   private boolean myActive = true;
 
-  private static final int STRUT = 22;
+  public static final int STRUT = 22;
 
   TitlePanel() {
     super(new BorderLayout());

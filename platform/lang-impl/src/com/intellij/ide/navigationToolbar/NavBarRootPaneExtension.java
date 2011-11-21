@@ -75,7 +75,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !myNavToolbarGroupExist;
   }
 
-  private static boolean runToolbarExists() {
+  public static boolean runToolbarExists() {
     final AnAction navBarToolBar = ActionManager.getInstance().getAction("NavBarToolBar");
     return navBarToolBar instanceof DefaultActionGroup && ((DefaultActionGroup)navBarToolBar).getChildrenCount() > 0;
   }
@@ -101,6 +101,16 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return myWrapperPanel;
   }
 
+  private static void alignVertically(Container container) {
+    if (container.getComponentCount() == 1) {
+      Component c = container.getComponent(0);
+      Insets insets = container.getInsets();
+      Dimension d = c.getPreferredSize();
+      Rectangle r = container.getBounds();
+      c.setBounds(insets.left, (r.height - d.height) / 2, r.width - insets.left - insets.right, d.height);
+    }
+  }
+
   private void toggleRunPanel(final boolean show) {
     if (show && myRunPanel == null && runToolbarExists()) {
       final ActionManager manager = ActionManager.getInstance();
@@ -111,7 +121,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR, group, true);
         final JComponent component = actionToolbar.getComponent();
         component.setOpaque(false);
-        myRunPanel = new JPanel(new BorderLayout());
+        myRunPanel = new JPanel(new BorderLayout()) {
+          @Override
+          public void doLayout() {
+            alignVertically(this);
+          }
+        };
         myRunPanel.setOpaque(false);
         myRunPanel.add(component, BorderLayout.CENTER);
 
@@ -177,11 +192,11 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myScrollPane = ScrollPaneFactory.createScrollPane(myNavigationBar);
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         myScrollPane.setHorizontalScrollBar(null);
-        myScrollPane.setBorder(null);
+        myScrollPane.setBorder(new NavBarBorder(true, 0));
         myScrollPane.setOpaque(false);
         myScrollPane.getViewport().setOpaque(false);
         panel.get().setOpaque(true);
-        panel.get().setBorder(new NavBarBorder(true, 0));
+        //panel.get().setBorder();
         myNavigationBar.setBorder(null);
         panel.get().add(myScrollPane, BorderLayout.CENTER);
       }
@@ -199,7 +214,18 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        NavBarUIManager.getUI().doPaintNavBarPanel((Graphics2D)g, getBounds(), isMainToolbarVisible(), isUndocked());
+        final Component navBar = myScrollPane;
+        Insets insets = getInsets();
+        Rectangle r = navBar.getBounds();
+
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.translate(r.x, r.y);
+
+        Rectangle rectangle =
+          new Rectangle(0, 0, r.width + insets.left + insets.right, r.height + insets.top + insets.bottom);
+        NavBarUIManager.getUI().doPaintNavBarPanel(g2d, rectangle, isMainToolbarVisible(), isUndocked());
+        
+        g2d.dispose();
       }
 
       @Override
@@ -213,22 +239,23 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
         final Dimension preferredSize = navBar.getPreferredSize();
 
-        navBar.setBounds(x, insets.top + ((r.height - preferredSize.height - insets.top - insets.bottom) / 2),
+        navBar.setBounds(x, (r.height - preferredSize.height) / 2,
                          r.width - insets.left - insets.right, preferredSize.height);
       }
     });
 
     updater.run();
-    final JPanel main = new JPanel(new BorderLayout());
-    main.setOpaque(false);
-    main.add(panel.get(), BorderLayout.NORTH);
-    return main;
+    return panel.get();
   }
 
   public void uiSettingsChanged(final UISettings settings) {
     if (myNavigationBar != null) {
       myNavigationBar.updateState(settings.SHOW_NAVIGATION_BAR);
       myWrapperPanel.setVisible(settings.SHOW_NAVIGATION_BAR);
+      
+      myWrapperPanel.revalidate();
+      myNavigationBar.revalidate();
+      myWrapperPanel.repaint();
 
       if (myWrapperPanel.getComponentCount() > 0) {
         final Component c = myWrapperPanel.getComponent(0);

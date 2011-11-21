@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.checkout;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -74,7 +75,7 @@ public class CvsCheckoutProvider implements CheckoutProvider {
         // shouldn't hold write action when calling this (IDEADEV-20086)
         for (CvsElement element : selectedElements) {
           final File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
-          listener.directoryCheckedOut(path);
+          listener.directoryCheckedOut(path, CvsVcs2.getKey());
         }
         listener.checkoutCompleted();
       }

@@ -363,13 +363,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     }
   }
 
-  private static void moveContentAndRemoveDir(Project project, @NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
-    for (VirtualFile child : from.getChildren()) {
-      child.move(project, to);
-    }
-    from.delete(project);
-  }
-
   private void createManifestFileAndAntFiles(Project project, VirtualFile contentRoot) {
     VirtualFile existingManifestFile = contentRoot.findChild(FN_ANDROID_MANIFEST_XML);
     if (existingManifestFile != null) {

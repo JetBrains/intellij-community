@@ -81,7 +81,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
             @Override
             public void run() {
               if (listener != null) {
-                listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
+                listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()), HgVcs.getKey());
                 listener.checkoutCompleted();
               }
             }

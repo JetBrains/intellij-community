@@ -47,7 +47,7 @@ import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.MacJBTabs;
+import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -82,8 +82,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     myProject = project;
     myDockManager = dockManager;
     final ActionManager actionManager = ActionManager.getInstance();
-    myTabs = new MacJBTabs(project, actionManager, IdeFocusManager.getInstance(project), this);
-    ((JBTabsImpl)myTabs).putClientProperty(JBTabsImpl.EDITOR_TABS, Boolean.TRUE);
+    myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this); 
+    ((JBTabsImpl)myTabs).setEditorTabs(true);
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
@@ -92,11 +92,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       .setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
       @NotNull
       public UiDecoration getDecoration() {
-        if (((MacJBTabs)myTabs).isNewTabsActive()) {
-          return new UiDecoration(null /*UIUtil.getLabelFont().deriveFont(11f)*/, new Insets(2, 9, 1, 9));
-        } else {
-          return new UiDecoration(null, new Insets(1, 6, 1, 6));
-        }
+        return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 10, TabsUtil.TAB_VERTICAL_PADDING, 10));
       }
     }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
@@ -387,8 +383,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setIcon(myTabs instanceof MacJBTabs && ((MacJBTabs)myTabs).isNewTabsActive()? myNewIcon : myIcon);
-      e.getPresentation().setHoveredIcon(myTabs instanceof MacJBTabs && ((MacJBTabs)myTabs).isNewTabsActive()? myNewHoveredIcon : myHoveredIcon);
+      e.getPresentation().setIcon(myTabs instanceof JBEditorTabs && ((JBEditorTabs)myTabs).isNewTabsActive()? myNewIcon : myIcon);
+      e.getPresentation().setHoveredIcon(myTabs instanceof JBEditorTabs && ((JBEditorTabs)myTabs).isNewTabsActive()? myNewHoveredIcon : myHoveredIcon);
       e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
     }
 

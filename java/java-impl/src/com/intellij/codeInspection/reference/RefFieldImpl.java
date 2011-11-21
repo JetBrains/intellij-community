@@ -56,7 +56,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (forWriting && expressionFrom != null) {
       PsiClassInitializer initializer = PsiTreeUtil.getParentOfType(expressionFrom, PsiClassInitializer.class);
       if (initializer != null) {
-        if (initializer.getParent() instanceof PsiClass && psiFrom == initializer.getParent()) {
+        if (initializer.getParent() instanceof PsiClass && psiFrom == initializer.getParent() && !expressionFrom.isQualified()) {
           referencedFromClassInitializer = true;
         }
       }

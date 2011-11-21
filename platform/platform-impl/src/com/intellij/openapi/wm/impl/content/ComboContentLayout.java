@@ -21,7 +21,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 
 import java.awt.*;
-import java.awt.geom.GeneralPath;
 
 class ComboContentLayout extends ContentLayout {
 
@@ -77,7 +76,18 @@ class ComboContentLayout extends ContentLayout {
     final GraphicsConfig c = new GraphicsConfig(g);
     c.setAntialiasing(true);
 
-    fillTabShape(g2d, getShapeFor(myComboLabel), true, myComboLabel.getBounds());
+    Rectangle r = myComboLabel.getBounds();
+
+    //g2d.setPaint(new GradientPaint(r.x, r.y, new SameColor(200), r.x, r.y + r.height, new SameColor(190)));
+    g2d.setPaint(new GradientPaint(r.x, r.y, new Color(0, 0, 0, 10), r.x, r.y + r.height, new Color(0, 0, 0, 30)));
+    g2d.fillRect(r.x, r.y, r.width, r.height);
+
+    g2d.setColor(new Color(0, 0, 0, 60));
+    g2d.drawLine(r.x, r.y, r.x, r.y + r.height);
+    g2d.drawLine(r.x + r.width - 1, r.y, r.x + r.width - 1, r.y + r.height);
+    
+    g2d.setColor(new Color(255, 255, 255, 80));
+    g2d.drawRect(r.x + 1, r.y, r.width - 3, r.height - 1);
 
     c.restore();
   }
@@ -90,42 +100,8 @@ class ComboContentLayout extends ContentLayout {
     c.setAntialiasing(true);
 
     final Graphics2D g2d = (Graphics2D)g;
-
-    final Color edges = myUi.myWindow.isActive() ? TAB_BORDER_ACTIVE_WINDOW : TAB_BORDER_PASSIVE_WINDOW;
-    g2d.setColor(edges);
-
-    Shape shape = getShapeFor(myComboLabel);
-    g2d.draw(shape);
-
     c.restore();
   }
-
-  private Shape getShapeFor(ContentComboLabel label) {
-    final Rectangle bounds = label.getBounds();
-
-    if (bounds.width <= 0 || bounds.height <= 0) return new GeneralPath();
-
-    int height = bounds.height - 1;
-
-    bounds.width += 1;
-
-    int arc = TAB_ARC;
-
-    final GeneralPath path = new GeneralPath();
-    path.moveTo(bounds.x, bounds.y + height - arc);
-    path.lineTo(bounds.x, bounds.y + arc);
-    path.quadTo(bounds.x, bounds.y, bounds.x + arc, bounds.y);
-    path.lineTo(bounds.x + bounds.width - arc, bounds.y);
-    path.quadTo(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + arc);
-    path.lineTo(bounds.x + bounds.width, bounds.y + height - arc);
-    path.quadTo(bounds.x + bounds.width, bounds.y + height, bounds.x + bounds.width - arc, bounds.y + height);
-    path.lineTo(bounds.x + arc, bounds.y + height);
-    path.quadTo(bounds.x, bounds.y + height, bounds.x, bounds.y + height - arc);
-    path.closePath();
-
-    return path;
-  }
-
 
   @Override
   public void update() {

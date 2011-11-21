@@ -38,15 +38,15 @@ public class NewAndroidComponentAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    Module module = e.getData(DataKeys.MODULE);
-    PsiElement file = e.getData(DataKeys.PSI_ELEMENT);
+    Module module = e.getData(LangDataKeys.MODULE);
+    PsiElement file = e.getData(LangDataKeys.PSI_ELEMENT);
     boolean visible = false;
     if (module != null && AndroidFacet.getInstance(module) != null) {
       if (file instanceof PsiDirectory) {
         PsiDirectory dir = (PsiDirectory)file;
         JavaDirectoryService dirService = JavaDirectoryService.getInstance();
         PsiPackage aPackage = dirService.getPackage(dir);
-        if (aPackage != null && AndroidUtils.contains2Ids(aPackage.getQualifiedName())) {
+        if (aPackage != null) {
           visible = true;
         }
       }

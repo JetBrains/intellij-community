@@ -34,7 +34,7 @@ public interface CheckoutProvider {
   @NonNls String getVcsName();
 
   interface Listener {
-    void directoryCheckedOut(File directory);
+    void directoryCheckedOut(File directory, VcsKey vcs);
     void checkoutCompleted();
   }
 }

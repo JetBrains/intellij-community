@@ -629,6 +629,7 @@ public class FileUtil {
     performCopy(fromFile, toFile, false);
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     FileOutputStream fos;
     try {
@@ -668,7 +669,17 @@ public class FileUtil {
     }
 
     if (syncTimestamp) {
-      toFile.setLastModified(fromFile.lastModified());
+      final long timeStamp = fromFile.lastModified();
+      if (!toFile.setLastModified(timeStamp)) {
+        LOG.warn("Unable to set timestamp " + timeStamp + " to " + toFile);
+      }
+    }
+
+    if (SystemInfo.isUnix && fromFile.canExecute()) {
+      final int permissions = FileSystemUtil.getPermissions(fromFile);
+      if (permissions != -1) {
+        FileSystemUtil.setPermissions(toFile, permissions);
+      }
     }
   }
 
@@ -705,7 +716,9 @@ public class FileUtil {
   }
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, @Nullable final FileFilter filter) throws IOException {
-    toDir.mkdirs();
+    if (!toDir.exists() && !toDir.mkdirs()) {
+      throw new IOException(CommonBundle.message("exception.directory.can.not.create", toDir.getPath()));
+    }
     if (isAncestor(fromDir, toDir, true)) {
       LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
       return;

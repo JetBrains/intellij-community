@@ -31,8 +31,9 @@ public class WatermarkIcon implements Icon {
   }
 
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
-    myIcon.paintIcon(c, g, x, y);
+    Graphics graphics = g.create();
+    ((Graphics2D)graphics).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
+    myIcon.paintIcon(c, graphics, x, y);
   }
 
   public int getIconWidth() {

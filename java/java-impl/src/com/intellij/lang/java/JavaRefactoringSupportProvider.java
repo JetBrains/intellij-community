@@ -128,8 +128,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
     if (!(elementToRename instanceof PsiLocalVariable) &&
-        !(elementToRename instanceof PsiParameter) &&
-        !(elementToRename instanceof PsiTypeParameter)) {
+        !(elementToRename instanceof PsiParameter)) {
       return false;
     }
     SearchScope useScope = PsiSearchHelper.SERVICE.getInstance(elementToRename.getProject()).getUseScope(elementToRename);

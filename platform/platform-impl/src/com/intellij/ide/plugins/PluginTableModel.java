@@ -132,7 +132,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
     final ArrayList<IdeaPluginDescriptor> desc = new ArrayList<IdeaPluginDescriptor>();
 
-    final List<IdeaPluginDescriptor> toProcess = new ArrayList<IdeaPluginDescriptor>(view);
+    final List<IdeaPluginDescriptor> toProcess = toProcess();
     toProcess.addAll(filtered);
     filtered.clear();
     for (IdeaPluginDescriptor descriptor : toProcess) {
@@ -145,6 +145,10 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
       }
     }
     filter(desc);
+  }
+
+  protected ArrayList<IdeaPluginDescriptor> toProcess() {
+    return new ArrayList<IdeaPluginDescriptor>(view);
   }
 
   public abstract int getNameColumn();
