@@ -11,6 +11,7 @@ import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -75,6 +76,18 @@ public class IncProjectBuilder {
     }
     finally {
       context.getBuildDataManager().close();
+      cleanupJavacNameTable();
+    }
+  }
+
+  private static void cleanupJavacNameTable() {
+    try {
+      final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
+      freelistField.setAccessible(true);
+      freelistField.set(null, com.sun.tools.javac.util.List.nil());
+    }
+    catch (Throwable e) {
+      e.printStackTrace();
     }
   }
 
