@@ -780,7 +780,7 @@ public class GitLogUI implements Disposable {
     wr2.add(treeSettings.getLabel(), BorderLayout.EAST);
     myEqualToHeadr.add(wr2, BorderLayout.CENTER);
     treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(UIUtil.getLabelBackground()));
-    treeSettings.getLabel().addMouseListener(new MouseAdapter() {
+    final MouseAdapter mouseAdapter = new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
         treeSettings.execute(e);
@@ -797,7 +797,9 @@ public class GitLogUI implements Disposable {
         treeSettings.getLabel().setBackground(UIUtil.getLabelBackground().darker());
         treeSettings.getLabel().setBorder(BorderFactory.createLineBorder(Color.black));
       }
-    });
+    };
+    myEqualToHeadr.addMouseListener(mouseAdapter);
+    treeSettings.getLabel().addMouseListener(mouseAdapter);
   }
 
   private void createContextMenu() {

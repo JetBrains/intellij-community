@@ -53,4 +53,7 @@ public interface AbstractDomChildrenDescription extends AnnotatedElement, PomTar
 
   @Nullable
   PsiElement getDeclaration(Project project);
+
+  @Nullable
+  DomElement getDomDeclaration();
 }

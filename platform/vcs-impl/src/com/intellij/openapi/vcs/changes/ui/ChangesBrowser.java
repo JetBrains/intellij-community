@@ -181,6 +181,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
   }
 
+  public void select(List<Change> changes) {
+    myViewer.select(changes);
+  }
+
   private class ToggleChangeAction extends CheckboxAction {
     private final Change myChange;
 

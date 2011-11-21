@@ -383,10 +383,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final GroovyResolveResult result = advancedResolve();
     if (result.isInvokedOnProperty()) {
-      newElementName = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
-      if (newElementName == null) throw new IncorrectOperationException("foo");
+      final String name = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
+      if (name != null) {
+        newElementName = name;
+      }
     }
-    
+
     return handleElementRenameSimple(newElementName);
   }
 
@@ -657,10 +659,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return resolveMethodOrProperty(false, null, genericsMatter);
       case TYPE_OR_PROPERTY:
         return resolveTypeOrProperty();
+      case METHOD_OR_PROPERTY_OR_TYPE:
+        GroovyResolveResult[] results = resolveMethodOrProperty(false, null, genericsMatter);
+        if (results.length == 0) results = resolveTypeOrProperty();
+        return results;
       default:
         return GroovyResolveResult.EMPTY_ARRAY;
-    }
-  }
+    }  }
 
   private PsiType getThisType() {
     GrExpression qualifier = getQualifierExpression();
@@ -672,10 +677,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return TypesUtil.getJavaLangObject(this);
   }
 
-
   enum Kind {
     TYPE_OR_PROPERTY,
-    METHOD_OR_PROPERTY
+    METHOD_OR_PROPERTY,
+    METHOD_OR_PROPERTY_OR_TYPE
   }
 
   Kind getKind() {
@@ -683,7 +688,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     PsiElement parent = getParent();
     if (parent instanceof GrMethodCallExpression || parent instanceof GrApplicationStatement) {
-      return Kind.METHOD_OR_PROPERTY;
+      return Kind.METHOD_OR_PROPERTY_OR_TYPE;
     }
 
     return Kind.TYPE_OR_PROPERTY;

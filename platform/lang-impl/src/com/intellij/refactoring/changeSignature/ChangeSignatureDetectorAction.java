@@ -38,7 +38,8 @@ public class ChangeSignatureDetectorAction extends RefactoringBaseIntention {
   @NotNull
   @Override
   public String getText() {
-    return myAcceptText;
+    final String text = myAcceptText;
+    return text != null ? text : CHANGE_SIGNATURE;
   }
 
   @NotNull
