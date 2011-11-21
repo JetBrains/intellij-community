@@ -28,11 +28,14 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -98,6 +101,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JLabel myNativeLibsFolderLabel;
   private JLabel myAidlGenPathLabel;
   private JLabel myRGenPathLabel;
+  private TextFieldWithBrowseButton myCustomDebugKeystoreField;
+  private JBLabel myCustomKeystoreLabel;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -110,6 +115,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myNativeLibsFolderLabel.setLabelFor(myNativeLibsFolder);
     myAidlGenPathLabel.setLabelFor(myAidlGenPathField);
     myRGenPathLabel.setLabelFor(myRGenPathField);
+    myCustomKeystoreLabel.setLabelFor(myCustomDebugKeystoreField);
 
     AndroidFacet facet = (AndroidFacet)myContext.getFacet();
 
@@ -117,18 +123,24 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myAidlGenPathField.getButton().addActionListener(new MyGenSourceFieldListener(myAidlGenPathField, facet.getAidlGenSourceRootPath()));
 
     Module module = myContext.getModule();
-    myManifestFileField.getButton().addActionListener(new MyFolderFieldListener(myManifestFileField,
-                                                                                AndroidRootUtil.getManifestFile(module), true));
+    
+    myManifestFileField.getButton().addActionListener(
+      new MyFolderFieldListener(myManifestFileField, AndroidRootUtil.getManifestFile(module), true, new MyManifestFilter()));
+    
     myResFolderField.getButton().addActionListener(new MyFolderFieldListener(myResFolderField,
-                                                                             AndroidRootUtil.getResourceDir(module), false));
+                                                                             AndroidRootUtil.getResourceDir(module), false, null));
+    
     myAssetsFolderField.getButton().addActionListener(new MyFolderFieldListener(myAssetsFolderField,
-                                                                                AndroidRootUtil.getAssetsDir(module), false));
+                                                                                AndroidRootUtil.getAssetsDir(module), false, null));
+    
     myNativeLibsFolder.getButton().addActionListener(new MyFolderFieldListener(myNativeLibsFolder,
-                                                                               AndroidRootUtil.getLibsDir(module), false));
+                                                                               AndroidRootUtil.getLibsDir(module), false, null));
 
     myCustomAptSourceDirField.getButton().addActionListener(new MyFolderFieldListener(myCustomAptSourceDirField,
                                                                                       AndroidAptCompiler.getCustomResourceDirForApt(facet),
-                                                                                      false));
+                                                                                      false, null));
+    
+    myCustomDebugKeystoreField.getButton().addActionListener(new MyFolderFieldListener(myCustomDebugKeystoreField, null, true, null));
 
     myResetPathsButton.addActionListener(new ActionListener() {
       @Override
@@ -183,7 +195,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         for (int i = 0; i < model.getSize(); i++) {
           currentItems.add(model.getElementAt(i));
         }
-        VirtualFile[] files = chooserDirsUnderModule(null, false, true);
+        VirtualFile[] files = chooserDirsUnderModule(null, false, true, null);
         for (VirtualFile file : files) {
           String newItem = FileUtil.toSystemDependentName(file.getPath());
           if (!currentItems.contains(newItem)) {
@@ -312,6 +324,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (myGenerateUnsignedApk.isSelected() != myConfiguration.GENERATE_UNSIGNED_APK) {
       return true;
     }
+    if (!myConfiguration.CUSTOM_DEBUG_KEYSTORE_PATH.equals(getSelectedCustomKeystorePath())) {
+      return true;
+    }
 
     List<String> currentResOverlayFolders = new ArrayList<String>();
     for (String folder : myConfiguration.RES_OVERLAY_FOLDERS) {
@@ -331,6 +346,12 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     Collections.sort(newResFolders);
 
     return !currentResOverlayFolders.equals(newResFolders);
+  }
+
+  @NotNull
+  private String getSelectedCustomKeystorePath() {
+    final String path = myCustomDebugKeystoreField.getText().trim();
+    return path.length() > 0 ? VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path)) : "";
   }
 
   private boolean checkRelativePath(String relativePathFromConfig, String absPathFromTextField) {
@@ -424,6 +445,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (myConfiguration.LIBRARY_PROJECT != myIsLibraryProjectCheckbox.isSelected()) {
       runApt = true;
     }
+    
+    myConfiguration.CUSTOM_DEBUG_KEYSTORE_PATH = getSelectedCustomKeystorePath();
 
     myConfiguration.LIBRARY_PROJECT = myIsLibraryProjectCheckbox.isSelected();
 
@@ -537,6 +560,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     String libsAbsPath = libsPath.length() > 0 ? toAbsolutePath(libsPath) : "";
     myNativeLibsFolder.setText(libsAbsPath != null ? libsAbsPath : "");
 
+    myCustomDebugKeystoreField.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(configuration.CUSTOM_DEBUG_KEYSTORE_PATH)));
+
     myGenerateRJavaWhenChanged.setSelected(configuration.REGENERATE_R_JAVA);
     myGenerateIdlWhenChanged.setSelected(configuration.REGENERATE_JAVA_BY_AIDL);
 
@@ -646,12 +671,17 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private class MyFolderFieldListener implements ActionListener {
     private final TextFieldWithBrowseButton myTextField;
     private final VirtualFile myDefaultDir;
-    private final boolean myManifest;
+    private final boolean myChooseFile;
+    private final Condition<VirtualFile> myFilter;
 
-    public MyFolderFieldListener(TextFieldWithBrowseButton textField, VirtualFile defaultDir, boolean manifest) {
+    public MyFolderFieldListener(TextFieldWithBrowseButton textField,
+                                 VirtualFile defaultDir,
+                                 boolean chooseFile,
+                                 @Nullable Condition<VirtualFile> filter) {
       myTextField = textField;
       myDefaultDir = defaultDir;
-      myManifest = manifest;
+      myChooseFile = chooseFile;
+      myFilter = filter;
     }
 
     @Override
@@ -665,7 +695,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       if (path != null) {
         initialFile = LocalFileSystem.getInstance().findFileByPath(path);
       }
-      VirtualFile[] files = chooserDirsUnderModule(initialFile, myManifest, false);
+      VirtualFile[] files = chooserDirsUnderModule(initialFile, myChooseFile, false, myFilter);
       if (files.length > 0) {
         assert files.length == 1;
         myTextField.setText(FileUtil.toSystemDependentName(files[0].getPath()));
@@ -673,7 +703,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
   }
 
-  private VirtualFile[] chooserDirsUnderModule(@Nullable VirtualFile initialFile, final boolean chooseManifest, boolean chooseMultiple) {
+  private VirtualFile[] chooserDirsUnderModule(@Nullable VirtualFile initialFile,
+                                               final boolean chooseFile,
+                                               boolean chooseMultiple,
+                                               @Nullable final Condition<VirtualFile> filter) {
     if (initialFile == null) {
       initialFile = myContext.getModule().getModuleFile();
     }
@@ -684,14 +717,27 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       }
     }
     return FileChooser
-      .chooseFiles(myContentPanel, new FileChooserDescriptor(chooseManifest, !chooseManifest, false, false, false, chooseMultiple) {
+      .chooseFiles(myContentPanel, new FileChooserDescriptor(chooseFile, !chooseFile, false, false, false, chooseMultiple) {
         @Override
         public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
           if (!super.isFileVisible(file, showHiddenFiles)) {
             return false;
           }
-          return file.isDirectory() || !chooseManifest || SdkConstants.FN_ANDROID_MANIFEST_XML.equals(file.getName());
+          
+          if (!file.isDirectory() && !chooseFile) {
+            return false;
+          }
+          
+          return filter == null || filter.value(file);
         }
       }, initialFile);
+  }
+  
+  private static class MyManifestFilter implements Condition<VirtualFile> {
+
+    @Override
+    public boolean value(VirtualFile file) {
+      return file.isDirectory() || file.getName().equals(SdkConstants.FN_ANDROID_MANIFEST_XML);
+    }
   }
 }
