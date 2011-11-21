@@ -1,5 +1,6 @@
 package org.jetbrains.jps.server;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.ether.dependencyView.Mappings;
@@ -16,9 +17,11 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
-import java.util.zip.DeflaterInputStream;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,6 +29,7 @@ import java.util.zip.DeflaterInputStream;
  * @noinspection UnusedDeclaration
  */
 class ServerState {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.server.ServerState");
   public static final String IDEA_PROJECT_DIRNAME = ".idea";
 
   private final Map<String, Project> myProjects = new HashMap<String, Project>();
@@ -116,6 +120,18 @@ class ServerState {
       if (mappings != null) {
         mappings.close();
       }
+      clearZipIndexCache();
+    }
+  }
+
+  private static void clearZipIndexCache() {
+    try {
+      final Class<?> indexClass = Class.forName("com.sun.tools.javac.zip.ZipFileIndex");
+      final Method clearMethod = indexClass.getMethod("clearCache");
+      clearMethod.invoke(null);
+    }
+    catch (Throwable ex) {
+      LOG.info(ex);
     }
   }
 

@@ -329,11 +329,11 @@ public class JavaBuilder extends Builder{
       final Collection<String> srcPaths;
       if (compilingTests) {
         outputPath = module.getTestOutputPath();
-        srcPaths = (Collection<String>)module.getTestRoots();
+        srcPaths = module.getTestRoots();
       }
       else {
         outputPath = module.getOutputPath();
-        srcPaths = (Collection<String>)module.getSourceRoots();
+        srcPaths = module.getSourceRoots();
       }
       final Set<File> roots = new HashSet<File>();
       for (String path : srcPaths) {
@@ -523,6 +523,7 @@ public class JavaBuilder extends Builder{
 
     public void outputLineAvailable(String line) {
       if (line != null) {
+        //System.err.println(line);
         if (line.startsWith("[") && line.endsWith("]")) {
           final String message = line.substring(1, line.length() - 1);
           if (message.startsWith("parsing")) {
@@ -585,7 +586,7 @@ public class JavaBuilder extends Builder{
     private final Set<File> mySuccessfullyCompiled = new HashSet<File>();
     private final Set<File> myProblematic = new HashSet<File>();
     private final List<OutputFileObject> myFileObjects = new ArrayList<OutputFileObject>();
-    private final Map<String, OutputFileObject.Content> myCompiledClasses = new HashMap<String, OutputFileObject.Content>();
+    private final Map<String, OutputFileObject> myCompiledClasses = new HashMap<String, OutputFileObject>();
 
     public OutputFilesSink(CompileContext context) {
       myContext = context;
@@ -597,7 +598,7 @@ public class JavaBuilder extends Builder{
         final OutputFileObject.Content content = fileObject.getContent();
         if (content != null) {
           synchronized (myCompiledClasses) {
-            myCompiledClasses.put(className, content);
+            myCompiledClasses.put(className, fileObject);
           }
         }
       }
@@ -610,7 +611,8 @@ public class JavaBuilder extends Builder{
     @Nullable
     public OutputFileObject.Content lookupClassBytes(String className) {
       synchronized (myCompiledClasses) {
-        return myCompiledClasses.get(className);
+        final OutputFileObject object = myCompiledClasses.get(className);
+        return object != null? object.getContent() : null;
       }
     }
 
@@ -631,6 +633,7 @@ public class JavaBuilder extends Builder{
       }
       finally {
         myFileObjects.clear();
+        myCompiledClasses.clear();
       }
     }
 

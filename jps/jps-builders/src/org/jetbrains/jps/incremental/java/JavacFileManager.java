@@ -155,12 +155,16 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return getStdManager().getJavaFileObjectsFromFiles(files);
   }
 
-  public void cleanupResources() {
+  @Override
+  public void close() {
     try {
-      fileManager.close();
+      super.close();
     }
     catch (IOException e) {
-      e.printStackTrace(); // todo
+      throw new RuntimeException(e);
+    }
+    finally {
+      myOutputsMap = Collections.emptyMap();
     }
   }
 
