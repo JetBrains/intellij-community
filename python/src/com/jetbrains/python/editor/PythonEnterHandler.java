@@ -101,8 +101,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         return Result.Continue;
       }
       if ("\\".equals(doc.getText(TextRange.create(offset - 1, offset)))) return Result.Continue;
+      String pref = element.getText().substring(0, prefixLength);
       String quote = element.getText().substring(prefixLength, prefixLength + 1);
-      doc.insertString(offset, quote + " \\" + quote);
+      doc.insertString(offset, quote + " \\" + pref + quote);
       caretOffset.set(caretOffset.get() + 3);
       return Result.Continue;
     }
