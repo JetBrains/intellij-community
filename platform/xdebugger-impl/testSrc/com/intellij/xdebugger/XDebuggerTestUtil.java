@@ -166,29 +166,6 @@ public class XDebuggerTestUtil {
     assertVariableValue(findVar(vars, name), name, value);
   }
 
-<<<<<<< HEAD
-  public static void assertVariableValueMatches(Collection<XValue> vars,
-                                                @Nullable String name,
-                                                @Nullable String valuePattern) throws InterruptedException {
-    assertVariableValueMatches(findVar(vars, name), name, valuePattern);
-  }
-
-  public static void assertVariableValueMatches(XValue var,
-                                                @Nullable String name,
-                                                @Nullable String valuePattern) throws InterruptedException {
-    assertVariableValueMatches(var, name, null, valuePattern);
-  }
-
-  public static void assertVariableValueMatches(XValue var,
-                                                @Nullable String name,
-                                                @Nullable String type,
-                                                @Nullable String valuePattern) throws InterruptedException {
-    XTestValueNode node = computePresentation(var);
-    if (name != null) Assert.assertEquals(name, node.myName);
-    if (type != null) Assert.assertEquals(type, node.myType);
-    if (valuePattern != null)
-      Assert.assertTrue("Expected value" + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
-=======
   public static void assertVariableValueMatches(Collection<XValue> vars, @Nullable String name, @Language("RegExp") String valuePattern)
     throws InterruptedException {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
@@ -219,7 +196,6 @@ public class XDebuggerTestUtil {
     if (typePattern != null) {
       Assert.assertTrue("Expected type" + typePattern + " Actual type: " + node.myType, node.myType.matches(typePattern));
     }
->>>>>>> Debugger: tests
   }
 
   public static void assertVariableFullValue(XValue var, @Nullable String value) throws InterruptedException {
