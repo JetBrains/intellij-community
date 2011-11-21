@@ -83,6 +83,9 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
     doTest();
   }
 
+  public void testBeforeExistNonAnnotated() throws Exception {
+    doTest();
+  }
 
   private void doTest() throws Exception {
     configureByFile("/refactoring/introduceField/before" + getTestName(false) + ".java");

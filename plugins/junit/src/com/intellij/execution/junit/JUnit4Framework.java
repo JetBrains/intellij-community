@@ -15,9 +15,14 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.testIntegration.JavaTestFramework;
@@ -87,6 +92,18 @@ public class JUnit4Framework extends JavaTestFramework {
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     method = factory.createMethodFromText("@org.junit.Before public void setUp() throws Exception {\n}", null);
+    PsiMethod existingMethod = clazz.findMethodBySignature(method, false);
+    if (existingMethod != null) {
+      int exit = ApplicationManager.getApplication().isUnitTestMode() ?
+                       DialogWrapper.OK_EXIT_CODE :
+                       Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @Before. Annotate?",
+                                                   CommonBundle.getWarningTitle(),
+                                                   Messages.getWarningIcon());
+      if (exit == DialogWrapper.OK_EXIT_CODE) {
+        new AddAnnotationFix("org.junit.Before", existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
+        return existingMethod;
+      }
+    }
     final PsiMethod testMethod = JUnitUtil.findFirstTestMethod(clazz);
     if (testMethod != null) {
       method = (PsiMethod)clazz.addBefore(method, testMethod);
