@@ -31,7 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +88,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     if (!orderEntry.isValid()) return false;
     VirtualFile[] files = orderEntry.getFiles(orderType);
     for (VirtualFile virtualFile : files) {
-      boolean ancestor = VfsUtil.isAncestor(virtualFile, file, false);
+      boolean ancestor = VfsUtilCore.isAncestor(virtualFile, file, false);
       if (ancestor) return true;
     }
     return false;
@@ -108,7 +108,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
           presentation.setLocationString(FileUtil.toSystemDependentName(path));
         }
       }
-      presentation.setTooltip(IdeBundle.message("node.projectview.jdk"));
+      presentation.setTooltip(null);
     }
     else {
       presentation.setTooltip(StringUtil.capitalize(IdeBundle.message("node.projectview.library", ((LibraryOrderEntry)orderEntry).getLibraryLevel())));
