@@ -23,9 +23,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
-import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xmlpull.v1.XmlPullParserException;
@@ -85,7 +83,7 @@ class RenderUtil {
     final ProjectResources projectResources = new ProjectResources();
 
     final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
-    final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
+    final IAbstractFolder[] resFolders = toAbstractFolders(project, resourceDirs);
 
     loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolders);
     final int minSdkVersion = getMinSdkVersion(facet);
@@ -213,10 +211,13 @@ class RenderUtil {
   }
 
   @NotNull
-  private static IAbstractFolder[] toAbstractFolders(@NotNull VirtualFile[] folders) {
+  private static IAbstractFolder[] toAbstractFolders(@NotNull Project project, @NotNull VirtualFile[] folders) {
     final IAbstractFolder[] result = new IAbstractFolder[folders.length];
+
     for (int i = 0; i < folders.length; i++) {
-      result[i] = new FolderWrapper(folders[i].getPath());
+      final VirtualFile folder = folders[i];
+      final String folderPath = FileUtil.toSystemDependentName(folder.getPath());
+      result[i] = new BufferingFolderWrapper(new File(folderPath));
     }
     return result;
   }
@@ -238,17 +239,24 @@ class RenderUtil {
 
         if (resFolder != null) {
           for (final IAbstractResource childRes : folder.listMembers()) {
+            
             if (childRes instanceof IAbstractFile) {
-              assert childRes instanceof FileWrapper;
-              @SuppressWarnings("CastConflictsWithInstanceof") 
-              final FileWrapper fileWrapper = (FileWrapper)childRes;
-              
-              final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fileWrapper.getPath());
-              if (vFile != null && vFile == layoutXmlFile && layoutXmlFileText != null) {
-                resFolder.processFile(new MyFileWrapper(layoutXmlFileText, childRes), ResourceDeltaKind.ADDED, scanningContext);
+              final VirtualFile vFile;
+
+              if (childRes instanceof BufferingFileWrapper) { 
+                final BufferingFileWrapper fileWrapper = (BufferingFileWrapper)childRes;
+                final String filePath = FileUtil.toSystemIndependentName(fileWrapper.getOsLocation());
+                vFile = LocalFileSystem.getInstance().findFileByPath(filePath);
+  
+                if (vFile != null && vFile == layoutXmlFile && layoutXmlFileText != null) {
+                  resFolder.processFile(new MyFileWrapper(layoutXmlFileText, childRes), ResourceDeltaKind.ADDED, scanningContext);
+                }
+                else {
+                  resFolder.processFile((IAbstractFile)childRes, ResourceDeltaKind.ADDED, scanningContext);
+                }
               }
               else {
-                resFolder.processFile((IAbstractFile)childRes, ResourceDeltaKind.ADDED, scanningContext);
+                LOG.error("childRes must be instance of " + BufferingFileWrapper.class.getName());
               }
             }
           }

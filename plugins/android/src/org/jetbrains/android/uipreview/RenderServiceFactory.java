@@ -24,8 +24,7 @@ import com.android.ide.common.resources.FrameworkResources;
 import com.android.ide.common.resources.ResourceResolver;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.ide.common.sdk.LoadStatus;
-import com.android.io.FileWrapper;
-import com.android.io.FolderWrapper;
+import com.android.io.IAbstractFolder;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
@@ -39,6 +38,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.BufferingFileWrapper;
+import org.jetbrains.android.util.BufferingFolderWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,7 +138,7 @@ public class RenderServiceFactory {
         AndroidBundle.message("android.directory.cannot.be.found.error", FileUtil.toSystemDependentName(platformFolderPath)));
     }
 
-    final FileWrapper buildProp = new FileWrapper(platformFolder, SdkConstants.FN_BUILD_PROP);
+    final File buildProp = new File(platformFolder, SdkConstants.FN_BUILD_PROP);
     if (!buildProp.isFile()) {
       throw new RenderingException(
         AndroidBundle.message("android.file.not.exist.error", FileUtil.toSystemDependentName(buildProp.getPath())));
@@ -152,13 +153,13 @@ public class RenderServiceFactory {
 
     myResources = loadPlatformResources(new File(resFolder.getPath()), logger);
 
-    final Map<String, String> buildPropMap = ProjectProperties.parsePropertyFile(buildProp, logger);
+    final Map<String, String> buildPropMap = ProjectProperties.parsePropertyFile(new BufferingFileWrapper(buildProp), logger);
     return myLibrary.init(buildPropMap, new File(fontFolder.getPath()), myEnumMap, logger);
   }
 
   private static FrameworkResources loadPlatformResources(File resFolder, ILogger log) throws IOException, RenderingException {
     final FrameworkResources resources = new FrameworkResources();
-    final FolderWrapper resFolderWrapper = new FolderWrapper(resFolder);
+    final IAbstractFolder resFolderWrapper = new BufferingFolderWrapper(resFolder);
 
     RenderUtil.loadResources(resources, null, null, resFolderWrapper);
 
