@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,6 +29,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -499,7 +501,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         return getContents();
       }
       if (myContent != null) return myContent;
-      return myContent = myFile.calcTreeElement().getText();
+      return myContent = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
+        public CharSequence compute() {
+          return myFile.calcTreeElement().getText();
+        }
+      });
     }
 
     @Override
