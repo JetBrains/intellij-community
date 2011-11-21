@@ -17,6 +17,8 @@ PyFile:IncompleteStatementList.py
             PsiElement(Py:IDENTIFIER)('ba')
           PsiErrorElement:colon expected
             <empty list>
+          PyStatementList
+            <empty list>
   PsiWhiteSpace('\n\n')
   PyFunction('bar')
     PsiElement(Py:DEF_KEYWORD)('def')

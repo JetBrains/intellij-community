@@ -28,7 +28,9 @@ PyFile:MissingParenInCall.py
                 <empty list>
           PsiErrorElement:colon expected
             <empty list>
-      PsiWhiteSpace('\n\n')
+          PsiWhiteSpace('\n\n')
+          PyStatementList
+            <empty list>
       PyFunction('clean')
         PsiElement(Py:DEF_KEYWORD)('def')
         PsiWhiteSpace(' ')

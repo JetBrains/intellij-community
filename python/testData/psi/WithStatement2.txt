@@ -74,6 +74,8 @@ PyFile:WithStatement2.py
         <empty list>
     PsiErrorElement:colon expected
       <empty list>
+    PyStatementList
+      <empty list>
   PsiElement(Py:EQ)('=')
   PsiErrorElement:statement expected, found Py:EQ
     <empty list>
