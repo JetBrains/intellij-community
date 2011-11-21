@@ -67,6 +67,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public boolean RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
 
   public boolean GENERATE_UNSIGNED_APK = false;
+  
+  public String CUSTOM_DEBUG_KEYSTORE_PATH = "";
 
   private AndroidFacet myFacet = null;
 
