@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -26,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
@@ -37,17 +39,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 /**
  * @author pegov
  */
-public abstract class ToolWindowHeader extends JPanel {
+public abstract class ToolWindowHeader extends JPanel implements Disposable {
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
 
@@ -61,31 +60,46 @@ public abstract class ToolWindowHeader extends JPanel {
 
   private static final Icon ourSettingsIcon = IconLoader.getIcon("/general/gear.png");
 
-  private final ToolWindow myToolWindow;
-  private JPanel myWestPanel;
-  private JPanel myEastPanel;
-  private final WindowInfoImpl myInfo;
+  private ToolWindow myToolWindow;
+  private WindowInfoImpl myInfo;
+  private final ToolWindowHeader.ActionButton myHideButton;
 
-  public ToolWindowHeader(ToolWindowImpl toolWindow, WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
+  public ToolWindowHeader(final ToolWindowImpl toolWindow, WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
     setLayout(new BorderLayout());
 
     myToolWindow = toolWindow;
     myInfo = info;
 
-    myWestPanel = new JPanel();
-    myWestPanel.setOpaque(false);
-    myWestPanel.setLayout(new BoxLayout(myWestPanel, BoxLayout.X_AXIS));
-    add(myWestPanel, BorderLayout.WEST);
+    JPanel westPanel = new JPanel() {
+      @Override
+      public void doLayout() {
+        if (getComponentCount() > 0) {
+          Rectangle r = getBounds();
+          Insets insets = getInsets();
 
-    myWestPanel.add(toolWindow.getContentUI().getTabComponent());
+          Component c = getComponent(0);
+          Dimension size = c.getPreferredSize();
+          if (size.width < (r.width - insets.left - insets.right)) {
+            c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
+          } else {
+            c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
+          }
+        }
+      }
+    };
 
-    myEastPanel = new JPanel();
-    myEastPanel.setOpaque(false);
-    myEastPanel.setLayout(new BoxLayout(myEastPanel, BoxLayout.X_AXIS));
-    myEastPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
-    add(myEastPanel, BorderLayout.EAST);
+    westPanel.setOpaque(false);
+    add(westPanel, BorderLayout.CENTER);
 
-    myEastPanel.add(new ActionButton(new AnAction() {
+    westPanel.add(toolWindow.getContentUI().getTabComponent());
+
+    JPanel eastPanel = new JPanel();
+    eastPanel.setOpaque(false);
+    eastPanel.setLayout(new BoxLayout(eastPanel, BoxLayout.X_AXIS));
+    eastPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
+    add(eastPanel, BorderLayout.EAST);
+
+    eastPanel.add(new ActionButton(new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final InputEvent inputEvent = e.getInputEvent();
@@ -103,8 +117,9 @@ public abstract class ToolWindowHeader extends JPanel {
       }
     }, ourSettingsIcon));
 
-    myEastPanel.add(Box.createHorizontalStrut(3));
-    myEastPanel.add(new ActionButton(new HideSideAction() {
+    eastPanel.add(Box.createHorizontalStrut(3));
+
+    myHideButton = new ActionButton(new HideSideAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         sideHidden();
@@ -115,7 +130,7 @@ public abstract class ToolWindowHeader extends JPanel {
         hideToolWindow();
       }
     },
-                                     ourHideLeftSideIcon, null, null
+                                    ourHideLeftSideIcon, null, null
     ) {
       @Override
       protected Icon getActiveIcon() {
@@ -126,12 +141,51 @@ public abstract class ToolWindowHeader extends JPanel {
       protected Icon getAlternativeIcon() {
         return getHideToolWindowIcon(myToolWindow);
       }
+    };
+
+    eastPanel.add(myHideButton);
+
+    addMouseListener(new PopupHandler() {
+      public void invokePopup(final Component comp, final int x, final int y) {
+        toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup());
+      }
+    });
+    
+    addMouseListener(new MouseAdapter() {
+      public void mousePressed(final MouseEvent e) {
+        if (!e.isPopupTrigger()) {
+          if (UIUtil.isCloseClick(e)) {
+            if (e.isAltDown()) {
+              toolWindow.fireHidden();
+            }
+            else {
+              toolWindow.fireHiddenSide();
+            }
+          }
+          else {
+            toolWindow.fireActivated();
+          }
+        }
+      }
     });
 
     setOpaque(true);
     setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
   }
 
+  @Override
+  public void dispose() {
+    removeAll();
+    myToolWindow = null;
+    myInfo = null;
+  }
+
+  public void updateTooltips() {
+    if (myHideButton != null) {
+      myHideButton.updateTooltip();
+    }
+  }
+  
   private static Icon getHideToolWindowIcon(ToolWindow toolWindow) {
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
@@ -268,6 +322,10 @@ public abstract class ToolWindowHeader extends JPanel {
 
       addPropertyChangeListener(listener);
     }
+    
+    public void updateTooltip() {
+      myButton.setToolTipText(getToolTipTextByAction(myCurrentAction));
+    }
 
     protected Icon getActiveIcon() {
       return myActiveIcon;
@@ -307,8 +365,9 @@ public abstract class ToolWindowHeader extends JPanel {
         myAlternativeAction != null && (e.getModifiers() & InputEvent.ALT_MASK) == InputEvent.ALT_MASK ? myAlternativeAction : myAction;
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+      InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent) e.getSource() : null; 
       final AnActionEvent event =
-        new AnActionEvent((InputEvent)e.getSource(), dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
+        new AnActionEvent(inputEvent, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
                           ActionManager.getInstance(),
                           0);
       actionManager.fireBeforeActionPerformed(action, dataContext, event);

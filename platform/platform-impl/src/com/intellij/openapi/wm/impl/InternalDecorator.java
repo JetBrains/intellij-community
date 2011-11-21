@@ -15,32 +15,27 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ResizeToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.Gray;
-import com.intellij.ui.InplaceButton;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Producer;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -83,12 +78,14 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    */
   private final ToolWindowHandler myToolWindowHandler;
   private final WeakKeymapManagerListener myWeakKeymapManagerListener;
+  @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
   @NonNls private static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
   @NonNls private static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
   @NonNls private static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
-  private final ToolWindowHeader myHeader;
+  
+  private ToolWindowHeader myHeader;
 
   InternalDecorator(final Project project, final WindowInfoImpl info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
@@ -198,7 +195,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     //
     updateTitle();
-    updateTooltips();
 
     // Push "apply" request forward
 
@@ -230,16 +226,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     removeAll();
     myToolWindow.removePropertyChangeListener(myToolWindowHandler);
     KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(myWeakKeymapManagerListener);
+    
+    Disposer.dispose(myHeader);
+    myHeader = null;
     myProject = null;
-  }
-
-  private static String getToolTipTextByAction(@NonNls final String actionId, final String description) {
-    String text = description;
-    final String shortcutForAction = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
-    if (shortcutForAction.length() > 0) {
-      text += "  " + shortcutForAction;
-    }
-    return text;
   }
 
   private void fireAnchorChanged(final ToolWindowAnchor anchor) {
@@ -486,7 +476,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     group.add(resize);
 
     group.addSeparator();
-    //group.add(myHideAction);
+    group.add(new HideAction());
     return group;
   }
 
@@ -555,11 +545,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
   }
 
-  private void updateTooltips() {
-    //myHideSideButton
-    //  .setToolTipText(getToolTipTextByAction(HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID, UIBundle.message("tool.window.hideSide.action.name")));
-  }
-
   private final class ChangeAnchorAction extends AnAction implements DumbAware {
     private final ToolWindowAnchor myAnchor;
 
@@ -572,8 +557,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       fireAnchorChanged(myAnchor);
     }
   }
-
-
 
   private final class TogglePinnedModeAction extends ToggleAction implements DumbAware {
     public TogglePinnedModeAction() {
@@ -645,6 +628,25 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       super.update(e);
     }
   }
+
+  private final class HideAction extends AnAction implements DumbAware {
+    @NonNls public static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
+
+    public HideAction() {
+      copyFrom(ActionManager.getInstance().getAction(HIDE_ACTIVE_WINDOW_ACTION_ID));
+      getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
+    }
+
+    public final void actionPerformed(final AnActionEvent e) {
+      fireHidden();
+    }
+
+    public final void update(final AnActionEvent event) {
+      final Presentation presentation = event.getPresentation();
+      presentation.setEnabled(myInfo.isVisible());
+    }
+  }
+
 
   private final class ToggleContentUiTypeAction extends ToggleAction implements DumbAware {
     private ToggleContentUiTypeAction() {
@@ -797,104 +799,11 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    */
   private final class MyKeymapManagerListener implements KeymapManagerListener {
     public final void activeKeymapChanged(final Keymap keymap) {
-      updateTooltips();
-    }
-  }
-
-
-  private class MyTitleButton extends Wrapper implements ActionListener {
-
-    private final InplaceButton myButton;
-    private final AnAction myAction;
-
-    public MyTitleButton(AnAction action) {
-      myAction = action;
-      myButton = new InplaceButton(null, EmptyIcon.ICON_16, this) {
-        @Override
-        public boolean isActive() {
-          return MyTitleButton.this.isActive();
-        }
-      };
-      myButton.setHoveringEnabled(false);
-      setContent(myButton);
-      setOpaque(false);
-    }
-
-    public void actionPerformed(final ActionEvent e) {
-      final DataContext dataContext = DataManager.getInstance().getDataContext(this);
-      final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      final InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent)e.getSource() : null;
-      final AnActionEvent event =
-        new AnActionEvent(inputEvent, dataContext, ActionPlaces.UNKNOWN, myAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
-      actionManager.fireBeforeActionPerformed(myAction, dataContext, event);
-      final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      if (component != null && !component.isShowing()) {
-        return;
+      if (myHeader != null) {
+        myHeader.updateTooltips();
       }
-      myAction.actionPerformed(event);
-    }
-
-    public boolean isActive() {
-      return InternalDecorator.this.isFocused();
-    }
-
-    public void setIcon(final Icon active) {
-      myButton.setIcons(active, active, active);
-    }
-
-
-    public void setToolTipText(final String text) {
-      myButton.setToolTipText(text);
     }
   }
-
-  //private static final class MyTitleButton extends FixedSizeButton {
-  //  public MyTitleButton() {
-  //    super(16);
-  //    setBorder(BorderFactory.createEmptyBorder());
-  //  }
-  //
-  //  public final void addActionListener(final AnAction action) {
-  //    final DataContext dataContext = DataManager.getInstance().getDataContext(this);
-  //
-  //    final ActionListener actionListener = new ActionListener() {
-  //      public void actionPerformed(final ActionEvent e) {
-  //        final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-  //        actionManager.fireBeforeActionPerformed(action, dataContext);
-  //        final Component component = ((Component) dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
-  //        if (component != null && !component.isShowing()) {
-  //          return;
-  //        }
-  //        action.actionPerformed(new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
-  //                                                 ActionManager.getInstance(),
-  //                                                 0));
-  //      }
-  //    };
-  //
-  //    addActionListener(actionListener);
-  //  }
-  //
-  //  /**
-  //   * Some UIs paint only opague buttons. It causes that button has gray background color.
-  //   * To prevent this I don't allow to change UI.
-  //   */
-  //  public final void updateUI() {
-  //    setUI(new MyTitleButtonUI());
-  //    setOpaque(false);
-  //    setRolloverEnabled(true);
-  //    setContentAreaFilled(false);
-  //  }
-  //}
-  //
-  //private static final class MyTitleButtonUI extends MetalButtonUI {
-  //  @Override protected void paintIcon(Graphics g, JComponent c, Rectangle iconRect) {
-  //    MyTitleButton btn = (MyTitleButton)c;
-  //    if (btn.getModel().isArmed() && btn.getModel().isPressed()) {
-  //      iconRect = new Rectangle(iconRect.x - 1, iconRect.y, iconRect.width, iconRect.height);
-  //    }
-  //    super.paintIcon(g, c, iconRect);
-  //  }
-  //}
 
   /**
    * Synchronizes decorator with IdeToolWindow changes.

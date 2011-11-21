@@ -70,6 +70,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
+  private DefaultActionGroup ourGroup;
+  private static DefaultActionGroup myGroup;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -149,7 +151,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
     });
 
-    initMouseListeners(this, ToolWindowContentUi.this);
+    initMouseListeners(this, this);
 
     rebuild();
 
@@ -290,43 +292,46 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     });
 
 
-    final DefaultActionGroup contentGroup = new DefaultActionGroup();
+    myGroup = new DefaultActionGroup();
     if (c instanceof BaseLabel) {
       final Content content = ((BaseLabel)c).getContent();
       if (content != null) {
-        contentGroup.add(ui.myShowContent);
-        contentGroup.addSeparator();
-        contentGroup.add(new TabbedContentAction.CloseAction(content));
-        contentGroup.add(ui.myCloseAllAction);
-        contentGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
-        contentGroup.addSeparator();
+        myGroup.add(ui.myShowContent);
+        myGroup.addSeparator();
+        myGroup.add(new TabbedContentAction.CloseAction(content));
+        myGroup.add(ui.myCloseAllAction);
+        myGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
+        myGroup.addSeparator();
         if (content.isPinnable()) {
-          contentGroup.add(PinToolwindowTabAction.getPinAction());
-          contentGroup.addSeparator();
+          myGroup.add(PinToolwindowTabAction.getPinAction());
+          myGroup.addSeparator();
         }
 
-        contentGroup.add(ui.myNextTabAction);
-        contentGroup.add(ui.myPreviousTabAction);
-        contentGroup.addSeparator();
+        myGroup.add(ui.myNextTabAction);
+        myGroup.add(ui.myPreviousTabAction);
+        myGroup.addSeparator();
       }
     }
 
     c.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        DefaultActionGroup group = new DefaultActionGroup();
-        group.addAll(contentGroup);
-
-        final ActionGroup windowPopup = ui.myWindow.getPopupGroup();
-        if (windowPopup != null) {
-          group.addAll(windowPopup);
-        }
-
-        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
-        popupMenu.getComponent().show(comp, x, y);
+        ui.showContextMenu(comp, x, y, ui.myWindow.getPopupGroup());
       }
     });
 
     c.putClientProperty(ui, Boolean.TRUE);
+  }
+
+  public void showContextMenu(Component comp, int x, int y, ActionGroup toolWindowGroup) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.addAll(myGroup);
+
+    if (toolWindowGroup != null) {
+      group.addAll(toolWindowGroup);
+    }
+
+    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
+    popupMenu.getComponent().show(comp, x, y);
   }
 
   private void processHide(final MouseEvent e) {
