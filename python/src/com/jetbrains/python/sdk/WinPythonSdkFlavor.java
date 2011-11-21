@@ -13,7 +13,7 @@ import java.util.TreeSet;
 /**
  * @author yole
  */
-public class WinPythonSdkFlavor extends PythonSdkFlavor {
+public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   public static WinPythonSdkFlavor INSTANCE = new WinPythonSdkFlavor();
 
   private WinPythonSdkFlavor() {
