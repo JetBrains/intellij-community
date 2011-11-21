@@ -61,7 +61,7 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (!PyTestFrameworksUtil.isAtTestInstalled(getProject(), getSdkHome()))
+    if (!PyTestFrameworksUtil.isAtTestInstalled(getSdkHome()))
       throw new RuntimeConfigurationWarning("No attest runner found in selected interpreter");
   }
 }

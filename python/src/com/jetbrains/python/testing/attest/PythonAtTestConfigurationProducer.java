@@ -23,7 +23,7 @@ public class PythonAtTestConfigurationProducer extends
     final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
     return (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
       PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME) && sdk != null &&
-            PyTestFrameworksUtil.isAtTestInstalled(element.getProject(), sdk.getHomePath()));
+            PyTestFrameworksUtil.isAtTestInstalled(sdk.getHomePath()));
   }
 
   protected boolean isTestClass(PyClass pyClass) {

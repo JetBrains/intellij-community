@@ -304,6 +304,8 @@
 
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCodeInsightSettings"
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
+    <applicationService serviceInterface="com.jetbrains.python.testing.TestFrameworkService"
+                        serviceImplementation="com.jetbrains.python.testing.TestFrameworkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.PyDefaultLiveTemplatesProvider"/>
