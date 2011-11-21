@@ -54,7 +54,7 @@ public class BreakpointNameCellRenderer extends DefaultTableCellRenderer {
       }
       setForeground(foreColor);
     }
-    setEnabled(breakpoint.ENABLED);
+    setEnabled(isSelected || breakpoint.ENABLED);
     return this;
   }
 }

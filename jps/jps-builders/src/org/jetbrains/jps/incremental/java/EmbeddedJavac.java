@@ -94,7 +94,7 @@ public class EmbeddedJavac {
     }
     finally {
       context.ensurePendingTasksCompleted();
-      fileManager.cleanupResources();
+      fileManager.close();
     }
   }
 
