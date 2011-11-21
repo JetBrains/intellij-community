@@ -123,10 +123,11 @@ public class AndroidApkBuilder {
                                                                    @NotNull VirtualFile[] nativeLibsFolders,
                                                                    @NotNull String finalApk,
                                                                    boolean unsigned,
-                                                                   @NotNull String sdkPath) throws IOException {
+                                                                   @NotNull String sdkPath,
+                                                                   @Nullable String customKeystorePath) throws IOException {
     if (unsigned) {
       return filterUsingKeystoreMessages(
-        finalPackage(project, dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, resPackagePath, false));
+        finalPackage(project, dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, resPackagePath, customKeystorePath, false));
     }
 
     final Map<CompilerMessageCategory, List<String>> map = new HashMap<CompilerMessageCategory, List<String>>();
@@ -136,7 +137,7 @@ public class AndroidApkBuilder {
 
     Map<CompilerMessageCategory, List<String>> map2 = filterUsingKeystoreMessages(
       finalPackage(project, dexPath, sourceRoots, externalJars, nativeLibsFolders, withAlignment ? unalignedApk : finalApk, resPackagePath,
-                   true));
+                   customKeystorePath, true));
     map.putAll(map2);
 
     if (withAlignment && map.get(ERROR).size() == 0) {
@@ -151,7 +152,9 @@ public class AndroidApkBuilder {
                                                                          @NotNull VirtualFile[] sourceRoots,
                                                                          @NotNull String[] externalJars,
                                                                          @NotNull VirtualFile[] nativeLibsFolders,
-                                                                         @NotNull String outputApk, @NotNull String apkPath,
+                                                                         @NotNull String outputApk, 
+                                                                         @NotNull String apkPath,
+                                                                         @Nullable String customKeystorePath,
                                                                          boolean signed) {
     final Map<CompilerMessageCategory, List<String>> result = new HashMap<CompilerMessageCategory, List<String>>();
     result.put(ERROR, new ArrayList<String>());
@@ -161,7 +164,10 @@ public class AndroidApkBuilder {
     FileOutputStream fos = null;
     try {
 
-      String keyStoreOsPath = DebugKeyProvider.getDefaultKeyStoreOsPath();
+      String keyStoreOsPath = customKeystorePath != null && customKeystorePath.length() > 0
+                              ? customKeystorePath 
+                              : DebugKeyProvider.getDefaultKeyStoreOsPath();
+      
       DebugKeyProvider provider = createDebugKeyProvider(result, keyStoreOsPath);
 
       X509Certificate certificate = signed ? (X509Certificate)provider.getCertificate() : null;

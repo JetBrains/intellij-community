@@ -213,7 +213,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     myMainSplitter = new Splitter(false);
     myMainSplitter.setFirstComponent(myLeftSide);
-    myMainSplitter.setHonorComponentsMinimumSize(false);
 
     myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), this, 150);
     myMainSplitter.setSecondComponent(myLoadingDecorator.getComponent());
@@ -629,7 +628,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     private final Splitter mySplitter = new Splitter(false);
     private JPanel myLeft = new JPanel(new BorderLayout());
-    public float myLastSplitterProproprtion;
+    public float myLastSplitterProportion;
 
     private ContentWrapper() {
       setLayout(new BorderLayout());
@@ -641,7 +640,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       mySplitter.addPropertyChangeListener(Splitter.PROP_PROPORTION, new PropertyChangeListener() {
         public void propertyChange(final PropertyChangeEvent evt) {
-          myLastSplitterProproprtion = ((Float)evt.getNewValue()).floatValue();
+          myLastSplitterProportion = ((Float)evt.getNewValue()).floatValue();
         }
       });
     }
@@ -698,7 +697,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       mySplitter.setFirstComponent(myLeft);
       mySplitter.setSecondComponent(myDetails.getComponent());
-      mySplitter.setProportion(myLastSplitterProproprtion);
+      mySplitter.setProportion(myLastSplitterProportion);
 
       add(mySplitter, BorderLayout.CENTER);
 
@@ -938,7 +937,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myDisposed = true;
 
     myProperties.setValue(MAIN_SPLITTER_PROPORTION, String.valueOf(myMainSplitter.getProportion()));
-    myProperties.setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(myContentWrapper.myLastSplitterProproprtion));
+    myProperties.setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(myContentWrapper.myLastSplitterProportion));
     myProperties.setValue(SEARCH_VISIBLE, Boolean.valueOf(isFilterFieldVisible()).toString());
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);

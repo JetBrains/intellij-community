@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
@@ -176,11 +177,13 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   protected boolean isCharLiteral(@NotNull PsiElement token) {
-    return token.getNode().getElementType() == JavaTokenType.CHARACTER_LITERAL;
+    ASTNode node = token.getNode();
+    return node != null && node.getElementType() == JavaTokenType.CHARACTER_LITERAL;
   }
 
   protected boolean isStringLiteral(@NotNull PsiElement token) {
-    return token.getNode().getElementType() == JavaTokenType.STRING_LITERAL;
+    ASTNode node = token.getNode();
+    return node != null && node.getElementType() == JavaTokenType.STRING_LITERAL;
   }
 
   @NotNull

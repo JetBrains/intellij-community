@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +112,7 @@ public class LogModel implements Disposable {
 
     Runnable handler = removeHandlers.remove(notification);
     if (handler != null) {
-      handler.run();
+      UIUtil.invokeLaterIfNeeded(handler);
     }
 
     Pair<Notification, Long> oldStatus = getStatusMessage();

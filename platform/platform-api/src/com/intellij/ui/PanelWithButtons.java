@@ -36,7 +36,7 @@ public abstract class PanelWithButtons extends JPanel {
 
     add(
         mainComponent,
-        new GridBagConstraints(0, 1, 1, buttons.length, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 4), 0, 0)
+        new GridBagConstraints(0, 1, 1, buttons.length == 0 ? 1 : buttons.length, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, buttons.length == 0 ? 0 : 4), 0, 0)
     );
 
     for (int i = 0; i < buttons.length; i++) {

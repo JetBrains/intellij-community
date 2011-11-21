@@ -16,13 +16,9 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
-import com.intellij.openapi.compiler.DummyCompileContext;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.util.AndroidBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,29 +35,7 @@ public class CheckModulePanel extends JPanel {
   }
 
   public void updateMessages(AndroidFacet facet) {
-    Module module = facet.getModule();
     clearMessages();
-    final DummyCompileContext compileContext = DummyCompileContext.getInstance();
-    VirtualFile outputDirectory = compileContext.getModuleOutputDirectory(module);
-    if (outputDirectory != null) {
-      /*String apkFilePath = facet.getApkPath();
-      File f = new File(apkFilePath);
-      if (!f.isFile()) {
-        addError(AndroidBundle.message("android.file.not.exist.error", f.getPath()));
-      }*/
-    }
-    else {
-      addError(AndroidBundle.message("android.unable.to.get.output.directory.error"));
-    }
-
-    /*Manifest manifest = facet.getManifest();
-    assert manifest != null;
-    Application application = manifest.getApplication();
-    assert application != null;
-    String debuggable = application.getDebuggable().getValue();
-    if (debuggable != null && BooleanValueConverter.getInstance(true).isTrue(debuggable)) {
-      addWarning(AndroidBundle.message("android.export.signed.package.debuggable.warning"));
-    }*/
     revalidate();
   }
 

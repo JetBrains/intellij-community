@@ -397,8 +397,10 @@ final class Stripe extends JPanel{
 
   public void setOverlayed(boolean overlayed) {
     Color bg = UIUtil.getPanelBackground();
-    float[] result = Color.RGBtoHSB(bg.getRed(), bg.getGreen(), bg.getBlue(), new float[3]);
-    bg = new Color(Color.HSBtoRGB(result[0], result[1], result[2] - 0.08f > 0 ? result[2] - 0.08f : result[2]));
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      float[] result = Color.RGBtoHSB(bg.getRed(), bg.getGreen(), bg.getBlue(), new float[3]);
+      bg = new Color(Color.HSBtoRGB(result[0], result[1], result[2] - 0.08f > 0 ? result[2] - 0.08f : result[2]));
+    }
     if (overlayed) {
      setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 190));
     } else {

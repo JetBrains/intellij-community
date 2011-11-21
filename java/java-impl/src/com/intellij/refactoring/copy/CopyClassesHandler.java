@@ -125,11 +125,16 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
       VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
         .getSourceRootForFile(defaultTargetDirectory.getVirtualFile());
       if (sourceRootForFile == null) {
-        final PsiFile[] files = new PsiFile[elements.length];
+        final List<PsiElement> files = new ArrayList<PsiElement>();
         for (int i = 0, elementsLength = elements.length; i < elementsLength; i++) {
-          files[i] = elements[i].getContainingFile();
+          PsiFile containingFile = elements[i].getContainingFile();
+          if (containingFile != null) {
+            files.add(containingFile);
+          } else if (elements[i] instanceof PsiDirectory) {
+            files.add(elements[i]);
+          }
         }
-        CopyFilesOrDirectoriesHandler.copyAsFiles(files, defaultTargetDirectory, project);
+        CopyFilesOrDirectoriesHandler.copyAsFiles(files.toArray(new PsiElement[files.size()]), defaultTargetDirectory, project);
         return;
       }
     }

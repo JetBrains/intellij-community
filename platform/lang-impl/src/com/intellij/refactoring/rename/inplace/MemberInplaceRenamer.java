@@ -159,6 +159,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   private void restore(final PsiNamedElement variable, String commandName) {
+    if (variable == null) return;
     final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(variable);
     final PsiElement substituted = processor.substituteElementToRename(variable, myEditor);
     if (substituted != null) {
