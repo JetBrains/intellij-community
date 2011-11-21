@@ -1107,4 +1107,10 @@ public class KeyVO {
     checkCompletion 'class A <caret> ArrayList {}', ' ', 'class A extends <caret> ArrayList {}'
     checkCompletion 'class A <caret> ArrayList {}', '\n', 'class A extends <caret>ArrayList {}'
   }
+
+  public void testPreferInterfacesInImplements() {
+    myFixture.addClass('interface FooIntf {}')
+    myFixture.addClass('class FooClass {}')
+    doVariantableTest('FooIntf', 'FooClass')
+  }
 }

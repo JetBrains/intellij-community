@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
 import com.intellij.application.options.editor.JavaAutoImportOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -39,7 +40,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AddImportAction implements QuestionAction {
@@ -92,7 +91,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void chooseClassAndImport() {
-    Arrays.sort(myTargetClasses, new PsiProximityComparator(myReference.getElement()));
+    CodeInsightUtil.sortIdenticalShortNameClasses(myTargetClasses, myReference);
 
     final BaseListPopupStep<PsiClass> step =
       new BaseListPopupStep<PsiClass>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {

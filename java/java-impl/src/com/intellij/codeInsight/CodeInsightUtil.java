@@ -162,10 +162,11 @@ public class CodeInsightUtil {
     return null;
   }
 
-  public static void sortIdenticalShortNameClasses(PsiClass[] classes, @NotNull PsiElement context) {
+  public static void sortIdenticalShortNameClasses(PsiClass[] classes, @NotNull PsiReference context) {
     if (classes.length <= 1) return;
 
-    Arrays.sort(classes, new PsiProximityComparator(context));
+    PsiElement leaf = context.getElement().getFirstChild(); // the same proximity weighers are used in completion, where the leafness is critical
+    Arrays.sort(classes, new PsiProximityComparator(leaf));
   }
 
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
