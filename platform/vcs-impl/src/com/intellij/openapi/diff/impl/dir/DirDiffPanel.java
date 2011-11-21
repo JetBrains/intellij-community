@@ -23,13 +23,17 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.JBLoadingPanelListener;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
@@ -131,7 +135,7 @@ public class DirDiffPanel implements Disposable {
               changeOperationForSelectedRow();
             }
           }
-        }
+        }        
       });
     }
     myTable.addKeyListener(new KeyAdapter() {
@@ -187,6 +191,23 @@ public class DirDiffPanel implements Disposable {
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
+    loadingPanel.addListener(new JBLoadingPanelListener.Adapter() {
+      boolean showHelp = true;
+      @Override
+      public void onLoadingFinish() {
+        if (showHelp && myModel.isOperationsEnabled() && myModel.getRowCount() > 0) {
+          final long count = PropertiesComponent.getInstance().getOrInitLong("dir.diff.space.button.info", 0);
+          if (count < 3) {
+            JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(" Use Space button to change operation"))
+              .setFadeoutTime(5000)
+              .setContentInsets(new Insets(15,15,15,15))
+              .createBalloon().show(new RelativePoint(myTable, new Point(myTable.getWidth() / 2, 0)), Balloon.Position.above);
+            PropertiesComponent.getInstance().setValue("dir.diff.space.button.info", String.valueOf(count + 1));
+          }
+        }
+        showHelp = false;
+      }
+    });
     loadingPanel.add(myComponent, BorderLayout.CENTER);
     myTable.putClientProperty(myModel.DECORATOR, loadingPanel);
     myTable.addComponentListener(new ComponentAdapter() {
