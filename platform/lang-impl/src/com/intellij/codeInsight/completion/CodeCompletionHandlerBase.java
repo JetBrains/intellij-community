@@ -860,6 +860,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     private void watchTail(int offset) {
       stopWatching();
       tailWatcher = (RangeMarkerEx)getDocument().createRangeMarker(offset, offset);
+      if (!tailWatcher.isValid()) {
+        throw new AssertionError(getDocument() + "; offset=" + offset);
+      }
       tailWatcher.setGreedyToRight(true);
       spy = new RangeMarkerSpy(tailWatcher) {
         @Override

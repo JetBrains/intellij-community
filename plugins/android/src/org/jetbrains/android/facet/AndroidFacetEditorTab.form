@@ -176,7 +176,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="3e085" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="3e085" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="4" bottom="0" right="0"/>
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -211,7 +211,7 @@
                   </component>
                   <component id="b01fc" class="javax.swing.JCheckBox" binding="myGenerateUnsignedApk">
                     <constraints>
-                      <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="messages/AndroidBundle" key="android.facet.settings.generate.unsigned.apk"/>
@@ -229,6 +229,21 @@
                   <component id="db22" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myApkPathCombo">
                     <constraints>
                       <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                  </component>
+                  <component id="e4bfd" class="com.intellij.ui.components.JBLabel" binding="myCustomKeystoreLabel">
+                    <constraints>
+                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <labelFor value=""/>
+                      <text resource-bundle="messages/AndroidBundle" key="android.facet.settings.custom.debug.keystore.label"/>
+                    </properties>
+                  </component>
+                  <component id="c6091" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myCustomDebugKeystoreField">
+                    <constraints>
+                      <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                   </component>

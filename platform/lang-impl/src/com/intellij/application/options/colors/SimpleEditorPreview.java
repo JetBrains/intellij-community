@@ -57,6 +57,10 @@ public class SimpleEditorPreview implements PreviewPanel{
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   public SimpleEditorPreview(final ColorAndFontOptions options, final ColorSettingsPage page) {
+    this(options, page, true);
+  }
+
+  public SimpleEditorPreview(final ColorAndFontOptions options, final ColorSettingsPage page, final boolean navigatable) {
     myOptions = options;
     myPage = page;
 
@@ -70,17 +74,16 @@ public class SimpleEditorPreview implements PreviewPanel{
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
+    if (navigatable) {
+      addMouseMotionListener(myEditor, page.getHighlighter(), myHighlightData, false);
 
-    addMouseMotionListener(myEditor, page.getHighlighter(), myHighlightData, false);
-
-    CaretListener listener = new CaretListener() {
-      public void caretPositionChanged(CaretEvent e) {
-        navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), myHighlightData, false);
-      }
-    };
-    myEditor.getCaretModel().addCaretListener(listener);
-
-
+      CaretListener listener = new CaretListener() {
+        public void caretPositionChanged(CaretEvent e) {
+          navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), myHighlightData, false);
+        }
+      };
+      myEditor.getCaretModel().addCaretListener(listener);
+    }
   }
 
   private void addMouseMotionListener(final Editor view,
