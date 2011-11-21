@@ -38,6 +38,11 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     super.closeStreams();
   }
 
+  @Override
+  public boolean isSilentlyDestroyOnClose() {
+    return !myPydevConsoleCommunication.isExecuting();
+  }
+
   private void doCloseCommunication() {
     if (myPydevConsoleCommunication != null) {
 
