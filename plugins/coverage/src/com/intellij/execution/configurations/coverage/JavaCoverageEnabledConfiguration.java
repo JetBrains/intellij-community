@@ -16,11 +16,10 @@
 
 package com.intellij.execution.configurations.coverage;
 
-import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageRunner;
+import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.coverage.JavaCoverageRunner;
-import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,6 +59,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
                                           final JavaCoverageEngine coverageProvider) {
     super(configuration);
     myCoverageProvider = coverageProvider;
+    setCoverageRunner(CoverageRunner.getInstance(IDEACoverageRunner.class));
   }
 
   @Nullable
