@@ -42,14 +42,15 @@ public class AndroidMavenUtil {
   public static final String APK_LIB_ARTIFACT_NATIVE_LIBS_DIR = "libs";
   public static final String APK_LIB_ARTIFACT_MANIFEST_FILE = "AndroidManifest.xml";
   @NonNls private static final String APKLIB_MODULE_PREFIX = "~apklib-";
+  @NonNls private static final String GEN_EXTERNAL_APKLIBS_DIRNAME = "gen-external-apklibs";
 
   private AndroidMavenUtil() {
   }
 
   @Nullable
-  public static String computePathToUnpackExtApklibArtifact(@NotNull MavenId mavenId,
-                                                            @NotNull MavenProject project,
-                                                            @NotNull Collection<MavenProject> allProjects) {
+  public static String computePathForGenExternalApklibsDir(@NotNull MavenId mavenId,
+                                                           @NotNull MavenProject project,
+                                                           @NotNull Collection<MavenProject> allProjects) {
     String path = null;
     boolean resultUnderApp = false;
 
@@ -58,21 +59,16 @@ public class AndroidMavenUtil {
         final VirtualFile projectDir = p.getDirectoryFile();
         final boolean app = APK_PACKAGING_TYPE.equals(p.getPackaging());
         if (path == null || !resultUnderApp && app) {
-          path = projectDir.getPath() + '/' + getDirNameToUnpackExtApklibArtifact(mavenId);
+          path = projectDir.getPath() + '/' + GEN_EXTERNAL_APKLIBS_DIRNAME;
           resultUnderApp = app;
         }
       }
     }
     
     if (path == null) {
-      path = project.getDirectoryFile().getPath() + '/' + getDirNameToUnpackExtApklibArtifact(mavenId);
+      path = project.getDirectoryFile().getPath() + '/' + GEN_EXTERNAL_APKLIBS_DIRNAME;
     }
     return path;
-  }
-
-  @NotNull
-  private static String getDirNameToUnpackExtApklibArtifact(@NotNull MavenId mavenId) {
-    return "gen-external-apklibs/" + getMavenIdStringForFileName(mavenId);
   }
 
   @NotNull
