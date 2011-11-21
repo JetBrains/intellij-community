@@ -59,7 +59,7 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
   }
 
   private static class ChangeSignaturePass extends TextEditorHighlightingPass {
-    @NonNls private static final String SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED = "Signature should be possibly changed";
+    @NonNls private static final String SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED = "Signature change was detected";
     private final Project myProject;
     private PsiFile myFile;
     private Editor myEditor;
