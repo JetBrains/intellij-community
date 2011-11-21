@@ -384,6 +384,8 @@
     <projectConfigurable instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
 
+    <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
+
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
