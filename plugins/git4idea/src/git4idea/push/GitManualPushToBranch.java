@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -183,7 +184,7 @@ class GitManualPushToBranch extends JPanel {
     @NotNull
     JComponent createComponent() {
       myRemoteCombobox = new JComboBox();
-      myRemoteCombobox.setRenderer(new RemoteCellRenderer());
+      myRemoteCombobox.setRenderer(new RemoteCellRenderer(myRemoteCombobox.getRenderer()));
       for (GitRemote remote : myRemotes) {
         myRemoteCombobox.addItem(remote);
       }
@@ -205,17 +206,16 @@ class GitManualPushToBranch extends JPanel {
       }
     }
 
-    private static class RemoteCellRenderer implements ListCellRenderer {
-
-      public static final DefaultListCellRenderer DEFAULT_RENDERER = new DefaultListCellRenderer();
+    private static class RemoteCellRenderer extends ListCellRendererWrapper {
+      public RemoteCellRenderer(final ListCellRenderer listCellRenderer) {
+        super(listCellRenderer);
+      }
 
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        Component renderer = DEFAULT_RENDERER.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof GitRemote) {
-          ((JLabel) renderer).setText(((GitRemote)value).getName());
+          setText(((GitRemote)value).getName());
         }
-        return renderer;
       }
     }
 

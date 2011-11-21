@@ -218,7 +218,6 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     if (project == null) return;
     EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(virtualFile, native2Ascii);
   }
-
   @Override
   @Nullable
   public Charset getDefaultCharset() {

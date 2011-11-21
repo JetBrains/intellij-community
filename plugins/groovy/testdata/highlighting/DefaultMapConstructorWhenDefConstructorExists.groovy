@@ -7,7 +7,7 @@ class X {
 
   void setF(int a) {}
 
-  def getK() {}
+  def getK() {2}
 }
 
 def x = new X(a: 4 , b: 5, f: 7, <warning descr="Property 'k' does not exist">k</warning>:8)

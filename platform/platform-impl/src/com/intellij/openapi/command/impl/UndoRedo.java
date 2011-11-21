@@ -88,7 +88,7 @@ abstract class UndoRedo {
 
   protected abstract void setBeforeState(EditorAndState state);
 
-  public boolean execute(boolean drop) {
+  public boolean execute(boolean drop, boolean isInsideStartFinishGroup) {
     if (!myUndoableGroup.isUndoable()) {
       reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
                        myUndoableGroup.getAffectedDocuments());
@@ -102,7 +102,7 @@ abstract class UndoRedo {
     }
 
 
-    if (myUndoableGroup.shouldAskConfirmation(isRedo())) {
+    if (!isInsideStartFinishGroup && myUndoableGroup.shouldAskConfirmation(isRedo())) {
       if (!askUser()) return false;
     }
     else {

@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidDxWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -109,6 +108,20 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     return CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
   }
 
+  static void addModuleOutputDir(Collection<VirtualFile> files, VirtualFile dir) {
+    // only include files inside packages
+    for (VirtualFile child : dir.getChildren()) {
+      if (child.isDirectory()) {
+        files.add(child);
+      }
+    }
+  }
+  
+  private static boolean shouldRunProguard(@NotNull AndroidFacet facet, @NotNull CompileContext context) {
+    return AndroidCompileUtil.isReleaseBuild(context) && 
+           AndroidCompileUtil.getProguardConfigFile(facet) != null;
+  }
+
   private static final class PrepareAction implements Computable<ProcessingItem[]> {
     private final CompileContext myContext;
 
@@ -122,43 +135,63 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
       for (Module module : modules) {
         AndroidFacet facet = FacetManager.getInstance(module).getFacetByType(AndroidFacet.ID);
         if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
-          CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
-          VirtualFile outputDir = extension.getCompilerOutputPath();
-          if (outputDir != null) {
-            AndroidFacetConfiguration configuration = facet.getConfiguration();
-            AndroidPlatform platform = configuration.getAndroidPlatform();
-            if (platform == null) {
-              myContext.addMessage(CompilerMessageCategory.ERROR,
-                                   AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+          
+          final VirtualFile dexOutputDir = getOutputDirectoryForDex(module);
+          
+          Collection<VirtualFile> files;
+            
+          if (shouldRunProguard(facet, myContext)) {
+            final VirtualFile obfuscatedSourcesJar = dexOutputDir.findChild(AndroidProguardCompiler.PROGUARD_OUTPUT_JAR_NAME);
+            if (obfuscatedSourcesJar == null) {
+              myContext.addMessage(CompilerMessageCategory.INFORMATION, "Dex won't be launched for module " +
+                                                                        module.getName() +
+                                                                        " because file " +
+                                                                        AndroidProguardCompiler.PROGUARD_OUTPUT_JAR_NAME +
+                                                                        "doesn't exist", null, -1, -1);
               continue;
             }
-            Set<VirtualFile> files = new HashSet<VirtualFile>();
+            
+            files = Collections.singleton(obfuscatedSourcesJar);
+          }
+          else {
+            CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+            VirtualFile outputDir = extension.getCompilerOutputPath();
+            
+            if (outputDir == null) {
+              myContext.addMessage(CompilerMessageCategory.INFORMATION,
+                                   "Dex won't be launched for module " + module.getName() + " because it doesn't contain compiled files",
+                                   null, -1, -1);
+              continue;
+            }
+            
+            files = new HashSet<VirtualFile>();
             addModuleOutputDir(files, outputDir);
             files.addAll(AndroidRootUtil.getExternalLibraries(module));
+
             for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
               addModuleOutputDir(files, file);
             }
+
             VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
+
             if (outputDirForTests != null) {
               addModuleOutputDir(files, outputDirForTests);
             }
-
-            outputDir = getOutputDirectoryForDex(module);
-
-            items.add(new DexItem(module, outputDir, platform.getTarget(), files, Collections.<String>emptySet()));
           }
+
+          final AndroidFacetConfiguration configuration = facet.getConfiguration();
+          final AndroidPlatform platform = configuration.getAndroidPlatform();
+          
+          if (platform == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+            continue;
+          }
+
+          items.add(new DexItem(module, dexOutputDir, platform.getTarget(), files));
         }
       }
       return items.toArray(new ProcessingItem[items.size()]);
-    }
-
-    private static void addModuleOutputDir(Set<VirtualFile> files, VirtualFile dir) {
-      // only include files inside packages
-      for (VirtualFile child : dir.getChildren()) {
-        if (child.isDirectory()) {
-          files.add(child);
-        }
-      }
     }
   }
 
@@ -189,7 +222,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           }
 
           Map<CompilerMessageCategory, List<String>> messages = AndroidDxWrapper
-            .execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files, ArrayUtil.toStringArray(dexItem.myExcludedFiles));
+            .execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files);
 
           addMessages(messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
@@ -215,18 +248,15 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     final VirtualFile myClassDir;
     final IAndroidTarget myAndroidTarget;
     final Collection<VirtualFile> myFiles;
-    final Set<String> myExcludedFiles;
 
     public DexItem(@NotNull Module module,
                    @NotNull VirtualFile classDir,
                    @NotNull IAndroidTarget target,
-                   Collection<VirtualFile> files,
-                   Set<String> excludedFiles) {
+                   Collection<VirtualFile> files) {
       myModule = module;
       myClassDir = classDir;
       myAndroidTarget = target;
       myFiles = files;
-      this.myExcludedFiles = excludedFiles;
     }
 
     @NotNull
@@ -236,31 +266,29 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myFiles, myExcludedFiles);
+      return new MyValidityState(myFiles);
     }
   }
 
   private static class MyValidityState implements ValidityState {
     private Map<String, Long> myFiles;
 
-    private void fillMap(VirtualFile file, Set<VirtualFile> visited, Set<String> excludedFiles) {
+    private void fillMap(VirtualFile file, Set<VirtualFile> visited) {
       if (file.isDirectory() && visited.add(file)) {
         for (VirtualFile child : file.getChildren()) {
-          fillMap(child, visited, excludedFiles);
+          fillMap(child, visited);
         }
       }
       else if (StdFileTypes.CLASS.equals(file.getFileType()) || file.getFileType() instanceof ArchiveFileType) {
-        if (!excludedFiles.contains(file.getPath())) {
-          myFiles.put(file.getPath(), file.getTimeStamp());
-        }
+        myFiles.put(file.getPath(), file.getTimeStamp());
       }
     }
 
-    public MyValidityState(Collection<VirtualFile> files, Set<String> excludedFiles) {
+    public MyValidityState(Collection<VirtualFile> files) {
       myFiles = new HashMap<String, Long>();
       Set<VirtualFile> visited = new HashSet<VirtualFile>();
       for (VirtualFile file : files) {
-        fillMap(file, visited, excludedFiles);
+        fillMap(file, visited);
       }
     }
 

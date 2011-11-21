@@ -150,7 +150,7 @@ public final class Utils {
 
         final Class aClass;
         try {
-            aClass = Class.forName(className, true, loader);
+            aClass = Class.forName(className, false, loader);
         }
         catch (final ClassNotFoundException exc) {
             return "Class \"" + className + "\"not found";

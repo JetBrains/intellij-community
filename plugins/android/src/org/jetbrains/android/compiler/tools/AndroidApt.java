@@ -56,10 +56,14 @@ public final class AndroidApt {
                                                                    @NotNull String[] resourceDirsOsPaths,
                                                                    @NotNull String[] libPackages,
                                                                    boolean isLibrary) throws IOException {
+    final Map<CompilerMessageCategory, List<String>> messages = new HashMap<CompilerMessageCategory, List<String>>();
+    messages.put(CompilerMessageCategory.ERROR, new ArrayList<String>());
+    messages.put(CompilerMessageCategory.INFORMATION, new ArrayList<String>());
+
     final File outOsDir = new File(outDirOsPath);
     if (!outOsDir.exists()) {
       if (!outOsDir.mkdirs()) {
-        LOG.error("Unable to create directory " + outDirOsPath);
+        messages.get(CompilerMessageCategory.ERROR).add("Unable to create directory " + outDirOsPath);
       }
     }
 
@@ -70,15 +74,15 @@ public final class AndroidApt {
     touch it */
     final File manifestJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidUtils.MANIFEST_JAVA_FILE_NAME);
     if (manifestJavaFile.exists()) {
-      if (!manifestJavaFile.delete()) {
-        LOG.error("Unable to delete " + manifestJavaFile.getPath());
+      if (!FileUtil.delete(manifestJavaFile)) {
+        messages.get(CompilerMessageCategory.ERROR).add("Unable to delete " + manifestJavaFile.getPath());
       }
     }
     
     final File rJavaFile = new File(packageFolderOsPath + File.separatorChar + AndroidUtils.R_JAVA_FILENAME);
     if (rJavaFile.exists()) {
-      if (!rJavaFile.delete()) {
-        LOG.error("Unable to delete " + rJavaFile.getPath());
+      if (!FileUtil.delete(rJavaFile)) {
+        messages.get(CompilerMessageCategory.ERROR).add("Unable to delete " + rJavaFile.getPath());
       }
     }
 
@@ -86,28 +90,29 @@ public final class AndroidApt {
       final String libPackageFolderOsPath = FileUtil.toSystemDependentName(outDirOsPath + '/' + libPackage.replace('.', '/'));
       final File libRJavaFile = new File(libPackageFolderOsPath + File.separatorChar + AndroidUtils.R_JAVA_FILENAME);
       if (libRJavaFile.exists()) {
-        if (!libRJavaFile.delete()) {
-          LOG.error("Unable to delete " + libRJavaFile.getPath());
+        if (!FileUtil.delete(libRJavaFile)) {
+          messages.get(CompilerMessageCategory.ERROR).add("Unable to delete " + libRJavaFile.getPath());
         }
       }
     }
 
     if (platformToolsRevision < 0 || platformToolsRevision > 7) {
-      return doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, isLibrary);
+      Map<CompilerMessageCategory, List<String>> map =
+        doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, isLibrary);
+      AndroidCompileUtil.addMessages(messages, map);
+      return messages;
     }
     else {
-      final Map<CompilerMessageCategory, List<String>> fullMap = new HashMap<CompilerMessageCategory, List<String>>();
-
       Map<CompilerMessageCategory, List<String>> map;
 
       map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, null, false);
-      AndroidCompileUtil.addMessages(fullMap, map);
+      AndroidCompileUtil.addMessages(messages, map);
 
       for (String libPackage : libPackages) {
         map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, libPackage, false);
-        AndroidCompileUtil.addMessages(fullMap, map);
+        AndroidCompileUtil.addMessages(messages, map);
       }
-      return map;
+      return messages;
     }
   }
 

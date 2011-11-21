@@ -112,12 +112,14 @@ class AndroidSdkConfigurableForm {
     return (IAndroidTarget)myBuildTargetComboBox.getSelectedItem();
   }
 
-  public void init(Sdk jdk, Sdk androidSdk, IAndroidTarget buildTarget) {
+  public void init(@Nullable Sdk jdk, Sdk androidSdk, IAndroidTarget buildTarget) {
     updateJdks();
+    
+    final String jdkName = jdk != null ? jdk.getName() : null;
 
     if (androidSdk != null) {
       for (int i = 0; i < myJdksModel.getSize(); i++) {
-        if (Comparing.strEqual(((Sdk)myJdksModel.getElementAt(i)).getName(), jdk.getName())) {
+        if (Comparing.strEqual(((Sdk)myJdksModel.getElementAt(i)).getName(), jdkName)) {
           myInternalJdkComboBox.setSelectedIndex(i);
           break;
         }

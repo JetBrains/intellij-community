@@ -85,7 +85,14 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         if (virtualFile != null) {
           final File file = VfsUtil.virtualToIoFile(virtualFile);
           try {
+            final IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
+            if (pluginDescriptor == null) {
+              Messages.showErrorDialog("Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
+              return;
+            }
             PluginDownloader.install(file, file.getName());
+            ((InstalledPluginsTableModel)pluginsModel).appendDescriptor(pluginDescriptor);
+            select(pluginDescriptor);
             setRequireShutdown(true);
           }
           catch (IOException ex) {
@@ -162,13 +169,13 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     final boolean modified = super.isModified();
     if (modified) return true;
     for (int i = 0; i < pluginsModel.getRowCount(); i++) {
-      final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)pluginsModel.getObjectAt(i);
+      final IdeaPluginDescriptor pluginDescriptor = pluginsModel.getObjectAt(i);
       if (pluginDescriptor.isEnabled() != ((InstalledPluginsTableModel)pluginsModel).isEnabled(pluginDescriptor.getPluginId())) {
         return true;
       }
     }
     for (IdeaPluginDescriptor descriptor : pluginsModel.filtered) {
-      if (((IdeaPluginDescriptorImpl)descriptor).isEnabled() !=
+      if (descriptor.isEnabled() !=
           ((InstalledPluginsTableModel)pluginsModel).isEnabled(descriptor.getPluginId())) {
         return true;
       }
@@ -189,12 +196,12 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     final String apply = super.apply();
     if (apply != null) return apply;
     for (int i = 0; i < pluginTable.getRowCount(); i++) {
-      final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)pluginsModel.getObjectAt(i);
+      final IdeaPluginDescriptor pluginDescriptor = pluginsModel.getObjectAt(i);
       final Boolean enabled = (Boolean)pluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn());
       pluginDescriptor.setEnabled(enabled != null && enabled.booleanValue());
     }
     for (IdeaPluginDescriptor descriptor : pluginsModel.filtered) {
-      ((IdeaPluginDescriptorImpl)descriptor).setEnabled(
+      descriptor.setEnabled(
         ((InstalledPluginsTableModel)pluginsModel).isEnabled(descriptor.getPluginId()));
     }
     try {
@@ -274,28 +281,4 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     }
   }
 
-  private class MyFilterBundleAction extends ComboBoxAction implements DumbAware {
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(((InstalledPluginsTableModel)pluginsModel).isBundledEnabled());
-      e.getPresentation().setText("Bundled: " + ((InstalledPluginsTableModel)pluginsModel).getBundledFilter());
-    }
-
-    @NotNull
-    @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-      final DefaultActionGroup gr = new DefaultActionGroup();
-      for (final String bundledValue : InstalledPluginsTableModel.BUNDLED_VALUES) {
-        gr.add(new AnAction(bundledValue) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            final String filter = myFilter.getFilter().toLowerCase();
-            ((InstalledPluginsTableModel)pluginsModel).setBundledFilter(bundledValue, filter);
-          }
-        });
-      }
-      return gr;
-    }
-  }
 }

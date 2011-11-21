@@ -72,8 +72,16 @@ public class AndroidCompileUtil {
   private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
+  
+  @NonNls private static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
 
   private AndroidCompileUtil() {
+  }
+
+  @Nullable
+  public static VirtualFile getProguardConfigFile(@NotNull AndroidFacet facet) {
+    final VirtualFile root = AndroidRootUtil.getMainContentRoot(facet);
+    return root != null ? root.findChild(PROGUARD_CFG_FILE_NAME) : null;
   }
 
   static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages) {
@@ -424,6 +432,10 @@ public class AndroidCompileUtil {
       @Override
       public void run() {
         for (Module module : affectedModules) {
+          if (module.isDisposed() || module.getProject().isDisposed()) {
+            continue;
+          }
+          
           final AndroidFacet facet = AndroidFacet.getInstance(module);
           if (facet != null) {
             AndroidCompileUtil.createGenModulesAndSourceRoots(facet);

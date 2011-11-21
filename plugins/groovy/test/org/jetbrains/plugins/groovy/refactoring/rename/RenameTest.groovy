@@ -484,4 +484,16 @@ class Test {
     myFixture.checkResultByFile prefix + "_after.groovy"
   }
 
+  void testRenameJavaGetter() {
+    myFixture.configureByText('J.java', '''
+class J {
+  int ge<caret>tFoo() {return 2;}
+}
+''')
+
+    PsiFile groovyFile = myFixture.addFileToProject('g.groovy', '''print new J().foo''')
+
+    myFixture.renameElementAtCaret('getAbc')
+    assertEquals('''print new J().abc''', groovyFile.text)
+  }
 }

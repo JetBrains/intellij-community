@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.TimedDeadzone;
 
 import javax.swing.*;
@@ -63,7 +65,7 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected boolean allowEngravement() {
-    return contentManager().getContentCount() <= 1;
+    return isSelected() || (myUi != null && myUi.myWindow.isActive());
   }
 
   @Override
@@ -77,7 +79,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Color getPassiveFg(boolean selected) {
     if (contentManager().getContentCount() > 1) {
-      return selected ? Color.white : super.getPassiveFg(selected);
+      return selected ? new SameColor(220) : super.getPassiveFg(selected);
     }
     return super.getPassiveFg(selected);
   }
@@ -88,6 +90,15 @@ class ContentTabLabel extends BaseLabel {
 
   public boolean isSelected() {
     return contentManager().isSelected(myContent);
+  }
+
+  @Override
+  protected Graphics _getGraphics(Graphics2D g) {
+    if (isSelected() && contentManager().getContentCount() > 1) {
+      return new EngravedTextGraphics(g, 1, 1, myUi.myWindow.isActive() ? new Color(0, 0, 0, 200) : new Color(0, 0, 0, 130));
+    }
+    
+    return super._getGraphics(g);
   }
 
   private ContentManager contentManager() {

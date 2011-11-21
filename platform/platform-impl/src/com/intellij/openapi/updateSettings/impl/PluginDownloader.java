@@ -124,26 +124,7 @@ public class PluginDownloader {
       return false;
     }
 
-    IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(myFile);
-    if (descriptor == null) {
-      if (myFile.getName().endsWith(".zip")) {
-        final File outputDir = FileUtil.createTempDirectory("plugin", "");
-        try {
-          ZipUtil.extract(myFile, outputDir, new FilenameFilter() {
-            public boolean accept(final File dir, final String name) {
-              return true;
-            }
-          });
-          final File[] files = outputDir.listFiles();
-          if (files != null && files.length == 1) {
-            descriptor = PluginManager.loadDescriptor(files[0], PluginManager.PLUGIN_XML);
-          }
-        }
-        finally {
-          FileUtil.delete(outputDir);
-        }
-      }
-    }
+    IdeaPluginDescriptorImpl descriptor = loadDescriptionFromJar(myFile);
     if (descriptor != null) {
       myPluginVersion = descriptor.getVersion();
       if (ideaPluginDescriptor != null && StringUtil.compareVersionNumbers(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) {
@@ -166,6 +147,31 @@ public class PluginDownloader {
       setDescriptor(descriptor);
      }
     return true;
+  }
+
+  @Nullable
+  public static IdeaPluginDescriptorImpl loadDescriptionFromJar(final File file) throws IOException {
+    IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(file);
+    if (descriptor == null) {
+      if (file.getName().endsWith(".zip")) {
+        final File outputDir = FileUtil.createTempDirectory("plugin", "");
+        try {
+          ZipUtil.extract(file, outputDir, new FilenameFilter() {
+            public boolean accept(final File dir, final String name) {
+              return true;
+            }
+          });
+          final File[] files = outputDir.listFiles();
+          if (files != null && files.length == 1) {
+            descriptor = PluginManager.loadDescriptor(files[0], PluginManager.PLUGIN_XML);
+          }
+        }
+        finally {
+          FileUtil.delete(outputDir);
+        }
+      }
+    }
+    return descriptor;
   }
 
   public void install() throws IOException {

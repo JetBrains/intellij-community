@@ -261,12 +261,21 @@ public class Splitter extends JPanel {
 
       myProportion = (float)(firstComponentSize / (firstComponentSize + secondComponentSize));
 
+      firstComponentSize = Math.floor(firstComponentSize);
+      secondComponentSize = Math.floor(secondComponentSize);
+      
       if (getOrientation()) {
+        // fix flooring
+        secondComponentSize += (int) (height - firstComponentSize - secondComponentSize - dividerWidth);
+        
         firstRect.setBounds(0, 0, (int)width, (int)firstComponentSize);
         dividerRect.setBounds(0, (int)firstComponentSize, (int)width, (int)dividerWidth);
         secondRect.setBounds(0, (int)(firstComponentSize + dividerWidth), (int)width, (int)secondComponentSize);
       }
       else {
+        // fix flooring
+        secondComponentSize += (int) (width - firstComponentSize - secondComponentSize - dividerWidth);
+        
         firstRect.setBounds(0, 0, (int)firstComponentSize, (int)height);
         dividerRect.setBounds((int)firstComponentSize, 0, (int)dividerWidth, (int)height);
         secondRect.setBounds((int)(firstComponentSize + dividerWidth), 0, (int)secondComponentSize, (int)height);

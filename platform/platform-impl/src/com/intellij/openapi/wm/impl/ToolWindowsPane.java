@@ -74,7 +74,7 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
   private final Stripe myBottomStripe;
   private final Stripe myTopStripe;
 
-  private final ArrayList<Stripe> myStipes = new ArrayList<Stripe>();
+  private final ArrayList<Stripe> myStripes = new ArrayList<Stripe>();
 
   private final MyUISettingsListenerImpl myUISettingsListener;
   private final ToolWindowManagerImpl myManager;
@@ -111,13 +111,13 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
     // Tool stripes
 
     myTopStripe=new Stripe(SwingConstants.TOP, manager);
-    myStipes.add(myTopStripe);
+    myStripes.add(myTopStripe);
     myLeftStripe=new Stripe(SwingConstants.LEFT, manager);
-    myStipes.add(myLeftStripe);
+    myStripes.add(myLeftStripe);
     myBottomStripe=new Stripe(SwingConstants.BOTTOM, manager);
-    myStipes.add(myBottomStripe);
+    myStripes.add(myBottomStripe);
     myRightStripe=new Stripe(SwingConstants.RIGHT, manager);
-    myStipes.add(myRightStripe);
+    myStripes.add(myRightStripe);
 
     updateToolStripesVisibility();
 
@@ -165,45 +165,6 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
-
-    UISettings settings = UISettings.getInstance();
-    if (myTopStripe.isVisible() && myStripesOverlayed && settings.HIDE_TOOL_STRIPES) {
-      Dimension topSize = myTopStripe.getSize();
-      Dimension bottomSize = myBottomStripe.getSize();
-      Dimension leftSize = myLeftStripe.getSize();
-      Dimension rightSize = myRightStripe.getSize();
-      Dimension size = getSize();
-
-
-      Rectangle rec = new Rectangle(leftSize.width, topSize.height, size.width - leftSize.width - rightSize.width,
-                                    size.height - topSize.height - bottomSize.height);
-
-      g.setColor(Color.gray);
-
-      boolean strikeoutTop = settings.SHOW_MAIN_TOOLBAR && !settings.SHOW_NAVIGATION_BAR && topSize.height == 0;
-
-      if (topSize.height> 0) {
-        g.drawLine(rec.x, rec.y, rec.x + rec.width, rec.y);
-      }
-
-      if (leftSize.width > 0) {
-        g.drawLine(rec.x, rec.y, rec.x, rec.y + rec.height);
-        if (strikeoutTop) {
-          g.drawLine(0, rec.y, rec.x, rec.y);
-        }
-      }
-
-      if (bottomSize.height > 0) {
-        g.drawLine(rec.x, rec.y + rec.height, rec.x + rec.width, rec.y + rec.height);
-      }
-
-      if (rightSize.width > 0) {
-        g.drawLine(rec.x + rec.width, rec.y, rec.x + rec.width, rec.y + rec.height);
-        if (strikeoutTop) {
-          g.drawLine(rec.x + rec.width, rec.y, size.width, rec.y);
-        }
-      }
-    }
   }
 
   /**
@@ -446,12 +407,12 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
 
   Stripe getStripeFor(final Rectangle screenRec, Stripe preferred) {
     if (preferred.containsScreen(screenRec)) {
-      return myStipes.get(myStipes.indexOf(preferred));
+      return myStripes.get(myStripes.indexOf(preferred));
     }
 
-    for (Stripe each : myStipes) {
+    for (Stripe each : myStripes) {
       if (each.containsScreen(screenRec)) {
-        return myStipes.get(myStipes.indexOf(each));
+        return myStripes.get(myStripes.indexOf(each));
       }
     }
 
@@ -459,13 +420,13 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
   }
 
   void startDrag() {
-    for (Stripe each : myStipes) {
+    for (Stripe each : myStripes) {
       each.startDrag();
     }
   }
 
   void stopDrag() {
-    for (Stripe each : myStipes) {
+    for (Stripe each : myStripes) {
       each.stopDrag();
     }
   }

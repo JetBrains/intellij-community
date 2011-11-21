@@ -143,25 +143,37 @@ public class JBOptionButton extends JButton {
     JMenuItem first = null;
     for (Action each : myOptions) {
       if (getAction() == each) continue;
-      final String text = (String)each.getValue(Action.NAME);
-      StringBuilder plainText = new StringBuilder();
-      for (int i = 0; i < text.length(); i++) {
-        char ch = text.charAt(i);
-        if (ch == '&' || ch == '_') {
-          continue;
-        }
-        plainText.append(ch);
-      }
-      
+      String plainText = getMenuText(each);
       final JMenuItem eachItem = new JMenuItem(each);
+
       if (first == null) {
         first = eachItem;
       }
       eachItem.setText(plainText.toString());
       myPopup.add(eachItem);
     }
+
+    if (myOptions.length > 0) {
+      myPopup.addSeparator();
+      final JMenuItem mainAction = new JMenuItem(getAction());
+      mainAction.setText(getMenuText(getAction()));
+      myPopup.add(mainAction);
+    }
     
     return first;
+  }
+
+  private String getMenuText(Action each) {
+    final String text = (String)each.getValue(Action.NAME);
+    StringBuilder plainText = new StringBuilder();
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (ch == '&' || ch == '_') {
+        continue;
+      }
+      plainText.append(ch);
+    }
+    return plainText.toString();
   }
 
   @Override

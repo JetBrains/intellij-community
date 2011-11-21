@@ -17,11 +17,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiPrimitiveType;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public interface GrBuiltinTypeClassExpression extends GrExpression {
+  @NotNull
   PsiPrimitiveType getPrimitiveType();
 }

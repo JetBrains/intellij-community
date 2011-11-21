@@ -83,4 +83,7 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   String getUntilBuild();
 
   boolean isBundled();
+
+  boolean isEnabled();
+  void setEnabled(boolean enabled);
 }

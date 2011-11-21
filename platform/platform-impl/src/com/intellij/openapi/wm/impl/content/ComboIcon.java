@@ -22,7 +22,7 @@ import java.awt.*;
 
 public abstract class ComboIcon {
 
-  private final ActiveIcon myIcon = new ActiveIcon(IconLoader.getIcon("/general/combo.png"));
+  private final ActiveIcon myIcon = new ActiveIcon(IconLoader.getIcon("/general/combo2.png"));
 
   public void paintIcon(final Component c, final Graphics g) {
     myIcon.setActive(isActive());
@@ -47,7 +47,7 @@ public abstract class ComboIcon {
   }
 
   protected int getIconY(final Rectangle iconRec) {
-    return iconRec.y + iconRec.height / 2 - getIconHeight() / 2;
+    return iconRec.y + iconRec.height / 2 - getIconHeight() / 2 + 1;
   }
 
   public int getIconHeight() {

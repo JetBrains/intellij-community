@@ -19,9 +19,8 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ListWithSelection;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.netbeans.lib.cvsclient.command.log.SymbolicName;
@@ -40,9 +39,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
 
   public CvsFileRevisionImpl(Revision cvsRevision, File file, LogInformation logInfo,
                              CvsEnvironment cvsRoot, Project project) {
-    super(new ComparableVcsRevisionOnOperation(createGetFileContentOperation(cvsRevision,
-                                                                             file,
-                                                                             cvsRoot), project));
+    super(new ComparableVcsRevisionOnOperation(createGetFileContentOperation(cvsRevision, file, cvsRoot), project));
     myCvsRevision = cvsRevision;
     myLogInformation = logInfo;
   }
@@ -52,13 +49,6 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
                                                                 final CvsEnvironment cvsEnvironment) {
     String revisionNumber = cvsRevision != null ? cvsRevision.getNumber() : null;
     return new GetFileContentOperation(cvsLightweightFile, cvsEnvironment, new SimpleRevision(revisionNumber));
-  }
-
-  private CvsRevisionNumber getNumber() {
-    if (myCvsRevision != null) {
-      return new CvsRevisionNumber(myCvsRevision.getNumber());
-    }
-    return myComparableCvsRevisionOnOperation.getRevision();
   }
 
   public Collection<String> getBranches() {
@@ -136,8 +126,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
 
   public Collection<String> getTags() {
     if (myTags == null) {
-      myTags = new ListWithSelection<String>(myLogInformation == null ? new ArrayList<String>() :
-                                             collectSymNamesForRevision());
+      myTags = myLogInformation == null ? Collections.<String>emptyList() : collectSymNamesForRevision();
     }
     return myTags;
   }
@@ -153,10 +142,11 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
   }
 
   public VcsRevisionNumber getRevisionNumber() {
-    if (getNumber() == null) {
-      return VcsRevisionNumber.NULL;
+    if (myCvsRevision != null) {
+      return new CvsRevisionNumber(myCvsRevision.getNumber());
     }
-    return getNumber();
+    final CvsRevisionNumber number = myComparableCvsRevisionOnOperation.getRevision();
+    return number == null ? VcsRevisionNumber.NULL : number;
   }
 
   public Date getRevisionDate() {

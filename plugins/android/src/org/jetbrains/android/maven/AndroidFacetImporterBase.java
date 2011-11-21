@@ -71,7 +71,6 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.maven.AndroidFacetImporterBase");
   
   private static final Key<Boolean> MODULE_IMPORTED = Key.create("ANDROID_NEWLY_CREATED_KEY");
-  private static final Key<Boolean> NEED_TO_DELETE_OBSOLETE_MODULES_KEY = Key.create("NEED_TO_DELETE_OBSOLETE_MODULES_KEY");
 
   public AndroidFacetImporterBase(@NotNull String pluginId) {
     super("com.jayway.maven.plugins.android.generation2", pluginId, FacetType.findInstance(AndroidFacetType.class), "Android");
@@ -346,6 +345,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
       if (sdk != null) {
         apklibModuleModel.setSdk(sdk);
+        moveJdkOrderEntryDown(apklibModuleModel);
       }
 
       for (AndroidExternalApklibDependenciesManager.MavenDependencyInfo depArtifactInfo : resolvedInfo.getApklibDependencies()) {
@@ -491,14 +491,36 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
   private void configureAndroidPlatform(MavenProject project, ModifiableRootModel model) {
     final Sdk currentSdk = model.getSdk();
-    if (currentSdk != null && isAppropriateSdk(currentSdk, project)) {
-      return;
+
+    if (currentSdk == null || !isAppropriateSdk(currentSdk, project)) {
+      final Sdk platformLib = findOrCreateAndroidPlatform(project);
+
+      if (platformLib != null) {
+        model.setSdk(platformLib);
+      }
+    }
+    moveJdkOrderEntryDown(model);
+  }
+
+  private static void moveJdkOrderEntryDown(@NotNull ModifiableRootModel model) {
+    final OrderEntry[] entries = model.getOrderEntries();
+    final List<OrderEntry> entryList = new ArrayList<OrderEntry>(Arrays.asList(entries));
+    OrderEntry jdkOrderEntry = null;
+
+    for (Iterator<OrderEntry> it = entryList.iterator(); it.hasNext(); ) {
+      final OrderEntry entry = it.next();
+      if (entry instanceof JdkOrderEntry) {
+        jdkOrderEntry = entry;
+        it.remove();
+        break;
+      }
     }
 
-    Sdk platformLib = findOrCreateAndroidPlatform(project);
-    if (platformLib != null) {
-      model.setSdk(platformLib);
+    if (jdkOrderEntry != null) {
+      entryList.add(jdkOrderEntry);
     }
+
+    model.rearrangeOrderEntries(entryList.toArray(new OrderEntry[entryList.size()]));
   }
 
   private boolean isAppropriateSdk(@NotNull Sdk sdk, MavenProject mavenProject) {

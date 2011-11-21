@@ -17,11 +17,10 @@ package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
+import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.ColorUtil;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,10 +32,6 @@ import java.awt.geom.Path2D;
  * @author Konstantin Bulenkov
  */
 public abstract class AbstractNavBarUI implements NavBarUI {
-  //private static Image SEPARATOR_ACTIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorActive.png"));
-  static Image SEPARATOR_PASSIVE = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorPassive.png"));
-  static Image SEPARATOR_GRADIENT = IconUtil.toImage(IconLoader.getIcon("/general/navbarSeparatorGradient.png"));
-
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
     return isPopupElement ? new Insets(1, 2, 1, 2) : JBInsets.NONE;
@@ -81,67 +76,85 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar) {
+    final boolean floating = navbar.isInFloatingMode();
+    
     Icon icon = item.getIcon();
-    final Color bg = item.isSelected() && item.isFocused()
-                      ? UIUtil.getListSelectionBackground()
-                      : (UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
-    final Color c = UIUtil.getListSelectionBackground();
-    final Color selBg = new Color(c.getRed(), c.getGreen(), c.getBlue(), getSelectionAlpha());
     int w = item.getWidth();
     int h = item.getHeight();
-    if (navbar.isInFloatingMode() || (item.isSelected() && navbar.hasFocus())) {
-      g.setPaint(item.isSelected() && item.isFocused() ? selBg : bg);
-      g.fillRect(0, 0, w - (item.isLastElement() ? 0 : getDecorationOffset()), h);
+
+    final Paint bg = floating ? Color.WHITE : new GradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
+    final Color selection = floating ? UIUtil.getListSelectionBackground() : new Color(0, 0, 0, 60);
+    
+    final boolean selected = item.isSelected() && item.isFocused();
+    
+    Graphics2D g2 = (Graphics2D) g.create();
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+    Path2D.Double shape = new Path2D.Double();
+    shape.moveTo(0, 0);
+    shape.lineTo(w - getDecorationOffset(), 0);
+    shape.lineTo(w, h / 2);
+    shape.lineTo(w - getDecorationOffset(), h);
+    shape.lineTo(0, h);
+    shape.closePath();
+    
+    Path2D.Double endShape = new Path2D.Double();
+    endShape.moveTo(w - getDecorationOffset(), 0);
+    endShape.lineTo(w, 0);
+    endShape.lineTo(w, h);
+    endShape.lineTo(w - getDecorationOffset(), h);
+    endShape.lineTo(w, h / 2);
+    endShape.closePath();
+    
+    if (bg != null) {
+      g2.setPaint(bg);
+      g2.fill(shape);
+      if (!item.isLastElement() || floating) {
+        g2.fill(endShape);
+      }
     }
+
+    if (selected) {
+      g2.setColor(selection);
+      if (floating && item.isLastElement()) {
+        g2.fillRect(0, 0, w, h);
+      } else {
+        g2.fill(shape);
+      }
+    }
+
+    if (item.isNextSelected() && navbar.hasFocus()) {
+      g2.setColor(selection);
+      g2.fill(endShape);
+    }
+
     final int offset = item.isFirstElement() ? getFirstElementLeftOffset() : 0;
     final int iconOffset = getElementPadding().left + offset;
-    icon.paintIcon(item, g, iconOffset, (h - icon.getIconHeight()) / 2);
+    icon.paintIcon(item, g2, iconOffset, (h - icon.getIconHeight()) / 2);
     final int textOffset = icon.getIconWidth() + getElementPadding().width() + offset;
-    int x = item.doPaintText(g, textOffset);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    item.doPaintText(g2, textOffset);
     
-    g.translate(x, 0);
-    Path2D.Double path;
-    int off = getDecorationOffset();
-    if (item.isFocused()) {
-      if (item.isSelected() && !item.isLastElement()) {
-        path = new Path2D.Double();
-        g.translate(2, 0);
-        path.moveTo(0, 0);
-        path.lineTo(off, h / 2);              // |\
-        path.lineTo(0, h);                    // |/
-        path.lineTo(0, 0);
-        g.setColor(selBg);
-        g.fill(path);
-        g.translate(-2, 0);
-      }
+    g2.translate(w - getDecorationOffset(), 0);
+    int off = getDecorationOffset() - 1;
 
-      if (navbar.isInFloatingMode() || item.isNextSelected()) {
-        if (! item.isLastElement()) {
-          path = new Path2D.Double();
-          path.moveTo(0, 0);
-          path.lineTo(off, h / 2);                // ___
-          path.lineTo(0, h);                      // \ |
-          path.lineTo(off + 2, h);                // /_|
-          path.lineTo(off + 2, 0);
-          path.lineTo(0, 0);
-          g.setColor(item.isNextSelected() ? selBg : UIUtil.getListBackground());
-          g.fill(path);
-        }
-      }
+    if (!floating || !item.isLastElement()) {
+      g2.setColor(new Color(0, 0, 0, 70));
+      g2.drawLine(0, 0, off, h / 2 - 1);
+      g2.drawLine(off, h / 2 - 1, 0, h);
     }
-    if (! item.isLastElement() && ((!item.isSelected() && !item.isNextSelected()) || !navbar.hasFocus())) {
-      Image img = SEPARATOR_PASSIVE;
-      final UISettings settings = UISettings.getInstance();
-      if (settings.SHOW_NAVIGATION_BAR) {
-        img = SEPARATOR_GRADIENT;
-      }
-      g.drawImage(img, null, null);
-    }    
+    
+    if (!selected && !floating) {
+      g2.translate(-1, 0);
+      g2.setColor(new SameColor(205));
+      g2.drawLine(0, 0, off, h / 2 - 1);
+      g2.drawLine(off, h / 2 - 1, 0, h);
+    }
+    
+    g2.dispose();
   }
 
   private int getDecorationOffset() {
-     return 11;
+     return 8;
    }
 
    private int getFirstElementLeftOffset() {
@@ -160,27 +173,21 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getWrapperPanelInsets(Insets insets) {
-    return JBInsets.NONE;
+    return new Insets(insets.top + (shouldPaintWrapperPanel() ? 5 : 0), insets.left, 
+                      insets.bottom + (shouldPaintWrapperPanel() ? 5 : 0), insets.right);
+  }
+  
+  private static boolean shouldPaintWrapperPanel() {
+    return !UISettings.getInstance().SHOW_MAIN_TOOLBAR && NavBarRootPaneExtension.runToolbarExists(); 
   }
 
+  protected Color getBackgroundColor() {
+    return new Color(0, 0, 0, 35);
+  }
+  
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
-    final Color startColor = UIUtil.getControlColor();
-    final Color endColor = ColorUtil.shift(startColor, 7.0d / 8.0d);
-    g.setPaint(new GradientPaint(0, 0, startColor, 0, r.height-1, endColor));
-    g.fillRect(0, 0, r.width, r.height-1);
-
-    if (!undocked) {
-      g.setColor(new Color(255, 255, 255, 220));
-      g.drawLine(0, 1, r.width, 1);
-    }
-
-    g.setColor(UIUtil.getBorderColor());
-    if (!undocked) g.drawLine(0, 0, r.width, 0);
-    g.drawLine(0, r.height-1, r.width, r.height-1);
-
-    if (!mainToolbarVisible) {
-      UIUtil.drawDottedLine(g, r.width - 1, 0, r.width - 1, r.height-1, null, Color.GRAY);
-    }
+    g.setColor(getBackgroundColor());
+    g.fillRect(0, 0, r.width, r.height);
   }
 }

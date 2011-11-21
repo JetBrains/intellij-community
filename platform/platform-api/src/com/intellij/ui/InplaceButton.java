@@ -64,7 +64,7 @@ public class InplaceButton extends JComponent implements ActiveComponent {
   public InplaceButton(IconButton source, final ActionListener listener, final Pass<MouseEvent> me, TimedDeadzone.Length mouseDeadzone) {
     myBehavior = new BaseButtonBehavior(this, mouseDeadzone) {
       protected void execute(final MouseEvent e) {
-        listener.actionPerformed(new ActionEvent(e, ActionEvent.ACTION_PERFORMED, "execute"));
+        listener.actionPerformed(new ActionEvent(e, ActionEvent.ACTION_PERFORMED, "execute", e.getModifiers()));
       }
 
       @Override

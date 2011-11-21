@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template;
+package com.intellij.ui.tabs;
+
+import javax.swing.*;
 
 /**
- * @author Eugene.Kudelevsky
+ * @author pegov
  */
-public interface TemplateInvokationListener {
-  void finished();
+public class TabsUtil {
+  
+  
+  public static final int TAB_VERTICAL_PADDING = 3;
+  public static final int TABS_BORDER = 1;  
+
+  private TabsUtil() {
+  }
+
+  public static int getTabsHeight() {
+    return TAB_VERTICAL_PADDING * 2 + new JLabel("XXX").getPreferredSize().height + 1 /* +1 ??? */; 
+  }
+  
 }

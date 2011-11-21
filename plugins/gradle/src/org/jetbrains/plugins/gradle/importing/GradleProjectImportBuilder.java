@@ -23,6 +23,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.GradleProjectState;
 import org.jetbrains.plugins.gradle.model.GradleEntity;
 import org.jetbrains.plugins.gradle.model.GradleModule;
 import org.jetbrains.plugins.gradle.model.GradleProject;
@@ -93,12 +94,13 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   public List<Module> commit(Project project,
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
-                             ModifiableArtifactModel artifactModel)
-  {
+                             ModifiableArtifactModel artifactModel) {
+    if (project != null) {
+      project.getComponent(GradleProjectState.class).GRADLE_PROJECT_FILE_PATH = myProjectFile.getAbsolutePath();
+    }
     GradleModulesImporter importer = new GradleModulesImporter();
-    Map<GradleModule, Module> mappings = importer.importModules(
-      myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath(), myProgressManager
-    );
+    Map<GradleModule, Module> mappings =
+      importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath(), myProgressManager);
     return new ArrayList<Module>(mappings.values());
   }
 

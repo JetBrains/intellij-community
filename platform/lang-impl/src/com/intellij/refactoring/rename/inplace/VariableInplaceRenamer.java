@@ -308,31 +308,42 @@ public class VariableInplaceRenamer {
 
               @Override
               public void templateFinished(Template template, final boolean brokenOff) {
-                super.templateFinished(template, brokenOff);
-                moveOffsetAfter(!brokenOff);
-                if (myNewName != null && !brokenOff) {
-                  final Runnable runnable = new Runnable() {
-                    public void run() {
-                      performRefactoringRename(myNewName, context, markAction);
+                boolean bind = false;
+                try {
+                  super.templateFinished(template, brokenOff);
+                  moveOffsetAfter(!brokenOff);
+                  if (myNewName != null && !brokenOff) {
+                    bind = true;
+                    final Runnable runnable = new Runnable() {
+                      public void run() {
+                        performRefactoringRename(myNewName, context, markAction);
+                      }
+                    };
+                    if (ApplicationManager.getApplication().isUnitTestMode()){
+                      runnable.run();
+                    } else {
+                      ApplicationManager.getApplication().invokeLater(runnable);
                     }
-                  };
-                  if (ApplicationManager.getApplication().isUnitTestMode()){
-                    runnable.run();
-                  } else {
-                    ApplicationManager.getApplication().invokeLater(runnable);
                   }
-                } else {
-                  FinishMarkAction.finish(myProject, myEditor, markAction);
+                }
+                finally {
+                  if (!bind) {
+                    FinishMarkAction.finish(myProject, myEditor, markAction);
+                  }
                 }
               }
 
               public void templateCancelled(Template template) {
-                final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-                documentManager.commitAllDocuments();
-                finish();
-                moveOffsetAfter(false);
-                documentManager.doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-                FinishMarkAction.finish(myProject, myEditor, markAction);
+                try {
+                  final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+                  documentManager.commitAllDocuments();
+                  finish();
+                  moveOffsetAfter(false);
+                  documentManager.doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                }
+                finally {
+                  FinishMarkAction.finish(myProject, myEditor, markAction);
+                }
               }
             });
 
@@ -419,47 +430,52 @@ public class VariableInplaceRenamer {
   protected void performRefactoringRename(final String newName,
                                             PsiElement context,
                                             final StartMarkAction markAction) {
-    PsiNamedElement elementToRename = getVariable();
-    for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-      if (renamerFactory.isApplicable(elementToRename)) {
-        final List<UsageInfo> usages = new ArrayList<UsageInfo>();
-        final AutomaticRenamer renamer =
-          renamerFactory.createRenamer(elementToRename, newName, new ArrayList<UsageInfo>());
-        if (renamer.hasAnythingToRename()) {
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);
-            renamingDialog.show();
-            if (!renamingDialog.isOK()) return;
-          }
-
-          final Runnable runnable = new Runnable() {
-            public void run() {
-              renamer.findUsages(usages, false, false);
+    try {
+      PsiNamedElement elementToRename = getVariable();
+      for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+        if (renamerFactory.isApplicable(elementToRename)) {
+          final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+          final AutomaticRenamer renamer =
+            renamerFactory.createRenamer(elementToRename, newName, new ArrayList<UsageInfo>());
+          if (renamer.hasAnythingToRename()) {
+            if (!ApplicationManager.getApplication().isUnitTestMode()) {
+              final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);
+              renamingDialog.show();
+              if (!renamingDialog.isOK()) return;
             }
-          };
 
-          if (!ProgressManager.getInstance()
-            .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
-            return;
-          }
-
-          if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilBase.toPsiElementArray(renamer.getElements()))) return;
-          final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
-          final MultiMap<PsiElement,UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
-          for (final PsiNamedElement element : renamer.getElements()) {
-            new WriteCommandAction(myProject, RENAME_TITLE) {
-              @Override
-              protected void run(com.intellij.openapi.application.Result result) throws Throwable {
-                final String newElementName = renamer.getNewName(element);
-                if (newElementName != null) {
-                  final Collection<UsageInfo> infos = classified.get(element);
-                  RenameUtil.doRenameGenericNamedElement(element, newElementName, infos.toArray(new UsageInfo[infos.size()]), null);
-                }
+            final Runnable runnable = new Runnable() {
+              public void run() {
+                renamer.findUsages(usages, false, false);
               }
-            }.execute();
+            };
+
+            if (!ProgressManager.getInstance()
+              .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
+              return;
+            }
+
+            if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilBase.toPsiElementArray(renamer.getElements()))) return;
+            final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
+            final MultiMap<PsiElement,UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
+            for (final PsiNamedElement element : renamer.getElements()) {
+              new WriteCommandAction(myProject, RENAME_TITLE) {
+                @Override
+                protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+                  final String newElementName = renamer.getNewName(element);
+                  if (newElementName != null) {
+                    final Collection<UsageInfo> infos = classified.get(element);
+                    RenameUtil.doRenameGenericNamedElement(element, newElementName, infos.toArray(new UsageInfo[infos.size()]), null);
+                  }
+                }
+              }.execute();
+            }
           }
         }
       }
+    }
+    finally {
+      FinishMarkAction.finish(myProject, myEditor, markAction);
     }
   }
 

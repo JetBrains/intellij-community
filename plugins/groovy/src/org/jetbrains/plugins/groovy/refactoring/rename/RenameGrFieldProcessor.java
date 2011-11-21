@@ -165,7 +165,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
                              boolean shouldCheckForCorrectResolve,
                              PsiManager manager) {
     final PsiReference ref = info.getReference();
-    final PsiElement renamed = ref.handleElementRename(nameToUse);
+    final PsiElement renamed = ((GrReferenceExpression)ref).handleElementRenameSimple(nameToUse);
     PsiElement newly_resolved = ref.resolve();
     if (shouldCheckForCorrectResolve) {
       if (element instanceof GrAccessorMethod && newly_resolved instanceof GrAccessorMethod) {

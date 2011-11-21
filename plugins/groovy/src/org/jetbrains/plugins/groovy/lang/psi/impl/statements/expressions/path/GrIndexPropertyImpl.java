@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -52,6 +53,7 @@ import static com.intellij.psi.util.PsiUtil.substituteTypeParameter;
  * @author ilyas
  */
 public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
+  private static final Logger LOG = Logger.getInstance(GrIndexPropertyImpl.class);
 
   private static final Function<GrIndexPropertyImpl, PsiType> TYPE_CALCULATOR = new NullableFunction<GrIndexPropertyImpl, PsiType>() {
     @Override
@@ -79,7 +81,10 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         if (selected instanceof GrReferenceExpression) {
           final PsiElement resolved = ((GrReferenceExpression)selected).resolve();
           if (resolved instanceof PsiClass) {
-            arrType = TypesUtil.createTypeByFQClassName(((PsiClass)resolved).getQualifiedName(), index);
+            String qname = ((PsiClass)resolved).getQualifiedName();
+            if (qname != null) {
+              arrType = TypesUtil.createTypeByFQClassName(qname, index);
+            }
           }
         }
 
@@ -139,7 +144,10 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
           if (selected instanceof GrReferenceExpression) {
             final PsiElement resolved = ((GrReferenceExpression)selected).resolve();
             if (resolved instanceof PsiClass) {
-              arrType = TypesUtil.createTypeByFQClassName(((PsiClass)resolved).getQualifiedName(), index);
+              String qname = ((PsiClass)resolved).getQualifiedName();
+              if (qname != null) {
+                arrType = TypesUtil.createTypeByFQClassName(qname, index);
+              }
             }
           }
 
@@ -156,12 +164,14 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         final String name;
         if (PsiUtil.isLValue(index)) {
           name = "putAt";
-          argTypes = ArrayUtil.append(argTypes, TypeInferenceHelper.getInitializerFor(index), PsiType.class);
+          if (!incompleteCode) {
+            argTypes = ArrayUtil.append(argTypes, TypeInferenceHelper.getInitializerFor(index), PsiType.class);
+          }
         }
         else {
           name = "getAt";
         }
-        candidates = ResolveUtil.getMethodCandidates(thisType, name, index, argTypes);
+        candidates = ResolveUtil.getMethodCandidates(thisType, name, index, true, incompleteCode, false, argTypes);
 
         //hack for remove DefaultGroovyMethods.getAt(Object, ...)
         if (candidates.length == 2) {
@@ -200,9 +210,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @NotNull
   public GrExpression getSelectedExpression() {
-    GrExpression result = findChildByClass(GrExpression.class);
-    assert result != null;
-    return result;
+    return findNotNullChildByClass(GrExpression.class);
   }
 
   @Nullable
@@ -213,7 +221,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return (GroovyResolveResult[])ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, false, false);
+    return (GroovyResolveResult[])ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, false, incompleteCode);
   }
 
   public PsiType getType() {
@@ -227,7 +235,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @Override
   public TextRange getRangeInElement() {
-    final int offset = findChildByType(GroovyTokenTypes.mLBRACK).getStartOffsetInParent();
+    final int offset = findNotNullChildByType(GroovyTokenTypes.mLBRACK).getStartOffsetInParent();
     return new TextRange(offset, offset + 1);
   }
 
@@ -266,5 +274,28 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @Override
   public boolean isSoft() {
     return false;
+  }
+
+  @Override
+  public PsiType getNominalType() {
+    LOG.assertTrue(PsiUtil.isLValue(this), "it is assumed that nominal type is invoked only for assignment lhs");
+
+    GroovyResolveResult[] candidates = multiResolve(true);
+    if (candidates.length == 1) {
+      return extractLastParameterType(candidates[0]);
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiType extractLastParameterType(GroovyResolveResult candidate) {
+    if (candidate.getElement() instanceof PsiMethod) {
+      PsiParameter[] parameters = ((PsiMethod)candidate.getElement()).getParameterList().getParameters();
+      if (parameters.length > 1) {
+        PsiParameter last = parameters[parameters.length - 1];
+        return TypesUtil.substituteBoxAndNormalizeType(last.getType(), candidate.getSubstitutor(), this);
+      }
+    }
+    return null;
   }
 }

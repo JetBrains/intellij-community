@@ -167,6 +167,7 @@ public class JBTabsImpl extends JComponent
 
   private TabInfo myOldSelection;
   private SelectionChangeHandler mySelectionChangeHandler;
+  private boolean myEditorTabs;
 
   private Runnable myDeferredFocusRequest;
   
@@ -292,6 +293,14 @@ public class JBTabsImpl extends JComponent
     }
 
     return this;
+  }
+  
+  public void setEditorTabs(boolean b) {
+    myEditorTabs = b;
+  }
+
+  public boolean isEditorTabs() {
+    return myEditorTabs;
   }
 
   public JBTabs setNavigationActionsEnabled(boolean enabled) {
@@ -1492,6 +1501,16 @@ public class JBTabsImpl extends JComponent
     return myPosition;
   }
   
+  protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
+    if (isEditorTabs() && UIUtil.isUnderAquaLookAndFeel()) {
+      g2d.setColor(MAC_AQUA_BG_COLOR);
+    } else {
+      g2d.setColor(getBackground());
+    }
+    
+    g2d.fill(clip);
+  }
+  
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
@@ -1502,14 +1521,9 @@ public class JBTabsImpl extends JComponent
     final GraphicsConfig config = new GraphicsConfig(g2d);
     config.setAntialiasing(true);
 
-
-    if (getClientProperty(EDITOR_TABS) != null && UIUtil.isUnderAquaLookAndFeel()) {
-      g2d.setColor(MAC_AQUA_BG_COLOR);
-    } else {
-      g2d.setColor(getBackground());
-    }
     final Rectangle clip = g2d.getClipBounds();
-    g2d.fillRect(clip.x, clip.y, clip.width, clip.height);
+    
+    doPaintBackground(g2d, clip);
 
     final TabInfo selected = getSelectedInfo();
 
@@ -2921,7 +2935,7 @@ public class JBTabsImpl extends JComponent
   private static class DefautDecorator implements UiDecorator {
     @NotNull
     public UiDecoration getDecoration() {
-      return new UiDecoration(null, new Insets(1, 4, 1, 5));
+      return new UiDecoration(null, new Insets(0, 4, 0, 5));
     }
   }
 

@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -64,6 +65,8 @@ public class PluginNode implements IdeaPluginDescriptor {
   private String myDownloadUrl;
   private String myRepositoryName;
   private String myInstalledVersion;
+
+  private boolean myEnabled = true;
 
   public PluginNode() {
   }
@@ -257,14 +260,14 @@ public class PluginNode implements IdeaPluginDescriptor {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public PluginId[] getDependentPluginIds() {
-    return null;
+    return PluginId.EMPTY_ARRAY;
   }
 
-  @Nullable
+  @NotNull
   public PluginId[] getOptionalDependentPluginIds() {
-    return myOptionalDependencies;
+    return myOptionalDependencies != null ? myOptionalDependencies : PluginId.EMPTY_ARRAY;
   }
 
   @Nullable
@@ -316,6 +319,16 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public boolean isBundled() {
     return false;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
   }
 
   @Nullable

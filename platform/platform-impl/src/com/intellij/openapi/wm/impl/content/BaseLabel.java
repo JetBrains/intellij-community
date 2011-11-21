@@ -17,8 +17,8 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
-import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
 
@@ -29,7 +29,7 @@ class BaseLabel extends JLabel {
 
   protected static final int TAB_SHIFT = 1;
   private static final Color DEFAULT_ACTIVE_FORE = Color.black;
-  private static final Color DEFAULT_PASSIVE_FORE = Gray._50;
+  private static final Color DEFAULT_PASSIVE_FORE = new SameColor(75);
 
   protected ToolWindowContentUi myUi;
 
@@ -53,7 +53,7 @@ class BaseLabel extends JLabel {
 
   private void updateFont() {
     Font f = UIUtil.getLabelFont();
-    Font baseFont = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
+    Font baseFont = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 1));
     if (myBold) {
       setFont(baseFont.deriveFont(Font.BOLD));
     }
@@ -73,8 +73,17 @@ class BaseLabel extends JLabel {
   protected void paintComponent(final Graphics g) {
     final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
     setForeground(fore);
-    final Graphics graphics = allowEngravement() && myUi.myWindow.isActive() && fore.equals(Color.black) ? new EngravedTextGraphics((Graphics2D)g) : g;
-    super.paintComponent(graphics);
+    super.paintComponent(_getGraphics((Graphics2D)g));
+  }
+  
+  protected Graphics _getGraphics(Graphics2D g) {
+    if (!allowEngravement()) return g;
+    Color foreground = getForeground();
+    if (Color.BLACK.equals(foreground)) {
+      return new EngravedTextGraphics(g);
+    } 
+    
+    return g;
   }
 
   protected boolean allowEngravement() {
@@ -111,7 +120,7 @@ class BaseLabel extends JLabel {
         setIcon(null);
       }
 
-      myBold = false;//isSelected;
+      myBold = false; //isSelected;
       updateFont();
     }
   }

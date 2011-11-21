@@ -155,9 +155,15 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testAnonymousClassShoudImplementMethods() throws Throwable {doTest();}
   public void testAnonymousClassShouldImplementSubstitutedMethod() throws Exception {doTest();}
 
-  public void testDefaultMapConstructorNamedArgs() throws Throwable {doTest(new GroovyConstructorNamedArgumentsInspection());}
-  public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest(new GroovyConstructorNamedArgumentsInspection());}
-  public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest(new GroovyConstructorNamedArgumentsInspection());}
+  public void testDefaultMapConstructorNamedArgs() throws Throwable {
+    doTest(new GroovyConstructorNamedArgumentsInspection(), new GroovyAssignabilityCheckInspection());
+  }
+  public void testDefaultMapConstructorNamedArgsError() throws Throwable {
+    doTest(new GroovyConstructorNamedArgumentsInspection(), new GroovyAssignabilityCheckInspection());
+  }
+  public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {
+    doTest(new GroovyConstructorNamedArgumentsInspection(), new GroovyAssignabilityCheckInspection());
+  }
 
   public void testSingleAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
   public void testUnusedAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}

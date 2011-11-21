@@ -129,6 +129,7 @@ public abstract class PluginManagerMain implements Disposable {
     };
     panel.add(component, BorderLayout.CENTER);
     myToolbarPanel.add(panel, BorderLayout.WEST);
+    myFilter.setMinimumSize(new Dimension(150, -1));
     myToolbarPanel.add(myFilter, BorderLayout.CENTER);
   }
 
