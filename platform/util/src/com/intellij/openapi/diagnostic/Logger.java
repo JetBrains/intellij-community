@@ -56,7 +56,7 @@ public abstract class Logger {
   public void error(Object message) {
     error(String.valueOf(message));
   }
-    /////
+
   public void error(@NonNls String message, @NonNls String... details) {
     error(message, new Throwable(), details);
   }
