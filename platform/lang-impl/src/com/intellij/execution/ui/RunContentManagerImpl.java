@@ -590,7 +590,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         return true;
       }
       final boolean destroyProcess;
-      if (Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
+      if (processHandler.isSilentlyDestroyOnClose() || Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
         destroyProcess = true;
       }
       else {
