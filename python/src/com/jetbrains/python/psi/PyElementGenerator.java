@@ -41,6 +41,11 @@ public abstract class PyElementGenerator {
 
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
 
+  /**
+   * @deprecated  use the overload with language level specified
+   * @param text the text to create an expression from
+   * @return the expression
+   */
   @Nullable
   public abstract  PyExpression createExpressionFromText(String text);
 
