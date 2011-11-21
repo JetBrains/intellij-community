@@ -22,10 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -312,5 +309,25 @@ public class AndroidRootUtil {
     return moduleDirPath != null
            ? moduleDirPath + '/' + SdkConstants.FD_GEN_SOURCES
            : null;
+  }
+  
+  @Nullable
+  public static VirtualFile getMainContentRoot(@NotNull AndroidFacet facet) {
+    final Module module = facet.getModule();
+    
+    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (contentRoots.length == 0) {
+      return null;
+    }
+
+    final VirtualFile manifestFile = getManifestFile(module);
+    if (manifestFile != null) {
+      for (VirtualFile root : contentRoots) {
+        if (VfsUtilCore.isAncestor(root, manifestFile, true)) {
+          return root;
+        }
+      }
+    }
+    return contentRoots[0];
   }
 }

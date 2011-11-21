@@ -108,6 +108,20 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     return CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
   }
 
+  static void addModuleOutputDir(Collection<VirtualFile> files, VirtualFile dir) {
+    // only include files inside packages
+    for (VirtualFile child : dir.getChildren()) {
+      if (child.isDirectory()) {
+        files.add(child);
+      }
+    }
+  }
+  
+  private static boolean shouldRunProguard(@NotNull AndroidFacet facet, @NotNull CompileContext context) {
+    return AndroidCompileUtil.isReleaseBuild(context) && 
+           AndroidCompileUtil.getProguardConfigFile(facet) != null;
+  }
+
   private static final class PrepareAction implements Computable<ProcessingItem[]> {
     private final CompileContext myContext;
 
@@ -121,43 +135,63 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
       for (Module module : modules) {
         AndroidFacet facet = FacetManager.getInstance(module).getFacetByType(AndroidFacet.ID);
         if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
-          CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
-          VirtualFile outputDir = extension.getCompilerOutputPath();
-          if (outputDir != null) {
-            AndroidFacetConfiguration configuration = facet.getConfiguration();
-            AndroidPlatform platform = configuration.getAndroidPlatform();
-            if (platform == null) {
-              myContext.addMessage(CompilerMessageCategory.ERROR,
-                                   AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+          
+          final VirtualFile dexOutputDir = getOutputDirectoryForDex(module);
+          
+          Collection<VirtualFile> files;
+            
+          if (shouldRunProguard(facet, myContext)) {
+            final VirtualFile obfuscatedSourcesJar = dexOutputDir.findChild(AndroidProguardCompiler.PROGUARD_OUTPUT_JAR_NAME);
+            if (obfuscatedSourcesJar == null) {
+              myContext.addMessage(CompilerMessageCategory.INFORMATION, "Dex won't be launched for module " +
+                                                                        module.getName() +
+                                                                        " because file " +
+                                                                        AndroidProguardCompiler.PROGUARD_OUTPUT_JAR_NAME +
+                                                                        "doesn't exist", null, -1, -1);
               continue;
             }
-            Set<VirtualFile> files = new HashSet<VirtualFile>();
+            
+            files = Collections.singleton(obfuscatedSourcesJar);
+          }
+          else {
+            CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+            VirtualFile outputDir = extension.getCompilerOutputPath();
+            
+            if (outputDir == null) {
+              myContext.addMessage(CompilerMessageCategory.INFORMATION,
+                                   "Dex won't be launched for module " + module.getName() + " because it doesn't contain compiled files",
+                                   null, -1, -1);
+              continue;
+            }
+            
+            files = new HashSet<VirtualFile>();
             addModuleOutputDir(files, outputDir);
             files.addAll(AndroidRootUtil.getExternalLibraries(module));
+
             for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
               addModuleOutputDir(files, file);
             }
+
             VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
+
             if (outputDirForTests != null) {
               addModuleOutputDir(files, outputDirForTests);
             }
-
-            outputDir = getOutputDirectoryForDex(module);
-
-            items.add(new DexItem(module, outputDir, platform.getTarget(), files));
           }
+
+          final AndroidFacetConfiguration configuration = facet.getConfiguration();
+          final AndroidPlatform platform = configuration.getAndroidPlatform();
+          
+          if (platform == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+            continue;
+          }
+
+          items.add(new DexItem(module, dexOutputDir, platform.getTarget(), files));
         }
       }
       return items.toArray(new ProcessingItem[items.size()]);
-    }
-
-    private static void addModuleOutputDir(Set<VirtualFile> files, VirtualFile dir) {
-      // only include files inside packages
-      for (VirtualFile child : dir.getChildren()) {
-        if (child.isDirectory()) {
-          files.add(child);
-        }
-      }
     }
   }
 

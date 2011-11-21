@@ -123,6 +123,7 @@
     <compiler implementation="org.jetbrains.android.compiler.AndroidRenderscriptCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidAptCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidIdlCompiler"/>
+    <compiler implementation="org.jetbrains.android.compiler.AndroidProguardCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidDexCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidPngFilesCachingCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidResourcesPackagingCompiler"/>
