@@ -61,14 +61,26 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   @NotNull
   @Override
   protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
-    String chars = "";
     IElementType tokenType = token.getNode().getElementType();
-    if ((tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) && !token.getText().contains("\"\"\"")) {
-      chars = "\"$";
-    } else if (tokenType == mSTRING_LITERAL) {
-      chars = "\'";
-    } else if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
-      chars = "/";
+
+    if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
+      return StringUtil.escapeSlashes(s);
+    }
+
+    String chars;
+    if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
+      if (token.getText().contains("\"\"\"")) {
+        chars = "$";
+      }
+      else {
+        chars = "\"$";
+      }
+    }
+    else if (tokenType == mSTRING_LITERAL && !token.getText().contains("'''")) {
+      chars = "'";
+    }
+    else {
+      chars = "";
     }
 
     StringBuilder buffer = new StringBuilder();
