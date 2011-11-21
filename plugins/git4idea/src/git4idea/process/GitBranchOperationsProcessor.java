@@ -175,7 +175,11 @@ public final class GitBranchOperationsProcessor {
     if (result.success()) {
       refreshRoot();
       updateRepository();
-      notifySuccess(String.format("Checked out <b><code>%s</code></b>", reference));
+      if (newBranch == null) {
+        notifySuccess(String.format("Checked out <b><code>%s</code></b>", reference));
+      } else {
+        notifySuccess(String.format("Checked out new branch <b><code>%s</code></b> from <b><code>%s</code></b>", newBranch, reference));
+      }
     }
     else if (unmergedDetector.hasHappened()) {
       GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
