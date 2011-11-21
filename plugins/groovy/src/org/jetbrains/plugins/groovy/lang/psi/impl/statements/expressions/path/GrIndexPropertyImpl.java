@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -278,6 +279,8 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @Override
   public PsiType getNominalType() {
+    if (getParent() instanceof GrThrowStatement) return super.getNominalType();
+    
     LOG.assertTrue(PsiUtil.isLValue(this), "it is assumed that nominal type is invoked only for assignment lhs");
 
     GroovyResolveResult[] candidates = multiResolve(true);
