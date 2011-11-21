@@ -134,15 +134,17 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   public void removeWatches(final List<? extends XDebuggerTreeNode> nodes) {
     List<? extends WatchNode> children = myRootNode.getAllChildren();
     int minIndex = Integer.MAX_VALUE;
+    List<XDebuggerTreeNode> toRemove = new ArrayList<XDebuggerTreeNode>();
     if (children != null) {
       for (XDebuggerTreeNode node : nodes) {
         int index = children.indexOf(node);
         if (index != -1) {
+          toRemove.add(node);
           minIndex = Math.min(minIndex, index);
         }
       }
     }
-    myRootNode.removeChildren(nodes);
+    myRootNode.removeChildren(toRemove);
 
     List<? extends WatchNode> newChildren = myRootNode.getAllChildren();
     if (newChildren != null && newChildren.size() > 0) {
