@@ -335,9 +335,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         LOG.info("Unable to save plugin settings",e);
       }
       catch (IOException e) {
-        MessagesEx.error(this, ProjectBundle.message("project.save.error", ApplicationManagerEx.getApplicationEx().isInternal()
-                                                                           ? StringUtil.getThrowableText(e)
-                                                                           : e.getMessage())).showLater();
+        MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
         LOG.info("Error saving project", e);
       } finally {
         mySavingInProgress.set(false);
