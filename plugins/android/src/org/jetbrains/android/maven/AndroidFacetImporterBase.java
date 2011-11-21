@@ -254,8 +254,12 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
     final String genModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(artifactMavenId);
 
-    String targetDirPath =
-      AndroidMavenUtil.computePathToUnpackExtApklibArtifact(artifactMavenId, mavenProject, mavenTree.getProjects());
+    final String genExternalApklibsDirPath =
+      AndroidMavenUtil.computePathForGenExternalApklibsDir(artifactMavenId, mavenProject, mavenTree.getProjects());
+    
+    final String targetDirPath = genExternalApklibsDirPath != null
+                              ? genExternalApklibsDirPath + '/' + AndroidMavenUtil.getMavenIdStringForFileName(artifactMavenId)
+                              : null;
 
     if (targetDirPath == null) {
       return null;
@@ -300,7 +304,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     if (apklibModule == null) {
-      final String genModuleFilePath = vApklibDir.getPath() + '/' + genModuleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+      final String genModuleFilePath = genExternalApklibsDirPath + '/' + genModuleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
       apklibModule = moduleModel.newModule(genModuleFilePath, StdModuleTypes.JAVA);
     }
 
