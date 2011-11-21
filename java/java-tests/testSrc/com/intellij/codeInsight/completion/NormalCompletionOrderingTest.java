@@ -47,7 +47,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testReturnF() throws Throwable {
-    checkPreferredItems(0, "false");
+    checkPreferredItems(0, "false", "finalize");
   }
 
   public void testPreferDefaultTypeToExpected() throws Throwable {
