@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ public class PythonSdkChooserPanel extends JComponent {
    *
    * @param project Current project
    */
-  public PythonSdkChooserPanel(final Project project) {
+  public PythonSdkChooserPanel(@NotNull final Project project) {
     myJdkChooser = new JdkChooserPanel(project);
 
     setLayout(new GridBagLayout());
