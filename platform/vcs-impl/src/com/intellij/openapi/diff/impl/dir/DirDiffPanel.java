@@ -123,7 +123,7 @@ public class DirDiffPanel implements Disposable {
       myTable.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
-          if (myTable.getRowCount() > 0 && e.getClickCount() > 1) {
+          if (myTable.getRowCount() > 0) {
             final int row = myTable.rowAtPoint(e.getPoint());
             final int col = myTable.columnAtPoint(e.getPoint());
 
