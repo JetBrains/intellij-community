@@ -469,9 +469,13 @@ public class PythonCompletionTest extends PyTestCase {
   public void testCompleteBeforeSyntaxError() { // PY-3792
     doTest();
   }
-
+  
   // PY-4279
   public void testFieldReassignment() {
+    doTest();
+  }
+
+  public void testSuperInit() {  // PY-5066
     doTest();
   }
 }

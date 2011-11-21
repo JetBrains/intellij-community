@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -179,7 +180,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
       if (second_type instanceof PyClassType) {
         // imitate isinstance(second_arg, possible_class)
         PyClass second_class = ((PyClassType)second_type).getPyClass();
-        if (first_class == second_class) {
+        if (CompletionUtil.getOriginalOrSelf(first_class) == second_class) {
           return getSuperClassUnionType(first_class);
         }
         if (second_class != null && second_class.isSubclass(first_class)) {
