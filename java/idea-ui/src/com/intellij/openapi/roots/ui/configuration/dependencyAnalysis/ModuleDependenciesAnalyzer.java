@@ -369,7 +369,7 @@ public class ModuleDependenciesAnalyzer {
     @NotNull
     @Override
     public CellAppearanceEx getAppearance(boolean isSelected) {
-      return OrderEntryAppearanceService.getInstance(myEntry.getOwnerModule().getProject()).forOrderEntry(myEntry, isSelected);
+      return OrderEntryAppearanceService.getInstance().forOrderEntry(myEntry.getOwnerModule().getProject(), myEntry, isSelected);
     }
   }
 

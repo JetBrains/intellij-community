@@ -22,7 +22,6 @@ import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.AntReference;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -35,7 +34,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -165,12 +163,10 @@ public class AntUIUtil {
   }
 
   public static class ProjectJdkRenderer extends ColoredListCellRenderer {
-    private final Project myProject;
     private final boolean myInComboBox;
     private final String myProjectJdkName;
 
-    public ProjectJdkRenderer(@NotNull final Project project, boolean inComboBox, String projectJdkName) {
-      myProject = project;
+    public ProjectJdkRenderer(boolean inComboBox, String projectJdkName) {
       myInComboBox = inComboBox;
       myProjectJdkName = projectJdkName != null ? projectJdkName : "";
     }
@@ -190,7 +186,7 @@ public class AntUIUtil {
         }
       }
       else  {
-        OrderEntryAppearanceService.getInstance(myProject).forJdk(jdk, myInComboBox, selected, true).customize(this);
+        OrderEntryAppearanceService.getInstance().forJdk(jdk, myInComboBox, selected, true).customize(this);
       }
     }
   }
