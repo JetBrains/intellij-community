@@ -21,6 +21,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomAnchor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.ConvertAnnotationImpl;
@@ -38,6 +39,7 @@ import java.util.Map;
  * @author peter
  */
 public class DomExtensionImpl implements DomExtension {
+  public static final Key<DomAnchor> KEY_DOM_DECLARATION = Key.create("DOM_DECLARATION");
   public static final Key<List<DomExtender>> DOM_EXTENDER_KEY = Key.create("Dom.Extender");
   public static Key<SmartPsiElementPointer<?>> DECLARING_ELEMENT_KEY = Key.create("Dom.Extension.PsiDeclaration");
   private final XmlName myXmlName;
@@ -73,7 +75,7 @@ public class DomExtensionImpl implements DomExtension {
   }
 
   public DomExtension setDeclaringElement(@NotNull DomElement declaringElement) {
-    putUserData(KEY_DECLARATION, DomAnchorImpl.createAnchor(declaringElement));
+    putUserData(KEY_DOM_DECLARATION, DomAnchorImpl.createAnchor(declaringElement, true));
     return this;
   }
 

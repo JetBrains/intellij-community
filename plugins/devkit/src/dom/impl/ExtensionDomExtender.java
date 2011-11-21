@@ -50,8 +50,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
     public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
-      final DomAnchor anchor = domElement.getChildDescription().getUserData(DomExtension.KEY_DECLARATION);
-      final ExtensionPoint extensionPoint = (ExtensionPoint)anchor.retrieveDomElement();
+      final ExtensionPoint extensionPoint = (ExtensionPoint)domElement.getChildDescription().getDomDeclaration();
       assert extensionPoint != null;
 
       String interfaceName = extensionPoint.getInterface().getStringValue();
