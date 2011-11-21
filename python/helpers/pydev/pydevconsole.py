@@ -225,6 +225,15 @@ def _DoExit(*args):
 def handshake():
     return "PyCharm"
 
+def ipython_editor(interpreter):
+    def editor(file, line):
+        if file is None:
+            file = ""
+        if line is None:
+            line = "-1"
+        interpreter.ipython_editor(file, line)
+    return editor
+
 #=======================================================================================================================
 # StartServer
 #=======================================================================================================================
@@ -242,6 +251,9 @@ def start_server(host, port, interpreter):
     server.register_function(interpreter.close)
     server.register_function(interpreter.interrupt)
     server.register_function(handshake)
+
+    if IPYTHON:
+        interpreter.interpreter.ipython.hooks.editor = ipython_editor(interpreter)
 
     server.serve_forever()
 

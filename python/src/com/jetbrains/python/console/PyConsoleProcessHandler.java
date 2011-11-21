@@ -4,7 +4,6 @@ import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.run.PythonProcessHandler;
 
 import java.nio.charset.Charset;
@@ -60,7 +59,6 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
       });
 
       // waiting for REPL communication before destroying process handler
-
     }
   }
 

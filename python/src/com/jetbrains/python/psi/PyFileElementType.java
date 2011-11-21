@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.console.parsing.PyConsoleParser;
 import com.jetbrains.python.console.parsing.PyConsoleParsingContext;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.parsing.PythonConsoleLexer;
@@ -82,12 +83,8 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       final Project project = psi.getProject();
       final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
       final PsiBuilder builder = factory.createBuilder(project, node, lexer, getLanguage(), node.getChars());
-      final PyParser parser = new PyParser() {
-        @Override
-        protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
-          return new PyConsoleParsingContext(builder, languageLevel, futureFlag, psi);
-        }
-      };
+      final PyParser parser = new PyConsoleParser(psi);
+
       return parser.parse(this, builder).getFirstChildNode();
     }
     return null;

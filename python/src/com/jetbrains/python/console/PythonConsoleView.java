@@ -118,7 +118,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     myExecuteActionHandler.processLine(statement, true);
   }
 
-  public void print(String text,  @NotNull final Key attributes) {
+  public void print(String text, @NotNull final Key attributes) {
     print(text, outputTypeForAttributes(attributes));
   }
 
@@ -161,15 +161,14 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   }
 
   public void detectIPython(String text, final ConsoleViewContentType outputType) {
-    if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
-      setIPythonDetected();
-    }
-  }
-
-  private void setIPythonDetected() {
     VirtualFile file = getConsole().getFile().getVirtualFile();
     if (file != null) {
-      PyConsoleUtil.markIPython(file);
+      if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
+        PyConsoleUtil.markIPython(file);
+      }
+      if (PyConsoleUtil.detectIPythonAutomagicOn(text)) {
+        PyConsoleUtil.setIPythonAutomagic(file, true);
+      }
     }
   }
 

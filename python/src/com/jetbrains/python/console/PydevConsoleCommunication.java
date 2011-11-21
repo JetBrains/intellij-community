@@ -1,11 +1,18 @@
-package com.jetbrains.python.console.pydev;
+package com.jetbrains.python.console;
 
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
+import com.jetbrains.django.util.VirtualFileUtil;
+import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PydevXmlUtils;
 import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
@@ -137,9 +144,39 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     else if ("RequestInput".equals(method)) {
       return execRequestInput();
     }
+    else if ("IPythonEditor".equals(method)) {
+      return execIPythonEditor(params);
+    }
     else {
       throw new UnsupportedOperationException();
     }
+  }
+
+  private Object execIPythonEditor(Vector params) {
+
+    String path = (String)params.get(0);
+    int line = Integer.parseInt((String)params.get(1));
+
+    final VirtualFile file = VirtualFileUtil.findFile(path);
+    if (file != null) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          AccessToken at = ApplicationManager.getApplication().acquireReadActionLock();
+
+          try {
+            FileEditorManager.getInstance(myProject).openFile(file, true);
+          }
+          finally {
+            at.finish();
+          }
+        }
+      });
+
+      return Boolean.TRUE;
+    }
+
+    return Boolean.FALSE;
   }
 
   private Object execNotifyFinished() {

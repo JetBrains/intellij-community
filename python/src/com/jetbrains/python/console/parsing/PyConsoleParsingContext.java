@@ -1,12 +1,9 @@
 package com.jetbrains.python.console.parsing;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.ParsingScope;
@@ -20,13 +17,15 @@ import org.jetbrains.annotations.Nullable;
 public class PyConsoleParsingContext extends ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;
+  private boolean myStartsWithIPythonSymbol;
 
   public PyConsoleParsingContext(final PsiBuilder builder,
                                  LanguageLevel languageLevel,
                                  StatementParsing.FUTURE futureFlag,
-                                 PsiElement psi) {
+                                 PsiElement psi, boolean startsWithIPythonSymbol) {
     super(builder, languageLevel, futureFlag);
-    stmtParser = new ConsoleStatementParsing(this, futureFlag);
+    myStartsWithIPythonSymbol = startsWithIPythonSymbol;
+    stmtParser = new ConsoleStatementParsing(this, futureFlag, myStartsWithIPythonSymbol);
     expressionParser = new ConsoleExpressionParsing(this);
   }
 
@@ -42,8 +41,26 @@ public class PyConsoleParsingContext extends ParsingContext {
 
   private static class ConsoleStatementParsing extends StatementParsing {
 
-    protected ConsoleStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
+    private boolean myStartsWithIPythonSymbol;
+
+    protected ConsoleStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag, boolean startsWithIPythonSymbol) {
       super(context, futureFlag);
+      myStartsWithIPythonSymbol = startsWithIPythonSymbol;
+    }
+
+
+    @Override
+    public void parseStatement(ParsingScope scope) {
+      if (myStartsWithIPythonSymbol) {
+        PsiBuilder.Marker ipythonCommend = myBuilder.mark();
+        while (!myBuilder.eof()) {
+          myBuilder.advanceLexer();
+        }
+        ipythonCommend.done(PyElementTypes.EMPTY_EXPRESSION);
+      }
+      else {
+        super.parseStatement(scope);
+      }
     }
 
     protected void checkEndOfStatement(ParsingScope scope) {
@@ -83,7 +100,9 @@ public class PyConsoleParsingContext extends ParsingContext {
 
     @Override
     public boolean parseExpressionOptional() {
-      if (myBuilder.getTokenType() == PyTokenTypes.PERC || myBuilder.getTokenType() == PyConsoleTokenTypes.PLING || myBuilder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+      if (myBuilder.getTokenType() == PyTokenTypes.PERC ||
+          myBuilder.getTokenType() == PyConsoleTokenTypes.PLING ||
+          myBuilder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
         PsiBuilder.Marker expr = myBuilder.mark();
         PsiBuilder.Marker command = myBuilder.mark();
 

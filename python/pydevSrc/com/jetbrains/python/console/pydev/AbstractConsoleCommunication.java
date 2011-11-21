@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 
 import java.util.List;
+import java.util.Vector;
 
 /**
  * @author traff
@@ -24,7 +25,6 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
 
   public AbstractConsoleCommunication(Project project) {
     myProject = project;
-
   }
 
   public static Pair<String, Boolean> parseExecResponseString(String str) {

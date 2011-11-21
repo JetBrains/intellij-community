@@ -1,3 +1,4 @@
+import xmlrpclib
 import sys
 from pydev_console_utils import BaseInterpreterInterface
 import re
@@ -81,7 +82,7 @@ class InterpreterInterface(BaseInterpreterInterface):
             completer = Completer(self.getNamespace(), None)
             return completer.complete(act_tok)
         except:
-            import traceback;
+            import traceback
 
             traceback.print_exc()
             return []
@@ -89,4 +90,10 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def close(self):
         sys.exit(0)
+
+
+    def ipython_editor(self, file, line):
+        if self.host is not None:
+            server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
+            return server.IPythonEditor(file, line)
 
