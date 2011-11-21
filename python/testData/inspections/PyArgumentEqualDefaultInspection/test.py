@@ -67,3 +67,6 @@ kw = a()
 
 kw['customerPaymentProfileId'] = kw.get("customerPaymentProfileId",
                                                  <warning descr="Argument equals to default parameter value">None</warning>)
+
+{1: 2}.get('foo', None) #pass
+{1: 2}.pop('foo', None) #pass
