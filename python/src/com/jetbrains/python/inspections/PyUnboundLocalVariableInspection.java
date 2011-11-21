@@ -42,7 +42,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
     session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<ScopeOwner>());
-    return new PyInspectionVisitor(holder){
+    return new PyInspectionVisitor(holder, session) {
       @Override
       public void visitPyReferenceExpression(final PyReferenceExpression node) {
         if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
@@ -101,7 +101,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         if (variable == null) {
-          final PsiElement resolved = node.getReference().resolve();
+          final PsiElement resolved = node.getReference(resolveWithoutImplicits()).resolve();
           final boolean isBuiltin = PyBuiltinCache.getInstance(node).hasInBuiltins(resolved);
           if (owner instanceof PyClass) {
             if (isBuiltin || ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {

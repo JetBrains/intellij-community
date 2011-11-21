@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElement;
@@ -31,15 +32,21 @@ public class PyRedundantParenthesesInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder, myIgnorePercOperator, myIgnoreTupleInReturn);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, session, myIgnorePercOperator, myIgnoreTupleInReturn);
   }
 
   private static class Visitor extends PyInspectionVisitor {
     private final boolean myIgnorePercOperator;
     private final boolean myIgnoreTupleInReturn;
-    public Visitor(final ProblemsHolder holder, boolean ignorePercOperator, boolean ignoreTupleInReturn) {
-      super(holder);
+
+    public Visitor(@NotNull ProblemsHolder holder,
+                   @NotNull LocalInspectionToolSession session,
+                   boolean ignorePercOperator,
+                   boolean ignoreTupleInReturn) {
+      super(holder, session);
       myIgnorePercOperator = ignorePercOperator;
       myIgnoreTupleInReturn = ignoreTupleInReturn;
     }

@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
@@ -26,14 +27,15 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, session);
   }
 
   private static class Visitor extends PyInspectionVisitor {
-
-    public Visitor(final ProblemsHolder holder) {
-      super(holder);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override
@@ -41,14 +43,14 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
       super.visitPyConditionalStatementPart(node);
       final PyExpression condition = node.getCondition();
       if (condition != null) {
-        condition.accept(new PyBinaryExpressionVisitor(getHolder()));
+        condition.accept(new PyBinaryExpressionVisitor(getHolder(), getSession()));
       }
     }
   }
 
   private static class PyBinaryExpressionVisitor extends PyInspectionVisitor {
-    public PyBinaryExpressionVisitor(@Nullable final ProblemsHolder holder) {
-      super(holder);
+    public PyBinaryExpressionVisitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+      super(holder, session);
     }
 
     @Override

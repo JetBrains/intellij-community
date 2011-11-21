@@ -17,23 +17,20 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PyInspectionVisitor extends PyElementVisitor {
   @Nullable private final ProblemsHolder myHolder;
+  @NotNull private final LocalInspectionToolSession mySession;
   protected final TypeEvalContext myTypeEvalContext;
 
   public static final Key<TypeEvalContext> INSPECTION_TYPE_EVAL_CONTEXT = Key.create("PyInspectionTypeEvalContext");
 
-  public PyInspectionVisitor(@Nullable final ProblemsHolder holder) {
-    myHolder = holder;
-    myTypeEvalContext = TypeEvalContext.fastStubOnly(holder == null ? null : holder.getFile());
-  }
-
   public PyInspectionVisitor(@Nullable ProblemsHolder holder,
                              @NotNull LocalInspectionToolSession session) {
     myHolder = holder;
+    mySession = session;
     TypeEvalContext context;
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
       if (context == null) {
-        context = TypeEvalContext.fastStubOnly(holder == null ? null : holder.getFile());
+        context = TypeEvalContext.fastStubOnly(session.getFile());
         session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
       }
     }
@@ -46,6 +43,11 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   @Nullable protected ProblemsHolder getHolder() {
     return myHolder;
+  }
+
+  @NotNull
+  public LocalInspectionToolSession getSession() {
+    return mySession;
   }
 
   protected final void registerProblem(final PsiElement element,

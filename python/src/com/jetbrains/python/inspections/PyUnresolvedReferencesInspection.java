@@ -72,9 +72,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@Nullable final ProblemsHolder holder, final boolean isOnTheFly,
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        final boolean isOnTheFly,
                                         @NotNull final LocalInspectionToolSession session) {
-    final Visitor visitor = new Visitor(holder, ignoredIdentifiers);
+    final Visitor visitor = new Visitor(holder, session, ignoredIdentifiers);
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     final Visitor existingVisitor = session.getUserData(KEY);
     if (existingVisitor == null) {
@@ -104,8 +105,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private Set<NameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
     private final ImmutableSet<String> myIgnoredIdentifiers;
 
-    public Visitor(final ProblemsHolder holder, List<String> ignoredIdentifiers) {
-      super(holder);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
+      super(holder, session);
       myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
     }
 
