@@ -104,7 +104,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       if (!preserveQualification || qualifiedName == null) {
         final String newName = ((PsiClass)element).getName();
         setQualifier(null);
-        final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRename(newName));
+        final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRenameSimple(newName));
 
         if (newElement.isReferenceTo(element) || qualifiedName == null || JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope()) == null) {
           return newElement;

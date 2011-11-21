@@ -383,10 +383,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final GroovyResolveResult result = advancedResolve();
     if (result.isInvokedOnProperty()) {
-      newElementName = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
-      if (newElementName == null) throw new IncorrectOperationException("foo");
+      final String name = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
+      if (name != null) {
+        newElementName = name;
+      }
     }
-    
+
     return handleElementRenameSimple(newElementName);
   }
 
