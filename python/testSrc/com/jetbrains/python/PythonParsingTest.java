@@ -305,6 +305,10 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testIncompleteFor() {  // PY-3792
     doTest();
   }
+  
+  public void testCallInAssignment() {  // PY-5062
+    doTest();
+  }
 
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
