@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,7 +100,10 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       final PsiTypeElement newTypeElement =
         factory.createTypeElementFromText(
           componentType.getCanonicalText() + "...", method);
-      lastParameter.getTypeElement().replace(newTypeElement);
+      final PsiTypeElement typeElement = lastParameter.getTypeElement();
+      if (typeElement != null) {
+        typeElement.replace(newTypeElement);
+      }
     }
   }
 
@@ -142,6 +146,9 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
             PsiType.SHORT.equals(componentType)) {
           return;
         }
+      }
+      if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+        return;
       }
       registerMethodError(method);
     }
