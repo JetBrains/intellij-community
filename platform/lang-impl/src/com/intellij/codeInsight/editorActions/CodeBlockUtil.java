@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -52,14 +53,23 @@ public class CodeBlockUtil {
     if (file == null) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-    final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
-    if (guide != null) {
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(guide.endLine, guide.indentLevel));
+    final CodeBlockProvider provider = CodeBlockProviders.INSTANCE.forLanguage(file.getLanguage());
+    if (provider != null) {
+      final TextRange range = provider.getCodeBlockRange(editor, file);
+      if (range != null) {
+        editor.getCaretModel().moveToOffset(range.getEndOffset());
+      }
     }
     else {
-      int endOffset = calcBlockEndOffset(editor, file);
-      if (endOffset != -1) {
-        editor.getCaretModel().moveToOffset(endOffset);
+      final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
+      if (guide != null) {
+        editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(guide.endLine, guide.indentLevel));
+      }
+      else {
+        int endOffset = calcBlockEndOffset(editor, file);
+        if (endOffset != -1) {
+          editor.getCaretModel().moveToOffset(endOffset);
+        }
       }
     }
 
@@ -80,15 +90,26 @@ public class CodeBlockUtil {
     if (file == null) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-    final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
-    if (guide != null) {
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(guide.startLine, guide.indentLevel));
+
+    final CodeBlockProvider provider = CodeBlockProviders.INSTANCE.forLanguage(file.getLanguage());
+    if (provider != null) {
+      final TextRange range = provider.getCodeBlockRange(editor, file);
+      if (range != null) {
+        editor.getCaretModel().moveToOffset(range.getStartOffset());
+      }
     }
     else {
-      int start = calcBlockStartOffset(editor, file);
-      if (start < 0) return;
-      editor.getCaretModel().moveToOffset(start);
+      final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
+      if (guide != null) {
+        editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(guide.startLine, guide.indentLevel));
+      }
+      else {
+        int start = calcBlockStartOffset(editor, file);
+        if (start < 0) return;
+        editor.getCaretModel().moveToOffset(start);
+      }
     }
+
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
@@ -101,6 +122,7 @@ public class CodeBlockUtil {
   }
 
   private static int calcBlockEndOffset(Editor editor, PsiFile file) {
+
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
     final FileType fileType = file.getFileType();
