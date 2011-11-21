@@ -40,6 +40,14 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
     myFixture.performEditorAction IdeActions.ACTION_PASTE
     myFixture.checkResult 'def x = /smtha\\/b<caret>/'
   }
+  
+  void testDontEscapeSymbolsInRegex(){
+    myFixture.configureByText 'a.groovy', '''def x = <selection>a/b</selection>'''
+    myFixture.performEditorAction IdeActions.ACTION_COPY
+    myFixture.configureByText 'b.groovy', 'def x = /<caret> /'
+    myFixture.performEditorAction IdeActions.ACTION_PASTE
+    myFixture.checkResult '''def x = /a\\/b /'''
+  }
 
   public void testEscapeDollarInGString() {
     myFixture.configureByText 'a.groovy', '''def x = '<selection>$a</selection>b/'''
