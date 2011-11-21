@@ -449,8 +449,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
 
       for (final Rectangle r : bounds) {
-        if (r.height < maxHeight && r.y == 0) {
-          r.y = (maxHeight - r.height) / 2;
+        if (r.height < maxHeight) {
+          r.y = r.y + (maxHeight - r.height) / 2;
         }
       }
 
