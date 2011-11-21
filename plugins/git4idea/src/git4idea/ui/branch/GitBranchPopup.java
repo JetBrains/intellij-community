@@ -201,6 +201,7 @@ class GitBranchPopup  {
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {
         new CheckoutAction(myRepository, myBranchName),
+        new CheckoutAsNewBranch(myRepository, myBranchName),
         new CompareAction(myRepository, myBranchName),
         //new StashAndCheckoutAction(myProject, myRepository, myBranchName),
         new DeleteAction(myRepository, myBranchName)
@@ -220,6 +221,27 @@ class GitBranchPopup  {
       @Override
       public void actionPerformed(AnActionEvent e) {
         new GitBranchOperationsProcessor(myRepository).checkout(myBranchName);
+      }
+
+    }
+
+    private static class CheckoutAsNewBranch extends DumbAwareAction {
+      private final GitRepository myRepository;
+      private final String myBranchName;
+
+      public CheckoutAsNewBranch(@NotNull GitRepository repository, @NotNull String branchName) {
+        super("Checkout as new branch");
+        myRepository = repository;
+        myBranchName = branchName;
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final String name = Messages.showInputDialog(myRepository.getProject(), "Enter name of new branch", "Checkout New Branch From " + myBranchName,
+                                                     Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepository));
+        if (name != null) {
+          new GitBranchOperationsProcessor(myRepository).checkoutNewBranchStartingFrom(name, myBranchName);
+        }
       }
 
     }
