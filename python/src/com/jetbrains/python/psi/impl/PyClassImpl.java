@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -832,12 +834,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // __init__ takes priority over all other methods
     PyFunctionImpl initMethod = (PyFunctionImpl)findMethodByName(PyNames.INIT, false);
     if (initMethod != null) {
-      collectInstanceAttributes(initMethod, result);
+      collectInstanceAttributes(initMethod, result, null);
     }
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
       if (!PyNames.INIT.equals(method.getName())) {
-        collectInstanceAttributes(method, result);
+        collectInstanceAttributes(method, result, null);
       }
     }
 
@@ -845,7 +847,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return new ArrayList<PyTargetExpression>(expressions);
   }
 
-  private static void collectInstanceAttributes(PyFunction method, final Map<String, PyTargetExpression> result) {
+  private static void collectInstanceAttributes(@NotNull PyFunction method,
+                                                @NotNull final Map<String, PyTargetExpression> result,
+                                                @Nullable PsiElement anchor) {
     final PyParameter[] params = method.getParameterList().getParameters();
     if (params.length == 0) {
       return;
@@ -859,21 +863,45 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     }
+    else if (anchor != null) {
+      PyResolveUtil.treeCrawlUp(new PsiScopeProcessor() {
+        @Override
+        public boolean execute(PsiElement element, ResolveState state) {
+          if (element instanceof PyAssignmentStatement) {
+            collectNewTargets(result, (PyAssignmentStatement)element);
+          }
+          return true;
+        }
+
+        @Nullable
+        @Override
+        public <T> T getHint(Key<T> hintKey) {
+          return null;
+        }
+
+        @Override
+        public void handleEvent(Event event, @Nullable Object associated) {
+        }
+      }, false, anchor, method);
+    }
     else {
-      // NOTE: maybe treeCrawlUp would be more precise, but currently it works well enough; don't care.
       final PyStatementList statementList = method.getStatementList();
       if (statementList != null) {
         statementList.accept(new PyRecursiveElementVisitor() {
           public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
             super.visitPyAssignmentStatement(node);
-            final PyExpression[] targets = node.getTargets();
-            for (PyExpression target : targets) {
-              if (PyUtil.isInstanceAttribute(target) && !result.containsKey(target.getName())) {
-                result.put(target.getName(), (PyTargetExpression) target);
-              }
-            }
+            collectNewTargets(result, node);
           }
         });
+      }
+    }
+  }
+
+  private static void collectNewTargets(Map<String, PyTargetExpression> collected, PyAssignmentStatement node) {
+    final PyExpression[] targets = node.getTargets();
+    for (PyExpression target : targets) {
+      if (target instanceof PyTargetExpression && PyUtil.isInstanceAttribute(target) && !collected.containsKey(target.getName())) {
+        collected.put(target.getName(), (PyTargetExpression)target);
       }
     }
   }
@@ -947,8 +975,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public boolean processInstanceLevelDeclarations(PsiScopeProcessor processor, @Nullable PyExpression location) {
     Map<String, PyTargetExpression> declarationsInMethod = new HashMap<String, PyTargetExpression>();
     PyFunction instanceMethod = PsiTreeUtil.getParentOfType(location, PyFunction.class);
-    if (instanceMethod != null && instanceMethod.getContainingClass() == this) {
-      collectInstanceAttributes(instanceMethod, declarationsInMethod);
+    final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;
+    if (instanceMethod != null && containingClass != null && CompletionUtil.getOriginalElement(containingClass) == this) {
+      collectInstanceAttributes(instanceMethod, declarationsInMethod, location);
       for (PyTargetExpression targetExpression : declarationsInMethod.values()) {
         if (!processor.execute(targetExpression, ResolveState.initial())) {
           return false;
