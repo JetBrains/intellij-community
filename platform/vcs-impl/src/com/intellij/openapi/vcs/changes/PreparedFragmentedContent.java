@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ public class PreparedFragmentedContent {
   private final FragmentedContent myFragmentedContent;
   private final String myFileName;
   private final FileType myFileType;
+  private VirtualFile myFile;
 
   public PreparedFragmentedContent(final Project project, final FragmentedContent fragmentedContent, final String fileName,
                                    final FileType fileType) {
@@ -279,5 +281,13 @@ public class PreparedFragmentedContent {
                                                 getAfterFragments(), myFileType, 1).execute();
     setBeforeTodoRanges(beforeTodoRanges);
     setAfterTodoRanges(afterTodoRanges);
+  }
+
+  public void setVirtualFile(VirtualFile file) {
+    myFile = file;
+  }
+
+  public VirtualFile getFile() {
+    return myFile;
   }
 }

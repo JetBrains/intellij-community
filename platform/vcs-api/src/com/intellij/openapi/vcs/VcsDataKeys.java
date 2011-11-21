@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;

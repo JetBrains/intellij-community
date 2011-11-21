@@ -410,7 +410,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myCurrentSide = viewSide;
   }
 
-  private DiffSideView getCurrentSide() { return myCurrentSide; }
+  public DiffSideView getCurrentSide() { return myCurrentSide; }
 
   public Project getProject() {
     return myData.getProject();
