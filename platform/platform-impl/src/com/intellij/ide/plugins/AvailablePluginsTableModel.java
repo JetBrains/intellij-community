@@ -51,6 +51,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     super.columns = new ColumnInfo[] {
       new AvailablePluginColumnInfo(this),
       new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS, this),
+      new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_RATE, this),
       new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, this)/*,
       new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY, this)*/};
 

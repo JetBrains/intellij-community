@@ -48,6 +48,7 @@ class RepositoryContentHandler extends DefaultHandler {
   @NonNls private static final String DEPENDS = "depends";
   @NonNls private static final String DOWNLOADS = "downloads";
   @NonNls private static final String SIZE = "size";
+  @NonNls private static final String RATING = "rating";
 
   @NonNls private static final String DATE = "date";
   private PluginNode currentPlugin;
@@ -111,6 +112,9 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(CATEGORY)) {
       categoriesStack.pop();
+    }
+    else if (qName.equals(RATING)) {
+      currentPlugin.setRating(currentValue);
     }
     currentValue = "";
   }

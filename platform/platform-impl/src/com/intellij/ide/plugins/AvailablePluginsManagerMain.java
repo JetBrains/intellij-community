@@ -83,6 +83,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     pluginTable.getTableHeader().setReorderingAllowed(false);
     pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 60);
     pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DATE, 60);
+    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_RATE, 70);
 
     return ScrollPaneFactory.createScrollPane(pluginTable);
   }
