@@ -716,8 +716,8 @@ public class FileUtil {
   }
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, @Nullable final FileFilter filter) throws IOException {
-    if (!toDir.exists() || !toDir.mkdirs()) {
-      throw new IOException(CommonBundle.message("exception.directory.can.not.create", fromDir.getPath()));
+    if (!toDir.exists() && !toDir.mkdirs()) {
+      throw new IOException(CommonBundle.message("exception.directory.can.not.create", toDir.getPath()));
     }
     if (isAncestor(fromDir, toDir, true)) {
       LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
