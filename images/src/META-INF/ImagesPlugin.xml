@@ -2,8 +2,6 @@
 
   <vendor>Alexey Efimov</vendor>
 
-  <resource-bundle>org.intellij.images.ImagesBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <applicationConfigurable instance="org.intellij.images.options.impl.OptionsConfigurabe"/>
