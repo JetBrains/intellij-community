@@ -55,12 +55,27 @@ public class JavaCharFilter extends CharFilter {
     
     Object o = item.getObject();
     if (o instanceof PsiClass && ((PsiClass)o).getName().length() > lookup.itemPattern(item).length()) {
-      if (PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(lookup.itemPattern(item), file.getResolveScope()).length > 0) {
-        return true;
+      for (PsiClass aClass : PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(lookup.itemPattern(item), file.getResolveScope())) {
+        if (!isObfuscated(aClass)) {
+          return true;
+        }
       }
     }
     
     return false;
+  }
+
+  private static boolean isObfuscated(PsiClass psiClass) {
+    if (!(psiClass instanceof PsiCompiledElement)) {
+      return false;
+    }
+
+    String name = psiClass.getName();
+    if (name == null) {
+      return false;
+    }
+    
+    return name.length() == 1 && Character.isLowerCase(name.charAt(0));
   }
 
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
