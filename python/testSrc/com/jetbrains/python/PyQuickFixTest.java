@@ -293,7 +293,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testAddEncoding() {                      //PY-491
-    doInspectionTest("AddEncoding.py", PyByteLiteralInspection.class,
+    doInspectionTest("AddEncoding.py", PyMandatoryEncodingInspection.class,
                      PyBundle.message("QFIX.add.encoding"), true, true);
   }
 
