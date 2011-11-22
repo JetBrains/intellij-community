@@ -244,26 +244,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       PyExceptPart guard = getImportErrorGuard(node);
       if (guard != null) {
-        final PyImportElement importElement = PsiTreeUtil.getParentOfType(node, PyImportElement.class);
-        if (importElement != null) {
-          Collection<PsiElement> allWrites = ScopeUtil.getReadWriteElements(importElement.getVisibleName(),
-                                                                            ScopeUtil.getScopeOwner(importElement),
-                                                                            false, true);
-          Collection<PsiElement> writesInsideGuard = new ArrayList<PsiElement>();
-          for (PsiElement write : allWrites) {
-            if (PsiTreeUtil.isAncestor(guard, write, false)) {
-              writesInsideGuard.add(write);
-            }
-          }
-          if (writesInsideGuard.isEmpty()) {
-            final PyTargetExpression asElement = importElement.getAsNameElement();
-            final PyElement toHighlight = asElement != null ? asElement : node;
-            registerProblem(toHighlight,
-                            PyBundle.message("INSP.try.except.import.error",
-                                             importElement.getVisibleName()),
-                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, null);
-          }
-        }
+        processReferenceInImportGuard(node, guard);
         return;
       }
       if (node instanceof PyQualifiedExpression) {
@@ -302,6 +283,29 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       else if (reference instanceof PyImportReferenceImpl && target == reference.getElement().getContainingFile()) {
         registerProblem(node, "Import resolves to its containing file");
+      }
+    }
+
+    private void processReferenceInImportGuard(PyElement node, PyExceptPart guard) {
+      final PyImportElement importElement = PsiTreeUtil.getParentOfType(node, PyImportElement.class);
+      if (importElement != null) {
+        Collection<PsiElement> allWrites = ScopeUtil.getReadWriteElements(importElement.getVisibleName(),
+                                                                          ScopeUtil.getScopeOwner(importElement),
+                                                                          false, true);
+        Collection<PsiElement> writesInsideGuard = new ArrayList<PsiElement>();
+        for (PsiElement write : allWrites) {
+          if (PsiTreeUtil.isAncestor(guard, write, false)) {
+            writesInsideGuard.add(write);
+          }
+        }
+        if (writesInsideGuard.isEmpty()) {
+          final PyTargetExpression asElement = importElement.getAsNameElement();
+          final PyElement toHighlight = asElement != null ? asElement : node;
+          registerProblem(toHighlight,
+                          PyBundle.message("INSP.try.except.import.error",
+                                           importElement.getVisibleName()),
+                          ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, null);
+        }
       }
     }
 
