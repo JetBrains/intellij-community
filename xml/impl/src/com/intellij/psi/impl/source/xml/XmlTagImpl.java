@@ -624,7 +624,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   protected void fillSubTags(final List<XmlTag> result) {
     processElements(new PsiElementProcessor() {
       public boolean execute(@NotNull PsiElement element) {
-        if (element instanceof XmlTag) result.add((XmlTag)element);
+        if (element instanceof XmlTag) {
+          assert element.isValid();
+          result.add((XmlTag)element);
+        }
         return true;
       }
     }, this);
