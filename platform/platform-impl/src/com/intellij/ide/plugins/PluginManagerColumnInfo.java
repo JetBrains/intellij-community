@@ -320,7 +320,14 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   //waiting for rates available in IDEA
   private static class RatesPanel extends JPanel {
     public static int MAX_RATE = 5;
-    private static final Icon STAR_ICON = IconLoader.getIcon("/general/toolWindowFavorites.png");
+
+    private static final Icon STAR = IconLoader.getIcon("/ide/rating.png");
+
+    private static final Icon STAR3 = IconLoader.getIcon("/ide/rating1.png");
+    private static final Icon STAR4 = IconLoader.getIcon("/ide/rating2.png");
+    private static final Icon STAR5 = IconLoader.getIcon("/ide/rating3.png");
+    private static final Icon STAR6 = IconLoader.getIcon("/ide/rating4.png");
+    private static final Icon[] STARs = new Icon[]{IconLoader.getDisabledIcon(STAR), STAR3, STAR3, STAR4, STAR4, STAR5, STAR5, STAR6, STAR6, STAR};
 
     private JLabel[] myLabels = new JLabel[MAX_RATE];
 
@@ -334,17 +341,22 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         myLabels[i].setOpaque(false);
         add(myLabels[i], gc);
       }
-      //setOpaque(false);
     }
 
     public void setRate(String rating) {
-      int rate = Double.valueOf(rating).intValue();
-      for (int i = 0; i < rate; i++) {
-        myLabels[i].setIcon(STAR_ICON);
+      final Double dblRating = Double.valueOf(rating);
+
+      final int intRating = dblRating.intValue();
+
+      for (int i = 0; i < intRating; i++) {
+        myLabels[i].setIcon(STAR);
       }
 
-      for (int i = rate; i < MAX_RATE; i++) {
-        myLabels[i].setIcon(IconLoader.getDisabledIcon(STAR_ICON));
+      if (intRating < MAX_RATE) {
+        myLabels[intRating].setIcon(STARs[((Double)(dblRating * 10)).intValue() % 10]);
+        for (int i = 1 + intRating; i < MAX_RATE; i++) {
+          myLabels[i].setIcon(IconLoader.getDisabledIcon(STAR));
+        }
       }
     }
   }

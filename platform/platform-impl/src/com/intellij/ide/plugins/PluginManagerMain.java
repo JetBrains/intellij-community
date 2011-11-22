@@ -120,7 +120,7 @@ public abstract class PluginManagerMain implements Disposable {
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(true), true);
     final JComponent component = myActionToolbar.getComponent();
-    component.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+    component.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public Dimension getMinimumSize() {
