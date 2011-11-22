@@ -494,6 +494,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("boolean", "byte")
   }
 
+  public void testDoubleConstant() throws Throwable {
+    configure()
+    assertStringItems("FOO", "Float")
+  }
+
   public void testNotOnlyKeywordsInsideSwitch() throws Throwable {
     doTest();
   }

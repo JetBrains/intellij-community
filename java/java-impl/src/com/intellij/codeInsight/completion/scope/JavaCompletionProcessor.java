@@ -224,7 +224,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
 
     if (satisfies(element, state) && isAccessible(element)) {
-      CompletionElement element1 = new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY), myQualifierClass);
+      CompletionElement element1 = new CompletionElement((PsiNamedElement)element, state.get(PsiSubstitutor.KEY));
       if (myResultNames.add(element1.getUniqueId())) {
         myResults.add(element1);
       }
@@ -257,7 +257,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
 
   public void setCompletionElements(@NotNull Object[] elements) {
     for (Object element: elements) {
-      myResults.add(new CompletionElement(null, element, PsiSubstitutor.EMPTY, myQualifierClass));
+      myResults.add(new CompletionElement(element, PsiSubstitutor.EMPTY));
     }
   }
 
