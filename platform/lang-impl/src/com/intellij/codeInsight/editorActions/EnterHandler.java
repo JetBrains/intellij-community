@@ -125,7 +125,6 @@ public class EnterHandler extends BaseEnterHandler {
 
       if (result == EnterHandlerDelegate.Result.Stop) return;
       if (result != EnterHandlerDelegate.Result.Continue) {
-        text = document.getCharsSequence();
         if (result == EnterHandlerDelegate.Result.DefaultForceIndent) {
           forceIndent = true;
         }
@@ -133,6 +132,7 @@ public class EnterHandler extends BaseEnterHandler {
       }
     }
 
+    text = document.getCharsSequence();   // update after changes done in preprocessEnter()
     caretOffset = caretOffsetRef.get().intValue();
     boolean isFirstColumn = caretOffset == 0 || text.charAt(caretOffset - 1) == '\n';
     final boolean insertSpace =
