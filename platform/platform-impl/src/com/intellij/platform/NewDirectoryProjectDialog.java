@@ -56,6 +56,8 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   private boolean myModifyingProjectName = false;
 
   private static final Object EMPTY_PROJECT_GENERATOR = new Object();
+  private final String mySuggestedProjectName;
+  private boolean myProjectNameWasChanged = false;
 
   protected NewDirectoryProjectDialog(Project project) {
     super(project, true);
@@ -65,9 +67,12 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     myLocationLabel.setLabelFor(myLocationField.getChildComponent());
 
     myBaseDir = getBaseDir();
-    File projectName = FileUtil.findSequentNonexistentFile(new File(myBaseDir), "untitled", "");
-    myLocationField.setText(projectName.toString());
-    myProjectNameTextField.setText(projectName.getName());
+
+    File suggestedProjectDirectory = FileUtil.findSequentNonexistentFile(new File(myBaseDir), "untitled", "");
+
+    myLocationField.setText(suggestedProjectDirectory.toString());
+    myProjectNameTextField.setText(suggestedProjectDirectory.getName());
+    mySuggestedProjectName = suggestedProjectDirectory.getName();
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
@@ -75,11 +80,16 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
                                                                            project,
                                                                            descriptor,
                                                                            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
-
         protected void onFileChoosen(VirtualFile chosenFile) {
-          super.onFileChoosen(chosenFile);
           myBaseDir = chosenFile.getPath();
-          myLocationField.setText(new File(chosenFile.getPath(), myProjectNameTextField.getText()).toString());
+          if (myProjectNameWasChanged) {
+            myLocationField.setText(new File(chosenFile.getPath(), myProjectNameTextField.getText()).toString());
+          } else {
+            myModifyingLocation = true;
+            myLocationField.setText(chosenFile.getPath());
+            myProjectNameTextField.setText(chosenFile.getName());
+            myModifyingLocation = false;
+          }
         }
       };
     myLocationField.addActionListener(listener);
@@ -110,6 +120,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     myProjectNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         if (!myModifyingLocation) {
+          myProjectNameWasChanged = true;
           myModifyingProjectName = true;
           File f = new File(myBaseDir);
           myLocationField.setText(new File(f, myProjectNameTextField.getText()).getPath());
@@ -153,6 +164,10 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         checkValid();
       }
     });
+  }
+
+  private boolean projectNameWasChanged() {
+    return mySuggestedProjectName != null && !mySuggestedProjectName.equals(myProjectNameTextField.getText());
   }
 
   private void checkValid() {
