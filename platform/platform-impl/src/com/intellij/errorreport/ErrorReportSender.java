@@ -24,15 +24,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.BuildInfo;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,13 +41,6 @@ public class ErrorReportSender {
   @NonNls public static final String PREPARE_URL = "http://www.intellij.net/";
 
   private ErrorReportSender() {
-  }
-
-  @Nullable
-  public static String checkNewBuild() {
-    final CheckForUpdateResult result = UpdateChecker.checkForUpdates();
-    final BuildInfo newBuild = result.getNewBuildInSelectedChannel();
-    return (newBuild != null && newBuild.getNumber() != null ? newBuild.getNumber().asString() : null);
   }
 
   static class SendTask {

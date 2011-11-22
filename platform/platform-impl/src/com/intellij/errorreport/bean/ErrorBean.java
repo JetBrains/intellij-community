@@ -16,13 +16,11 @@
 package com.intellij.errorreport.bean;
 
 import com.intellij.diagnostic.errordialog.Attachment;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -33,38 +31,49 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class ErrorBean {
-  private Date date;
-  private String os;
   private String lastAction;
-  private String description;
-
+  private String pluginName;
+  private String pluginVersion;
+  private Integer previousException;
   private String message;
   private String stackTrace;
+  private String description;
 
-  private String exceptionClass = "";
   private List<Attachment> attachments = Collections.emptyList();
 
   public ErrorBean(Throwable throwable, String lastAction) {
     if (throwable != null) {
-      exceptionClass = throwable.getClass().getName();
-
       message = throwable.getMessage();
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       throwable.printStackTrace(new PrintStream(baos, true));
       stackTrace = baos.toString();
     }
-    os = SystemProperties.getOsName();
-    date = new Date();
     this.lastAction = lastAction;
   }
 
-  public Date getDate() {
-    return date;
+  public Integer getPreviousException() {
+    return previousException;
   }
 
-  public String getOs() {
-    return os;
+  public void setPreviousException(Integer previousException) {
+    this.previousException = previousException;
+  }
+
+  public String getPluginName() {
+    return pluginName;
+  }
+
+  public void setPluginName(String pluginName) {
+    this.pluginName = pluginName;
+  }
+
+  public String getPluginVersion() {
+    return pluginVersion;
+  }
+
+  public void setPluginVersion(String pluginVersion) {
+    this.pluginVersion = pluginVersion;
   }
 
   public String getLastAction() {
@@ -79,16 +88,16 @@ public class ErrorBean {
     this.description = description;
   }
 
-  public String getExceptionClass() {
-    return exceptionClass;
-  }
-
   public String getStackTrace() {
     return stackTrace;
   }
 
   public String getMessage() {
     return message;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
   }
 
   public void setAttachments(List<Attachment> attachments) {
