@@ -221,7 +221,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return;
       }
       final PsiFile file = node.getContainingFile();
-      if (file instanceof CythonFile && ((CythonFile)file).isInculdeFile()) {
+      if (file instanceof CythonFile && ((CythonFile)file).isIncludeFile()) {
         return;
       }
       if (node instanceof PyReferenceOwner) {
