@@ -694,7 +694,7 @@ public class AndroidCompileUtil {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            if (facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
+            if (!element.isValid() || facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
               return;
             }
             final String name = element.getName().getValue();
@@ -707,38 +707,31 @@ public class AndroidCompileUtil {
       }
     }
 
-    for (Resources resources : manager.getResourceElements()) {
-      for (final Attr attr : resources.getAttrs()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
-              return;
-            }
+    for (final Resources resources : manager.getResourceElements()) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          if (!resources.isValid() || facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
+            return;
+          }
+
+          for (final Attr attr : resources.getAttrs()) {
             final String name = attr.getName().getValue();
 
             if (name != null) {
               resourceSet.add(new ResourceEntry(ResourceType.ATTR.getName(), name));
             }
           }
-        });
-      }
 
-      for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
-              return;
-            }
+          for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
             final String name = styleable.getName().getValue();
 
             if (name != null) {
               resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
             }
           }
-        });
-      }
+        }
+      });
     }
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
