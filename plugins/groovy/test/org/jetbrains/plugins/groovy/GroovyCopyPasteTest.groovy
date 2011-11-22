@@ -54,7 +54,7 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
     myFixture.performEditorAction IdeActions.ACTION_COPY
     myFixture.configureByText 'b.groovy', 'def x = "smth<caret>h"'
     myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult 'def x = "smth$a<caret>h"'
+    myFixture.checkResult 'def x = "smth\\$a<caret>h"'
 
   }
 

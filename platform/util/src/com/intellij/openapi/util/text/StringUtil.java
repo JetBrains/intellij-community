@@ -1655,6 +1655,32 @@ public class StringUtil {
       idx += 2;
     }
   }
+  
+  public static String unescapeSlashes(@NotNull final String str) {
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      unescapeSlashes(buf, str);
+      return buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf); 
+    }
+  }
+
+  private static void unescapeSlashes(StringBuilder buf, String str) {
+    final int length = str.length();
+    final int last = length - 1;
+    for (int i = 0; i < length; i++) {
+      char ch = str.charAt(i);
+      if (ch == '\\' && i != last) {
+        i++;
+        ch = str.charAt(i);
+        if (ch != '/') buf.append('\\');
+      }
+
+      buf.append(ch);
+    }
+  }
 
   public static void quote(@NotNull final StringBuilder builder) {
     quote(builder, '\"');
