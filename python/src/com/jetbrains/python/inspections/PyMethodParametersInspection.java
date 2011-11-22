@@ -64,23 +64,14 @@ public class PyMethodParametersInspection extends PyInspection {
       return ret;
     }
 
-    private static boolean ultimatelyListsInBases(PyClass cls, PsiElement target_base) {
-      for (PyClassRef cref : cls.iterateAncestors()) {
-        if (cref.getElement() == target_base) return true;
-        PyClass base_class = cref.getPyClass();
-        if (base_class != null && ultimatelyListsInBases(base_class, target_base)) return true;
-      }
-      return false;
-    }
-
 
     @Override
     public void visitPyFunction(final PyFunction node) {
       // maybe it's a zope interface?
       PsiElement zope_interface = findZopeInterface(node);
-      if (zope_interface != null) {
+      if (zope_interface instanceof PyClass) {
         PyClass cls = node.getContainingClass();
-        if (cls != null && ultimatelyListsInBases(cls, zope_interface)) return; // it can have any params
+        if (cls != null && cls.isSubclass((PyClass) zope_interface)) return; // it can have any params
       }
       // analyze function itself
       PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(node);
