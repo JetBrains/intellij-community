@@ -57,10 +57,7 @@ import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -672,12 +669,13 @@ public class XmlUtil {
 
       final PsiElement[] inclusion = CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new CachedValueProvider<PsiElement[]>() {
           public Result<PsiElement[]> compute() {
-            return RecursionManager.doPreventingRecursion(xincludeTag, true, new Computable<Result<PsiElement[]>>() {
+            PsiElement[] result = RecursionManager.doPreventingRecursion(xincludeTag, true, new NullableComputable<PsiElement[]>() {
               @Override
-              public Result<PsiElement[]> compute() {
+              public PsiElement[] compute() {
                 return computeInclusion(xincludeTag);
               }
             });
+            return Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
           }
         });
 
@@ -690,39 +688,26 @@ public class XmlUtil {
       return true;
     }
 
-    private static final Key<Trinity<XmlFile, String, CachedValue<PsiElement[]>>> COPY_CACHE = Key.create("XInclude.CopyCache");
-
-    private static CachedValueProvider.Result<PsiElement[]> computeInclusion(final XmlTag xincludeTag) {
-      final PsiFile containingFile = xincludeTag.getContainingFile();
-
+    @Nullable
+    private static PsiElement[] computeInclusion(final XmlTag xincludeTag) {
       final XmlFile included = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
       final XmlDocument document = included != null ? included.getDocument() : null;
       final XmlTag rootTag = document != null ? document.getRootTag() : null;
       if (rootTag != null) {
         final String xpointer = xincludeTag.getAttributeValue("xpointer", XINCLUDE_URI);
-        Trinity<XmlFile, String, CachedValue<PsiElement[]>> cached = xincludeTag.getUserData(COPY_CACHE);
-        if (cached == null || !cached.first.equals(included) || !Comparing.equal(cached.second, xpointer)) {
-          cached = Trinity.create(included, xpointer, CachedValuesManager.getManager(xincludeTag.getProject()).createCachedValue(new CachedValueProvider<PsiElement[]>() {
-            @Override
-            public Result<PsiElement[]> compute() {
-              final XmlTag[] includeTag = extractXpointer(rootTag, xpointer);
-              PsiElement[] result = new PsiElement[includeTag.length];
-              for (int i = 0; i < includeTag.length; i++) {
-                XmlTag xmlTag = includeTag[i];
-                final PsiElement psiElement = xmlTag.copy();
-                psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
-                psiElement.putUserData(ORIGINAL_ELEMENT, PsiAnchor.create(xmlTag));
-                result[i] = psiElement;
-              }
-              return Result.create(result, included);
-            }
-          }, false));
-          xincludeTag.putUserData(COPY_CACHE, cached);
+        final XmlTag[] includeTag = extractXpointer(rootTag, xpointer);
+        PsiElement[] result = new PsiElement[includeTag.length];
+        for (int i = 0; i < includeTag.length; i++) {
+          XmlTag xmlTag = includeTag[i];
+          final PsiElement psiElement = xmlTag.copy();
+          psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
+          psiElement.putUserData(ORIGINAL_ELEMENT, PsiAnchor.create(xmlTag));
+          result[i] = psiElement;
         }
-        return new CachedValueProvider.Result<PsiElement[]>(cached.third.getValue(), containingFile);
+        return result;
       }
 
-      return new CachedValueProvider.Result<PsiElement[]>(null, containingFile);
+      return null;
     }
 
     private static XmlTag[] extractXpointer(XmlTag rootTag, @Nullable final String xpointer) {
