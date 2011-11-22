@@ -465,6 +465,11 @@ public class UIUtil {
   public static Color getInactiveTextColor() {
     return UIManager.getColor("textInactiveText");
   }
+  
+  public static Color getSlightlyDarkerColor(Color c) {
+    float[] hsl = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), new float[3]);
+    return new Color(Color.HSBtoRGB(hsl[0], hsl[1], hsl[2] - .08f > 0 ? hsl[2] - .08f : hsl[2]));
+  }
 
   /**
    * @deprecated use com.intellij.util.ui.UIUtil#getTextFieldBackground()

@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -101,6 +102,18 @@ public class TabLabel extends JPanel {
         handlePopup(e);
       }
     });
+  }
+
+  @Override
+  public Insets getInsets() {
+    Insets insets = super.getInsets();
+    if (myTabs.isEditorTabs()) {
+      if (UISettings.getInstance().SHOW_CLOSE_BUTTON) {
+        return new Insets(insets.top, insets.left, insets.bottom, 3);
+      }
+    }
+    
+    return insets;
   }
 
   public void setAligmentToCenter(boolean toCenter) {

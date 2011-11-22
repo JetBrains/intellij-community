@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1007,10 +1008,14 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
       myBottomImageRef=new SoftReference<BufferedImage>(null);
       myTopImageRef=new SoftReference<BufferedImage>(null);
       setOpaque(true);
-      setBackground(Color.gray);
       add(splitter,JLayeredPane.DEFAULT_LAYER);
       splitter.setBounds(0,0,getWidth(),getHeight());
       enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
+    }
+
+    @Override
+    public Color getBackground() {
+      return SwingUtilities.getDeepestComponentAt(this, 0, 0) == this ? Color.GRAY : UIUtil.getPanelBackground(); 
     }
 
     /**

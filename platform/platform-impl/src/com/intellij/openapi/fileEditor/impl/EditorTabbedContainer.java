@@ -383,8 +383,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setIcon(myTabs instanceof JBEditorTabs && myTabs.isEditorTabs() ? myNewIcon : myIcon);
-      e.getPresentation().setHoveredIcon(myTabs instanceof JBEditorTabs && myTabs.isEditorTabs()? myNewHoveredIcon : myHoveredIcon);
+      e.getPresentation().setIcon(myTabs.isEditorTabs() ? myNewIcon : myIcon);
+      e.getPresentation().setHoveredIcon(myTabs.isEditorTabs()? myNewHoveredIcon : myHoveredIcon);
       e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
     }
 
