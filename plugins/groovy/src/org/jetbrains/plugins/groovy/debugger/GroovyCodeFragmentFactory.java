@@ -94,8 +94,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     javaText.append("groovy.lang.MetaClass |mc;\n");
     javaText.append("java.lang.Class |clazz;\n");
     if (!isStatic) {
-      javaText.append("|clazz = ((java.lang.Object)this).getClass();\n");
-      javaText.append("|mc = ((groovy.lang.GroovyObject)this).getMetaClass();\n");
+      javaText.append("|clazz = this.getClass();\n");
+      javaText.append("|mc = this.getMetaClass();\n");
     } else {
       assert contextClass != null;
       javaText.append("|clazz = java.lang.Class.forName(\"").append(contextClass.getQualifiedName()).append("\");\n");
@@ -118,16 +118,16 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     javaText.append("groovy.lang.ExpandoMetaClass |emc = new groovy.lang.ExpandoMetaClass(|clazz);\n");
     if (!isStatic) {
       javaText.append("|emc.setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
-      javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(|emc);\n");
+      javaText.append("this.setMetaClass(|emc);\n");
     } else {
-      javaText.append("((groovy.lang.GroovyObject)|emc.getProperty(\"static\")).setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
+      javaText.append("|emc.getProperty(\"static\").setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
       javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(|clazz, |emc);\n");
     }
     javaText.append("|emc.initialize();\n");
     javaText.append(unwrapVals(values));
     if (!isStatic) {
       javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(this, \"").append(EVAL_NAME).append("\", |resVals);\n");
-      javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(|mc);"); //try/finally is not supported
+      javaText.append("this.setMetaClass(|mc);"); //try/finally is not supported
     } else {
       javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \"").append(EVAL_NAME).append("\", |resVals);\n");
       javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(|clazz, |mc);\n");

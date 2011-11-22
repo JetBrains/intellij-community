@@ -85,7 +85,7 @@ public class PositionManagerImpl implements PositionManager {
         }
 
         if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-          PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
+          PsiClass parent = TopLevelParentClassProvider.getTopLevelParentClass(psiClass);
 
           if (parent == null) {
             return;
@@ -244,7 +244,7 @@ public class PositionManagerImpl implements PositionManager {
         }
 
         if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-          final PsiClass parentNonLocal = JVMNameUtil.getTopLevelParentClass(psiClass);
+          final PsiClass parentNonLocal = TopLevelParentClassProvider.getTopLevelParentClass(psiClass);
           if(parentNonLocal == null) {
             LOG.error("Local or anonymous class has no non-local parent");
             return null;
