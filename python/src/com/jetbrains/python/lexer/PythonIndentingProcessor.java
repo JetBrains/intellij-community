@@ -174,6 +174,9 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     adjustBraceLevel();
     myLineHasSignificantTokens = false;
     checkSignificantTokens();
+    if (isBaseAt(PyTokenTypes.SPACE)) {
+      processIndent(0, PyTokenTypes.SPACE);
+    }
   }
 
   private void adjustBraceLevel() {
@@ -254,7 +257,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
       }
       myLineHasSignificantTokens = false;
       advanceBase();
-      processIndent(startPos);
+      processIndent(startPos, PyTokenTypes.LINE_BREAK);
     }
     else {
       processInsignificantLineBreak(startPos, false);
@@ -281,7 +284,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, startPos, end));
   }
 
-  protected void processIndent(int whiteSpaceStart) {
+  protected void processIndent(int whiteSpaceStart, IElementType whitespaceTokenType) {
     int lastIndent = myIndentStack.peek();
     int indent = getNextLineIndent();
     myLastNewLineIndent = indent;
@@ -292,7 +295,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     int whiteSpaceEnd = (getBaseTokenType() == null) ? super.getBufferEnd() : getBaseTokenStart();
     if (indent > lastIndent) {
       myIndentStack.push(indent);
-      myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, whiteSpaceStart, whiteSpaceEnd));
+      myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
       int insertIndex = skipPrecedingCommentsWithIndent(indent, myTokenQueue.size() - 1);
       int indentOffset = insertIndex == myTokenQueue.size() ? whiteSpaceEnd : myTokenQueue.get(insertIndex).getStart();
       myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.INDENT, indentOffset, indentOffset));
@@ -315,10 +318,10 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
         }
         myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.DEDENT, dedentOffset, dedentOffset));
       }
-      myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, whiteSpaceStart, whiteSpaceEnd));
+      myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
     }
     else {
-      myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, whiteSpaceStart, whiteSpaceEnd));
+      myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
     }
   }
 

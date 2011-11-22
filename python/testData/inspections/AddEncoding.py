@@ -1,1 +1,1 @@
-c = <warning descr="Byte literal contains characters > 255">"строч<caret>ка"</warning>
+<warning descr="No encoding specified for file"><caret></warning>c = "string"

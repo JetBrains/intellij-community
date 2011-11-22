@@ -76,8 +76,15 @@ if __name__ == "__main__":
   fixGetpass()
 
   try:
-    settings_module = __import__(settings_file)
-    setup_environ(settings_module)
+    custom_settings = __import__(settings_file)
+    splitted_settings = settings_file.split('.')
+    if len(splitted_settings) != 1:
+      settings_name = '.'.join(splitted_settings[:-1])
+      settings_module = __import__(settings_name, globals(), locals(), [splitted_settings[-1]], -1)
+      custom_settings = getattr(settings_module, splitted_settings[-1])
+
+    if custom_settings:
+      setup_environ(custom_settings)
   except ImportError:
     print ("There is no such settings file " + str(settings_file))
 

@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -270,7 +271,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
     }
-    boolean withinOurClass = containingClass == getPyClass();
+    boolean withinOurClass = containingClass == getPyClass() || isInSuperCall(expressionHook);
 
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
       expressionHook, new PyResolveUtil.FilterNotInstance(myClass), null
@@ -301,6 +302,14 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
         }
       }
     }
+  }
+
+  private static boolean isInSuperCall(PyExpression hook) {
+    if (hook instanceof PyReferenceExpression) {
+      final PyExpression qualifier = ((PyReferenceExpression)hook).getQualifier();
+      return qualifier instanceof PyCallExpression && ((PyCallExpression) qualifier).isCalleeText(PyNames.SUPER);
+    }
+    return false;
   }
 
   private void addInheritedMembers(String name, PyExpression expressionHook, ProcessingContext context, List<Object> ret) {

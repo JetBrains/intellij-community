@@ -9,6 +9,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RemoveArgumentEqualDefaultQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,17 +53,34 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(final PyCallExpression node){
+    public void visitPyCallExpression(final PyCallExpression node) {
       PyArgumentList list = node.getArgumentList();
       PyCallExpression.PyMarkedCallee func = node.resolveCallee(resolveWithoutImplicits());
       if ((func != null && func.isImplicitlyResolved()) || (list == null)) return;
       if (func != null) {
-        // getattr's default attribute is a special case, see PY-3440
         final Callable callable = func.getCallable();
-        if ("getattr".equals(callable.getName()) && PyBuiltinCache.getInstance(node).hasInBuiltins(callable)) return;
+        if (hasSpecialCasedDefaults(callable, node)) {
+          return;
+        }
       }
       CallArgumentsMapping result = list.analyzeCall(resolveWithoutImplicits());
       checkArguments(result, node.getArguments());
+    }
+
+    private static boolean hasSpecialCasedDefaults(Callable callable, PsiElement anchor) {
+      final String name = callable.getName();
+      final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
+      if ("getattr".equals(name) && cache.hasInBuiltins(callable)) {
+        return true;
+      }
+      else if ("get".equals(name) || "pop".equals(name)) {
+        final PyFunction method = callable.asMethod();
+        final PyClassType dictType = cache.getDictType();
+        if (method != null && dictType != null && method.getContainingClass() == dictType.getPyClass()) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private void checkArguments(CallArgumentsMapping result, PyExpression[] arguments) {

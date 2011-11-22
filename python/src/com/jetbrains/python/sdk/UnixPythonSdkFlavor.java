@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class UnixPythonSdkFlavor extends PythonSdkFlavor {
+public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
   private UnixPythonSdkFlavor() {
   }
 

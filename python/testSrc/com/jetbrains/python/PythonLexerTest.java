@@ -196,6 +196,10 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:LINE_BREAK");
   }
+  
+  public void testIndentAtStartOfFile() {  // PY-4941
+    doTest("   a", "Py:SPACE", "Py:INDENT", "Py:IDENTIFIER");
+  }
 
   private static void doTest(String text, String... expectedTokens) {
     doLexerTest(text, new PythonIndentingLexer(), expectedTokens);

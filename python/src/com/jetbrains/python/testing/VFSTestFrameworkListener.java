@@ -1,15 +1,16 @@
 package com.jetbrains.python.testing;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -18,6 +19,7 @@ import com.jetbrains.python.sdk.SdkUtil;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: catherine
@@ -27,14 +29,12 @@ public class VFSTestFrameworkListener implements BulkFileListener {
   public static final String PYTESTSEARCHER = "pycharm/finders/find_pytest.py";
   public static final String NOSETESTSEARCHER = "pycharm/finders/find_nosetest.py";
   public static final String ATTESTSEARCHER = "pycharm/finders/find_attest.py";
-  private static TestRunnerService ourService;
-  private Project myProject;
+  private static TestFrameworkService ourService;
 
   private static final MergingUpdateQueue myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null);
 
-  public VFSTestFrameworkListener(Project project) {
-    ourService = TestRunnerService.getInstance(project);
-    myProject = project;
+  public VFSTestFrameworkListener() {
+    ourService = TestFrameworkService.getInstance();
     updateTestFrameworks(ourService);
   }
 
@@ -43,15 +43,22 @@ public class VFSTestFrameworkListener implements BulkFileListener {
 
   @Override
   public void after(List<? extends VFileEvent> events) {
+  EVENTSLOOP:
     for (VFileEvent event : events) {
       VirtualFile vFile = event.getFile();
-      if (vFile != null && !myProject.isDisposed() && ProjectRootManager.getInstance(myProject).getFileIndex().isInLibraryClasses(vFile)) {
-        String path = vFile.getPath().toLowerCase();
-        if (path.contains("nose") || path.contains("py-1") || path.contains("pytest") || path.contains("attest")) {
-          Sdk sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-          if (sdk != null) {
-            updateTestFrameworks(ourService, sdk.getHomePath());
-            break;
+      Set<String> sdks = ourService.getSdks();
+      Set <String> roots = new HashSet<String>();
+      for (String sdk : sdks) {
+        Sdk realSdk = PythonSdkType.findSdkByPath(sdk);
+        if (realSdk != null)
+          roots.addAll(Lists.newArrayList(realSdk.getRootProvider().getUrls(OrderRootType.CLASSES)));
+      }
+      for (String root :roots) {
+        if (vFile != null && vFile.getUrl().contains(root)) {
+          String path = vFile.getUrl().toLowerCase();
+          if (path.contains("nose") || path.contains("py-1") || path.contains("pytest") || path.contains("attest")) {
+            updateTestFrameworks(ourService);
+            break EVENTSLOOP;
           }
         }
       }
@@ -81,7 +88,7 @@ public class VFSTestFrameworkListener implements BulkFileListener {
     return true;
   }
 
-  public void updateTestFrameworks(TestRunnerService service) {
+  public void updateTestFrameworks(TestFrameworkService service) {
     List<Sdk> sdks = PythonSdkType.getAllSdks();
     for (Sdk sdk : sdks) {
       String sdkHome = sdk.getHomePath();
@@ -89,7 +96,7 @@ public class VFSTestFrameworkListener implements BulkFileListener {
     }
   }
 
-  public void updateTestFrameworks(final TestRunnerService service, final String sdkHome) {
+  public void updateTestFrameworks(final TestFrameworkService service, final String sdkHome) {
     service.addSdk(sdkHome);
     myQueue.queue(new Update(Pair.create(sdkHome, PYTESTSEARCHER)) {
       public void run() {

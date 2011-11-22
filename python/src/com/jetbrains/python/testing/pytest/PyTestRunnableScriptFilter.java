@@ -28,7 +28,7 @@ public class PyTestRunnableScriptFilter implements RunnableScriptFilter {
   private static boolean isPyTestInstalled(Module module) {
     // TODO[yole] add caching to avoid disk I/O in findPyTestRunner()?
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    return sdk != null && PyTestFrameworksUtil.isPyTestInstalled(module.getProject(), sdk.getHomePath());
+    return sdk != null && PyTestFrameworksUtil.isPyTestInstalled(sdk.getHomePath());
   }
 
   public static boolean isPyTestScript(PsiFile script) {

@@ -362,9 +362,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @Nullable
-  public static String pyVersion(String versionString) {
+  public static String pyVersion(@Nullable String versionString) {
     String prefix = "Python ";
-    if (versionString.startsWith(prefix)) {
+    if (versionString != null && versionString.startsWith(prefix)) {
       String version = versionString.substring(prefix.length());
       int dot = version.indexOf('.');
       if (dot > 0) {

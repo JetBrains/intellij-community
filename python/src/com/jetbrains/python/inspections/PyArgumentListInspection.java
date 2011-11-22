@@ -135,8 +135,8 @@ public class PyArgumentListInspection extends PyInspection {
               }
             }
             else { // * arg
-              if (!PyABCUtil.isSubtype(inside_type, PyNames.SEQUENCE)) {
-                holder.registerProblem(arg, PyBundle.message("INSP.expected.seq.got.$0", inside_type.getName()));
+              if (!PyABCUtil.isSubtype(inside_type, PyNames.ITERABLE)) {
+                holder.registerProblem(arg, PyBundle.message("INSP.expected.iter.got.$0", inside_type.getName()));
               }
             }
           }

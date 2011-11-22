@@ -1,2 +1,2 @@
 # coding=utf-8
-c = "строчка"
+c = "string"

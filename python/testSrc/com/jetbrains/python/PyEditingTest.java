@@ -102,6 +102,11 @@ public class PyEditingTest extends PyTestCase {
     doTestEnter("# foo <caret>bar", "# foo \n# bar");
   }
 
+  public void testEnterInPrefixString() {  // PY-5058
+    doTestEnter("s = r'some <caret>string'", "s = r'some ' \\\n" +
+                                            "    r'string'");
+  }
+
   public void testEnterInStatement() {
     doTestEnter("if a <caret>and b: pass", "if a \\\nand b: pass");
   }

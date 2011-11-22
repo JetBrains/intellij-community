@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.97" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.98" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -235,7 +235,7 @@ def sanitizeIdent(x, is_clr=False):
 def reliable_repr(value):
     # some subclasses of built-in types (see PyGtk) may provide invalid __repr__ implementations,
     # so we need to sanitize the output
-    if isinstance(value, bool):
+    if type(bool) == type and isinstance(value, bool):
         return repr(bool(value))
     for t in NUM_TYPES:
         if isinstance(value, t):
@@ -792,6 +792,7 @@ class ModuleRedeclarator(object):
         (None, "range"): "(start=None, stop=None, step=None)", # suboptimal: allows empty arglist
         (None, "filter"): "(function_or_none, sequence)",
         (None, "iter"): "(source, sentinel=None)",
+        (None, "getattr"): "(object, name, default=None)",
         ('frozenset', "__init__"): "(self, seq=())",
     }
 
@@ -1622,7 +1623,7 @@ class ModuleRedeclarator(object):
         return None
 
     def qualifierOf(self, cls, qualifiers_to_skip):
-        m = cls.__module__
+        m = getattr(cls, "__module__", None)
         if m in qualifiers_to_skip:
             return ""
         return m
@@ -2043,7 +2044,9 @@ class ModuleRedeclarator(object):
                     right_pos += len(import_heading)
                     names_pack = [import_heading]
                     indent_level = 0
-                    for n in sorted(names):
+                    names = list(names)
+                    names.sort()
+                    for n in names:
                         self._defined[n] = True
                         len_n = len(n)
                         if right_pos + len_n >= 78:
