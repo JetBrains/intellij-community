@@ -30,10 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class JavaChangeInfoImpl implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
@@ -284,6 +281,11 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
 
   public void updateMethod(PsiMethod method) {
     this.method = method;
+  }
+
+  @Override
+  public Collection<PsiMethod> getMethodsToPropagateParameters() {
+    return propagateParametersMethods;
   }
 
   public ParameterInfoImpl[] getCreatedParmsInfoWithoutVarargs() {

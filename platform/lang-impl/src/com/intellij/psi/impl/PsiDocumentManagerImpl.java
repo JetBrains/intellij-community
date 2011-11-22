@@ -689,7 +689,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   private boolean isRelevant(FileViewProvider viewProvider) {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
-    return !virtualFile.getFileType().isBinary() && viewProvider.getManager() == myPsiManager && !myPsiManager.getProject().isDisposed();
+    return !virtualFile.getFileType().isBinary() && viewProvider.getManager() == myPsiManager && !myPsiManager.getProject().isDisposed() && !myProject.isDefault();
   }
 
   public static boolean checkConsistency(PsiFile psiFile, Document document) {

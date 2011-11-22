@@ -69,7 +69,6 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myProject = project;
     myJdksModel = jdksModel;
     myJdksModel.addListener(myListener);
-    init();
   }
 
   @Nullable
@@ -78,6 +77,28 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   public JComponent createComponent() {
+    if (myJdkPanel == null) {
+      myJdkPanel = new JPanel(new GridBagLayout());
+      myCbProjectJdk = new JdkComboBox(myJdksModel);
+      myCbProjectJdk.insertItemAt(new JdkComboBox.NoneJdkComboBoxItem(), 0);
+      myCbProjectJdk.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (myFreeze) return;
+          myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
+          clearCaches();
+        }
+      });
+      myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 4, 0), 0, 0));
+      myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
+      final JButton setUpButton = myCbProjectJdk.createSetupButton(myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem());
+      myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
+      myCbProjectJdk.appendEditButton(myProject, myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0), new Computable<Sdk>() {
+        @Nullable
+        public Sdk compute() {
+          return myJdksModel.getProjectSdk();
+        }
+      });
+    }
     return myJdkPanel;
   }
 
@@ -98,29 +119,6 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
       myCbProjectJdk.setSelectedJdk(null);
     }
     myFreeze = false;
-  }
-
-  private void init() {
-    myJdkPanel = new JPanel(new GridBagLayout());
-    myCbProjectJdk = new JdkComboBox(myJdksModel);
-    myCbProjectJdk.insertItemAt(new JdkComboBox.NoneJdkComboBoxItem(), 0);
-    myCbProjectJdk.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myFreeze) return;
-        myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
-        clearCaches();
-      }
-    });
-    myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 4, 0), 0, 0));
-    myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
-    final JButton setUpButton = myCbProjectJdk.createSetupButton(myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem());
-    myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
-    myCbProjectJdk.appendEditButton(myProject, myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0), new Computable<Sdk>() {
-      @Nullable
-      public Sdk compute() {
-        return myJdksModel.getProjectSdk();
-      }
-    });
   }
 
   private void clearCaches() {

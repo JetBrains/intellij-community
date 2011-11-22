@@ -19,6 +19,8 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -64,4 +66,6 @@ public interface JavaChangeInfo extends ChangeInfo {
   PsiExpression getValue(int i, PsiCallExpression callExpression);
 
   void updateMethod(PsiMethod psiMethod);
+
+  Collection<PsiMethod> getMethodsToPropagateParameters();
 }

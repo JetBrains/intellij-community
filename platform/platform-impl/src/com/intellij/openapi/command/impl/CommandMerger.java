@@ -57,7 +57,7 @@ public class CommandMerger {
     return myCommandName;
   }
 
-  public void addAction(UndoableAction action) {
+  public void addAction(@NotNull UndoableAction action) {
     myCurrentActions.add(action);
     DocumentReference[] refs = action.getAffectedDocuments();
     if (refs != null) {

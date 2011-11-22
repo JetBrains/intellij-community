@@ -49,12 +49,6 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
   private static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
-  private final Project myProject;
-
-  public OrderEntryAppearanceServiceImpl(@NotNull final Project project) {
-    myProject = project;
-  }
-
   @NotNull
   @Override
   public CellAppearanceEx forOrderEntry(Project project, @NotNull final OrderEntry orderEntry, final boolean selected) {
@@ -96,7 +90,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
   @NotNull
   @Override
   public CellAppearanceEx forLibrary(Project project, @NotNull final Library library, final boolean hasInvalidRoots) {
-    final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
+    final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(project).getContext();
     final Icon icon = LibraryPresentationManager.getInstance().getCustomIcon(library, context);
 
     final String name = library.getName();
