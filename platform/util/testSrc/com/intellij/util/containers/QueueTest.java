@@ -48,6 +48,15 @@ public class QueueTest extends TestCase {
     testEmpty();
   }
 
+  public void testQuibble() {
+    com.intellij.util.containers.Queue queue = new com.intellij.util.containers.Queue(0);
+    String xxx = "xxx";
+    queue.addLast(xxx);
+    CHECK.compareAll(queue.toArray(), new String[] {xxx});
+    Object x = queue.pullFirst();
+    assertEquals(xxx,x);
+    assertTrue(queue.isEmpty());
+  }
   public void testCycling() {
     com.intellij.util.containers.Queue queue = new com.intellij.util.containers.Queue(10);
     for (int i = 0; i < 9; i++) {
