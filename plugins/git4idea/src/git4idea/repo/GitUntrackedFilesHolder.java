@@ -95,7 +95,9 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myChangeListManager = ChangeListManager.getInstance(project);
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+  }
 
+  void setupVfsListener(@NotNull Project project) {
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
