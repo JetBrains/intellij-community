@@ -165,7 +165,6 @@ public final class GitRepository implements Disposable {
     myMessageBus = project.getMessageBus();
     myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
     update(TrackedTopic.ALL);
-    updateConfig();
   }
 
   /**
