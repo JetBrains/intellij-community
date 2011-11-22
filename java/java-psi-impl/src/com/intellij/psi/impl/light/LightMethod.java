@@ -41,10 +41,6 @@ public class LightMethod extends LightElement implements PsiMethod {
   private final PsiMethod myMethod;
   private final PsiClass myContainingClass;
 
-  public LightMethod(PsiMethod method, PsiClass containingClass) {
-    this(method.getManager(), method, containingClass);
-  }
-
   public LightMethod(PsiManager manager, PsiMethod method, PsiClass containingClass) {
     super(manager, JavaLanguage.INSTANCE);
     myMethod = method;
