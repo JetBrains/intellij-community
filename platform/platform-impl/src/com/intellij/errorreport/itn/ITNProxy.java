@@ -22,7 +22,6 @@ import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.Pair;
@@ -30,10 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -50,7 +46,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class ITNProxy {
-  @NonNls public static final String ENCODE = "UTF8";
+  @NonNls public static final String ENCODING = "UTF8";
   public static final String POST_DELIMITER = "&";
 
   @NonNls public static final String NEW_THREAD_URL = "http://www.intellij.net/trackerRpc/idea/createScr";
@@ -70,7 +66,7 @@ public class ITNProxy {
                                                                     (ApplicationInfoEx) ApplicationInfo.getInstance(),
                                                                     ApplicationNamesInfo.getInstance());
 
-    HttpURLConnection connection = post(NEW_THREAD_URL, params);
+    HttpURLConnection connection = post(new URL(NEW_THREAD_URL), join(params));
     int responseCode = connection.getResponseCode();
 
     if (responseCode != HttpURLConnection.HTTP_OK) {
@@ -175,25 +171,39 @@ public class ITNProxy {
     }
   }
 
-  private static HttpURLConnection post (String url, List<Pair<String,String>> params) throws IOException {
-    HttpURLConnection connection = (HttpURLConnection) new URL (url).openConnection();
+  private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
     connection.setReadTimeout(10 * 1000);
     connection.setConnectTimeout(10 * 1000);
     connection.setRequestMethod(HTTP_POST);
     connection.setDoInput(true);
     connection.setDoOutput(true);
-    connection.setRequestProperty(HTTP_CONTENT_TYPE, HTTP_WWW_FORM);
+    connection.setRequestProperty(HTTP_CONTENT_TYPE, String.format("%s; charset=%s", HTTP_WWW_FORM, ENCODING));
+    connection.setRequestProperty(HTTP_CONTENT_LENGTH, Integer.toString(bytes.length));
 
+    OutputStream out = new BufferedOutputStream(connection.getOutputStream());
+    try {
+      out.write(bytes);
+      out.flush();
+    } finally {
+      out.close();
+    }
+
+    return connection;
+  }
+
+  private static byte[] join(List<Pair<String, String>> params) throws UnsupportedEncodingException {
     StringBuilder buffer = new StringBuilder();
+
     for (Pair<String, String> param : params) {
       if (StringUtil.isEmpty(param.first))
         throw new IllegalArgumentException(param.toString());
 
       if (StringUtil.isNotEmpty(param.second))
-        buffer.append(param.first + "=" + URLEncoder.encode(param.second, ENCODE) + POST_DELIMITER);
+        buffer.append(param.first + "=" + URLEncoder.encode(param.second, ENCODING) + POST_DELIMITER);
     }
-    connection.setRequestProperty(HTTP_CONTENT_LENGTH, Integer.toString(buffer.length()));
-    connection.getOutputStream().write(buffer.toString().getBytes());
-    return connection;
+
+    return buffer.toString().getBytes();
   }
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AmbiguousFieldAccess.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Inherited field accessed while local variable, parameter or field access from surrounding class might be expected</problem_class>
+    <description>Field &lt;code&gt;name&lt;/code&gt; from super class 'Foo' accessed, while parameter access might be expected #loc</description>
+  </problem>
+</problems>
