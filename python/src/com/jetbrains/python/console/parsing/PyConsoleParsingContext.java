@@ -18,14 +18,15 @@ public class PyConsoleParsingContext extends ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;
   private boolean myStartsWithIPythonSymbol;
+  private IPythonData myIPythonData;
 
   public PyConsoleParsingContext(final PsiBuilder builder,
                                  LanguageLevel languageLevel,
                                  StatementParsing.FUTURE futureFlag,
-                                 PsiElement psi, boolean startsWithIPythonSymbol) {
+                                 IPythonData iPythonData, boolean startsWithIPythonSymbol) {
     super(builder, languageLevel, futureFlag);
     myStartsWithIPythonSymbol = startsWithIPythonSymbol;
-    stmtParser = new ConsoleStatementParsing(this, futureFlag, myStartsWithIPythonSymbol);
+    stmtParser = new ConsoleStatementParsing(this, futureFlag, myStartsWithIPythonSymbol, iPythonData);
     expressionParser = new ConsoleExpressionParsing(this);
   }
 
@@ -42,25 +43,36 @@ public class PyConsoleParsingContext extends ParsingContext {
   private static class ConsoleStatementParsing extends StatementParsing {
 
     private boolean myStartsWithIPythonSymbol;
+    private IPythonData myIPythonData;
 
-    protected ConsoleStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag, boolean startsWithIPythonSymbol) {
+    protected ConsoleStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag, boolean startsWithIPythonSymbol, IPythonData iPythonData) {
       super(context, futureFlag);
       myStartsWithIPythonSymbol = startsWithIPythonSymbol;
+      myIPythonData = iPythonData;
     }
 
 
     @Override
     public void parseStatement(ParsingScope scope) {
       if (myStartsWithIPythonSymbol) {
-        PsiBuilder.Marker ipythonCommend = myBuilder.mark();
-        while (!myBuilder.eof()) {
-          myBuilder.advanceLexer();
-        }
-        ipythonCommend.done(PyElementTypes.EMPTY_EXPRESSION);
+        parseIPythonCommand();
       }
       else {
+        if (myIPythonData.isAutomagic()) {
+          if (myIPythonData.isMagicCommand(myBuilder.getTokenText())) {
+            parseIPythonCommand();
+          }
+        }
         super.parseStatement(scope);
       }
+    }
+
+    private void parseIPythonCommand() {
+      PsiBuilder.Marker ipythonCommand = myBuilder.mark();
+      while (!myBuilder.eof()) {
+        myBuilder.advanceLexer();
+      }
+      ipythonCommand.done(PyElementTypes.EMPTY_EXPRESSION);
     }
 
     protected void checkEndOfStatement(ParsingScope scope) {

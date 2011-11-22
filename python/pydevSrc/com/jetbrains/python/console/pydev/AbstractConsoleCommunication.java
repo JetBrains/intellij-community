@@ -3,6 +3,7 @@ package com.jetbrains.python.console.pydev;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 import java.util.Vector;
@@ -13,6 +14,8 @@ import java.util.Vector;
 public abstract class AbstractConsoleCommunication implements ConsoleCommunication {
   public static final int MAX_ATTEMPTS = 3;
   public static final long TIMEOUT = (long)(10e9);
+
+  private VirtualFile myConsoleFile;
 
   protected final Project myProject;
   /**
@@ -59,5 +62,13 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
     for (ConsoleCommunicationListener listener: communicationListeners) {
       listener.executionFinished();
     }
+  }
+
+  public VirtualFile getConsoleFile() {
+    return myConsoleFile;
+  }
+
+  public void setConsoleFile(VirtualFile consoleFile) {
+    myConsoleFile = consoleFile;
   }
 }

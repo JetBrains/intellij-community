@@ -316,11 +316,19 @@ class BaseInterpreterInterface:
     def startExec(self):
         self.interruptable = True
 
+    def get_server(self):
+        if self.host is not None:
+            return xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
+        else:
+            return None
+
+
     def finishExec(self):
         self.interruptable = False
 
-        if self.host is not None:
-            server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
+        server = self.get_server()
+
+        if server is not None:
             return server.NotifyFinished()
         else:
             return True

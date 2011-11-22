@@ -42,6 +42,7 @@ import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
+import com.jetbrains.python.console.parsing.IPythonData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
@@ -202,6 +203,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   @Override
   protected PythonConsoleView createConsoleView() {
     PythonConsoleView consoleView = new PythonConsoleView(getProject(), getConsoleTitle(), mySdk);
+    myPydevConsoleCommunication.setConsoleFile(consoleView.getConsoleVirtualFile());
     consoleView.addMessageFilter(new PythonTracebackFilter(getProject()));
     return consoleView;
   }
@@ -418,15 +420,25 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return file.getName().contains("Python Console");
   }
 
-  public static boolean isIPythonConsole(final FileElement element) {
+  public static boolean isIPythonConsole(@Nullable final FileElement element) {
     //noinspection ConstantConditions
-    if (element.getPsi() == null || element.getPsi().getContainingFile() == null) {
-      return false;
+    IPythonData data = getIPythonData(element);
+
+    return data != null && data.isEnabled();
+  }
+
+  @Nullable
+  public static IPythonData getIPythonData(@Nullable FileElement element) {
+    if (element == null || element.getPsi() == null || element.getPsi().getContainingFile() == null) {
+      return null;
     }
 
     VirtualFile file = getConsoleFile(element.getPsi().getContainingFile());
 
-    return PyConsoleUtil.isIPythonDetected(file);
+    if (file == null) {
+      return null;
+    }
+    return file.getUserData(PyConsoleUtil.IPYTHON);
   }
 
   private static VirtualFile getConsoleFile(PsiFile psiFile) {

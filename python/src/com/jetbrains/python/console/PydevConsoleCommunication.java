@@ -1,7 +1,6 @@
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -10,8 +9,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.util.VirtualFileUtil;
+import com.jetbrains.python.console.parsing.IPythonData;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PydevXmlUtils;
 import org.apache.xmlrpc.WebServer;
@@ -147,9 +146,25 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     else if ("IPythonEditor".equals(method)) {
       return execIPythonEditor(params);
     }
+    else if ("NotifyAboutMagic".equals(method)) {
+      return execNotifyAboutMagic(params);
+    }
     else {
       throw new UnsupportedOperationException();
     }
+  }
+
+  private Object execNotifyAboutMagic(Vector params) {
+    List<String> commands = (List<String>) params.get(0);
+    boolean isAutoMagic = (Boolean)params.get(1);
+
+    if (getConsoleFile() != null) {
+      IPythonData data = PyConsoleUtil.getOrCreateIPythonData(getConsoleFile());
+      data.setAutomagic(isAutoMagic);
+      data.setMagicCommands(commands);
+    }
+
+    return "";
   }
 
   private Object execIPythonEditor(Vector params) {

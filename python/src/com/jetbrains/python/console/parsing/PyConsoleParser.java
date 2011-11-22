@@ -18,11 +18,11 @@ import org.jetbrains.annotations.NotNull;
 public class PyConsoleParser extends PyParser{
   private LanguageLevel myLanguageLevel;
   private StatementParsing.FUTURE myFutureFlag;
-  private PsiElement myPsi;
+  private IPythonData myIPythonData;
   private boolean myIPythonStartSymbol;
 
-  public PyConsoleParser(PsiElement psi) {
-    myPsi = psi;
+  public PyConsoleParser(IPythonData iPythonData) {
+    myIPythonData = iPythonData;
     myLanguageLevel = LanguageLevel.getDefault();
   }
 
@@ -33,7 +33,6 @@ public class PyConsoleParser extends PyParser{
   @NotNull
   @Override
   public ASTNode parse(IElementType root, PsiBuilder builder) {
-    long start = System.currentTimeMillis();
     final PsiBuilder.Marker rootMarker = builder.mark();
 
     myIPythonStartSymbol = startsWithIPythonSpecialSymbol(builder);
@@ -42,26 +41,24 @@ public class PyConsoleParser extends PyParser{
 
     StatementParsing stmt_parser = context.getStatementParser();
     builder.setTokenTypeRemapper(stmt_parser); // must be done before touching the caching lexer with eof() call.
-    //if (builder.getTokenType() == PyTokenTypes.BACKSLASH)
 
     while (!builder.eof()) {
       stmt_parser.parseStatement(context.emptyParsingScope());
     }
     rootMarker.done(root);
     ASTNode ast = builder.getTreeBuilt();
-    long diff = System.currentTimeMillis() - start;
-    double kb = builder.getCurrentOffset() / 1000.0;
     return ast;
   }
 
   private static boolean startsWithIPythonSpecialSymbol(PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
-    return builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK || tokenType == PyTokenTypes.PERC;
+    return builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK || tokenType == PyTokenTypes.PERC || tokenType == PyTokenTypes.COMMA || tokenType == PyTokenTypes.SEMICOLON ||
+      "/".equals(builder.getTokenText());
   }
 
 
   @Override
   protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
-    return new PyConsoleParsingContext(builder, languageLevel, futureFlag, myPsi, myIPythonStartSymbol);
+    return new PyConsoleParsingContext(builder, languageLevel, futureFlag, myIPythonData, myIPythonStartSymbol);
   }
 }

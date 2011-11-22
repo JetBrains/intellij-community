@@ -161,7 +161,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   }
 
   public void detectIPython(String text, final ConsoleViewContentType outputType) {
-    VirtualFile file = getConsole().getFile().getVirtualFile();
+    VirtualFile file = getConsoleVirtualFile();
     if (file != null) {
       if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
         PyConsoleUtil.markIPython(file);
@@ -169,7 +169,14 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
       if (PyConsoleUtil.detectIPythonAutomagicOn(text)) {
         PyConsoleUtil.setIPythonAutomagic(file, true);
       }
+      if (PyConsoleUtil.detectIPythonAutomagicOff(text)) {
+        PyConsoleUtil.setIPythonAutomagic(file, false);
+      }
     }
+  }
+
+  public VirtualFile getConsoleVirtualFile() {
+    return getConsole().getFile().getVirtualFile();
   }
 
   private boolean detectHyperlink(@NotNull String text) {

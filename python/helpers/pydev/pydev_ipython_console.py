@@ -37,6 +37,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         self.host = host
         self.interpreter = PyDevFrontEnd()
         self._input_error_printed = False
+        self.notify_about_magic()
 
 
     def doAddExec(self, line):
@@ -106,7 +107,19 @@ class InterpreterInterface(BaseInterpreterInterface):
 
 
     def ipython_editor(self, file, line):
-        if self.host is not None:
-            server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
-            return server.IPythonEditor(file, line)
+        server = self.get_server()
+
+        if server is not None:
+            return server.IPythonEditor(os.path.realpath(file), line)
+
+    def notify_about_magic(self):
+        completions = self.getCompletions("%", "%")
+        magic_commands = [x[0] for x in completions]
+
+        server = self.get_server()
+
+        if server is not None:
+            server.NotifyAboutMagic(magic_commands, self.interpreter.ipython.automagic)
+
+
 
