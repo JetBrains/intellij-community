@@ -224,11 +224,11 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   @Override
   public void after(List<? extends VFileEvent> events) {
-    boolean indexChanged = false;
+    boolean allChanged = false;
     Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
 
     for (VFileEvent event : events) {
-      if (indexChanged) {
+      if (allChanged) {
         break;
       }
       VirtualFile file = event.getFile();
@@ -236,8 +236,8 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
         continue;
       }
       String path = file.getPath();
-      if (myRepositoryFiles.isIndexFile(path)) {
-        indexChanged = true;
+      if (myRepositoryFiles.isIndexFile(path) || myRepositoryFiles.isCommitMessageFile(path)) {
+        allChanged = true;
       }
       else {
         VirtualFile affectedFile = getAffectedFile(event);
@@ -248,7 +248,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     }
 
     // if index has changed, no need to refresh specific files - we get the full status of all files
-    if (indexChanged) {
+    if (allChanged) {
       myDirtyScopeManager.dirDirtyRecursively(myRoot);
       synchronized (LOCK) {
         myReady = false;
