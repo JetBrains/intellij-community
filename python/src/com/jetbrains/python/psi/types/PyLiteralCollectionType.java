@@ -23,7 +23,7 @@ public class PyLiteralCollectionType extends PyClassType implements PyCollection
     if (elements.length == 0 || elements.length > 10 /* performance */) {
       return null;
     }
-    PyType result = elements [0].getType(context);
+    PyType result = context.getType(elements [0]);
     if (result == null) {
       return null;
     }
