@@ -300,6 +300,7 @@ public final class GitRepository implements Disposable {
     for (TrackedTopic topic : topics) {
       topic.update(this);
     }
+    notifyListeners();
   }
   
   private void updateConfig() {
@@ -312,7 +313,6 @@ public final class GitRepository implements Disposable {
    */
   private void updateState() {
     myState = myReader.readState();
-    notifyListeners();
   }
 
   /**
@@ -320,7 +320,6 @@ public final class GitRepository implements Disposable {
    */
   private void updateCurrentRevision() {
     myCurrentRevision = myReader.readCurrentRevision();
-    notifyListeners();
   }
 
   /**
@@ -328,12 +327,10 @@ public final class GitRepository implements Disposable {
    */
   private void updateCurrentBranch() {
     myCurrentBranch = myReader.readCurrentBranch();
-    notifyListeners();
   }
   
   private void updateBranchList() {
     myBranches = myReader.readBranches();
-    notifyListeners();
   }
 
   private void notifyListeners() {
