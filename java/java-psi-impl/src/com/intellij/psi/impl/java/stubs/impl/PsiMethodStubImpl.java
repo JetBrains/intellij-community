@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,8 +174,9 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
 
     builder.append(getName()).append(":").append(TypeInfo.createTypeText(getReturnTypeText(false)));
 
-    if (getDefaultValueText() != null) {
-      builder.append(" default=").append(getDefaultValueText());
+    final String defaultValue = getDefaultValueText();
+    if (defaultValue != null) {
+      builder.append(" default=").append(defaultValue);
     }
 
     builder.append("]");
