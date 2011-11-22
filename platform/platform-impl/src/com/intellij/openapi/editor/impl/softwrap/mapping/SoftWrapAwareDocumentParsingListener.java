@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,4 +120,9 @@ interface SoftWrapAwareDocumentParsingListener {
    *                should be rolled back if this param value is <code>false</code>
    */
   void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal);
+
+  /**
+   * Callback for asking to drop all cached information (if any).
+   */
+  void reset();
 }

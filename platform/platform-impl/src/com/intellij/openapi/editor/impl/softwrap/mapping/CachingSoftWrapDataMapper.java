@@ -482,6 +482,13 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     myBeforeChangeState.cacheShouldBeUpdated = false;
   }
 
+  @Override
+  public void reset() {
+    myCache.clear();
+    myAffectedByUpdateCacheEntries.clear();
+    myNotAffectedByUpdateTailCacheEntries.clear();
+  }
+
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UnusedDeclaration", "CallToPrintStackTrace"})
   private void dumpCache() {
     Document document = myEditor.getDocument();
@@ -542,7 +549,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
     int softWrapIndex = myStorage.getSoftWrapIndex(offset);
     if (softWrapIndex >= 0) {
-      softWrapIndex++; // We want to process only soft wraps which offsets strictly more than the given one.
+      softWrapIndex++; // We want to process only soft wraps which offsets are strictly more than the given one.
     }
     else {
       softWrapIndex = -softWrapIndex - 1;
