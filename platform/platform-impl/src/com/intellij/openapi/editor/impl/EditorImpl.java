@@ -985,10 +985,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // We mark that we're under such circumstances then.
     boolean activeSoftWrapProcessed = logicalPosition.softWrapLinesOnCurrentLogicalLine <= 0;
 
-    int column = 0;
-    int prevX = 0;
     CharSequence text = myDocument.getCharsNoThreadCheck();
-    char c = ' ';
 
     LogicalPosition endLogicalPosition = visualToLogicalPosition(new VisualPosition(line+1, 0));
     int endOffset = logicalPositionToOffset(endLogicalPosition);
@@ -1004,125 +1001,133 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     IterationState state = new IterationState(this, offset, endOffset, false);
 
-    int fontType = state.getMergedAttributes().getFontType();
-    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
+    try {
+      int fontType = state.getMergedAttributes().getFontType();
+      int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
 
-    int x = 0;
-    int charWidth;
-    boolean onSoftWrapDrawing = false;
-    outer:
-    while (true) {
-      charWidth = -1;
-      if (offset >= textLength) {
-        break;
-      }
+      int x = 0;
+      int charWidth;
+      boolean onSoftWrapDrawing = false;
+      char c = ' ';
+      int prevX = 0;
+      int column = 0;
+      outer:
+      while (true) {
+        charWidth = -1;
+        if (offset >= textLength) {
+          break;
+        }
 
-      if (offset >= state.getEndOffset()) {
-        state.advance();
-        fontType = state.getMergedAttributes().getFontType();
-      }
+        if (offset >= state.getEndOffset()) {
+          state.advance();
+          fontType = state.getMergedAttributes().getFontType();
+        }
 
-      SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
-      if (softWrap != null) {
-        if (activeSoftWrapProcessed) {
-          prevX = x;
-          charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-          x += charWidth;
-          if (x >= px) {
-            onSoftWrapDrawing = true;
+        SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
+        if (softWrap != null) {
+          if (activeSoftWrapProcessed) {
+            prevX = x;
+            charWidth = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+            x += charWidth;
+            if (x >= px) {
+              onSoftWrapDrawing = true;
+            }
+            else {
+              column++;
+            }
+            break outer;
           }
           else {
-            column++;
-          }
-          break outer;
-        }
-        else {
-          CharSequence softWrapText = softWrap.getText();
-          for (int i = 1/*Assuming line feed is located at the first position*/; i < softWrapText.length(); i++) {
-            c = softWrapText.charAt(i);
+            CharSequence softWrapText = softWrap.getText();
+            for (int i = 1/*Assuming line feed is located at the first position*/; i < softWrapText.length(); i++) {
+              c = softWrapText.charAt(i);
+              prevX = x;
+              charWidth = charToVisibleWidth(c, fontType, x);
+              x += charWidth;
+              if (x >= px) {
+                break outer;
+              }
+              column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+            }
+
+            // Process 'after soft wrap' sign.
             prevX = x;
-            charWidth = charToVisibleWidth(c, fontType, x);
+            charWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
             x += charWidth;
+            if (x >= px) {
+              onSoftWrapDrawing = true;
+              break outer;
+            }
+            column++;
+            activeSoftWrapProcessed = true;
+          }
+        }
+        FoldRegion region = state.getCurrentFold();
+        if (region != null) {
+          char[] placeholder = region.getPlaceholderText().toCharArray();
+          for (char aPlaceholder : placeholder) {
+            c = aPlaceholder;
+            x += EditorUtil.charWidth(c, fontType, this);
             if (x >= px) {
               break outer;
             }
-            column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+            column++;
           }
-
-          // Process 'after soft wrap' sign.
+          offset = region.getEndOffset();
+        }
+        else {
           prevX = x;
-          charWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+          c = text.charAt(offset);
+          charWidth = charToVisibleWidth(c, fontType, x);
+          if (charWidth == 0) {
+            break;
+          }
           x += charWidth;
+
           if (x >= px) {
-            onSoftWrapDrawing = true;
-            break outer;
+            break;
           }
-          column++;
-          activeSoftWrapProcessed = true;
+          column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+
+          offset++;
         }
       }
-      FoldRegion region = state.getCurrentFold();
-      if (region != null) {
-        char[] placeholder = region.getPlaceholderText().toCharArray();
-        for (char aPlaceholder : placeholder) {
-          c = aPlaceholder;
-          x += EditorUtil.charWidth(c, fontType, this);
-          if (x >= px) {
-            break outer;
-          }
-          column++;
+
+      if (charWidth < 0) {
+        charWidth = EditorUtil.charWidth(c, fontType, this);
+      }
+
+      if (charWidth < 0) {
+        charWidth = spaceSize;
+      }
+
+      if (x >= px && c == '\t' && !onSoftWrapDrawing) {
+        if (mySettings.isCaretInsideTabs()) {
+          column += (px - prevX) / spaceSize;
+          if ((px - prevX) % spaceSize > spaceSize / 2) column++;
         }
-        offset = region.getEndOffset();
+        else if ((x - px) * 2 < x - prevX) {
+          column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+        }
       }
       else {
-        prevX = x;
-        c = text.charAt(offset);
-        charWidth = charToVisibleWidth(c, fontType, x);
-        if (charWidth == 0) {
-          break;
-        }
-        x += charWidth;
-
         if (x >= px) {
-          break;
+          if ((x - px) * 2 < charWidth) column++;
         }
-        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
-
-        offset++;
-      }
-    }
-
-    if (charWidth < 0) {
-      charWidth = EditorUtil.charWidth(c, fontType, this);
-    }
-    
-    if (charWidth < 0) {
-      charWidth = spaceSize;
-    }
-
-    if (x >= px && c == '\t' && !onSoftWrapDrawing) {
-      if (mySettings.isCaretInsideTabs()) {
-        column += (px - prevX) / spaceSize;
-        if ((px - prevX) % spaceSize > spaceSize / 2) column++;
-      }
-      else if ((x - px) * 2 < x - prevX) {
-        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
-      }
-    }
-    else {
-      if (x >= px) {
-        if ((x - px) * 2 < charWidth) column++;
-      }
-      else {
-        int diff = px - x;
-        column += diff / spaceSize;
-        if (diff % spaceSize * 2 >= spaceSize) {
-          column++;
+        else {
+          int diff = px - x;
+          column += diff / spaceSize;
+          if (diff % spaceSize * 2 >= spaceSize) {
+            column++;
+          }
         }
       }
-    }
 
-    return new VisualPosition(line, column);
+      return new VisualPosition(line, column);
+    }
+    finally {
+      state.dispose();
+    }
   }
 
   /**
@@ -1299,68 +1304,73 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int textLength = myDocument.getTextLength();
     IterationState state = new IterationState(this, startOffset, startOffset + length, false);
-    int fontType = state.getMergedAttributes().getFontType();
-    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
+    try {
+      int fontType = state.getMergedAttributes().getFontType();
+      int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
 
-    int column = 0;
-    outer:
-    while (column < length) {
-      if (offset >= textLength) break;
+      int column = 0;
+      outer:
+      while (column < length) {
+        if (offset >= textLength) break;
 
-      if (offset >= state.getEndOffset()) {
-        state.advance();
-        fontType = state.getMergedAttributes().getFontType();
-      }
-      // We need to consider 'before soft wrap drawing'.
-      SoftWrap softWrap = getSoftWrapModel().getSoftWrap(offset);
-      if (softWrap != null && offset > startOffset) {
-        column++;
-        x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-        // Assuming that first soft wrap symbol is line feed or all soft wrap symbols before the first line feed are spaces.
-        break;
-      }
-
-      FoldRegion region = state.getCurrentFold();
-
-      if (region != null) {
-        char[] placeholder = region.getPlaceholderText().toCharArray();
-        for (char aPlaceholder : placeholder) {
-          x += EditorUtil.charWidth(aPlaceholder, fontType, this);
-          column++;
-          if (column >= length) break outer;
+        if (offset >= state.getEndOffset()) {
+          state.advance();
+          fontType = state.getMergedAttributes().getFontType();
         }
-        offset = region.getEndOffset();
-      }
-      else {
-        char c = text.charAt(offset);
-        if (c == '\n') {
+        // We need to consider 'before soft wrap drawing'.
+        SoftWrap softWrap = getSoftWrapModel().getSoftWrap(offset);
+        if (softWrap != null && offset > startOffset) {
+          column++;
+          x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+          // Assuming that first soft wrap symbol is line feed or all soft wrap symbols before the first line feed are spaces.
           break;
         }
-        if (c == '\t') {
-          int prevX = x;
-          x = EditorUtil.nextTabStop(x, this);
-          int columnDiff = (x - prevX) / spaceSize;
-          if ((x - prevX) % spaceSize > 0) {
-            // There is a possible case that tabulation symbol takes more than one visual column to represent and it's shown at
-            // soft-wrapped line. Soft wrap sign width may be not divisible by space size, hence, part of tabulation symbol represented
-            // as a separate visual column may take less space than space width.
-            columnDiff++;
+
+        FoldRegion region = state.getCurrentFold();
+
+        if (region != null) {
+          char[] placeholder = region.getPlaceholderText().toCharArray();
+          for (char aPlaceholder : placeholder) {
+            x += EditorUtil.charWidth(aPlaceholder, fontType, this);
+            column++;
+            if (column >= length) break outer;
           }
-          column += columnDiff;
+          offset = region.getEndOffset();
         }
         else {
-          x += EditorUtil.charWidth(c, fontType, this);
-          column++;
+          char c = text.charAt(offset);
+          if (c == '\n') {
+            break;
+          }
+          if (c == '\t') {
+            int prevX = x;
+            x = EditorUtil.nextTabStop(x, this);
+            int columnDiff = (x - prevX) / spaceSize;
+            if ((x - prevX) % spaceSize > 0) {
+              // There is a possible case that tabulation symbol takes more than one visual column to represent and it's shown at
+              // soft-wrapped line. Soft wrap sign width may be not divisible by space size, hence, part of tabulation symbol represented
+              // as a separate visual column may take less space than space width.
+              columnDiff++;
+            }
+            column += columnDiff;
+          }
+          else {
+            x += EditorUtil.charWidth(c, fontType, this);
+            column++;
+          }
+          offset++;
         }
-        offset++;
       }
-    }
 
-    if (column != length) {
-      x += EditorUtil.getSpaceWidth(fontType, this) * (length - column);
-    }
+      if (column != length) {
+        x += EditorUtil.getSpaceWidth(fontType, this) * (length - column);
+      }
 
-    return x;
+      return x;
+    }
+    finally {
+      state.dispose();
+    }
   }
 
   public int visibleLineToY(int line) {
@@ -1910,7 +1920,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int start = clipStartOffset;
     int end = clipEndOffset;
     getSoftWrapModel().registerSoftWrapsIfNecessary();
-    IterationState iterationState = new IterationState(this, start, end, isPaintSelection());
 
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
@@ -1918,112 +1927,118 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    TextAttributes attributes = iterationState.getMergedAttributes();
-    Color backColor = getBackgroundColor(attributes);
-    int fontType = attributes.getFontType();
-    CharSequence text = myDocument.getCharsNoThreadCheck();
-    int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
+    IterationState iterationState = new IterationState(this, start, end, isPaintSelection());
+    try {
+      TextAttributes attributes = iterationState.getMergedAttributes();
+      Color backColor = getBackgroundColor(attributes);
+      int fontType = attributes.getFontType();
+      CharSequence text = myDocument.getCharsNoThreadCheck();
+      int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
 
-    // There is a possible case that we need to draw background from the start of soft wrap-introduced visual line. Given position
-    // has valid 'y' coordinate then at it shouldn't be affected by soft wrap that corresponds to the visual line start offset.
-    // Hence, we store information about soft wrap to be skipped for further processing and adjust 'x' coordinate value if necessary.
-    TIntHashSet softWrapsToSkip = new TIntHashSet();
-    SoftWrap softWrap = getSoftWrapModel().getSoftWrap(start);
-    if (softWrap != null) {
-      softWrapsToSkip.add(softWrap.getStart());
-      Color color = null;
-      if (backColor != null && !backColor.equals(defaultBackground)) {
-        color = backColor;
-      }
-
-      // There is a possible case that target clip points to soft wrap-introduced visual line and that it's an active
-      // line (caret cursor is located on it). We want to draw corresponding 'caret line' background for soft wraps-introduced
-      // virtual space then.
-      if (color == null && position.y == getCaretModel().getVisualPosition().line * getLineHeight()) {
-        color = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
-      }
-      
-      if (color != null) {
-        drawBackground(g, color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
-      }
-      position.x = softWrap.getIndentInPixels();
-    }
-    
-    // There is a possible case that caret is located at soft-wrapped line. We don't need to paint caret row background
-    // on a last visual line of that soft-wrapped line then. Below is a holder for the flag that indicates if caret row
-    // background is already drawn.
-    boolean[] caretRowPainted = new boolean[1];
-
-    while (!iterationState.atEnd() && !lIterator.atEnd()) {
-      int hEnd = iterationState.getEndOffset();
-      int lEnd = lIterator.getEnd();
-
-      if (hEnd >= lEnd) {
-        FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
-        if (collapsedFolderAt == null) {
-          position.x = drawSoftWrapAwareBackground(g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
-                                      defaultBackground, clip, softWrapsToSkip, caretRowPainted);
-
-          if (lIterator.getLineNumber() < lastLineIndex) {
-            if (backColor != null && !backColor.equals(defaultBackground)) {
-              g.setColor(backColor);
-              g.fillRect(position.x, position.y, clip.x + clip.width - position.x, lineHeight);
-            }
-          }
-          else {
-            paintAfterFileEndBackground(iterationState,
-                                        g,
-                                        position, clip,
-                                        lineHeight, defaultBackground, caretRowPainted);
-            break;
-          }
-
-          position.x = 0;
-          if (position.y > clip.y + clip.height) break;
-          position.y += lineHeight;
-          start = lEnd;
+      // There is a possible case that we need to draw background from the start of soft wrap-introduced visual line. Given position
+      // has valid 'y' coordinate then at it shouldn't be affected by soft wrap that corresponds to the visual line start offset.
+      // Hence, we store information about soft wrap to be skipped for further processing and adjust 'x' coordinate value if necessary.
+      TIntHashSet softWrapsToSkip = new TIntHashSet();
+      SoftWrap softWrap = getSoftWrapModel().getSoftWrap(start);
+      if (softWrap != null) {
+        softWrapsToSkip.add(softWrap.getStart());
+        Color color = null;
+        if (backColor != null && !backColor.equals(defaultBackground)) {
+          color = backColor;
         }
 
-        lIterator.advance();
+        // There is a possible case that target clip points to soft wrap-introduced visual line and that it's an active
+        // line (caret cursor is located on it). We want to draw corresponding 'caret line' background for soft wraps-introduced
+        // virtual space then.
+        if (color == null && position.y == getCaretModel().getVisualPosition().line * getLineHeight()) {
+          color = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+        }
+
+        if (color != null) {
+          drawBackground(g, color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
+        }
+        position.x = softWrap.getIndentInPixels();
       }
-      else {
-        FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
-        if (collapsedFolderAt != null) {
-          softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
-          if (softWrap != null) {
-            position.x = drawSoftWrapAwareBackground(
-              g, backColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
-              defaultBackground, clip, softWrapsToSkip, caretRowPainted
-            );
+
+      // There is a possible case that caret is located at soft-wrapped line. We don't need to paint caret row background
+      // on a last visual line of that soft-wrapped line then. Below is a holder for the flag that indicates if caret row
+      // background is already drawn.
+      boolean[] caretRowPainted = new boolean[1];
+
+      while (!iterationState.atEnd() && !lIterator.atEnd()) {
+        int hEnd = iterationState.getEndOffset();
+        int lEnd = lIterator.getEnd();
+
+        if (hEnd >= lEnd) {
+          FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
+          if (collapsedFolderAt == null) {
+            position.x = drawSoftWrapAwareBackground(g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
+                                        defaultBackground, clip, softWrapsToSkip, caretRowPainted);
+
+            if (lIterator.getLineNumber() < lastLineIndex) {
+              if (backColor != null && !backColor.equals(defaultBackground)) {
+                g.setColor(backColor);
+                g.fillRect(position.x, position.y, clip.x + clip.width - position.x, lineHeight);
+              }
+            }
+            else {
+              paintAfterFileEndBackground(iterationState,
+                                          g,
+                                          position, clip,
+                                          lineHeight, defaultBackground, caretRowPainted);
+              break;
+            }
+
+            position.x = 0;
+            if (position.y > clip.y + clip.height) break;
+            position.y += lineHeight;
+            start = lEnd;
           }
-          position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
+
+          lIterator.advance();
         }
         else {
-          if (hEnd > lEnd - lIterator.getSeparatorLength()) {
-            position.x = drawSoftWrapAwareBackground(
-              g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
-              defaultBackground, clip, softWrapsToSkip, caretRowPainted
-            );
+          FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
+          if (collapsedFolderAt != null) {
+            softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
+            if (softWrap != null) {
+              position.x = drawSoftWrapAwareBackground(
+                g, backColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
+                defaultBackground, clip, softWrapsToSkip, caretRowPainted
+              );
+            }
+            position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
           }
           else {
-            position.x = drawSoftWrapAwareBackground(
-              g, backColor, text, start, hEnd, position, fontType, defaultBackground, clip, softWrapsToSkip, caretRowPainted
-            );
+            if (hEnd > lEnd - lIterator.getSeparatorLength()) {
+              position.x = drawSoftWrapAwareBackground(
+                g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
+                defaultBackground, clip, softWrapsToSkip, caretRowPainted
+              );
+            }
+            else {
+              position.x = drawSoftWrapAwareBackground(
+                g, backColor, text, start, hEnd, position, fontType, defaultBackground, clip, softWrapsToSkip, caretRowPainted
+              );
+            }
           }
-        }
 
-        iterationState.advance();
-        attributes = iterationState.getMergedAttributes();
-        backColor = getBackgroundColor(attributes);
-        fontType = attributes.getFontType();
-        start = iterationState.getStartOffset();
+          iterationState.advance();
+          attributes = iterationState.getMergedAttributes();
+          backColor = getBackgroundColor(attributes);
+          fontType = attributes.getFontType();
+          start = iterationState.getStartOffset();
+        }
+      }
+
+      flushBackground(g, clip);
+
+      if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
+        paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground, caretRowPainted);
       }
     }
-
-    flushBackground(g, clip);
-
-    if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
-      paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground, caretRowPainted);
+    finally {
+      iterationState.dispose();
     }
 
     // Perform additional activity if soft wrap is added or removed during repainting.
@@ -2356,92 +2371,97 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    IterationState iterationState = new IterationState(this, start, clipEndOffset, isPaintSelection());
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
     if (lIterator.atEnd()) {
       return;
     }
 
-    TextAttributes attributes = iterationState.getMergedAttributes();
-    Color currentColor = attributes.getForegroundColor();
-    if (currentColor == null) {
-      currentColor = getForegroundColor();
-    }
-    Color effectColor = attributes.getEffectColor();
-    EffectType effectType = attributes.getEffectType();
-    int fontType = attributes.getFontType();
-    g.setColor(currentColor);
-
-    final char[] chars = myDocument.getRawChars();
-
-    while (!iterationState.atEnd() && !lIterator.atEnd()) {
-      int hEnd = iterationState.getEndOffset();
-      int lEnd = lIterator.getEnd();
-      if (hEnd >= lEnd) {
-        FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
-        if (collapsedFolderAt == null) {
-          drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
-                                  effectType, fontType, currentColor, logicalPosition);
-          position.x = 0;
-          if (position.y > clip.y + clip.height) {
-            break;
-          }
-          position.y += lineHeight;
-          start = lEnd;
-        }
-
-//        myBorderEffect.eolReached(g, this);
-        lIterator.advance();
+    IterationState iterationState = new IterationState(this, start, clipEndOffset, isPaintSelection());
+    try {
+      TextAttributes attributes = iterationState.getMergedAttributes();
+      Color currentColor = attributes.getForegroundColor();
+      if (currentColor == null) {
+        currentColor = getForegroundColor();
       }
-      else {
-        FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
-        if (collapsedFolderAt != null) {
-          SoftWrap softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
-          if (softWrap != null) {
-            position.x = drawStringWithSoftWraps(
-              g, chars, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, clip, effectColor, effectType,
-              fontType, currentColor, logicalPosition
-            );
-          }
-          int foldingXStart = position.x;
-          position.x = drawString(
-            g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor
-          );
-          //drawStringWithSoftWraps(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType,
-          //                        fontType, currentColor, logicalPosition);
-          BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, position.x, getLineHeight(), effectColor, effectType);
+      Color effectColor = attributes.getEffectColor();
+      EffectType effectType = attributes.getEffectType();
+      int fontType = attributes.getFontType();
+      g.setColor(currentColor);
 
+      final char[] chars = myDocument.getRawChars();
+
+      while (!iterationState.atEnd() && !lIterator.atEnd()) {
+        int hEnd = iterationState.getEndOffset();
+        int lEnd = lIterator.getEnd();
+        if (hEnd >= lEnd) {
+          FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
+          if (collapsedFolderAt == null) {
+            drawStringWithSoftWraps(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
+                                    effectType, fontType, currentColor, logicalPosition);
+            position.x = 0;
+            if (position.y > clip.y + clip.height) {
+              break;
+            }
+            position.y += lineHeight;
+            start = lEnd;
+          }
+
+  //        myBorderEffect.eolReached(g, this);
+          lIterator.advance();
         }
         else {
-          position.x = drawStringWithSoftWraps(g, chars, start, Math.min(hEnd, lEnd - lIterator.getSeparatorLength()) , position, clip,
-                                               effectColor, effectType, fontType, currentColor, logicalPosition);
+          FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
+          if (collapsedFolderAt != null) {
+            SoftWrap softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
+            if (softWrap != null) {
+              position.x = drawStringWithSoftWraps(
+                g, chars, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, clip, effectColor, effectType,
+                fontType, currentColor, logicalPosition
+              );
+            }
+            int foldingXStart = position.x;
+            position.x = drawString(
+              g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType, fontType, currentColor
+            );
+            //drawStringWithSoftWraps(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType,
+            //                        fontType, currentColor, logicalPosition);
+            BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, position.x, getLineHeight(), effectColor, effectType);
+
+          }
+          else {
+            position.x = drawStringWithSoftWraps(g, chars, start, Math.min(hEnd, lEnd - lIterator.getSeparatorLength()) , position, clip,
+                                                 effectColor, effectType, fontType, currentColor, logicalPosition);
+          }
+
+          iterationState.advance();
+          attributes = iterationState.getMergedAttributes();
+
+          currentColor = attributes.getForegroundColor();
+          if (currentColor == null) {
+            currentColor = getForegroundColor();
+          }
+
+          effectColor = attributes.getEffectColor();
+          effectType = attributes.getEffectType();
+          fontType = attributes.getFontType();
+
+          start = iterationState.getStartOffset();
         }
+      }
 
-        iterationState.advance();
-        attributes = iterationState.getMergedAttributes();
-
-        currentColor = attributes.getForegroundColor();
-        if (currentColor == null) {
-          currentColor = getForegroundColor();
-        }
-
-        effectColor = attributes.getEffectColor();
-        effectType = attributes.getEffectType();
-        fontType = attributes.getFontType();
-
-        start = iterationState.getStartOffset();
+      FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
+      if (collapsedFolderAt != null) {
+        int foldingXStart = position.x;
+        int foldingXEnd =
+          drawStringWithSoftWraps(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType,
+                                  fontType, currentColor, logicalPosition);
+        BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, foldingXEnd, getLineHeight(), effectColor, effectType);
+  //      myBorderEffect.collapsedFolderReached(g, this);
       }
     }
-
-    FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
-    if (collapsedFolderAt != null) {
-      int foldingXStart = position.x;
-      int foldingXEnd =
-        drawStringWithSoftWraps(g, collapsedFolderAt.getPlaceholderText(), position, clip, effectColor, effectType,
-                                fontType, currentColor, logicalPosition);
-      BorderEffect.paintFoldedEffect(g, foldingXStart, position.y, foldingXEnd, getLineHeight(), effectColor, effectType);
-//      myBorderEffect.collapsedFolderReached(g, this);
+    finally {
+      iterationState.dispose();
     }
 
     flushCachedChars(g);
@@ -5903,59 +5923,64 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           } 
           
           IterationState state = new IterationState(EditorImpl.this, offset, endOffset, false);
-          int fontType = state.getMergedAttributes().getFontType();
+          try {
+            int fontType = state.getMergedAttributes().getFontType();
 
-          int maxPreviousSoftWrappedWidth = -1;
+            int maxPreviousSoftWrappedWidth = -1;
 
-          while (offset < documentLength && line < lineCount) {
-            char c = text.charAt(offset);
-            if (offset >= state.getEndOffset()) {
-              state.advance();
-              fontType = state.getMergedAttributes().getFontType();
-            }
+            while (offset < documentLength && line < lineCount) {
+              char c = text.charAt(offset);
+              if (offset >= state.getEndOffset()) {
+                state.advance();
+                fontType = state.getMergedAttributes().getFontType();
+              }
 
-            while (softWrapsIndex < softWraps.size() && line < lineCount) {
-              SoftWrap softWrap = softWraps.get(softWrapsIndex);
-              if (softWrap.getStart() > offset) {
-                break;
+              while (softWrapsIndex < softWraps.size() && line < lineCount) {
+                SoftWrap softWrap = softWraps.get(softWrapsIndex);
+                if (softWrap.getStart() > offset) {
+                  break;
+                }
+                softWrapsIndex++;
+                if (softWrap.getStart() == offset) {
+                  maxPreviousSoftWrappedWidth = Math.max(maxPreviousSoftWrappedWidth, x);
+                  x = softWrap.getIndentInPixels();
+                }
               }
-              softWrapsIndex++;
-              if (softWrap.getStart() == offset) {
-                maxPreviousSoftWrappedWidth = Math.max(maxPreviousSoftWrappedWidth, x);
-                x = softWrap.getIndentInPixels();
-              }
-            }
 
-            FoldRegion collapsed = state.getCurrentFold();
-            if (collapsed != null) {
-              String placeholder = collapsed.getPlaceholderText();
-              for (int i = 0; i < placeholder.length(); i++) {
-                x += EditorUtil.charWidth(placeholder.charAt(i), fontType, EditorImpl.this);
+              FoldRegion collapsed = state.getCurrentFold();
+              if (collapsed != null) {
+                String placeholder = collapsed.getPlaceholderText();
+                for (int i = 0; i < placeholder.length(); i++) {
+                  x += EditorUtil.charWidth(placeholder.charAt(i), fontType, EditorImpl.this);
+                }
+                offset = collapsed.getEndOffset();
+                line = myDocument.getLineNumber(offset);
               }
-              offset = collapsed.getEndOffset();
-              line = myDocument.getLineNumber(offset);
-            }
-            else if (c == '\t') {
-              x = EditorUtil.nextTabStop(x, EditorImpl.this);
-              offset++;
-            }
-            else if (c == '\n') {
-              int width = Math.max(x, maxPreviousSoftWrappedWidth);
-              myLineWidths.set(line, width);
-              maxCalculatedLine = Math.max(maxCalculatedLine, line);
-              if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
-              offset++;
-              x = 0;
-              //noinspection AssignmentToForLoopParameter
-              line++;
-              if (line == lineCount - 1) {
-                lastLineLengthCalculated = true;
+              else if (c == '\t') {
+                x = EditorUtil.nextTabStop(x, EditorImpl.this);
+                offset++;
+              }
+              else if (c == '\n') {
+                int width = Math.max(x, maxPreviousSoftWrappedWidth);
+                myLineWidths.set(line, width);
+                maxCalculatedLine = Math.max(maxCalculatedLine, line);
+                if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
+                offset++;
+                x = 0;
+                //noinspection AssignmentToForLoopParameter
+                line++;
+                if (line == lineCount - 1) {
+                  lastLineLengthCalculated = true;
+                }
+              }
+              else {
+                x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);
+                offset++;
               }
             }
-            else {
-              x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);
-              offset++;
-            }
+          }
+          finally {
+            state.dispose();
           }
         }
 
@@ -6011,35 +6036,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize) {
     IterationState state = new IterationState(this, start, start+offset, false);
-    int fontType = state.getMergedAttributes().getFontType();
-    int column = 0;
-    int x = 0;
-    int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
-    for (int i = start; i < offset; i++) {
-      if (i >= state.getEndOffset()) {
-        state.advance();
-        fontType = state.getMergedAttributes().getFontType();
+    try {
+      int fontType = state.getMergedAttributes().getFontType();
+      int column = 0;
+      int x = 0;
+      int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
+      for (int i = start; i < offset; i++) {
+        if (i >= state.getEndOffset()) {
+          state.advance();
+          fontType = state.getMergedAttributes().getFontType();
+        }
+
+        SoftWrap softWrap = getSoftWrapModel().getSoftWrap(i);
+        if (softWrap != null) {
+          column++; // For 'after soft wrap' drawing.
+          x = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+        }
+
+        char c = text.charAt(i);
+        if (c == '\t') {
+          int prevX = x;
+          x = EditorUtil.nextTabStop(x, this);
+          column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
+        }
+        else {
+          x += EditorUtil.charWidth(c, fontType, this);
+          column++;
+        }
       }
 
-      SoftWrap softWrap = getSoftWrapModel().getSoftWrap(i);
-      if (softWrap != null) {
-        column++; // For 'after soft wrap' drawing.
-        x = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
-      }
-
-      char c = text.charAt(i);
-      if (c == '\t') {
-        int prevX = x;
-        x = EditorUtil.nextTabStop(x, this);
-        column += EditorUtil.columnsNumber(c, x, prevX, spaceSize);
-      }
-      else {
-        x += EditorUtil.charWidth(c, fontType, this);
-        column++;
-      }
+      return column;
     }
-
-    return column;
+    finally {
+      state.dispose();
+    }
   }
 
   @Override

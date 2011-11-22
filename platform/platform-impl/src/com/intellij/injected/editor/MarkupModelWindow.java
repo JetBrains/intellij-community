@@ -18,6 +18,7 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.SweepProcessor;
@@ -25,14 +26,12 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Iterator;
 
 /**
  * @author cdr
@@ -146,7 +145,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
 
   @NotNull
   @Override
-  public Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
+  public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     // todo convert
     return myHostModel.overlappingIterator(startOffset, endOffset);
   }
