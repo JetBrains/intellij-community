@@ -1,9 +1,13 @@
 package com.jetbrains.python.console.completion;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -53,8 +57,23 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
         LookupElementBuilder builder = LookupElementBuilder
           .create(new PydevConsoleElement(manager, name, completion.getDescription()))
           .setIcon(PyCodeCompletionImages.getImageForType(type));
-        final String args = completion.getArgs();
-        if (!StringUtil.isEmptyOrSpaces(args)) {
+
+
+        String args = completion.getArgs();
+        if (args.equals("(%)")) {
+          builder.setPresentableText("%" + completion.getName());
+          builder = builder.setInsertHandler(new InsertHandler<LookupElement>() {
+            @Override
+            public void handleInsert(InsertionContext context, LookupElement item) {
+              final Editor editor = context.getEditor();
+              final Document document = editor.getDocument();
+              int offset = context.getStartOffset();
+              document.insertString(offset, "%");
+            }
+          });
+          args = "";
+        }
+        else if (!StringUtil.isEmptyOrSpaces(args)) {
           builder = builder.setTailText(args);
         }
         // Set function insert handler
@@ -67,7 +86,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
     catch (Exception e) {
       //LOG.error(e);
     }
-    return variants.toArray();
+     return variants.toArray();
   }
 
   private String getText() {

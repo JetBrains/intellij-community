@@ -63,24 +63,37 @@ class InterpreterInterface(BaseInterpreterInterface):
                 if s is not None and s.start() == 0:
                     ipython_completion = True
 
-            if ipython_completion:
-                if not act_tok.startswith('%'):
-                    act_tok = '%' + act_tok
-                TYPE_LOCAL = '9'
-                _line, completions = self.interpreter.complete(text)
+            if text is None:
+                text = ""
 
-                ret = []
-                append = ret.append
-                for completion in completions:
-                    completion = completion[1:]
+            TYPE_LOCAL = '9'
+            _line, completions = self.interpreter.complete(text)
+
+            ret = []
+            append = ret.append
+            for completion in completions:
+                if completion.startswith('%'):
+                    append((completion[1:], '', '%', TYPE_LOCAL))
+                else:
                     append((completion, '', '', TYPE_LOCAL))
+
+            if ipython_completion:
                 return ret
 
             #Otherwise, use the default PyDev completer (to get nice icons)
             from _completer import Completer
 
             completer = Completer(self.getNamespace(), None)
-            return completer.complete(act_tok)
+            completions = completer.complete(act_tok)
+            cset = set()
+            for c in completions:
+                cset.add(c[0])
+            for c in ret:
+                if c[0] not in cset:
+                    completions.append(c)
+
+            return completions
+
         except:
             import traceback
 
