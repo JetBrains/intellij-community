@@ -61,11 +61,7 @@ class MoverWrapper {
     String textToInsert2 = document.getCharsSequence().subSequence(start2, end2).toString();
     if (!StringUtil.endsWithChar(textToInsert2,'\n')) textToInsert2 += '\n';
     myInfo.range2 = document.createRangeMarker(start2, end2);
-    final int startOffset1 = myInfo.range1.getStartOffset();
-    final int startOffset2 = myInfo.range2.getStartOffset();
-    final int endOffset1 = myInfo.range1.getEndOffset();
-    final int endOffset2 = myInfo.range2.getEndOffset();
-    if (startOffset1 < startOffset2) {
+    if (myInfo.range1.getStartOffset() < myInfo.range2.getStartOffset()) {
       myInfo.range1.setGreedyToLeft(true);
       myInfo.range1.setGreedyToRight(false);
       myInfo.range2.setGreedyToLeft(true);
@@ -110,13 +106,14 @@ class MoverWrapper {
       }
     }
 
-    document.insertString(startOffset1, textToInsert2);
-    
-    document.deleteString(startOffset1 +textToInsert2.length(), endOffset1);
+    document.insertString(myInfo.range1.getStartOffset(), textToInsert2);
+    document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
 
-    document.insertString(startOffset2, textToInsert);
-    if (endOffset2 > startOffset1 + textToInsert.length()) {
-      document.deleteString(startOffset2 + textToInsert.length(), endOffset2);
+    document.insertString(myInfo.range2.getStartOffset(), textToInsert);
+    int s = myInfo.range2.getStartOffset() + textToInsert.length();
+    int e = myInfo.range2.getEndOffset();
+    if (e > s) {
+      document.deleteString(s, e);
     }
 
     final Project project = file.getProject();
@@ -138,10 +135,10 @@ class MoverWrapper {
     CodeFoldingManager.getInstance(project).allowFoldingOnCaretLine(editor);
 
     if (hasSelection) {
-      restoreSelection(editor, selectionStart, selectionEnd, start, startOffset2);
+      restoreSelection(editor, selectionStart, selectionEnd, start, myInfo.range2.getStartOffset());
     }
 
-    caretModel.moveToOffset(startOffset2 + caretRelativePos);
+    caretModel.moveToOffset(myInfo.range2.getStartOffset() + caretRelativePos);
     if (myInfo.indentTarget) {
       indentLinesIn(editor, file, document, project, myInfo.range2);
     }
