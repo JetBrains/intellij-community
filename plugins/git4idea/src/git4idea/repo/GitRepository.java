@@ -56,6 +56,15 @@ import java.util.Collection;
  *   or preferably via {@link GitRepositoryManager#addListenerToAllRepositories(GitRepositoryChangeListener)}
  * </p>
  *
+ * <p>
+ *   Getters and setters (update...()-methods) are not synchronized intentionally - to avoid live- and deadlocks.
+ *   GitRepository is updated asynchronously,
+ *   so even if the getters would have been synchronized, it wouldn't guarantee that they return actual values (as they are in .git).
+ *   <br/>
+ *   If one needs an up-to-date value, one should call update(TrackedTopic...) and then get...().
+ *   update() is a synchronous read from .git, so it is guaranteed to query the real value.
+ * </p>
+ *
  * @author Kirill Likhodedov
  */
 public final class GitRepository implements Disposable {
@@ -78,23 +87,31 @@ public final class GitRepository implements Disposable {
 
   /**
    * Current state of the repository.
-   * NORMAL   - HEAD is on branch, no merge process is in progress.
-   * MERGING  - during merge (for instance, merge failed with conflicts that weren't immediately resolved).
-   * REBASING - during rebase.
-   * DETACHED - detached HEAD state, but not during rebase.
    */
   public enum State {
+    /**
+     * HEAD is on branch, no merge process is in progress (and no rebase as well).
+     */
     NORMAL,
+    /**
+     * During merge (for instance, merge failed with conflicts that weren't immediately resolved).
+     */
     MERGING {
       @Override public String toString() {
         return "Merging";
       }
     },
+    /**
+     * During rebase.
+     */
     REBASING {
       @Override public String toString() {
         return "Rebasing";
       }
     },
+    /**
+     * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
+     */
     DETACHED
   }
 
@@ -197,15 +214,6 @@ public final class GitRepository implements Disposable {
   public GitUntrackedFilesHolder getUntrackedFilesHolder() {
     return myUntrackedFilesHolder;
   }
-
-  /*
-    Getters and setters (update...()-methods) are not synchronized intentionally - to avoid live- and deadlocks.
-    GitRepository is updated asynchronously,
-    so even if the getters would have been synchronized, it wouldn't guarantee that they return actual values (as they are in .git).
-
-    If one needs an up-to-date value, one should call update(TrackedTopic...) and then get...().
-    update() is a synchronous read from .git, so it is guaranteed to query the real value.
-   */
 
   @NotNull
   public State getState() {
