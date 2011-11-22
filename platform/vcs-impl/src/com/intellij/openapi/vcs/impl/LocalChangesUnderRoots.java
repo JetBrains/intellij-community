@@ -43,6 +43,7 @@ public class LocalChangesUnderRoots {
   private final Project myProject;
   private final ChangeListManager myChangeManager;
   private final ProjectLevelVcsManager myVcsManager;
+  private VcsRoot[] myRoots;
 
   public LocalChangesUnderRoots(Project project) {
     myProject = project;
@@ -60,6 +61,8 @@ public class LocalChangesUnderRoots {
   public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<VirtualFile> rootsToSave) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<VirtualFile, Collection<Change>>();
     final Collection<Change> allChanges = myChangeManager.getAllChanges();
+    myRoots = myVcsManager.getAllVcsRoots();
+
     for (Change change : allChanges) {
       if (change.getBeforeRevision() != null) {
         addChangeToMap(result, change, change.getBeforeRevision(), rootsToSave);
@@ -82,15 +85,15 @@ public class LocalChangesUnderRoots {
     if (vf == null) {
       return null;
     }
-    final VcsRoot[] vcsRoots = myVcsManager.getAllVcsRoots();
     VirtualFile rootCandidate = null;
-    for (VcsRoot root : vcsRoots) {
-      if (VfsUtil.isAncestor(root.path, vf, false) && rootsToSave.contains(root.path)) {
+    for (VcsRoot root : myRoots) {
+      if (VfsUtil.isAncestor(root.path, vf, false)) {
         if (rootCandidate == null || VfsUtil.isAncestor(rootCandidate, root.path, true)) { // in the case of nested roots choose the closest root
           rootCandidate = root.path;
         }
       }
     }
+    if (! rootsToSave.contains(rootCandidate)) return null;
     return rootCandidate;
   }
 
