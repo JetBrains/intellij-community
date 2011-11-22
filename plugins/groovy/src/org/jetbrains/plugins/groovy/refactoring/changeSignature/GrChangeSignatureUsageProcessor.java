@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -22,6 +23,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -41,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -124,6 +128,43 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @Override
   public boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
+    if (!(changeInfo instanceof JavaChangeInfo)) return true;
+    for (UsageInfo usageInfo : refUsages.get()) {
+      if (usageInfo instanceof  GrMethodCallUsageInfo) {
+        GrMethodCallUsageInfo methodCallUsageInfo = (GrMethodCallUsageInfo)usageInfo;
+        if (methodCallUsageInfo.isToChangeArguments()){
+          final PsiElement element = methodCallUsageInfo.getElement();
+          if (element == null) continue;
+          final PsiMethod caller = RefactoringUtil.getEnclosingMethod(element);
+          final boolean needDefaultValue = !((JavaChangeInfo)changeInfo).getMethodsToPropagateParameters().contains(caller);
+          final PsiMethod referencedMethod = methodCallUsageInfo.getReferencedMethod();
+          if (needDefaultValue &&
+              (caller == null || referencedMethod == null || !MethodSignatureUtil.isSuperMethod(referencedMethod, caller))) {
+            final ParameterInfo[] parameters = changeInfo.getNewParameters();
+            for (ParameterInfo parameter : parameters) {
+              final String defaultValue = parameter.getDefaultValue();
+              if (defaultValue == null && parameter.getOldIndex() == -1) {
+                ((ParameterInfoImpl)parameter).setDefaultValue("");
+                if (!ApplicationManager.getApplication().isUnitTestMode()) {
+                  final PsiType type = ((ParameterInfoImpl)parameter).getTypeWrapper().getType(element, element.getManager());
+                  final DefaultValueChooser chooser = new DefaultValueChooser(project, parameter.getName(), PsiTypesUtil.getDefaultValueOfType(type));
+                  chooser.show();
+                  if (chooser.isOK()) {
+                    if (chooser.feelLucky()) {
+                      parameter.setUseAnySingleVariable(true);
+                    } else {
+                      ((ParameterInfoImpl)parameter).setDefaultValue(chooser.getDefaultValue());
+                    }
+                  } else {
+                    return false;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     return true;
   }
 
@@ -492,18 +533,39 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         }
         else {
           if (skipOptionals && isParameterOptional(parameter)) continue;
-          GrExpression fromText = null;
+
           if (forceOptional(parameter)) {
             skipOptionals = true;
             continue;
           }
           try {
-            fromText = factory.createExpressionFromText(parameter.getDefaultValue());
+            final String value = parameter.getDefaultValue();
+            if (value == null || value.isEmpty()) {
+              if (i > 0) {
+                PsiElement comma = Factory.createSingleLeafElement(GroovyTokenTypes.mCOMMA, ",", 0, 1,
+                                                                 SharedImplUtil.findCharTableByTree(argumentList.getNode()),
+                                                                 argumentList.getManager()).getPsi();
+                if (anchor == null) anchor = argumentList.getLeftParen();
+
+                anchor = argumentList.addAfter(comma, anchor);
+              }
+            }
+            else {
+              if (i > 0 && anchor == null) {
+                anchor = argumentList.getLeftParen();
+                PsiElement comma = Factory.createSingleLeafElement(GroovyTokenTypes.mCOMMA, ",", 0, 1,
+                                                                   SharedImplUtil.findCharTableByTree(argumentList.getNode()),
+                                                                   argumentList.getManager()).getPsi();
+
+                anchor = argumentList.addAfter(comma, anchor);
+              }
+              GrExpression fromText = factory.createExpressionFromText(value);
+              anchor = argumentList.addAfter(fromText, anchor);
+            }
           }
           catch (IncorrectOperationException e) {
             LOG.error(e.getMessage());
           }
-          anchor = argumentList.addAfter(fromText, anchor);
         }
       }
 

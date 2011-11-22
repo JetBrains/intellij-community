@@ -60,7 +60,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
 
   @NotNull
   @Override
-  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
+  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token, boolean escapeSlashes) {
     IElementType tokenType = token.getNode().getElementType();
 
     if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
@@ -84,7 +84,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     StringBuilder buffer = new StringBuilder();
-    StringUtil.escapeStringCharacters(s.length(), s, chars, buffer);
+    StringUtil.escapeStringCharacters(s.length(), s, chars, escapeSlashes, buffer);
     return buffer.toString();
   }
 }
