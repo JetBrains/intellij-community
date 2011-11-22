@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -129,7 +130,7 @@ public interface MergeVersion {
     private static void setDocumentText(final Document document, final String text, String name, Project project) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
-          document.replaceString(0, document.getTextLength(), text);
+          document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
         }
       }, name, null);
     }
