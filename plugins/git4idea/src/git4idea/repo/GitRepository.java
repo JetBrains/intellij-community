@@ -27,7 +27,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchesCollection;
-import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
