@@ -277,14 +277,26 @@ def StartServer(host, port, client_port):
     process_exec_queue(interpreter)
 
 
-def exec_expression(expression, globals, locals):
-
+def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
 
+    return interpreterInterface
+
+def get_completions(text, token, globals, locals):
+    interpreterInterface = get_interpreter()
+
+    interpreterInterface.interpreter.update(globals, locals)
+
+    return interpreterInterface.getCompletions(text, token)
+
+
+def exec_expression(expression, globals, locals):
+
+    interpreterInterface = get_interpreter()
 
     interpreterInterface.interpreter.update(globals, locals)
 
