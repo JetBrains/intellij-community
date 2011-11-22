@@ -118,11 +118,8 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
         file.getFileType() == AndroidRenderscriptFileType.INSTANCE ||
         getManifestFileName().equals(file.getName()) ||
         (gp != null && gp.isDirectory() && getResDirName().equals(gp.getName()))) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          myQueue.queue(new MyUpdate(e));
-        }
-      });
+
+      myQueue.queue(new MyUpdate(e));
     }
   }
 
