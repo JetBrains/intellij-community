@@ -81,7 +81,7 @@ from pydevd_utils import *
 from pydevd_utils import quote_smart as quote
 
 from pydevd_tracing import GetExceptionTracebackStr
-
+import pydevconsole
 
 CMD_RUN = 101
 CMD_LIST_THREADS = 102
@@ -871,13 +871,21 @@ class InternalGetCompletions(InternalThreadCommand):
                     updated_globals = {}
                     updated_globals.update(frame.f_globals)
                     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
+                    locals = frame.f_locals
+                else:
+                    updated_globals = {}
+                    locals = {}
 
-                try:
-                    completer = _completer.Completer(updated_globals, None)
-                    #list(tuple(name, descr, parameters, type))
-                    completions = completer.complete(self.act_tok)
-                except :
-                    completions = []
+
+                if pydevconsole.IPYTHON:
+                    completions = pydevconsole.get_completions(self.act_tok, self.act_tok, updated_globals, locals)
+                else:
+                    try:
+                        completer = _completer.Completer(updated_globals, None)
+                        #list(tuple(name, descr, parameters, type))
+                        completions = completer.complete(self.act_tok)
+                    except :
+                        completions = []
                 
                 
                 def makeValid(s):

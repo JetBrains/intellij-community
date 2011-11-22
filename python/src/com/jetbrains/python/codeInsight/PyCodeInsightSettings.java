@@ -41,6 +41,8 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
   public boolean INSERT_BACKSLASH_ON_WRAP = true;
   public boolean INSERT_SELF_FOR_METHODS = true;
 
+  public boolean INSERT_TYPE_DOCSTUB = false;
+
   public PyCodeInsightSettings getState() {
     return this;
   }

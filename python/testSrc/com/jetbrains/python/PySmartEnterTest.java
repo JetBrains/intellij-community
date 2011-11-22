@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -106,6 +107,7 @@ public class PySmartEnterTest extends PyTestCase {
 
   public void testDocRest() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    boolean oldStubOnEnter = codeInsightSettings.JAVADOC_STUB_ON_ENTER;
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
     documentationSettings.setFormat(DocStringFormat.REST);
@@ -114,11 +116,13 @@ public class PySmartEnterTest extends PyTestCase {
     }
     finally {
       documentationSettings.setFormat(DocStringFormat.PLAIN);
+      codeInsightSettings.JAVADOC_STUB_ON_ENTER = oldStubOnEnter;
     }
   }
 
   public void testDocEpytext() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    boolean oldStubOnEnter = codeInsightSettings.JAVADOC_STUB_ON_ENTER;
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
@@ -127,6 +131,27 @@ public class PySmartEnterTest extends PyTestCase {
     }
     finally {
       documentationSettings.setFormat(DocStringFormat.PLAIN);
+      codeInsightSettings.JAVADOC_STUB_ON_ENTER = oldStubOnEnter;
+
+    }
+  }
+
+  public void testDocTypeRtype() {
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    boolean oldStubOnEnter = codeInsightSettings.JAVADOC_STUB_ON_ENTER;
+    codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
+    PyCodeInsightSettings pyCodeInsightSettings = PyCodeInsightSettings.getInstance();
+    boolean oldInsertType = pyCodeInsightSettings.INSERT_TYPE_DOCSTUB;
+    pyCodeInsightSettings.INSERT_TYPE_DOCSTUB = true;
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      doTest();
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+      codeInsightSettings.JAVADOC_STUB_ON_ENTER = oldStubOnEnter;
+      pyCodeInsightSettings.INSERT_TYPE_DOCSTUB = oldInsertType;
     }
   }
 }

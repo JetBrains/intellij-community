@@ -66,7 +66,10 @@ class PyDevFrontEnd:
         
         
     def complete(self, string):
-        return self.ipython.complete(string)
+        if string:
+            return self.ipython.complete(string)
+        else:
+            return self.ipython.complete(string, string, 0)
     
     
         
