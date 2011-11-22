@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -25,10 +26,12 @@ import java.util.Map;
 public class PyConsoleOptionsProvider implements PersistentStateComponent<PyConsoleOptionsProvider.State> {
   private State myState = new State();
 
+  @NotNull
   private final Project myProject;
 
-  public PyConsoleOptionsProvider(Project project) {
+  public PyConsoleOptionsProvider(@NotNull Project project) {
     myProject = project;
+    myState.setProject(project);
   }
 
   public PyConsoleSettings getPythonConsoleSettings() {
@@ -71,8 +74,7 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
     myState.myShowSeparatorLine = state.myShowSeparatorLine;
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myDjangoConsoleState = state.myDjangoConsoleState;
-    myState.myPythonConsoleState.myProject = myProject;
-    myState.myDjangoConsoleState.myProject = myProject;
+    myState.setProject(myProject);
   }
 
   public static class State {
@@ -81,6 +83,11 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
 
     public boolean myShowDebugConsoleByDefault = false;
     public boolean myShowSeparatorLine = true;
+
+    public void setProject(Project project) {
+      myPythonConsoleState.myProject = project;
+      myDjangoConsoleState.myProject = project;
+    }
   }
 
   public static class PyConsoleSettings {
