@@ -71,6 +71,8 @@ public final class GitRepository implements Disposable {
 
   public static final Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
 
+  private static final Object STUB_OBJECT = new Object();
+
   private final Project myProject;
   private final VirtualFile myRootDir;
   private final GitRepositoryReader myReader;
@@ -336,7 +338,7 @@ public final class GitRepository implements Disposable {
   }
 
   private void notifyListeners() {
-    myNotifier.add(new Object());
+    myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
   }
 
   private static class NotificationConsumer implements Consumer<Object> {
