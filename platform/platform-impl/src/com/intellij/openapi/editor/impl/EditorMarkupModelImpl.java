@@ -209,8 +209,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       public boolean process(RangeHighlighterEx highlighter) {
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-          if (range.getStartOffset() >= y - getMinHeight() * 2 &&
-              range.getEndOffset() <= y + getMinHeight() * 2) {
+          if (y >= range.getStartOffset() - getMinHeight() * 2 &&
+              y <= range.getEndOffset() + getMinHeight() * 2) {
             nearest.add(highlighter);
           }
         }
