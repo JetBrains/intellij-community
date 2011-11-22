@@ -29,6 +29,8 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -309,5 +311,10 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     if (psiMethod instanceof GrMethod) {
       method = (GrMethod)psiMethod;
     }
+  }
+
+  @Override
+  public Collection<PsiMethod> getMethodsToPropagateParameters() {
+    return Collections.emptyList();
   }
 }
