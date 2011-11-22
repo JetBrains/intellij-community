@@ -18,7 +18,6 @@ package org.jetbrains.android.facet;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.GeneratingCompiler;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -47,13 +46,12 @@ import static org.jetbrains.android.util.AndroidUtils.findSourceRoot;
  * To change this template use File | Settings | File Templates.
  */
 class AndroidResourceFilesListener extends VirtualFileAdapter {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidResourceFilesListener");
 
   private final MergingUpdateQueue myQueue;
   private final AndroidFacet myFacet;
   private String myCachedPackage = null;
 
-  private Set<ResourceEntry> myResourceSet = new HashSet<ResourceEntry>();
+  private volatile Set<ResourceEntry> myResourceSet = new HashSet<ResourceEntry>();
   private static final Object RESOURCES_SET_LOCK = new Object();
 
   public AndroidResourceFilesListener(final AndroidFacet facet) {
