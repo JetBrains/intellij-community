@@ -41,7 +41,8 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
   protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                 @NotNull PsiElement parent,
                                                 @NotNull final String type,
-                                                @NotNull StringTokenizer tokenizer)
+                                                @NotNull StringTokenizer tokenizer,
+                                                @Nullable StringBuilder processingInfoStorage)
   {
     if (!TYPE_MARKER.equals(type)) {
       return null;

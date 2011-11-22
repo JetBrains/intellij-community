@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.StringTokenizer;
 
@@ -38,9 +39,16 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
   protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                 @NotNull PsiElement parent,
                                                 @NotNull String type,
-                                                @NotNull StringTokenizer tokenizer)
+                                                @NotNull StringTokenizer tokenizer,
+                                                @Nullable StringBuilder processingInfoStorage)
   {
     if (!TYPE_MARKER.equals(type)) {
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format(
+          "Stopping '%s' provider because given signature doesn't have expected type - can work with '%s' but got '%s'",
+          getClass().getName(), TYPE_MARKER, type
+        ));
+      }
       return null;
     }
     int start;
@@ -52,15 +60,28 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     catch (NumberFormatException e) {
       return null;
     }
+    if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format("Parsed target offsets - [%d; %d)", start, end));
+    }
+    
     PsiElement element = file.findElementAt(start);
+    if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format("Found the following element at start offset - '%s'", element));
+    }
     if (element == null) {
       return null;
     }
     
     TextRange range = element.getTextRange();
+    if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format("Target element range is %s", range));
+    }
     while (range != null && range.getStartOffset() == start && range.getEndOffset() < end) {
       element = element.getParent();
       range = element.getTextRange();
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format("Expanding element to '%s' and range to '%s'", element, range));
+      }
     }
     if (range == null || range.getStartOffset() != start || range.getEndOffset() != end) {
       return null;
@@ -82,10 +103,17 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
       indexFromRoot++;
     }
 
+    if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format("Target element index is %d. Current index from root is %d", index, indexFromRoot));
+    }
+    
     if (index > indexFromRoot) {
       int steps = index - indexFromRoot;
       PsiElement result = element;
       for (PsiElement e = result.getFirstChild(); steps > 0 && e != null && range.equals(e.getTextRange()); steps--, e = e.getFirstChild()) {
+        if (processingInfoStorage != null) {
+          processingInfoStorage.append(String.format("Clarifying target element to '%s', its range is %s", result, result.getTextRange()));
+        }
         result = e;
       }
       return result;
@@ -95,6 +123,9 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     PsiElement result = element;
     while (--steps >= 0) {
       result = result.getParent();
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format("Reducing target element to '%s', its range is %s", result, result.getTextRange()));
+      }
     }
     return result;
   }
