@@ -621,6 +621,7 @@ public class EditorWindow {
       if (tabCount != 0) {
         final EditorWithProviderComposite firstEC = getEditorAt(0);
         myPanel = new JPanel(new BorderLayout());
+        myPanel.setOpaque(false);
         myPanel.setBorder(new AdaptiveBorder());
         myPanel.setOpaque(false);
         

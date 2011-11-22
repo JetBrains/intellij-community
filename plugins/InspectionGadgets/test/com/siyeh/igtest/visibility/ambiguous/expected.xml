@@ -4,7 +4,7 @@
     <file>AmbiguousMethodCall.java</file>
     <line>11</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Inherited method called which hides method in outer class</problem_class>
-    <description>&lt;code&gt;m()&lt;/code&gt; inherited from 'Y' hides method from outer class 'X'</description>
+    <description>Method &lt;code&gt;m()&lt;/code&gt; from super class 'Y' called, when method from class 'X' might have been expected #loc</description>
   </problem>
 
 </problems>

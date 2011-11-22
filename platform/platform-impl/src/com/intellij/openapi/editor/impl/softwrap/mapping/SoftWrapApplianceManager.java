@@ -118,6 +118,9 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   public void reset() {
     myEventsStorage.release();
     myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor.getDocument()));
+    for (SoftWrapAwareDocumentParsingListener listener : myListeners) {
+      listener.reset();
+    }
   }
   
   public void release() {

@@ -494,6 +494,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("boolean", "byte")
   }
 
+  public void testDoubleConstant() throws Throwable {
+    configure()
+    assertStringItems("FOO", "Float")
+  }
+
   public void testNotOnlyKeywordsInsideSwitch() throws Throwable {
     doTest();
   }
@@ -606,6 +611,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
 
   public void testSpacesAroundEq() throws Throwable { doTest('='); }
+
+  public void testClassBeforeCast() throws Throwable { doTest '\n' }
 
   public void testNoAllClassesOnQualifiedReference() throws Throwable {
     configureByFile(getTestName(false) + ".java");
@@ -727,7 +734,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    assertStringItems("false", "fefefef");
+    assertStringItems("false", "fefefef", "finalize");
   }
 
   public void testSameNamedVariableInNestedClasses() throws Throwable {
@@ -893,16 +900,6 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     finally {
       CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     }
-  }
-
-  public void testVoidMethodsInNonVoidContext() throws Throwable {
-    configure()
-    checkResultByFile(getTestName(false) + ".java")
-    assertEmpty(myItems)
-    assertNull(getLookup());
-
-    myFixture.complete(CompletionType.BASIC, 2)
-    checkResult()
   }
 
   public void testEnumConstantFromEnumMember() throws Throwable { doTest(); }

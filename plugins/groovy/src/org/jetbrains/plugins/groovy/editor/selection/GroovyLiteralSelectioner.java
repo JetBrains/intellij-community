@@ -20,14 +20,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -47,9 +47,8 @@ public class GroovyLiteralSelectioner extends GroovyBasicSelectioner {
     ASTNode node = element.getNode();
     if (node == null) return false;
     ASTNode firstNode = node.getFirstChildNode();
-    return firstNode == node.getLastChildNode() &&
-           (firstNode.getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
-            firstNode.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL);
+    final IElementType type = firstNode.getElementType();
+    return firstNode == node.getLastChildNode() && (type == mSTRING_LITERAL || type == mGSTRING_LITERAL || type == mREGEX_LITERAL);
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {

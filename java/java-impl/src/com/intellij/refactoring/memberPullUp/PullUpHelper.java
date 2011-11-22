@@ -133,6 +133,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
   }
 
   private void processMethodsDuplicates() {
+    if (!myTargetSuperClass.isValid()) return;
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {

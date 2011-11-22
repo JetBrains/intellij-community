@@ -32,7 +32,9 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -718,18 +720,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void finishLookup(char completionChar, @Nullable final LookupElement item) {
-    doHide(false, true);
     if (item == null ||
         item instanceof EmptyLookupItem ||
         item.getObject() instanceof DeferredUserLookupValue &&
         item.as(LookupItem.CLASS_CONDITION_KEY) != null &&
         !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.CLASS_CONDITION_KEY), myProject)) {
+      doHide(false, true);
       fireItemSelected(null, completionChar);
       return;
     }
 
     final PsiFile file = getPsiFile();
     if (file != null && !WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file))) {
+      doHide(false, true);
       fireItemSelected(null, completionChar);
       return;
     }
@@ -744,12 +747,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!plainMatch) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
     }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    
+    performGuardedChange(new Runnable() {
       public void run() {
-        insertLookupString(item, prefix);
+        AccessToken token = WriteAction.start();
+        try {
+          insertLookupString(item, prefix);
+        }
+        finally {
+          token.finish();
+        }
       }
     });
+
+    doHide(false, true);
 
     fireItemSelected(item, completionChar);
   }

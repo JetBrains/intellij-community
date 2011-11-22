@@ -17,6 +17,8 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.util.text.DateFormatUtil;
@@ -40,12 +42,9 @@ import java.util.Comparator;
 class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public static final int COLUMN_NAME = 0;
   public static final int COLUMN_DOWNLOADS = 1;
-  public static final int COLUMN_DATE = 2;
-  public static final int COLUMN_CATEGORY = 3;
-  public static final int COLUMN_INSTALLED_VERSION = 4;
-  public static final int COLUMN_SIZE = 5;
-  public static final int COLUMN_VERSION = 6;
-  public static final int COLUMN_STATE = 7;
+  public static final int COLUMN_RATE = 2;
+  public static final int COLUMN_DATE = 3;
+  public static final int COLUMN_CATEGORY = 4;
   private static final float mgByte = 1024.0f * 1024.0f;
   private static final float kByte = 1024.0f;
 
@@ -53,6 +52,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public static final String[] COLUMNS = {
     IdeBundle.message("column.plugins.name"),
     IdeBundle.message("column.plugins.downloads"),
+    IdeBundle.message("column.plugins.rate"),
     IdeBundle.message("column.plugins.date"),
     IdeBundle.message("column.plugins.category")
   };
@@ -86,6 +86,9 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     }
     else if (columnIdx == COLUMN_CATEGORY) {
       return base.getCategory();
+    }
+    else if (columnIdx == COLUMN_RATE) {
+      return ((PluginNode)base).getRating();
     }
     else
     // For COLUMN_STATUS - set of icons show the actual state of installed plugins.
@@ -170,6 +173,16 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         }
       };
     }
+    if (columnIdx == COLUMN_RATE) {
+      return new Comparator<IdeaPluginDescriptor>() {
+        @Override
+        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+          final String rating1 = ((PluginNode)o1).getRating();
+          final String rating2 = ((PluginNode)o2).getRating();
+          return Comparing.compare(rating1, rating2);
+        }
+      };
+    }
     if (isSortByDownloads()) {
       return new Comparator<IdeaPluginDescriptor>() {
         public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
@@ -243,6 +256,20 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   public TableCellRenderer getRenderer(IdeaPluginDescriptor o) {
+    if (columnIdx == COLUMN_RATE) {
+      return new DefaultTableCellRenderer(){
+        private RatesPanel myPanel = new RatesPanel();
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+          final Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          myPanel.setBackground(orig.getBackground());
+          if (value != null) {
+            myPanel.setRate((String)value);
+          }
+          return myPanel;
+        }
+      };
+    }
     return new PluginTableCellRenderer((PluginNode)o);
   }
 
@@ -287,6 +314,50 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         }
       }
       return myLabel;
+    }
+  }
+
+  //waiting for rates available in IDEA
+  private static class RatesPanel extends JPanel {
+    public static int MAX_RATE = 5;
+
+    private static final Icon STAR = IconLoader.getIcon("/ide/rating.png");
+
+    private static final Icon STAR3 = IconLoader.getIcon("/ide/rating1.png");
+    private static final Icon STAR4 = IconLoader.getIcon("/ide/rating2.png");
+    private static final Icon STAR5 = IconLoader.getIcon("/ide/rating3.png");
+    private static final Icon STAR6 = IconLoader.getIcon("/ide/rating4.png");
+    private static final Icon[] STARs = new Icon[]{IconLoader.getDisabledIcon(STAR), STAR3, STAR3, STAR4, STAR4, STAR5, STAR5, STAR6, STAR6, STAR};
+
+    private JLabel[] myLabels = new JLabel[MAX_RATE];
+
+    private RatesPanel() {
+      super(new GridBagLayout());
+      GridBagConstraints gc =
+        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                               new Insets(0, 0, 0, 0), 0, 0);
+      for (int i = 0, myLabelsLength = myLabels.length; i < myLabelsLength; i++) {
+        myLabels[i] = new JLabel();
+        myLabels[i].setOpaque(false);
+        add(myLabels[i], gc);
+      }
+    }
+
+    public void setRate(String rating) {
+      final Double dblRating = Double.valueOf(rating);
+
+      final int intRating = dblRating.intValue();
+
+      for (int i = 0; i < intRating; i++) {
+        myLabels[i].setIcon(STAR);
+      }
+
+      if (intRating < MAX_RATE) {
+        myLabels[intRating].setIcon(STARs[((Double)(dblRating * 10)).intValue() % 10]);
+        for (int i = 1 + intRating; i < MAX_RATE; i++) {
+          myLabels[i].setIcon(IconLoader.getDisabledIcon(STAR));
+        }
+      }
     }
   }
 }

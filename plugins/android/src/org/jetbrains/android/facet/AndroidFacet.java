@@ -55,7 +55,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -67,12 +66,10 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
-import org.jetbrains.android.compiler.AndroidAptCompiler;
-import org.jetbrains.android.compiler.AndroidCompileUtil;
-import org.jetbrains.android.compiler.AndroidIdlCompiler;
-import org.jetbrains.android.compiler.AndroidRenderscriptCompiler;
+import org.jetbrains.android.compiler.*;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
@@ -96,7 +93,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidFacet");
 
   public static final FacetTypeId<AndroidFacet> ID = new FacetTypeId<AndroidFacet>("android");
-  private VirtualFileAdapter myListener;
+  private AndroidResourceFilesListener myListener;
 
   private AvdManager myAvdManager = null;
 
@@ -351,6 +348,11 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
             if (project.isDisposed()) {
               return;
             }
+
+            final HashSet<ResourceEntry> resourceSet = new HashSet<ResourceEntry>();
+            AndroidCompileUtil.collectAllResources(AndroidFacet.this, resourceSet);
+            myListener.setResourceSet(resourceSet);
+
             if (getConfiguration().REGENERATE_R_JAVA && AndroidAptCompiler.isToCompileModule(module, getConfiguration())) {
               AndroidCompileUtil.generate(module, new AndroidAptCompiler());
             }

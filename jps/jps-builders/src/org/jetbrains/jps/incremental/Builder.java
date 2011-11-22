@@ -103,6 +103,7 @@ public abstract class Builder {
 
   private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws Exception {
     final Ref<Boolean> result = new Ref<Boolean>(false);
+    // todo: avoid calling processFiles to implement this logic
     context.processFiles(chunk, new FileProcessor() {
       public boolean apply(Module module, File file, String sourceRoot) throws Exception {
         if (affected.contains(file)) {

@@ -83,7 +83,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     int h = item.getHeight();
 
     final Paint bg = floating ? Color.WHITE : new GradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
-    final Color selection = floating ? UIUtil.getListSelectionBackground() : new Color(0, 0, 0, 60);
+    final Color selection = UIUtil.getListSelectionBackground();
     
     final boolean selected = item.isSelected() && item.isFocused();
     
@@ -173,8 +173,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getWrapperPanelInsets(Insets insets) {
-    return new Insets(insets.top + (shouldPaintWrapperPanel() ? 5 : 0), insets.left, 
-                      insets.bottom + (shouldPaintWrapperPanel() ? 5 : 0), insets.right);
+    return new Insets(insets.top + (shouldPaintWrapperPanel() ? 1 : 0), insets.left, insets.bottom, insets.right);
   }
   
   private static boolean shouldPaintWrapperPanel() {
@@ -182,7 +181,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   protected Color getBackgroundColor() {
-    return new Color(0, 0, 0, 35);
+    return UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground());
   }
   
   @Override

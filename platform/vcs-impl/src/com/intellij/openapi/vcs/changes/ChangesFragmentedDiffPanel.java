@@ -30,6 +30,7 @@ import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.FragmentedDiffPanelState;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -173,9 +174,10 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
             final boolean isAfter = FragmentSide.SIDE2.equals(side.getSide());
             if (isAfter) {
-              final int line = side.getEditor().getCaretModel().getLogicalPosition().line;
+              final LogicalPosition position = side.getEditor().getCaretModel().getLogicalPosition();
+              final int line = position.line;
               final Integer converted = myFragmentedContent.getNewConvertor().convert(line);
-              descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, 0);
+              descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, position.column);
             } else {
               if (((DiffPanelImpl) panel).getEditor1().getDocument().getTextLength() == 0) {
                 FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), 0), true);
@@ -185,7 +187,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
               final CaretModel model = side.getEditor().getCaretModel();
               final FragmentList fragments = ((DiffPanelImpl)panel).getFragments();
               final int line = model.getLogicalPosition().line;
-              final int offset = side.getEditor().getDocument().getLineStartOffset(line);
+              //final int offset = side.getEditor().getDocument().getLineStartOffset(line);
+              final int offset =  model.getOffset();
 
               BeforeAfter<Integer> current = null;
               final List<BeforeAfter<Integer>> ranges = myFragmentedContent.getLineRanges();
@@ -200,10 +203,21 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
               final int lineInNew = ((DiffPanelImpl)panel).getEditor2().getDocument().getLineNumber(opposite.getStartOffset());
 
-              int correctLine = Math.max(lineInNew, current.getAfter());
+              int correctLine;
+              int column;
+              if (at.getType() == null || TextDiffTypeEnum.NONE.equals(at.getType())) {
+                column = model.getLogicalPosition().column;
+                final int startIn1 =
+                  ((DiffPanelImpl)panel).getEditor1().getDocument().getLineNumber(at.getRange(FragmentSide.SIDE1).getStartOffset());
+                correctLine = lineInNew + line - startIn1;
+              }
+              else {
+                column = 0;
+                correctLine = Math.max(lineInNew, current.getAfter());
+              }
 
               final Integer converted = myFragmentedContent.getNewConvertor().convert(correctLine);
-              descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, 0);
+              descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, column);
             }
           }
           if (descriptor == null) return;

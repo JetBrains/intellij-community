@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,8 +228,8 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
 
   @Override
   public String toString() {
-    return "visual line: " + visualLine + ", offsets: " + startOffset + "-" + endOffset + ", fold regions: " 
-           + Arrays.toString(myFoldingData.getValues()) + ", tab data: " + myTabPositions;
+    return System.identityHashCode(this) + "=visual line: " + visualLine + ", offsets: " + startOffset + "-" + endOffset
+           + ", fold regions: " + Arrays.toString(myFoldingData.getValues()) + ", tab data: " + myTabPositions;
   }
 
   @Override

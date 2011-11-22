@@ -175,11 +175,10 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   }
 
   private GitRepository createGitRepository(VirtualFile root) {
-    GitRepository repository = new GitRepository(root, myProject);
+    GitRepository repository = GitRepository.getFullInstance(root, myProject, this);
     for (GitRepositoryChangeListener listener : myListeners) {
       repository.addListener(listener);
     }
-    Disposer.register(this, repository);
     return repository;
   }
 

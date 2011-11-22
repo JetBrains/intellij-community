@@ -178,9 +178,6 @@
   <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
                   serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
 
-  <projectService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
-                  serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
-
   <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
                   serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
 

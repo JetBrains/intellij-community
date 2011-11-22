@@ -20,7 +20,7 @@ import org.jetbrains.jps.incremental.storage.TimestampStorage;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.objectweb.asm.ClassReader;
 
-import java.io.*;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -46,6 +46,7 @@ public class GroovyBuilder extends Builder {
     final List<File> toCompile = new ArrayList<File>();
     try {
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(getName());
+      // todo: use dirty files passed from outside
       context.processFiles(chunk, new FileProcessor() {
         @Override
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {

@@ -27,7 +27,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchesCollection;
-import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,11 +55,22 @@ import java.util.Collection;
  *   or preferably via {@link GitRepositoryManager#addListenerToAllRepositories(GitRepositoryChangeListener)}
  * </p>
  *
+ * <p>
+ *   Getters and setters (update...()-methods) are not synchronized intentionally - to avoid live- and deadlocks.
+ *   GitRepository is updated asynchronously,
+ *   so even if the getters would have been synchronized, it wouldn't guarantee that they return actual values (as they are in .git).
+ *   <br/>
+ *   If one needs an up-to-date value, one should call update(TrackedTopic...) and then get...().
+ *   update() is a synchronous read from .git, so it is guaranteed to query the real value.
+ * </p>
+ *
  * @author Kirill Likhodedov
  */
 public final class GitRepository implements Disposable {
 
   public static final Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
+
+  private static final Object STUB_OBJECT = new Object();
 
   private final Project myProject;
   private final VirtualFile myRootDir;
@@ -78,23 +88,31 @@ public final class GitRepository implements Disposable {
 
   /**
    * Current state of the repository.
-   * NORMAL   - HEAD is on branch, no merge process is in progress.
-   * MERGING  - during merge (for instance, merge failed with conflicts that weren't immediately resolved).
-   * REBASING - during rebase.
-   * DETACHED - detached HEAD state, but not during rebase.
    */
   public enum State {
+    /**
+     * HEAD is on branch, no merge process is in progress (and no rebase as well).
+     */
     NORMAL,
+    /**
+     * During merge (for instance, merge failed with conflicts that weren't immediately resolved).
+     */
     MERGING {
       @Override public String toString() {
         return "Merging";
       }
     },
+    /**
+     * During rebase.
+     */
     REBASING {
       @Override public String toString() {
         return "Rebasing";
       }
     },
+    /**
+     * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
+     */
     DETACHED
   }
 
@@ -147,15 +165,17 @@ public final class GitRepository implements Disposable {
   }
 
   /**
-   * Don't use this constructor - get the GitRepository instance from the {@link GitRepositoryManager}.
+   * Get the GitRepository instance from the {@link GitRepositoryManager}.
+   * If you need to have an instance of GitRepository for a repository outside the project, use
+   * {@link #getLightInstance(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project, com.intellij.openapi.Disposable)}.
    */
-  GitRepository(@NotNull VirtualFile rootDir, @NotNull Project project) {
+  private GitRepository(@NotNull VirtualFile rootDir, @NotNull Project project, @NotNull Disposable parentDisposable) {
     myRootDir = rootDir;
     myProject = project;
+    Disposer.register(parentDisposable, this);
+    
     myReader = new GitRepositoryReader(this);
-    GitRepositoryUpdater updater = new GitRepositoryUpdater(this);
-    Disposer.register(this, updater);
-
+    
     myGitDir = myRootDir.findChild(".git");
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
     
@@ -165,16 +185,32 @@ public final class GitRepository implements Disposable {
     myMessageBus = project.getMessageBus();
     myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
     update(TrackedTopic.ALL);
-    updateConfig();
   }
 
   /**
-   * Returns the temporary instance of GitRepository.
-   * It may lack some of its functionality. And it should be disposed manually after usage.
+   * Returns the temporary light instance of GitRepository.
+   * It lacks functionality of auto-updating GitRepository on Git internal files change, and also stored a stub instance of 
+   * {@link GitUntrackedFilesHolder}.
    */
   @NotNull
-  public static GitRepository getTempRepository(@NotNull VirtualFile root, @NotNull Project project) {
-    return new GitRepository(root, project);
+  public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
+    return new GitRepository(root, project, parentDisposable);
+  }
+
+  /**
+   * Returns the full-functional instance of GitRepository - with UntrackedFilesHolder and GitRepositoryUpdater.
+   * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
+   */
+  static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
+    GitRepository repository = new GitRepository(root, project, parentDisposable);
+    repository.myUntrackedFilesHolder.setupVfsListener(project);
+    repository.setupUpdater();
+    return repository;
+  }
+
+  private void setupUpdater() {
+    GitRepositoryUpdater updater = new GitRepositoryUpdater(this);
+    Disposer.register(this, updater);
   }
 
   @Override
@@ -191,22 +227,15 @@ public final class GitRepository implements Disposable {
     return getRoot().getPresentableUrl();
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   public GitUntrackedFilesHolder getUntrackedFilesHolder() {
     return myUntrackedFilesHolder;
   }
-
-  /*
-    Getters and setters (update...()-methods) are not synchronized intentionally - to avoid live- and deadlocks.
-    GitRepository is updated asynchronously,
-    so even if the getters would have been synchronized, it wouldn't guarantee that they return actual values (as they are in .git).
-
-    If one needs an up-to-date value, one should call update(TrackedTopic...) and then get...().
-    update() is a synchronous read from .git, so it is guaranteed to query the real value.
-   */
 
   @NotNull
   public State getState() {
@@ -292,6 +321,7 @@ public final class GitRepository implements Disposable {
     for (TrackedTopic topic : topics) {
       topic.update(this);
     }
+    notifyListeners();
   }
   
   private void updateConfig() {
@@ -304,7 +334,6 @@ public final class GitRepository implements Disposable {
    */
   private void updateState() {
     myState = myReader.readState();
-    notifyListeners();
   }
 
   /**
@@ -312,7 +341,6 @@ public final class GitRepository implements Disposable {
    */
   private void updateCurrentRevision() {
     myCurrentRevision = myReader.readCurrentRevision();
-    notifyListeners();
   }
 
   /**
@@ -320,16 +348,14 @@ public final class GitRepository implements Disposable {
    */
   private void updateCurrentBranch() {
     myCurrentBranch = myReader.readCurrentBranch();
-    notifyListeners();
   }
   
   private void updateBranchList() {
     myBranches = myReader.readBranches();
-    notifyListeners();
   }
 
   private void notifyListeners() {
-    myNotifier.add(new Object());
+    myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
   }
 
   private static class NotificationConsumer implements Consumer<Object> {

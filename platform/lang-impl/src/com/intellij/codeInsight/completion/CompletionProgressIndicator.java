@@ -304,8 +304,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return "Completion" + hashCode();
   }
 
-  public void showLookup() {
-    updateLookup();
+  public boolean showLookup() {
+    return updateLookup();
   }
 
   public CompletionParameters getParameters() {
@@ -320,14 +320,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myLookup;
   }
 
-  private void updateLookup() {
+  private boolean updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isOutdated()) return;
+    if (isOutdated()) return false;
 
     boolean justShown = false;
     if (!myLookup.isShown() && shouldShowLookup()) {
       if (hideAutopopupIfMeaningless()) {
-        return;
+        return false;
       }
 
       if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
@@ -338,7 +338,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       if (!myLookup.showLookup()) {
-        return;
+        return false;
       }
       justShown = true;
     }
@@ -347,6 +347,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (justShown) {
       myLookup.ensureSelectionVisible();
     }
+    return true;
   }
 
   private boolean shouldShowLookup() {

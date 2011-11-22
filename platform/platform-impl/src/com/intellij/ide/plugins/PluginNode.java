@@ -67,6 +67,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private String myInstalledVersion;
 
   private boolean myEnabled = true;
+  private String myRating;
 
   public PluginNode() {
   }
@@ -367,5 +368,13 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public String getInstalledVersion() {
     return myInstalledVersion;
+  }
+
+  public void setRating(String rating) {
+    myRating = rating;
+  }
+
+  public String getRating() {
+    return myRating;
   }
 }

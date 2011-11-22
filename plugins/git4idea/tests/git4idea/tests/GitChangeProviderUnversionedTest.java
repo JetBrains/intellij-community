@@ -40,7 +40,7 @@ import static org.testng.Assert.*;
 /**
  * Tests unversioned files tracking by the {@link git4idea.status.GitChangeProvider}.
  * This test is separate from {@link GitChangeProviderTest}, because in the {@link git4idea.status.GitNewChangesCollector} 
- * untracked files are handled separately by the {@link git4idea.status.GitUntrackedFilesHolder}.
+ * untracked files are handled separately by the {@link git4idea.repo.GitUntrackedFilesHolder}.
  *
  * @author Kirill Likhodedov
  */

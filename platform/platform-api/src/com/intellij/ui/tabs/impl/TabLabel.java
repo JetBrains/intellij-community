@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -68,7 +69,7 @@ public class TabLabel extends JPanel {
     myInfo = info;
     myLabel.setOpaque(false);
     myLabel.setBorder(null);
-    myLabel.setIconTextGap(tabs instanceof JBEditorTabs && ((JBEditorTabs)tabs).isNewTabsActive() ? 2 : new JLabel().getIconTextGap());
+    myLabel.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
     setOpaque(false);
@@ -101,6 +102,18 @@ public class TabLabel extends JPanel {
         handlePopup(e);
       }
     });
+  }
+
+  @Override
+  public Insets getInsets() {
+    Insets insets = super.getInsets();
+    if (myTabs.isEditorTabs()) {
+      if (UISettings.getInstance().SHOW_CLOSE_BUTTON) {
+        return new Insets(insets.top, insets.left, insets.bottom, 3);
+      }
+    }
+    
+    return insets;
   }
 
   public void setAligmentToCenter(boolean toCenter) {

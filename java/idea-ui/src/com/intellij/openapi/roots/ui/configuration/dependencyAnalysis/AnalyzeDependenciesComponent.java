@@ -636,10 +636,10 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
           };
         }
         else {
-          return OrderEntryAppearanceService.getInstance(myModule.getProject()).forModule(e.getOwnerModule());
+          return OrderEntryAppearanceService.getInstance().forModule(e.getOwnerModule());
         }
       }
-      return OrderEntryAppearanceService.getInstance(myModule.getProject()).forOrderEntry(myExplanation.entry(), selected);
+      return OrderEntryAppearanceService.getInstance().forOrderEntry(myModule.getProject(), myExplanation.entry(), selected);
     }
 
     /**

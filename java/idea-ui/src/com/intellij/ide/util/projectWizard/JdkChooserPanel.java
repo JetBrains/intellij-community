@@ -34,7 +34,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,16 +49,16 @@ public class JdkChooserPanel extends JPanel {
   private JList myList = null;
   private DefaultListModel myListModel = null;
   private Sdk myCurrentJdk;
-  private final Project myProject;
+  @Nullable private final Project myProject;
   private SdkType[] myAllowedJdkTypes = null;
 
-  public JdkChooserPanel(@NotNull final Project project) {
+  public JdkChooserPanel(@Nullable final Project project) {
     super(new BorderLayout());
     myProject = project;
     myListModel = new DefaultListModel();
     myList = new JBList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new ProjectJdkListRenderer(myList.getCellRenderer(), project));
+    myList.setCellRenderer(new ProjectJdkListRenderer(myList.getCellRenderer()));
     //noinspection HardCodedStringLiteral
     myList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 

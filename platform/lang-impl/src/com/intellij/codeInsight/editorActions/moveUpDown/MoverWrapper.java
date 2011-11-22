@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,11 @@ class MoverWrapper {
     document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
 
     document.insertString(myInfo.range2.getStartOffset(), textToInsert);
-    document.deleteString(myInfo.range2.getStartOffset()+textToInsert.length(), myInfo.range2.getEndOffset());
+    int s = myInfo.range2.getStartOffset() + textToInsert.length();
+    int e = myInfo.range2.getEndOffset();
+    if (e > s) {
+      document.deleteString(s, e);
+    }
 
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();

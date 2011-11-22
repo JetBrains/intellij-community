@@ -22,6 +22,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -53,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,13 +93,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Nullable
   public Module getModule() {
     return getConfigurationModule().getModule();
-  }
-
-  private String getAbsoluteWorkDir() {
-    if (!FileUtil.isAbsolute(workDir)) {
-      return new File(getProject().getLocation(), workDir).getAbsolutePath();
-    }
-    return workDir;
   }
 
   public Collection<Module> getValidModules() {
@@ -186,7 +179,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     final JavaCommandLineState state = new JavaCommandLineState(environment) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = createJavaParametersWithSdk(module);
-        params.setWorkingDirectory(getAbsoluteWorkDir());
+        ProgramParametersUtil.configureConfiguration(params, GroovyScriptRunConfiguration.this);
         scriptRunner.configureCommandLine(params, module, tests, script, GroovyScriptRunConfiguration.this);
 
         return params;

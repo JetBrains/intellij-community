@@ -37,6 +37,7 @@ import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

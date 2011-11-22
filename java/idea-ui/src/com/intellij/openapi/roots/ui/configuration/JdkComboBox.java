@@ -50,9 +50,9 @@ import java.util.Comparator;
 class JdkComboBox extends ComboBoxWithWidePopup {
   private final JButton myEditButton = new JButton(ApplicationBundle.message("button.edit"));
 
-  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel, @NotNull final Project project) {
+  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     super(new JdkComboBoxModel(jdkModel));
-    setRenderer(new ProjectJdkListRenderer(getRenderer(), project) {
+    setRenderer(new ProjectJdkListRenderer(getRenderer()) {
       @Override
       public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (JdkComboBox.this.isEnabled()) {

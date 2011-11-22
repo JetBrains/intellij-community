@@ -15,12 +15,10 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -29,17 +27,14 @@ import javax.swing.*;
  * @since May 18, 2005
  */
 public class ProjectJdkListRenderer extends HtmlListCellRenderer {
-  private final Project myProject;
-
-  public ProjectJdkListRenderer(final ListCellRenderer listCellRenderer, @NotNull final Project project) {
+  public ProjectJdkListRenderer(final ListCellRenderer listCellRenderer) {
     super(listCellRenderer);
-    myProject = project;
   }
 
   @Override
   public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     if (value == null || value instanceof Sdk) {
-      OrderEntryAppearanceService.getInstance(myProject).forJdk((Sdk)value, false, selected, index != -1).customize(this);
+      OrderEntryAppearanceService.getInstance().forJdk((Sdk)value, false, selected, index != -1).customize(this);
     }
     else {
       final String str = value.toString();

@@ -50,6 +50,8 @@ public class ResourcesBuilder extends Builder{
       final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
       final OutputToSourceMapping outputToSourceMapping = context.getBuildDataManager().getOutputToSourceStorage();
       final ResourcePatterns finalPatterns = patterns;
+      // todo: process all files in case of rebuild or wholeModuleDirty
+      // todo: otherwise avoid traverwing the whole module and use dirty file list taken from params
       context.processFiles(chunk, new FileProcessor() {
         public boolean apply(final Module module, final File file, final String sourceRoot) throws Exception {
           if (finalPatterns.isResourceFile(file, sourceRoot)) {

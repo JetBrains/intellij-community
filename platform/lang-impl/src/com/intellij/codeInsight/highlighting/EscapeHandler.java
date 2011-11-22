@@ -16,19 +16,15 @@
 
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
-import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 
 import java.util.Map;
 
@@ -74,10 +70,6 @@ public class EscapeHandler extends EditorActionHandler {
             return true;
           }
         }
-      }
-      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-      if (file != null && ChangeSignatureGestureDetector.getInstance(project).containsChangeSignatureChange(file)) {
-        return true;
       }
     }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,6 +41,7 @@ import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
@@ -257,8 +259,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         }) {
         @Override
         protected void afterDiffRefresh() {
+          final List<Change> changes1 = myBrowser.getSelectedChanges();
           myBrowser.rebuildList();
           myBrowser.setDataIsDirty(false);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myBrowser.select(changes1);
+              IdeFocusManager.findInstance().requestFocus(myBrowser.getViewer().getPreferredFocusedComponent(), true);
+            }
+          });
         }
       };
       myBrowser = browser;
@@ -521,32 +531,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      if (!saveDialogState()) return;
-      saveComments(true);
-      final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-
-      final Runnable callCommit = new Runnable() {
-        public void run() {
-          try {
-            runBeforeCommitHandlers(new Runnable() {
-                public void run() {
-                  CommitChangeListDialog.super.doOKAction();
-                  doCommit();
-                }
-              }, null);
-
-            defaultListCleaner.clean();
-          }
-          catch (InputException ex) {
-            ex.show();
-          }
-        }
-      };
-      if (myBrowser.isDataIsDirty()) {
-        ensureDataIsActual(callCommit);
-      } else {
-        callCommit.run();
-      }
+      doOKAction();
     }
 
     @NotNull
@@ -557,6 +542,35 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     public void setOptions(Action[] actions) {
       myOptions = actions;
+    }
+  }
+
+  protected void doOKAction() {
+    if (!saveDialogState()) return;
+    saveComments(true);
+    final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+
+    final Runnable callCommit = new Runnable() {
+      public void run() {
+        try {
+          runBeforeCommitHandlers(new Runnable() {
+              public void run() {
+                CommitChangeListDialog.super.doOKAction();
+                doCommit();
+              }
+            }, null);
+
+          defaultListCleaner.clean();
+        }
+        catch (InputException ex) {
+          ex.show();
+        }
+      }
+    };
+    if (myBrowser.isDataIsDirty()) {
+      ensureDataIsActual(callCommit);
+    } else {
+      callCommit.run();
     }
   }
 

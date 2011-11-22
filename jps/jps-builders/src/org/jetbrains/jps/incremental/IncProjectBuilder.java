@@ -42,7 +42,10 @@ public class IncProjectBuilder {
   public void addMessageHandler(MessageHandler handler) {
     myMessageHandlers.add(handler);
   }
-
+  
+  // todo: pass dirty and removed sources from outside
+  
+  
   public void build(CompileScope scope, final boolean isMake) {
 
     final CompileContext context = createContext(scope, isMake);
@@ -223,6 +226,8 @@ public class IncProjectBuilder {
          // TODO: check how the output-source storage is filled and!
       if (context.isMake()) {
         // cleanup outputs
+        
+        // todo: use dirty and removed paths passed from IDEA instead of collecting all chunk sources
         final HashSet<File> allChunkSources = new HashSet<File>();
         context.processFiles(chunk, new FilesCollector(allChunkSources, FilesCollector.ALL_FILES));
 

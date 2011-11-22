@@ -230,6 +230,14 @@ public class TemplateState implements Disposable {
 
     return new TextRange(mySegments.getSegmentStart(segment), mySegments.getSegmentEnd(segment));
   }
+  
+  public int getSegmentsCount() {
+    return mySegments.getSegmentsCount();
+  }
+
+  public TextRange getSegmentRange(int segment){
+    return new TextRange(mySegments.getSegmentStart(segment), mySegments.getSegmentEnd(segment));
+  }
 
   public boolean isFinished() {
     return myCurrentVariableNumber < 0;

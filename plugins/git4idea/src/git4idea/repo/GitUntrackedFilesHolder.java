@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.status;
+package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -26,9 +26,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.Git;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryFiles;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,14 +88,16 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
 
-  public GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
+  GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
     myProject = project;
     myRoot = root;
     myRepositoryFiles = GitRepositoryFiles.getInstance(root);
     myChangeListManager = ChangeListManager.getInstance(project);
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+  }
 
+  void setupVfsListener(@NotNull Project project) {
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
@@ -169,7 +168,9 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     } else {
       rescanAll();
     }
-    return myDefinitelyUntrackedFiles;
+    synchronized (LOCK) {
+      return myDefinitelyUntrackedFiles;
+    }
   }
 
   /**
@@ -223,11 +224,11 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   @Override
   public void after(List<? extends VFileEvent> events) {
-    boolean indexChanged = false;
+    boolean allChanged = false;
     Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
 
     for (VFileEvent event : events) {
-      if (indexChanged) {
+      if (allChanged) {
         break;
       }
       VirtualFile file = event.getFile();
@@ -235,8 +236,8 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
         continue;
       }
       String path = file.getPath();
-      if (myRepositoryFiles.isIndexFile(path)) {
-        indexChanged = true;
+      if (myRepositoryFiles.isIndexFile(path) || myRepositoryFiles.isCommitMessageFile(path)) {
+        allChanged = true;
       }
       else {
         VirtualFile affectedFile = getAffectedFile(event);
@@ -247,7 +248,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     }
 
     // if index has changed, no need to refresh specific files - we get the full status of all files
-    if (indexChanged) {
+    if (allChanged) {
       myDirtyScopeManager.dirDirtyRecursively(myRoot);
       synchronized (LOCK) {
         myReady = false;

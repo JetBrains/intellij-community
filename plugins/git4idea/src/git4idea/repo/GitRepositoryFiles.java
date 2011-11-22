@@ -36,6 +36,7 @@ public class GitRepositoryFiles {
   private final String myPackedRefsPath;
   private final String myRefsHeadsDirPath;
   private final String myRefsRemotesDirPath;
+  private final String myCommitMessagePath;
 
   public static GitRepositoryFiles getInstance(@NotNull VirtualFile root) {
     // maybe will be cached later to store a single GitRepositoryFiles for a root. 
@@ -53,6 +54,7 @@ public class GitRepositoryFiles {
     myHeadFilePath = gitDirPath + "/HEAD";
     myIndexFilePath = gitDirPath + "/index";
     myMergeHeadPath = gitDirPath + "/MERGE_HEAD";
+    myCommitMessagePath = gitDirPath + "/COMMIT_EDITMSG";
     myRebaseApplyPath = gitDirPath + "/rebase-apply";
     myRebaseMergePath = gitDirPath + "/rebase-merge";
     myPackedRefsPath = gitDirPath + "/packed-refs";
@@ -116,5 +118,8 @@ public class GitRepositoryFiles {
     return file.equals(myPackedRefsPath);
   }
 
- 
+  public boolean isCommitMessageFile(@NotNull String file) {
+    return file.equals(myCommitMessagePath);
+  }
+
 }

@@ -689,7 +689,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   private boolean isRelevant(FileViewProvider viewProvider) {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
-    return !virtualFile.getFileType().isBinary() && viewProvider.getManager() == myPsiManager && !myPsiManager.getProject().isDisposed();
+    return !virtualFile.getFileType().isBinary() && viewProvider.getManager() == myPsiManager && !myPsiManager.getProject().isDisposed() && !myProject.isDefault();
   }
 
   public static boolean checkConsistency(PsiFile psiFile, Document document) {
@@ -772,5 +772,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void save() {
     // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
     commitAllDocuments();
+  }
+
+  @NonNls
+  @Override
+  public String toString() {
+    return super.toString() + " for the project "+myProject + ".";
   }
 }

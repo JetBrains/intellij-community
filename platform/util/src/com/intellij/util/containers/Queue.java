@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Queue<T> {
+  private final static Object[] EMPTY = new Object[0];
   private Object[] myArray;
   private int myFirst;
   private int myLast;
@@ -28,13 +29,13 @@ public class Queue<T> {
   private boolean isWrapped;
 
   public Queue(int initialCapacity) {
-    myArray = new Object[initialCapacity];
+    myArray = initialCapacity > 0 ? new Object[initialCapacity] : EMPTY;
   }
 
   public void addLast(T object) {
     int currentSize = size();
     if (currentSize == myArray.length) {
-      myArray = normalize(currentSize * 2);
+      myArray = normalize(Math.max(currentSize * 2, 5));
       myFirst = 0;
       myLast = currentSize;
       isWrapped = false;

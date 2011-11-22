@@ -184,20 +184,20 @@ public class SdkConfigurationUtil {
     });
   }
 
-  public static void configureDirectoryProjectSdk(final Project project, final SdkType... sdkTypes) {
+  public static void configureDirectoryProjectSdk(final Project project, @Nullable Comparator<Sdk> preferredSdkComparator, final SdkType... sdkTypes) {
     Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (existingSdk != null && ArrayUtil.contains(existingSdk.getSdkType(), sdkTypes)) {
       return;
     }
 
-    Sdk sdk = findOrCreateSdk(sdkTypes);
+    Sdk sdk = findOrCreateSdk(preferredSdkComparator, sdkTypes);
     if (sdk != null) {
       setDirectoryProjectSdk(project, sdk);
     }
   }
 
   @Nullable
-  public static Sdk findOrCreateSdk(final SdkType... sdkTypes) {
+  public static Sdk findOrCreateSdk(@Nullable Comparator<Sdk> comparator, final SdkType... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (sdk != null) {
@@ -210,6 +210,9 @@ public class SdkConfigurationUtil {
     for (SdkType type : sdkTypes) {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
       if (sdks.size() > 0) {
+        if (comparator != null) {
+          Collections.sort(sdks, comparator);
+        }
         return sdks.get(0);
       }
     }

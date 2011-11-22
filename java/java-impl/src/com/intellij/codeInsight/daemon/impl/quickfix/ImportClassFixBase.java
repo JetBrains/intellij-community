@@ -132,7 +132,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     }
     PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
     final Project project = myRef.getProject();
-    CodeInsightUtil.sortIdenticalShortNameClasses(classes, psiFile);
+    CodeInsightUtil.sortIdenticalShortNameClasses(classes, myRef);
 
     final QuestionAction action = createAddImportAction(classes, project, editor);
 
@@ -241,7 +241,6 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
       public void run() {
         List<PsiClass> classesToImport = getClassesToImport();
         PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
-        CodeInsightUtil.sortIdenticalShortNameClasses(classes, file);
         if (classes.length == 0) return;
 
         AddImportAction action = createAddImportAction(classes, project, editor);

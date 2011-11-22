@@ -156,6 +156,9 @@
     <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
                         serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
+                        serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
+
     <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactPointerManager"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"

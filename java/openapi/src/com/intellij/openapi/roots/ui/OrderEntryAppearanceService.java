@@ -26,15 +26,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class OrderEntryAppearanceService {
-  public static OrderEntryAppearanceService getInstance(@NotNull final Project project) {
-    return ServiceManager.getService(project, OrderEntryAppearanceService.class);
+  public static OrderEntryAppearanceService getInstance() {
+    return ServiceManager.getService(OrderEntryAppearanceService.class);
   }
 
   @NotNull
-  public abstract CellAppearanceEx forOrderEntry(@NotNull OrderEntry orderEntry, boolean selected);
+  public abstract CellAppearanceEx forOrderEntry(Project project, @NotNull OrderEntry orderEntry, boolean selected);
 
   @NotNull
-  public abstract CellAppearanceEx forLibrary(@NotNull Library library, boolean hasInvalidRoots);
+  public abstract CellAppearanceEx forLibrary(Project project, @NotNull Library library, boolean hasInvalidRoots);
 
   @NotNull
   public abstract CellAppearanceEx forJdk(@Nullable Sdk jdk, boolean isInComboBox, boolean selected, boolean showVersion);

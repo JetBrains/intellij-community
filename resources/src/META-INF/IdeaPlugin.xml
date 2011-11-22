@@ -804,6 +804,8 @@
     <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
     <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
 
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ReferenceListWeigher" id="referenceList"
+             order="before samePsiMember"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SamePsiMemberWeigher" id="samePsiMember"
              order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ExplicitlyImportedWeigher" id="explicitlyImported"

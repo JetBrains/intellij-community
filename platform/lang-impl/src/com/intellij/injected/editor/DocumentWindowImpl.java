@@ -16,11 +16,10 @@
 
 package com.intellij.injected.editor;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -629,10 +628,10 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     int offsetInRightFragment = injectedToHost(offset, false);
     if (offsetInLeftFragment == offsetInRightFragment) return offsetInLeftFragment;
 
-    // heuristics: return offset closest to caret
-    Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-    if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
-    if (editor != null) {
+    // heuristics: return offset closest to the caret
+    Editor[] editors = EditorFactory.getInstance().getEditors(getDelegate());
+    for (Editor editor : editors) {
+      if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
       int caret = editor.getCaretModel().getOffset();
       return Math.abs(caret - offsetInLeftFragment) < Math.abs(caret - offsetInRightFragment) ? offsetInLeftFragment : offsetInRightFragment;
     }
@@ -649,10 +648,10 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       if (offset < 0) {
         return preferLeftFragment ? prevEnd : currentRange.getStartOffset() - 1;
       }
-      else if (offset == 0) {
+      if (offset == 0) {
         return preferLeftFragment && i != 0 ? prevEnd : currentRange.getStartOffset();
       }
-      else if (offset < length || offset == length && preferLeftFragment) {
+      if (offset < length || offset == length && preferLeftFragment) {
         return currentRange.getStartOffset() + offset;
       }
       offset -= length;

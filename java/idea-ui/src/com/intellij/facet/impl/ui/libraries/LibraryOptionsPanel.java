@@ -198,7 +198,7 @@ public class LibraryOptionsPanel implements Disposable {
         else if (value instanceof ExistingLibraryEditor) {
           final Library library = ((ExistingLibraryEditor)value).getLibrary();
           final boolean invalid = !((LibraryEx)library).getInvalidRootUrls(OrderRootType.CLASSES).isEmpty();
-          OrderEntryAppearanceService.getInstance(getProject()).forLibrary(library, invalid).customize(this);
+          OrderEntryAppearanceService.getInstance().forLibrary(getProject(), library, invalid).customize(this);
         }
         else if (value instanceof NewLibraryEditor) {
           setIcon(PlatformIcons.LIBRARY_ICON);

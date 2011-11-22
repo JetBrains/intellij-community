@@ -64,6 +64,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
+import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -209,7 +210,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (myPanels == null) {
       synchronized (myInitLock) {
         if (myPanels == null) {
-          myPanels = new JPanel(new BorderLayout());
+          myPanels = new JPanel(new BorderLayout()) {
+            @Override
+            public Color getBackground() {
+              boolean navBar = UISettings.getInstance().SHOW_NAVIGATION_BAR;
+              if (navBar) {
+                return  UIUtil.getSlightlyDarkerColor(UIUtil.isUnderAquaLookAndFeel() ? new SameColor(200) : UIUtil.getPanelBackground());
+              } else {
+                return UIUtil.isUnderAquaLookAndFeel() ? new SameColor(189) : UIUtil.getPanelBackground();
+              }
+            }
+          };
           myPanels.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, myDockManager, true);
           myPanels.add(mySplitters, BorderLayout.CENTER);

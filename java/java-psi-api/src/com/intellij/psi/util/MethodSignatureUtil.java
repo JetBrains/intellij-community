@@ -144,7 +144,7 @@ public class MethodSignatureUtil {
     final boolean isConstructor2 = sig2.isConstructor();
     if (isConstructor1 != isConstructor2) return false;
 
-    if (!isConstructor1 && !isConstructor2) {
+    if (!isConstructor1 && !isConstructor2 || !(sig1 instanceof HierarchicalMethodSignature || sig2 instanceof HierarchicalMethodSignature)) {
       final String name1 = sig1.getName();
       final String name2 = sig2.getName();
       if (!name1.equals(name2)) return false;

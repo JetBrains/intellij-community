@@ -210,6 +210,7 @@ class GitPushResult {
 
     boolean onlyError = error && !rejected && !success;
     boolean onlyRejected = rejected && !error && !success;
+    final boolean onlySuccess = success && !rejected && !error;
 
     int pushedCommitsNumber = calcPushedCommitTotalNumber(myResults);
     
@@ -254,7 +255,7 @@ class GitPushResult {
       sb.append("<a href='UpdatedFiles'>View files updated during the push<a/>");
     }
 
-    return GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, sb.toString(), notificationType, new NotificationListener() {
+    NotificationListener viewUpdateFilesListener = new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED) && event.getDescription().equals("UpdatedFiles")) {
@@ -264,7 +265,14 @@ class GitPushResult {
           tree.setAfter(LocalHistory.getInstance().putSystemLabel(myProject, "After push"));
         }
       }
-    });
+    };
+
+    return new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener) {
+      @Override
+      public boolean isImportant() {
+        return !onlySuccess;          // don't highlight event log if push was totally successful
+      }
+    };
   }
 
   @NotNull

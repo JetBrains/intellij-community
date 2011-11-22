@@ -48,6 +48,14 @@ public abstract class PropertiesComponent {
     return isValueSet(name) ? getValue(name) : defaultValue;
   }
 
+  public final long getOrInitLong(@NonNls String name, long defaultValue) {
+    try {
+      return Long.parseLong(getValue(name));
+    } catch (NumberFormatException e) {
+      return defaultValue;
+    }
+  }
+
   public String getOrInit(@NonNls String name, String defaultValue) {
     if (!isValueSet(name)) {
       setValue(name, defaultValue);

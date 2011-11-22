@@ -78,8 +78,7 @@ public class EditorsSplitters extends JPanel {
 
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
-    setOpaque(true);
-    setBackground(UIUtil.isUnderAquaLookAndFeel() ? JBTabsImpl.MAC_AQUA_BG_COLOR : Color.GRAY);
+    setOpaque(false);
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
@@ -304,6 +303,7 @@ public class EditorsSplitters extends JPanel {
       Splitter splitter;
       if (panel == null) {
         panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
         splitter = new Splitter(orientation, proportion, 0.1f, 0.9f);
         panel.add(splitter, BorderLayout.CENTER);
         splitter.setFirstComponent(readExternalPanel(first, null));

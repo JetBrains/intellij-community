@@ -204,7 +204,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     return myTooltip;
   }
 
-  public void setTooltip(final String tooltip) {
+  public void setTooltip(@Nullable final String tooltip) {
     myTooltip = tooltip;
   }
 

@@ -49,15 +49,9 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
   private static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
-  private final Project myProject;
-
-  public OrderEntryAppearanceServiceImpl(@NotNull final Project project) {
-    myProject = project;
-  }
-
   @NotNull
   @Override
-  public CellAppearanceEx forOrderEntry(@NotNull final OrderEntry orderEntry, final boolean selected) {
+  public CellAppearanceEx forOrderEntry(Project project, @NotNull final OrderEntry orderEntry, final boolean selected) {
     if (orderEntry instanceof JdkOrderEntry) {
       JdkOrderEntry jdkLibraryEntry = (JdkOrderEntry)orderEntry;
       Sdk jdk = jdkLibraryEntry.getJdk();
@@ -77,7 +71,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       }
       Library library = libraryOrderEntry.getLibrary();
       assert library != null : libraryOrderEntry;
-      return forLibrary(library, false);
+      return forLibrary(project, library, false);
     }
     else if (orderEntry.isSynthetic()) {
       String presentableName = orderEntry.getPresentableName();
@@ -95,8 +89,8 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
   @NotNull
   @Override
-  public CellAppearanceEx forLibrary(@NotNull final Library library, final boolean hasInvalidRoots) {
-    final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
+  public CellAppearanceEx forLibrary(Project project, @NotNull final Library library, final boolean hasInvalidRoots) {
+    final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(project).getContext();
     final Icon icon = LibraryPresentationManager.getInstance().getCustomIcon(library, context);
 
     final String name = library.getName();

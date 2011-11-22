@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.StringTokenizer;
 
 /**
@@ -41,9 +42,16 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
   protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                 @NotNull PsiElement parent,
                                                 @NotNull final String type,
-                                                @NotNull StringTokenizer tokenizer)
+                                                @NotNull StringTokenizer tokenizer,
+                                                @Nullable StringBuilder processingInfoStorage)
   {
     if (!TYPE_MARKER.equals(type)) {
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format(
+          "Stopping '%s' provider because given signature doesn't have expected type - can work with '%s' but got '%s'",
+          getClass().getName(), TYPE_MARKER, type
+        ));
+      }
       return null;
     }
     String elementMarker = tokenizer.nextToken();
@@ -58,6 +66,12 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
           result = child;
         }
         else {
+          if (processingInfoStorage != null) {
+            processingInfoStorage.append(String.format(
+              "Stopping '%s' provider because it has top level marker but more than one non white-space child: %s",
+              getClass().getName(), Arrays.toString(children)
+            ));
+          }
           // More than one top-level non-white space children. Can't match.
           return null;
         }

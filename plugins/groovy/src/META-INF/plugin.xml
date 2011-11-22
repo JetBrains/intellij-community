@@ -249,6 +249,9 @@
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrWithWeigher" id="groovyWithWeigher" order="before stats" />
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher" id="groovyKindWeigher" order="before stats, after groovyWithWeigher" />
 
+    <weigher key="proximity" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrReferenceListWeigher"
+             id="groovyReferenceListWeigher" order="before openedInEditor" />
+
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
 
     <useScopeEnlarger implementation="org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger"/>

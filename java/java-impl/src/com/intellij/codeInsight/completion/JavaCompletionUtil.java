@@ -23,7 +23,6 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -47,7 +46,6 @@ import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -725,15 +723,15 @@ public class JavaCompletionUtil {
 
         if (psiClass.isValid() && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
           final boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
-          PsiElement newElement = staticImport
-                                  ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
-                                  : ref.bindToElement(psiClass);
-
-          ASTNode newNode = newElement.getNode();
-          CodeEditUtil.disablePostponedFormatting(newNode);
-          ASTNode next = TreeUtil.nextLeaf(newNode);
-          if (next != null) {
-            CodeEditUtil.disablePostponedFormatting(next);
+          CodeEditUtil.setAllowSuspendNodesReformatting(true);
+          PsiElement newElement;
+          try {
+            newElement = staticImport
+                                    ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
+                                    : ref.bindToElement(psiClass);
+          }
+          finally {
+            CodeEditUtil.setAllowSuspendNodesReformatting(false);
           }
 
           newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);

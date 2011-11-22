@@ -365,7 +365,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     }
   }
 
-  private static class MyValidityState extends ResourcesValidityState {
+  private static class MyValidityState extends ResourceNamesValidityState {
     private final String myCustomGenPathR;
     private final Set<String> myNonExistingFiles;
     private final int myPlatformToolsRevision;

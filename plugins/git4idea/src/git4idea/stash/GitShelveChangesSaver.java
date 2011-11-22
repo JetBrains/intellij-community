@@ -30,10 +30,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.rollback.GitRollbackEnvironment;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Kirill Likhodedov
@@ -54,7 +51,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
     final Map<VirtualFile,Collection<Change>> map = new LocalChangesUnderRoots(myProject).getChangesUnderRoots(rootsToSave);
-    final List<Change> changes = new ArrayList<Change>();
+    final Set<Change> changes = new HashSet<Change>();
     for (Collection<Change> changeCollection : map.values()) {
       changes.addAll(changeCollection);
     }

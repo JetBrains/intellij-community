@@ -2462,6 +2462,9 @@
     <localInspection language="JAVA" shortName="AmbiguousMethodCall" bundle="com.siyeh.InspectionGadgetsBundle" key="ambiguous.method.call.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.AmbiguousMethodCallInspection"/>
+    <localInspection language="JAVA" shortName="AmbiguousFieldAccess" bundle="com.siyeh.InspectionGadgetsBundle" key="ambiguous.field.access.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.visibility.AmbiguousFieldAccessInspection"/>
     <localInspection language="JAVA" shortName="AnonymousClassVariableHidesContainingMethodVariable" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="anonymous.class.variable.hides.containing.method.variable.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.visibility.issues" enabledByDefault="false" level="WARNING"

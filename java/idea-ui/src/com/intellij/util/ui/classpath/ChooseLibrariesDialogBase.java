@@ -314,7 +314,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private static class LibraryDescriptor extends LibrariesTreeNodeBase<Library> {
     protected LibraryDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Library element) {
       super(project, parentDescriptor, element);
-      final CellAppearanceEx appearance = OrderEntryAppearanceService.getInstance(project).forLibrary(element, false);
+      final CellAppearanceEx appearance = OrderEntryAppearanceService.getInstance().forLibrary(project, element, false);
       final SimpleColoredComponent coloredComponent = new SimpleColoredComponent();
       appearance.customize(coloredComponent);
       final PresentationData templatePresentation = getTemplatePresentation();
