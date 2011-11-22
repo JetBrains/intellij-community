@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionListModel;
@@ -68,12 +69,14 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private final Project myProject;
   private JComboBox myDeviceCombo;
   private JPanel myConsoleWrapper;
-  private JPanel myPanel;
+  private final Splitter mySplitter;
   private JButton myClearLogButton;
   private JPanel mySearchComponentWrapper;
   private JPanel myFiltersToolbarPanel;
 
   private JBList myFiltersList;
+  private JPanel myLeftPanel;
+  private JPanel myRightPanel;
 
   private volatile IDevice myDevice;
   private final Object myLock = new Object();
@@ -138,6 +141,13 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   public AndroidLogcatToolWindowView(final Project project) {
     myProject = project;
     Disposer.register(myProject, this);
+
+    mySplitter = new Splitter();
+    mySplitter.setFirstComponent(myLeftPanel);
+    mySplitter.setSecondComponent(myRightPanel);
+    mySplitter.setProportion(0.2f);
+
+    myFiltersList.setBorder(BorderFactory.createEmptyBorder());
 
     myDeviceCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -412,7 +422,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   }
 
   public JPanel getContentPanel() {
-    return myPanel;
+    return mySplitter;
   }
 
   public void dispose() {
