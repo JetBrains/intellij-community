@@ -143,14 +143,14 @@ public class VariableInplaceRenamer {
 
     SearchScope referencesSearchScope = getReferencesSearchScope(file);
 
-    final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
+    final Collection<PsiReference> refs = collectRefs(referencesSearchScope);
 
     addReferenceAtCaret(refs);
 
     for (PsiReference ref : refs) {
-      final FileViewProvider usageViewProvider = ref.getElement().getContainingFile().getViewProvider();
+      final PsiFile containingFile = ref.getElement().getContainingFile();
 
-      if (getTopLevelVirtualFile(usageViewProvider) != file) {
+      if (notSameFile(file, containingFile)) {
         return false;
       }
     }
@@ -186,6 +186,14 @@ public class VariableInplaceRenamer {
     return true;
   }
 
+  protected Collection<PsiReference> collectRefs(SearchScope referencesSearchScope) {
+    return ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
+  }
+
+  protected boolean notSameFile(VirtualFile file, PsiFile containingFile) {
+    return getTopLevelVirtualFile(containingFile.getViewProvider()) != file;
+  }
+
   protected SearchScope getReferencesSearchScope(VirtualFile file) {
     return file == null || ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)
       ? ProjectScope.getProjectScope(myElementToRename.getProject())
@@ -209,7 +217,7 @@ public class VariableInplaceRenamer {
 
   protected void collectAdditionalElementsToRename(boolean processTextOccurrences, final List<Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
-    final PsiFile currentFile = myElementToRename.getContainingFile();
+    final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (processTextOccurrences && stringToSearch != null) {
       TextOccurrencesUtil
         .processUsagesInStringsAndComments(myElementToRename, stringToSearch, true, new PairProcessor<PsiElement, TextRange>() {
@@ -243,7 +251,7 @@ public class VariableInplaceRenamer {
       resolveSnapshotProvider.createSnapshot(scope):null;
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(scope);
 
-    PsiElement nameIdentifier = myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
+    PsiElement nameIdentifier = getNameIdentifier();
     int offset = myEditor.getCaretModel().getOffset();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
@@ -304,6 +312,7 @@ public class VariableInplaceRenamer {
                     }
                   }
                 }
+                restoreStateBeforeTemplateIsFinished();
               }
 
               @Override
@@ -374,6 +383,13 @@ public class VariableInplaceRenamer {
       }
     }, RENAME_TITLE, null);
     return true;
+  }
+
+  protected void restoreStateBeforeTemplateIsFinished() {}
+
+  @Nullable
+  protected PsiElement getNameIdentifier() {
+    return myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
   }
 
   protected void restoreStateBeforeDialogWouldBeShown() {
@@ -528,12 +544,11 @@ public class VariableInplaceRenamer {
                                           Collection<PsiReference> refs,
                                           Collection<Pair<PsiElement, TextRange>> stringUsages) {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    if (myElementToRename instanceof PsiNameIdentifierOwner) {
-      PsiElement nameId = ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier();
-      LOG.assertTrue(nameId != null, myElementToRename);
-      final TextRange textRange = nameId.getTextRange();
-      LOG.assertTrue(textRange != null, nameId);
-      TextRange range = InjectedLanguageManager.getInstance(myProject).injectedToHost(nameId, textRange);
+    PsiElement nameIdentifier = getNameIdentifier();
+    if (nameIdentifier != null) {
+      final TextRange textRange = nameIdentifier.getTextRange();
+      LOG.assertTrue(textRange != null, nameIdentifier);
+      TextRange range = InjectedLanguageManager.getInstance(myProject).injectedToHost(nameIdentifier, textRange);
       rangesToHighlight.put(range, colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
     }
 

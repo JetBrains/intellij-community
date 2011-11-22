@@ -19,8 +19,6 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 
 import java.util.ArrayList;
 
@@ -128,5 +126,9 @@ public class TemplateSegments {
     }
 
     return -1;
+  }
+
+  public int getSegmentsCount() {
+    return mySegments.size();
   }
 }

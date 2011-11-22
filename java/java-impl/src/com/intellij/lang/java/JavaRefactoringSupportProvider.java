@@ -65,7 +65,6 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
 
   @Override
   public boolean isMemberInplaceRenameAvailable(PsiElement elementToRename, PsiElement context) {
-    if (context != null && context.getContainingFile() != elementToRename.getContainingFile()) return false;
     if (elementToRename instanceof PsiMethod && ((PsiMethod)elementToRename).findDeepestSuperMethods().length > 0) {
       return false;
     }
