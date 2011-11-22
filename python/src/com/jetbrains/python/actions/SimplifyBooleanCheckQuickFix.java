@@ -3,9 +3,11 @@ package com.jetbrains.python.actions;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
@@ -18,12 +20,10 @@ import org.jetbrains.annotations.NotNull;
  * Time:   19:41:07
  */
 public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
-  private PyBinaryExpression myExpression;
   private String myReplacementText;
 
   public SimplifyBooleanCheckQuickFix(PyBinaryExpression binaryExpression) {
-    myExpression = binaryExpression;
-    myReplacementText = createReplacementText();
+    myReplacementText = createReplacementText(binaryExpression);
   }
 
   private static boolean isTrue(PyExpression expression) {
@@ -53,15 +53,19 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    final PsiElement element = descriptor.getPsiElement();
+    if (!element.isValid() || !(element instanceof PyBinaryExpression)) {
+      return;
+    }
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    myExpression.replace(elementGenerator.createExpressionFromText(myReplacementText));
+    element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), myReplacementText));
   }
 
-  private String createReplacementText() {
+  private static String createReplacementText(PyBinaryExpression expression) {
     PyExpression resultExpression;
-    final PyExpression leftExpression = myExpression.getLeftExpression();
-    final PyExpression rightExpression = myExpression.getRightExpression();
-    boolean positiveCondition = !TokenSet.create(PyTokenTypes.NE, PyTokenTypes.NE_OLD).contains(myExpression.getOperator());
+    final PyExpression leftExpression = expression.getLeftExpression();
+    final PyExpression rightExpression = expression.getRightExpression();
+    boolean positiveCondition = !TokenSet.create(PyTokenTypes.NE, PyTokenTypes.NE_OLD).contains(expression.getOperator());
     positiveCondition ^= isFalse(leftExpression) || isFalse(rightExpression) || isNull(rightExpression) || isNull(leftExpression)
                          || isEmpty(rightExpression) || isEmpty(leftExpression);
     if (isTrue(leftExpression) || isFalse(leftExpression) || isNull(leftExpression) || isEmpty(leftExpression)) {

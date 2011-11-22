@@ -361,6 +361,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final PyAssignmentStatement statement = performRefactoring(operation);
     PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
     final List<PsiElement> occurrences = operation.getOccurrences();
+    if (occurrences.size() == 0) {
+      operation.getEditor().getCaretModel().moveToOffset(target.getTextRange().getStartOffset());
+    }
     final InplaceVariableIntroducer<PsiElement> introducer =
             new PyInplaceVariableIntroducer(target, operation, occurrences);
     introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));

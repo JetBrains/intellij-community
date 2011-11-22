@@ -349,7 +349,6 @@ public class PythonSdkType extends SdkType {
   }
 
   private boolean switchPathToInterpreter(Sdk currentSdk, String... variants) {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     File sdk_file = new File(currentSdk.getHomePath());
     final String sdk_name = currentSdk.getName();
     boolean success = false;
@@ -369,7 +368,7 @@ public class PythonSdkType extends SdkType {
     if (!success) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          Messages.showWarningDialog(project,
+          Messages.showWarningDialog(
             "Failed to convert Python SDK '" + sdk_name + "'\nplease delete and re-create it",
             "Converting Python SDK"
           );

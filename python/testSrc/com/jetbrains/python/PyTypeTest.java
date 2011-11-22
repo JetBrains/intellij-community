@@ -274,7 +274,25 @@ public class PyTypeTest extends PyTestCase {
            "        self.assertIsInstance(x, int)\n" +
            "        expr = x\n");
   }
-  
+
+  // PY-4279
+  public void testFieldReassignment() {
+    doTest("C1",
+           "class C1(object):\n" +
+           "    def m1(self):\n" +
+           "        pass\n" +
+           "\n" +
+           "class C2(object):\n" +
+           "    def m2(self):\n" +
+           "        pass\n" +
+           "\n" +
+           "class Test(object):\n" +
+           "    def __init__(self, param1):\n" +
+           "        self.x = param1\n" +
+           "        self.x = C1()\n" +
+           "        expr = self.x\n");
+  }
+
   public void testSOEOnRecursiveCall() {
     PyExpression expr = parseExpr("def foo(x): return foo(x)\n" +
                                   "expr = foo(1)");

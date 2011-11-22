@@ -400,7 +400,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             PyType qtype = myTypeEvalContext.getType(qualifier);
             if (qtype != null) {
               if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
-                  (qtype instanceof PyUnionType && ((PyUnionType) qtype).isWeak())) {
+                  (qtype instanceof PyUnionType && ((PyUnionType) qtype).isWeak()) ||
+                  (qtype instanceof PyImportedModuleType)) {
                 // this almost always means that we don't know the type, so don't show an error in this case
                 return;
               }

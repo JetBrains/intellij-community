@@ -307,7 +307,7 @@ public class ExpressionParsing extends Parsing {
           else recast_first_identifier = false; 
           myBuilder.advanceLexer();
           checkMatches(PyTokenTypes.IDENTIFIER, message("PARSE.expected.name"));
-          if (isTargetExpression && ! recast_qualifier && myBuilder.getTokenType() != PyTokenTypes.DOT) {
+          if (isTargetExpression && ! recast_qualifier && !atAnyOfTokens(PyTokenTypes.DOT, PyTokenTypes.LPAR, PyTokenTypes.LBRACKET)) {
             expr.done(PyElementTypes.TARGET_EXPRESSION);
           }
           else {

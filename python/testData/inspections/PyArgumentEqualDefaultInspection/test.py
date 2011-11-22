@@ -3,9 +3,6 @@ def foo(a, b = 345, c = 1):
 
 foo(1, <warning descr="Argument equals to default parameter value">345</warning>, 22)
 
-a = dict()
-a.get(1, <warning descr="Argument equals to default parameter value">None</warning>)
-
 def foo(a = None):
     pass
 foo(<warning descr="Argument equals to default parameter value">a = None</warning>)
@@ -67,3 +64,6 @@ kw = a()
 
 kw['customerPaymentProfileId'] = kw.get("customerPaymentProfileId",
                                                  <warning descr="Argument equals to default parameter value">None</warning>)
+
+{1: 2}.get('foo', None) #pass
+{1: 2}.pop('foo', None) #pass
