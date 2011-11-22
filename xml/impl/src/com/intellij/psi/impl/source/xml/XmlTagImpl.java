@@ -79,7 +79,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private volatile String myLocalName;
   private volatile XmlAttribute[] myAttributes = null;
   private volatile Map<String, String> myAttributeValueMap = null;
-  private CachedValue<XmlTag[]> myTags = null;
   private volatile XmlTagValue myValue = null;
   private volatile Map<String, CachedValue<XmlNSDescriptor>> myNSDescriptorsMap = null;
   private volatile String myCachedNamespace;
@@ -121,7 +120,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     myHaveNamespaceDeclarations = false;
     myValue = null;
     myNSDescriptorsMap = null;
-    myTags = null;
     super.clearCaches();
   }
 
@@ -608,29 +606,28 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   @NotNull
   public XmlTag[] getSubTags() {
-    CachedValue<XmlTag[]> value = myTags;
-    if (value == null) {
-      value = myTags = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<XmlTag[]>() {
-        @Override
-        public Result<XmlTag[]> compute() {
-          final List<XmlTag> result = new ArrayList<XmlTag>();
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<XmlTag[]>() {
+      @Override
+      public Result<XmlTag[]> compute() {
+        final List<XmlTag> result = new ArrayList<XmlTag>();
 
-      fillSubTags(result);
+        fillSubTags(result);
 
-      final int s = result.size();
-      XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
-          return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        final int s = result.size();
+        XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
+        return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
 
-        }
-      }, false);
-    }
-    return value.getValue();
+      }
+    });
   }
 
   protected void fillSubTags(final List<XmlTag> result) {
     processElements(new PsiElementProcessor() {
       public boolean execute(@NotNull PsiElement element) {
-        if (element instanceof XmlTag) result.add((XmlTag)element);
+        if (element instanceof XmlTag) {
+          assert element.isValid();
+          result.add((XmlTag)element);
+        }
         return true;
       }
     }, this);

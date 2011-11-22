@@ -30,6 +30,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private boolean myEnabled = true;
   private boolean myVisible = true;
   private ShortcutSet myShortcut;
+  private AnAction myAction = null;
   private JComponent myContextComponent;
 
   public AnActionButton(String text) {
@@ -46,6 +47,29 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public AnActionButton() {
+  }
+  
+  public static AnActionButton fromAction(final AnAction action) {
+    final Presentation presentation = action.getTemplatePresentation();
+    return new AnActionButton(presentation.getText(),
+                                                     presentation.getDescription(),
+                                                     presentation.getIcon()) {
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        action.actionPerformed(e);
+      }
+
+      @Override
+      public void updateButton(AnActionEvent e) {
+        action.update(e);
+        final boolean enabled = e.getPresentation().isEnabled();
+        final boolean visible = e.getPresentation().isVisible();
+        if (enabled && visible) {
+          super.updateButton(e);
+        }
+      }
+    };
   }
 
   public boolean isEnabled() {
@@ -66,9 +90,17 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   @Override
   public final void update(AnActionEvent e) {
-    final boolean enabled = isEnabled() && isContextComponentOk();
+    boolean myActionVisible = true;
+    boolean myActionEnabled = true;
+    if (myAction != null) {
+      myAction.update(e);
+      myActionEnabled = myAction.getTemplatePresentation().isEnabled();
+      myActionVisible = myAction.getTemplatePresentation().isVisible();
+    }
+    final boolean enabled = isEnabled() && isContextComponentOk() && myActionEnabled;
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(isVisible());
+    e.getPresentation().setVisible(isVisible() && myActionVisible);
+
     if (enabled) {
       updateButton(e);
     }

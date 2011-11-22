@@ -189,6 +189,10 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   public boolean isStartNotified() {
     return myState.get() > STATE_INITIAL;
   }
+  
+  public boolean isSilentlyDestroyOnClose() {
+    return false;
+  }
 
   private ProcessListener createEventMulticaster() {
     final Class<ProcessListener> listenerClass = ProcessListener.class;
