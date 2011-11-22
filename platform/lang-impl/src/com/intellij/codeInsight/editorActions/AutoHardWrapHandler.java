@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class AutoHardWrapHandler {
    * @param dataContext                     current data context
    * @param modificationStampBeforeTyping   document modification stamp before the current symbols typing
    */
-  public void wrapLineIfNecessary(Editor editor, @NotNull DataContext dataContext, long modificationStampBeforeTyping) {
+  public void wrapLineIfNecessary(@NotNull Editor editor, @NotNull DataContext dataContext, long modificationStampBeforeTyping) {
     Project project = editor.getProject();
     Document document = editor.getDocument();
     AutoWrapChange change = myAutoWrapChanges.get(document);
@@ -94,9 +94,9 @@ public class AutoHardWrapHandler {
     }
 
     // Return eagerly if we don't need to auto-wrap line on right margin exceeding.
-    if (project == null ||
-        !editor.getSettings().isWrapWhenTypingReachesRightMargin(project) ||
-        TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
+    if (project == null || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)
+        || (TemplateManager.getInstance(project) != null && TemplateManager.getInstance(project).getActiveTemplate(editor) != null))
+    {
       return;
     }
 
