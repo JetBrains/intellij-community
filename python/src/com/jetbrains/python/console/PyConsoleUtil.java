@@ -1,12 +1,12 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.console.parsing.IPythonData;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class PyConsoleUtil {
   };
   public static final String DOUBLE_QUOTE_MULTILINE = "\"\"\"";
   public static final String SINGLE_QUOTE_MULTILINE = "'''";
-  static final Key<Boolean> IPYTHON = Key.create("ipython");
+  static final Key<IPythonData> IPYTHON = Key.create("ipython");
 
   private PyConsoleUtil() {
   }
@@ -109,16 +109,34 @@ public class PyConsoleUtil {
   public static boolean detectIPythonEnd(@NotNull String text) {
     return text.contains("<--IPython");
   }
-  
-  public static boolean isIPythonDetected(VirtualFile file) {
-    if (file == null) {
-      return false;
-    }
-    Boolean detected = file.getUserData(IPYTHON);
-    return detected != null && detected.booleanValue();
+
+  public static boolean detectIPythonAutomagicOn(@NotNull String text) {
+    return text.contains("Automagic is ON, % prefix NOT needed for magic functions.");
+  }
+
+  public static boolean detectIPythonAutomagicOff(@NotNull String text) {
+    return text.contains("Automagic is OFF, % prefix IS needed for magic functions.");
   }
 
   public static void markIPython(@NotNull VirtualFile file) {
-    file.putUserData(IPYTHON, Boolean.TRUE);
+    IPythonData data = getOrCreateIPythonData(file);
+    data.setEnabled(true);
+  }
+
+  @NotNull
+  public static IPythonData getOrCreateIPythonData(@NotNull VirtualFile file) {
+    IPythonData data = file.getUserData(IPYTHON);
+    if (data == null) {
+      data = new IPythonData();
+      file.putUserData(IPYTHON, data);
+    }
+    return data;
+  }
+
+  public static void setIPythonAutomagic(@NotNull VirtualFile file, boolean detected) {
+    IPythonData data = getOrCreateIPythonData(file);
+    data.setAutomagic(detected);
   }
 }
+
+

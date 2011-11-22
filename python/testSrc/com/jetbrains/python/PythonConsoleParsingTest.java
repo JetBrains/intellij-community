@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PythonConsoleParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public PythonConsoleParsingTest() {
     super("psi", "py", new PythonParserDefinition());
     PyTestCase.initPlatformPrefix();
@@ -51,6 +52,26 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
 
   public void testDoubleQuestionStart() {
     PsiFile psiFile = consoleFile("??sys");
+    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+  }
+
+  public void testSlashGlobals() {
+    PsiFile psiFile = consoleFile("/globals");
+    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+  }
+
+  public void testComma() {
+    PsiFile psiFile = consoleFile(", call while True");
+    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+  }
+
+  public void testSemicolon() {
+    PsiFile psiFile = consoleFile("; length str");
+    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+  }
+
+  public void testCallNoAutomagic() {
+    PsiFile psiFile = consoleFile("; length str");
     assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
   }
 

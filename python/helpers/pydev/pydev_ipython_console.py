@@ -1,3 +1,4 @@
+import xmlrpclib
 import sys
 from pydev_console_utils import BaseInterpreterInterface
 import re
@@ -36,6 +37,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         self.host = host
         self.interpreter = PyDevFrontEnd()
         self._input_error_printed = False
+        self.notify_about_magic()
 
 
     def doAddExec(self, line):
@@ -62,26 +64,39 @@ class InterpreterInterface(BaseInterpreterInterface):
                 if s is not None and s.start() == 0:
                     ipython_completion = True
 
-            if ipython_completion:
-                if not act_tok.startswith('%'):
-                    act_tok = '%' + act_tok
-                TYPE_LOCAL = '9'
-                _line, completions = self.interpreter.complete(text)
+            if text is None:
+                text = ""
 
-                ret = []
-                append = ret.append
-                for completion in completions:
-                    completion = completion[1:]
+            TYPE_LOCAL = '9'
+            _line, completions = self.interpreter.complete(text)
+
+            ret = []
+            append = ret.append
+            for completion in completions:
+                if completion.startswith('%'):
+                    append((completion[1:], '', '%', TYPE_LOCAL))
+                else:
                     append((completion, '', '', TYPE_LOCAL))
+
+            if ipython_completion:
                 return ret
 
             #Otherwise, use the default PyDev completer (to get nice icons)
             from _completer import Completer
 
             completer = Completer(self.getNamespace(), None)
-            return completer.complete(act_tok)
+            completions = completer.complete(act_tok)
+            cset = set()
+            for c in completions:
+                cset.add(c[0])
+            for c in ret:
+                if c[0] not in cset:
+                    completions.append(c)
+
+            return completions
+
         except:
-            import traceback;
+            import traceback
 
             traceback.print_exc()
             return []
@@ -89,4 +104,22 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def close(self):
         sys.exit(0)
+
+
+    def ipython_editor(self, file, line):
+        server = self.get_server()
+
+        if server is not None:
+            return server.IPythonEditor(os.path.realpath(file), line)
+
+    def notify_about_magic(self):
+        completions = self.getCompletions("%", "%")
+        magic_commands = [x[0] for x in completions]
+
+        server = self.get_server()
+
+        if server is not None:
+            server.NotifyAboutMagic(magic_commands, self.interpreter.ipython.automagic)
+
+
 

@@ -50,13 +50,23 @@ public class PyABCUtil {
       return isSized && isIterable && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS);
     }
     return false;
-
   }
 
   public static boolean isSubtype(@NotNull PyType type, @NotNull String superClassName) {
     if (type instanceof PyClassType) {
       final PyClass pyClass = ((PyClassType)type).getPyClass();
       return pyClass != null && isSubclass(pyClass, superClassName);
+    }
+    if (type instanceof PyUnionType) {
+      final PyUnionType unionType = (PyUnionType)type;
+      for (PyType m : unionType.getMembers()) {
+        if (m != null) {
+          if (!isSubtype(m, superClassName)) {
+            return false;
+          }
+        }
+      }
+      return true;
     }
     return false;
   }
