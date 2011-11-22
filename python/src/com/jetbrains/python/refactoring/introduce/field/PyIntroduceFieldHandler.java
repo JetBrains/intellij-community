@@ -290,26 +290,6 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));
   }
 
-  @Nullable
-  private static PsiElement findOccurrenceUnderCaret(List<PsiElement> occurrences, Editor editor) {
-    if (occurrences.isEmpty()) {
-      return null;
-    }
-    int offset = editor.getCaretModel().getOffset();
-    for (PsiElement occurrence : occurrences) {
-      if (occurrence.getTextRange().contains(offset)) {
-        return occurrence;
-      }
-    }
-    int line = editor.getDocument().getLineNumber(offset);
-    for (PsiElement occurrence : occurrences) {
-      if (editor.getDocument().getLineNumber(occurrence.getTextRange().getStartOffset()) == line) {
-        return occurrence;
-      }
-    }
-    return occurrences.get(0);
-  }
-
   private static void putCaretOnFieldName(Editor editor, PsiElement occurrence) {
     PyQualifiedExpression qExpr = PsiTreeUtil.getParentOfType(occurrence, PyQualifiedExpression.class, false);
     if (qExpr != null && qExpr.getQualifier() == null) {

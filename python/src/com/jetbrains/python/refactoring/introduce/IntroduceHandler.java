@@ -77,6 +77,26 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
   }
 
+  @Nullable
+  protected static PsiElement findOccurrenceUnderCaret(List<PsiElement> occurrences, Editor editor) {
+    if (occurrences.isEmpty()) {
+      return null;
+    }
+    int offset = editor.getCaretModel().getOffset();
+    for (PsiElement occurrence : occurrences) {
+      if (occurrence.getTextRange().contains(offset)) {
+        return occurrence;
+      }
+    }
+    int line = editor.getDocument().getLineNumber(offset);
+    for (PsiElement occurrence : occurrences) {
+      if (editor.getDocument().getLineNumber(occurrence.getTextRange().getStartOffset()) == line) {
+        return occurrence;
+      }
+    }
+    return occurrences.get(0);
+  }
+
   public enum InitPlace {
     SAME_METHOD,
     CONSTRUCTOR,
@@ -361,9 +381,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final PyAssignmentStatement statement = performRefactoring(operation);
     PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
     final List<PsiElement> occurrences = operation.getOccurrences();
-    if (occurrences.size() == 0) {
-      operation.getEditor().getCaretModel().moveToOffset(target.getTextRange().getStartOffset());
-    }
+    final PsiElement occurrence = findOccurrenceUnderCaret(occurrences, operation.getEditor());
+    PsiElement elementForCaret = occurrence != null ? occurrence : target;
+    operation.getEditor().getCaretModel().moveToOffset(elementForCaret.getTextRange().getStartOffset());
     final InplaceVariableIntroducer<PsiElement> introducer =
             new PyInplaceVariableIntroducer(target, operation, occurrences);
     introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));
