@@ -15,11 +15,12 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.ArrayUtil;
+
 import java.util.Arrays;
 import java.util.List;
 
 public class Queue<T> {
-  private final static Object[] EMPTY = new Object[0];
   private Object[] myArray;
   private int myFirst;
   private int myLast;
@@ -29,7 +30,7 @@ public class Queue<T> {
   private boolean isWrapped;
 
   public Queue(int initialCapacity) {
-    myArray = initialCapacity > 0 ? new Object[initialCapacity] : EMPTY;
+    myArray = initialCapacity > 0 ? new Object[initialCapacity] : ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public void addLast(T object) {
