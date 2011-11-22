@@ -234,6 +234,10 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     myFiltersList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) {
+          return;
+        }
+        
         final String filterName = (String)myFiltersList.getSelectedValue();
         final ConfiguredFilter filter = filterName != null ? compileConfiguredFilter(filterName) : null;
 
