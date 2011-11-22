@@ -457,13 +457,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     setTitle1(data.getContentTitles()[0]);
     setTitle2(data.getContentTitles()[1]);
     setWindowTitle(myOwnerWindow, data.getWindowTitle());
-    if (isBinaryOrUIEditors(data)) {
-      myPanel.removeStatusBar();
-      myPanel.disableToolbar(true);
-    } else {
-      data.customizeToolbar(myPanel.resetToolbar());
-      myPanel.registerToolbarActions();
-    }
+    //if (isBinaryOrUIEditors(data)) {
+    //  myPanel.removeStatusBar();
+    //  //myPanel.disableToolbar(true);
+    //} else {
+    //  myPanel.addStatusBar();
+    //}
+    data.customizeToolbar(myPanel.resetToolbar());
+    myPanel.registerToolbarActions();
 
     final JComponent oldBottomComponent = myPanel.getBottomComponent();
     if (oldBottomComponent instanceof Disposable) {
@@ -475,7 +476,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     if (myIsRequestFocus) {
       if (isEditor1Focused || isEditor2Focused) {
-        fm.requestFocus(isEditor2Focused ? getEditor2().getContentComponent() : getEditor1().getContentComponent(), true);
+        Editor e = isEditor2Focused ? getEditor2() : getEditor1();
+        if (e != null) {
+          fm.requestFocus(e.getContentComponent(), true);
+        }
       }
 
       myPanel.requestScrollEditors();
