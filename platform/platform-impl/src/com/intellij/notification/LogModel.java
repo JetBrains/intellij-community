@@ -35,7 +35,8 @@ import java.util.*;
  * @author peter
  */
 public class LogModel implements Disposable {
-  private final Map<Notification, Long> myNotifications = new LinkedHashMap<Notification, Long>();
+  private final List<Notification> myNotifications = new ArrayList<Notification>();
+  private final Map<Notification, Long> myStamps = Collections.synchronizedMap(new WeakHashMap<Notification, Long>());
   private Notification myStatusMessage;
   private long myStatusTime;
   private final Project myProject;
@@ -51,9 +52,10 @@ public class LogModel implements Disposable {
     NotificationDisplayType type = NotificationsConfigurationImpl.getSettings(notification.getGroupId()).getDisplayType();
     if (notification.isImportant() || (type != NotificationDisplayType.NONE && type != NotificationDisplayType.TOOL_WINDOW)) {
       synchronized (myNotifications) {
-        myNotifications.put(notification, stamp);
+        myNotifications.add(notification);
       }
     }
+    myStamps.put(notification, stamp);
     setStatusMessage(notification, stamp);
   }
 
@@ -93,15 +95,13 @@ public class LogModel implements Disposable {
 
   public ArrayList<Notification> getNotifications() {
     synchronized (myNotifications) {
-      return new ArrayList<Notification>(myNotifications.keySet());
+      return new ArrayList<Notification>(myNotifications);
     }
   }
 
   @Nullable
   public Long getNotificationTime(Notification notification) {
-    synchronized (myNotifications) {
-      return myNotifications.get(notification);
-    }
+    return myStamps.get(notification);
   }
 
   void removeNotification(Notification notification) {
