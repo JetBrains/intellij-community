@@ -88,7 +88,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
 
-  public GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
+  GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
     myProject = project;
     myRoot = root;
     myRepositoryFiles = GitRepositoryFiles.getInstance(root);
@@ -166,7 +166,9 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     } else {
       rescanAll();
     }
-    return myDefinitelyUntrackedFiles;
+    synchronized (LOCK) {
+      return myDefinitelyUntrackedFiles;
+    }
   }
 
   /**
