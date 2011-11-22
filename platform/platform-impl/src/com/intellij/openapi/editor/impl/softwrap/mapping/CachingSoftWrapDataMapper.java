@@ -452,7 +452,8 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       CacheEntry beforeLast = myCache.get(myCache.size() - 2);
       CacheEntry last = myCache.get(myCache.size() - 1);
       if (beforeLast.visualLine == last.visualLine
-          || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1))
+          || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1)
+          || last.startOffset > myEditor.getDocument().getTextLength())
       {
         CharSequence editorState = "";
         if (myEditor instanceof EditorImpl) {
