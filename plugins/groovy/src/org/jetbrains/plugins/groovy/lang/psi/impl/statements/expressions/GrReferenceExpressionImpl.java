@@ -709,13 +709,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    PsiElement target = GroovyTargetElementEvaluator.correctSearchTargets(resolve());
-    if (getManager().areElementsEquivalent(element, target)) {
+    PsiElement baseTarget = resolve();
+    if (getManager().areElementsEquivalent(element, baseTarget)) {
+      return true;
+    }
+
+    PsiElement target = GroovyTargetElementEvaluator.correctSearchTargets(baseTarget);
+    if (target != baseTarget && getManager().areElementsEquivalent(element, target)) {
       return true;
     }
 
     if (element instanceof PsiMethod && target instanceof PsiMethod) {
       PsiMethod[] superMethods = ((PsiMethod)target).findSuperMethods(false);
+      //noinspection SuspiciousMethodCalls
       if (Arrays.asList(superMethods).contains(element)) {
         return true;
       }
