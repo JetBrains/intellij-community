@@ -845,10 +845,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     String[] parts;
     PsiElement child = literal.getFirstChild();
-    assert child != null : "null child: " + literal.getText() + ";";
-    ASTNode node = child.getNode();
-    assert node != null : "null node: " + child.getText() + ";";
-    IElementType elementType = node.getElementType();
+    if (child == null) child = literal;
+    IElementType elementType = child.getNode().getElementType();
     boolean isSimpleString = elementType == GroovyTokenTypes.mSTRING_LITERAL ||
                              elementType == GroovyTokenTypes.mGSTRING_LITERAL ||
                              elementType == GroovyTokenTypes.mREGEX_LITERAL;
