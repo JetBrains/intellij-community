@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
  * @version 1.0
  */
 public interface Filter {
+
+  Filter[] EMPTY_ARRAY = new Filter[0];
+
   class Result{
     public final int highlightStartOffset;
     public final int highlightEndOffset;
