@@ -233,10 +233,19 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       if (update instanceof MyUpdate) {
         VirtualFile hisFile = ((MyUpdate)update).myEvent.getFile();
         VirtualFile file = myEvent.getFile();
-        if (hisFile == file) return true;
+        
+        if (hisFile == file) {
+          return true;
+        }
+        
         if (hisFile.getFileType() == AndroidIdlFileType.ourFileType || file.getFileType() == AndroidIdlFileType.ourFileType) {
           return hisFile.getFileType() == file.getFileType();
         }
+        
+        if (hisFile.getFileType() == AndroidRenderscriptFileType.INSTANCE || file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
+          return hisFile.getFileType() == file.getFileType();
+        }
+        
         return true;
       }
       return false;
