@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.GeneratingCompiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.*;
@@ -155,6 +156,9 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       if (compilerToRun instanceof AndroidAptCompiler) {
         final HashSet<ResourceEntry> resourceSet = new HashSet<ResourceEntry>();
+
+        DumbService.getInstance(myFacet.getModule().getProject()).waitForSmartMode();
+
         AndroidCompileUtil.collectAllResources(myFacet, resourceSet);
 
         synchronized (RESOURCES_SET_LOCK) {
