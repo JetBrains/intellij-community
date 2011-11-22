@@ -68,7 +68,7 @@ public class TabLabel extends JPanel {
     myInfo = info;
     myLabel.setOpaque(false);
     myLabel.setBorder(null);
-    myLabel.setIconTextGap(tabs instanceof JBEditorTabs && ((JBEditorTabs)tabs).isNewTabsActive() ? 2 : new JLabel().getIconTextGap());
+    myLabel.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
     setOpaque(false);

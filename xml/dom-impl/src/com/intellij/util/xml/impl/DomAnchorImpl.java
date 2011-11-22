@@ -15,15 +15,18 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -34,6 +37,16 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomAnchorImpl");
 
   public static <T extends DomElement> DomAnchorImpl<T> createAnchor(@NotNull T t) {
+    return createAnchor(t, false);
+  }
+  public static <T extends DomElement> DomAnchorImpl<T> createAnchor(@NotNull T t, boolean usePsi) {
+    if (usePsi) {
+      final XmlElement element = t.getXmlElement();
+      if (element != null) {
+        return new PsiBasedDomAnchor<T>(PsiAnchor.create(element), element.getProject());
+      }
+    }
+
     final DomElement parent = t.getParent();
     if (parent == null) {
       LOG.error("Parent null: " + t);
@@ -271,4 +284,33 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   }
 
 
+  private static class PsiBasedDomAnchor<T extends DomElement> extends DomAnchorImpl<T> {
+    private final PsiAnchor myAnchor;
+    private final Project myProject;
+
+    public PsiBasedDomAnchor(PsiAnchor anchor, Project project) {
+      myAnchor = anchor;
+      myProject = project;
+    }
+
+    @Override
+    public T retrieveDomElement() {
+      PsiElement psi = myAnchor.retrieve();
+      if (psi == null) return null;
+
+      if (psi instanceof XmlTag) {
+        return (T)DomManager.getDomManager(myProject).getDomElement((XmlTag)psi);
+      }
+      if (psi instanceof XmlAttribute) {
+        return (T)DomManager.getDomManager(myProject).getDomElement((XmlAttribute)psi);
+      }
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public XmlFile getContainingFile() {
+      return (XmlFile)myAnchor.getFile();
+    }
+  }
 }

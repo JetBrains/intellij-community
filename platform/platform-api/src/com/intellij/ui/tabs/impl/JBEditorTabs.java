@@ -18,7 +18,6 @@ package com.intellij.ui.tabs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.geom.GeneralPath;
 import java.util.List;
 
 /**
@@ -42,14 +40,14 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected void paintFirstGhost(Graphics2D g2d) {
-    if (!isNewTabsActive()) {
+    if (!isEditorTabs()) {
       super.paintFirstGhost(g2d);
     }
   }
 
   @Override
   protected void paintLastGhost(Graphics2D g2d) {
-    if (!isNewTabsActive()) {
+    if (!isEditorTabs()) {
       super.paintLastGhost(g2d);
     }
   }
@@ -63,25 +61,21 @@ public class JBEditorTabs extends JBTabsImpl {
                                  TabLabel label,
                                  Rectangle effectiveBounds,
                                  boolean rightGhostExists) {
-    if (!isNewTabsActive()) {
-      super.doPaintInactive(g2d, leftGhostExists, label, effectiveBounds, rightGhostExists);
-      return;
-    }
-
     Insets insets = getTabsBorder().getEffectiveBorder();
 
     int _x = effectiveBounds.x + insets.left;
     int _y = effectiveBounds.y + insets.top;
-    int _width = effectiveBounds.width - insets.left - insets.right;
+    int _width = effectiveBounds.width - insets.left - insets.right + (getTabsPosition() == JBTabsPosition.right ? 1 : 0);
     int _height = effectiveBounds.height - insets.top - insets.bottom;
     
     
     Color tabColor = label.getInfo().getTabColor();
     if (tabColor != null) {
-      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(200), _x, _y + effectiveBounds.height, new SameColor(140)));
+      //g2d.setPaint(new LinearGradientPaint(_x, _y, _x, _y + effectiveBounds.height, new float[] {.3f, .6f, 1f}, new Color[] {new SameColor(170), new SameColor(150), new SameColor(90)}));
+      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(170), _x, _y + effectiveBounds.height, new SameColor(150)));
       g2d.fillRect(_x, _y, _width, _height);
 
-      g2d.setColor(new Color(tabColor.getRed(), tabColor.getGreen(), tabColor.getBlue(), 110));
+      g2d.setColor(new Color(tabColor.getRed(), tabColor.getGreen(), tabColor.getBlue(), 150));
       g2d.fillRect(_x, _y, _width, _height);
     } else {
       g2d.setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 140), _x, _y + effectiveBounds.height, new Color(255, 255, 255, 90)));
@@ -96,13 +90,9 @@ public class JBEditorTabs extends JBTabsImpl {
     return new Color(c.getRed() * c.getRed() / 255, c.getGreen() * c.getGreen() / 255, c.getBlue() * c.getBlue() / 255);
   }
 
-  public boolean isNewTabsActive() {
-    return Registry.is("editor.use.new.tabs");
-  }
-
   @Override
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
-    if (isNewTabsActive() && isEditorTabs()) {
+    if (isEditorTabs()) {
       g2d.setColor(UIUtil.getPanelBackground());
       g2d.fill(clip);
       
@@ -134,7 +124,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
       Rectangle rectangle;
       if (vertical) {
-        rectangle = new Rectangle(insets.left, maxOffset, maxLength - insets.left - insets.right,
+        rectangle = new Rectangle(insets.left, maxOffset, getWidth(),
                                   r2.height - maxOffset - insets.top - insets.bottom);
       } else {
         int y = r2.y + insets.top;
@@ -160,65 +150,115 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   protected void paintSelectionAndBorder(Graphics2D g2d) {
-    if (!isNewTabsActive()) {
-      super.paintSelectionAndBorder(g2d);
-      return;
-    }
-    
     if (getSelectedInfo() == null) return;
 
     TabLabel label = getSelectedLabel();
     Rectangle r = label.getBounds();
 
+    ShapeInfo selectedShape = _computeSelectedLabelShape();
+    
     Insets insets = getTabsBorder().getEffectiveBorder();
+    Insets i = selectedShape.path.transformInsets(insets);
 
-    int _x = r.x + insets.left;
-    int _y = r.y + insets.top;
-    int _width = r.width - insets.left - insets.right;
-    int _height = r.height - insets.top - insets.bottom;
+    int _x = r.x;
+    int _y = r.y;
+    int _height = r.height;
+    
+    //g2d.setColor(Color.WHITE);
+    //g2d.draw(
+    //  selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
+    //    - selectedShape.labelPath.deltaY(3), selectedShape.path.getMaxX(), selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(3)));
+
+
+    g2d.setColor(new Color(0, 0, 0, 45));
+    g2d.draw(
+      selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
+        - selectedShape.labelPath.deltaY(4), selectedShape.path.getMaxX(), selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(4)));
+    
+    g2d.setColor(new Color(0, 0, 0, 15));
+    g2d.draw(
+      selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
+        - selectedShape.labelPath.deltaY(5), selectedShape.path.getMaxX(), selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(5)));
 
     Color tabColor = label.getInfo().getTabColor();
     if (tabColor != null) {
       g2d.setColor(multiplyColor(tabColor));
-      g2d.fillRect(_x, _y, _width, _height);
+      g2d.fill(selectedShape.fillPath.getShape());
       
       g2d.setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 150), _x, _y + _height, new Color(255, 255, 255, 0)));
     } else {
-      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(255), _x, _y + _height, new SameColor(210)));
+      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(255), _x, _y + _height, new SameColor(230)));
     }
 
-    g2d.fillRect(_x, _y, _width, _height);
+    g2d.fill(selectedShape.fillPath.getShape());
     
     g2d.setColor(new Color(255, 255, 255, 180));
-    g2d.drawRect(_x, _y, _width - 1, _height - 1);
-  }
-  
-  private static Shape createColorShape(int x, int y, int height) {
-    GeneralPath shape = new GeneralPath();
-    shape.moveTo(x, y);
-    shape.lineTo(x + height / 2, y);
-    shape.lineTo(x, y + height / 2);
-    shape.closePath();
-    return shape;
-  }
-  
-  private static void drawColorCornerAt(Graphics2D g2d, int _x, int _y, int _height, Color tabColor) {
-    g2d.setColor(multiplyColor(tabColor));
-    Shape shape = createColorShape(_x + 1, _y + 1, _height);
-    g2d.fill(shape);
-    g2d.setPaint(new GradientPaint(_x + 1, _y + 1, new Color(0, 0, 0, 50), _x + 1, _y + 1 + _height / 5, new Color(0, 0, 0, 0)));
-    g2d.fill(shape);
+    g2d.draw(selectedShape.fillPath.getShape());
+    
+    // fix right side due to swing stupidity (fill & draw will occupy different shapes)
+    g2d.draw(selectedShape.labelPath
+               .transformLine(selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
+                                                                                                     selectedShape.labelPath.deltaY(1),
+                              selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() - 
+               selectedShape.labelPath.deltaY(4)));
+    
+    // side shadow
+    g2d.setColor(new Color(0, 0, 0, 30));
+    g2d.draw(selectedShape.labelPath
+               .transformLine(selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
+                                                                                                     selectedShape.labelPath.deltaY(1),
+                              selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() - 
+               selectedShape.labelPath.deltaY(4)));
+    
+    boolean horizontal = getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom;
+    
+    g2d.draw(selectedShape.labelPath
+               .transformLine(selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontal ? 2 : 1), selectedShape.labelPath.getY() +
+                                                                                                     selectedShape.labelPath.deltaY(1),
+                              selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontal ? 2 : 1), selectedShape.labelPath.getMaxY() - 
+               selectedShape.labelPath.deltaY(4)));
 
-    g2d.setColor(new Color(0, 0, 0, 100));
-    g2d.drawLine(_x + 1, _y + 1, _x + _height / 2, _y + 1);
-    g2d.setColor(new Color(0, 0, 0, 75));
-    g2d.drawLine(_x + 1, _y + 1, _x + 1, _y + _height / 2);
-    g2d.setColor(new Color(255, 255, 255, 130));
-    g2d.drawLine(_x + _height / 2 + 1, _y + 1, _x + 1, _y + _height / 2 + 1);
+    g2d.setColor(new Color(0, 0, 0, 50));
+    g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
+                                                   selectedShape.path.getMaxX(), selectedShape.labelPath.getMaxY()));
   }
 
   @Override
   public Color getBackground() {
     return new SameColor(142);
+  }
+  
+  protected ShapeInfo _computeSelectedLabelShape() {
+    final ShapeInfo shape = new ShapeInfo();
+
+    shape.path = getEffectiveLayout().createShapeTransform(getSize());
+    shape.insets = shape.path.transformInsets(getLayoutInsets());
+    shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
+    
+    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(3);
+    shape.labelTopY =
+      shape.labelPath.getY() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? shape.labelPath.deltaY(1) : 0) ;
+    shape.labelLeftX = shape.labelPath.getX() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? 0 : shape.labelPath.deltaX(
+      1));
+    shape.labelRightX = shape.labelPath.getMaxX() - shape.labelPath.deltaX(1);
+
+    int leftX = shape.insets.left + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? 0 : shape.labelPath.deltaX(1));
+    
+    shape.path.moveTo(leftX, shape.labelBottomY);
+    shape.path.lineTo(shape.labelLeftX, shape.labelBottomY);
+    shape.path.lineTo(shape.labelLeftX, shape.labelTopY);
+    shape.path.lineTo(shape.labelRightX, shape.labelTopY);
+    shape.path.lineTo(shape.labelRightX, shape.labelBottomY);
+
+    int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right);
+
+    shape.path.lineTo(lastX, shape.labelBottomY);
+    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(3));
+    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(3));
+    
+    shape.path.closePath();
+    shape.fillPath = shape.path.copy();
+    
+    return shape;
   }
 }

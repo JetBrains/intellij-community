@@ -86,6 +86,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/smRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/plugins/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/plugins/spellchecker/spellchecker.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/svn4ideaOld/svn4ideaOld.iml" filepath="$PROJECT_DIR$/plugins/svn4ideaOld/svn4ideaOld.iml" group="plugins/VCS" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/svn4ideaOld/svn4idea-testsOld.iml" filepath="$PROJECT_DIR$/plugins/svn4ideaOld/svn4idea-testsOld.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" group="plugins/tasks" />

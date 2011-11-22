@@ -32,6 +32,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import junit.framework.Assert;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -184,8 +185,19 @@ public class XDebuggerTestUtil {
     XTestValueNode node = computePresentation(var);
     if (name != null) Assert.assertEquals(name, node.myName);
     if (type != null) Assert.assertEquals(type, node.myType);
-    if (valuePattern != null)
+    if (valuePattern != null) {
       Assert.assertTrue("Expected value" + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
+    }
+  }
+
+  public static void assertVariableTypeMatches(XValue var, String name, @Language("RegExp") String typePattern) throws InterruptedException {
+    XTestValueNode node = computePresentation(var);
+    if (name != null) {
+      Assert.assertEquals(name, node.myName);
+    }
+    if (typePattern != null) {
+      Assert.assertTrue("Expected type" + typePattern + " Actual type: " + node.myType, node.myType.matches(typePattern));
+    }
   }
 
   public static void assertVariableFullValue(XValue var, @Nullable String value) throws InterruptedException {

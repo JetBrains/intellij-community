@@ -129,18 +129,18 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
 
-    final Condition<GroovyResolveResult> condition = new Condition<GroovyResolveResult>() {
-      public boolean value(GroovyResolveResult groovyResolveResult) {
-        final PsiElement element = groovyResolveResult.getElement();
-        return element instanceof PsiMethod && !groovyResolveResult.isInvokedOnProperty() ||
-               element instanceof GrVariable && ((GrVariable)element).getTypeGroovy() instanceof GrClosureType;
-      }
-    };
     final List elementToShow = new ArrayList();
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
+      final Condition<GroovyResolveResult> condition = new Condition<GroovyResolveResult>() {
+        public boolean value(GroovyResolveResult groovyResolveResult) {
+          final PsiElement element = groovyResolveResult.getElement();
+          return element instanceof PsiMethod && !groovyResolveResult.isInvokedOnProperty() ||
+                 element instanceof GrVariable && ((GrVariable)element).getTypeGroovy() instanceof GrClosureType;
+        }
+      };
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
-      if (isPropertyInvoked(invoked)) {
+      if (isPropertyOrVariableInvoked(invoked)) {
         final PsiType type = invoked.getType();
         if (type instanceof GrClosureType) {
           elementToShow.add(type);
@@ -161,11 +161,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
-  private static boolean isPropertyInvoked(GrExpression invoked) {
+  private static boolean isPropertyOrVariableInvoked(GrExpression invoked) {
     if (!(invoked instanceof GrReferenceExpression)) return false;
 
     final GroovyResolveResult resolveResult = ((GrReferenceExpression)invoked).advancedResolve();
-    return resolveResult.isInvokedOnProperty();
+    return resolveResult.isInvokedOnProperty() || resolveResult.getElement() instanceof PsiVariable;
   }
 
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {

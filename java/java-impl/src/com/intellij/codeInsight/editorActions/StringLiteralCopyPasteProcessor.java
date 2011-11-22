@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
@@ -23,7 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -123,21 +127,31 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     if (isStringLiteral(token)) {
-      if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
+      boolean escapeSlashes = true;
+      if (rawText != null && rawText.rawText != null) {
+        //is is assumed that all slashes are escaped in the raw text but some unescaped symbols can present (for example " copied from CharLiteral '"')
+        //so we should escape all needed symbols except slash.
+        escapeSlashes = false;
+        text = rawText.rawText;
+      }
 
       StringBuilder buffer = new StringBuilder(text.length());
       @NonNls String breaker = getLineBreaker(token);
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
-        buffer.append(escapeCharCharacters(line, token));
+        buffer.append(escapeCharCharacters(line, token, escapeSlashes));
         if (i != lines.length - 1) buffer.append(breaker);
       }
       text = buffer.toString();
     }
     else if (isCharLiteral(token)) {
-      if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
-      return escapeCharCharacters(text, token);
+      if (rawText != null && rawText.rawText != null) {
+        return escapeCharCharacters(rawText.rawText, token, false);
+      }
+      else {
+        return escapeCharCharacters(text, token, true);
+      }
     }
     return text;
   }
@@ -176,17 +190,19 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   protected boolean isCharLiteral(@NotNull PsiElement token) {
-    return token.getNode().getElementType() == JavaTokenType.CHARACTER_LITERAL;
+    ASTNode node = token.getNode();
+    return node != null && node.getElementType() == JavaTokenType.CHARACTER_LITERAL;
   }
 
   protected boolean isStringLiteral(@NotNull PsiElement token) {
-    return token.getNode().getElementType() == JavaTokenType.STRING_LITERAL;
+    ASTNode node = token.getNode();
+    return node != null && node.getElementType() == JavaTokenType.STRING_LITERAL;
   }
 
   @NotNull
-  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
+  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token, boolean escapeSlashes) {
     StringBuilder buffer = new StringBuilder();
-    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'", buffer);
+    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'",escapeSlashes, buffer);
     return buffer.toString();
   }
 }

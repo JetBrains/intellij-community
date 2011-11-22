@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,6 +33,7 @@ import java.awt.*;
 public class JBLoadingPanel extends JPanel {
   private final JPanel myPanel;
   final LoadingDecorator myDecorator;
+  private Collection<JBLoadingPanelListener> myListeners = new ArrayList<JBLoadingPanelListener>();
 
   public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent) {
     super(new BorderLayout());
@@ -58,6 +61,9 @@ public class JBLoadingPanel extends JPanel {
 
   public void stopLoading() {
     myDecorator.stopLoading();
+    for (JBLoadingPanelListener listener : myListeners) {
+      listener.onLoadingFinish();
+    }
   }
 
   public boolean isLoading() {
@@ -66,6 +72,17 @@ public class JBLoadingPanel extends JPanel {
 
   public void startLoading() {
     myDecorator.startLoading(false);
+    for (JBLoadingPanelListener listener : myListeners) {
+      listener.onLoadingStart();
+    }
+  }
+  
+  public void addListener(@NotNull JBLoadingPanelListener listener) {
+    myListeners.add(listener);
+  }
+
+  public boolean removeListener(@NotNull JBLoadingPanelListener listener) {
+    return myListeners.remove(listener);
   }
 
   @Override

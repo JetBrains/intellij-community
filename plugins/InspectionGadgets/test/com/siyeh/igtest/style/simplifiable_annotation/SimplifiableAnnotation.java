@@ -8,3 +8,13 @@ public class SimplifiableAnnotation {
         return null;
     }
 }
+@interface ValueAnnotation {
+  String[] value();
+}
+@interface ArrayAnnotation {
+  String[] array();
+}
+@ValueAnnotation({"the value"})
+@ArrayAnnotation(array = {"first"})
+class MyClass {
+}

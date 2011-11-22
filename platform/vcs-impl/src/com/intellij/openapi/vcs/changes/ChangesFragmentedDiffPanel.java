@@ -23,10 +23,15 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.DiffSideView;
 import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
+import com.intellij.openapi.diff.impl.fragments.Fragment;
+import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.FragmentedDiffPanelState;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -35,6 +40,8 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -44,11 +51,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,6 +94,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private final MyPreviousDiffAction myPreviousDiff;
   private final JLabel myTitleLabel;
   private ChangesFragmentedDiffPanel.PresentationState myPresentationState;
+  private DumbAwareAction myNavigateAction;
 
   public ChangesFragmentedDiffPanel(final Project project, String filePath, JComponent parent) {
     myProject = project;
@@ -120,6 +131,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     dag.add(new MyChangeContextAction());
     dag.add(myPreviousDiff);
     dag.add(myNextDiff);
+    createNavigateAction();
+    dag.add(myNavigateAction);
     myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myPanel);
     myNextDiff.registerCustomShortcutSet(myNextDiff.getShortcutSet(), myPanel);
 
@@ -136,12 +149,100 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
     myHorizontal = createPanel(true);
     myVertical = createPanel(false);
+    myNavigateAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myHorizontal.getComponent());
+    myNavigateAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myVertical.getComponent());
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(getCurrentPanel().getComponent(), BorderLayout.CENTER);
 
     myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myParent);
     myNextDiff.registerCustomShortcutSet(myNextDiff.getShortcutSet(), myParent);
+  }
+
+  private void createNavigateAction() {
+    myNavigateAction = new DumbAwareAction("Edit Source", "Edit Source", IconLoader.getIcon("/actions/editSource.png")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final boolean enabled = getEnabled();
+        if (enabled) {
+          OpenFileDescriptor descriptor = null;
+          if (myFragmentedContent != null && myFragmentedContent.getFile() != null) {
+            final DiffPanel panel = myCurrentHorizontal ? myHorizontal : myVertical;
+
+            final DiffSideView side = ((DiffPanelImpl)panel).getCurrentSide();
+            if (side == null || side.getEditor() == null) return;
+
+            final boolean isAfter = FragmentSide.SIDE2.equals(side.getSide());
+            if (isAfter) {
+              final LogicalPosition position = side.getEditor().getCaretModel().getLogicalPosition();
+              final int line = position.line;
+              final Integer converted = myFragmentedContent.getNewConvertor().convert(line);
+              descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, position.column);
+            } else {
+              if (((DiffPanelImpl) panel).getEditor1().getDocument().getTextLength() == 0) {
+                FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), 0), true);
+                return;
+              }
+
+              final CaretModel model = side.getEditor().getCaretModel();
+              final FragmentList fragments = ((DiffPanelImpl)panel).getFragments();
+              final int line = model.getLogicalPosition().line;
+              //final int offset = side.getEditor().getDocument().getLineStartOffset(line);
+              final int offset =  model.getOffset();
+
+              BeforeAfter<Integer> current = null;
+              final List<BeforeAfter<Integer>> ranges = myFragmentedContent.getLineRanges();
+              for (BeforeAfter<Integer> range : ranges) {
+                if (range.getBefore() > line) break;
+                current = range;
+              }
+              if (current == null) return;
+              final Fragment at = fragments.getFragmentAt(offset, FragmentSide.SIDE1, Condition.TRUE);
+              if (at == null) return;
+              final TextRange opposite = at.getRange(FragmentSide.SIDE2);
+
+              final int lineInNew = ((DiffPanelImpl)panel).getEditor2().getDocument().getLineNumber(opposite.getStartOffset());
+
+              int correctLine;
+              int column;
+              if (at.getType() == null || TextDiffTypeEnum.NONE.equals(at.getType())) {
+                column = model.getLogicalPosition().column;
+                final int startIn1 =
+                  ((DiffPanelImpl)panel).getEditor1().getDocument().getLineNumber(at.getRange(FragmentSide.SIDE1).getStartOffset());
+                correctLine = lineInNew + line - startIn1;
+              }
+              else {
+                column = 0;
+                correctLine = Math.max(lineInNew, current.getAfter());
+              }
+
+              final Integer converted = myFragmentedContent.getNewConvertor().convert(correctLine);
+              descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, column);
+            }
+          }
+          if (descriptor == null) return;
+          FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        }
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        final boolean enabled = getEnabled();
+        e.getPresentation().setEnabled(enabled);
+      }
+
+      private boolean getEnabled() {
+        final DiffPanel panel = myCurrentHorizontal ? myHorizontal : myVertical;
+        if (panel == null) return false;
+        final DiffSideView side = ((DiffPanelImpl)panel).getCurrentSide();
+        if (side == null || side.getEditor() == null) return false;
+        if (side.getEditor() != null) {
+          return true;
+        }
+        return false;
+      }
+    };
   }
 
   public void setTitle(String filePath) {

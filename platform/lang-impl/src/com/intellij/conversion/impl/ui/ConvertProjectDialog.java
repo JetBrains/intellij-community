@@ -72,7 +72,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     }
     else {
       message.append(IdeBundle.message("conversion.dialog.text.1", context.getProjectFile().getName(),
-                                       ApplicationNamesInfo.getInstance().getProductName()));
+                                       ApplicationNamesInfo.getInstance().getFullProductName()));
     }
     message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.getAbsolutePath()));
     message.append("</html>");
@@ -155,7 +155,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     List<File> files = getReadOnlyFiles();
     if (!files.isEmpty()) {
       final String message = IdeBundle.message("message.text.unlock.read.only.files",
-                                               ApplicationNamesInfo.getInstance().getProductName(),
+                                               ApplicationNamesInfo.getInstance().getFullProductName(),
                                                getFilesString(files));
       final String[] options = {CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText()};
       if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != 0) {

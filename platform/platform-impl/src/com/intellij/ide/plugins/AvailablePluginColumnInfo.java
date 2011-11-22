@@ -124,36 +124,4 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
     }
   }
 
-  //waiting for rates available in IDEA
-  private static class RatesPanel extends JPanel {
-    public static int MAX_RATE = 5;
-    private static final Icon STAR_ICON = IconLoader.getIcon("/general/toolWindowFavorites.png");
-
-    private JLabel[] myLabels = new JLabel[MAX_RATE];
-
-    private RatesPanel() {
-      super(new GridBagLayout());
-      GridBagConstraints gc =
-        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                               new Insets(0, 0, 0, 0), 0, 0);
-      for (int i = 0, myLabelsLength = myLabels.length; i < myLabelsLength; i++) {
-        myLabels[i] = new JLabel();
-        add(myLabels[i], gc);
-      }
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      add(Box.createHorizontalBox(), gc);
-      setOpaque(false);
-    }
-
-    public void setRate(int rate) {
-      for (int i = 0; i < rate; i++) {
-        myLabels[i].setIcon(STAR_ICON);
-      }
-
-      for (int i = rate; i < MAX_RATE; i++) {
-        myLabels[i].setIcon(IconLoader.getDisabledIcon(STAR_ICON));
-      }
-    }
-  }
 }

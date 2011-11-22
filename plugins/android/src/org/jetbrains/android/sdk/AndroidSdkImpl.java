@@ -16,11 +16,11 @@
 
 package org.jetbrains.android.sdk;
 
-import com.android.io.FileWrapper;
 import com.android.sdklib.*;
 import com.android.sdklib.internal.project.ProjectProperties;
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.android.util.BufferingFileWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ public class AndroidSdkImpl extends AndroidSdk {
     int platformToolsRevision = -1;
     if (platformToolsPropFile.exists() && platformToolsPropFile.isFile()) {
       final Map<String, String> map =
-        ProjectProperties.parsePropertyFile(new FileWrapper(platformToolsPropFile), new MessageBuildingSdkLog());
+        ProjectProperties.parsePropertyFile(new BufferingFileWrapper(platformToolsPropFile), new MessageBuildingSdkLog());
       final String revision = map.get("Pkg.Revision");
       if (revision != null) {
         try {

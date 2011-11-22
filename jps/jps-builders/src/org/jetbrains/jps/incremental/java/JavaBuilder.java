@@ -118,10 +118,11 @@ public class JavaBuilder extends Builder{
       final Set<File> filesToCompile = new LinkedHashSet<File>();
       final List<File> formsToCompile = new ArrayList<File>();
       final List<File> upToDateForms = new ArrayList<File>();
+      // todo: read srcRoots from JPS model
       final Set<String> srcRoots = new HashSet<String>();
 
       final boolean wholeModuleRebuildRequired = context.isDirty(chunk);
-
+      // todo: only process all sources if wholeModuleRebuild == true
       context.processFiles(chunk, new FileProcessor() {
         public boolean apply(Module module, File file, String sourceRoot) throws Exception {
           if (JAVA_SOURCES_FILTER.accept(file)) {
@@ -142,6 +143,8 @@ public class JavaBuilder extends Builder{
         }
       });
 
+      // todo: change logic below so that complete forms list is not required
+      
       // force compilation of bound source file if the form is dirty
       for (File form : formsToCompile) {
         for (String root : srcRoots) {

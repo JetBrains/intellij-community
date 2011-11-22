@@ -76,6 +76,8 @@ public class BinaryDiffTool implements DiffTool {
               myPanel.setDiffRequest(data);
               myPanel.setTitle1(src.getPath());
               myPanel.setTitle2(trg.getPath());
+              myPanel.enableToolbar(false);
+              myPanel.removeStatusBar();
               return myPanel.getComponent();
             }
           }.show();

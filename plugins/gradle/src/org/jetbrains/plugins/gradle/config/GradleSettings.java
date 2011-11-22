@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 @State(
     name = "GradleSettings",
     storages = {
-      @Storage( file = "$PROJECT_FILE$"),
-      @Storage( file = "$PROJECT_CONFIG_DIR$/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
+      @Storage(file = "$PROJECT_FILE$"),
+      @Storage(file = "$PROJECT_CONFIG_DIR$/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class GradleSettings implements PersistentStateComponent<GradleSettings>, Cloneable {

@@ -106,7 +106,6 @@ public class CvsOperationExecutor {
             }
           }
           finally {
-
             if (myProject != null && handler != CvsHandler.NULL) {
               StatusBar.Info.set(getStatusMessage(handler), myProject);
             }
@@ -143,7 +142,11 @@ public class CvsOperationExecutor {
 
     if (doNotShowProgress()) {
       cvsAction.run();
-      myExecutor.runInDispatchThread(finish, myProject);
+      if (myIsQuietOperation) {
+        finish.run();
+      } else {
+        myExecutor.runInDispatchThread(finish, myProject);
+      }
     }
     else {
       final PerformInBackgroundOption backgroundOption = handler.getBackgroundOption(myProject);

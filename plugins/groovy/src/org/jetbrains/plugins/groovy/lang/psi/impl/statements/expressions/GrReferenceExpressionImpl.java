@@ -381,7 +381,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return handleElementRenameInner(newElementName);
+    final GroovyResolveResult result = advancedResolve();
+    if (result.isInvokedOnProperty()) {
+      final String name = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
+      if (name != null) {
+        newElementName = name;
+      }
+    }
+
+    return handleElementRenameSimple(newElementName);
   }
 
   @Override
@@ -399,7 +407,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final Kind kind = getKind();
     switch (kind) {
       case TYPE_OR_PROPERTY:
-      case METHOD_OR_PROPERTY_OR_TYPE:
         if (resolve() instanceof PsiPackage) return true;
         break;
       case METHOD_OR_PROPERTY:
@@ -411,14 +418,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return ((GrReferenceExpressionImpl)qualifier).isFullyQualified();
   }
 
-  protected PsiElement handleElementRenameInner(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRenameSimple(String newElementName) throws IncorrectOperationException {
     if (!PsiUtil.isValidReferenceName(newElementName)) {
       PsiElement element = GroovyPsiElementFactory.getInstance(getProject()).createStringLiteral(newElementName);
       getReferenceNameElement().replace(element);
       return this;
     }
 
-    return super.handleElementRenameInner(newElementName);
+    return super.handleElementRenameSimple(newElementName);
   }
 
   public String toString() {
@@ -552,9 +559,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (result != null) {
-      result = resolveResult.getSubstitutor().substitute(result);
-      result = TypesUtil.boxPrimitiveType(result, getManager(), getResolveScope());
-      result = PsiImplUtil.normalizeWildcardTypeByPosition(result, this);
+      result = TypesUtil.substituteBoxAndNormalizeType(result, resolveResult.getSubstitutor(), this);
     }
     if (dotType != mSPREAD_DOT) {
       return result;
@@ -660,8 +665,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return results;
       default:
         return GroovyResolveResult.EMPTY_ARRAY;
-    }
-  }
+    }  }
 
   private PsiType getThisType() {
     GrExpression qualifier = getQualifierExpression();
@@ -672,7 +676,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     return TypesUtil.getJavaLangObject(this);
   }
-
 
   enum Kind {
     TYPE_OR_PROPERTY,

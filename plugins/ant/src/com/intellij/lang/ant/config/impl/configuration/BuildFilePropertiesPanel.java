@@ -433,7 +433,7 @@ public class BuildFilePropertiesPanel {
 
     public void reset(AbstractProperty.AbstractPropertyContainer options) {
       String projectJdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(options);
-      myJDKsController.setRenderer(new AntUIUtil.ProjectJdkRenderer(myProject, true, projectJdkName));
+      myJDKsController.setRenderer(new AntUIUtil.ProjectJdkRenderer(true, projectJdkName));
       super.reset(options);
       myJDKsController.resetList(null);
       myProjectDefaultAnt = AntConfigurationImpl.DEFAULT_ANT.get(options);

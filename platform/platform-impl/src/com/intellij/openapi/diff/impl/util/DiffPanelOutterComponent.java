@@ -123,7 +123,9 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   }
 
   public void removeStatusBar() {
-    myBottomContainer.remove(myStatusBar);
+    if (myStatusBar != null) {
+      myStatusBar.setVisible(false);
+    }
   }
 
   public Object getData(String dataId) {
@@ -190,6 +192,12 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
 
   public void removeTopComponent(final JComponent jComponent) {
     myWrapper.remove(jComponent);
+  }
+
+  public void addStatusBar() {
+    if (myStatusBar != null) {
+      myStatusBar.setVisible(true);
+    }
   }
 
   private interface DeferScrollToFirstDiff {

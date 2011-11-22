@@ -172,7 +172,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       if (selected > savedSelected) { // actually added something
         AbstractTableModel model = (AbstractTableModel)myExcludedTable.getModel();
         model.fireTableRowsInserted(savedSelected, selected-1);
-        myExcludedTable.setRowSelectionInterval(savedSelected, selected-1);
+        myExcludedTable.setRowSelectionInterval(savedSelected, selected - 1);
       }
     }
 
@@ -291,7 +291,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       myExcludedTable.setDefaultRenderer(Boolean.class, new BooleanRenderer());
       myExcludedTable.setDefaultRenderer(Object.class, new MyObjectRenderer());
       myExcludedTable.getColumn(names[0]).setPreferredWidth(350);
-      final int cbWidth = 15 + myExcludedTable.getFontMetrics(myExcludedTable.getFont()).stringWidth(names[1]);
+      final int cbWidth = 15 + myExcludedTable.getTableHeader().getFontMetrics(myExcludedTable.getTableHeader().getFont()).stringWidth(names[1]);
       final TableColumn cbColumn = myExcludedTable.getColumn(names[1]);
       cbColumn.setPreferredWidth(cbWidth);
       cbColumn.setMaxWidth(cbWidth);

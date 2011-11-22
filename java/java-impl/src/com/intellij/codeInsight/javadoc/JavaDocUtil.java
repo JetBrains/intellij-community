@@ -157,10 +157,12 @@ public class JavaDocUtil {
 
         for (int k = 0; k < parms.length; k++) {
           PsiParameter parm = parms[k];
+          final PsiType parmType = parm.getType();
           if (
             types[k] != null &&
-            !TypeConversionUtil.erasure(parm.getType()).getCanonicalText().equals(types[k].getCanonicalText()) &&
-            !parm.getType().getCanonicalText().equals(types[k].getCanonicalText())
+            !TypeConversionUtil.erasure(parmType).getCanonicalText().equals(types[k].getCanonicalText()) &&
+            !parmType.getCanonicalText().equals(types[k].getCanonicalText()) &&
+            !TypeConversionUtil.isAssignable(parmType, types[k])
             ) {
             continue MethodsLoop;
           }

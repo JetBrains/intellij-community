@@ -519,4 +519,7 @@
   <extensionPoint name="psi.treeChangePreprocessor"
                   interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
                   area="IDEA_PROJECT"/>
+  
+  <extensionPoint name="codeBlockProvider"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 </extensionPoints>

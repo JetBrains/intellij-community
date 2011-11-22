@@ -52,6 +52,7 @@ public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implement
     return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
   }
 
+  @NotNull
   @Override
   public PsiPrimitiveType getPrimitiveType() {
     return TypesUtil.getPrimitiveTypeByText(getText());

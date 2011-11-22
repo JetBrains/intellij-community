@@ -82,13 +82,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public void setDirty(ModuleChunk chunk, boolean isDirty) {
     final Set<Module> modules = chunk.getModules();
-    if (isDirty) {
-      myDirtyModules.addAll(modules);
-    }
-    else {
+    
+    if (!isDirty) {
       myDirtyModules.removeAll(modules);
+      return;
     }
-
+    
+    myDirtyModules.addAll(modules);
     // now mark all modules that depend on dirty modules
     final ClasspathKind classpathKind = ClasspathKind.compile(isCompilingTests());
     final ProjectChunks chunks = isCompilingTests()? myTestChunks : myProductionChunks;

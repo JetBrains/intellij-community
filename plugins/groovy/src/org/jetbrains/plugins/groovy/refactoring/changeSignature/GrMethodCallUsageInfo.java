@@ -88,7 +88,16 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
   }
 
   @Nullable
-  public static GroovyResolveResult resolveMethod(final PsiElement ref) {
+  public PsiMethod getReferencedMethod() {
+    final GroovyResolveResult result = resolveMethod(getElement());
+    if (result == null) return null;
+
+    final PsiElement element = result.getElement();
+    return element instanceof PsiMethod ? (PsiMethod)element : null;
+  }
+
+  @Nullable
+  private static GroovyResolveResult resolveMethod(final PsiElement ref) {
     if (ref instanceof GrEnumConstant) return ((GrEnumConstant)ref).resolveConstructorGenerics();
     PsiElement parent = ref.getParent();
     if (parent instanceof GrMethodCall) {

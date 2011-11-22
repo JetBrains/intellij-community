@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.intellij.lang.regexp;
 
-package org.jetbrains.android.exportSignedPackage;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
+import org.intellij.lang.regexp.psi.RegExpChar;
 
 /**
- * @author Eugene.Kudelevsky
+ * @author yole
  */
-class AndroidExportPackageUtil {
-  private AndroidExportPackageUtil() {
+public class RegExpWordSelectionFilter implements Condition<PsiElement> {
+  @Override
+  public boolean value(PsiElement element) {
+    if (element.getNode().getElementType() == RegExpTT.CHARACTER || element instanceof RegExpChar) {
+      return false;
+    }
+    return true;
   }
 }

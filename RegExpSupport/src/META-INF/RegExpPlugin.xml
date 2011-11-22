@@ -9,5 +9,6 @@
     <lang.braceMatcher language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpBraceMatcher"/>
     <lang.surroundDescriptor language="RegExp" implementationClass="org.intellij.lang.regexp.surroundWith.SimpleSurroundDescriptor"/>
     <colorSettingsPage implementation="org.intellij.lang.regexp.RegExpColorsPage"/>
+    <basicWordSelectionFilter implementation="org.intellij.lang.regexp.RegExpWordSelectionFilter"/>
   </extensions>
 </idea-plugin>

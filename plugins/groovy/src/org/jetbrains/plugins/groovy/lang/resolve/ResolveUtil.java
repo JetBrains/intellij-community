@@ -55,7 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -598,7 +598,7 @@ public class ResolveUtil {
                                                           @Nullable String methodName,
                                                           @NotNull GroovyPsiElement place,
                                                           @Nullable PsiType... argumentTypes) {
-    return getMethodCandidates(thisType, methodName, place, true, argumentTypes);
+    return getMethodCandidates(thisType, methodName, place, true, false, false, argumentTypes);
   }
 
   @NotNull
@@ -606,11 +606,13 @@ public class ResolveUtil {
                                                           @Nullable String methodName,
                                                           @NotNull GroovyPsiElement place,
                                                           boolean resolveClosures,
+                                                          boolean allVariants,
+                                                          boolean byShape,
                                                           @Nullable PsiType... argumentTypes) {
     if (methodName == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     MethodResolverProcessor processor =
-      new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
+      new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY, allVariants, byShape);
     processAllDeclarations(thisType, processor, ResolveState.initial(), place);
     boolean hasApplicableMethods = processor.hasApplicableCandidates();
     final GroovyResolveResult[] methodCandidates = processor.getCandidates();
@@ -691,8 +693,7 @@ public class ResolveUtil {
   public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression) {
     final PsiElement element = candidate.getElement();
     if (element instanceof PsiMethod && !candidate.isInvokedOnProperty()) {
-      PsiType substituted = candidate.getSubstitutor().substitute(getSmartReturnType((PsiMethod)element));
-      return PsiImplUtil.normalizeWildcardTypeByPosition(substituted, expression);
+      return TypesUtil.substituteBoxAndNormalizeType(getSmartReturnType((PsiMethod)element), candidate.getSubstitutor(), expression);
     }
 
     final PsiType type;
@@ -706,8 +707,8 @@ public class ResolveUtil {
       return null;
     }
     if (type instanceof GrClosureType) {
-      PsiType substituted = candidate.getSubstitutor().substitute(((GrClosureType)type).getSignature().getReturnType());
-      return PsiImplUtil.normalizeWildcardTypeByPosition(substituted, expression);
+      PsiType returnType = ((GrClosureType)type).getSignature().getReturnType();
+      return TypesUtil.substituteBoxAndNormalizeType(returnType, candidate.getSubstitutor(), expression);
     }
     return null;
   }

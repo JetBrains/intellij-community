@@ -77,3 +77,7 @@ contributor(ctype:NUMBER) {
   method name: "plus", type: STRING, params:[arg:STRING]
 }
 
+contributor(ctype: 'groovy.lang.MetaClass') {
+  property name: 'static'
+}
+

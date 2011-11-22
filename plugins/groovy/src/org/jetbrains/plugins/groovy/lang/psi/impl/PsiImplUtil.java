@@ -534,11 +534,11 @@ public class PsiImplUtil {
 
   @Nullable
   public static PsiType inferExpectedTypeForDiamond(GrExpression diamondNew) {
-    PsiElement pparent = PsiUtil.skipParentheses(diamondNew.getParent(), true);
+    PsiElement pparent = PsiUtil.skipParentheses(diamondNew, true).getParent();
     if (pparent instanceof GrAssignmentExpression &&
         PsiTreeUtil.isAncestor(((GrAssignmentExpression)pparent).getRValue(), diamondNew, false)) {
       GrExpression lValue = ((GrAssignmentExpression)pparent).getLValue();
-      if (PsiUtil.mightBeLValue(lValue) && !(lValue instanceof GrIndexProperty)) {
+      if (PsiUtil.mightBeLValue(lValue)) {
         return lValue.getNominalType();
       }
     }

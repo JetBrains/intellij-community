@@ -58,6 +58,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   }
 
   public JComponent createComponent() {
+    myFoldingPanel.removeAll();
     for (CodeFoldingOptionsProvider provider : getConfigurables()) {
       myFoldingPanel
         .add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,

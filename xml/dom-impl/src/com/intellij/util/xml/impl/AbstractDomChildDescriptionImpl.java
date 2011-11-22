@@ -26,7 +26,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
-import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionImpl;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -135,16 +134,16 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
 
   @Nullable
   public PsiElement getDeclaration(final Project project) {
-    final DomAnchor anchor = getUserData(DomExtension.KEY_DECLARATION);
-    if (anchor != null) {
-      final DomElement declaration = anchor.retrieveDomElement();
-      if (declaration != null) {
-        final DomTarget target = DomTarget.getTarget(declaration);
-        if (target != null) {
-          return PomService.convertToPsi(target);
-        }
-        return declaration.getXmlElement();
+    DomElement domDeclaration = getDomDeclaration();
+    if (domDeclaration != null) {
+      final DomTarget target = DomTarget.getTarget(domDeclaration);
+      if (target != null) {
+        return PomService.convertToPsi(target);
       }
+      return domDeclaration.getXmlElement();
+    }
+    final DomAnchor anchor = getUserData(DomExtensionImpl.KEY_DOM_DECLARATION);
+    if (anchor != null) {
       return anchor.getContainingFile();
     }
     final SmartPsiElementPointer<?> pointer = getUserData(DomExtensionImpl.DECLARING_ELEMENT_KEY);
@@ -156,5 +155,14 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     }
 
     return PomService.convertToPsi(project, this);
+  }
+
+  @Override
+  public DomElement getDomDeclaration() {
+    final DomAnchor anchor = getUserData(DomExtensionImpl.KEY_DOM_DECLARATION);
+    if (anchor != null) {
+      return anchor.retrieveDomElement();
+    }
+    return null;
   }
 }

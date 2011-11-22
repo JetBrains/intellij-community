@@ -246,12 +246,24 @@ public class PatchReader {
     private DiffFormat myDiffFormat = null;
     private final List<TextFilePatch> myPatches;
 
+    private boolean myDiffCommandLike;
+    private boolean myIndexLike;
+
     private PatchContentParser() {
       myPatches = new SmartList<TextFilePatch>();
     }
 
     @Override
     public boolean testIsStart(String start) {
+      if (start.startsWith("diff")) {
+        myDiffCommandLike = true;
+        return false;
+      }
+      if (start.startsWith("index")) {
+        myIndexLike = true;
+        return false;
+      }
+
       if (start.startsWith("--- ") && (myDiffFormat == null || myDiffFormat == DiffFormat.UNIFIED)) {
         myDiffFormat = DiffFormat.UNIFIED;
         return true;
@@ -269,6 +281,8 @@ public class PatchReader {
       if (patch != null) {
         myPatches.add(patch);
       }
+      myDiffCommandLike = false;
+      myIndexLike = false;
     }
 
     public List<TextFilePatch> getResult() throws PatchSyntaxException {
@@ -277,7 +291,7 @@ public class PatchReader {
 
     private TextFilePatch readPatch(String curLine, ListIterator<String> iterator) throws PatchSyntaxException {
       final TextFilePatch curPatch = new TextFilePatch(null);
-      extractFileName(curLine, curPatch, true);
+      extractFileName(curLine, curPatch, true, myDiffCommandLike && myIndexLike);
 
       if (! iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
       curLine = iterator.next();
@@ -285,7 +299,7 @@ public class PatchReader {
       if (! curLine.startsWith(secondNamePrefix)) {
         throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
       }
-      extractFileName(curLine, curPatch, false);
+      extractFileName(curLine, curPatch, false, myDiffCommandLike && myIndexLike);
 
       while (iterator.hasNext()) {
         PatchHunk hunk;
@@ -297,6 +311,12 @@ public class PatchReader {
         }
         if (hunk == null) break;
         curPatch.addHunk(hunk);
+      }
+      if (curPatch.getBeforeName() == null) {
+        curPatch.setBeforeName(curPatch.getAfterName());
+      }
+      if (curPatch.getAfterName() == null) {
+        curPatch.setAfterName(curPatch.getBeforeName());
       }
       return curPatch;
     }
@@ -511,7 +531,7 @@ public class PatchReader {
       return result;
     }
 
-    private static void extractFileName(final String curLine, final FilePatch patch, final boolean before) {
+    private static void extractFileName(final String curLine, final FilePatch patch, final boolean before, final boolean gitPatch) {
       String fileName = curLine.substring(4);
       int pos = fileName.indexOf('\t');
       if (pos < 0) {
@@ -529,10 +549,17 @@ public class PatchReader {
           }
         }
       }
+      if (gitPatch && "/dev/null".equals(fileName)) return;
       if (before) {
+        if (gitPatch && fileName.startsWith("a/")) {
+          fileName = fileName.substring(2);
+        }
         patch.setBeforeName(fileName);
       }
       else {
+        if (gitPatch && fileName.startsWith("b/")) {
+          fileName = fileName.substring(2);
+        }
         patch.setAfterName(fileName);
       }
     }

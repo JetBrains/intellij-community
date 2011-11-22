@@ -166,6 +166,11 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
     public PsiElement getDeclaration(final Project project) {
       return PomService.convertToPsi(project, this);
     }
+
+    @Override
+    public DomElement getDomDeclaration() {
+      return myDomElement;
+    }
   }
 
 }

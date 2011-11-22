@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -78,6 +79,12 @@ public class FragmentedDiffRequestFromChange {
     final PreparedFragmentedContent preparedFragmentedContent =
       new PreparedFragmentedContent(myProject, new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges),
                                     filePath.getName(), filePath.getFileType());
+    VirtualFile file = filePath.getVirtualFile();
+    if (file == null) {
+      filePath.hardRefresh();
+      file = filePath.getVirtualFile();
+    }
+    preparedFragmentedContent.setVirtualFile(file);
     return preparedFragmentedContent;
   }
 

@@ -604,14 +604,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private static CellAppearanceEx getCellAppearance(final ClasspathTableItem<?> item,
                                                     final StructureConfigurableContext context,
                                                     final boolean selected) {
-    final OrderEntryAppearanceService service = OrderEntryAppearanceService.getInstance(context.getProject());
+    final OrderEntryAppearanceService service = OrderEntryAppearanceService.getInstance();
     if (item instanceof InvalidJdkItem) {
       return service.forJdk(null, false, selected, true);
     }
     else {
       final OrderEntry entry = item.getEntry();
       assert entry != null : item;
-      return service.forOrderEntry(entry, selected);
+      return service.forOrderEntry(context.getProject(), entry, selected);
     }
   }
 

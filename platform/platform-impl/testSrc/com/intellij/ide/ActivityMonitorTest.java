@@ -58,6 +58,7 @@ public class ActivityMonitorTest extends UsefulTestCase {
       }
     }, getTestRootDisposable());
     myMonitor = new UiActivityMonitorImpl(new MockApplication(getTestRootDisposable()));
+    myMonitor.setActive(true);
     disposeOnTearDown(myMonitor);
   }
 

@@ -78,7 +78,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return new TextRange(0, getTextLength());
   }
 
-  protected PsiElement handleElementRenameInner(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRenameSimple(String newElementName) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       ASTNode node = nameElement.getNode();
@@ -91,7 +91,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return handleElementRenameInner(newElementName);
+    return handleElementRenameSimple(newElementName);
   }
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
@@ -104,7 +104,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       if (!preserveQualification || qualifiedName == null) {
         final String newName = ((PsiClass)element).getName();
         setQualifier(null);
-        final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRename(newName));
+        final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRenameSimple(newName));
 
         if (newElement.isReferenceTo(element) || qualifiedName == null || JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope()) == null) {
           return newElement;

@@ -47,7 +47,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testReturnF() throws Throwable {
-    checkPreferredItems(0, "false");
+    checkPreferredItems(0, "false", "finalize");
   }
 
   public void testPreferDefaultTypeToExpected() throws Throwable {
@@ -205,6 +205,14 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferSameNamedMethods() {
     checkPreferredItems(0, "foo", "boo", "doo", "hashCode");
+  }
+
+  public void testPreferInterfacesInImplements() {
+    checkPreferredItems(0, "FooIntf", "FooClass");
+  }
+
+  public void testPreferClassesInExtends() {
+    checkPreferredItems(0, "FooClass", "Foo_Intf");
   }
 
   public void testPreferClassOverItsStaticMembers() {

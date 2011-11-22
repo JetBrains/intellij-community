@@ -437,7 +437,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
       }
       
       myConfigFileTimestamp = proguardConfigFile.getTimeStamp();
-      myLogsDirectoryPath = logsDirectoryOsPath;
+      myLogsDirectoryPath = logsDirectoryOsPath != null ? logsDirectoryOsPath : "";
     }
   
     private void fillClassFilesMap(VirtualFile file, Set<VirtualFile> visited) {
