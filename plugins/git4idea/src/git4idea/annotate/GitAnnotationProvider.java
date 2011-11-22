@@ -159,7 +159,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
     String output = h.run();
-    GitFileAnnotation annotation = new GitFileAnnotation(myProject, file, revision == null);
+    GitFileAnnotation annotation = new GitFileAnnotation(myProject, file, revision == null, revision == null ? null : revision.getRevisionNumber());
     class CommitInfo {
       Date date;
       String author;
@@ -228,7 +228,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                 String annotatedContent,
                                 boolean forCurrentRevision, VcsRevisionNumber revisionNumber) {
     final GitFileAnnotation gitFileAnnotation =
-      new GitFileAnnotation(myProject, vcsAnnotation.getFilePath().getVirtualFile(), forCurrentRevision);
+      new GitFileAnnotation(myProject, vcsAnnotation.getFilePath().getVirtualFile(), forCurrentRevision, revisionNumber);
     gitFileAnnotation.addLogEntries(session.getRevisionList());
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
     final int size = basicAnnotation.getNumLines();
