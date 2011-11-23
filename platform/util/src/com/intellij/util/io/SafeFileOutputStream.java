@@ -106,9 +106,13 @@ public class SafeFileOutputStream extends OutputStream {
       throw e;
     }
 
+    if (failed) {
+      throw new IOException("Failed to save to backup file (" + backdoorFile() + "). Original file (" + myTargetFile + ") left unchanged.");
+    }
+
     final int permissions = myPreserveAttributes ? FileSystemUtil.getPermissions(myTargetFile) : -1;
-    if (failed || !FileUtil.delete(myTargetFile)) {
-      throw new IOException("Failed to save to " + myTargetFile + ". No data were harmed. Attempt result left at " + backdoorFile());
+    if (!FileUtil.delete(myTargetFile) && myTargetFile.exists()) {
+      throw new IOException("Failed to save to " + myTargetFile + ". The file left unchanged. Attempt result stored to " + backdoorFile());
     }
 
     FileUtil.rename(backdoorFile(), myTargetFile);
