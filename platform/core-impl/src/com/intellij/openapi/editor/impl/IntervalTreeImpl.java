@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.IncorrectOperationException;
@@ -22,14 +23,12 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.WalkingState;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TLongHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.locks.Lock;
@@ -495,15 +494,18 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   @NotNull
-  Iterator<T> overlappingIterator(final int startOffset, final int endOffset) {
+  DisposableIterator<T> overlappingIterator(final int startOffset, final int endOffset) {
     final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), new TextRangeInterval(startOffset, endOffset), modCount, 0);
     if (firstOverlap == null) {
-      return ContainerUtil.emptyIterator();
+      return DisposableIterator.EMPTY;
     }
     final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
     final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
     final int modCountBefore = modCount;
-    return new Iterator<T>() {
+
+    l.readLock().lock();
+
+    return new DisposableIterator<T>() {
       private IntervalNode<T> currentNode = firstOverlap;
       private int deltaUpToRootExclusive = firstOverlapDelta-firstOverlap.delta;
       private int indexInCurrentList = 0;
@@ -513,39 +515,33 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       public boolean hasNext() {
         if (current != null) return true;
         if (currentNode == null) return false;
-        try {
-          l.readLock().lock();
 
-          if (modCount != modCountBefore) throw new ConcurrentModificationException();
-          while (indexInCurrentList != currentNode.intervals.size()) {
-            T t = currentNode.intervals.get(indexInCurrentList++).get();
-            if (t != null) {
-              current = t;
-              return true;
-            }
-          }
-          indexInCurrentList = 0;
-          while (true) {
-            currentNode = nextNode(currentNode);
-            if (currentNode == null) {
-              return false;
-            }
-            if (overlaps(currentNode, startOffset, endOffset, deltaUpToRootExclusive)) {
-              assert currentNode.intervalStart() + deltaUpToRootExclusive + currentNode.delta >= firstOverlapStart;
-              indexInCurrentList = 0;
-              while (indexInCurrentList != currentNode.intervals.size()) {
-                T t = currentNode.intervals.get(indexInCurrentList++).get();
-                if (t != null) {
-                  current = t;
-                  return true;
-                }
-              }
-              indexInCurrentList = 0;
-            }
+        if (modCount != modCountBefore) throw new ConcurrentModificationException();
+        while (indexInCurrentList != currentNode.intervals.size()) {
+          T t = currentNode.intervals.get(indexInCurrentList++).get();
+          if (t != null) {
+            current = t;
+            return true;
           }
         }
-        finally {
-          l.readLock().unlock();
+        indexInCurrentList = 0;
+        while (true) {
+          currentNode = nextNode(currentNode);
+          if (currentNode == null) {
+            return false;
+          }
+          if (overlaps(currentNode, startOffset, endOffset, deltaUpToRootExclusive)) {
+            assert currentNode.intervalStart() + deltaUpToRootExclusive + currentNode.delta >= firstOverlapStart;
+            indexInCurrentList = 0;
+            while (indexInCurrentList != currentNode.intervals.size()) {
+              T t = currentNode.intervals.get(indexInCurrentList++).get();
+              if (t != null) {
+                current = t;
+                return true;
+              }
+            }
+            indexInCurrentList = 0;
+          }
         }
       }
 
@@ -560,6 +556,11 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       @Override
       public void remove() {
         throw new IncorrectOperationException();
+      }
+
+      @Override
+      public void dispose() {
+        l.readLock().unlock();
       }
 
       // next node in in-order traversal

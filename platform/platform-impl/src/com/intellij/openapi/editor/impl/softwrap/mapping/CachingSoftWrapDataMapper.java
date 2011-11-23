@@ -452,7 +452,8 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       CacheEntry beforeLast = myCache.get(myCache.size() - 2);
       CacheEntry last = myCache.get(myCache.size() - 1);
       if (beforeLast.visualLine == last.visualLine
-          || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1))
+          || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1)
+          || last.startOffset > myEditor.getDocument().getTextLength())
       {
         CharSequence editorState = "";
         if (myEditor instanceof EditorImpl) {
@@ -479,6 +480,13 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     }
 
     myBeforeChangeState.cacheShouldBeUpdated = false;
+  }
+
+  @Override
+  public void reset() {
+    myCache.clear();
+    myAffectedByUpdateCacheEntries.clear();
+    myNotAffectedByUpdateTailCacheEntries.clear();
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UnusedDeclaration", "CallToPrintStackTrace"})
@@ -541,7 +549,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
     int softWrapIndex = myStorage.getSoftWrapIndex(offset);
     if (softWrapIndex >= 0) {
-      softWrapIndex++; // We want to process only soft wraps which offsets strictly more than the given one.
+      softWrapIndex++; // We want to process only soft wraps which offsets are strictly more than the given one.
     }
     else {
       softWrapIndex = -softWrapIndex - 1;

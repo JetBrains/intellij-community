@@ -181,7 +181,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   protected Color getBackgroundColor() {
-    return new Color(0, 0, 0, 35);
+    return UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground());
   }
   
   @Override

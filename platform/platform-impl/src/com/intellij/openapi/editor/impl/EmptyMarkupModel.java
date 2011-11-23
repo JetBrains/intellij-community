@@ -2,6 +2,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.SweepProcessor;
@@ -13,11 +14,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Iterator;
 
 /**
  * This is mock implementation to be used in null-object pattern where necessary.
@@ -126,8 +124,8 @@ public class EmptyMarkupModel implements MarkupModelEx {
 
   @NotNull
   @Override
-  public Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return ContainerUtil.emptyIterator();
+  public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
+    return DisposableIterator.EMPTY;
   }
 
   @Override

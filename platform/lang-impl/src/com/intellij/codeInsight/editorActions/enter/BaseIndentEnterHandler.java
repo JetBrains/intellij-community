@@ -32,7 +32,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +128,9 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   protected String getSingleIndent(final PsiFile file) {
-    return StringUtil.repeatSymbol(' ', CodeStyleSettingsManager.getInstance().getCurrentSettings().getIndentSize(myLanguage.getAssociatedFileType()));
+    CodeStyleSettings currantSettings = CodeStyleSettingsManager.getSettings(file.getProject());
+    CommonCodeStyleSettings.IndentOptions indentOptions = currantSettings.getIndentOptions(file.getFileType());
+    return StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
   }
 
   @Nullable

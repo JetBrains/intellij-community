@@ -52,7 +52,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
-import com.intellij.util.*;
+import com.intellij.ui.treeStructure.actions.CollapseAllAction;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +72,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @author anna
+ * @author Konstantin Bulenkov
+ */
 public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private final FavoritesTreeStructure myFavoritesTreeStructure;
   private FavoritesViewTreeBuilder myBuilder;
@@ -167,6 +175,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           return CustomShortcutSet.fromString("DELETE");
         }
       })
+      .addExtraAction(AnActionButton.fromAction(new CollapseAllAction(myTree)))
       .setLineBorder(0, 0, 0, 0)
       .createPanel();
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0));

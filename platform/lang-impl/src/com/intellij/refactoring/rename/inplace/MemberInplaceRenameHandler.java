@@ -18,12 +18,15 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,9 +48,20 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   }
 
   @Override
-  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
+  public VariableInplaceRenamer doRename(@NotNull final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     if (elementToRename instanceof PsiNameIdentifierOwner) {
-      return new MemberInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor);
+      RenamePsiElementProcessor.forElement(elementToRename).substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
+        @Override
+        public void pass(PsiElement element) {
+          final MemberInplaceRenamer renamer = new MemberInplaceRenamer((PsiNameIdentifierOwner)elementToRename, element, editor);
+          boolean startedRename = renamer.performInplaceRename();
+          if (!startedRename) {
+            performDialogRename(elementToRename, editor, dataContext);
+          }
+        }
+      });
+    } else {
+      performDialogRename(elementToRename, editor, dataContext);
     }
     return null;
   }

@@ -259,6 +259,9 @@ public abstract class ResourceManager {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
+          if (!resources.isValid() || myModule.isDisposed() || myModule.getProject().isDisposed()) {
+            return;
+          }
           result.addAll(getValueResources(resourceType, resources));
         }
       });

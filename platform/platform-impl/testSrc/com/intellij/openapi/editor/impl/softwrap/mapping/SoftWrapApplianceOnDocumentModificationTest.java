@@ -817,6 +817,37 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     ((EditorImpl)myEditor).setPrefixTextAndAttributes(" ", new TextAttributes());
     myEditor.getCaretModel().moveToOffset(text.length());
   }
+
+  public void testSoftWrapCacheReset() throws IOException {
+    // Inspired by IDEA-76537 - the point is to drop cached document info on complete soft wraps recalculation
+    String text =
+      "\t first line\n" +
+      "\t second line\n" +
+      "\t third line";
+    
+    // Make soft wraps to build a document info cache.
+    init(300, text);
+    
+    // Modify document while soft wraps processing is off.
+    final EditorSettings settings = getEditor().getSettings();
+    settings.setUseSoftWraps(false);
+    int startOffset = text.indexOf("\t third") - 1;
+    getEditor().getDocument().deleteString(startOffset, text.length());
+    
+    // Enable soft wraps and ensure that the cache is correctly re-built.
+    settings.setUseSoftWraps(true);
+    
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getTextLength());
+    type("\n test");
+    
+    final int offset = getEditor().getDocument().getTextLength() - 1;
+    final LogicalPosition logicalPosition = getEditor().offsetToLogicalPosition(offset);
+    assertEquals(offset, getEditor().logicalPositionToOffset(logicalPosition));
+
+    final VisualPosition visualPosition = getEditor().offsetToVisualPosition(offset);
+    assertEquals(visualPosition, getEditor().logicalToVisualPosition(logicalPosition));
+    assertEquals(logicalPosition, getEditor().visualToLogicalPosition(visualPosition));
+  }
   
   private void init(final int visibleWidth, @NotNull String fileText) throws IOException {
     init(visibleWidth, fileText, TestFileType.TEXT);

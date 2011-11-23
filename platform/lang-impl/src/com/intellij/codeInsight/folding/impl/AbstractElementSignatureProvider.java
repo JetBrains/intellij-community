@@ -42,7 +42,9 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     if (semicolonIndex >= 0) {
       String parentSignature = signature.substring(semicolonIndex + 1);
       if (processingInfoStorage != null) {
-        processingInfoStorage.append(String.format("Restoring parent by signature '%s'...%n", parentSignature));
+        processingInfoStorage.append(String.format(
+          "Provider '%s'. Restoring parent by signature '%s'...%n", getClass().getName(), parentSignature
+        ));
       }
       parent = restoreBySignature(file, parentSignature, processingInfoStorage);
       if (processingInfoStorage != null) {
@@ -59,17 +61,19 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     String type = tokenizer.nextToken();
     if (processingInfoStorage != null) {
       processingInfoStorage.append(String.format(
-        "Restoring target element by signature '%s'. Parent: %s, same as the given parent: %b%n", signature, parent, parent == file
+        "Provider '%s'. Restoring target element by signature '%s'. Parent: %s, same as the given parent: %b%n",
+        getClass().getName(), signature, parent, parent == file
       ));
     }
-    return restoreBySignatureTokens(file, parent, type, tokenizer);
+    return restoreBySignatureTokens(file, parent, type, tokenizer, processingInfoStorage);
   }
 
   @Nullable
   protected abstract PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                          @NotNull PsiElement parent,
                                                          @NotNull String type,
-                                                         @NotNull StringTokenizer tokenizer);
+                                                         @NotNull StringTokenizer tokenizer,
+                                                         @Nullable StringBuilder processingInfoStorage);
 
   protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<T> hisClass) {
     PsiElement[] children = parent.getChildren();

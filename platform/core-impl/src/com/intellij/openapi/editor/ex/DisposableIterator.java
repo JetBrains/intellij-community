@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl.softwrap.mapping;
+package com.intellij.openapi.editor.ex;
 
-/**
-* @author Denis Zhdanov
-* @since Sep 9, 2010 9:21:22 AM
-*/
-class TabData implements Cloneable {
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-  public final int widthInColumns;
-  public int offset;
+public interface DisposableIterator<T> extends Iterator<T> {
+  void dispose();
+  DisposableIterator EMPTY = new DisposableIterator() {
+    @Override
+    public void dispose() {
+    }
 
-  TabData(int widthInColumns, int offset) {
-    this.widthInColumns = widthInColumns;
-    this.offset = offset;
-  }
+    @Override
+    public boolean hasNext() {
+      return false;
+    }
 
-  @Override
-  public String toString() {
-    return "[" + offset + ", width: " + widthInColumns + "]";
-  }
+    @Override
+    public Object next() {
+      throw new NoSuchElementException();
+    }
 
-  @Override
-  protected TabData clone() {
-    return new TabData(widthInColumns, offset);
-  }
+    @Override
+    public void remove() {
+      throw new IllegalAccessError();
+    }
+  };
 }

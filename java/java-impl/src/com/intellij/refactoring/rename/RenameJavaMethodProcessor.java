@@ -18,8 +18,10 @@ package com.intellij.refactoring.rename;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -235,6 +237,25 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       return element;
     }
     return SuperMethodWarningUtil.checkSuperMethod(psiMethod, RefactoringBundle.message("to.rename"));
+  }
+
+  @Override
+  public void substituteElementToRename(@NotNull PsiElement element,
+                                        @NotNull Editor editor,
+                                        @NotNull final Pass<PsiElement> renameCallback) {
+    PsiMethod psiMethod = (PsiMethod)element;
+    if (psiMethod.isConstructor()) {
+      super.substituteElementToRename(element, editor, renameCallback);
+    }
+    else {
+      SuperMethodWarningUtil.checkSuperMethod(psiMethod, "Rename", new PsiElementProcessor<PsiMethod>() {
+        @Override
+        public boolean execute(@NotNull PsiMethod method) {
+          renameCallback.pass(method);
+          return false;
+        }
+      }, editor);
+    }
   }
 
   private static void findSubmemberHidesMemberCollisions(final PsiMethod method, final String newName, final List<UsageInfo> result) {

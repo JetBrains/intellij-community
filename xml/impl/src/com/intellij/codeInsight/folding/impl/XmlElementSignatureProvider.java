@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.StringTokenizer;
 
@@ -58,7 +59,12 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
   }
 
   @Override
-  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, @NotNull String type, @NotNull StringTokenizer tokenizer) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
+                                                @NotNull PsiElement parent,
+                                                @NotNull String type,
+                                                @NotNull StringTokenizer tokenizer,
+                                                @Nullable StringBuilder processingInfoStorage)
+  {
     if (type.equals("tag")) {
       String name = tokenizer.nextToken();
 

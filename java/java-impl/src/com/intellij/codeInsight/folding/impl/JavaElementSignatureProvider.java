@@ -152,7 +152,12 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
     return null;
   }
 
-  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file, @NotNull PsiElement parent, @NotNull String type, @NotNull StringTokenizer tokenizer) {
+  protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
+                                                @NotNull PsiElement parent,
+                                                @NotNull String type,
+                                                @NotNull StringTokenizer tokenizer,
+                                                @Nullable StringBuilder processingInfoStorage)
+  {
     if (type.equals("imports")) {
       if (!(file instanceof PsiJavaFile)) return null;
       return ((PsiJavaFile)file).getImportList();

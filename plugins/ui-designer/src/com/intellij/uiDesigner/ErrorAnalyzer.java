@@ -80,22 +80,26 @@ public final class ErrorAnalyzer {
                                    @Nullable final GuiEditor editor,
                                    @NotNull final IRootContainer rootContainer,
                                    @Nullable final ProgressIndicator progress) {
+    if (module.isDisposed()) {
+      return;
+    }
+
     // 1. Validate class to bind
     final String classToBind = rootContainer.getClassToBind();
     final PsiClass psiClass;
-    if(classToBind != null){
+    if (classToBind != null) {
       psiClass = FormEditingUtil.findClassToBind(module, classToBind);
-      if(psiClass == null){
+      if (psiClass == null) {
         final QuickFix[] fixes = editor != null ? new QuickFix[]{new CreateClassToBindFix(editor, classToBind)} : QuickFix.EMPTY_ARRAY;
         final ErrorInfo errorInfo = new ErrorInfo(null, null, UIDesignerBundle.message("error.class.does.not.exist", classToBind),
                                                   HighlightDisplayLevel.ERROR, fixes);
         rootContainer.putClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR, errorInfo);
       }
-      else{
+      else {
         rootContainer.putClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR, null);
       }
     }
-    else{
+    else {
       rootContainer.putClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR, null);
       psiClass = null;
     }
@@ -116,13 +120,13 @@ public final class ErrorAnalyzer {
           final String binding = component.getBinding();
 
           // a. Check that field exists and field is not static
-          if(psiClass != null && binding != null) {
+          if (psiClass != null && binding != null) {
             if (validateFieldInClass(component, binding, component.getComponentClassName(), psiClass, editor, module)) return true;
           }
 
           // b. Check that binding is unique
           if (binding != null) {
-            if(usedBindings.contains(binding)){
+            if (usedBindings.contains(binding)) {
               // TODO[vova] implement
               component.putClientProperty(
                 CLIENT_PROP_BINDING_ERROR,
@@ -162,14 +166,14 @@ public final class ErrorAnalyzer {
           // Clear previous error (if any)
           component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, null);
 
-          if(!(component instanceof IContainer)){
+          if (!(component instanceof IContainer)) {
             return true;
           }
 
           final IContainer container = (IContainer)component;
-          if(container instanceof IRootContainer){
+          if (container instanceof IRootContainer) {
             final IRootContainer rootContainer = (IRootContainer)container;
-            if(rootContainer.getComponentCount() > 1){
+            if (rootContainer.getComponentCount() > 1) {
               // TODO[vova] implement
               putError(component, new ErrorInfo(
                 component, null, UIDesignerBundle.message("error.multiple.toplevel.components"),
@@ -178,13 +182,13 @@ public final class ErrorAnalyzer {
               ));
             }
           }
-          else if(container.isXY() && container.getComponentCount() > 0){
+          else if (container.isXY() && container.getComponentCount() > 0) {
             // TODO[vova] implement
             putError(component, new ErrorInfo(
-                component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
-                HighlightDisplayLevel.ERROR,
-                QuickFix.EMPTY_ARRAY
-              )
+              component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
+              HighlightDisplayLevel.ERROR,
+              QuickFix.EMPTY_ARRAY
+            )
             );
           }
           return true;
@@ -199,14 +203,14 @@ public final class ErrorAnalyzer {
       if (formPsiFile != null && rootContainer instanceof RadRootContainer) {
         final List<FormInspectionTool> formInspectionTools = new ArrayList<FormInspectionTool>();
         final FormInspectionTool[] registeredFormInspections = Extensions.getExtensions(FormInspectionTool.EP_NAME);
-        for(FormInspectionTool formInspectionTool: registeredFormInspections) {
+        for (FormInspectionTool formInspectionTool : registeredFormInspections) {
           if (formInspectionTool.isActive(formPsiFile) && !rootContainer.isInspectionSuppressed(formInspectionTool.getShortName(), null)) {
             formInspectionTools.add(formInspectionTool);
           }
         }
 
         if (formInspectionTools.size() > 0 && editor != null) {
-          for(FormInspectionTool tool: formInspectionTools) {
+          for (FormInspectionTool tool : formInspectionTools) {
             tool.startCheckForm(rootContainer);
           }
           FormEditingUtil.iterate(
@@ -215,7 +219,7 @@ public final class ErrorAnalyzer {
               public boolean visit(final RadComponent component) {
                 if (progress != null && progress.isCanceled()) return false;
 
-                for(FormInspectionTool tool: formInspectionTools) {
+                for (FormInspectionTool tool : formInspectionTools) {
                   if (rootContainer.isInspectionSuppressed(tool.getShortName(), component.getId())) continue;
                   ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
                   if (errorInfos != null) {
@@ -231,7 +235,7 @@ public final class ErrorAnalyzer {
               }
             }
           );
-          for(FormInspectionTool tool: formInspectionTools) {
+          for (FormInspectionTool tool : formInspectionTools) {
             tool.doneCheckForm(rootContainer);
           }
         }

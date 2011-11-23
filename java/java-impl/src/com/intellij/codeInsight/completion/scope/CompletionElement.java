@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,16 +26,12 @@ import com.intellij.psi.util.PsiUtilCore;
  * To change this template use Options | File Templates.
  */
 public class CompletionElement{
-  private final PsiType myQualifier;
-  private final PsiClass myQualifierClass;
   private final Object myElement;
   private final PsiSubstitutor mySubstitutor;
 
-  public CompletionElement(PsiType qualifier, Object element, PsiSubstitutor substitutor, final PsiClass qualifierClass){
+  public CompletionElement(Object element, PsiSubstitutor substitutor) {
     myElement = element;
-    myQualifier = qualifier;
     mySubstitutor = substitutor;
-    myQualifierClass = qualifierClass;
   }
 
   public PsiSubstitutor getSubstitutor(){
@@ -46,34 +42,22 @@ public class CompletionElement{
     return myElement;
   }
 
-  public Object getUniqueId(){
-    final String name;
+  @Nullable
+  Object getUniqueId(){
     if(myElement instanceof PsiClass){
-      name = ((PsiClass)myElement).getQualifiedName();
+      return ((PsiClass)myElement).getQualifiedName();
     }
-    else if(myElement instanceof PsiPackage){
-      name = ((PsiPackage)myElement).getQualifiedName();
+    if(myElement instanceof PsiPackage){
+      return ((PsiPackage)myElement).getQualifiedName();
     }
-    else if(myElement instanceof PsiMethod){
+    if(myElement instanceof PsiMethod){
       return ((PsiMethod)myElement).getSignature(mySubstitutor);
     }
-    else if (myElement instanceof PsiField) {
-      final PsiField field = (PsiField)myElement;
-      final String s = field.getName();
-      if (myQualifierClass != null || !field.hasModifierProperty(PsiModifier.STATIC)) return "#" + s;
-      return field.getContainingClass().getQualifiedName() + "#" + s;
-    }
-    else if(myElement instanceof PsiElement){
-      name = PsiUtilCore.getName((PsiElement)myElement);
-    }
-    else{
-      name = "";
+    if (myElement instanceof PsiVariable) {
+      return "#" + ((PsiVariable)myElement).getName();
     }
 
-    return name;
+    return null;
   }
 
-  public PsiType getQualifier(){
-    return myQualifier;
-  }
 }

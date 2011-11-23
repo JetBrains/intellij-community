@@ -426,14 +426,4 @@ public class JVMNameUtil {
     }
     return "";
   }
-
-  public static PsiClass getTopLevelParentClass(PsiClass psiClass) {
-    PsiClass enclosing = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
-    while (enclosing != null) {
-      psiClass = enclosing;
-      enclosing = PsiTreeUtil.getParentOfType(enclosing, PsiClass.class, true); 
-    }
-    return psiClass;
-  }
-
 }

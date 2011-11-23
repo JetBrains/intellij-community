@@ -101,6 +101,7 @@ public class Splitter extends JPanel {
     super.add(myDivider);
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(this);
+    setOpaque(false);
   }
 
   public void setShowDividerControls(boolean showDividerControls) {
@@ -463,7 +464,7 @@ public class Splitter extends JPanel {
       myResizeEnabled = true;
       setFocusable(false);
       enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
-
+      setOpaque(false);
       setOrientation(myVerticalSplit);
     }
 
@@ -486,7 +487,7 @@ public class Splitter extends JPanel {
                                                        GridBagConstraints.CENTER, GridBagConstraints.EAST,
                                                        new Insets(0, leftInsetIcon, 0, 0), 0, 0));
 
-      if (myShowDividerControls) {
+      if (myShowDividerControls && false) {
         int xMask = isVerticalSplit ? 1 : 0;
         int yMask = isVerticalSplit ? 0 : 1;
 

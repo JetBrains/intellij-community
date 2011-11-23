@@ -98,7 +98,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
         numberOfSymbolsToCopy = Math.min(escapedEndOffset, fileEndOffset) - Math.max(fileStartOffset, escapedStartOffset);
         if (numberOfSymbolsToCopy > 0) {
           textWasChanged = true;
-          buffer.append(unescapeStringCharacters(text.substring(givenTextStartOffset, givenTextStartOffset + numberOfSymbolsToCopy)));
+          buffer.append(unescape(text.substring(givenTextStartOffset, givenTextStartOffset + numberOfSymbolsToCopy), element));
           givenTextStartOffset += numberOfSymbolsToCopy;
         }
 
@@ -112,7 +112,12 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     }
     return textWasChanged ? buffer.toString() : null;
   }
-  
+
+  @NotNull
+  protected String unescape(String text, PsiElement token) {
+    return unescapeStringCharacters(text);
+  }
+
   public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -139,9 +144,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       @NonNls String breaker = getLineBreaker(token);
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        buffer.append(escapeCharCharacters(line, token, escapeSlashes));
-        if (i != lines.length - 1) buffer.append(breaker);
+        buffer.append(escapeCharCharacters(lines[i], token, escapeSlashes));
+        if (i != lines.length - 1 || "\n".equals(breaker) && text.endsWith("\n")) {
+          buffer.append(breaker);
+        }
       }
       text = buffer.toString();
     }

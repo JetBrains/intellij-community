@@ -320,25 +320,31 @@ public class EditorUtil {
     EditorEx editorImpl = (EditorEx)editor;
     int offset = start;
     IterationState state = new IterationState(editorImpl, start, end, false);
-    int fontType = state.getMergedAttributes().getFontType();
-    int column = currentColumn[0];
-    int spaceSize = getSpaceWidth(fontType, editorImpl);
-    for (; column < columnNumber && offset < end; offset++) {
-      if (offset >= state.getEndOffset()) {
-        state.advance();
-        fontType = state.getMergedAttributes().getFontType();
-      }
+    int column;
+    try {
+      int fontType = state.getMergedAttributes().getFontType();
+      column = currentColumn[0];
+      int spaceSize = getSpaceWidth(fontType, editorImpl);
+      for (; column < columnNumber && offset < end; offset++) {
+        if (offset >= state.getEndOffset()) {
+          state.advance();
+          fontType = state.getMergedAttributes().getFontType();
+        }
 
-      char c = text.charAt(offset);
-      if (c == '\t') {
-        int prevX = x;
-        x = nextTabStop(x, editorImpl);
-        column += columnsNumber(x - prevX, spaceSize);
+        char c = text.charAt(offset);
+        if (c == '\t') {
+          int prevX = x;
+          x = nextTabStop(x, editorImpl);
+          column += columnsNumber(x - prevX, spaceSize);
+        }
+        else {
+          x += charWidth(c, fontType, editorImpl);
+          column++;
+        }
       }
-      else {
-        x += charWidth(c, fontType, editorImpl);
-        column++;
-      }
+    }
+    finally {
+      state.dispose();
     }
 
     if (column == columnNumber) {

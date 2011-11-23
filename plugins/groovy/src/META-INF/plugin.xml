@@ -252,6 +252,8 @@
     <weigher key="proximity" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrReferenceListWeigher"
              id="groovyReferenceListWeigher" order="before openedInEditor" />
 
+    <topLevelClassProvider implementation="org.jetbrains.plugins.groovy.debugger.GroovyTopLevelParentClassProvider"/>
+
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
 
     <useScopeEnlarger implementation="org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger"/>
