@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -38,13 +38,12 @@ public class Advertiser {
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
     @Override
     public Dimension getPreferredSize() {
-      List<String> texts = getTexts();
-      if (texts.isEmpty()) {
+      if (myTexts.isEmpty()) {
         return new Dimension(-1, 0);
       }
 
       int maxSize = 0;
-      for (String label : texts) {
+      for (String label : myTexts) {
         maxSize = Math.max(maxSize, createLabel(label).getPreferredSize().width);
       }
 
@@ -78,11 +77,10 @@ public class Advertiser {
   }
 
   private void updateAdvertisements() {
-    List<String> texts = getTexts();
-    myNextLabel.setVisible(texts.size() > 1);
+    myNextLabel.setVisible(myTexts.size() > 1);
     myTextPanel.removeAll();
-    if (!texts.isEmpty()) {
-      String text = texts.get(myCurrentItem % texts.size());
+    if (!myTexts.isEmpty()) {
+      String text = myTexts.get(myCurrentItem % myTexts.size());
       myTextPanel.add(createLabel(text));
     }
     myComponent.revalidate();
@@ -95,17 +93,14 @@ public class Advertiser {
     return label;
   }
 
-  private synchronized List<String> getTexts() {
-    return new ArrayList<String>(myTexts);
-  }
-
   public void showRandomText() {
     int count = myTexts.size();
     myCurrentItem = count > 0 ? new Random().nextInt(count) : 0;
     updateAdvertisements();
   }
 
-  public synchronized void clearAdvertisements() {
+  public void clearAdvertisements() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myTexts.clear();
     myCurrentItem = 0;
     updateAdvertisements();
@@ -116,14 +111,10 @@ public class Advertiser {
     return font.deriveFont((float)(font.getSize() - 2));
   }
 
-  public synchronized void addAdvertisement(@NotNull String text) {
+  public void addAdvertisement(@NotNull String text) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myTexts.add(text);
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        updateAdvertisements();
-      }
-    });
+    updateAdvertisements();
   }
 
   public JComponent getAdComponent() {
