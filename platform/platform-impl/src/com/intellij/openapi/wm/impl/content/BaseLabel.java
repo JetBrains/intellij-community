@@ -53,7 +53,7 @@ class BaseLabel extends JLabel {
 
   private void updateFont() {
     Font f = UIUtil.getLabelFont();
-    Font baseFont = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 1));
+    Font baseFont = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
     if (myBold) {
       setFont(baseFont.deriveFont(Font.BOLD));
     }
