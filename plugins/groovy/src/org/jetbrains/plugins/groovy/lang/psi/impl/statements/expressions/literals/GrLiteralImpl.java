@@ -43,7 +43,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 /**
  * @author ilyas
  */
-public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLanguageInjectionHost {
+public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLanguageInjectionHost {
 
   private static final Function<GrLiteralImpl,PsiType> TYPE_CALCULATOR = new NullableFunction<GrLiteralImpl, PsiType>() {
     @Override

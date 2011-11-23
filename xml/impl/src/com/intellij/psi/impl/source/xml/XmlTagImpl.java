@@ -615,7 +615,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
         final int s = result.size();
         XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
-        return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, getContainingFile());
 
       }
     });

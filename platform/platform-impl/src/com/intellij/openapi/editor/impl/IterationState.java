@@ -35,15 +35,13 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-@SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage in AbstractList.iterator() produced otherwise.
 public final class IterationState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
   private final TextAttributes myMergedAttributes = new TextAttributes();
 
   private final HighlighterIterator myHighlighterIterator;
-  private final HighlighterSweep myView = new HighlighterSweep();
-
-  private final HighlighterSweep myDoc = new HighlighterSweep();
+  private final HighlighterSweep myView;
+  private final HighlighterSweep myDoc;
 
   private int myStartOffset;
 
@@ -71,6 +69,9 @@ public final class IterationState {
   private final EditorEx myEditor;
   private final Color myReadOnlyColor;
 
+  /**
+   * You MUST CALL {@link #dispose()} afterwards
+   */
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = (DocumentEx)editor.getDocument();
@@ -104,22 +105,29 @@ public final class IterationState {
     myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
 
     MarkupModelEx editorMarkup = (MarkupModelEx)editor.getMarkupModel();
-    myView.init(editorMarkup, start, myEnd);
+    myView = new HighlighterSweep(editorMarkup, start, myEnd);
 
     final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), true);
-    myDoc.init(docMarkup, start, myEnd);
+    myDoc = new HighlighterSweep(docMarkup, start, myEnd);
 
     myEndOffset = myStartOffset;
 
     advance();
   }
 
-  private class HighlighterSweep {
-    private RangeHighlighterEx myNextHighlighter = null;
-    private PushBackIterator<RangeHighlighterEx> myIterator;
+  public void dispose() {
+    myView.dispose();
+    myDoc.dispose();
+  }
 
-    private void init(@NotNull MarkupModelEx markupModel, int start, int end) {
-      myIterator = new PushBackIterator<RangeHighlighterEx>(markupModel.overlappingIterator(start, end));
+  private class HighlighterSweep {
+    private RangeHighlighterEx myNextHighlighter;
+    private final PushBackIterator<RangeHighlighterEx> myIterator;
+    private final DisposableIterator<RangeHighlighterEx> myDisposableIterator;
+
+    private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end) {
+      myDisposableIterator = markupModel.overlappingIterator(start, end);
+      myIterator = new PushBackIterator<RangeHighlighterEx>(myDisposableIterator);
       int skipped = 0;
       while (myIterator.hasNext()) {
         RangeHighlighterEx highlighter = myIterator.next();
@@ -176,6 +184,10 @@ public final class IterationState {
       }
       return Integer.MAX_VALUE;
     }
+
+    public void dispose() {
+      myDisposableIterator.dispose();
+    }
   }
 
   private boolean skipHighlighter(@NotNull RangeHighlighterEx highlighter) {
@@ -230,6 +242,7 @@ public final class IterationState {
   private int getGuardedBlockEnd(int start) {
     List<RangeMarker> blocks = myDocument.getGuardedBlocks();
     int min = myEnd;
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < blocks.size(); i++) {
       RangeMarker block = blocks.get(i);
       if (block.getStartOffset() > start) {
@@ -257,7 +270,6 @@ public final class IterationState {
 
   private void advanceSegmentHighlighters() {
     myDoc.advance();
-
     myView.advance();
 
     for (int i = myCurrentHighlighters.size() - 1; i >= 0; i--) {
@@ -296,6 +308,7 @@ public final class IterationState {
   private int getMinSegmentHighlightersEnd() {
     int end = myEnd;
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myCurrentHighlighters.size(); i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (highlighter.getAffectedAreaEndOffset() < end) {
@@ -332,6 +345,7 @@ public final class IterationState {
       ContainerUtil.quickSort(myCurrentHighlighters, LayerComparator.INSTANCE);
     }
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
@@ -342,6 +356,7 @@ public final class IterationState {
     List<TextAttributes> cachedAttributes = myCachedAttributesList;
     cachedAttributes.clear();
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (selection != null && highlighter.getLayer() < HighlighterLayer.SELECTION) {
@@ -387,6 +402,7 @@ public final class IterationState {
     EffectType effectType = null;
     int fontType = 0;
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < cachedAttributes.size(); i++) {
       TextAttributes attrs = cachedAttributes.get(i);
 
@@ -453,6 +469,7 @@ public final class IterationState {
 
     ContainerUtil.quickSort(myCurrentHighlighters, LayerComparator.INSTANCE);
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myCurrentHighlighters.size(); i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {

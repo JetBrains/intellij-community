@@ -144,9 +144,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       @NonNls String breaker = getLineBreaker(token);
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        buffer.append(escapeCharCharacters(line, token, escapeSlashes));
-        if (i != lines.length - 1) buffer.append(breaker);
+        buffer.append(escapeCharCharacters(lines[i], token, escapeSlashes));
+        if (i != lines.length - 1 || "\n".equals(breaker) && text.endsWith("\n")) {
+          buffer.append(breaker);
+        }
       }
       text = buffer.toString();
     }
