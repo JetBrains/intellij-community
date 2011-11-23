@@ -25,39 +25,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
   int myAddImportsOld
 
-  public void testEscapeSlashesInRegex() {
-    myFixture.configureByText 'a.groovy', '<selection>a/b</selection>'
-    myFixture.performEditorAction IdeActions.ACTION_COPY
-    myFixture.configureByText 'b.groovy', 'def x = /smth<caret>/'
-    myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult 'def x = /smtha\\/b<caret>/'
-  }
-
-  public void testEscapeSlashesInRegexFromRegex() {
-    myFixture.configureByText 'a.groovy', 'def x = /<selection>a\\/b</selection>/'
-    myFixture.performEditorAction IdeActions.ACTION_COPY
-    myFixture.configureByText 'b.groovy', 'def x = /smth<caret>/'
-    myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult 'def x = /smtha\\/b<caret>/'
-  }
-  
-  void testDontEscapeSymbolsInRegex(){
-    myFixture.configureByText 'a.groovy', '''def x = <selection>a/b</selection>'''
-    myFixture.performEditorAction IdeActions.ACTION_COPY
-    myFixture.configureByText 'b.groovy', 'def x = /<caret> /'
-    myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult '''def x = /a\\/b /'''
-  }
-
-  public void testEscapeDollarInGString() {
-    myFixture.configureByText 'a.groovy', '''def x = '<selection>$a</selection>b/'''
-    myFixture.performEditorAction IdeActions.ACTION_COPY
-    myFixture.configureByText 'b.groovy', 'def x = "smth<caret>h"'
-    myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult 'def x = "smth\\$a<caret>h"'
-
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -73,41 +40,50 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
     settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld;
     super.tearDown();
   }
+  
+  private void doTest(String fromFileName, String fromText, String toText, String expected) {
+    myFixture.configureByText fromFileName, fromText
+    myFixture.performEditorAction IdeActions.ACTION_COPY
+    myFixture.configureByText 'b.groovy', toText
+    myFixture.performEditorAction IdeActions.ACTION_PASTE
+    myFixture.checkResult expected
+  }
+
+  public void testEscapeSlashesInRegex() {
+    doTest 'a.groovy', '<selection>a/b</selection>', 'def x = /smth<caret>/', 'def x = /smtha\\/b<caret>/'
+  }
+
+  public void testEscapeSlashesInRegexFromRegex() {
+    doTest 'a.groovy', 'def x = /<selection>a\\/b</selection>/', 'def x = /smth<caret>/', 'def x = /smtha\\/b<caret>/'
+  }
+
+  void testDontEscapeSymbolsInRegex(){
+    doTest 'a.groovy', '''def x = <selection>a/b</selection>''', 'def x = /<caret> /', '''def x = /a\\/b /'''
+  }
+
+  public void testEscapeDollarInGString() {
+    doTest 'a.groovy', '''def x = '<selection>$a</selection>b/''', 'def x = "smth<caret>h"', 'def x = "smth\\$a<caret>h"'
+
+  }
 
   public void testRestoreImports() {
     myFixture.addClass("package foo; public class Foo {}")
 
-    myFixture.configureByText 'a.groovy', '''import foo.*; <selection>Foo f</selection>'''
-    myFixture.performEditorAction IdeActions.ACTION_COPY
-    myFixture.configureByText 'b.groovy', '<caret>'
-    myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult '''import foo.Foo
+    doTest 'a.groovy', '''import foo.*; <selection>Foo f</selection>''', '<caret>', '''import foo.Foo
 
 Foo f'''
   }
 
   public void testPasteMultilineIntoMultilineGString() throws Exception {
-    myFixture.configureByText 'a.txt', '<selection>a/b\nc/d</selection>'
-    myFixture.performEditorAction IdeActions.ACTION_COPY
-    myFixture.configureByText 'b.groovy', 'def x = """smth<caret>"""'
-    myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult 'def x = """smtha/b\nc/d<caret>"""'
+    doTest 'a.txt', '<selection>a/b\nc/d</selection>', 'def x = """smth<caret>"""', 'def x = """smtha/b\nc/d<caret>"""'
   }
 
   public void testPasteMultilineIntoString() throws Exception {
-    myFixture.configureByText 'a.txt', '<selection>a\nd</selection>'
-    myFixture.performEditorAction IdeActions.ACTION_COPY
-    myFixture.configureByText 'b.groovy', "def x = 'smth<caret>'"
-    myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult "def x = 'smtha\\n' +\n        'd<caret>'"
+    doTest 'a.txt', '<selection>a\nd</selection>', "def x = 'smth<caret>'", "def x = 'smtha\\n' +\n        'd<caret>'"
   }
 
   public void testPasteMultilineIntoGString() throws Exception {
-    myFixture.configureByText 'a.txt', '<selection>a\nd</selection>'
-    myFixture.performEditorAction IdeActions.ACTION_COPY
-    myFixture.configureByText 'b.groovy', 'def x = "smth<caret>"'
-    myFixture.performEditorAction IdeActions.ACTION_PASTE
-    myFixture.checkResult 'def x = "smtha\\n" +\n        "d<caret>"'
+    doTest  'a.txt', '<selection>a\nd</selection>', 'def x = "smth<caret>"', 'def x = "smtha\\n" +\n        "d<caret>"'
   }
 
 }
