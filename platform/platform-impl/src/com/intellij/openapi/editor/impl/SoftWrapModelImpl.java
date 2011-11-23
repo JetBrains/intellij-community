@@ -431,8 +431,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDirty = false;
     }
     
-    myApplianceManager.recalculateIfNecessary();
-    return true;
+    return myApplianceManager.recalculateIfNecessary();
   }
 
   /**
