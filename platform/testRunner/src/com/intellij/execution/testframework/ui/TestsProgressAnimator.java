@@ -87,9 +87,7 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
   }
 
   public void stopMovie() {
-    if (myTreeBuilder != null && myCurrentTestCase != null) {
-      repaintSubTree();
-    }
+    repaintSubTree();
     setCurrentTestCase(null);
     cancelAlarm();
   }
@@ -109,7 +107,9 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
   }
 
   private void repaintSubTree() {
-    myTreeBuilder.repaintWithParents(myCurrentTestCase);
+    if (myTreeBuilder != null && myCurrentTestCase != null) {
+      myTreeBuilder.repaintWithParents(myCurrentTestCase);
+    }
   }
 
   private void scheduleRepaint() {
