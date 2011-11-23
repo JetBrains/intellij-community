@@ -228,7 +228,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         panel.setBorder(new DottedBorder(UIUtil.getTableForeground()));
       }
     }
-    panel.add(field, BorderLayout.CENTER);
+    panel.add(field, BorderLayout.WEST);
     return panel;
   }
 
