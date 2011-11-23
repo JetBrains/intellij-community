@@ -503,17 +503,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     @Nullable
     private OccurenceInfo goToPointer(TodoItemNode pointer) {
       if (pointer == null) return null;
-      DefaultMutableTreeNode node = myTodoTreeBuilder.getNodeForElement(pointer);
-      if (node == null) {
-        myTodoTreeBuilder.buildNodeForElement(pointer);
-        node = myTodoTreeBuilder.getNodeForElement(pointer);
-        if (node == null) {
-          // TODO[vova] it seems that this check isn't required any more bacause it was side effect of SCR#7063
-          // TODO[vova] try to remove this check in Aurora
-          return null;
-        }
-      }
-      TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
+      myTodoTreeBuilder.select(pointer);
       return new OccurenceInfo(
         new OpenFileDescriptor(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
                                pointer.getValue().getRangeMarker().getStartOffset()),
