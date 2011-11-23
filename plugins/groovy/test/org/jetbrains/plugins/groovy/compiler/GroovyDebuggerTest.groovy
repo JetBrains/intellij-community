@@ -211,6 +211,22 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
       eval 'a', '2'
     }
   }
+  
+  void testAnonymousClassInScript() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+new Runnable() {
+  void run() {
+    print 'foo'
+  }
+}.run()
+
+''')
+    addBreakpoint 'Foo.groovy', 2
+    runDebugger 'Foo', {
+      waitForBreakpoint()
+      eval '1+1', '2'
+    }
+  }
 
   private def addBreakpoint(String fileName, int line) {
     VirtualFile file = null
