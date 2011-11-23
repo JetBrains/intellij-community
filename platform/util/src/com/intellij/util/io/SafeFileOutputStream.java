@@ -27,6 +27,7 @@ import java.io.*;
  */
 public class SafeFileOutputStream extends OutputStream {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.SafeFileOutputStream");
+
   private final File myTargetFile;
   private final boolean myPreserveAttributes;
   private final OutputStream myBackDoorStream;
@@ -53,7 +54,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.write(b);
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -64,7 +65,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.write(b);
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -76,7 +77,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.write(b, off, len);
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -88,7 +89,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.flush();
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -100,7 +101,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.close();
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       FileUtil.delete(backdoorFile());
       throw e;
     }
