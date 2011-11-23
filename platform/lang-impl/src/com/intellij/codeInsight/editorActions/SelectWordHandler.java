@@ -121,7 +121,9 @@ public class SelectWordHandler extends EditorActionHandler {
 
       element = element.getNextSibling();
       if (element == null) return;
-      caretOffset = element.getTextRange().getStartOffset();
+      TextRange range = element.getTextRange();
+      if (range == null) return; // Fix NPE (EA-29110)
+      caretOffset = range.getStartOffset();
     }
 
     if (element instanceof OuterLanguageElement) {
