@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -59,9 +60,12 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -132,7 +136,25 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
+        if (LOG.isDebugEnabled()) {
+          StringWriter sw = new StringWriter();
+          new Throwable().printStackTrace(new PrintWriter(sw));
+          LOG.debug("selection changed. selected:  " + toStringPaths(myView.getSelectionPaths()) + " from: " + sw.toString());
+        }
         changeDetails();
+      }
+
+      private String toStringPaths(TreePath[] paths) {
+        if (paths == null) return "null";
+        if (paths.length == 0) return "empty";
+        final StringBuilder sb = new StringBuilder();
+        for (TreePath path : paths) {
+          if (sb.length() > 0) {
+            sb.append(", ");
+          }
+          sb.append(path.toString());
+        }
+        return sb.toString();
       }
     };
   }
