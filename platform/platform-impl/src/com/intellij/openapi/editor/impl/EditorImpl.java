@@ -2499,8 +2499,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public String dumpState() {
-    return "use soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off") +  ", soft wraps data: " + getSoftWrapModel()
-           + "\n\nfolding data: " + getFoldingModel() + "\n\ndocument info: " + myDocument.dumpState();
+    return "prefix: '" + (myPrefixText == null ? "none" : new String(myPrefixText))
+           + "', allow caret inside tab: " + mySettings.isCaretInsideTabs()
+           + ", allow caret after line end: " + mySettings.isVirtualSpace()
+           + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
+           +  ", soft wraps data: " + getSoftWrapModel()
+           + "\n\nfolding data: " + getFoldingModel()
+           + "\n\ndocument info: " + myDocument.dumpState();
   }
   
   private class CachedFontContent {

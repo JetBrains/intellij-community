@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -186,21 +187,21 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
     assertIsDispatchThread();
     validateCallContext();
-    moveToLogicalPosition(myEditor.offsetToLogicalPosition(offset), locateBeforeSoftWrap);
-    if (!ignoreWrongMoves && !myEditor.offsetToLogicalPosition(myOffset).equals(myEditor.offsetToLogicalPosition(offset))) {
-      StringBuilder documentInfo = new StringBuilder();
-      Document document = myEditor.getDocument();
-      for (int line = 0; line < document.getLineCount(); line++) {
-        documentInfo.append(line).append(": ").append(document.getLineStartOffset(line)).append("-")
-          .append(document.getLineEndOffset(line)).append(", ");
-      }
-      if (documentInfo.length() > 0) {
-        documentInfo.setLength(documentInfo.length() - 1);
-      } 
+    final LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
+    moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null);
+    if (!ignoreWrongMoves && !myEditor.offsetToLogicalPosition(myOffset).equals(logicalPosition)) {
+      StringBuilder debugBuffer = new StringBuilder();
+      moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer);
+      int textStart = Math.max(0, Math.min(offset, myOffset) - 1);
+      final DocumentEx document = myEditor.getDocument();
+      int textEnd = Math.min(document.getTextLength() - 1, Math.max(offset, myOffset) + 1);
+      CharSequence text = document.getCharsSequence().subSequence(textStart, textEnd);
       LOG.error(
-        "caret moved to wrong offset. Requested: offset=" + offset + ", logical position=" + myEditor.offsetToLogicalPosition(offset)
+        "caret moved to wrong offset. Requested: offset=" + offset + ", logical position=" + logicalPosition
         + " but actual: offset=" + myOffset + ", logical position=" + myLogicalCaret + "(" + myEditor.offsetToLogicalPosition(myOffset)
         + "). " + myEditor.dumpState()
+        + "\n interested text [" + textStart + "; " + textEnd + "): '" + text + "'"
+        + "\n debug trace: " + debugBuffer
       );
     }
   }
@@ -361,11 +362,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
-    moveToLogicalPosition(pos, false);
+    moveToLogicalPosition(pos, false, null);
   }
 
-  private void moveToLogicalPosition(LogicalPosition pos, boolean locateBeforeSoftWrap) {
+  private void moveToLogicalPosition(@NotNull LogicalPosition pos, boolean locateBeforeSoftWrap, @Nullable StringBuilder debugBuffer) {
     assertIsDispatchThread();
+    if (debugBuffer != null) {
+      debugBuffer.append(String.format(
+        "Start moveToLogicalPosition(). Locate before soft wrap: %b, position: %s", locateBeforeSoftWrap, pos
+      ));
+    }
     myDesiredX = -1;
     validateCallContext();
     int column = pos.column;
@@ -377,10 +383,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     Document doc = myEditor.getDocument();
 
     if (column < 0) {
+      if (debugBuffer != null) {
+        debugBuffer.append("Resetting target logical column to zero as it is negative (" + column + ")");
+      }
       column = 0;
       softWrapColumns = 0;
     }
     if (line < 0) {
+      if (debugBuffer != null) {
+        debugBuffer.append("Resetting target logical line to zero as it is negative (" + line + ")");
+      }
       line = 0;
       softWrapLinesBefore = 0;
       softWrapLinesCurrent = 0;
@@ -388,9 +400,17 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     int lineCount = doc.getLineCount();
     if (lineCount == 0) {
+      if (debugBuffer != null) {
+        debugBuffer.append("Resetting target logical line to zero as the document is empty");
+      }
       line = 0;
     }
     else if (line > lineCount - 1) {
+      if (debugBuffer != null) {
+        debugBuffer.append(String.format(
+          "Resetting target logical line (%d) to %d as it is greater than total document lines number", line, lineCount - 1
+        ));
+      }
       line = lineCount - 1;
       softWrapLinesBefore = 0;
       softWrapLinesCurrent = 0;
@@ -400,11 +420,20 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     if (!editorSettings.isVirtualSpace() && line < lineCount && !myEditor.getSelectionModel().hasBlockSelection()) {
       int lineEndOffset = doc.getLineEndOffset(line);
-      int lineEndColumnNumber = myEditor.offsetToLogicalPosition(lineEndOffset).column;
+      final LogicalPosition endLinePosition = myEditor.offsetToLogicalPosition(lineEndOffset);
+      int lineEndColumnNumber = endLinePosition.column;
       if (column > lineEndColumnNumber) {
+        int oldColumn = column;
         column = lineEndColumnNumber;
         if (softWrapColumns != 0) {
           softWrapColumns -= column - lineEndColumnNumber;
+        }
+        if (debugBuffer != null) {
+          debugBuffer.append(String.format(
+            "Resetting target logical column (%d) to %d because caret is not allowed to be located after line end (offset: %d, "
+            + "logical position: %s). Current soft wrap columns value: %d",
+            oldColumn, lineEndColumnNumber, lineEndOffset, endLinePosition, softWrapColumns
+          ));
         }
       }
     }
@@ -424,12 +453,17 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       logicalPositionToUse = new LogicalPosition(line, column);
     }
     setCurrentLogicalCaret(logicalPositionToUse);
-
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
+    if (debugBuffer != null) {
+      debugBuffer.append(String.format("Resulting logical position to use: %s. It's mapped to offset %d", myLogicalCaret, offset));
+    }
 
     FoldRegion collapsedAt = myEditor.getFoldingModel().getCollapsedRegionAtOffset(offset);
 
     if (collapsedAt != null && offset > collapsedAt.getStartOffset()) {
+      if (debugBuffer != null) {
+        debugBuffer.append("Scheduling expansion of fold region ").append(collapsedAt);
+      }
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -447,6 +481,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
 
     myOffset = myEditor.logicalPositionToOffset(myLogicalCaret);
+    if (debugBuffer != null) {
+      debugBuffer.append(String.format("Storing offset %d (mapped from logical position %s)", myOffset, myLogicalCaret));
+    }
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
     myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
@@ -458,7 +495,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (locateBeforeSoftWrap && SoftWrapHelper.isCaretAfterSoftWrap(myEditor)) {
       int lineToUse = myVisibleCaret.line - 1;
       if (lineToUse >= 0) {
-        moveToVisualPosition(new VisualPosition(lineToUse, EditorUtil.getLastVisualLineColumnNumber(myEditor, lineToUse)));
+        final VisualPosition visualPosition = new VisualPosition(lineToUse, EditorUtil.getLastVisualLineColumnNumber(myEditor, lineToUse));
+        if (debugBuffer != null) {
+          debugBuffer.append(String.format(
+            "Adjusting caret position by moving it before soft wrap. Moving to visual position %s", visualPosition
+          ));
+        }
+        moveToVisualPosition(visualPosition);
         return;
       }
     }
@@ -561,7 +604,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     finishUpdate();
 
     DocumentEventImpl event = (DocumentEventImpl)e;
-    final Document document = myEditor.getDocument();
+    final DocumentEx document = myEditor.getDocument();
     boolean performSoftWrapAdjustment = e.getNewLength() > 0 // We want to put caret just after the last added symbol
       // There is a possible case that the user removes text just before the soft wrap. We want to keep caret
       // on a visual line with soft wrap start then.
@@ -576,7 +619,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         final int line;
         try {
           line = event.translateLineViaDiff(myLogicalCaret.line);
-          moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment);
+          moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment, null);
         }
         catch (FilesTooBigForDiffException e1) {
           LOG.info(e1);
@@ -585,7 +628,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
     }
     else {
-      if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
+      if (document.isInBulkUpdate()) return;
       int startOffset = e.getOffset();
       int oldEndOffset = startOffset + e.getOldLength();
 
