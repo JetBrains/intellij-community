@@ -347,6 +347,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myFlushAlarm.addRequest(scrollRunnable, 0, getStateForUpdate());
   }
 
+  public void requestScrollingToEnd() {
+    if (myEditor == null) return;
+    final Runnable scrollRunnable = new Runnable() {
+      public void run() {
+        flushDeferredText(false);
+        if (myEditor == null) return;
+        myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
+    };
+    myFlushAlarm.addRequest(scrollRunnable, 0, getStateForUpdate());
+  }
+
   private static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
