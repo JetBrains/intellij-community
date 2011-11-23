@@ -51,7 +51,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
