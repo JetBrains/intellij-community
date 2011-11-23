@@ -86,4 +86,18 @@ Foo f'''
     doTest  'a.txt', '<selection>a\nd</selection>', 'def x = "smth<caret>"', 'def x = "smtha\\n" +\n        "d<caret>"'
   }
 
+  public void testGStringEolReplace() throws Exception {
+    doTest  'a.txt',
+            '''<selection>first
+second
+</selection>''',
+            '''def x = """
+<selection>foo
+</selection>"""''',
+            '''def x = """
+first
+second
+<caret>"""'''
+  }
+
 }
