@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -159,6 +160,18 @@ public abstract class RenamePsiElementProcessor {
   @Nullable
   public PsiElement substituteElementToRename(final PsiElement element, @Nullable Editor editor) {
     return element;
+  }
+
+  /**
+   * Substitutes element to be renamed and initiate rename procedure. Should be used in order to prevent modal dialogs to appear during inplace rename
+   * @param element the element on which refactoring was invoked
+   * @param editor the editor in which inplace refactoring was invoked
+   * @param renameCallback rename procedure which should be called on the chosen substitution
+   */
+  public void substituteElementToRename(@NotNull final PsiElement element, @NotNull Editor editor, @NotNull Pass<PsiElement> renameCallback) {
+    final PsiElement psiElement = substituteElementToRename(element, editor);
+    if (psiElement == null) return;
+    renameCallback.pass(psiElement);
   }
 
   public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames,

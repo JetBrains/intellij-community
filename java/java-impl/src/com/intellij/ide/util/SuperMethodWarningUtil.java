@@ -16,12 +16,17 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
+import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -101,5 +106,52 @@ public class SuperMethodWarningUtil {
     if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) return method;
 
     return null;
+  }
+
+  public static void checkSuperMethod(final PsiMethod method,
+                                      final String actionString,
+                                      final PsiElementProcessor<PsiMethod> processor,
+                                      final Editor editor) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) {
+      processor.execute(method);
+      return;
+    }
+
+    PsiMethod superMethod = method.findDeepestSuperMethod();
+    if (superMethod == null) {
+      processor.execute(method);
+      return;
+    }
+
+    final PsiClass containingClass = superMethod.getContainingClass();
+    if (containingClass == null) {
+      processor.execute(method);
+      return;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      processor.execute(superMethod);
+      return;
+    }
+
+    final PsiMethod[] methods = new PsiMethod[]{superMethod, method};
+    final String renameBase = actionString + " base method";
+    final String renameCurrent = actionString + " only current method";
+    final JBList list = new JBList(renameBase, renameCurrent);
+    JBPopupFactory.getInstance().createListPopupBuilder(list)
+      .setTitle(method.getName() + (containingClass.isInterface() && !aClass.isInterface() ? " implements" : " overrides") + " method of " +
+                SymbolPresentationUtil.getSymbolPresentableText(containingClass))
+      .setMovable(false)
+      .setResizable(false)
+      .setRequestFocus(true)
+      .setItemChoosenCallback(new Runnable() {
+        public void run() {
+          final Object value = list.getSelectedValue();
+          if (value instanceof String) {
+            processor.execute(methods[value.equals(renameBase) ? 0 : 1]);
+          }
+        }
+      }).createPopup().showInBestPositionFor(editor);
   }
 }
