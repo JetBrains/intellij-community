@@ -13,26 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.tabs;
-
-import javax.swing.*;
-
-/**
- * @author pegov
- */
-public class TabsUtil {
-  
-  
-  public static final int TAB_VERTICAL_PADDING = 2;
-  public static final int TABS_BORDER = 1;
-  
-  public static final int ACTIVE_TAB_UNDERLINE_HEIGHT = 4;
-
-  private TabsUtil() {
-  }
-
-  public static int getTabsHeight() {
-    return TAB_VERTICAL_PADDING * 2 + new JLabel("XXX").getPreferredSize().height + 1 /* +1 ??? */; 
-  }
-  
+public class Foo {
+    void test(int i) {
+        if (i > 1) {
+            i <caret>= 1;
+        }
+    }
 }

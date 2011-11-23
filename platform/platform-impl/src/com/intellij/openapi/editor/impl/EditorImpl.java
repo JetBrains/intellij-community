@@ -390,7 +390,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.flushCaretShift();
     myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
 
-    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
+    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListenerAdapter() {
       @Override
       public void softWrapAdded(@NotNull SoftWrap softWrap) {
         mySoftWrapsChanged = true;
@@ -2499,8 +2499,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public String dumpState() {
-    return "use soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off") +  ", soft wraps data: " + getSoftWrapModel()
-           + "\n\nfolding data: " + getFoldingModel() + "\n\ndocument info: " + myDocument.dumpState();
+    return "prefix: '" + (myPrefixText == null ? "none" : new String(myPrefixText))
+           + "', allow caret inside tab: " + mySettings.isCaretInsideTabs()
+           + ", allow caret after line end: " + mySettings.isVirtualSpace()
+           + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
+           +  ", soft wraps data: " + getSoftWrapModel()
+           + "\n\nfolding data: " + getFoldingModel()
+           + "\n\ndocument info: " + myDocument.dumpState();
   }
   
   private class CachedFontContent {
@@ -3325,6 +3330,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     while (start <= end) {
       i = (start + end) / 2;
       FoldRegion region = topLevelCollapsed[i];
+      if (!region.isValid()) {
+        // Folding model is inconsistent (update in progress).
+        return null;
+      }
       int regionVisualLine = offsetToVisualLine(region.getEndOffset() - 1);
       if (regionVisualLine < visualPos.line) {
         start = i + 1;

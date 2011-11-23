@@ -229,8 +229,10 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
       } else if (v instanceof ObjectValue) {
         final Object o = ((ObjectValue)v).getObject();
         return new MyValue(o, o != null ? o.getClass().getName() : "null");
-      } else {
+      } else if (v != null) {
         return new MyValue(v.evaluateAsString(context), v.getDataType());
+      } else {
+        return new MyValue("", "<uninitialized>");
       }
     }
   }

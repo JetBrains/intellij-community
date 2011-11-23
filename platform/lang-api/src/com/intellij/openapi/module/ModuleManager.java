@@ -39,7 +39,7 @@ public abstract class ModuleManager {
    * @param project the project for which the module manager is requested.
    * @return the module manager instance.
    */
-  public static ModuleManager getInstance(Project project) {
+  public static ModuleManager getInstance(@NotNull Project project) {
     return project.getComponent(ModuleManager.class);
   }
 

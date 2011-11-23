@@ -96,7 +96,11 @@ public class EditorWindow {
     myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), getManager().getDockManager(), tabPlacement);
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
   }
-  
+
+  public boolean isShowing() {
+    return myPanel.isShowing();
+  }
+
   private static class AdaptiveBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {

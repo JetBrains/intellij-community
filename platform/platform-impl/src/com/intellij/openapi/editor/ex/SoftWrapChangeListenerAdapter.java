@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.tabs;
+package com.intellij.openapi.editor.ex;
 
-import javax.swing.*;
+import com.intellij.openapi.editor.SoftWrap;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author pegov
+ * @author Denis Zhdanov
+ * @since 11/23/11 7:03 PM
  */
-public class TabsUtil {
+public class SoftWrapChangeListenerAdapter implements SoftWrapChangeListener {
   
-  
-  public static final int TAB_VERTICAL_PADDING = 2;
-  public static final int TABS_BORDER = 1;
-  
-  public static final int ACTIVE_TAB_UNDERLINE_HEIGHT = 4;
-
-  private TabsUtil() {
+  @Override
+  public void recalculationStarts() {
   }
 
-  public static int getTabsHeight() {
-    return TAB_VERTICAL_PADDING * 2 + new JLabel("XXX").getPreferredSize().height + 1 /* +1 ??? */; 
+  @Override
+  public void softWrapAdded(@NotNull SoftWrap softWrap) {
   }
-  
+
+  @Override
+  public void softWrapsRemoved() {
+  }
+
+  @Override
+  public void recalculationEnds() {
+  }
 }

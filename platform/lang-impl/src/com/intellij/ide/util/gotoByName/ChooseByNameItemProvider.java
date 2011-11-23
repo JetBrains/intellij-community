@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.tabs;
+package com.intellij.ide.util.gotoByName;
 
-import javax.swing.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.util.Processor;
 
-/**
- * @author pegov
- */
-public class TabsUtil {
-  
-  
-  public static final int TAB_VERTICAL_PADDING = 2;
-  public static final int TABS_BORDER = 1;
-  
-  public static final int ACTIVE_TAB_UNDERLINE_HEIGHT = 4;
+import java.util.List;
 
-  private TabsUtil() {
-  }
+public interface ChooseByNameItemProvider {
+  List<String> filterNames(ChooseByNameBase base, String[] names, String pattern);
 
-  public static int getTabsHeight() {
-    return TAB_VERTICAL_PADDING * 2 + new JLabel("XXX").getPreferredSize().height + 1 /* +1 ??? */; 
-  }
-  
+  void filterElements(ChooseByNameBase base,
+                      String pattern,
+                      boolean everywhere,
+                      Computable<Boolean> cancelled,
+                      Processor<Object> consumer);
 }
