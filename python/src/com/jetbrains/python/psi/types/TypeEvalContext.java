@@ -8,10 +8,7 @@ import com.jetbrains.python.psi.PyTypedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -24,6 +21,7 @@ public class TypeEvalContext {
   private final PsiFile myOrigin;
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<PyTypedElement, PyType>();
+  private final Set<PyTypedElement> myEvaluating = new HashSet<PyTypedElement>();
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, PsiFile origin) {
     myAllowDataFlow = allowDataFlow;
@@ -113,9 +111,14 @@ public class TypeEvalContext {
       if (myEvaluated.containsKey(element)) {
         return myEvaluated.get(element);
       }
+      if (myEvaluating.contains(element)) {
+        return null;
+      }
+      myEvaluating.add(element);
     }
     PyType result = element.getType(this);
     synchronized (myEvaluated) {
+      myEvaluating.remove(element);
       myEvaluated.put(element, result);
     }
     return result;

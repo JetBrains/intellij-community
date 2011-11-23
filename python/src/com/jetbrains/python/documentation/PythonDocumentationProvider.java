@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.psi.*;
@@ -469,6 +470,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       builder.append(p.getName());
       builder.append(": ");
       builder.append(offset);
+      if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+        builder.append(prefix);
+        builder.append("type ");
+        builder.append(p.getName());
+        builder.append(": ");
+        builder.append(offset);
+      }
     }
     if (checkReturn) {
       RaiseVisitor visitor = new RaiseVisitor();
@@ -476,13 +484,21 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       if (statementList != null) {
         statementList.accept(visitor);
       }
-      if (visitor.myHasReturn)
+      if (visitor.myHasReturn) {
         builder.append(prefix).append("return:").append(offset);
+        if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+          builder.append(prefix).append("rtype:").append(offset);
+        }
+      }
       if (visitor.myHasRaise)
         builder.append(prefix).append("raise:").append(offset);
     }
-    else
+    else {
       builder.append(prefix).append("return:").append(offset);
+      if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+        builder.append(prefix).append("rtype:").append(offset);
+      }
+    }
     return builder.toString();
   }
 
