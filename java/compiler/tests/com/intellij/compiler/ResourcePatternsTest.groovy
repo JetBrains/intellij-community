@@ -1,13 +1,32 @@
 package com.intellij.compiler;
 
+
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author peter
  */
 public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
   String[] oldPatterns
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new DefaultLightProjectDescriptor() {
+      @Override
+      void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+        contentEntry.sourceFolders.each { contentEntry.removeSourceFolder(it) }
+        contentEntry.addSourceFolder(contentEntry.getFile().createChildDirectory(this, "aaa").createChildDirectory(this, "bbb"), false)
+        super.configureModule(module, model, contentEntry)
+      }
+    }
+
+  }
 
   @Override
   protected void setUp() {
@@ -61,8 +80,16 @@ public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
     assert conf.isResourceFile(createFile('goo/foo/zzz'))
   }
 
+  public void testResourceRoot() {
+    conf.addResourceFilePattern('bbb:*.ttt')
+
+    assert conf.isResourceFile(createFile('foo/bar.ttt'))
+    assert !conf.isResourceFile(createFile('foo/bar.xxx'))
+    assert !conf.isResourceFile(myFixture.addFileToProject("aaa/ccc/xxx.ttt", '').virtualFile)
+  }
+
   private VirtualFile createFile(String path) {
-    return myFixture.addFileToProject(path, '').virtualFile
+    return myFixture.addFileToProject("aaa/bbb/" + path, '').virtualFile
   }
 
   private CompilerConfigurationImpl getConf() {
