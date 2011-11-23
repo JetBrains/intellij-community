@@ -126,7 +126,12 @@ public class VariableInplaceRenamer {
     myElementToRename = elementToRename;
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myProject = project;
-    myRenameOffset = myElementToRename != null && myElementToRename.getTextRange() != null ? myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange()) : null;
+    if (myElementToRename != null) {
+      final PsiFile containingFile = myElementToRename.getContainingFile();
+      if (!notSameFile(containingFile.getVirtualFile(), containingFile)) {
+        myRenameOffset = myElementToRename != null && myElementToRename.getTextRange() != null ? myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange()) : null;
+      }
+    }
   }
 
   public boolean performInplaceRename() {
@@ -190,7 +195,7 @@ public class VariableInplaceRenamer {
     return ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
   }
 
-  protected boolean notSameFile(VirtualFile file, PsiFile containingFile) {
+  protected boolean notSameFile(@Nullable VirtualFile file, PsiFile containingFile) {
     return getTopLevelVirtualFile(containingFile.getViewProvider()) != file;
   }
 
