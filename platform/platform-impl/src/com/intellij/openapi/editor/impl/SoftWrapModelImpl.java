@@ -24,9 +24,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
-import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareVisualSizeManager;
+import com.intellij.openapi.editor.impl.softwrap.mapping.*;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +63,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   private final List<DocumentListener>        myDocumentListeners = new ArrayList<DocumentListener>();
   private final List<SoftWrapFoldingListener> myFoldListeners     = new ArrayList<SoftWrapFoldingListener>();
+  private final List<SoftWrapChangeListener>  mySoftWrapListeners = new ArrayList<SoftWrapChangeListener>();
   
   /**
    * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc).
@@ -163,6 +162,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myDocumentListeners.add(myApplianceManager);
     myFoldListeners.add(myApplianceManager);
     applianceManager.addListener(myVisualSizeManager);
+    applianceManager.addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
+      @Override
+      public void onCacheUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
+        for (SoftWrapChangeListener listener : mySoftWrapListeners) {
+          listener.recalculationStarts();
+        }
+      }
+
+      @Override
+      public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal) {
+        for (SoftWrapChangeListener listener : mySoftWrapListeners) {
+          listener.recalculationEnds();
+        }
+      }
+    });
     EditorSettings settings = myEditor.getSettings();
     myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
     myUseSoftWraps = settings.isUseSoftWraps();
@@ -527,6 +541,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
+    mySoftWrapListeners.add(listener);
     return myStorage.addSoftWrapChangeListener(listener);
   }
 
