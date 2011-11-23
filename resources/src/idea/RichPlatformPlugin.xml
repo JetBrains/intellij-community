@@ -80,8 +80,14 @@
 
     <extensionPoint name="libraryTable.attachHandler" interface="com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler"/>
 
-    <extensionPoint name="java.compiler" area="IDEA_PROJECT" interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
-    <extensionPoint name="configuration.ModuleStructureExtension" interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>
+    <extensionPoint name="java.compiler" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
+
+    <extensionPoint name="configuration.ModuleStructureExtension"
+                    interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>
+
+    <extensionPoint name="java.highlighting.filter"
+                    interface="com.intellij.codeInsight.daemon.JavaHighlightingFilter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
