@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -39,9 +40,9 @@ final class ComponentPtrDescriptor extends NodeDescriptor<ComponentPtr> {
     myPtr=ptr;
   }
 
-  public boolean update(){
+  public boolean update() {
     myPtr.validate();
-    if(!myPtr.isValid()){
+    if(!myPtr.isValid()) {
       myPtr=null;
       return true;
     }
@@ -49,7 +50,10 @@ final class ComponentPtrDescriptor extends NodeDescriptor<ComponentPtr> {
     final String oldBinding = myBinding;
     final String oldTitle = myTitle;
     final RadComponent component = myPtr.getComponent();
-    if(component instanceof RadRootContainer){
+    if (component.getModule().isDisposed()) {
+      return false;
+    }
+    if(component instanceof RadRootContainer) {
       myBinding = ((RadRootContainer)component).getClassToBind();
     }
     else{
@@ -59,6 +63,7 @@ final class ComponentPtrDescriptor extends NodeDescriptor<ComponentPtr> {
     return !Comparing.equal(oldBinding,myBinding) || !Comparing.equal(oldTitle, myTitle);
   }
 
+  @Nullable
   public RadComponent getComponent() {
     return myPtr != null ? myPtr.getComponent() : null;
   }

@@ -84,11 +84,17 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
   }
 
-  public void appendDescriptor(IdeaPluginDescriptor descriptor) {
-    myInstalled.add(descriptor);
-    view.add(descriptor);
-    setEnabled(descriptor, true);
-    fireTableDataChanged();
+  public void appendOrUpdateDescriptor(IdeaPluginDescriptor descriptor) {
+    final PluginId descrId = descriptor.getPluginId();
+    final IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
+    if (existing != null) {
+      updateExistingPluginInfo(descriptor, existing);
+    } else {
+      myInstalled.add(descriptor);
+      view.add(descriptor);
+      setEnabled(descriptor, true);
+      fireTableDataChanged();
+    }
   }
 
   public static int getCheckboxColumn() {

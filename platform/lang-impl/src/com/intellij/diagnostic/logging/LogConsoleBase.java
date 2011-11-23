@@ -409,6 +409,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
           myConsole.print(fragment.getText(), consoleViewType);
         }
       }
+      return true;
     }
     else {
       final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(line);
@@ -422,11 +423,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
               myConsole.print(messagePrefix, type);
             }
             myConsole.print(line + "\n", type);
+            return true;
           }
         }
       }
+      return false;
     }
-    return true;
   }
 
   @NotNull

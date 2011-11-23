@@ -64,7 +64,12 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     IElementType tokenType = token.getNode().getElementType();
 
     if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
-      return StringUtil.escapeSlashes(s);
+      if (escapeSlashes) {
+        return StringUtil.escapeSlashes(s);
+      }
+      else {
+        return s;
+      }
     }
 
     String chars;
@@ -87,4 +92,17 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     StringUtil.escapeStringCharacters(s.length(), s, chars, escapeSlashes, buffer);
     return buffer.toString();
   }
+
+  @NotNull
+  @Override
+  protected String unescape(String text, PsiElement token) {
+    final IElementType tokenType = token.getNode().getElementType();
+
+    if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
+      return StringUtil.unescapeSlashes(text);
+    }
+
+    return super.unescape(text, token);
+  }
+
 }

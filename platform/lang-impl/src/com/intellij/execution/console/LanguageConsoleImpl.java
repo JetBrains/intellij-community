@@ -180,9 +180,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
       myFullEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
-      configureFullEditor();
-      setConsoleFilePinned(fileManager);
-
       myHistoryViewer.setHorizontalScrollbarVisible(true);
       myCurrentEditor = myFullEditor;
     }
@@ -201,7 +198,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setFullEditorActions(ActionGroup actionGroup) {
     myFullEditorActions = actionGroup;
-    configureFullEditor();
+    configureFullEditor(myFullEditor);
   }
 
   public void setShowSeparatorLine(boolean showSeparatorLine) {
@@ -539,6 +536,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           for (FileEditor fileEditor : source.getAllEditors(file)) {
             if (!(fileEditor instanceof TextEditor)) continue;
             final Editor editor = ((TextEditor)fileEditor).getEditor();
+            // todo what if it is splitted?
+            myCurrentEditor = editor;
+            myFullEditor = editor;
+            configureFullEditor(editor);
+            setConsoleFilePinned((FileEditorManagerEx)source);
             EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
             editor.getCaretModel().addCaretListener(new CaretListener() {
               public void caretPositionChanged(CaretEvent e) {
@@ -595,20 +597,18 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
         editorManager.closeFile(file);
         myFullEditor = editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
-        configureFullEditor();
-        setConsoleFilePinned(editorManager);
       }
     }
   }
 
-  private void configureFullEditor() {
-    if (myFullEditor == null || myFullEditorActions == null) return;
+  private void configureFullEditor(final Editor editor) {
+    if (editor == null || myFullEditorActions == null) return;
     final JPanel header = new JPanel(new BorderLayout());
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true);
-    actionToolbar.setTargetComponent(myFullEditor.getContentComponent());
+    actionToolbar.setTargetComponent(editor.getContentComponent());
     header.add(actionToolbar.getComponent(), BorderLayout.EAST);
-    myFullEditor.setHeaderComponent(header);
-    myFullEditor.getSettings().setLineMarkerAreaShown(false);
+    editor.setHeaderComponent(header);
+    editor.getSettings().setLineMarkerAreaShown(false);
   }
 
   public void setInputText(final String query) {

@@ -399,64 +399,69 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int docLength = document.getTextLength();
     int patchedStartOffset = startOffset < docLength ? document.getLineStartOffset(document.getLineNumber(startOffset)) : docLength;
     int patchedEndOffset = endOffset <= docLength ? document.getLineEndOffset(document.getLineNumber(endOffset)) + 1 : docLength;
-    Iterator<RangeHighlighterEx> docHighlighters = docMarkup.overlappingIterator(patchedStartOffset, patchedEndOffset);
+    DisposableIterator<RangeHighlighterEx> docHighlighters = docMarkup.overlappingIterator(patchedStartOffset, patchedEndOffset);
 
     final MarkupModelEx editorMarkup = (MarkupModelEx)myEditor.getMarkupModel();
-    Iterator<RangeHighlighterEx> editorHighlighters = editorMarkup.overlappingIterator(startOffset, endOffset);
+    DisposableIterator<RangeHighlighterEx> editorHighlighters = editorMarkup.overlappingIterator(startOffset, endOffset);
 
-    RangeHighlighterEx lastDocHighlighter = null;
-    RangeHighlighterEx lastEditorHighlighter = null;
+    try {
+      RangeHighlighterEx lastDocHighlighter = null;
+      RangeHighlighterEx lastEditorHighlighter = null;
+      while (true) {
+        if (lastDocHighlighter == null && docHighlighters.hasNext()) {
+          lastDocHighlighter = docHighlighters.next();
+          if (!lastDocHighlighter.isValid() || lastDocHighlighter.getAffectedAreaStartOffset() > endOffset) {
+            lastDocHighlighter = null;
+            continue;
+          }
+          if (lastDocHighlighter.getAffectedAreaEndOffset() < startOffset) {
+            lastDocHighlighter = null;
+            continue;
+          }
+        }
 
-    while (true) {
-      if (lastDocHighlighter == null && docHighlighters.hasNext()) {
-        lastDocHighlighter = docHighlighters.next();
-        if (!lastDocHighlighter.isValid() || lastDocHighlighter.getAffectedAreaStartOffset() > endOffset) {
+        if (lastEditorHighlighter == null && editorHighlighters.hasNext()) {
+          lastEditorHighlighter = editorHighlighters.next();
+          if (!lastEditorHighlighter.isValid() || lastEditorHighlighter.getAffectedAreaStartOffset() > endOffset) {
+            lastEditorHighlighter = null;
+            continue;
+          }
+          if (lastEditorHighlighter.getAffectedAreaEndOffset() < startOffset) {
+            lastEditorHighlighter = null;
+            continue;
+          }
+        }
+
+        if (lastDocHighlighter == null && lastEditorHighlighter == null) return;
+
+        final RangeHighlighterEx lowerHighlighter;
+
+        if (less(lastDocHighlighter, lastEditorHighlighter)) {
+          lowerHighlighter = lastDocHighlighter;
           lastDocHighlighter = null;
-          continue;
         }
-        if (lastDocHighlighter.getAffectedAreaEndOffset() < startOffset) {
-          lastDocHighlighter = null;
-          continue;
-        }
-      }
-
-      if (lastEditorHighlighter == null && editorHighlighters.hasNext()) {
-        lastEditorHighlighter = editorHighlighters.next();
-        if (!lastEditorHighlighter.isValid() || lastEditorHighlighter.getAffectedAreaStartOffset() > endOffset) {
+        else {
+          lowerHighlighter = lastEditorHighlighter;
           lastEditorHighlighter = null;
-          continue;
         }
-        if (lastEditorHighlighter.getAffectedAreaEndOffset() < startOffset) {
-          lastEditorHighlighter = null;
-          continue;
+
+        assert lowerHighlighter != null;
+        if (!lowerHighlighter.isValid()) continue;
+
+        int startLineIndex = lowerHighlighter.getDocument().getLineNumber(startOffset);
+        if (startLineIndex < 0 || startLineIndex >= document.getLineCount()) continue;
+
+        int endLineIndex = lowerHighlighter.getDocument().getLineNumber(endOffset);
+        if (endLineIndex < 0 || endLineIndex >= document.getLineCount()) continue;
+
+        if (lowerHighlighter.getEditorFilter().avaliableIn(myEditor)) {
+          processor.process(lowerHighlighter);
         }
       }
-
-      if (lastDocHighlighter == null && lastEditorHighlighter == null) return;
-
-      final RangeHighlighterEx lowerHighlighter;
-
-      if (less(lastDocHighlighter, lastEditorHighlighter)) {
-        lowerHighlighter = lastDocHighlighter;
-        lastDocHighlighter = null;
-      }
-      else {
-        lowerHighlighter = lastEditorHighlighter;
-        lastEditorHighlighter = null;
-      }
-
-      assert lowerHighlighter != null;
-      if (!lowerHighlighter.isValid()) continue;
-
-      int startLineIndex = lowerHighlighter.getDocument().getLineNumber(startOffset);
-      if (startLineIndex < 0 || startLineIndex >= document.getLineCount()) continue;
-
-      int endLineIndex = lowerHighlighter.getDocument().getLineNumber(endOffset);
-      if (endLineIndex < 0 || endLineIndex >= document.getLineCount()) continue;
-
-      if (lowerHighlighter.getEditorFilter().avaliableIn(myEditor)) {
-        processor.process(lowerHighlighter);
-      }
+    }
+    finally {
+      docHighlighters.dispose();
+      editorHighlighters.dispose();
     }
   }
 
@@ -968,7 +973,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public boolean isAnnotationsShown() {
-    return myTextAnnotationGutters.size() > 0;
+    return !myTextAnnotationGutters.isEmpty();
   }
 
   @Override
@@ -1122,7 +1127,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
-    if (toolTip != null && toolTip.length() != 0) {
+    if (toolTip != null && !toolTip.isEmpty()) {
       final Ref<Point> t = new Ref<Point>(e.getPoint());
       int line = myEditor.yPositionToLogicalLine(e.getY());
       ArrayList<GutterIconRenderer> row = myLineToGutterRenderers.get(line);

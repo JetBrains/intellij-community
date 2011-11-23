@@ -16,6 +16,7 @@
 
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 
@@ -25,6 +26,8 @@ import java.io.*;
  * @author max
  */
 public class SafeFileOutputStream extends OutputStream {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.SafeFileOutputStream");
+
   private final File myTargetFile;
   private final boolean myPreserveAttributes;
   private final OutputStream myBackDoorStream;
@@ -51,6 +54,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.write(b);
     }
     catch (IOException e) {
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -61,6 +65,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.write(b);
     }
     catch (IOException e) {
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -72,6 +77,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.write(b, off, len);
     }
     catch (IOException e) {
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -83,6 +89,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.flush();
     }
     catch (IOException e) {
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -94,13 +101,18 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.close();
     }
     catch (IOException e) {
+      LOG.warn(e);
       FileUtil.delete(backdoorFile());
       throw e;
     }
 
+    if (failed) {
+      throw new IOException("Failed to save to backup file (" + backdoorFile() + "). Original file (" + myTargetFile + ") left unchanged.");
+    }
+
     final int permissions = myPreserveAttributes ? FileSystemUtil.getPermissions(myTargetFile) : -1;
-    if (failed || !FileUtil.delete(myTargetFile)) {
-      throw new IOException("Failed to save to " + myTargetFile + ". No data were harmed. Attempt result left at " + backdoorFile());
+    if (!FileUtil.delete(myTargetFile) && myTargetFile.exists()) {
+      throw new IOException("Failed to save to " + myTargetFile + ". The file left unchanged. Attempt result stored to " + backdoorFile());
     }
 
     FileUtil.rename(backdoorFile(), myTargetFile);

@@ -457,6 +457,7 @@
   <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>
   <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
   <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInExplorerTarget"/>
+  <selectInTarget implementation="com.intellij.ide.favoritesTreeView.FavoritesViewSelectInTarget"/>
 
   <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>
 
@@ -653,6 +654,7 @@
   <fileIconProvider implementation="com.intellij.ide.FileIconPatcherImpl"/>
   <renameHandler implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler"/>
   <renameHandler implementation="com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler"/>
+  <completion.contributor language="any" implementationClass="com.intellij.refactoring.rename.inplace.CompletionContributorForInplaceRename" order="first"/>
 
   <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesFileNameDecorator"
                   serviceImplementation="com.intellij.openapi.vcs.changes.ui.WolfChangesFileNameDecorator"/>

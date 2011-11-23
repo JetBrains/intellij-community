@@ -42,13 +42,8 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
   private final GuiEditor myEditor;
 
   public ComponentTreeStructure(@NotNull final GuiEditor editor){
-    myRootElement=new Object() {
-      @Override
-      public String toString() {
-        return "root of component tree structure " + ComponentTreeStructure.this.toString();
-      }
-    };
-    myEditor=editor;
+    myRootElement = new ComponentTreeStructureRoot();
+    myEditor = editor;
   }
 
   public Object getRootElement(){
@@ -107,7 +102,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
   }
 
   public Object getParentElement(final Object element){
-    if(element==myRootElement){
+    if (element instanceof ComponentTreeStructureRoot) {
       return null;
     }
     else if (element instanceof LwInspectionSuppression[] || element instanceof RadButtonGroup[]) {
@@ -179,5 +174,12 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
    */
   public boolean hasSomethingToCommit(){
     return false;
+  }
+
+  private class ComponentTreeStructureRoot {
+    @Override
+    public String toString() {
+      return "root of component tree structure " + ComponentTreeStructure.this.toString();
+    }
   }
 }

@@ -220,7 +220,8 @@ public class PsiCopyPasteManager {
       if (myElements == null || myElements.length == 0) {
         return null;
       }
-      return myElements [0].getProject();
+      final PsiElement element = myElements[0];
+      return element.isValid() ? element.getProject() : null;
     }
   }
 

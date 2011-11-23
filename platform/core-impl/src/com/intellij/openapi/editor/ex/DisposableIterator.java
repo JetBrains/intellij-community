@@ -13,26 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.tabs;
+package com.intellij.openapi.editor.ex;
 
-import javax.swing.*;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-/**
- * @author pegov
- */
-public class TabsUtil {
-  
-  
-  public static final int TAB_VERTICAL_PADDING = 2;
-  public static final int TABS_BORDER = 1;
-  
-  public static final int ACTIVE_TAB_UNDERLINE_HEIGHT = 4;
+public interface DisposableIterator<T> extends Iterator<T> {
+  void dispose();
+  DisposableIterator EMPTY = new DisposableIterator() {
+    @Override
+    public void dispose() {
+    }
 
-  private TabsUtil() {
-  }
+    @Override
+    public boolean hasNext() {
+      return false;
+    }
 
-  public static int getTabsHeight() {
-    return TAB_VERTICAL_PADDING * 2 + new JLabel("XXX").getPreferredSize().height + 1 /* +1 ??? */; 
-  }
-  
+    @Override
+    public Object next() {
+      throw new NoSuchElementException();
+    }
+
+    @Override
+    public void remove() {
+      throw new IllegalAccessError();
+    }
+  };
 }

@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GrStringImpl extends GrExpressionImpl implements GrString {
+public class GrStringImpl extends GrAbstractLiteral implements GrString {
   private static final Function<GrStringImpl,PsiType> TYPE_CALCULATOR = new Function<GrStringImpl, PsiType>() {
     @Override
     public PsiType fun(GrStringImpl grString) {

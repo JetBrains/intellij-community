@@ -68,7 +68,7 @@ public class GitPull extends GitRepositoryAction {
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
     
     final AtomicReference<GitLineHandler> handlerReference = new AtomicReference<GitLineHandler>();
-    new Task.Modal(project, GitBundle.message("pulling.title", dialog.getRemote()), false) {
+    new Task.Modal(project, GitBundle.message("pulling.title", dialog.getRemote()), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(dialog.gitRoot());
@@ -103,8 +103,9 @@ public class GitPull extends GitRepositoryAction {
         final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
     
         GitTask pullTask = new GitTask(project, handlerReference.get(), GitBundle.message("pulling.title", dialog.getRemote()));
+        pullTask.setProgressIndicator(indicator);
         pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-        pullTask.executeModal(new GitTaskResultHandlerAdapter() {
+        pullTask.execute(true, false, new GitTaskResultHandlerAdapter() {
           @Override
           protected void onSuccess() {
             GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);

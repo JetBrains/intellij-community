@@ -26,8 +26,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-
 /**
  * @author max
  */
@@ -46,7 +44,7 @@ public interface MarkupModelEx extends MarkupModel {
   boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
 
   @NotNull
-  Iterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
+  DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
