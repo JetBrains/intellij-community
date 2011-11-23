@@ -9,3 +9,17 @@ def test_union_type():
         pass
     bar = (1,) if True else (1, 2)
     foo(*bar) #pass
+
+# PY-4890
+def test_old_style_iterable():
+    class C:
+        def __getitem__(self, key):
+            if 0 <= key < 10:
+                return key
+            else:
+                raise IndexError('index out of range')
+    def foo(*args):
+        pass
+    xs = C()
+    foo(*xs) #pass
+    foo(*'bar') #pass
