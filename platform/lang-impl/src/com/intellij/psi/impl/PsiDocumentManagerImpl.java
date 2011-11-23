@@ -371,7 +371,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     });
 
     if (ok[0]) {
-      ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject)).startRunInjectors(document, synchronously);
+      // otherwise changes maybe not synced to the document yet, and injectors will crash
+      if (!mySynchronizer.isDocumentAffectedByTransactions(document)) {
+        ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject)).startRunInjectors(document, synchronously);
+      }
       // run after commit actions outside write action
       runAfterCommitActions(document);
       if (DebugUtil.DO_EXPENSIVE_CHECKS) {
