@@ -17,7 +17,7 @@ public class PythonNoseTestConfigurationProducer extends
     final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
     return (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
       PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) && sdk != null &&
-            PyTestFrameworksUtil.isNoseTestInstalled(sdk.getHomePath()));
+            VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk.getHomePath()));
   }
 
 }

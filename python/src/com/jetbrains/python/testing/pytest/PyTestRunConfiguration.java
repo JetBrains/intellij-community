@@ -10,7 +10,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
-import com.jetbrains.python.testing.PyTestFrameworksUtil;
+import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,7 +114,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     if (StringUtil.isEmptyOrSpaces(myTestToRun)) {
       throw new RuntimeConfigurationError("Please specify target folder or script");
     }
-    if (!PyTestFrameworksUtil.isPyTestInstalled(getSdkHome()))
+    if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(getSdkHome()))
       throw new RuntimeConfigurationWarning("No py.test runner found in selected interpreter");
   }
 

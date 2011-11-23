@@ -933,4 +933,11 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.python.testing.VFSTestFrameworkListener</implementation-class>
+    </component>
+  </application-components>
+
 </idea-plugin>
