@@ -112,21 +112,24 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
 
     if (!startedRename) {
-      try {
-        ourPreventInlineRenameFlag.set(Boolean.TRUE);
-
-        RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
-        assert handler != null;
-        handler.invoke(
-          elementToRename.getProject(),
-          editor,
-          elementToRename.getContainingFile(), dataContext
-        );
-      } finally {
-        ourPreventInlineRenameFlag.set(null);
-      }
+      performDialogRename(elementToRename, editor, dataContext);
     }
     return renamer;
+  }
+
+  protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext) {
+    try {
+      ourPreventInlineRenameFlag.set(Boolean.TRUE);
+      RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
+      assert handler != null;
+      handler.invoke(
+        elementToRename.getProject(),
+        editor,
+        elementToRename.getContainingFile(), dataContext
+      );
+    } finally {
+      ourPreventInlineRenameFlag.set(null);
+    }
   }
 
   @Nullable

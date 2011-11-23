@@ -58,11 +58,10 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   private final PsiElement mySubstituted;
   private RangeMarker mySubstitutedRange;
 
-  public MemberInplaceRenamer(@NotNull PsiNameIdentifierOwner elementToRename, Editor editor) {
+  public MemberInplaceRenamer(@NotNull PsiNameIdentifierOwner elementToRename, PsiElement substituted, Editor editor) {
     super(elementToRename, editor);
     myOldName = elementToRename.getName();
-    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
-    mySubstituted = processor.substituteElementToRename(elementToRename, myEditor);
+    mySubstituted = substituted;
     mySubstitutedRange = mySubstituted != null && mySubstituted != myElementToRename && mySubstituted.getTextRange() != null ? myEditor.getDocument().createRangeMarker(mySubstituted.getTextRange()) : null;
 
     showDialogAdvertisement("RenameElement");
