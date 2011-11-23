@@ -3330,6 +3330,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     while (start <= end) {
       i = (start + end) / 2;
       FoldRegion region = topLevelCollapsed[i];
+      if (!region.isValid()) {
+        // Folding model is inconsistent (update in progress).
+        return null;
+      }
       int regionVisualLine = offsetToVisualLine(region.getEndOffset() - 1);
       if (regionVisualLine < visualPos.line) {
         start = i + 1;
