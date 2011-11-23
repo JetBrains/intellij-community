@@ -103,9 +103,22 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       if ("\\".equals(doc.getText(TextRange.create(offset - 1, offset)))) return Result.Continue;
       String pref = element.getText().substring(0, prefixLength);
       String quote = element.getText().substring(prefixLength, prefixLength + 1);
-      doc.insertString(offset, quote + " \\" + pref + quote);
-      caretOffset.set(caretOffset.get() + 3);
-      return Result.Continue;
+      PsiElement parent = string.getParent();
+      String replacementString;
+      if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
+          parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression ||
+          parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
+        replacementString = quote + pref + quote;
+        doc.insertString(offset, replacementString);
+        caretOffset.set(caretOffset.get() + 1);
+        return Result.Continue;
+      }
+      else {
+        replacementString = quote + " \\" + pref + quote;
+        doc.insertString(offset, replacementString);
+        caretOffset.set(caretOffset.get() + 3);
+        return Result.Continue;
+      }
     }
 
     if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
