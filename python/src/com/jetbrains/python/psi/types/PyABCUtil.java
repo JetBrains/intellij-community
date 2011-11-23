@@ -20,19 +20,19 @@ public class PyABCUtil {
   }
 
   public static boolean isSubclass(@NotNull PyClass subClass, @NotNull String superClassName) {
-    final String subClassName = subClass.getName();
     if (PyNames.CALLABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.CALL);
     }
     if (PyNames.HASHABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.HASH);
     }
-    final boolean isIterable = hasMethod(subClass, PyNames.ITER);
+    final boolean hasIter = hasMethod(subClass, PyNames.ITER);
+    final boolean hasGetItem = hasMethod(subClass, PyNames.GETITEM);
     if (PyNames.ITERABLE.equals(superClassName)) {
-      return isIterable || isStringClass(subClassName);
+      return hasIter || hasGetItem;
     }
     if (PyNames.ITERATOR.equals(superClassName)) {
-      return (isIterable && hasMethod(subClass, PyNames.NEXT)) || isStringClass(subClassName);
+      return (hasIter && hasMethod(subClass, PyNames.NEXT)) || hasGetItem;
     }
     final boolean isSized = hasMethod(subClass, PyNames.LEN);
     if (PyNames.SIZED.equals(superClassName)) {
@@ -42,12 +42,11 @@ public class PyABCUtil {
     if (PyNames.CONTAINER.equals(superClassName)) {
       return isContainer;
     }
-    final boolean hasGetItem = hasMethod(subClass, PyNames.GETITEM);
     if (PyNames.SEQUENCE.equals(superClassName)) {
-      return isSized && isIterable && isContainer && hasGetItem;
+      return isSized && hasIter && isContainer && hasGetItem;
     }
     if (PyNames.MAPPING.equals(superClassName)) {
-      return isSized && isIterable && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS);
+      return isSized && hasIter && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS);
     }
     return false;
   }
@@ -73,9 +72,5 @@ public class PyABCUtil {
 
   private static boolean hasMethod(PyClass cls, String name) {
     return cls.findMethodByName(name, true) != null;
-  }
-
-  private static boolean isStringClass(String className) {
-    return "bytes".equals(className) || "str".equals(className) || "unicode".equals(className);
   }
 }

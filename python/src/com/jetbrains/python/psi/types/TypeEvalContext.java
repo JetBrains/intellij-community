@@ -21,7 +21,12 @@ public class TypeEvalContext {
   private final PsiFile myOrigin;
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<PyTypedElement, PyType>();
-  private final Set<PyTypedElement> myEvaluating = new HashSet<PyTypedElement>();
+  private final ThreadLocal<Set<PyTypedElement>> myEvaluating = new ThreadLocal<Set<PyTypedElement>>() {
+    @Override
+    protected Set<PyTypedElement> initialValue() {
+      return new HashSet<PyTypedElement>();
+    }
+  };
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, PsiFile origin) {
     myAllowDataFlow = allowDataFlow;
@@ -111,17 +116,22 @@ public class TypeEvalContext {
       if (myEvaluated.containsKey(element)) {
         return myEvaluated.get(element);
       }
-      if (myEvaluating.contains(element)) {
-        return null;
+    }
+    final Set<PyTypedElement> evaluating = myEvaluating.get();
+    if (evaluating.contains(element)) {
+      return null;
+    }
+    evaluating.add(element);
+    try {
+      PyType result = element.getType(this);
+      synchronized (myEvaluated) {
+        myEvaluated.put(element, result);
       }
-      myEvaluating.add(element);
+      return result;
     }
-    PyType result = element.getType(this);
-    synchronized (myEvaluated) {
-      myEvaluating.remove(element);
-      myEvaluated.put(element, result);
+    finally {
+      evaluating.remove(element);
     }
-    return result;
   }
 
   public boolean maySwitchToAST(StubBasedPsiElement element) {
