@@ -91,7 +91,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
               return;
             }
             PluginDownloader.install(file, file.getName());
-            ((InstalledPluginsTableModel)pluginsModel).appendDescriptor(pluginDescriptor);
+            ((InstalledPluginsTableModel)pluginsModel).appendOrUpdateDescriptor(pluginDescriptor);
             select(pluginDescriptor);
             setRequireShutdown(true);
           }
