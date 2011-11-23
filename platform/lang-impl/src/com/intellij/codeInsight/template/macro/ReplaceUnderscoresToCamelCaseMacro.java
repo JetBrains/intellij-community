@@ -39,13 +39,15 @@ public class ReplaceUnderscoresToCamelCaseMacro extends MacroBase {
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     final String text = getTextResult(params, context, true);
     if (text != null) {
-      final StringBuffer buf = new StringBuffer();
       final List<String> strings = StringUtil.split(text, "_");
-      buf.append(strings.get(0).toLowerCase());
-      for (int i = 1; i < strings.size(); i++) {
-        buf.append(StringUtil.capitalize(strings.get(i).toLowerCase()));
+      if (strings.size() > 0) {
+        final StringBuilder buf = new StringBuilder();
+        buf.append(strings.get(0).toLowerCase());
+        for (int i = 1; i < strings.size(); i++) {
+          buf.append(StringUtil.capitalize(strings.get(i).toLowerCase()));
+        }
+        return new TextResult(buf.toString());
       }
-      return new TextResult(buf.toString());
     }
     return null;
   }
