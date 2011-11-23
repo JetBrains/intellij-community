@@ -16,8 +16,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,18 +44,18 @@ public class DomCompletionContributor extends CompletionContributor{
 
   private boolean domKnowsBetter(final CompletionParameters parameters, final CompletionResultSet result) {
     final PsiElement element = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlTag.class, XmlAttributeValue.class);
-    return element != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        if (isSchemaEnumerated(element)) {
-          return false;
-        }
-        final PsiReference[] references = myProvider.getReferencesByElement(element, new ProcessingContext());
-        if (references.length > 0) {
-          return LegacyCompletionContributor.completeReference(parameters, result, new XmlCompletionData());
-        }
-        return false;
-      }
-    }).booleanValue();
+    if (element == null) {
+      return false;
+    }
+
+    if (isSchemaEnumerated(element)) {
+      return false;
+    }
+    final PsiReference[] references = myProvider.getReferencesByElement(element, new ProcessingContext());
+    if (references.length > 0) {
+      return LegacyCompletionContributor.completeReference(parameters, result, new XmlCompletionData());
+    }
+    return false;
   }
 
   public static boolean isSchemaEnumerated(final PsiElement element) {
