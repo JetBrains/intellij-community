@@ -54,6 +54,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   private String myBaseDir;
   private boolean myModifyingLocation = false;
   private boolean myModifyingProjectName = false;
+  private boolean myExternalModify = false;
 
   private static final Object EMPTY_PROJECT_GENERATOR = new Object();
   private final String mySuggestedProjectName;
@@ -82,13 +83,15 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
                                                                            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
         protected void onFileChoosen(VirtualFile chosenFile) {
           myBaseDir = chosenFile.getPath();
-          if (myProjectNameWasChanged) {
+          if (myProjectNameWasChanged && !myProjectNameTextField.getText().equals(chosenFile.getName())) {
+            myExternalModify = true;
             myLocationField.setText(new File(chosenFile.getPath(), myProjectNameTextField.getText()).toString());
+            myExternalModify = false;
           } else {
-            myModifyingLocation = true;
+            myExternalModify = true;
             myLocationField.setText(chosenFile.getPath());
             myProjectNameTextField.setText(chosenFile.getName());
-            myModifyingLocation = false;
+            myExternalModify = false;
           }
         }
       };
@@ -96,6 +99,9 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        if (myExternalModify) {
+          return;
+        }
         myModifyingLocation = true;
         String path = myLocationField.getText().trim();
         if (path.endsWith(File.separator)) {
@@ -119,7 +125,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
 
     myProjectNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
-        if (!myModifyingLocation) {
+        if (!myModifyingLocation && !myExternalModify) {
           myProjectNameWasChanged = true;
           myModifyingProjectName = true;
           File f = new File(myBaseDir);

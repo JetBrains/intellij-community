@@ -130,6 +130,10 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
     return true;
   }
 
+  @Override
+  public void reportAdditionalInfo(final String text) {
+  }
+
   public void reportWarningMessage(final String message) {
     // todo maybe, use further
   }

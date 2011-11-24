@@ -25,7 +25,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdatingChangeListBuilder");
@@ -38,6 +41,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private final IgnoredFilesComponent myIgnoredFilesComponent;
   private final FileIndexFacade myIndex;
   private final ChangeListManagerGate myGate;
+  private List<String> myAdditionalInfo;
 
   UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
                             final FileHolderComposite composite,
@@ -49,6 +53,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     myIgnoredFilesComponent = ignoredFilesComponent;
     myGate = gate;
     myIndex = PeriodicalTasksCloser.getInstance().safeGetService(changeListWorker.getProject(), FileIndexFacade.class);
+    myAdditionalInfo = new SmartList<String>();
   }
 
   private void checkIfDisposed() {
@@ -195,5 +200,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   public boolean reportChangesOutsideProject() {
     return false;
+  }
+
+  @Override
+  public void reportAdditionalInfo(String text) {
+    myAdditionalInfo.add(text);
+  }
+
+  public List<String> getAdditionalInfo() {
+    return myAdditionalInfo;
   }
 }

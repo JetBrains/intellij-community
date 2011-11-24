@@ -79,7 +79,7 @@ public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditor
               if (editor != null) {
                 final LibraryEditorBase target = (LibraryEditorBase)myEditorComponent.getLibraryEditor();
                 target.removeAllRoots();
-                target.setName(editor.getName());
+                myEditorComponent.renameLibrary(editor.getName());
                 target.setType(myLibraryType);
                 editor.applyTo(target);
                 myEditorComponent.updateRootsTree();

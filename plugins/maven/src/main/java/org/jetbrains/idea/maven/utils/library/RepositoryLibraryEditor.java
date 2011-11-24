@@ -38,7 +38,7 @@ public class RepositoryLibraryEditor extends LibraryPropertiesEditorBase<Reposit
 
     final LibraryEditorBase target = (LibraryEditorBase)myEditorComponent.getLibraryEditor();
     target.removeAllRoots();
-    target.setName(configuration.getDefaultLibraryName());
+    myEditorComponent.renameLibrary(configuration.getDefaultLibraryName());
     target.setType(myLibraryType);
     target.setProperties(configuration.getProperties());
     configuration.addRoots(target);

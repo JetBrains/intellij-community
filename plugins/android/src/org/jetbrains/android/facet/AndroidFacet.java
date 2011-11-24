@@ -40,6 +40,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -349,6 +350,8 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
               return;
             }
 
+            DumbService.getInstance(project).waitForSmartMode();
+
             final HashSet<ResourceEntry> resourceSet = new HashSet<ResourceEntry>();
             AndroidCompileUtil.collectAllResources(AndroidFacet.this, resourceSet);
             myListener.setResourceSet(resourceSet);
@@ -531,14 +534,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       }
     });
     if (module == null) return null;
-
-    if (AndroidCompileUtil.isGenModule(module)) {
-      final Module baseModule = AndroidCompileUtil.getBaseModuleByGenModule(module);
-      if (baseModule != null) {
-        module = baseModule;
-      }
-    }
-
     return getInstance(module);
   }
 

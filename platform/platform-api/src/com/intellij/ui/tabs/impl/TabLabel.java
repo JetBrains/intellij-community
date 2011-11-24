@@ -224,7 +224,12 @@ public class TabLabel extends JPanel {
   }
 
   private int getNonSelectedOffset() {
-    return myTabs.isEditorTabs() ? -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2) + 1 : 2;
+    if (myTabs.isEditorTabs()) {
+      int offset = (TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2);
+      return myTabs.getTabsPosition() == JBTabsPosition.bottom ? -(offset + 1) : -offset + 1;
+    }
+    
+    return 2;
   }
 
   private int getSelectedOffset() {

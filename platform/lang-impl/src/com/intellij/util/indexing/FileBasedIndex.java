@@ -615,7 +615,7 @@ public class FileBasedIndex implements ApplicationComponent {
     finally {
       LOG.info("START INDEX SHUTDOWN");
       try {
-        myChangedFilesCollector.forceUpdate(null, null, true);
+        myChangedFilesCollector.forceUpdate(null, null, null, true);
 
         for (ID<?, ?> indexId : myIndices.keySet()) {
           final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
@@ -764,7 +764,7 @@ public class FileBasedIndex implements ApplicationComponent {
       if (isUpToDateCheckEnabled()) {
         try {
           checkRebuild(indexId, false);
-          myChangedFilesCollector.forceUpdate(project, filter, false);
+          myChangedFilesCollector.forceUpdate(project, filter, restrictedFile, false);
           indexUnsavedDocuments(indexId, project, filter, restrictedFile);
         }
         catch (StorageException e) {
@@ -1777,10 +1777,11 @@ public class FileBasedIndex implements ApplicationComponent {
 
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
 
-    public void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, boolean onlyRemoveOutdatedData) {
+    private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo, 
+                             boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       for (VirtualFile file: getAllFilesToUpdate()) {
-        if (filter == null || filter.accept(file)) {
+        if (filter == null || filter.accept(file) || file == restrictedTo) {
           try {
             myForceUpdateSemaphore.down();
             // process only files that can affect result
@@ -1955,7 +1956,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void removeIndexableSet(IndexableFileSet set) {
-    myChangedFilesCollector.forceUpdate(null, null, true);
+    myChangedFilesCollector.forceUpdate(null, null, null, true);
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
   }
