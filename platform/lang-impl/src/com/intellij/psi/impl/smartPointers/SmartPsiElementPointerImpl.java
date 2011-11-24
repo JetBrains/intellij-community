@@ -203,16 +203,23 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     myElementInfo.fastenBelt(offset, cachedRangeMarker);
   }
 
+  @Override
   @NotNull
-  SmartPointerElementInfo getElementInfo() {
+  public SmartPointerElementInfo getElementInfo() {
     return myElementInfo;
   }
 
-  protected static boolean pointsToTheSameElementAs(SmartPsiElementPointer pointer1, SmartPsiElementPointer pointer2) {
+  protected static boolean pointsToTheSameElementAs(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
+    if (pointer1 == pointer2) return true;
     if (pointer1 instanceof SmartPsiElementPointerImpl && pointer2 instanceof SmartPsiElementPointerImpl) {
-      SmartPointerElementInfo elementInfo1 = ((SmartPsiElementPointerImpl)pointer1).getElementInfo();
-      SmartPointerElementInfo elementInfo2 = ((SmartPsiElementPointerImpl)pointer2).getElementInfo();
-      return elementInfo1.pointsToTheSameElementAs(elementInfo2);
+      SmartPsiElementPointerImpl impl1 = (SmartPsiElementPointerImpl)pointer1;
+      SmartPsiElementPointerImpl impl2 = (SmartPsiElementPointerImpl)pointer2;
+      SmartPointerElementInfo elementInfo1 = impl1.getElementInfo();
+      SmartPointerElementInfo elementInfo2 = impl2.getElementInfo();
+      if (!elementInfo1.pointsToTheSameElementAs(elementInfo2)) return false;
+      PsiElement cachedElement1 = impl1.getCachedElement();
+      PsiElement cachedElement2 = impl2.getCachedElement();
+      return cachedElement1 == null || cachedElement2 == null || cachedElement1 == cachedElement2;
     }
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }

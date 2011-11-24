@@ -696,6 +696,14 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     action.actionPerformed(event);
   }
 
+  public static void ctrlD() {
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE);
+    DataContext dataContext = DataManager.getInstance().getDataContext();
+    AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+    event.setInjectedContext(true);
+    action.actionPerformed(event);
+  }
+
   @NotNull
   protected PsiClass findClass(@NotNull @NonNls final String name) {
     final PsiClass aClass = myJavaFacade.findClass(name, ProjectScope.getProjectScope(getProject()));
