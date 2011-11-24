@@ -283,8 +283,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         if (expr != null) {
           info = codeStyleManager.suggestUniqueVariableName(info, expr, true);
         }
-        final String[] strings = JavaCompletionUtil
-          .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info);
+        final String[] strings = AbstractJavaInplaceIntroducer.appendUnresolvedExprName(JavaCompletionUtil
+          .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info), expr);
         return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings): strings, info);
       }
 
