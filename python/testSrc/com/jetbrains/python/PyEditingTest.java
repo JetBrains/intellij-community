@@ -203,6 +203,12 @@ public class PyEditingTest extends PyTestCase {
                 "\"string\"");
   }
 
+  public void testEnterInStringInParenth() {
+    doTestEnter("a = (\"str<caret>ing\")",
+                "a = (\"str\"\n" +
+                "     \"ing\")");
+  }
+
   public void testEnterAfterSlash() {
     doTestEnter("a = 'some \\<caret> string'",
                 "a = 'some \\\n" +

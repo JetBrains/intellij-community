@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.98" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.99" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -637,7 +637,7 @@ class emptylistdict(dict):
 
 
 class Buf(object):
-    "Buffers data in a list, can wrtie to a file. Indentation is provided externally."
+    "Buffers data in a list, can write to a file. Indentation is provided externally."
     def __init__(self, indenter):
         self.data = []
         self.indenter = indenter
@@ -718,7 +718,10 @@ class ModuleRedeclarator(object):
                 else:
                     out_func(indent, '"""')
                     for line in lines:
-                        out_func(indent, line)
+                        try:
+                            out_func(indent, line)
+                        except UnicodeEncodeError:
+                            continue
                     out_func(indent, '"""')
 
     def outDocAttr(self, out_func, p_object, indent, p_class=None):
@@ -1703,6 +1706,8 @@ class ModuleRedeclarator(object):
                     item = getattr(p_class, item_name) # let getters do the magic
                 except AttributeError:
                     item = field_source[item_name] # have it raw
+                except Exception:
+                    continue
             if isCallable(item):
                 methods[item_name] = item
             elif isProperty(item):
@@ -2009,6 +2014,8 @@ class ModuleRedeclarator(object):
                   out(0, "# definition of " + item_name + " omitted")
                   continue
                 item = vars_complex[item_name]
+                if str(type(item)) == "<type 'namespace#'>":
+                    continue            # this is an IronPython submodule, we mustn't generate a reference for it in the base module
                 replacement = self.REPLACE_MODULE_VALUES.get((p_name, item_name), None)
                 if replacement is not None:
                     out(0, item_name + " = " + replacement + " # real value of type " + str(type(item)) + " replaced")
@@ -2112,7 +2119,20 @@ def redoModule(name, out_name, mod_file_name, doing_builtins, imported_module_na
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
-    mod = sys.modules[name]
+    mod = sys.modules.get(name)
+    if not mod and sys.platform == 'cli':
+        # "import System.Collections" in IronPython 2.7 doesn't actually put System.Collections in sys.modules
+        # instead, sys.modules['System'] get set to a Microsoft.Scripting.Actions.NamespaceTracker and Collections can be
+        # accessed as its attribute
+        path = name.split('.')
+        mod = sys.modules[path[0]]
+        for component in path[1:]:
+            try:
+                mod = getattr(mod, component)
+            except AttributeError:
+                mod = None
+                report("Failed to find CLR module " + name)
+                break
     if mod:
         action("opening %r", out_name)
         outfile = fopen(out_name, "w")

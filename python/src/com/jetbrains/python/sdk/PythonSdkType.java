@@ -481,10 +481,10 @@ public class PythonSdkType extends SdkType {
         }
         addSdkRoot(sdkModificator, path);
       }
-      @NonNls final String stubs_path = getSkeletonsPath(bin_path);
-      new File(stubs_path).mkdirs();      
-      final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path);
-      assert builtins_root != null;
+      @NonNls final String skeletonsPath = getSkeletonsPath(bin_path);
+      new File(skeletonsPath).mkdirs();
+      final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
+      assert builtins_root != null: "Cannot find skeletons path " + skeletonsPath + " in VFS";
       sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
     }
     if (not_in_unit_test_mode) {

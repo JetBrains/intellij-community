@@ -49,3 +49,6 @@ foo(1, 2,<warning descr="Unnecessary backslash in expression."> \</warning>
 # PY-3036
 v = [ "some"<warning descr="Unnecessary backslash in expression."> \</warning>
 "long string" ]
+
+a = func('some '<warning descr="Unnecessary backslash in expression."> \</warning>
+         'string')

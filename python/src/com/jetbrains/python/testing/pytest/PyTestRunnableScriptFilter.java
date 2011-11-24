@@ -10,9 +10,9 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.run.RunnableScriptFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.testing.PyTestFrameworksUtil;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
+import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +28,7 @@ public class PyTestRunnableScriptFilter implements RunnableScriptFilter {
   private static boolean isPyTestInstalled(Module module) {
     // TODO[yole] add caching to avoid disk I/O in findPyTestRunner()?
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    return sdk != null && PyTestFrameworksUtil.isPyTestInstalled(sdk.getHomePath());
+    return sdk != null && VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk.getHomePath());
   }
 
   public static boolean isPyTestScript(PsiFile script) {

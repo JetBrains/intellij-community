@@ -8,7 +8,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
-import com.jetbrains.python.testing.PyTestFrameworksUtil;
+import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +61,7 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (!PyTestFrameworksUtil.isAtTestInstalled(getSdkHome()))
+    if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(getSdkHome()))
       throw new RuntimeConfigurationWarning("No attest runner found in selected interpreter");
   }
 }

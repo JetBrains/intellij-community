@@ -136,7 +136,7 @@ public class PySmartEnterTest extends PyTestCase {
     }
   }
 
-  public void testDocTypeRtype() {
+  public void testDocTypeRType() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     boolean oldStubOnEnter = codeInsightSettings.JAVADOC_STUB_ON_ENTER;
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;

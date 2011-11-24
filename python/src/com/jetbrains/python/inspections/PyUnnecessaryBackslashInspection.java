@@ -86,7 +86,8 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     public void visitPyStringLiteralExpression(final PyStringLiteralExpression stringLiteralExpression) {
       PsiElement parent = stringLiteralExpression.getParent();
       if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
-          parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression) {
+          parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression ||
+          parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
         findProblem(stringLiteralExpression);
       }
     }
