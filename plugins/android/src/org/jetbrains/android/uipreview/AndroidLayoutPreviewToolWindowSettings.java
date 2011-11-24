@@ -43,6 +43,7 @@ public class AndroidLayoutPreviewToolWindowSettings implements PersistentStateCo
     private String myLocaleLanguage;
     private String myLocaleRegion;
     private boolean myVisible = true;
+    private boolean myHideForNonLayoutFiles = true;
 
     public String getDevice() {
       return myDevice;
@@ -114,6 +115,14 @@ public class AndroidLayoutPreviewToolWindowSettings implements PersistentStateCo
 
     public void setVisible(boolean visible) {
       myVisible = visible;
+    }
+
+    public boolean isHideForNonLayoutFiles() {
+      return myHideForNonLayoutFiles;
+    }
+
+    public void setHideForNonLayoutFiles(boolean hideForNonLayoutFiles) {
+      myHideForNonLayoutFiles = hideForNonLayoutFiles;
     }
   }
 }

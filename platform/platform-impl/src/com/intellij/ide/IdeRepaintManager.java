@@ -104,7 +104,7 @@ public class IdeRepaintManager extends RepaintManager {
           .invoke(env, displayChangeHack);
       }
     } catch (Throwable t) {
-      LOG.error("Cannot setup display change listener", t);
+      if (!(t instanceof HeadlessException)) LOG.error("Cannot setup display change listener", t);
     }
   }
   

@@ -1,0 +1,4 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="wrap_content" android:layout_height="wrap_content">
+    <Button android:id="@+id/ok" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="<error>@string/myLibResource123</error>" />
+</LinearLayout>

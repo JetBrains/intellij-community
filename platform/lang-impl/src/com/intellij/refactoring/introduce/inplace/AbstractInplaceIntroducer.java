@@ -210,22 +210,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
-        RangeMarker r;
-        if (myLocalMarker != null) {
-          final PsiReference reference = myExpr != null ? myExpr.getReference() : null;
-          if (reference != null && reference.resolve() == myLocalVariable) {
-            r = myExprMarker;
-          } else {
-            r = myLocalMarker;
-          }
-        }
-        else {
-          r = myExprMarker;
-        }
         final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
         boolean started = false;
         if (variable != null) {
-          myEditor.getCaretModel().moveToOffset(r.getStartOffset());
+          int caretOffset = getCaretOffset();
+          myEditor.getCaretModel().moveToOffset(caretOffset);
           myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
           final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
@@ -267,6 +256,22 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
     }, getCommandName(), getCommandName());
     return result.get();
+  }
+
+  protected int getCaretOffset() {
+    RangeMarker r;
+    if (myLocalMarker != null) {
+      final PsiReference reference = myExpr != null ? myExpr.getReference() : null;
+      if (reference != null && reference.resolve() == myLocalVariable) {
+        r = myExprMarker;
+      } else {
+        r = myLocalMarker;
+      }
+    }
+    else {
+      r = myExprMarker;
+    }
+    return r != null ? r.getStartOffset() : 0;
   }
 
   protected void updateTitle(@Nullable V variable, String value) {

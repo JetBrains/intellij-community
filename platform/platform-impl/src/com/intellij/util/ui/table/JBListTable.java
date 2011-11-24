@@ -41,6 +41,7 @@ public abstract class JBListTable extends JPanel {
   protected final JTable myInternalTable;
   private final JBTable mainTable;
   private final Ref<Integer> myLastEditorIndex = Ref.create(null);
+  private MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
 
   public JBListTable(@NotNull final JTable t) {
@@ -56,9 +57,14 @@ public abstract class JBListTable extends JPanel {
       public boolean isCellEditable(int rowIndex, int columnIndex) {
         return isRowEditable(rowIndex);
       }
+
+      @Override
+      public void addRow() {
+        myLastEditorIndex.set(null);
+        super.addRow();
+      }
     };
     mainTable = new JBTable(model) {
-      private MouseEvent myMouseEvent;      
 
       @Override
       protected void processKeyEvent(KeyEvent e) {
@@ -108,6 +114,19 @@ public abstract class JBListTable extends JPanel {
         //Mnemonics and actions
         if (e.isAltDown() || e.isMetaDown() || e.isControlDown()) {
           return false;
+        }
+        
+        if (e.getKeyCode() == VK_ESCAPE && pressed) {
+          final int row = getSelectedRow();
+          if (row != -1 && isRowEmpty(row)) {
+            final int count = model.getRowCount();
+            model.removeRow(row);
+            int newRow = count == row + 1 ? row - 1 : row;
+
+            if (0 <= newRow && newRow < model.getRowCount()) {
+              setRowSelectionInterval(newRow, newRow);
+            }
+          }
         }
 
         if (e.getKeyCode() == VK_ENTER) {
@@ -216,6 +235,10 @@ public abstract class JBListTable extends JPanel {
   protected boolean isRowEditable(int row) {
     return true;
   }
+  
+  protected boolean isRowEmpty(int row) {
+    return false;
+  }
 
   private static class RowResizeAnimator extends Thread {
     private final JTable myTable;
@@ -295,14 +318,14 @@ public abstract class JBListTable extends JPanel {
           super.addNotify();
           final int height = (int)getPreferredSize().getHeight();
           if (height > table.getRowHeight(row)) {
-            new RowResizeAnimator(table, row, height, myEditor, myLastEditorIndex).start();
+            new RowResizeAnimator(table, row, height, myEditor, myMouseEvent == null ? myLastEditorIndex : Ref.<Integer>create(null)).start();
           }
         }
 
         public void removeNotify() {
           if (myCellEditor != null) myCellEditor.saveFocusIndex();
           super.removeNotify();
-          new RowResizeAnimator(table, row, table.getRowHeight(), null, myLastEditorIndex).start();
+          new RowResizeAnimator(table, row, table.getRowHeight(), null, myMouseEvent == null ? myLastEditorIndex : Ref.<Integer>create(null)).start();
         }
       };
       p.add(myEditor, BorderLayout.CENTER);
@@ -319,6 +342,17 @@ public abstract class JBListTable extends JPanel {
     public boolean stopCellEditing() {
       saveFocusIndex();
       return super.stopCellEditing();
+    }
+
+    private void removeEmptyRow() {
+      final int row = curTable.getSelectedRow();
+      if (row != -1 && isRowEmpty(row)) {
+        final JBListTableModel model = (JBListTableModel)curTable.getModel();
+        final int count = model.getRowCount();
+        model.removeRow(row);
+        int newRow = count == row + 1 ? row - 1 : row;
+        curTable.setRowSelectionInterval(newRow, newRow);
+      }
     }
 
     public void saveFocusIndex() {

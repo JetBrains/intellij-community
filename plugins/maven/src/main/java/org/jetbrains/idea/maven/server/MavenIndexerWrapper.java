@@ -32,7 +32,6 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServerIndexer> {
@@ -118,11 +117,18 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     });
   }
 
-  public List<MavenId> getAllArtifacts(final int indexId) throws MavenServerIndexerException {
-    return perform(new IndexRetriable<List<MavenId>>() {
+  public void processArtifacts(final int indexId, final MavenIndicesProcessor processor) throws MavenServerIndexerException {
+    perform(new IndexRetriable<Object>() {
       @Override
-      public List<MavenId> execute() throws RemoteException, MavenServerIndexerException {
-        return getOrCreateWrappee().getAllArtifacts(getRemoteId(indexId));
+      public Object execute() throws RemoteException, MavenServerIndexerException {
+        MavenServerIndicesProcessor processorWrapper = MavenServerManager.wrapAndExport(processor);
+        try {
+          getOrCreateWrappee().processArtifacts(getRemoteId(indexId), processorWrapper);
+        }
+        finally {
+          UnicastRemoteObject.unexportObject(processorWrapper, true);
+        }
+        return null;
       }
     });
   }

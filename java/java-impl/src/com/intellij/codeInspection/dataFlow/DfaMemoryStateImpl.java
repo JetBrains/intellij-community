@@ -504,7 +504,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaTypeValue dfaType = (DfaTypeValue)dfaCond.getRightOperand();
 
     final DfaVariableState varState = getVariableState(dfaVar);
-    varState.setNullable(varState.isNullable() || dfaType.isNullable());
+    varState.setNullable(dfaType.isNullable());
     return !isNotNull(dfaVar) || varState.setInstanceofValue(dfaType);
   }
 

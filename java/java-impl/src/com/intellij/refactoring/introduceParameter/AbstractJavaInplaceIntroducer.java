@@ -13,12 +13,14 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +103,16 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   public PsiType getType() {
     return myTypeSelectorManager.getDefaultType();
+  }
+
+  public static String[] appendUnresolvedExprName(String[] names, final PsiExpression expr) {
+    if (expr instanceof PsiReferenceExpression && ((PsiReferenceExpression)expr).resolve() == null) {
+      final String name = expr.getText();
+      if (JavaPsiFacade.getInstance(expr.getProject()).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+        names = ArrayUtil.mergeArrays(new String[]{name}, names);
+      }
+    }
+    return names;
   }
 
   @Nullable

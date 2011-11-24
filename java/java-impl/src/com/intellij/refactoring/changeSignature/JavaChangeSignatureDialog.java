@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Document;
@@ -31,6 +33,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
@@ -59,7 +64,9 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -193,6 +200,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
+  protected boolean isEmptyRow(ParameterTableModelItemBase<ParameterInfoImpl> row) {
+    if (!StringUtil.isEmpty(row.parameter.getName())) return false;
+    if (!StringUtil.isEmpty(row.parameter.getTypeText())) return false;
+    return true;
+  }
+
+  @Override
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, final boolean focused) {
     final JPanel panel = new JPanel(new BorderLayout());
     final String typeText = item.typeCodeFragment.getText();
@@ -310,6 +324,32 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         namePanel.add(nameLabel);
         namePanel.add(myNameEditor);
         add(namePanel, BorderLayout.CENTER);
+        new TextFieldCompletionProvider() {
+
+          @Override
+          protected void addCompletionVariants(@NotNull String text,
+                                               int offset,
+                                               @NotNull String prefix,
+                                               @NotNull CompletionResultSet result) {
+            final PsiCodeFragment fragment = item.typeCodeFragment;
+            if (fragment instanceof PsiTypeCodeFragment) {
+              final PsiType type;
+              try {
+                type = ((PsiTypeCodeFragment)fragment).getType();
+              }
+              catch (Exception e) {
+                return;
+              }
+              final SuggestedNameInfo info = JavaCodeStyleManager.getInstance(myProject)
+                .suggestVariableName(VariableKind.PARAMETER, null, null, type);
+
+              for (String completionVariant : info.names) {
+                final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
+                result.addElement(element.addLookupString(completionVariant.toLowerCase()));
+              }
+            }
+          }
+        }.apply(myNameEditor, item.parameter.getName());
 
         if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
           final JPanel additionalPanel = new JPanel(new BorderLayout());

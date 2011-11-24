@@ -835,6 +835,7 @@ public abstract class ChooseByNameBase {
 
                   myListIsUpToDate = true;
                   setElementsToList(pos, elements);
+                  myList.repaint();
                   choosenElementMightChange();
 
                   if (elements.isEmpty() && myTextFieldPanel != null) {

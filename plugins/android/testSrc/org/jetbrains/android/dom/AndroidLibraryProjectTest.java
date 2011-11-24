@@ -24,9 +24,11 @@ import org.jetbrains.android.AndroidResourcesLineMarkerProvider;
 import org.jetbrains.android.AndroidResourcesLineMarkerTest;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.inspections.AndroidDomInspection;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -55,6 +57,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     super.setUp();
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
+    myFixture.enableInspections(AndroidDomInspection.class);
 
     final JavaModuleFixtureBuilder appModuleBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     String appModuleDir = myFixture.getTempDirPath() + "/app";
@@ -101,7 +104,9 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
         model2.commit();
       }
     });
+  }
 
+  private void createInitialStructure() {
     myFixture.copyFileToProject(SdkConstants.FN_ANDROID_MANIFEST_XML, "app/" + SdkConstants.FN_ANDROID_MANIFEST_XML);
     myFixture.copyFileToProject(BASE_PATH + "LibAndroidManifest.xml", "lib/" + SdkConstants.FN_ANDROID_MANIFEST_XML);
 
@@ -129,10 +134,45 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   }
 
   public void testHighlighting() {
+    createInitialStructure();
     String to = "app/res/layout/" + getTestName(true) + ".xml";
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", to);
     myFixture.configureFromExistingVirtualFile(file);
+    myFixture.doHighlighting();
     myFixture.checkHighlighting(true, true, true);
+  }
+
+  public void testHighlighting1() {
+    createInitialStructure();
+    String to = "app/res/layout/" + getTestName(true) + ".xml";
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", to);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.doHighlighting();
+    myFixture.checkHighlighting(true, true, true);
+  }
+
+  public void testHighlighting2() {
+    myFixture.copyFileToProject(BASE_PATH + "LibAndroidManifest.xml", "lib/" + SdkConstants.FN_ANDROID_MANIFEST_XML);
+    final VirtualFile manifestFile =
+      myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", "app/" + SdkConstants.FN_ANDROID_MANIFEST_XML);
+    myFixture.copyDirectoryToProject(BASE_PATH + "res", "lib/res");
+    myFixture.configureFromExistingVirtualFile(manifestFile);
+    myFixture.doHighlighting();
+    myFixture.checkHighlighting(true, true, true);
+  }
+
+  private void doRename(final VirtualFile file, final String newName) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          file.rename(myFixture.getProject(), newName);
+        }
+        catch (IOException e) {
+          new RuntimeException(e);
+        }
+      }
+    });
   }
 
   public void testCompletion() {
@@ -144,6 +184,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   }
 
   private void doTestCompletion() {
+    createInitialStructure();
     String to = "app/res/layout/" + getTestName(true) + ".xml";
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", to);
     myFixture.configureFromExistingVirtualFile(file);
@@ -167,6 +208,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   }
 
   private void doTestRJavaFilesMarkers(String destPath) {
+    createInitialStructure();
     List<LineMarkerInfo> markers =
       AndroidResourcesLineMarkerTest.collectMarkers(myFixture, BASE_PATH + getTestName(false) + ".java", destPath);
     assertEquals(3, markers.size());
@@ -180,22 +222,15 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   }
 
   public void testJavaFileMarkers() throws Exception {
+    createInitialStructure();
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
     List<LineMarkerInfo> markers =
       AndroidResourcesLineMarkerTest.collectMarkers(myFixture, BASE_PATH + getTestName(false) + ".java", "/app/src/p1/p2/Java.java");
     assertEquals(0, markers.size());
-    /*for (LineMarkerInfo marker : markers) {
-      PsiReferenceExpression expression = (PsiReferenceExpression)marker.getElement();
-      PsiField field = (PsiField)expression.resolve();
-      GutterIconNavigationHandler handler = marker.getNavigationHandler();
-      assertInstanceOf(handler, AndroidResourcesLineMarkerProvider.MyLazyNavigationHandler.class);
-      Computable<PsiElement[]> targetProvider = ((AndroidResourcesLineMarkerProvider.MyLazyNavigationHandler)handler).getTargetProvider();
-      PsiElement[] targets = targetProvider.compute();
-      checkTargets(field, targets);
-    }*/
   }
 
   public void testJavaNavigation() throws Exception {
+    createInitialStructure();
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".java", "/app/src/p1/p2/Java.java");
     myFixture.configureFromExistingVirtualFile(file);
@@ -210,6 +245,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   }
 
   public void testLayoutFileMarkers() throws Exception {
+    createInitialStructure();
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/lib/R.java");
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "lib/src/p1/p2/lib/R.java");
@@ -285,6 +321,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   }
 
   private void doFindUsagesTest(String extension, String dir) throws Throwable {
+    createInitialStructure();
     myFixture.copyFileToProject(BASE_PATH + "FindUsagesClass.java", "app/src/p1/p2/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "FindUsagesClass1.java", "app/src/p1/p2/lib/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "FindUsagesClass1.java", "lib/src/p1/p2/lib/Class.java");

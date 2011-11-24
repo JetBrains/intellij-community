@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,6 +74,7 @@ public final class IdeMouseEventDispatcher {
 
     // here we try to find "local" shortcuts
     if (component instanceof JComponent) {
+      @SuppressWarnings("unchecked")
       final ArrayList<AnAction> listOfActions = (ArrayList<AnAction>)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
       if (listOfActions != null) {
         for (AnAction action : listOfActions) {
@@ -122,12 +124,16 @@ public final class IdeMouseEventDispatcher {
   public boolean dispatchMouseEvent(MouseEvent e) {
     boolean ignore = false;
 
+    if (SystemInfo.isLinux && e.isPopupTrigger() && e.getButton() != 3) {
+      // we can do better than silly triggering popup on everything but left click
+      resetPopupTrigger(e);
+    }
+
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
           e.getID() == MOUSE_CLICKED)) {
       ignore = true;
     }
-
 
     if (e.isConsumed()
         || e.isPopupTrigger()
@@ -202,6 +208,15 @@ public final class IdeMouseEventDispatcher {
       }
     }
     return false;
+  }
+
+  private static void resetPopupTrigger(final MouseEvent e) {
+    try {
+      final Field popupTrigger = e.getClass().getDeclaredField("popupTrigger");
+      popupTrigger.setAccessible(true);
+      popupTrigger.set(e, false);
+    }
+    catch (Exception ignored) { }
   }
 
   private boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {

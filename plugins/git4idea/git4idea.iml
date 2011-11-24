@@ -35,6 +35,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="images" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module-library">
       <library name="ini4j-0.5.2-patched">
         <CLASSES>

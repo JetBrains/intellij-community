@@ -1387,8 +1387,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myAdComponent.addAdvertisement(text);
-        requestResize();
+        if (!myDisposed) {
+          myAdComponent.addAdvertisement(text);
+          requestResize();
+          refreshUi(false);
+        }
       }
     });
   }

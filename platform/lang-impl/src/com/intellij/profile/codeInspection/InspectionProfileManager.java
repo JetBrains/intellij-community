@@ -178,7 +178,12 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     final File file = new File(path);
     if (file.exists()){
       InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), myRegistrar, this);
-      profile.load(JDOMUtil.loadDocument(file).getRootElement());
+      Element rootElement = JDOMUtil.loadDocument(file).getRootElement();
+      final Element profileElement = rootElement.getChild("profile");
+      if (profileElement != null) {
+        rootElement = profileElement;
+      }
+      profile.load(rootElement);
       return profile;
     }
     return getProfile(path, false);

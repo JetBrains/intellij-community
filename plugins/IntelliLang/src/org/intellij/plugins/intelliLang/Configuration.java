@@ -145,6 +145,17 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     public long getModificationCount() {
       return super.getModificationCount() + myParentConfiguration.getModificationCount();
     }
+
+    public boolean replaceInjections(final List<? extends BaseInjection> newInjections,
+                                     final List<? extends BaseInjection> originalInjections) {
+      if (!originalInjections.isEmpty()) {
+        if (myParentConfiguration.replaceInjections(Collections.<BaseInjection>emptyList(), originalInjections)) {
+          myParentConfiguration.replaceInjections(newInjections, Collections.<BaseInjection>emptyList());
+          return true;
+        }
+      }
+      return super.replaceInjections(newInjections, originalInjections);
+    }
   }
 
   public enum InstrumentationType {
@@ -517,14 +528,19 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     }.execute();
   }
 
-  public void replaceInjections(final List<? extends BaseInjection> newInjections, final List<? extends BaseInjection> originalInjections) {
+  public boolean replaceInjections(final List<? extends BaseInjection> newInjections,
+                                   final List<? extends BaseInjection> originalInjections) {
+    boolean changed = false;
     for (BaseInjection injection : originalInjections) {
-      myInjections.get(injection.getSupportId()).remove(injection);
+      changed |= myInjections.get(injection.getSupportId()).remove(injection);
     }
     for (BaseInjection injection : newInjections) {
-      myInjections.get(injection.getSupportId()).add(injection);
+      changed |= myInjections.get(injection.getSupportId()).add(injection);
     }
-    configurationModified();
+    if (changed) {
+      configurationModified();
+    }
+    return changed;
   }
 
   public static class AdvancedConfiguration {

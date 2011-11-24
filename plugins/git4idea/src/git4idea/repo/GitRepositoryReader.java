@@ -17,15 +17,12 @@ package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchesCollection;
-import git4idea.merge.GitMergeUtil;
-import git4idea.rebase.GitRebaseUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,19 +61,17 @@ class GitRepositoryReader {
   private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
   private static final int    IO_RETRIES        = 3; // number of retries before fail if an IOException happens during file read.
 
-  private final GitRepository myRepository;
   private final File          myGitDir;         // .git/
   private final File          myHeadFile;       // .git/HEAD
   private final File          myRefsHeadsDir;   // .git/refs/heads/
   private final File          myRefsRemotesDir; // .git/refs/remotes/
   private final File          myPackedRefsFile; // .git/packed-refs
 
-  GitRepositoryReader(@NotNull GitRepository repository) {
-    myRepository = repository;
-    myGitDir = new File(VfsUtil.virtualToIoFile(myRepository.getRoot()), ".git");
-    assertFileExists(myGitDir, ".git directory not found in " + myRepository.getRoot());
+  GitRepositoryReader(@NotNull File gitDir) {
+    myGitDir = gitDir;
+    assertFileExists(myGitDir, ".git directory not found in " + gitDir);
     myHeadFile = new File(myGitDir, "HEAD");
-    assertFileExists(myHeadFile, ".git/HEAD file not found in " + myRepository.getRoot());
+    assertFileExists(myHeadFile, ".git/HEAD file not found in " + gitDir);
     myRefsHeadsDir = new File(new File(myGitDir, "refs"), "heads");
     myRefsRemotesDir = new File(new File(myGitDir, "refs"), "remotes");
     myPackedRefsFile = new File(myGitDir, "packed-refs");
@@ -132,7 +127,9 @@ class GitRepositoryReader {
   GitBranch readCurrentBranch() {
     Head head = readHead();
     if (head.isBranch) {
-      return new GitBranch(head.ref, true, false);
+      String branchName = head.ref;
+      String hash = readCurrentRevision();  // TODO make this faster, because we know the branch name
+      return new GitBranch(branchName, hash == null ? "" : hash, true, false);
     }
     if (isRebaseInProgress()) {
       GitBranch branch = readRebaseBranch("rebase-apply");
@@ -166,11 +163,17 @@ class GitRepositoryReader {
   }
   
   private boolean isMergeInProgress() {
-    return GitMergeUtil.isMergeInProgress(myRepository.getRoot());
+    File mergeHead = new File(myGitDir, "MERGE_HEAD");
+    return mergeHead.exists();
   }
 
   private boolean isRebaseInProgress() {
-    return GitRebaseUtils.isRebaseInTheProgress(myRepository.getRoot());
+    File f = new File(myGitDir, "rebase-apply");
+    if (f.exists()) {
+      return true;
+    }
+    f = new File(myGitDir, "rebase-merge");
+    return f.exists();
   }
 
   /**
@@ -282,10 +285,24 @@ class GitRepositoryReader {
   @NotNull
   private Set<GitBranch> readUnpackedLocalBranches() {
     Set<GitBranch> branches = new HashSet<GitBranch>();
-    for (String branchName : readLocalBranches().keySet()) {
-      branches.add(new GitBranch(branchName, false, false));
+    for (Map.Entry<String, File> entry : readLocalBranches().entrySet()) {
+      String branchName = entry.getKey();
+      File branchFile = entry.getValue();
+      String hash = loadHashFromBranchFile(branchFile);
+      branches.add(new GitBranch(branchName, hash == null ? "" : hash, false, false));
     }
     return branches;
+  }
+  
+  @Nullable
+  private static String loadHashFromBranchFile(@NotNull File branchFile) {
+    try {
+      return tryLoadFile(branchFile, null);
+    }
+    catch (GitRepoStateException e) {  // notify about error but don't break the process
+      LOG.error("Couldn't read " + branchFile, e);
+    }
+    return null;
   }
 
   /**
@@ -302,7 +319,9 @@ class GitRepositoryReader {
         if (!file.isDirectory()) {
           final String relativePath = FileUtil.getRelativePath(myRefsRemotesDir, file);
           if (relativePath != null) {
-            branches.add(new GitBranch(FileUtil.toSystemIndependentName(relativePath), false, true));
+            String branchName = FileUtil.toSystemIndependentName(relativePath);
+            String hash = loadHashFromBranchFile(file);
+            branches.add(new GitBranch(branchName, hash == null ? "": hash, false, true));
           }
         }
         return true;
@@ -330,9 +349,9 @@ class GitRepositoryReader {
             return;
           }
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), false, false));
+            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), hash, false, false));
           } else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), false, true));
+            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), hash, false, true));
           }
         }
       });

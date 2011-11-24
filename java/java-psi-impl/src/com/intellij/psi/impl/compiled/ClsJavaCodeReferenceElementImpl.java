@@ -150,6 +150,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
     ResolveResult[] results = resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode);
+    if (results.length == 0) return JavaResolveResult.EMPTY_ARRAY;
     return (JavaResolveResult[])results;
   }
 

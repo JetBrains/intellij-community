@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -840,17 +840,22 @@ public class HighlightClassUtil {
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
   }
 
+  @Nullable
   public static HighlightInfo checkSuperQualifierType(@NotNull Project project, @NotNull PsiMethodCallExpression superCall) {
     if (!HighlightUtil.isSuperMethodCall(superCall)) return null;
     PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
     if (ctr == null) return null;
-    PsiClass targetClass = ctr.getContainingClass().getSuperClass();
+    final PsiClass aClass = ctr.getContainingClass();
+    if (aClass == null) return null;
+    PsiClass targetClass = aClass.getSuperClass();
     if (targetClass == null) return null;
     PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
     if (qualifier != null && PsiUtil.isInnerClass(targetClass)) {
       PsiClass outerClass = targetClass.getContainingClass();
-      PsiClassType outerType = JavaPsiFacade.getInstance(project).getElementFactory().createType(outerClass);
-      return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
+      if (outerClass != null) {
+        PsiClassType outerType = JavaPsiFacade.getInstance(project).getElementFactory().createType(outerClass);
+        return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
+      }
     }
     return null;
   }
@@ -893,16 +898,21 @@ public class HighlightClassUtil {
       if (startElement instanceof PsiNewExpression) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         String startElementText = startElement.getText();
-        PsiNewExpression newExpression =
-          (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "{}", startElement);
-        if (newExpression.getAnonymousClass() == null) {
-          try {
-            newExpression = (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "){}", startElement);
+        try {
+          PsiNewExpression newExpression =
+            (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "{}", startElement);
+          if (newExpression.getAnonymousClass() == null) {
+            try {
+              newExpression = (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "){}", startElement);
+            }
+            catch (IncorrectOperationException e) {
+              return false;
+            }
+            if (newExpression.getAnonymousClass() == null) return false;
           }
-          catch (IncorrectOperationException e) {
-            return false;
-          }
-          if (newExpression.getAnonymousClass() == null) return false;
+        }
+        catch (IncorrectOperationException e) {
+          return false;
         }
         return true;
       }

@@ -43,4 +43,6 @@ public interface LibraryEditorComponent<P extends LibraryProperties> {
 
   @Nullable
   Project getProject();
+
+  void renameLibrary(String newName);
 }

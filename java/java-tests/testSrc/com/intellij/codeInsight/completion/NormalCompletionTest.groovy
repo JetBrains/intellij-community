@@ -66,6 +66,15 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertNull(myItems);
   }
 
+  public void testPrimitivesInTypeCodeFragmentWithParameterListContext() throws Throwable {
+    def clazz = myFixture.addClass("class Foo { void foo(int a) {} }")
+
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment("b<caret>", clazz.methods[0].parameterList, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    complete();
+    assertStringItems('boolean', 'byte')
+  }
+
   public void testQualifierCastingInExpressionCodeFragment() throws Throwable {
     final ctxText = "class Bar {{ Object o; o=null }}"
     final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)

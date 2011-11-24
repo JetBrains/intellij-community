@@ -55,6 +55,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The dialog wrapper. The dialog wrapper could be used only on event dispatch thread.
@@ -533,9 +534,28 @@ public abstract class DialogWrapper {
     if (action instanceof OptionAction) {
       final Action[] options = ((OptionAction)action).getOptions();
       button = new JBOptionButton(action, options);
-      final JBOptionButton jbOptionButton = (JBOptionButton)button;
-      jbOptionButton.setOptionTooltipText("Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand");
-      myOptionsButtons.add(jbOptionButton);
+      final JBOptionButton eachOptionsButton = (JBOptionButton)button;
+      eachOptionsButton.setOkToProcessDefaultMnemonics(false);
+      eachOptionsButton.setOptionTooltipText(
+        "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
+      myOptionsButtons.add(eachOptionsButton);
+
+      final Set<JBOptionButton.OptionInfo> infos = eachOptionsButton.getOptionInfos();
+      for (final JBOptionButton.OptionInfo eachInfo : infos) {
+        if (eachInfo.getMnemonic() >=0) {
+          final CustomShortcutSet sc =
+            new CustomShortcutSet(KeyStroke.getKeyStroke("alt pressed " + Character.valueOf((char)eachInfo.getMnemonic())));
+          
+          new AnAction() {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              final JBOptionButton buttonToActivate = eachInfo.getButton();
+              buttonToActivate.showPopup(eachInfo.getAction());
+            }
+          }.registerCustomShortcutSet(sc, getPeer().getRootPane());
+        }
+      }
+
     } else {
       button = new JButton(action);
     }
@@ -1039,7 +1059,7 @@ public abstract class DialogWrapper {
     }
 
     if (myCurrentOptionsButtonIndex >= 0 && myCurrentOptionsButtonIndex < myOptionsButtons.size()) {
-      myOptionsButtons.get(myCurrentOptionsButtonIndex).showPopup();
+      myOptionsButtons.get(myCurrentOptionsButtonIndex).showPopup(null);
     }
 
   }

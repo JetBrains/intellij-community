@@ -19,9 +19,10 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -128,23 +129,30 @@ public abstract class BaseCompleteMacro extends Macro {
       LookupElement item = event.getItem();
       if (item == null) return;
 
-      boolean goNextTab = true;
       for(TemplateCompletionProcessor processor: Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {
         if (!processor.nextTabOnItemSelected(myContext, item)) {
-          goNextTab = false;
-          break;
+          return;
         }
       }
 
-      if (goNextTab) {
-        final Editor editor = myContext.getEditor();
-        if (editor != null) {
-          TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-          if (templateState != null) {
-            templateState.nextTab();
-          }
+      final Project project = myContext.getProject();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          new WriteCommandAction(project) {
+            protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+              final Editor editor = myContext.getEditor();
+              if (editor != null) {
+                TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+                if (templateState != null) {
+                  templateState.nextTab();
+                }
+              }
+            }
+          }.execute();
         }
-      }
+      }, ModalityState.current(), project.getDisposed());
+
     }
   }
 }

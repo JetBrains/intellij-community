@@ -14,6 +14,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -60,6 +61,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   private static final Icon ZOOM_IN_ICON = IconLoader.getIcon("/icons/zoomIn.png");
   private static final Icon ZOOM_OUT_ICON = IconLoader.getIcon("/icons/zoomOut.png");
   private static final Icon ZOOM_ACTUAL_ICON = IconLoader.getIcon("/icons/zoomActual.png");
+  private static final Icon REFRESH_ICON = IconLoader.getIcon("/icons/refreshPreview.png");
 
   private static final String CUSTOM_DEVICE_STRING = "Edit...";
 
@@ -239,8 +241,25 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     actionGroup.add(new MyZoomActualAction());
     actionGroup.add(new MyZoomInAction());
     actionGroup.add(new MyZoomOutAction());
+    actionGroup.add(new MyRefreshAction());
     myActionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
     myActionToolBar.setReservePlaceAutoPopupIcon(false);
+
+    final DefaultActionGroup optionsGroup = new DefaultActionGroup();
+    final ActionToolbar optionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, optionsGroup, true);
+    optionsToolBar.setReservePlaceAutoPopupIcon(false);
+    optionsToolBar.setSecondaryActionsTooltip("Options");
+    optionsGroup.addAction(new CheckboxAction("Hide for non-layout files") {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return mySettings.getState().isHideForNonLayoutFiles();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        mySettings.getState().setHideForNonLayoutFiles(state);
+      }
+    }).setAsSecondary(true);
 
     gb.gridx = 0;
     gb.gridy++;
@@ -249,7 +268,11 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     toolBarWrapper.add(toolbar, BorderLayout.CENTER);
     toolBarWrapper.setPreferredSize(new Dimension(10, toolbar.getMinimumSize().height));
     toolBarWrapper.setMinimumSize(new Dimension(10, toolbar.getMinimumSize().height));
-    myComboPanel.add(toolBarWrapper, gb);
+
+    final JPanel fullToolbarComponent = new JPanel(new BorderLayout());
+    fullToolbarComponent.add(toolBarWrapper, BorderLayout.CENTER);
+    fullToolbarComponent.add(optionsToolBar.getComponent(), BorderLayout.EAST);
+    myComboPanel.add(fullToolbarComponent, gb);
 
     gb.fill = GridBagConstraints.HORIZONTAL;
     myThemeCombo = new ComboBox();
@@ -1197,6 +1220,17 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     public void setSelected(AnActionEvent e, boolean state) {
       myPreviewPanel.setZoomToFit(state);
       myActionToolBar.updateActionsImmediately();
+    }
+  }
+
+  private class MyRefreshAction extends AnAction {
+    MyRefreshAction() {
+      super(AndroidBundle.message("android.layout.preview.zoom.actual.action.text"), null, REFRESH_ICON);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myToolWindowManager.render();
     }
   }
 }

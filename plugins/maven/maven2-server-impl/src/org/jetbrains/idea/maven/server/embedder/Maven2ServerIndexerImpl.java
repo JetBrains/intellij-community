@@ -77,13 +77,13 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
                          @Nullable String url,
                          @NotNull File indexDir) throws MavenServerIndexerException {
     try {
-      IndexingContext context = myIndexer.addIndexingContext(indexId,
-                                                             repositoryId,
-                                                             file,
-                                                             indexDir,
-                                                             url,
-                                                             null, // repo update url
-                                                             NexusIndexer.FULL_INDEX);
+      IndexingContext context = myIndexer.addIndexingContextForced(indexId,
+                                                                   repositoryId,
+                                                                   file,
+                                                                   indexDir,
+                                                                   url,
+                                                                   null, // repo update url
+                                                                   NexusIndexer.FULL_INDEX);
       int id = System.identityHashCode(context);
       myIndices.put(id, context);
       return id;
@@ -143,31 +143,31 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
         Maven2ServerEmbedderImpl embedder = Maven2ServerEmbedderImpl.create(settings);
         try {
           request.setResourceFetcher(new Maven2ServerIndexFetcher(index.getRepositoryId(),
-                                                           index.getRepositoryUrl(),
-                                                           embedder.getComponent(WagonManager.class),
-                                                           new TransferListenerAdapter(indicator) {
-                                                             @Override
-                                                             protected void downloadProgress(long downloaded, long total) {
-                                                               super.downloadProgress(downloaded, total);
-                                                               try {
-                                                                 myIndicator.setFraction(((double)downloaded) / total);
-                                                               }
-                                                               catch (RemoteException e) {
-                                                                 throw new RuntimeRemoteException(e);
-                                                               }
-                                                             }
+                                                                  index.getRepositoryUrl(),
+                                                                  embedder.getComponent(WagonManager.class),
+                                                                  new TransferListenerAdapter(indicator) {
+                                                                    @Override
+                                                                    protected void downloadProgress(long downloaded, long total) {
+                                                                      super.downloadProgress(downloaded, total);
+                                                                      try {
+                                                                        myIndicator.setFraction(((double)downloaded) / total);
+                                                                      }
+                                                                      catch (RemoteException e) {
+                                                                        throw new RuntimeRemoteException(e);
+                                                                      }
+                                                                    }
 
-                                                             @Override
-                                                             public void transferCompleted(TransferEvent event) {
-                                                               super.transferCompleted(event);
-                                                               try {
-                                                                 myIndicator.setText2("Processing indices...");
-                                                               }
-                                                               catch (RemoteException e) {
-                                                                 throw new RuntimeRemoteException(e);
-                                                               }
-                                                             }
-                                                           }));
+                                                                    @Override
+                                                                    public void transferCompleted(TransferEvent event) {
+                                                                      super.transferCompleted(event);
+                                                                      try {
+                                                                        myIndicator.setText2("Processing indices...");
+                                                                      }
+                                                                      catch (RemoteException e) {
+                                                                        throw new RuntimeRemoteException(e);
+                                                                      }
+                                                                    }
+                                                                  }));
           myUpdater.fetchAndUpdateIndex(request);
         }
         finally {
@@ -186,11 +186,14 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
-  public List<MavenId> getAllArtifacts(int indexId) throws MavenServerIndexerException {
+  public void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws MavenServerIndexerException {
     try {
-      List<MavenId> result = new ArrayList<MavenId>();
+      final int CHUNK_SIZE = 10000;
+
       IndexReader r = getIndex(indexId).getIndexReader();
       int total = r.numDocs();
+
+      List<MavenId> result = new ArrayList<MavenId>(Math.min(CHUNK_SIZE, total));
       for (int i = 0; i < total; i++) {
         if (r.isDeleted(i)) continue;
 
@@ -204,8 +207,16 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
         if (groupId == null || artifactId == null || version == null) continue;
 
         result.add(new MavenId(groupId, artifactId, version));
+
+        if (result.size() == CHUNK_SIZE) {
+          processor.processArtifacts(result);
+          result.clear();
+        }
       }
-      return result;
+
+      if (!result.isEmpty()) {
+        processor.processArtifacts(result);
+      }
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));

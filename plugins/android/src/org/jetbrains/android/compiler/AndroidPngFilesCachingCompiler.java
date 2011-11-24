@@ -75,7 +75,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
   public GenerationItem[] generate(CompileContext context,
                                    GenerationItem[] items,
                                    VirtualFile outputRootDirectory) {
-    if (items == null || items.length == 0) {
+    if (items == null || items.length == 0 || !AndroidCompileUtil.isFullBuild(context)) {
       return new GenerationItem[0];
     }
 

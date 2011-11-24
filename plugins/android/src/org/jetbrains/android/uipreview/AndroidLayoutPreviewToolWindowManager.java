@@ -175,7 +175,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
 
     ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
       private boolean myVisible = false;
-      
+
       @Override
       public void stateChanged() {
         if (myProject.isDisposed()) {
@@ -186,7 +186,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         if (window != null && window.isAvailable()) {
           final boolean visible = window.isVisible();
           AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getState().setVisible(visible);
-          
+
           if (visible && !myVisible) {
             render();
           }
@@ -243,16 +243,19 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
           initToolWindow();
         }
 
+        final AndroidLayoutPreviewToolWindowSettings settings = AndroidLayoutPreviewToolWindowSettings.getInstance(myProject);
+        final boolean hideForNonLayoutFiles = settings.getState().isHideForNonLayoutFiles();
+
         if (activeEditor == null) {
           myToolWindowForm.setFile(null);
-          myToolWindow.setAvailable(false, null);
+          myToolWindow.setAvailable(!hideForNonLayoutFiles, null);
           return;
         }
 
         final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(activeEditor.getDocument());
         if (psiFile == null) {
           myToolWindowForm.setFile(null);
-          myToolWindow.setAvailable(false, null);
+          myToolWindow.setAvailable(!hideForNonLayoutFiles, null);
           return;
         }
 

@@ -51,6 +51,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
@@ -500,7 +501,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     for (Component component : components) {
       if (component instanceof AbstractButton) {
         final AbstractButton button = (AbstractButton)component;
-        if (button.getMnemonic() == keyCode) return true;
+        if (button instanceof JBOptionButton) {
+          if (((JBOptionButton)button).isOkToProcessDefaultMnemonics()) return true;
+        } else {
+          if (button.getMnemonic() == keyCode) return true;
+        }
       }
       if (component instanceof JLabel) {
         final JLabel label = (JLabel)component;

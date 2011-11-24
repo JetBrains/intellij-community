@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
@@ -31,8 +30,6 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
-
-import javax.swing.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,38 +47,34 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    final long startTime = System.nanoTime();
-    try {
-      final Project project = e.getData(PlatformDataKeys.PROJECT);
-      final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-      if (project == null || project.isDefault() || virtualFile == null) {
-        e.getPresentation().setVisible(false);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
+    final boolean applicable = isApplicable(e);
+    e.getPresentation().setVisible(applicable);
+    e.getPresentation().setEnabled(applicable);
+  }
 
-      final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(project.getBaseDir());
-      if (gitRepository == null){
-        e.getPresentation().setVisible(false);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
+  private boolean isApplicable(final AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    if (project == null || project.isDefault() || virtualFile == null) {
+      return false;
+    }
 
-      // Check that given repository is properly configured git repository
-      final GitRemote gitHubRemoteBranch = GithubUtil.findGitHubRemoteBranch(gitRepository);
-      if (gitHubRemoteBranch == null) {
-        e.getPresentation().setVisible(false);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(true);
+    final VirtualFile dir = project.getBaseDir();
+    if (dir == null) {
+      return false;
     }
-    finally {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("GithubOpenInBrowserAction#update finished in: " + (System.nanoTime() - startTime) / 10e6 + "ms");
-      }
+
+    final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(dir);
+    if (gitRepository == null) {
+      return false;
     }
+
+    // Check that given repository is properly configured git repository
+    final GitRemote gitHubRemoteBranch = GithubUtil.findGitHubRemoteBranch(gitRepository);
+    if (gitHubRemoteBranch == null) {
+      return false;
+    }
+    return true;
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -91,7 +84,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     while (!GithubUtil.checkCredentials(project)) {
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
       dialog.show();
-      if (!dialog.isOK()){
+      if (!dialog.isOK()) {
         return;
       }
     }
@@ -105,7 +98,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final String rootPath = root.getPath();
     final String path = virtualFile.getPath();
-    if (!path.startsWith(rootPath)){
+    if (!path.startsWith(rootPath)) {
       Messages.showErrorDialog(project, "File is not under project root", CANNOT_OPEN_IN_BROWSER);
       return;
     }
@@ -122,7 +115,8 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
         Messages.showErrorDialog(project, "Cannot extract info about repository owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
         return;
       }
-    } else {
+    }
+    else {
       index = pushUrl.lastIndexOf(':');
       if (index == -1) {
         Messages.showErrorDialog(project, "Cannot extract info about repository name and owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
@@ -138,12 +132,12 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     final GitBranch tracked;
     try {
       final GitBranch current = GitBranch.current(project, root);
-      if (current == null){
+      if (current == null) {
         Messages.showErrorDialog(project, "Cannot find local branch", CANNOT_OPEN_IN_BROWSER);
         return;
       }
       tracked = current.tracked(project, root);
-      if (tracked == null || !tracked.isRemote()){
+      if (tracked == null || !tracked.isRemote()) {
         Messages.showErrorDialog(project, "Cannot find tracked branch for branch: " + current.getFullName(), CANNOT_OPEN_IN_BROWSER);
         return;
       }
@@ -153,14 +147,14 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return;
     }
     String branch = tracked.getName();
-    if (branch.startsWith("origin/")){
+    if (branch.startsWith("origin/")) {
       branch = branch.substring(7);
     }
 
     final StringBuilder builder = new StringBuilder();
     builder.append("https://github.com/").append(repoInfo).append("/blob/").append(branch).append(path.substring(rootPath.length()));
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    if (editor != null){
+    if (editor != null) {
       final int line = editor.getCaretModel().getLogicalPosition().line;
       builder.append("#L").append(line);
     }

@@ -29,19 +29,23 @@ public abstract class TextFieldCompletionProvider {
     myCaseInsensitivity = caseInsensitivity;
   }
 
-  public void apply(@NotNull EditorTextField field) {
+  public void apply(@NotNull EditorTextField field, String text) {
     Project project = field.getProject();
     assert project != null;
-    field.setDocument(createDocument(project));
+    field.setDocument(createDocument(project, text));
+  }
+  
+  public void apply(@NotNull EditorTextField field) {
+    apply(field, "");
   }
 
-  private Document createDocument(final Project project) {
+  private Document createDocument(final Project project, String text) {
     final FileType fileType = PlainTextLanguage.INSTANCE.getAssociatedFileType();
     assert fileType != null;
 
     final long stamp = LocalTimeCounter.currentTime();
     final PsiFile psiFile = PsiFileFactory.getInstance(project)
-      .createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, "", stamp, true, false);
+      .createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, text, stamp, true, false);
 
     psiFile.putUserData(COMPLETING_TEXT_FIELD_KEY, this);
 
@@ -62,6 +66,6 @@ public abstract class TextFieldCompletionProvider {
   protected abstract void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result);
 
   public EditorTextField createEditor(Project project) {
-    return new EditorTextField(createDocument(project), project, PlainTextLanguage.INSTANCE.getAssociatedFileType());
+    return new EditorTextField(createDocument(project, ""), project, PlainTextLanguage.INSTANCE.getAssociatedFileType());
   }
 }

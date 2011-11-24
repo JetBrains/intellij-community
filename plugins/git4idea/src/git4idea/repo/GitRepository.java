@@ -174,10 +174,10 @@ public final class GitRepository implements Disposable {
     myProject = project;
     Disposer.register(parentDisposable, this);
     
-    myReader = new GitRepositoryReader(this);
-    
     myGitDir = myRootDir.findChild(".git");
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
+    
+    myReader = new GitRepositoryReader(VfsUtil.virtualToIoFile(myGitDir));
     
     myUntrackedFilesHolder = new GitUntrackedFilesHolder(rootDir, project);
     Disposer.register(this, myUntrackedFilesHolder);

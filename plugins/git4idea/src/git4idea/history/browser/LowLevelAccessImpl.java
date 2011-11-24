@@ -117,11 +117,11 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     final GitRepository repositoryForRoot = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myRoot);
     if (repositoryForRoot != null) {
       final GitBranchesCollection branches = repositoryForRoot.getBranches();
-      final Set<GitBranch> localBranches = branches.getLocalBranches();
+      final Collection<GitBranch> localBranches = branches.getLocalBranches();
       for (GitBranch localBranch : localBranches) {
         refs.addLocal(localBranch.getName());
       }
-      final Set<GitBranch> remoteBranches = branches.getRemoteBranches();
+      final Collection<GitBranch> remoteBranches = branches.getRemoteBranches();
       for (GitBranch remoteBranch : remoteBranches) {
         String name = remoteBranch.getName();
         name = name.startsWith("remotes/") ? name.substring("remotes/".length()) : name;

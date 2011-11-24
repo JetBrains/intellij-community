@@ -123,6 +123,7 @@
     <compiler implementation="org.jetbrains.android.compiler.AndroidRenderscriptCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidAptCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidIdlCompiler"/>
+    <compiler implementation="org.jetbrains.android.compiler.AndroidLibraryPackagingCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidProguardCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidDexCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidPngFilesCachingCompiler"/>
@@ -179,7 +180,6 @@
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
     <refactoring.safeDeleteProcessor id="android" order="before javaProcessor"
                                      implementation="org.jetbrains.android.AndroidSafeDeleteProcessorDelegate"/>
-    <compiler.additionalCompileScopeProvider implementation="org.jetbrains.android.compiler.AndroidAdditionalCompileScopeProvider"/>
   </extensions>
 
   <extensionPoints>

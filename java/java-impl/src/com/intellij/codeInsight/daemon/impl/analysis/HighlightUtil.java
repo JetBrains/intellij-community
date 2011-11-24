@@ -468,7 +468,7 @@ public class HighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkAssignability(PsiType lType, PsiType rType, PsiExpression expression, PsiElement elementToHighlight) {
+  static HighlightInfo checkAssignability(PsiType lType, @Nullable PsiType rType, PsiExpression expression, PsiElement elementToHighlight) {
     TextRange textRange = elementToHighlight.getTextRange();
     return checkAssignability(lType, rType, expression, textRange);
   }
