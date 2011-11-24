@@ -15,8 +15,12 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -24,10 +28,11 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JBOptionButton extends JButton {
+public class JBOptionButton extends JButton implements MouseMotionListener {
 
 
   private static final Icon myDownIcon = IconLoader.getIcon("/general/arrowDown.png");
@@ -45,12 +50,67 @@ public class JBOptionButton extends JButton {
   private Set<OptionInfo> myOptionInfos = new HashSet<OptionInfo>();
   private boolean myOkToProcessDefaultMnemonics = true;
 
+  private IdeGlassPane myGlassPane;
+  private final Disposable myDisposable = new Disposable() {
+    @Override
+    public void dispose() {
+    }
+  };
+
   public JBOptionButton(Action action, Action[] options) {
     super(action);
     myOptions = options;
     myMoreRec = new Rectangle(0, 0, myDownIcon.getIconWidth(), myDownIcon.getIconHeight());
 
     myPopup = fillMenu();
+    enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    myGlassPane = IdeGlassPaneUtil.find(this);
+    if (myGlassPane != null) {
+      myGlassPane.addMouseMotionPreprocessor(this, myDisposable);
+    }
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    Disposer.dispose(myDisposable);
+  }
+
+  @Override
+  public void mouseDragged(MouseEvent e) {
+  }
+
+  @Override
+  public void mouseMoved(MouseEvent e) {
+    final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
+    final boolean insideMoreRec = myMoreRecMouse.contains(event.getPoint());
+    if (!myPopupIsShowing && insideMoreRec) {
+      showPopup(null);
+    } else if (myPopupIsShowing && !insideMoreRec) {
+      final Component over = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+      if (over != null && myPopup.isShowing()) {
+        final Rectangle rec = new Rectangle(myPopup.getLocationOnScreen(), myPopup.getSize());
+        int delta = 15;
+        rec.x -= delta;
+        rec.width += delta * 2;
+        rec.y -= delta;
+        rec.height += delta * 2;
+
+        final Point eventPoint = e.getPoint();
+        SwingUtilities.convertPointToScreen(eventPoint, e.getComponent());
+        
+        if (rec.contains(eventPoint)) {
+          return;
+        }
+      }
+
+      closePopup();
+    }
   }
 
   @Override

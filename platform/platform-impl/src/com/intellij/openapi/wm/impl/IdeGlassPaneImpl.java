@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,11 +79,25 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   public boolean dispatch(final AWTEvent e) {
-
+    JRootPane eventRootPane = myRootPane;
+    
     if (e instanceof MouseEvent) {
-      final MouseEvent me = (MouseEvent)e;
+      MouseEvent me = (MouseEvent)e;
       Window eventWindow = me.getComponent() instanceof Window ? (Window)me.getComponent() : SwingUtilities.getWindowAncestor(me.getComponent());
       final Window thisGlassWindow = SwingUtilities.getWindowAncestor(myRootPane);
+      
+      if (eventWindow instanceof JWindow) {
+        eventRootPane = ((JWindow)eventWindow).getRootPane();
+        if (eventRootPane != null) {
+          if (!(eventRootPane.getGlassPane() instanceof IdeGlassPane)) {
+            final Container parentWindow = eventWindow.getParent();
+            if (parentWindow instanceof Window) {
+              eventWindow = (Window)parentWindow;
+            }
+          }
+        }
+      }
+      
       if (eventWindow != thisGlassWindow) return false;
     }
 
@@ -95,11 +110,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
     boolean dispatched;
     if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
-      dispatched = preprocess((MouseEvent)e, false);
+      dispatched = preprocess((MouseEvent)e, false, eventRootPane);
     } else if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_DRAGGED) {
-      dispatched = preprocess((MouseEvent)e, true);
+      dispatched = preprocess((MouseEvent)e, true, eventRootPane);
     } else if (e.getID() == MouseEvent.MOUSE_EXITED || e.getID() == MouseEvent.MOUSE_ENTERED) {
-      dispatched = preprocess((MouseEvent)e, false);
+      dispatched = preprocess((MouseEvent)e, false, eventRootPane);
     } else {
       return false;
     }
@@ -221,9 +236,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     return dispatched;
   }
 
-  private boolean preprocess(final MouseEvent e, final boolean motion) {
+  private boolean preprocess(final MouseEvent e, final boolean motion, JRootPane eventRootPane) {
     try {
-      final MouseEvent event = convertEvent(e, myRootPane);
+      final MouseEvent event = convertEvent(e, eventRootPane);
 
       if (!IdeGlassPaneUtil.canBePreprocessed(e)) {
         return false;
@@ -245,43 +260,50 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       return false;
     }
     finally {
-      Cursor cursor;
-      if (!myListener2Cursor.isEmpty()) {
-        cursor = myListener2Cursor.values().iterator().next();
+      if (eventRootPane == myRootPane) {
+        Cursor cursor;
+        if (!myListener2Cursor.isEmpty()) {
+          cursor = myListener2Cursor.values().iterator().next();
 
-        final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myRootPane.getContentPane());
-        Component target =
-            SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+          final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myRootPane.getContentPane());
+          Component target =
+              SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
 
-
-        target = getCompWithCursor(target);
-
-        restoreLastComponent(target);
-
-        if (target != null) {
-          if (myLastCursorComponent != target) {
-            myLastCursorComponent = target;
-            myLastOriginalCursor = target.getCursor();
+          if (canProcessCursorFor(target)) {
+            target = getCompWithCursor(target);
+  
+            restoreLastComponent(target);
+  
+            if (target != null) {
+              if (myLastCursorComponent != target) {
+                myLastCursorComponent = target;
+                myLastOriginalCursor = target.getCursor();
+              }
+  
+              if (cursor != null && !cursor.equals(target.getCursor())) {
+                target.setCursor(cursor);
+              }
+            }
+  
+            getRootPane().setCursor(cursor);
           }
+        } else {
+          cursor = Cursor.getDefaultCursor();
+          getRootPane().setCursor(cursor);
 
-          if (cursor != null && !cursor.equals(target.getCursor())) {
-            target.setCursor(cursor);
-          }
+
+          restoreLastComponent(null);
+          myLastOriginalCursor = null;
+          myLastCursorComponent = null;
         }
-
-        getRootPane().setCursor(cursor);
-
-      } else {
-        cursor = Cursor.getDefaultCursor();
-        getRootPane().setCursor(cursor);
-
-
-        restoreLastComponent(null);
-        myLastOriginalCursor = null;
-        myLastCursorComponent = null;
+        myListener2Cursor.clear();
       }
-      myListener2Cursor.clear();
     }
+  }
+
+  private boolean canProcessCursorFor(Component target) {
+    if (target instanceof JMenu || target instanceof JMenuItem || target instanceof JSeparator) return false;
+    return true;
   }
 
   private Component getCompWithCursor(Component c) {

@@ -70,8 +70,6 @@ public class IdeGlassPaneUtil {
   public static boolean canBePreprocessed(MouseEvent e) {
     Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
 
-    if (c instanceof JMenu || c instanceof JMenuItem || c instanceof JSeparator) return false;
-
     if (c instanceof IdeGlassPane.TopComponent) {
       return ((IdeGlassPane.TopComponent)c).canBePreprocessed(e);
     }
