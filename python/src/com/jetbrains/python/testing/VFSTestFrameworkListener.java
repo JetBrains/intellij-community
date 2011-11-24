@@ -86,21 +86,9 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   }
 
   public void updateAllTestFrameworks(final String sdkHome) {
-    myQueue.queue(new Update(Pair.create(sdkHome, PYTESTSEARCHER)) {
-      public void run() {
-        testInstalled(isTestFrameworkInstalled(sdkHome, PYTESTSEARCHER), sdkHome, "pytest");
-      }
-    });
-    myQueue.queue(new Update(Pair.create(sdkHome, NOSETESTSEARCHER)) {
-      public void run() {
-        testInstalled(isTestFrameworkInstalled(sdkHome, NOSETESTSEARCHER), sdkHome, "nosetest");
-      }
-    });
-    myQueue.queue(new Update(Pair.create(sdkHome, ATTESTSEARCHER)) {
-      public void run() {
-        testInstalled(isTestFrameworkInstalled(sdkHome, ATTESTSEARCHER), sdkHome, "attest");
-      }
-    });
+    updateTestFrameworks(sdkHome, PYTESTSEARCHER, "pytest");
+    updateTestFrameworks(sdkHome, NOSETESTSEARCHER, "nosetest");
+    updateTestFrameworks(sdkHome, ATTESTSEARCHER, "attest");
     myQueue.flush();
   }
 
@@ -173,8 +161,8 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   public boolean isPyTestInstalled(final String sdkHome) {
     Boolean isInstalled = SDK_TO_PYTEST.get(sdkHome);
     if (isInstalled == null) {
-      isInstalled = isTestFrameworkInstalled(sdkHome, PYTESTSEARCHER);
-      testInstalled(isInstalled, sdkHome, "pytest");
+      updateTestFrameworks(sdkHome, PYTESTSEARCHER, "pytest");
+      return true;
     }
     return isInstalled;
   }
@@ -186,8 +174,8 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   public boolean isNoseTestInstalled(final String sdkHome) {
     Boolean isInstalled = SDK_TO_NOSETEST.get(sdkHome);
     if (isInstalled == null) {
-      isInstalled = isTestFrameworkInstalled(sdkHome, NOSETESTSEARCHER);
-      testInstalled(isInstalled, sdkHome, "nosetest");
+      updateTestFrameworks(sdkHome, NOSETESTSEARCHER, "nosetest");
+      return true;
     }
     return isInstalled;
   }
@@ -199,8 +187,8 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   public boolean isAtTestInstalled(final String sdkHome) {
     Boolean isInstalled = SDK_TO_ATTEST.get(sdkHome);
     if (isInstalled == null) {
-      isInstalled = isTestFrameworkInstalled(sdkHome, ATTESTSEARCHER);
-      testInstalled(isInstalled, sdkHome, "attest");
+      updateTestFrameworks(sdkHome, ATTESTSEARCHER, "attest");
+      return true;
     }
     return isInstalled;
   }

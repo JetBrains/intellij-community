@@ -16,8 +16,7 @@ public class PythonNoseTestConfigurationProducer extends
     PsiElement element = location.getPsiElement();
     final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
     return (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
-      PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) && sdk != null &&
-            VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk.getHomePath()));
+      PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) && sdk != null);
   }
 
 }

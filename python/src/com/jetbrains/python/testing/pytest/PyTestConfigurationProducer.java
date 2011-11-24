@@ -63,7 +63,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     configuration.setModule(ModuleUtil.findModuleForPsiElement(myPsiElement));
 
     final Sdk sdk = PythonSdkType.findPythonSdk(location.getModule());
-    if (sdk == null || !VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk.getHomePath())) return null;
+    if (sdk == null) return null;
     configuration.setTestToRun(path);
 
     PyFunction pyFunction = findTestFunction(location);
