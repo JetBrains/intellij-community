@@ -21,13 +21,18 @@
 package com.intellij.compiler.make;
 
 import com.intellij.compiler.classParsing.FieldInfo;
+import com.intellij.compiler.impl.ExitException;
+import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
@@ -45,29 +50,32 @@ class ChangedConstantsDependencyProcessor {
   private final CachingSearcher mySearcher;
   private final DependencyCache myDependencyCache;
   private final int myQName;
+  private final CompileContext myContext;
   private final boolean mySkipExpressionResolve;
   private final FieldChangeInfo[] myChangedFields;
   private final FieldChangeInfo[] myRemovedFields;
   private static final long ANALYSIS_DURATION_THRESHOLD_MILLIS = 60000L /*1 minute*/;
+  private final int MAX_CONSTANT_SEARCHES = Registry.intValue("compiler.max.static.constants.searches");
 
 
   public ChangedConstantsDependencyProcessor(Project project,
                                              CachingSearcher searcher,
                                              DependencyCache dependencyCache,
-                                             int qName, boolean skipExpressionResolve, FieldChangeInfo[] changedFields,
+                                             int qName, CompileContext context, FieldChangeInfo[] changedFields,
                                              FieldChangeInfo[] removedFields) {
     myProject = project;
     mySearcher = searcher;
     myDependencyCache = dependencyCache;
     myQName = qName;
-    mySkipExpressionResolve = skipExpressionResolve;
+    myContext = context;
+    mySkipExpressionResolve = context.getProgressIndicator().isCanceled();
     myChangedFields = changedFields;
     myRemovedFields = removedFields;
   }
 
-  public void run() throws CacheCorruptedException {
-    final CacheCorruptedException[] _ex = new CacheCorruptedException[] {null};
-
+  public void run() throws CacheCorruptedException, ExitException {
+    final Ref<CacheCorruptedException> _ex = new Ref<CacheCorruptedException>();
+    final Ref<ExitException> exitException = new Ref<ExitException>(null);
     DumbService.getInstance(myProject).waitForSmartMode(); // ensure running in smart mode
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -89,15 +97,21 @@ class ChangedConstantsDependencyProcessor {
           }
         }
         catch (CacheCorruptedException e) {
-          _ex[0] = e;
+          _ex.set(e);
+        }
+        catch (ExitException e) {
+          exitException.set(e);
         }
         catch (ProcessCanceledException e) {
           // supressed deliberately
         }
       }
     });
-    if (_ex[0] != null) {
-      throw _ex[0];
+    if (_ex.get() != null) {
+      throw _ex.get();
+    }
+    if (exitException.get() != null) {
+      throw exitException.get();
     }
   }
 
@@ -180,7 +194,8 @@ class ChangedConstantsDependencyProcessor {
     return helper.processElementsWithWord(processor1, searchScope, identifier, searchContext, true);
   }
 
-  private void processFieldChanged(PsiField field, PsiClass aClass, final boolean isAccessibilityChange) throws CacheCorruptedException {
+  private void processFieldChanged(PsiField field, PsiClass aClass, final boolean isAccessibilityChange)
+    throws CacheCorruptedException, ExitException {
     if (!isAccessibilityChange && field.hasModifierProperty(PsiModifier.PRIVATE)) {
       return; // optimization: don't need to search, cause may be used only in this class
     }
@@ -229,8 +244,16 @@ class ChangedConstantsDependencyProcessor {
     }
   }
 
-  private void addUsages(PsiField psiField, Collection<PsiElement> usages, final boolean ignoreAccessScope) {
+  private void addUsages(PsiField psiField, Collection<PsiElement> usages, final boolean ignoreAccessScope) throws ExitException {
+    final int count = getConstantSearchesCount();
+    if (count > MAX_CONSTANT_SEARCHES) {
+      myContext.requestRebuildNextTime("Too many changed compile-time constants, project rebuild scheduled");
+      throw new ExitException(ExitStatus.CANCELLED);
+    }
     Collection<PsiReference> references = mySearcher.findReferences(psiField, ignoreAccessScope)/*doFindReferences(searchHelper, psiField)*/;
+
+    incConstantSearchesCount();
+
     for (final PsiReference ref : references) {
       if (!(ref instanceof PsiReferenceExpression)) {
         continue;
@@ -342,4 +365,14 @@ class ChangedConstantsDependencyProcessor {
     }
   }
 
+  private static final Key<Integer> CONSTANTS_COUNTER = Key.create("_constant_searches_counter_");
+
+  private int getConstantSearchesCount() {
+    final Integer value = CONSTANTS_COUNTER.get(myContext);
+    return value != null? value.intValue() : 0;
+  }
+
+  private void incConstantSearchesCount() {
+    CONSTANTS_COUNTER.set(myContext, getConstantSearchesCount() + 1);
+  }
 }

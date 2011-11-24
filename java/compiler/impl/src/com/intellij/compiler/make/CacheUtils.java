@@ -19,6 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.MethodInfo;
+import com.intellij.compiler.impl.ExitException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -131,7 +132,8 @@ public class CacheUtils {
   public static Collection<VirtualFile> findDependentFiles(
     final CompileContextEx context, 
     final Set<VirtualFile> compiledWithErrors, 
-    final @Nullable Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> filter) throws CacheCorruptedException {
+    final @Nullable Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> filter)
+    throws CacheCorruptedException, ExitException {
     
     if (!CompilerConfiguration.MAKE_ENABLED) {
       return Collections.emptyList();
@@ -140,8 +142,7 @@ public class CacheUtils {
 
     final DependencyCache dependencyCache = context.getDependencyCache();
 
-    final Pair<int[], Set<VirtualFile>> deps =
-        dependencyCache.findDependentClasses(context, context.getProject(), compiledWithErrors);
+    final Pair<int[], Set<VirtualFile>> deps = dependencyCache.findDependentClasses(context, context.getProject(), compiledWithErrors);
     final Pair<int[], Set<VirtualFile>> filteredDeps = filter != null? filter.fun(deps) : deps;
 
     final Set<VirtualFile> dependentFiles = new HashSet<VirtualFile>();
