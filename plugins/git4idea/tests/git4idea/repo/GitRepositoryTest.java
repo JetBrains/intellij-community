@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.openapi.vfs.VfsUtil;
 import git4idea.GitBranch;
 import git4idea.tests.GitTest;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -46,7 +48,7 @@ public class GitRepositoryTest extends GitTest {
   public void setUp() throws Exception {
     super.setUp();
     myRepository = GitRepository.getFullInstance(myRepo.getVFRootDir(), myProject, myProject);
-    myReader = new GitRepositoryReader(myRepository);
+    myReader = new GitRepositoryReader(new File(VfsUtil.virtualToIoFile(myRepository.getRoot()), ".git"));
   }
 
   @Test

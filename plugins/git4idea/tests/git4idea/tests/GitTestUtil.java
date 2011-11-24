@@ -133,7 +133,50 @@ public class GitTestUtil {
     }
   }
 
-  private static <T> String stringifyActualExpected(@NotNull Collection<T> actual, @NotNull Collection<T> expected) {
+  /**
+   * Testng compares by iterating over 2 collections, but it won't work for sets which may have different order.
+   */
+  public static <T, E> void assertEqualCollections(@NotNull Collection<T> actual, @NotNull Collection<E> expected, @NotNull EqualityChecker<T, E> equalityChecker) {
+    if (actual.size() != expected.size()) {
+      fail("Collections don't have the same size. " + stringifyActualExpected(actual, expected));
+    }
+    for (T act : actual) {
+      if (!contains2(expected, act, equalityChecker)) {
+        fail("Unexpected object " + act + stringifyActualExpected(actual, expected));
+      }
+    }
+    // backwards is needed for collections which may contain duplicates, e.g. Lists.
+    for (E exp : expected) {
+      if (!contains(actual, exp, equalityChecker)) {
+        fail("Object " + exp + " not found in actual collection." + stringifyActualExpected(actual, expected));
+      }
+    }
+  }
+
+  private static <T, E> boolean contains(@NotNull Collection<T> collection, @NotNull E object, @NotNull EqualityChecker<T, E> equalityChecker) {
+    for (T t : collection) {
+      if (equalityChecker.areEqual(t, object)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  private static <T, E> boolean contains2(Collection<E> collection, T object, EqualityChecker<T, E> equalityChecker) {
+    for (E e : collection) {
+      if (equalityChecker.areEqual(object, e)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public interface EqualityChecker<T, E> {
+    boolean areEqual(T actual, E expected);
+  }
+
+  @NotNull
+  public static String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {
     return "\nExpected:\n" + expected + "\nActual:\n" + actual;
   }
 }
