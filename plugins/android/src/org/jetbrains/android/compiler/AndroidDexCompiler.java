@@ -17,12 +17,9 @@ package org.jetbrains.android.compiler;
 
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.facet.FacetManager;
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -44,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
@@ -82,14 +78,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
   }
 
   public ValidityState createValidityState(DataInput in) throws IOException {
-    final HashMap<String, Long> map = new HashMap<String, Long>();
-    int size = in.readInt();
-    while (size-- > 0) {
-      final String path = CompilerIOUtil.readString(in);
-      final long timestamp = in.readLong();
-      map.put(path, timestamp);
-    }
-    return new MyValidityState(map);
+    return new ClassesAndJarsValidityState(in);
   }
 
   public static VirtualFile getOutputDirectoryForDex(@NotNull Module module) {
@@ -169,7 +158,12 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             files.addAll(AndroidRootUtil.getExternalLibraries(module));
 
             for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
-              addModuleOutputDir(files, file);
+              if (file.isDirectory()) {
+                addModuleOutputDir(files, file);
+              }
+              else {
+                files.add(file);
+              }
             }
 
             VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
@@ -266,47 +260,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myFiles);
-    }
-  }
-
-  private static class MyValidityState implements ValidityState {
-    private Map<String, Long> myFiles;
-
-    private void fillMap(VirtualFile file, Set<VirtualFile> visited) {
-      if (file.isDirectory() && visited.add(file)) {
-        for (VirtualFile child : file.getChildren()) {
-          fillMap(child, visited);
-        }
-      }
-      else if (StdFileTypes.CLASS.equals(file.getFileType()) || file.getFileType() instanceof ArchiveFileType) {
-        myFiles.put(file.getPath(), file.getTimeStamp());
-      }
-    }
-
-    public MyValidityState(Collection<VirtualFile> files) {
-      myFiles = new HashMap<String, Long>();
-      Set<VirtualFile> visited = new HashSet<VirtualFile>();
-      for (VirtualFile file : files) {
-        fillMap(file, visited);
-      }
-    }
-
-    public MyValidityState(Map<String, Long> files) {
-      myFiles = files;
-    }
-
-    public boolean equalsTo(ValidityState otherState) {
-      return otherState instanceof MyValidityState
-             && myFiles.equals(((MyValidityState)otherState).myFiles);
-    }
-
-    public void save(DataOutput out) throws IOException {
-      out.writeInt(myFiles.size());
-      for (String dependency : myFiles.keySet()) {
-        CompilerIOUtil.writeString(dependency, out);
-        out.writeLong(myFiles.get(dependency));
-      }
+      return new ClassesAndJarsValidityState(myFiles);
     }
   }
 }

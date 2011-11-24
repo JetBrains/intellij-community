@@ -23,7 +23,6 @@ import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -32,12 +31,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -55,15 +51,15 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,7 +68,8 @@ import java.util.regex.Pattern;
  */
 public class AndroidCompileUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidCompileUtil");
-
+  private static Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
+  
   private static final Pattern ourMessagePattern = Pattern.compile("(.+):(\\d+):.+");
 
   private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
@@ -80,6 +77,7 @@ public class AndroidCompileUtil {
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
   
   @NonNls private static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
+  @NonNls public static final String CLASSES_JAR_FILE_NAME = "classes.jar";
 
   private AndroidCompileUtil() {
   }
@@ -218,7 +216,7 @@ public class AndroidCompileUtil {
   public static boolean isGenModule(@NotNull Module module) {
     return module.getName().startsWith(GEN_MODULE_PREFIX);
   }
-  
+
   @Nullable
   public static Module getBaseModuleByGenModule(@NotNull Module module) {
     if (isGenModule(module)) {
@@ -236,7 +234,7 @@ public class AndroidCompileUtil {
 
   public static void createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    
+
     final File rootFile = new File(path);
     final boolean created;
     if (!rootFile.exists()) {
@@ -253,15 +251,7 @@ public class AndroidCompileUtil {
     final AndroidFacet facet = AndroidFacet.getInstance(genModule);
 
     if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
-      final VirtualFile oldStyleRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      if (oldStyleRoot != null) {
-        removeSourceRoot(module, oldStyleRoot);
-      }
-
-      genModule = setUpGenModule(module);
-      if (genModule == null) {
-        return;
-      }
+      removeGenModule(module);
     }
 
     if (project.isDisposed() || genModule.isDisposed()) {
@@ -289,67 +279,51 @@ public class AndroidCompileUtil {
     }
   }
 
-  @Nullable
-  private static Module setUpGenModule(@NotNull Module libModule) {
-    final ModuleRootManager libRootManager = ModuleRootManager.getInstance(libModule);
-    final Sdk sdk = libRootManager.getSdk();
+  private static void removeGenModule(@NotNull final Module libModule) {
+    final String genModuleName = getGenModuleName(libModule);
+    final ModuleManager moduleManager = ModuleManager.getInstance(libModule.getProject());
+    final ModifiableRootModel model = ModuleRootManager.getInstance(libModule).getModifiableModel();
 
-    if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
-      LOG.info("Android SDK is not specified for module " + libModule.getName());
-      return null;
+    for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof ModuleOrderEntry &&
+          genModuleName.equals(((ModuleOrderEntry)entry).getModuleName())) {
+        model.removeOrderEntry(entry);
+      }
     }
 
-    final Module genModule = findOrCreateGenModule(libModule);
-    
-    final ModifiableRootModel genModel = ModuleRootManager.getInstance(genModule).getModifiableModel();
-    genModel.setSdk(sdk);
-    
-    if (ArrayUtil.find(genModel.getModuleDependencies(), libModule) < 0) {
-      genModel.addModuleOrderEntry(libModule);
-    }
-    
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        genModel.commit();
+        model.commit();
       }
     });
-    
 
-    if (ArrayUtil.find(libRootManager.getDependencies(), genModule) < 0) {
-      final ModifiableRootModel libModel = libRootManager.getModifiableModel();
-      libModel.addModuleOrderEntry(genModule);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    final Module genModule = moduleManager.findModuleByName(genModuleName);
+    if (genModule == null) {
+      return;
+    }
+    moduleManager.disposeModule(genModule);
+    
+    final VirtualFile moduleFile = genModule.getModuleFile();
+    
+    if (moduleFile != null) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          libModel.commit();
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                moduleFile.delete(libModule.getProject());
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
+            }
+          });
         }
       });
     }
-    
-    return genModule;
-  }
-
-  @NotNull
-  private static Module findOrCreateGenModule(Module module) {
-    final String genModuleName = getGenModuleName(module);
-    final ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
-    
-    final Module genModule = moduleManager.findModuleByName(genModuleName);
-    if (genModule != null) {
-      return genModule;
-    }
-    
-    final File moduleDir = new File(module.getModuleFilePath()).getParentFile();
-    final String moduleDirPath = FileUtil.toSystemIndependentName(moduleDir.getPath());
-
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return moduleManager.newModule(moduleDirPath + '/' + genModuleName + ModuleFileType.DOT_DEFAULT_EXTENSION,
-                                       StdModuleTypes.JAVA);
-      }
-    });
   }
   
   private static void removeSourceRoot(@NotNull Module module, @NotNull final VirtualFile root) {
@@ -441,7 +415,7 @@ public class AndroidCompileUtil {
           if (module.isDisposed() || module.getProject().isDisposed()) {
             continue;
           }
-          
+
           final AndroidFacet facet = AndroidFacet.getInstance(module);
           if (facet != null) {
             AndroidCompileUtil.createGenModulesAndSourceRoots(facet);
@@ -756,5 +730,83 @@ public class AndroidCompileUtil {
         resourceSet.add(new ResourceEntry(subdir.getName(), file.getName()));
       }
     }
+  }
+
+  public static void packClassFilesIntoJar(@NotNull String[] firstPackageDirPaths,
+                                           @NotNull String[] libFirstPackageDirPaths,
+                                           @NotNull File jarFile) throws IOException {
+    final JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
+    try {
+      for (String path : firstPackageDirPaths) {
+        final File firstPackageDir = new File(path);
+        if (firstPackageDir.exists()) {
+          addFileToJar(jos, firstPackageDir, firstPackageDir.getParentFile(), true);
+        }
+      }
+
+      for (String path : libFirstPackageDirPaths) {
+        final File firstPackageDir = new File(path);
+        if (firstPackageDir.exists()) {
+          addFileToJar(jos, firstPackageDir, firstPackageDir.getParentFile(), false);
+        }
+      }
+    }
+    finally {
+      jos.close();
+    }
+  }
+
+  private static void addFileToJar(@NotNull JarOutputStream jar, @NotNull File file, @NotNull File rootDirectory, boolean packRClasses)
+    throws IOException {
+    
+    if (file.isDirectory()) {
+      for (File child : file.listFiles()) {
+        addFileToJar(jar, child, rootDirectory, packRClasses);
+      }
+    }
+    else if (file.isFile()) {
+      if (!FileUtil.getExtension(file.getName()).equals("class")) {
+        return;
+      }
+      
+      if (!packRClasses && R_PATTERN.matcher(file.getName()).matches()) {
+        return;
+      }
+
+      final String rootPath = rootDirectory.getAbsolutePath();
+      
+      String path = file.getAbsolutePath();
+      path = FileUtil.toSystemIndependentName(path.substring(rootPath.length()));
+      if (path.charAt(0) == '/') {
+        path = path.substring(1);
+      }
+
+      final JarEntry entry = new JarEntry(path);
+      entry.setTime(file.lastModified());
+      jar.putNextEntry(entry);
+
+      BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+      try {
+        final byte[] buffer = new byte[1024];
+        int count;
+        while ((count = bis.read(buffer)) != -1) {
+          jar.write(buffer, 0, count);
+        }
+        jar.closeEntry();
+      }
+      finally {
+        bis.close();
+      }
+    }
+  }
+
+  @NotNull
+  public static String[] toOsPaths(@NotNull VirtualFile[] classFilesDirs) {
+    final String[] classFilesDirOsPaths = new String[classFilesDirs.length];
+
+    for (int i = 0; i < classFilesDirs.length; i++) {
+      classFilesDirOsPaths[i] = FileUtil.toSystemDependentName(classFilesDirs[i].getPath());
+    }
+    return classFilesDirOsPaths;
   }
 }
