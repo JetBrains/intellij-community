@@ -110,13 +110,16 @@ public abstract class JBListTable extends JPanel {
           return false;
         }
         
-        if (e.getKeyCode() == VK_ESCAPE) {
+        if (e.getKeyCode() == VK_ESCAPE && pressed) {
           final int row = getSelectedRow();
           if (row != -1 && isRowEmpty(row)) {
             final int count = model.getRowCount();
             model.removeRow(row);
             int newRow = count == row + 1 ? row - 1 : row;
-            setRowSelectionInterval(newRow, newRow);
+
+            if (0 <= newRow && newRow < model.getRowCount()) {
+              setRowSelectionInterval(newRow, newRow);
+            }
           }
         }
 
