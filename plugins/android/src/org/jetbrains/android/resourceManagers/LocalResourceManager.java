@@ -103,7 +103,7 @@ public class LocalResourceManager extends ResourceManager {
 
   private static void collectResourceDirs(Module module, Set<VirtualFile> result) {
     VirtualFile resDir = AndroidRootUtil.getResourceDir(module);
-    if (resDir == null || !result.add(resDir)) {
+    if (resDir != null && !result.add(resDir)) {
       return;
     }
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, false)) {
