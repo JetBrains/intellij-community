@@ -46,9 +46,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private boolean myShowListForEmptyPattern = false;
   private boolean myMayRequestCurrentWindow;
 
-  protected ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
-                            final PsiElement context, @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWundow, int initialIndex) {
-    super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context, initialIndex);
+  protected ChooseByNamePopup(final Project project, final ChooseByNameModel model, ChooseByNameItemProvider provider, final ChooseByNamePopup oldPopup,
+                            @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWundow, int initialIndex) {
+    super(project, model, provider, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, initialIndex);
     if (oldPopup == null && predefinedText != null) {
       setPreselectInitialText(true);
     }
@@ -234,22 +234,37 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context) {
-    return createPopup(project, model, context, null);
+    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), null);
   }
+
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText) {
-    return createPopup(project, model, context, predefinedText, false, 0);
-
+    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
+                                              @Nullable final String predefinedText,
+                                              boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
+     return createPopup(project,model,new DefaultChooseByNameItemProvider(context),predefinedText,mayRequestOpenInCurrentWindow,initialIndex);
+  }
+
+  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final ChooseByNameItemProvider provider) {
+    return createPopup(project, model, provider, null);
+  }
+
+  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final ChooseByNameItemProvider provider,
+                                              @Nullable final String predefinedText) {
+    return createPopup(project, model, provider, predefinedText, false, 0);
+  }
+
+  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final ChooseByNameItemProvider provider,
                                               @Nullable final String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
     final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, context, predefinedText, mayRequestOpenInCurrentWindow,
+    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow,
                                                        initialIndex);
 
     project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
@@ -259,7 +274,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+)(?::|@|,|#)(\\d+)?(?:(?:\\D)(\\d+)?)?");
   private static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$\\d)*(\\$)?)");
 
-  public String getNamePattern(String pattern) {
+  public String transformPattern(String pattern) {
     Pattern regex = null;
     if (pattern.indexOf(':') != -1 ||
         pattern.indexOf(',') != -1 ||
@@ -280,7 +295,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
     }
 
-    return super.getNamePattern(pattern);
+    return super.transformPattern(pattern);
   }
 
   public int getLinePosition() {

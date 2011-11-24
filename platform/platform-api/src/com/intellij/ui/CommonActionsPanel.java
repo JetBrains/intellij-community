@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IconUtil;
@@ -175,7 +176,7 @@ class CommonActionsPanel extends JPanel {
     }
   }
 
-  static class MyActionButton extends AnActionButton {
+  static class MyActionButton extends AnActionButton implements DumbAware {
     private final Buttons myButton;
     private final Listener myListener;
 

@@ -92,7 +92,7 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
 
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
-    <libraryTable.attachHandler implementation="org.jetbrains.idea.maven.utils.RepositoryAttachHandler"/>
+    <library.type implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibraryType"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
 
     <intentionAction>

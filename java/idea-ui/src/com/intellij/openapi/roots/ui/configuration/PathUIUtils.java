@@ -19,7 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.libraries.ui.RootDetector;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.RootDetectionUtil;
+import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;

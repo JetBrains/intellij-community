@@ -91,6 +91,10 @@ public abstract class RenamePsiElementProcessor {
   public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement,String> conflicts) {
   }
 
+  public boolean isInplaceRenameSupported() {
+    return true;
+  }
+
   public static List<RenamePsiElementProcessor> allForElement(@NotNull PsiElement element) {
     final List<RenamePsiElementProcessor> result = new ArrayList<RenamePsiElementProcessor>();
     for (RenamePsiElementProcessor processor : EP_NAME.getExtensions()) {

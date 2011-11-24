@@ -160,6 +160,17 @@ public class CoreEnvironment {
     });
   }
 
+  protected <T> void addExtension(ExtensionPointName<T> name, final T extension) {
+    final ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name);
+    extensionPoint.registerExtension(extension);
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        extensionPoint.unregisterExtension(extension);
+      }
+    });
+  }
+
   protected <T> void registerExtensionPoint(final ExtensionsArea area, final ExtensionPointName<T> extensionPointName,
                                             final Class<? extends T> aClass) {
     final String name = extensionPointName.getName();

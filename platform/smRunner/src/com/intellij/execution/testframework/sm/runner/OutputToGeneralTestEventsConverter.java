@@ -302,6 +302,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "locationHint";
     @NonNls private static final String ATTR_KEY_LOCATION_URL_OLD = "location";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
+    @NonNls private static final String ATTR_KEY_DIAGNOSTIC = "diagnosticInfo";
 
     @NonNls private static final String MESSAGE = "message";
     @NonNls private static final String TEST_REPORTER_ATTACHED = "enteredTheMatrix";
@@ -362,7 +363,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       int duration = 0;
 
       if (!StringUtil.isEmptyOrSpaces(durationStr)) {
-        duration = convertToInt(durationStr);
+        duration = convertToInt(durationStr, testFinished);
       }
       
       fireOnTestFinished(testFinished.getTestName(), duration);
@@ -476,15 +477,16 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
     private void processTestCountInSuite(final ServiceMessage msg) {
       final String countStr = msg.getAttributes().get(ATTR_KEY_TEST_COUNT);
-      fireOnTestsCountInSuite(convertToInt(countStr));
+      fireOnTestsCountInSuite(convertToInt(countStr, msg));
     }
 
-    private int convertToInt(String countStr) {
+    private int convertToInt(String countStr, final ServiceMessage msg) {
       int count = 0;
       try {
         count = Integer.parseInt(countStr);
       } catch (NumberFormatException ex) {
-        LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse integer error.", ex);
+        final String diagnosticInfo = msg.getAttributes().get(ATTR_KEY_DIAGNOSTIC);
+        LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse integer error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo), ex);
       }
       return count;
     }
@@ -503,7 +505,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       final String testsCategory = attrs.get(ATTR_KEY_TESTS_CATEGORY);
       if (testsCategory != null) {
         final String countStr = msg.getAttributes().get(ATTR_KEY_TEST_COUNT);
-        fireOnCustomProgressTestsCategory(testsCategory, convertToInt(countStr));
+        fireOnCustomProgressTestsCategory(testsCategory, convertToInt(countStr, msg));
 
         //noinspection UnnecessaryReturnStatement
         return;

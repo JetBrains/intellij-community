@@ -184,11 +184,12 @@ final class Stripe extends JPanel{
 
     data.eachY = 0;
     data.size = new Dimension();
-    data.gap = 0;
+    data.gap = 1;
     data.horizontal = isHorizontal();
     data.dragInsertPosition = -1;
     if (data.horizontal) {
       data.eachX = horizontaloffset - 1;
+      data.eachY = 1;
     } else {
       data.eachX = 0;
     }

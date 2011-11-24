@@ -16,6 +16,7 @@
 
 package com.intellij.util.io;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,8 +28,13 @@ import java.io.*;
  */
 public class SafeFileOutputStream extends OutputStream {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.SafeFileOutputStream");
+
+  private static final String EXTENSION_BAK = "___jb_bak___";
+  private static final String EXTENSION_OLD = "___jb_old___";
+
   private final File myTargetFile;
   private final boolean myPreserveAttributes;
+  private final File myBackDoorFile;
   private final OutputStream myBackDoorStream;
   private boolean failed = false;
 
@@ -39,12 +45,9 @@ public class SafeFileOutputStream extends OutputStream {
   public SafeFileOutputStream(File target, boolean preserveAttributes) throws FileNotFoundException {
     myTargetFile = target;
     myPreserveAttributes = preserveAttributes;
+    myBackDoorFile = new File(myTargetFile.getParentFile(), myTargetFile.getName() + EXTENSION_BAK);
     //noinspection IOResourceOpenedButNotSafelyClosed
-    myBackDoorStream = new FileOutputStream(backdoorFile());
-  }
-
-  private File backdoorFile() {
-    return new File(myTargetFile.getParentFile(), myTargetFile.getName() + "___jb_bak___");
+    myBackDoorStream = new FileOutputStream(myBackDoorFile);
   }
 
   @Override
@@ -53,18 +56,19 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.write(b);
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       failed = true;
       throw e;
     }
   }
 
+  @Override
   public void write(int b) throws IOException {
     try {
       myBackDoorStream.write(b);
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -76,7 +80,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.write(b, off, len);
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -88,7 +92,7 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.flush();
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.warn(e);
       failed = true;
       throw e;
     }
@@ -100,20 +104,43 @@ public class SafeFileOutputStream extends OutputStream {
       myBackDoorStream.close();
     }
     catch (IOException e) {
-      LOG.info(e);
-      FileUtil.delete(backdoorFile());
+      LOG.warn(e);
+      FileUtil.delete(myBackDoorFile);
       throw e;
     }
 
-    final int permissions = myPreserveAttributes ? FileSystemUtil.getPermissions(myTargetFile) : -1;
-    if (failed || !FileUtil.delete(myTargetFile)) {
-      throw new IOException("Failed to save to " + myTargetFile + ". No data were harmed. Attempt result left at " + backdoorFile());
+    if (failed) {
+      throw new IOException(CommonBundle.message("safe.write.failed",
+                                                 myTargetFile, myBackDoorFile.getName()));
     }
 
-    FileUtil.rename(backdoorFile(), myTargetFile);
+    final int permissions = myPreserveAttributes ? FileSystemUtil.getPermissions(myTargetFile) : -1;
+
+    final File oldFile = new File(myTargetFile.getParent(), myTargetFile.getName() + EXTENSION_OLD);
+    try {
+      FileUtil.rename(myTargetFile, oldFile);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      throw new IOException(CommonBundle.message("safe.write.rename.original",
+                                                 myTargetFile, myBackDoorFile.getName()));
+    }
+
+    try {
+      FileUtil.rename(myBackDoorFile, myTargetFile);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      throw new IOException(CommonBundle.message("safe.write.rename.backup",
+                                                 myTargetFile, oldFile.getName(), myBackDoorFile.getName()));
+    }
 
     if (permissions != -1) {
       FileSystemUtil.setPermissions(myTargetFile, permissions);
+    }
+
+    if (!FileUtil.delete(oldFile)) {
+      throw new IOException(CommonBundle.message("safe.write.drop.temp", oldFile));
     }
   }
 }

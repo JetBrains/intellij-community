@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -47,10 +49,17 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   }
 
   /**
-   * @return text to show in 'New Library' popup
+   * @return text to show in 'New Library' popup. Return {@code null} if the type should not be shown in the 'New Library' popup
    */
   @Nullable
   public abstract String getCreateActionName();
+
+  /**
+   * Called when a new library of this type is created in Project Structure dialog
+   */
+  @Nullable
+  public abstract NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, @Nullable VirtualFile contextDirectory,
+                                                           @NotNull Project project);
 
   @NotNull
   public abstract P createDefaultProperties();

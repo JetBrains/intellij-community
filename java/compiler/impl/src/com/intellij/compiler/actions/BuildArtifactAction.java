@@ -105,7 +105,7 @@ public class BuildArtifactAction extends AnAction {
   }
 
   private static class BuildArtifactItem extends ArtifactActionItem {
-    private BuildArtifactItem(@NotNull Artifact artifact, Project project) {
+    private BuildArtifactItem(Artifact artifact, Project project) {
       super(artifact, project, "Build");
     }
 
@@ -116,7 +116,7 @@ public class BuildArtifactAction extends AnAction {
   }
 
   private static class RebuildArtifactItem extends ArtifactActionItem {
-    private RebuildArtifactItem(@NotNull Artifact artifact, Project project) {
+    private RebuildArtifactItem(Artifact artifact, Project project) {
       super(artifact, project, "Rebuild");
     }
 
@@ -129,7 +129,7 @@ public class BuildArtifactAction extends AnAction {
   private static class EditArtifactItem extends ArtifactActionItem {
     private final ArtifactAwareProjectSettingsService mySettingsService;
 
-    private EditArtifactItem(@NotNull Artifact artifact, Project project, final ArtifactAwareProjectSettingsService projectSettingsService) {
+    private EditArtifactItem(Artifact artifact, Project project, final ArtifactAwareProjectSettingsService projectSettingsService) {
       super(artifact, project, "Edit...");
       mySettingsService = projectSettingsService;
     }
@@ -141,11 +141,12 @@ public class BuildArtifactAction extends AnAction {
   }
 
   private static abstract class ArtifactActionItem implements Runnable {
+    @Nullable
     protected final Artifact myArtifact;
     protected final Project myProject;
     private String myActionName;
 
-    protected ArtifactActionItem(@NotNull Artifact artifact, @NotNull Project project, @NotNull String name) {
+    protected ArtifactActionItem(@Nullable Artifact artifact, @NotNull Project project, @NotNull String name) {
       myArtifact = artifact;
       myProject = project;
       myActionName = name;

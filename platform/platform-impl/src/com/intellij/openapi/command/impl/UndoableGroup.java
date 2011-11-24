@@ -171,7 +171,7 @@ class UndoableGroup {
     commitAllDocuments();
   }
 
-  boolean isInsideStopFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
+  boolean isInsideStartFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
     final FinishMarkAction finishMark = getFinishMark();
     final StartMarkAction startMark = getStartMark();
     if (startMark == null || finishMark == null) {

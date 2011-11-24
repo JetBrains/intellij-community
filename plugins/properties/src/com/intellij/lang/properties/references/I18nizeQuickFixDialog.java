@@ -133,8 +133,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     myPropertiesFilePanel.add(GuiUtils.constructFieldWithBrowseButton(myPropertiesFile, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         TreeFileChooserFactory chooserFactory = TreeFileChooserFactory.getInstance(myProject);
+        final PropertiesFile propertiesFile = getPropertiesFile();
         TreeFileChooser fileChooser = chooserFactory.createFileChooser(
-          CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), getPropertiesFile().getContainingFile(), StdFileTypes.PROPERTIES, null);
+          CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), propertiesFile != null ? propertiesFile.getContainingFile() : null, StdFileTypes.PROPERTIES, null);
         fileChooser.showDialog();
         PsiFile selectedFile = fileChooser.getSelectedFile();
         if (selectedFile == null) return;

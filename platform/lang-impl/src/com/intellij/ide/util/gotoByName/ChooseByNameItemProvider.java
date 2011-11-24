@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.libraries;
+package com.intellij.ide.util.gotoByName;
 
-import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Computable;
+import com.intellij.util.Processor;
 
-/**
- * @author nik
- */
-public abstract class LibraryTypeRegistry {
-  public static LibraryTypeRegistry getInstance() {
-    return ServiceManager.getService(LibraryTypeRegistry.class);
-  }
+import java.util.List;
 
-  @Nullable
-  public abstract LibraryType<?> findTypeById(@NotNull String typeId);
+public interface ChooseByNameItemProvider {
+  List<String> filterNames(ChooseByNameBase base, String[] names, String pattern);
+
+  void filterElements(ChooseByNameBase base,
+                      String pattern,
+                      boolean everywhere,
+                      Computable<Boolean> cancelled,
+                      Processor<Object> consumer);
 }

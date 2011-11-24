@@ -61,6 +61,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.daemon.JavaHighlightingFilter.Kind;
+import static com.intellij.codeInsight.daemon.JavaHighlightingFilter.suppressed;
+
 /**
  * @author cdr
  * Date: Jul 30, 2002
@@ -496,6 +499,8 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkReturnStatementType(PsiReturnStatement statement) {
+    if (suppressed(Kind.RETURN_STATEMENT, statement)) return null;
+
     PsiMethod method = null;
     PsiElement parent = statement.getParent();
     while (true) {
@@ -2267,6 +2272,8 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkReference(PsiJavaCodeReferenceElement ref, JavaResolveResult result) {
+    if (suppressed(Kind.REFERENCE, ref)) return null;
+
     PsiElement refName = ref.getReferenceNameElement();
 
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;

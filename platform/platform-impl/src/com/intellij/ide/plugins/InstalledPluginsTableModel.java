@@ -84,11 +84,17 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
   }
 
-  public void appendDescriptor(IdeaPluginDescriptor descriptor) {
-    myInstalled.add(descriptor);
-    view.add(descriptor);
-    setEnabled(descriptor, true);
-    fireTableDataChanged();
+  public void appendOrUpdateDescriptor(IdeaPluginDescriptor descriptor) {
+    final PluginId descrId = descriptor.getPluginId();
+    final IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
+    if (existing != null) {
+      updateExistingPluginInfo(descriptor, existing);
+    } else {
+      myInstalled.add(descriptor);
+      view.add(descriptor);
+      setEnabled(descriptor, true);
+      fireTableDataChanged();
+    }
   }
 
   public static int getCheckboxColumn() {
@@ -446,10 +452,12 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           return pluginDescriptor.getName();
         }
       }, ", ");
+      final Set<IdeaPluginDescriptor> pluginDependencies = new HashSet<IdeaPluginDescriptor>();
       final String listOfDependencies = StringUtil.join(deps, new Function<PluginId, String>() {
         public String fun(final PluginId pluginId) {
           final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
           assert pluginDescriptor != null;
+          pluginDependencies.add(pluginDescriptor);
           return pluginDescriptor.getName();
         }
       }, "<br>");
@@ -463,6 +471,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         }
 
         updatePluginDependencies();
+        hideNotApplicablePlugins(newVal, pluginDependencies.toArray(new IdeaPluginDescriptor[pluginDependencies.size()]));
       }
     }
   }

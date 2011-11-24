@@ -19,7 +19,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -43,8 +43,10 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -81,7 +83,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myDirectoryField;
   private String myFilterString;
 
-  public RepositoryAttachDialog(Project project, boolean managed) {
+  public RepositoryAttachDialog(Project project, boolean managed, final @Nullable String initialFilter) {
     super(project, true);
     myProject = project;
     myManaged = managed;
@@ -107,6 +109,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myCombobox.setEditable(true);
     final JTextField textField = (JTextField)myCombobox.getEditor().getEditorComponent();
     textField.setColumns(50);
+    if (initialFilter != null) {
+      textField.setText(initialFilter);
+    }
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -153,7 +158,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
         }
       }
       final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      descriptor.putUserData(FileChooserDialogImpl.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
+      descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
       myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
                                                ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                                descriptor);

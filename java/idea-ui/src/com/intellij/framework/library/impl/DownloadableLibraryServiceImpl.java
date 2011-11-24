@@ -54,6 +54,6 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
   public LibraryPropertiesEditor createDownloadableLibraryEditor(@NotNull DownloadableLibraryDescription description,
                                                                  @NotNull LibraryEditorComponent<LibraryVersionProperties> editorComponent,
                                                                  @NotNull DownloadableLibraryType libraryType) {
-    return new DownloadableLibraryEditor(description, editorComponent, libraryType);
+    return new DownloadableLibraryPropertiesEditor(description, editorComponent, libraryType);
   }
 }

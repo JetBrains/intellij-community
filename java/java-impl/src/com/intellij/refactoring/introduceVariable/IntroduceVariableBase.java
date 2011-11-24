@@ -79,12 +79,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
 
   public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type, @NotNull final PsiExpression expression) {
+    return getSuggestedName(type, expression, expression);
+  }
+
+  public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type,
+                                                   @NotNull final PsiExpression expression,
+                                                   final PsiElement anchor) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
     final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, type);
     final String[] strings = JavaCompletionUtil
       .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
     final SuggestedNameInfo.Delegate delegate = new SuggestedNameInfo.Delegate(strings, nameInfo);
-    return codeStyleManager.suggestUniqueVariableName(delegate, expression, true);
+    return codeStyleManager.suggestUniqueVariableName(delegate, anchor, true);
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
@@ -531,18 +537,19 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
       @Override
       public void pass(final OccurrencesChooser.ReplaceChoice choice) {
+        final boolean allOccurences = choice != OccurrencesChooser.ReplaceChoice.NO;
+        final PsiElement chosenAnchor = allOccurences ? anchorStatementIfAll : anchorStatement;
         final Ref<SmartPsiElementPointer<PsiVariable>> variable = new Ref<SmartPsiElementPointer<PsiVariable>>();
         final IntroduceVariableSettings settings =
-          getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
+          getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, chosenAnchor, choice);
         if (!settings.isOK()) {
           wasSucceed[0] = false;
           return;
         }
-        final boolean allOccurences = choice != OccurrencesChooser.ReplaceChoice.NO;
         typeSelectorManager.setAllOccurrences(allOccurences);
         final TypeExpression expression = new TypeExpression(project, allOccurences ? typeSelectorManager.getTypesForAll() : typeSelectorManager.getTypesForOne());
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
-        final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);
+        final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr, chosenAnchor);
         final List<RangeMarker> occurrenceMarkers = new ArrayList<RangeMarker>();
         for (PsiExpression occurrence : occurrences) {
           occurrenceMarkers.add(editor.getDocument().createRangeMarker(occurrence.getTextRange()));
@@ -915,11 +922,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                boolean declareFinalIfAll,
                                                boolean anyAssignmentLHS,
                                                final InputValidator validator,
+                                               PsiElement anchor,
                                                final OccurrencesChooser.ReplaceChoice replaceChoice) {
-    final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr);
-    final String variableName = suggestedName.names[0];
     final boolean replaceAll =
       replaceChoice == OccurrencesChooser.ReplaceChoice.ALL || replaceChoice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
+    final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr, anchor);
+    final String variableName = suggestedName.names[0];
     final boolean declareFinal = replaceAll && declareFinalIfAll || !anyAssignmentLHS && createFinals(project);
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice == OccurrencesChooser.ReplaceChoice.ALL;
     return new IntroduceVariableSettings() {

@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -80,14 +81,13 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
     scheduleRepaint();
   }
 
-  public void setCurrentTestCase(final AbstractTestProxy currentTestCase) {
+  public void setCurrentTestCase(@Nullable final AbstractTestProxy currentTestCase) {
     myCurrentTestCase = currentTestCase;
     scheduleRepaint();
   }
 
   public void stopMovie() {
-    if (myCurrentTestCase != null)
-      repaintSubTree();
+    repaintSubTree();
     setCurrentTestCase(null);
     cancelAlarm();
   }
@@ -107,7 +107,9 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
   }
 
   private void repaintSubTree() {
-    myTreeBuilder.repaintWithParents(myCurrentTestCase);
+    if (myTreeBuilder != null && myCurrentTestCase != null) {
+      myTreeBuilder.repaintWithParents(myCurrentTestCase);
+    }
   }
 
   private void scheduleRepaint() {

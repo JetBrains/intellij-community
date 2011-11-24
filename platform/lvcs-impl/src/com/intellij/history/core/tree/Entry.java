@@ -26,6 +26,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -112,6 +113,10 @@ public abstract class Entry {
 
   public void addChild(Entry child) {
     throw new UnsupportedOperationException(formatAddRemove(child));
+  }
+
+  public void addChildren(Collection<Entry> children) {
+    throw new UnsupportedOperationException();
   }
 
   public void removeChild(Entry child) {

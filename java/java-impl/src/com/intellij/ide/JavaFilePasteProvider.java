@@ -45,16 +45,23 @@ public class JavaFilePasteProvider implements PasteProvider {
     final PsiJavaFile javaFile = createJavaFileFromClipboardContent(project);
     if (javaFile == null) return;
     final PsiClass[] classes = javaFile.getClasses();
-    if (classes.length != 1) return;
+    if (classes.length < 1) return;
     final PsiDirectory targetDir = ideView.getOrChooseDirectory();
     if (targetDir == null) return;
-
-    new WriteCommandAction(project, "Paste class '" + classes[0].getName() + "'") {
+    PsiClass publicClass = classes[0];
+    for (PsiClass aClass : classes) {
+      if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        publicClass = aClass;
+        break;
+      }
+    }
+    final PsiClass mainClass = publicClass;
+    new WriteCommandAction(project, "Paste class '" + mainClass.getName() + "'") {
       @Override
       protected void run(Result result) throws Throwable {
         PsiFile file;
         try {
-          file = targetDir.createFile(classes[0].getName() + ".java");
+          file = targetDir.createFile(mainClass.getName() + ".java");
         }
         catch (IncorrectOperationException e) {
           return;
@@ -111,7 +118,7 @@ public class JavaFilePasteProvider implements PasteProvider {
       return false;
     }
     PsiJavaFile file = createJavaFileFromClipboardContent(project);
-    return file != null && file.getClasses().length == 1;
+    return file != null && file.getClasses().length >= 1;
   }
 
   @Nullable

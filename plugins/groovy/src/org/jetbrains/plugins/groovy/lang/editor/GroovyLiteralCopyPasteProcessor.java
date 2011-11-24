@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.editor;
 
 import com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -36,7 +37,8 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
 
   @Override
   protected boolean isStringLiteral(@NotNull PsiElement token) {
-    return TokenSets.STRING_LITERALS.contains(token.getNode().getElementType());
+    ASTNode node = token.getNode();
+    return node != null ? TokenSets.STRING_LITERALS.contains(node.getElementType()):false;
   }
 
   @Override

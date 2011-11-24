@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;

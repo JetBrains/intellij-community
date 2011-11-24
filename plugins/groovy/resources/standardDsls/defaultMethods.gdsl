@@ -37,6 +37,8 @@ def extractIterableParameter(PsiType type) {
 }
 
 private String removeWildcard(String componentType) {
+  componentType = componentType.replace("?extends", "? extends ")
+
   if (componentType?.startsWith(Constants.WILDCARD_PREFIX)) {
     return componentType.substring(Constants.WILDCARD_PREFIX.size())
   }

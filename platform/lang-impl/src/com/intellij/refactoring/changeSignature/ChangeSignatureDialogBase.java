@@ -427,6 +427,12 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         }
 
         @Override
+        protected boolean isRowEmpty(int row) {
+          final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
+          return isEmptyRow(items.get(row));
+        }
+
+        @Override
         protected JBTableRowEditor getRowEditor(final int row) {
           final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
           JBTableRowEditor editor = getTableEditor(myParametersList.getTable(), items.get(row));
@@ -478,6 +484,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<P> item) {
     return null;
+  }
+
+  protected boolean isEmptyRow(ParameterTableModelItemBase<P> row) {
+    return false;
   }
 
   protected JComponent getRowPresentation(ParameterTableModelItemBase<P> item, boolean selected, boolean focused) {

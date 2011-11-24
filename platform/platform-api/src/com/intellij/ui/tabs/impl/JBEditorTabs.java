@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,16 +70,24 @@ public class JBEditorTabs extends JBTabsImpl {
     int _height = effectiveBounds.height - insets.top - insets.bottom;
     
     
+    if ((!isSingleRow() && label.getBounds().y > 0 /* for multiline */) || (isSingleRow() && isHorizontalTabs()))  {
+      if (isSingleRow() && getPosition() == JBTabsPosition.bottom) {
+        _y += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT; 
+      } else {
+        _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+      }
+    }
+    
     Color tabColor = label.getInfo().getTabColor();
     if (tabColor != null) {
       //g2d.setPaint(new LinearGradientPaint(_x, _y, _x, _y + effectiveBounds.height, new float[] {.3f, .6f, 1f}, new Color[] {new SameColor(170), new SameColor(150), new SameColor(90)}));
-      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(170), _x, _y + effectiveBounds.height, new SameColor(150)));
+      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(200), _x, _y + effectiveBounds.height, new SameColor(130)));
       g2d.fillRect(_x, _y, _width, _height);
 
       g2d.setColor(new Color(tabColor.getRed(), tabColor.getGreen(), tabColor.getBlue(), 150));
       g2d.fillRect(_x, _y, _width, _height);
     } else {
-      g2d.setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 140), _x, _y + effectiveBounds.height, new Color(255, 255, 255, 90)));
+      g2d.setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 180), _x, _y + effectiveBounds.height, new Color(255, 255, 255, 100)));
       g2d.fillRect(_x, _y, _width, _height);
     }
 
@@ -130,7 +139,9 @@ public class JBEditorTabs extends JBTabsImpl {
         int y = r2.y + insets.top;
         int height = maxLength - insets.top - insets.bottom;
         if (getTabsPosition() == JBTabsPosition.bottom) {
-          y = r2.height - height - insets.top;
+          y = r2.height - height - insets.top + TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+        } else {
+          height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT; 
         }
 
         rectangle = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
@@ -163,22 +174,20 @@ public class JBEditorTabs extends JBTabsImpl {
     int _x = r.x;
     int _y = r.y;
     int _height = r.height;
-    
-    //g2d.setColor(Color.WHITE);
-    //g2d.draw(
-    //  selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
-    //    - selectedShape.labelPath.deltaY(3), selectedShape.path.getMaxX(), selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(3)));
 
+    if (getPosition() == JBTabsPosition.left || getPosition() == JBTabsPosition.right) {
+      g2d.setColor(new Color(0, 0, 0, 45));
+      g2d.draw(
+        selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
+                                                      - selectedShape.labelPath.deltaY(4), selectedShape.path.getMaxX(),
+                                              selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(4)));
 
-    g2d.setColor(new Color(0, 0, 0, 45));
-    g2d.draw(
-      selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
-        - selectedShape.labelPath.deltaY(4), selectedShape.path.getMaxX(), selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(4)));
-    
-    g2d.setColor(new Color(0, 0, 0, 15));
-    g2d.draw(
-      selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
-        - selectedShape.labelPath.deltaY(5), selectedShape.path.getMaxX(), selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(5)));
+      g2d.setColor(new Color(0, 0, 0, 15));
+      g2d.draw(
+        selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY()
+                                                      - selectedShape.labelPath.deltaY(5), selectedShape.path.getMaxX(),
+                                              selectedShape.labelPath.getMaxY() - selectedShape.labelPath.deltaY(5)));
+    }
 
     Color tabColor = label.getInfo().getTabColor();
     if (tabColor != null) {
@@ -201,26 +210,31 @@ public class JBEditorTabs extends JBTabsImpl {
                                                                                                      selectedShape.labelPath.deltaY(1),
                               selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() - 
                selectedShape.labelPath.deltaY(4)));
-    
-    // side shadow
-    g2d.setColor(new Color(0, 0, 0, 30));
-    g2d.draw(selectedShape.labelPath
-               .transformLine(selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
-                                                                                                     selectedShape.labelPath.deltaY(1),
-                              selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() - 
-               selectedShape.labelPath.deltaY(4)));
-    
-    boolean horizontal = getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom;
-    
-    g2d.draw(selectedShape.labelPath
-               .transformLine(selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontal ? 2 : 1), selectedShape.labelPath.getY() +
-                                                                                                     selectedShape.labelPath.deltaY(1),
-                              selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontal ? 2 : 1), selectedShape.labelPath.getMaxY() - 
-               selectedShape.labelPath.deltaY(4)));
+
+    if (!isHorizontalTabs()) {
+      // side shadow
+      g2d.setColor(new Color(0, 0, 0, 30));
+      g2d.draw(selectedShape.labelPath
+                 .transformLine(selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
+                                                                                                       selectedShape.labelPath.deltaY(1),
+                                selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() -
+                                                                                                       selectedShape.labelPath.deltaY(4)));
+
+      boolean horizontal = getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom;
+
+      g2d.draw(selectedShape.labelPath
+                 .transformLine(selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontal ? 2 : 1),
+                                selectedShape.labelPath.getY() +
+                                selectedShape.labelPath.deltaY(1),
+                                selectedShape.labelPath.getX() - selectedShape.labelPath.deltaX(horizontal ? 2 : 1),
+                                selectedShape.labelPath.getMaxY() -
+                                selectedShape.labelPath.deltaY(4)));
+    }
 
     g2d.setColor(new Color(0, 0, 0, 50));
     g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
-                                                   selectedShape.path.getMaxX(), selectedShape.labelPath.getMaxY()));
+                                                   selectedShape.path.getMaxX(), 
+                                                   selectedShape.labelPath.getMaxY()));
   }
 
   @Override
@@ -235,7 +249,7 @@ public class JBEditorTabs extends JBTabsImpl {
     shape.insets = shape.path.transformInsets(getLayoutInsets());
     shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
     
-    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(3);
+    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1);
     shape.labelTopY =
       shape.labelPath.getY() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? shape.labelPath.deltaY(1) : 0) ;
     shape.labelLeftX = shape.labelPath.getX() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? 0 : shape.labelPath.deltaX(
@@ -253,8 +267,8 @@ public class JBEditorTabs extends JBTabsImpl {
     int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right);
 
     shape.path.lineTo(lastX, shape.labelBottomY);
-    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(3));
-    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(3));
+    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1));
+    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1));
     
     shape.path.closePath();
     shape.fillPath = shape.path.copy();

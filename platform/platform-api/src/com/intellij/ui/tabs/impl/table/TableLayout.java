@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
@@ -118,6 +119,9 @@ public class TableLayout extends TabLayout {
     final Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
     int eachX;
+    int row = 0;
+    final int tabUnderlineFix = myTabs.isEditorTabs() ? TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT : 0;
+    
     for (TableRow eachRow : data.table) {
       eachX = insets.left;
 
@@ -142,14 +146,15 @@ public class TableLayout extends TabLayout {
           width = data.toFitRec.width + insets.left - eachX;
         }
 
-
-        myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
+        myTabs.layout(label, eachX, eachY, width, row < data.table.size() - 1 ? myTabs.myHeaderFitSize.height - tabUnderlineFix :  myTabs.myHeaderFitSize.height);
         label.setAligmentToCenter(deltaToFit > 0);
 
         boolean lastCell = i == eachRow.myColumns.size() - 1;
         eachX += width + (lastCell ? 0 : myTabs.getInterTabSpaceLength());
       }
-      eachY += myTabs.myHeaderFitSize.height - 1 + myTabs.getInterTabSpaceLength();
+      eachY += myTabs.myHeaderFitSize.height - 1 + myTabs.getInterTabSpaceLength() - (row < data.table.size() - 1 ? tabUnderlineFix : 0);
+      
+      row++;
     }
 
     if (myTabs.getSelectedInfo() != null) {

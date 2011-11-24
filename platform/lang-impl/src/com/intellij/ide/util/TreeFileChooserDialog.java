@@ -229,6 +229,10 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         //IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()).requestFocus();
       }
 
+      @Override
+      protected void showTextFieldPanel() {
+      }
+
       protected void choosenElementMightChange() {
         handleSelectionChanged();
       }
