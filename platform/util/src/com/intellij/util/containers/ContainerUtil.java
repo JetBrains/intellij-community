@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -974,6 +974,14 @@ public class ContainerUtil {
       if (!condition.value(t)) return false;
     }
     return true;
+  }
+
+  public static <T> boolean exists(@NotNull T[] iterable, @NotNull Condition<T> condition) {
+    return or(Arrays.asList(iterable), condition);
+  }
+
+  public static <T> boolean exists(@NotNull Iterable<T> iterable, @NotNull Condition<T> condition) {
+    return or(iterable, condition);
   }
 
   public static <T> boolean or(@NotNull T[] iterable, @NotNull Condition<T> condition) {
