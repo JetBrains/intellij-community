@@ -893,16 +893,21 @@ public class HighlightClassUtil {
       if (startElement instanceof PsiNewExpression) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         String startElementText = startElement.getText();
-        PsiNewExpression newExpression =
-          (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "{}", startElement);
-        if (newExpression.getAnonymousClass() == null) {
-          try {
-            newExpression = (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "){}", startElement);
+        try {
+          PsiNewExpression newExpression =
+            (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "{}", startElement);
+          if (newExpression.getAnonymousClass() == null) {
+            try {
+              newExpression = (PsiNewExpression)elementFactory.createExpressionFromText(startElementText + "){}", startElement);
+            }
+            catch (IncorrectOperationException e) {
+              return false;
+            }
+            if (newExpression.getAnonymousClass() == null) return false;
           }
-          catch (IncorrectOperationException e) {
-            return false;
-          }
-          if (newExpression.getAnonymousClass() == null) return false;
+        }
+        catch (IncorrectOperationException e) {
+          return false;
         }
         return true;
       }
