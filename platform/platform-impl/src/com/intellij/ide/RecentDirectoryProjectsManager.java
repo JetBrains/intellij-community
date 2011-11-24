@@ -47,8 +47,9 @@ public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   @Nullable
   protected String getProjectPath(final Project project) {
     final ProjectBaseDirectory baseDir = ProjectBaseDirectory.getInstance(project);
-    if (baseDir.getBaseDir() != null) {
-      return FileUtil.toSystemDependentName(baseDir.getBaseDir().getPath());
+    VirtualFile baseDirVFile = baseDir.getBaseDir() != null ? baseDir.getBaseDir() : project.getBaseDir();   
+    if (baseDirVFile != null) {
+      return FileUtil.toSystemDependentName(baseDirVFile.getPath());
     }
     return null;
   }
