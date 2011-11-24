@@ -257,6 +257,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return element;
   }
 
+  @Override
   public void renameLibrary(String newName) {
     final LibraryEditor libraryEditor = getLibraryEditor();
     libraryEditor.setName(newName);
