@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cython.CythonLanguageDialect;
+import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -43,7 +44,7 @@ public class PyArgumentListInspection extends PyInspection {
 
     @Override
     public void visitPyArgumentList(final PyArgumentList node) {
-      if (CythonLanguageDialect._isDisabledFor(node)) {
+      if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
         return;
       }
       // analyze
@@ -87,12 +88,16 @@ public class PyArgumentListInspection extends PyInspection {
 
   }
 
-  public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context) {
+  public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context, int implicitOffset) {
     if (node.getParent() instanceof PyClass) return; // class Foo(object) is also an arg list
-    CallArgumentsMapping result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
+    CallArgumentsMapping result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context), implicitOffset);
     highlightIncorrectArguments(holder, result);
     highlightMissingArguments(node, holder, result);
     highlightStarArgumentTypeMismatch(node, holder, context);
+  }
+
+  public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context) {
+    inspectPyArgumentList(node, holder, context, 0);
   }
 
   private static void highlightIncorrectArguments(ProblemsHolder holder, CallArgumentsMapping result) {

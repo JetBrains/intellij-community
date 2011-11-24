@@ -692,6 +692,10 @@
     <lang.elementManipulator forClass="com.jetbrains.mako.psi.impl.MakoTagAttribute"
                              implementationClass="com.jetbrains.mako.psi.MakoTagAttributeManipulator"/>
 
+    <localInspection language="Python" shortName="MakoArgumentListInspection" displayName="Incorrect call arguments"
+                     groupKey="INSP.GROUP.mako" enabledByDefault="true"  level="WARNING"
+                     implementationClass="com.jetbrains.mako.inspection.MakoArgumentListInspection"/>
+
     <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
                     serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
 

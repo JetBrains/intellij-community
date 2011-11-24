@@ -112,6 +112,9 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   }
 
   public PyMarkedCallee resolveCallee(PyResolveContext resolveContext) {
+    return resolveCallee(resolveContext, 0);
+  }
+  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int offset) {
     PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this, resolveContext);
     if (callee == null) return null;
     if (!hasArgumentList()) {
