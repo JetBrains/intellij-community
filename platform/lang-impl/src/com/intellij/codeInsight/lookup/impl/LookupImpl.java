@@ -1389,6 +1389,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       public void run() {
         myAdComponent.addAdvertisement(text);
         requestResize();
+        refreshUi(false);
       }
     });
   }
