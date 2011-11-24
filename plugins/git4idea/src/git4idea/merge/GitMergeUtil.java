@@ -184,8 +184,8 @@ public class GitMergeUtil {
 
   /**
    * @return true if merge is going on for the given git root, false if there is no merge operation in progress.
-   * @deprecated
    */
+  @Deprecated
   public static boolean isMergeInProgress(@NotNull VirtualFile root) {
     return getMergeHead(root) != null;
   }

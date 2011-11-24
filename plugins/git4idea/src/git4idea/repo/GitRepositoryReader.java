@@ -17,15 +17,12 @@ package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchesCollection;
-import git4idea.merge.GitMergeUtil;
-import git4idea.rebase.GitRebaseUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,19 +61,17 @@ class GitRepositoryReader {
   private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
   private static final int    IO_RETRIES        = 3; // number of retries before fail if an IOException happens during file read.
 
-  private final GitRepository myRepository;
   private final File          myGitDir;         // .git/
   private final File          myHeadFile;       // .git/HEAD
   private final File          myRefsHeadsDir;   // .git/refs/heads/
   private final File          myRefsRemotesDir; // .git/refs/remotes/
   private final File          myPackedRefsFile; // .git/packed-refs
 
-  GitRepositoryReader(@NotNull GitRepository repository) {
-    myRepository = repository;
-    myGitDir = new File(VfsUtil.virtualToIoFile(myRepository.getRoot()), ".git");
-    assertFileExists(myGitDir, ".git directory not found in " + myRepository.getRoot());
+  GitRepositoryReader(@NotNull File gitDir) {
+    myGitDir = gitDir;
+    assertFileExists(myGitDir, ".git directory not found in " + gitDir);
     myHeadFile = new File(myGitDir, "HEAD");
-    assertFileExists(myHeadFile, ".git/HEAD file not found in " + myRepository.getRoot());
+    assertFileExists(myHeadFile, ".git/HEAD file not found in " + gitDir);
     myRefsHeadsDir = new File(new File(myGitDir, "refs"), "heads");
     myRefsRemotesDir = new File(new File(myGitDir, "refs"), "remotes");
     myPackedRefsFile = new File(myGitDir, "packed-refs");
@@ -166,11 +161,17 @@ class GitRepositoryReader {
   }
   
   private boolean isMergeInProgress() {
-    return GitMergeUtil.isMergeInProgress(myRepository.getRoot());
+    File mergeHead = new File(myGitDir, "MERGE_HEAD");
+    return mergeHead.exists();
   }
 
   private boolean isRebaseInProgress() {
-    return GitRebaseUtils.isRebaseInTheProgress(myRepository.getRoot());
+    File f = new File(myGitDir, "rebase-apply");
+    if (f.exists()) {
+      return true;
+    }
+    f = new File(myGitDir, "rebase-merge");
+    return f.exists();
   }
 
   /**
