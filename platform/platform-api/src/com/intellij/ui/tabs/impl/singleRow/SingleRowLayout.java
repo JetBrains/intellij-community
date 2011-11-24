@@ -15,7 +15,9 @@
  */
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
 
 import javax.swing.*;
@@ -41,6 +43,14 @@ public class SingleRowLayout extends TabLayout {
 
     protected Rectangle getIconRec() {
       return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
+    }
+
+    @Override
+    protected int getIconY(Rectangle iconRec) {
+      return super.getIconY(iconRec) +
+             (myTabs.getTabsPosition() == JBTabsPosition.bottom
+              ? TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT
+              : -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2));
     }
   };
   public JPopupMenu myMorePopup;
