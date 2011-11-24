@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.compiled.ClsStubBuilder;
+import com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.testFramework.LightIdeaTestCase;
@@ -81,7 +81,7 @@ public class ClsBuilderTest extends LightIdeaTestCase {
   }
 
   private static void doTest(VirtualFile vFile, String goldFile) throws ClsFormatException, IOException {
-    final PsiFileStub stub = ClsStubBuilder.build(vFile, vFile.contentsToByteArray());
+    final PsiFileStub stub = (new DefaultClsStubBuilderFactory()).buildFileStub(vFile, vFile.contentsToByteArray());
     assert stub != null : vFile;
     final String butWas = ((StubBase)stub).printTree();
 

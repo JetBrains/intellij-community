@@ -127,11 +127,11 @@ public class ClassFileStubBuilderTest extends TestCase {
     Set<String> all = new HashSet<String>();
     ContainerUtil.addAll(all, files);
     all.add(name);
-    return ClassFileStubBuilder.isInner(name, new DirectoryMock(all));
+    return DefaultClsStubBuilderFactory.isInner(name, new DirectoryMock(all));
   }
 
 
-  private static class DirectoryMock implements ClassFileStubBuilder.Directory {
+  private static class DirectoryMock implements DefaultClsStubBuilderFactory.Directory {
     private Set<String> myFiles;
 
     private DirectoryMock(Set<String> files) {
