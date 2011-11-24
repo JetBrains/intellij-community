@@ -370,7 +370,11 @@ public class VariableInplaceRenamer {
                   documentManager.commitAllDocuments();
                   finish();
                   moveOffsetAfter(false);
-                  documentManager.doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                  ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                    public void run() {
+                      documentManager.doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                    }
+                  });
                 }
                 finally {
                   FinishMarkAction.finish(myProject, myEditor, markAction);
