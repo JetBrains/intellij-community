@@ -22,55 +22,55 @@ import java.util.Collection;
 /**
  * @author vlan
  */
-public class PyMoveClassOrFunctionTest extends PyTestCase {
+public class PyMoveTest extends PyTestCase {
   public void testFunction() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   public void testClass() {
-    doTest("C", "b.py");
+    doMoveSymbolTest("C", "b.py");
   }
 
   // PY-3929
   // PY-4095
   public void testImportAs() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-3929
   public void testQualifiedImport() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-4074
   public void testNewModule() {
     SystemProperties.setTestUserName("user1");
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-4098
   public void testPackageImport() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-4130
   // PY-4131
   public void testDocstringTypes() {
-    doTest("C", "b.py");
+    doMoveSymbolTest("C", "b.py");
   }
 
   // PY-4182
   public void testInnerImports() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-4545
   public void testBaseClass() {
-    doTest("B", "b.py");
+    doMoveSymbolTest("B", "b.py");
   }
 
-  private void doTest(final String symbolName, final String toFileName) {
-    String root = "/refactoring/moveClassOrFunction/" + getTestName(true);
+  private void doMoveSymbolTest(final String symbolName, final String toFileName) {
+    String root = "/refactoring/move/" + getTestName(true);
     String rootBefore = root + "/before/src";
     String rootAfter = root + "/after/src";
     VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
