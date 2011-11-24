@@ -18,12 +18,12 @@ package com.intellij.compiler.impl;
 import com.google.common.base.Throwables;
 import com.intellij.compiler.impl.generic.GenericCompilerCache;
 import com.intellij.compiler.impl.generic.GenericCompilerPersistentData;
-import com.intellij.openapi.compiler.generic.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.generic.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -64,7 +64,7 @@ public class GenericCompilerRunner {
     myProject = myContext.getProject();
   }
 
-  public boolean invokeCompilers(GenericCompiler.CompileOrderPlace place) throws CompileDriver.ExitException {
+  public boolean invokeCompilers(GenericCompiler.CompileOrderPlace place) throws ExitException {
     boolean didSomething = false;
     try {
       for (GenericCompiler<?,?,?> compiler : myCompilers) {
@@ -76,9 +76,9 @@ public class GenericCompilerRunner {
     catch (IOException e) {
       LOG.info(e);
       myContext.requestRebuildNextTime(e.getMessage());
-      throw new CompileDriver.ExitException(CompileDriver.ExitStatus.ERRORS);
+      throw new ExitException(ExitStatus.ERRORS);
     }
-    catch (CompileDriver.ExitException e) {
+    catch (ExitException e) {
       throw e;
     }
     catch (ProcessCanceledException e) {
@@ -91,12 +91,14 @@ public class GenericCompilerRunner {
     return didSomething;
   }
 
-  private <Key, SourceState, OutputState> boolean invokeCompiler(GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException, CompileDriver.ExitException {
+  private <Key, SourceState, OutputState> boolean invokeCompiler(GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException,
+                                                                                                                                 ExitException {
     return invokeCompiler(compiler, compiler.createInstance(myContext));
   }
 
   private <T extends BuildTarget, Item extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState>
-  boolean invokeCompiler(GenericCompiler<Key, SourceState, OutputState> compiler, final GenericCompilerInstance<T, Item, Key, SourceState, OutputState> instance) throws IOException, CompileDriver.ExitException {
+  boolean invokeCompiler(GenericCompiler<Key, SourceState, OutputState> compiler, final GenericCompilerInstance<T, Item, Key, SourceState, OutputState> instance) throws IOException,
+                                                                                                                                                                         ExitException {
     final GenericCompilerCache<Key, SourceState, OutputState> cache = CompilerCacheManager.getInstance(myProject).getGenericCompilerCache(compiler);
     GenericCompilerPersistentData
       data = new GenericCompilerPersistentData(getGenericCompilerCacheDir(myProject, compiler), compiler.getVersion());
@@ -158,12 +160,12 @@ public class GenericCompilerRunner {
     return didSomething;
   }
 
-  private void checkForErrorsOrCanceled() throws CompileDriver.ExitException {
+  private void checkForErrorsOrCanceled() throws ExitException {
     if (myContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-      throw new CompileDriver.ExitException(CompileDriver.ExitStatus.ERRORS);
+      throw new ExitException(ExitStatus.ERRORS);
     }
     if (myContext.getProgressIndicator().isCanceled()) {
-      throw new CompileDriver.ExitException(CompileDriver.ExitStatus.CANCELLED);
+      throw new ExitException(ExitStatus.CANCELLED);
     }
   }
 
@@ -173,7 +175,7 @@ public class GenericCompilerRunner {
 
   private <T extends BuildTarget, Item extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState>
   boolean processTarget(T target, final int targetId, final GenericCompiler<Key, SourceState, OutputState> compiler, final GenericCompilerInstance<T, Item, Key, SourceState, OutputState> instance,
-                        final GenericCompilerCache<Key, SourceState, OutputState> cache) throws IOException, CompileDriver.ExitException {
+                        final GenericCompilerCache<Key, SourceState, OutputState> cache) throws IOException, ExitException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing target '" + target + "' (id=" + targetId + ")");
     }
@@ -233,7 +235,7 @@ public class GenericCompilerRunner {
     }
 
     if (myOnlyCheckStatus) {
-      throw new CompileDriver.ExitException(CompileDriver.ExitStatus.CANCELLED);
+      throw new ExitException(ExitStatus.CANCELLED);
     }
 
     List<GenericCompilerCacheState<Key, SourceState, OutputState>> obsoleteItems = new ArrayList<GenericCompilerCacheState<Key,SourceState,OutputState>>();
