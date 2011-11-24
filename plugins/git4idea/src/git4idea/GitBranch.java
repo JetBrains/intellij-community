@@ -45,11 +45,18 @@ public class GitBranch extends GitReference {
   private final boolean myRemote;
   private boolean myActive;
   private static final Logger LOG = Logger.getInstance(GitBranch.class);
+  private final String myHash;
 
-  public GitBranch(@NotNull String name, boolean active, boolean remote) {
+  public GitBranch(@NotNull String name, @NotNull String hash, boolean active, boolean remote) {
     super(name);
     myRemote = remote;
     myActive = active;
+    myHash = hash;
+  }
+  
+  @Deprecated
+  public GitBranch(@NotNull String name, boolean active, boolean remote) {
+    this(name, "", active, remote);
   }
 
   /**
@@ -122,6 +129,15 @@ public class GitBranch extends GitReference {
   }
 
   /**
+   * Returns the hash on which this branch is reference to.
+   * May be empty, if this information wasn't supplied to the GitBranch constructor.
+   */
+  @NotNull
+  public String getHash() {
+    return myHash;
+  }
+
+  /**
    * Get current branch from Git.
    *
    * @param project a project
@@ -134,6 +150,7 @@ public class GitBranch extends GitReference {
    *             call {@link git4idea.repo.GitRepository#update(git4idea.repo.GitRepository.TrackedTopic...)} before querying.
    * @throws VcsException if there is a problem running git
    */
+  @Deprecated
   @Nullable
   public static GitBranch current(Project project, VirtualFile root) throws VcsException {
     return list(project, root, false, false, null, null);
@@ -149,6 +166,7 @@ public class GitBranch extends GitReference {
    * @see #list(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, boolean, boolean, java.util.Collection, String)
    */
   @Nullable
+  @Deprecated
   public static GitBranch listAsStrings(final Project project, final VirtualFile root, final boolean remote, final boolean local,
                                         final Collection<String> branches, @Nullable final String containingCommit) throws VcsException {
     final Collection<GitBranch> gitBranches = new ArrayList<GitBranch>();
@@ -177,6 +195,7 @@ public class GitBranch extends GitReference {
    * @throws VcsException if there is a problem with running git
    */
   @Nullable
+  @Deprecated
   public static GitBranch list(final Project project, final VirtualFile root, final boolean localWanted, final boolean remoteWanted,
                                @Nullable final Collection<GitBranch> branches, @Nullable final String containingCommit) throws VcsException {
     // preparing native command executor

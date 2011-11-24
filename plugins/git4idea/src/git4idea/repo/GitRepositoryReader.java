@@ -127,7 +127,9 @@ class GitRepositoryReader {
   GitBranch readCurrentBranch() {
     Head head = readHead();
     if (head.isBranch) {
-      return new GitBranch(head.ref, true, false);
+      String branchName = head.ref;
+      String hash = readCurrentRevision();  // TODO make this faster, because we know the branch name
+      return new GitBranch(branchName, hash == null ? "" : hash, true, false);
     }
     if (isRebaseInProgress()) {
       GitBranch branch = readRebaseBranch("rebase-apply");
@@ -283,10 +285,24 @@ class GitRepositoryReader {
   @NotNull
   private Set<GitBranch> readUnpackedLocalBranches() {
     Set<GitBranch> branches = new HashSet<GitBranch>();
-    for (String branchName : readLocalBranches().keySet()) {
-      branches.add(new GitBranch(branchName, false, false));
+    for (Map.Entry<String, File> entry : readLocalBranches().entrySet()) {
+      String branchName = entry.getKey();
+      File branchFile = entry.getValue();
+      String hash = loadHashFromBranchFile(branchFile);
+      branches.add(new GitBranch(branchName, hash == null ? "" : hash, false, false));
     }
     return branches;
+  }
+  
+  @Nullable
+  private static String loadHashFromBranchFile(@NotNull File branchFile) {
+    try {
+      return tryLoadFile(branchFile, null);
+    }
+    catch (GitRepoStateException e) {  // notify about error but don't break the process
+      LOG.error("Couldn't read " + branchFile, e);
+    }
+    return null;
   }
 
   /**
@@ -303,7 +319,9 @@ class GitRepositoryReader {
         if (!file.isDirectory()) {
           final String relativePath = FileUtil.getRelativePath(myRefsRemotesDir, file);
           if (relativePath != null) {
-            branches.add(new GitBranch(FileUtil.toSystemIndependentName(relativePath), false, true));
+            String branchName = FileUtil.toSystemIndependentName(relativePath);
+            String hash = loadHashFromBranchFile(file);
+            branches.add(new GitBranch(branchName, hash == null ? "": hash, false, true));
           }
         }
         return true;
@@ -331,9 +349,9 @@ class GitRepositoryReader {
             return;
           }
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), false, false));
+            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), hash, false, false));
           } else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), false, true));
+            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), hash, false, true));
           }
         }
       });

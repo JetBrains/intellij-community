@@ -66,13 +66,17 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
     assertEquals("0e1d130689bc52f140c5c374aa9cc2b8916c0ad7", myRepositoryReader.readCurrentRevision());
   }
   
+  public void testCurrentBranch() {
+    assertBranch(myRepositoryReader.readCurrentBranch(), new GitTestBranch("master", "0e1d130689bc52f140c5c374aa9cc2b8916c0ad7"));
+  }
+  
   public void testBranches(){
     GitBranchesCollection branchesCollection = myRepositoryReader.readBranches();
     GitBranch currentBranch = branchesCollection.getCurrentBranch();
     Collection<GitBranch> localBranches = branchesCollection.getLocalBranches();
     Collection<GitBranch> remoteBranches = branchesCollection.getRemoteBranches();
     
-    assertBranch(currentBranch, new GitTestBranch("master"));
+    assertBranch(currentBranch, new GitTestBranch("master", "0e1d130689bc52f140c5c374aa9cc2b8916c0ad7"));
     assertBranches(localBranches, myLocalBranches);
     assertBranches(remoteBranches, myRemoteBranches);
   }
@@ -81,7 +85,7 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
     GitTestUtil.assertEqualCollections(actual, expected, new GitTestUtil.EqualityChecker<GitBranch, GitTestBranch>() {
       @Override
       public boolean areEqual(@NotNull GitBranch actual, @NotNull GitTestBranch expected) {
-        return actual.getName().equals(expected.getName());
+        return branchesAreEqual(actual, expected);
       }
     });
   }
@@ -99,7 +103,14 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
           return true;
         }
         String name = FileUtil.getRelativePath(refsHeads, file);
-        GitTestBranch branch = new GitTestBranch(name);
+        GitTestBranch branch = null;
+        try {
+          branch = new GitTestBranch(name, FileUtil.loadFile(file));
+        }
+        catch (IOException e) {
+          fail(e.toString());
+          e.printStackTrace();
+        }
         if (!branches.contains(branch)) {
           branches.add(branch);
         }
@@ -107,13 +118,14 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
       }
     });
 
+    // read from packed-refs, these have less priority, so the won't overwrite hashes from branch files
     String packedRefs = FileUtil.loadFile(new File(myGitDir, "packed-refs"));
     for (String ref : packedRefs.split("\n")) {
       String[] refAndName = ref.split(" ");
       String name = refAndName[1];
       String prefix = local ? "refs/heads/" : "refs/remotes/";
       if (name.startsWith(prefix)) {
-        GitTestBranch branch = new GitTestBranch(name.substring(prefix.length()));
+        GitTestBranch branch = new GitTestBranch(name.substring(prefix.length()), refAndName[0]);
         if (!branches.contains(branch)) {
           branches.add(branch);
         }
@@ -123,16 +135,20 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
   }
   
   private static void assertBranch(GitBranch actual, GitTestBranch expected) {
-    assertEquals(actual.getName(), expected.getName());
-    // TODO test revision
+    assertTrue(String.format("Branches are not equal. Actual: %s:%sExpected: %s", actual.getName(), actual.getHash(), expected), branchesAreEqual(actual, expected));
+  }
+
+  private static boolean branchesAreEqual(GitBranch actual, GitTestBranch expected) {
+    return actual.getName().equals(expected.getName()) && actual.getHash().equals(expected.getHash());
   }
   
   private static class GitTestBranch {
     private final String myName;
-    private final String myHash = "";
+    private final String myHash;
 
-    private GitTestBranch(String name) {
+    private GitTestBranch(String name, String hash) {
       myName = name;
+      myHash = hash;
     }
 
     String getName() {
@@ -145,18 +161,16 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
 
     @Override
     public String toString() {
-      return myName;
+      return myName + ":" + myHash;
     }
 
     @Override
     public boolean equals(Object o) {
-      
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
       GitTestBranch branch = (GitTestBranch)o;
 
-      if (myHash != null ? !myHash.equals(branch.myHash) : branch.myHash != null) return false;
       if (myName != null ? !myName.equals(branch.myName) : branch.myName != null) return false;
 
       return true;
@@ -164,9 +178,7 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
 
     @Override
     public int hashCode() {
-      int result = myName != null ? myName.hashCode() : 0;
-      result = 31 * result + (myHash != null ? myHash.hashCode() : 0);
-      return result;
+      return myName != null ? myName.hashCode() : 0;
     }
   }
 
