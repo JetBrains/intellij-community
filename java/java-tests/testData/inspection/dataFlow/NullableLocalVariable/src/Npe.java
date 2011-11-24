@@ -7,7 +7,7 @@ public class Npe {
      o.hashCode(); // NPE
    }
 
-   Object foo() {
+   @Nullable Object foo() {
      return null;
    }
 }
