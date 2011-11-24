@@ -6,9 +6,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +29,9 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
           scheme);
   }
 
+  private Boolean hadUnicodeImport = false;
+
+  public static final Key<Boolean> KEY = new Key<Boolean>("python.future.import");
   @Override
   public void documentChanged(DocumentEvent e) {
     synchronized (this) {
@@ -34,10 +41,14 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
       // we should update the whole document
       if (l instanceof LayeredLexer) {
         Lexer delegate = ((LayeredLexer)l).getDelegate();
+        int offset = e.getOffset();
+        int lineNumber = document.getLineNumber(offset);
+        TextRange tr = new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
+        document.putUserData(KEY, document.getText(tr).indexOf(PyNames.UNICODE_LITERALS) == -1);
+        Boolean hasUnicodeImport = document.getUserData(KEY);
         if (delegate instanceof PythonHighlightingLexer &&
             (((PythonHighlightingLexer)delegate).getImportOffset() > e.getOffset()
-             || ((PythonHighlightingLexer)delegate).getImportOffset() == -1)) {
-
+             || hasUnicodeImport != hadUnicodeImport)) {
           ((PythonHighlightingLexer)delegate).clearState(e.getDocument().getTextLength());
           setText(document.getCharsSequence());
         }
@@ -45,5 +56,20 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
       }
       else super.documentChanged(e);
     }
+  }
+
+  @Override
+  public void beforeDocumentChange(DocumentEvent e) {
+    final Document document = e.getDocument();
+    hadUnicodeImport = document.getUserData(KEY);
+  }
+
+  @Override
+  public void setEditor(HighlighterClient editor) {
+    Lexer l = getLexer();
+    if (l instanceof LayeredLexer) {
+      editor.getDocument().putUserData(KEY, editor.getDocument().getText().indexOf(PyNames.UNICODE_LITERALS) == -1);
+    }
+    super.setEditor(editor);
   }
 }
