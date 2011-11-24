@@ -24,26 +24,34 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.HashSet;
+import java.util.Set;
 
 public class JBOptionButton extends JButton {
 
 
   private static final Icon myDownIcon = IconLoader.getIcon("/general/arrowDown.png");
-  private static final Insets myDownIconInsets = new Insets(0, 4, 0, 4);
+  private static final Insets myDownIconInsets = new Insets(0, 6, 0, 4);
 
   private Rectangle myMoreRec;
   private Rectangle myMoreRecMouse;
   private Action[] myOptions;
 
   private JPopupMenu myPopup;
+  private boolean myPopupIsShowing;
+
   private String myOptionTooltipText;
+
+  private Set<OptionInfo> myOptionInfos = new HashSet<OptionInfo>();
+  private boolean myOkToProcessDefaultMnemonics = true;
 
   public JBOptionButton(Action action, Action[] options) {
     super(action);
     myOptions = options;
     myMoreRec = new Rectangle(0, 0, myDownIcon.getIconWidth(), myDownIcon.getIconHeight());
-  }
 
+    myPopup = fillMenu();
+  }
 
   @Override
   public Dimension getPreferredSize() {
@@ -61,12 +69,12 @@ public class JBOptionButton extends JButton {
     myMoreRec.x = getSize().width - myMoreRec.width - insets.right + 8;
     myMoreRec.y = (getHeight() / 2 - myMoreRec.height / 2);
 
-    myMoreRecMouse = new Rectangle(myMoreRec.x - 6, insets.top, getWidth() - myMoreRec.x, getHeight() - insets.bottom);
+    myMoreRecMouse = new Rectangle(myMoreRec.x - 8, 0, getWidth() - myMoreRec.x, getHeight());
   }
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    if (myMoreRecMouse.contains(event.getPoint())) {
+    if (myMoreRec.contains(event.getPoint())) {
       return myOptionTooltipText;
     } else {
       return super.getToolTipText(event);
@@ -77,7 +85,7 @@ public class JBOptionButton extends JButton {
   protected void processMouseEvent(MouseEvent e) {
     if (myMoreRecMouse.contains(e.getPoint())) {
       if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-        if (myPopup == null) {
+        if (!myPopupIsShowing) {
           togglePopup();
         }
       }
@@ -88,18 +96,17 @@ public class JBOptionButton extends JButton {
   }
 
   public void togglePopup() {
-    if (myPopup != null) {
+    if (myPopupIsShowing) {
       closePopup();
     } else {
-      showPopup();
+      showPopup(null);
     }
   }
 
-  public void showPopup() {
-    if (myPopup != null) return;
+  public void showPopup(final Action actionToSelect) {
+    if (myPopupIsShowing) return;
     
-    myPopup = new JPopupMenu();
-    final JMenuItem first = fillMenu();
+    myPopupIsShowing = true;
     final Ref<PopupMenuListener> listener = new Ref<PopupMenuListener>();
     listener.set(new PopupMenuListener() {
       @Override
@@ -108,13 +115,13 @@ public class JBOptionButton extends JButton {
 
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        if (myPopup !=null && listener.get() != null) {
+        if (myPopup != null && listener.get() != null) {
           myPopup.removePopupMenuListener(listener.get());
         }
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            myPopup = null;
+            myPopupIsShowing = false;
           }
         });
       }
@@ -125,11 +132,32 @@ public class JBOptionButton extends JButton {
     });
     myPopup.addPopupMenuListener(listener.get());
     myPopup.show(this, myMoreRec.x, getY() + getHeight() - getInsets().bottom);
+
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (first != null) {
-          myPopup.setSelected(first);
+        if (myPopup == null || !myPopup.isShowing() || !myPopupIsShowing) return;
+        
+        Action selection = actionToSelect;
+        if (selection == null && myOptions.length > 0) {
+          selection = myOptions[0];          
+        }
+
+        if (selection == null) return;
+        
+        final MenuElement[] elements = myPopup.getSubElements();
+        for (MenuElement eachElement : elements) {
+          if (eachElement instanceof JMenuItem) {
+            JMenuItem eachItem = (JMenuItem)eachElement;
+            if (selection.equals(eachItem.getAction())) {
+              final MenuSelectionManager mgr = MenuSelectionManager.defaultManager();
+              final MenuElement[] path = new MenuElement[2];
+              path[0] = myPopup;
+              path[1] = eachItem;
+              mgr.setSelectedPath(path);
+              break;
+            }
+          }
         }
       }
     });
@@ -139,41 +167,102 @@ public class JBOptionButton extends JButton {
     myPopup.setVisible(false);
   }
 
-  private JMenuItem fillMenu() {
-    JMenuItem first = null;
+  private JPopupMenu fillMenu() {
+    final JPopupMenu result = new JPopupMenu();
     for (Action each : myOptions) {
       if (getAction() == each) continue;
-      String plainText = getMenuText(each);
+      final OptionInfo info = getMenuInfo(each);
       final JMenuItem eachItem = new JMenuItem(each);
 
-      if (first == null) {
-        first = eachItem;
-      }
-      eachItem.setText(plainText.toString());
-      myPopup.add(eachItem);
+      configureItem(info, eachItem);
+      result.add(eachItem);
     }
 
     if (myOptions.length > 0) {
-      myPopup.addSeparator();
+      result.addSeparator();
       final JMenuItem mainAction = new JMenuItem(getAction());
-      mainAction.setText(getMenuText(getAction()));
-      myPopup.add(mainAction);
+      configureItem(getMenuInfo(getAction()), mainAction);
+      result.add(mainAction);
     }
-    
-    return first;
+
+    return result;
   }
 
-  private String getMenuText(Action each) {
+  private void configureItem(OptionInfo info, JMenuItem eachItem) {
+    eachItem.setText(info.myPlainText);
+    if (info.myMnemonic >= 0) {
+      eachItem.setMnemonic(info.myMnemonic);
+      eachItem.setDisplayedMnemonicIndex(info.myMnemonicIndex);
+    }
+    myOptionInfos.add(info);
+  }
+
+  public boolean isOkToProcessDefaultMnemonics() {
+    return myOkToProcessDefaultMnemonics;
+  }
+
+
+  public static class OptionInfo {
+
+    String myPlainText;
+    int myMnemonic;
+    int myMnemonicIndex;
+    JBOptionButton myButton;
+    Action myAction;
+
+    OptionInfo(String plainText, int mnemonic, int mnemonicIndex, JBOptionButton button, Action action) {
+      myPlainText = plainText;
+      myMnemonic = mnemonic;
+      myMnemonicIndex = mnemonicIndex;
+      myButton = button;
+      myAction = action;
+    }
+
+    public String getPlainText() {
+      return myPlainText;
+    }
+
+    public int getMnemonic() {
+      return myMnemonic;
+    }
+
+    public int getMnemonicIndex() {
+      return myMnemonicIndex;
+    }
+
+    public JBOptionButton getButton() {
+      return myButton;
+    }
+
+    public Action getAction() {
+      return myAction;
+    }
+  }
+  
+  private OptionInfo getMenuInfo(Action each) {
     final String text = (String)each.getValue(Action.NAME);
+    int mnemonic = -1;
+    int mnemonicIndex = -1;
     StringBuilder plainText = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
       if (ch == '&' || ch == '_') {
+        if (i + 1 < text.length()) {
+          final char mnemonicsChar = text.charAt(i + 1);
+          mnemonic = Character.toUpperCase(mnemonicsChar);
+          mnemonicIndex = i;          
+        }
         continue;
       }
       plainText.append(ch);
     }
-    return plainText.toString();
+    
+    return new OptionInfo(plainText.toString(), mnemonic, mnemonicIndex, this, each);
+    
+  }
+
+  public Set<OptionInfo> getOptionInfos() {
+    return myOptionInfos;
   }
 
   @Override
@@ -200,5 +289,9 @@ public class JBOptionButton extends JButton {
 
   public void setOptionTooltipText(String text) {
     myOptionTooltipText = text;
+  }
+
+  public void setOkToProcessDefaultMnemonics(boolean ok) {
+    myOkToProcessDefaultMnemonics = ok;
   }
 }
