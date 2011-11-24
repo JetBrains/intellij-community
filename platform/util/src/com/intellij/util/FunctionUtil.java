@@ -35,6 +35,15 @@ public class FunctionUtil {
     return NullableFunction.NULL;
   }
 
+  public static <A, B> Function<A, B> constant(final B b) {
+    return new Function<A, B>() {
+      @Override
+      public B fun(A a) {
+        return b;
+      }
+    };
+  }
+
   @NotNull
   public static <A, B, C> NotNullFunction<A, C> composition(@NotNull final NotNullFunction<B, C> f, @NotNull final NotNullFunction<A, B> g) {
     return new NotNullFunction<A, C>() {
