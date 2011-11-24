@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -322,6 +323,7 @@ public class GenerationUtil {
                                  PsiParameter[] parameters,
                                  final ClassNameProvider classNameProvider,
                                  @Nullable ExpressionContext context) {
+    Set<String> usedNames = new HashSet<String>();
     text.append('(');
 
     //writes myParameters
@@ -345,12 +347,22 @@ public class GenerationUtil {
         writeType(text, parameter.getType(), parameter, classNameProvider);
       }
       text.append(' ');
-      text.append(parameter.getName());
+      text.append(generateUniqueName(usedNames, parameter.getName()));
 
       i++;
     }
     text.append(')');
     text.append(' ');
+  }
+
+  private static String generateUniqueName(Set<String> usedNames, String name) {
+    if (StringUtil.isEmptyOrSpaces(name)) {
+      name = "p";
+    }
+    while (!usedNames.add(name)) {
+      name += "x";
+    }
+    return name;
   }
 
   static void writeThrowsList(StringBuilder text,
