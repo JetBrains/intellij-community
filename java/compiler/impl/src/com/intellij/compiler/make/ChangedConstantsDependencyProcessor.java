@@ -51,10 +51,8 @@ class ChangedConstantsDependencyProcessor {
   private final DependencyCache myDependencyCache;
   private final int myQName;
   private final CompileContext myContext;
-  private final boolean mySkipExpressionResolve;
   private final FieldChangeInfo[] myChangedFields;
   private final FieldChangeInfo[] myRemovedFields;
-  private static final long ANALYSIS_DURATION_THRESHOLD_MILLIS = 60000L /*1 minute*/;
   private final int MAX_CONSTANT_SEARCHES = Registry.intValue("compiler.max.static.constants.searches");
 
 
@@ -68,7 +66,6 @@ class ChangedConstantsDependencyProcessor {
     myDependencyCache = dependencyCache;
     myQName = qName;
     myContext = context;
-    mySkipExpressionResolve = context.getProgressIndicator().isCanceled();
     myChangedFields = changedFields;
     myRemovedFields = removedFields;
   }
@@ -134,35 +131,27 @@ class ChangedConstantsDependencyProcessor {
     final PsiSearchHelper psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
 
     final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
-    final long analysisStart = System.currentTimeMillis();
-    
     processIdentifiers(psiSearchHelper, new PsiElementProcessor<PsiIdentifier>() {
-      private boolean skipResolve = mySkipExpressionResolve;
       @Override
       public boolean execute(@NotNull PsiIdentifier identifier) {
         try {
           final PsiElement parent = identifier.getParent();
           if (parent instanceof PsiReferenceExpression) {
-            PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
-            PsiReference reference = refExpr.getReference();
-            skipResolve = skipResolve || (System.currentTimeMillis() - analysisStart) > ANALYSIS_DURATION_THRESHOLD_MILLIS;
-            if (skipResolve || reference == null || reference.resolve() == null) {
-              final PsiClass ownerClass = getOwnerClass(refExpr);
-              if (ownerClass != null && !ownerClass.equals(aClass)) {
-                final String _qName = ownerClass.getQualifiedName();
-                if (_qName != null) {
-                  int qualifiedName = myDependencyCache.getSymbolTable().getId(_qName);
-                  // should force marking of the class no matter was it compiled or not
-                  // This will ensure the class was recompiled _after_ all the constants get their new values
-                  if (myDependencyCache.markClass(qualifiedName, true)) {
-                    if (LOG.isDebugEnabled()) {
-                      LOG.debug("Mark dependent class " + myDependencyCache.resolve(qualifiedName) + "; reason: some constants were removed from " + myDependencyCache.resolve(myQName));
-                    }
+            final PsiClass ownerClass = getOwnerClass(parent);
+            if (ownerClass != null && !ownerClass.equals(aClass)) {
+              final String _qName = ownerClass.getQualifiedName();
+              if (_qName != null) {
+                int qualifiedName = myDependencyCache.getSymbolTable().getId(_qName);
+                // should force marking of the class no matter was it compiled or not
+                // This will ensure the class was recompiled _after_ all the constants get their new values
+                if (myDependencyCache.markClass(qualifiedName, true)) {
+                  if (LOG.isDebugEnabled()) {
+                    LOG.debug("Mark dependent class " + myDependencyCache.resolve(qualifiedName) + "; reason: some constants were removed from " + myDependencyCache.resolve(myQName));
                   }
                 }
-                else {
-                  LOG.warn("Class with null qualified name was not expected here: " + ownerClass);
-                }
+              }
+              else {
+                LOG.warn("Class with null qualified name was not expected here: " + ownerClass);
               }
             }
           }
