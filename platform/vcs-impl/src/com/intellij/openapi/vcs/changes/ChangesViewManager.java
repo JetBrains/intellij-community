@@ -427,6 +427,10 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       VcsException updateException = changeListManager.getUpdateException();
       if (updateException == null) {
         updateProgressText("", false);
+        final List<String> additionalUpdateInfo = changeListManager.getAdditionalUpdateInfo();
+        if (! additionalUpdateInfo.isEmpty()) {
+          updateProgressText(additionalUpdateInfo.get(0), true);
+        }
       }
       else {
         updateProgressText(VcsBundle.message("error.updating.changes", updateException.getMessage()), true);

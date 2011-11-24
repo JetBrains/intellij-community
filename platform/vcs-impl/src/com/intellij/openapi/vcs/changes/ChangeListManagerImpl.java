@@ -81,6 +81,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private ChangeListWorker myWorker;
   private VcsException myUpdateException = null;
+  private List<String> myAdditionalInfo;
 
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
@@ -119,6 +120,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
     myFreezeName = new AtomicReference<String>(null);
+    myAdditionalInfo = new ArrayList<String>();
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
@@ -381,6 +383,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.enterUpdate();
         if (wasEverythingDirty) {
           myUpdateException = null;
+          myAdditionalInfo.clear();
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("refresh procedure started, everything = " + wasEverythingDirty);
@@ -492,6 +495,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);
 
       if (myUpdateException != null) break;
+    }
+    synchronized (myDataLock) {
+      myAdditionalInfo.addAll(builder.getAdditionalInfo());
     }
   }
 
@@ -713,7 +719,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public VcsException getUpdateException() {
-    return myUpdateException;
+    synchronized (myDataLock) {
+      return myUpdateException;
+    }
+  }
+  
+  public List<String> getAdditionalUpdateInfo() {
+    synchronized (myDataLock) {
+      return new ArrayList<String>(myAdditionalInfo);
+    }
   }
 
   public boolean isFileAffected(final VirtualFile file) {

@@ -106,4 +106,6 @@ public interface ChangelistBuilder {
   void processRootSwitch(VirtualFile file, String branch);
 
   boolean reportChangesOutsideProject();
+  
+  void reportAdditionalInfo(final String text);
 }
