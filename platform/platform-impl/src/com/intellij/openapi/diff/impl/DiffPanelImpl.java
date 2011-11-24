@@ -64,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseListener;
 import java.security.InvalidParameterException;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -371,7 +372,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       }
       return;
     }
-    PopupHandler.installUnknownPopupHandler(editor.getContentComponent(), new MergeActionGroup(this, source.getSide()), ActionManager.getInstance());
+
+    final MouseListener mouseListener = PopupHandler
+      .installUnknownPopupHandler(editor.getContentComponent(), new MergeActionGroup(this, source.getSide()), ActionManager.getInstance());
     myDiffUpdater.contentAdded(source);
     editor.getSettings().setLineNumbersShown(true);
     editor.getSettings().setFoldingOutlineShown(false);
@@ -400,6 +403,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         if (visibleAreaListener != null) {
           scrollingModel.removeVisibleAreaListener(visibleAreaListener);
         }
+        editor.getContentComponent().removeMouseListener(mouseListener);
       }
     });
   }
