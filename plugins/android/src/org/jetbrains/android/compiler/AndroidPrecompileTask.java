@@ -65,7 +65,9 @@ public class AndroidPrecompileTask implements CompileTask {
       }
     }
 
-    CompilerManager.getInstance(project).addCompilationStatusListener(new MyCompilationStatusListener(project, addedEntries), project);
+    if (addedEntries.size() > 0) {
+      CompilerManager.getInstance(project).addCompilationStatusListener(new MyCompilationStatusListener(project, addedEntries), project);
+    }
 
     return true;
   }
