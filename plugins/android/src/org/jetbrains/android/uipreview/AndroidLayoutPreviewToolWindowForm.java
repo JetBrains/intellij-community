@@ -60,6 +60,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   private static final Icon ZOOM_IN_ICON = IconLoader.getIcon("/icons/zoomIn.png");
   private static final Icon ZOOM_OUT_ICON = IconLoader.getIcon("/icons/zoomOut.png");
   private static final Icon ZOOM_ACTUAL_ICON = IconLoader.getIcon("/icons/zoomActual.png");
+  private static final Icon REFRESH_ICON = IconLoader.getIcon("/icons/refreshPreview.png");
 
   private static final String CUSTOM_DEVICE_STRING = "Edit...";
 
@@ -239,6 +240,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     actionGroup.add(new MyZoomActualAction());
     actionGroup.add(new MyZoomInAction());
     actionGroup.add(new MyZoomOutAction());
+    actionGroup.add(new MyRefreshAction());
     myActionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
     myActionToolBar.setReservePlaceAutoPopupIcon(false);
 
@@ -1197,6 +1199,17 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     public void setSelected(AnActionEvent e, boolean state) {
       myPreviewPanel.setZoomToFit(state);
       myActionToolBar.updateActionsImmediately();
+    }
+  }
+
+  private class MyRefreshAction extends AnAction {
+    MyRefreshAction() {
+      super(AndroidBundle.message("android.layout.preview.zoom.actual.action.text"), null, REFRESH_ICON);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myToolWindowManager.render();
     }
   }
 }
