@@ -14,6 +14,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -244,6 +245,22 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myActionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
     myActionToolBar.setReservePlaceAutoPopupIcon(false);
 
+    final DefaultActionGroup optionsGroup = new DefaultActionGroup();
+    final ActionToolbar optionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, optionsGroup, true);
+    optionsToolBar.setReservePlaceAutoPopupIcon(false);
+    optionsToolBar.setSecondaryActionsTooltip("Options");
+    optionsGroup.addAction(new CheckboxAction("Hide for non-layout files") {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return mySettings.getState().isHideForNonLayoutFiles();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        mySettings.getState().setHideForNonLayoutFiles(state);
+      }
+    }).setAsSecondary(true);
+
     gb.gridx = 0;
     gb.gridy++;
     final JComponent toolbar = myActionToolBar.getComponent();
@@ -251,7 +268,11 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     toolBarWrapper.add(toolbar, BorderLayout.CENTER);
     toolBarWrapper.setPreferredSize(new Dimension(10, toolbar.getMinimumSize().height));
     toolBarWrapper.setMinimumSize(new Dimension(10, toolbar.getMinimumSize().height));
-    myComboPanel.add(toolBarWrapper, gb);
+
+    final JPanel fullToolbarComponent = new JPanel(new BorderLayout());
+    fullToolbarComponent.add(toolBarWrapper, BorderLayout.CENTER);
+    fullToolbarComponent.add(optionsToolBar.getComponent(), BorderLayout.EAST);
+    myComboPanel.add(fullToolbarComponent, gb);
 
     gb.fill = GridBagConstraints.HORIZONTAL;
     myThemeCombo = new ComboBox();
