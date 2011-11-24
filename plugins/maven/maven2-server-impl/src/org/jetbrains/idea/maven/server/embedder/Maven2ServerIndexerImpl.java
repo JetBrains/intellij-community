@@ -186,11 +186,14 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
-  public List<MavenId> getAllArtifacts(int indexId) throws MavenServerIndexerException {
+  public void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws MavenServerIndexerException {
     try {
-      List<MavenId> result = new ArrayList<MavenId>();
+      final int CHUNK_SIZE = 10000;
+
       IndexReader r = getIndex(indexId).getIndexReader();
       int total = r.numDocs();
+
+      List<MavenId> result = new ArrayList<MavenId>(Math.min(CHUNK_SIZE, total));
       for (int i = 0; i < total; i++) {
         if (r.isDeleted(i)) continue;
 
@@ -204,8 +207,16 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
         if (groupId == null || artifactId == null || version == null) continue;
 
         result.add(new MavenId(groupId, artifactId, version));
+
+        if (result.size() == CHUNK_SIZE) {
+          processor.processArtifacts(result);
+          result.clear();
+        }
       }
-      return result;
+
+      if (!result.isEmpty()) {
+        processor.processArtifacts(result);
+      }
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));

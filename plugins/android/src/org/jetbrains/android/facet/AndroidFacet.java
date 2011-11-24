@@ -483,7 +483,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
             propertiesFile.addProperty(AndroidUtils.ANDROID_TARGET_PROPERTY, targetPropertyValue);
           }
           else {
-            property.setValue(targetPropertyValue);
+            if (!Comparing.equal(property.getValue(), targetPropertyValue)) {
+              property.setValue(targetPropertyValue);
+            }
           }
         }
       });
