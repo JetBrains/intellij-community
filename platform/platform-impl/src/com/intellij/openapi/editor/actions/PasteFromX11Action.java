@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 
+import javax.swing.*;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
@@ -39,7 +41,6 @@ import java.awt.event.MouseEvent;
  * Author: msk
  */
 public class PasteFromX11Action extends EditorAction {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.PasteFromX11Action");
 
   public PasteFromX11Action() {
@@ -58,7 +59,12 @@ public class PasteFromX11Action extends EditorAction {
       boolean rightPlace = true;
       final InputEvent inputEvent = e.getInputEvent();
       if (inputEvent instanceof MouseEvent) {
-        rightPlace = editor.getMouseEventArea((MouseEvent)inputEvent) == EditorMouseEventArea.EDITING_AREA;
+        rightPlace = false;
+        final MouseEvent me = (MouseEvent)inputEvent;
+        if (editor.getMouseEventArea(me) == EditorMouseEventArea.EDITING_AREA) {
+          final Component component = SwingUtilities.getDeepestComponentAt(me.getComponent(), me.getX(), me.getY());
+          rightPlace = !(component instanceof JScrollBar);
+        }
       }
       presentation.setEnabled(rightPlace);
     }
@@ -85,4 +91,3 @@ public class PasteFromX11Action extends EditorAction {
     }
   }
 }
-
