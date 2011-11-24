@@ -293,6 +293,15 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       }
     });
   }
+
+  public Self withTreeParent(final ElementPattern<? extends PsiElement> ancestor) {
+    return with(new PatternCondition<T>("withTreeParent") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        return ancestor.accepts(t.getParent(), context);
+      }
+    });
+  }
   
   public Self insideStarting(final ElementPattern<PsiElement> ancestor) {
     return with(new PatternCondition<PsiElement>("insideStarting") {
