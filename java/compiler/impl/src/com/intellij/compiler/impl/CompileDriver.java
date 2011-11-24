@@ -769,35 +769,6 @@ public class CompileDriver {
     return CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
   }
 
-  static class ExitStatus {
-    private final String myName;
-
-    private ExitStatus(@NonNls String name) {
-      myName = name;
-    }
-
-    public String toString() {
-      return myName;
-    }
-
-    public static final ExitStatus CANCELLED = new ExitStatus("CANCELLED");
-    public static final ExitStatus ERRORS = new ExitStatus("ERRORS");
-    public static final ExitStatus SUCCESS = new ExitStatus("SUCCESS");
-    public static final ExitStatus UP_TO_DATE = new ExitStatus("UP_TO_DATE");
-  }
-
-  static class ExitException extends Exception {
-    private final ExitStatus myStatus;
-
-    ExitException(ExitStatus status) {
-      myStatus = status;
-    }
-
-    public ExitStatus getExitStatus() {
-      return myStatus;
-    }
-  }
-
   private ExitStatus doCompile(final CompileContextEx context, boolean isRebuild, final boolean forceCompile, final boolean onlyCheckStatus) {
     try {
       if (isRebuild) {
@@ -1321,6 +1292,9 @@ public class CompileDriver {
           }
           catch (CacheCorruptedException ignored) {
             LOG.info(ignored);
+          }
+          catch (ExitException e1) {
+            LOG.info(e1);
           }
         }
       });
