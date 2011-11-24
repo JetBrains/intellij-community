@@ -193,6 +193,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
+  protected boolean isEmptyRow(ParameterTableModelItemBase<ParameterInfoImpl> row) {
+    if (!StringUtil.isEmpty(row.parameter.getName())) return false;
+    if (!StringUtil.isEmpty(row.parameter.getTypeText())) return false;
+    return true;
+  }
+
+  @Override
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, final boolean focused) {
     final JPanel panel = new JPanel(new BorderLayout());
     final String typeText = item.typeCodeFragment.getText();
