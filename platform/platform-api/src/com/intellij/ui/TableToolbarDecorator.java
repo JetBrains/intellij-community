@@ -152,7 +152,9 @@ class TableToolbarDecorator extends ToolbarDecorator {
 
     myUpAction = new AnActionButtonRunnable() {
       @Override
-      public void run(AnActionButton button) {
+      public void run(AnActionButton button) {        
+        final int row = table.getEditingRow();
+        final int col = table.getEditingColumn();
         TableUtil.stopEditing(table);
         final int[] indexes = table.getSelectedRows();
         for (int index : indexes) {
@@ -160,14 +162,20 @@ class TableToolbarDecorator extends ToolbarDecorator {
             tableModel.exchangeRows(index, index - 1);
             table.setRowSelectionInterval(index - 1, index - 1);
           }
-        }
+        }        
         table.requestFocus();
+        if (row > 0 && col != -1) {
+          table.editCellAt(row - 1, col);
+        }
       }
     };
 
     myDownAction = new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
+        final int row = table.getEditingRow();
+        final int col = table.getEditingColumn();
+
         TableUtil.stopEditing(table);
         final int[] indexes = table.getSelectedRows();
         for (int index : indexes) {
@@ -177,6 +185,9 @@ class TableToolbarDecorator extends ToolbarDecorator {
           }
         }
         table.requestFocus();
+        if (row < table.getRowCount() - 1 && col != -1) {
+          table.editCellAt(row + 1, col);
+        }
       }
     };
   }
