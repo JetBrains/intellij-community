@@ -235,7 +235,7 @@ public class AndroidRootUtil {
           }
           else if (entry instanceof ModuleOrderEntry) {
             Module depModule = ((ModuleOrderEntry)entry).getModule();
-            if (depModule == null || AndroidCompileUtil.isGenModule(depModule)) {
+            if (depModule == null) {
               continue;
             }
             final AndroidFacet facet = AndroidFacet.getInstance(depModule);

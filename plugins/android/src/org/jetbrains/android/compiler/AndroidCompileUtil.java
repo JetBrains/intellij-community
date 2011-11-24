@@ -209,27 +209,7 @@ public class AndroidCompileUtil {
   
   @NotNull
   private static String getGenModuleName(@NotNull Module module) {
-    // todo: name can be used by another module
     return GEN_MODULE_PREFIX + module.getName();
-  }
-
-  public static boolean isGenModule(@NotNull Module module) {
-    return module.getName().startsWith(GEN_MODULE_PREFIX);
-  }
-
-  @Nullable
-  public static Module getBaseModuleByGenModule(@NotNull Module module) {
-    if (isGenModule(module)) {
-      final String baseModuleName = module.getName().substring(GEN_MODULE_PREFIX.length());
-      return ModuleManager.getInstance(module.getProject()).findModuleByName(baseModuleName);
-    }
-    return null;
-  }
-
-  @Nullable
-  public static Module getGenModule(@NotNull Module baseModule) {
-    final String genModuleName = getGenModuleName(baseModule);
-    return ModuleManager.getInstance(baseModule.getProject()).findModuleByName(genModuleName);
   }
 
   public static void createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
