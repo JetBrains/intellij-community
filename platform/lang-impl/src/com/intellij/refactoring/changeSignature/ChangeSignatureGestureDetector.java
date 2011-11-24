@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -333,6 +334,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       if (myDeaf) return;
+      if (DumbService.isDumb(myProject)) return;
       if (myInitialText == null) {
         final Document document = e.getDocument();
         final PsiDocumentManager documentManager = myPsiDocumentManager;
