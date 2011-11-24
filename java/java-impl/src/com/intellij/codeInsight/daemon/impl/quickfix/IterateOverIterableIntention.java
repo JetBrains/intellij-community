@@ -98,6 +98,7 @@ public class IterateOverIterableIntention implements IntentionAction {
 
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     while ((element = PsiTreeUtil.getParentOfType(element, PsiExpression.class, true)) != null) {
+      if (element.getParent() instanceof PsiMethodCallExpression) continue;
       final PsiType type = ((PsiExpression)element).getType();
       if (type instanceof PsiArrayType || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return (PsiExpression)element;
     }
