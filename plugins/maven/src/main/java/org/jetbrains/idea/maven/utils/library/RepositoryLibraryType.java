@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library;
+package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryKind;
@@ -21,67 +21,58 @@ import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import javax.swing.*;
 
 /**
  * @author nik
  */
-public class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
-  private final String myLibraryCategoryName;
-  private final DownloadableLibraryDescription myLibraryDescription;
+public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
+  private static final LibraryKind<RepositoryLibraryProperties> LIBRARY_KIND = LibraryKind.create("repository");
 
-  public DownloadableLibraryType(@NotNull LibraryKind<LibraryVersionProperties> kind, @NotNull String libraryCategoryName,
-                                 @NotNull DownloadableLibraryDescription description) {
-    super(kind);
-    myLibraryCategoryName = libraryCategoryName;
-    myLibraryDescription = description;
+  public static RepositoryLibraryType getInstance() {
+    return EP_NAME.findExtension(RepositoryLibraryType.class);
+  }
+
+  public RepositoryLibraryType() {
+    super(LIBRARY_KIND);
   }
 
   @Override
   public String getCreateActionName() {
-    return null;
+    return "From Maven...";
   }
 
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent,
                                                   @Nullable VirtualFile contextDirectory,
                                                   @NotNull Project project) {
-    return null;
-  }
-
-  @NotNull
-  public DownloadableLibraryDescription getLibraryDescription() {
-    return myLibraryDescription;
-  }
-
-  public String getLibraryCategoryName() {
-    return myLibraryCategoryName;
-  }
-
-  @Override
-  public String getDescription(@NotNull LibraryVersionProperties properties) {
-    final String versionString = properties.getVersionString();
-    return StringUtil.capitalize(myLibraryCategoryName) + " library" + (versionString != null ? " of version " + versionString : "");
+    return RepositoryAttachHandler.chooseLibraryAndDownload(project, null);
   }
 
   @NotNull
   @Override
-  public LibraryVersionProperties createDefaultProperties() {
-    return new LibraryVersionProperties();
+  public RepositoryLibraryProperties createDefaultProperties() {
+    return new RepositoryLibraryProperties();
   }
 
   @Override
-  public LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<LibraryVersionProperties> editorComponent) {
-    return DownloadableLibraryService.getInstance().createDownloadableLibraryEditor(myLibraryDescription, editorComponent, this);
+  public LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<RepositoryLibraryProperties> component) {
+    return new RepositoryLibraryEditor(component, this);
+  }
+
+  @Override
+  public String getDescription(@NotNull RepositoryLibraryProperties properties) {
+    final String mavenIdKey = properties.getMavenId();
+    return "Library " + (mavenIdKey != null ? mavenIdKey + " " : "") + "from Maven repository";
   }
 
   @Override
   public Icon getIcon() {
-    return null;
+    return MavenIcons.MAVEN_ICON;
   }
 }

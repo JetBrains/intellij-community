@@ -16,17 +16,29 @@
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author nik
  */
-public abstract class LibraryTypeRegistry {
-  public static LibraryTypeRegistry getInstance() {
-    return ServiceManager.getService(LibraryTypeRegistry.class);
+public abstract class LibraryTypeService {
+  public static LibraryTypeService getInstance() {
+    return ServiceManager.getService(LibraryTypeService.class);
   }
 
   @Nullable
   public abstract LibraryType<?> findTypeById(@NotNull String typeId);
+
+  @Nullable
+  public abstract NewLibraryConfiguration createLibraryFromFiles(@NotNull LibraryRootsComponentDescriptor descriptor,
+                                                                 @NotNull JComponent parentComponent,
+                                                                 @Nullable VirtualFile contextDirectory,
+                                                                 @Nullable LibraryType<?> type,
+                                                                 final @Nullable Project project);
 }

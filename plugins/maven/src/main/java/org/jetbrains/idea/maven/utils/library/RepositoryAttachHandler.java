@@ -13,33 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.utils;
+package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
@@ -49,8 +49,11 @@ import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.RepositoryAttachDialog;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -59,93 +62,78 @@ import java.util.*;
 /**
  * @author Gregory.Shrago
  */
-public class RepositoryAttachHandler implements LibraryTableAttachHandler {
-  public String getLongName() {
-    return "Attach Classes from Repository...";
-  }
+public class RepositoryAttachHandler {
 
-  public String getShortName() {
-    return "Classes from Repository...";
-  }
-
-  public Icon getIcon() {
-    return MavenIcons.MAVEN_ICON;
-  }
-
-  public ActionCallback performAttach(final Project project,
-                                      final LibraryEditor libraryEditor,
-                                      final @Nullable NullableComputable<Library.ModifiableModel> modelProvider) {
-
-    final RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, false);
-    dialog.setTitle(getLongName());
+  @Nullable
+  public static NewLibraryConfiguration chooseLibraryAndDownload(final @NotNull Project project, final @Nullable String initialFilter) {
+    final RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, false, initialFilter);
+    dialog.setTitle("Attach Classes from Repository...");
     dialog.show();
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      final ActionCallback callback = new ActionCallback();
-      final String copyTo = dialog.getDirectoryPath();
-      final String coord = dialog.getCoordinateText();
-      final boolean attachJavaDoc = dialog.getAttachJavaDoc();
-      final boolean attachSources = dialog.getAttachSources();
-      final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
-      if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
-      if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
-      resolveLibrary(project, coord, extraTypes, dialog.getRepositories(), true, new Processor<List<MavenArtifact>>() {
-        public boolean process(final List<MavenArtifact> artifacts) {
+    if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+      return null;
+    }
+
+    final String copyTo = dialog.getDirectoryPath();
+    final String coord = dialog.getCoordinateText();
+    final boolean attachJavaDoc = dialog.getAttachJavaDoc();
+    final boolean attachSources = dialog.getAttachSources();
+    final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
+    if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
+    if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
+    final Ref<NewLibraryConfiguration> result = Ref.create(null);
+    resolveLibrary(project, coord, extraTypes, dialog.getRepositories(), new Processor<List<MavenArtifact>>() {
+      public boolean process(final List<MavenArtifact> artifacts) {
+        final boolean nothingRetrieved = artifacts.isEmpty();
+        if (!nothingRetrieved) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              replaceLibraryData(project, libraryEditor, artifacts, copyTo);
-              callback.setDone();
+              final List<OrderRoot> roots = createRoots(artifacts, copyTo);
+              result.set(new NewLibraryConfiguration(coord, RepositoryLibraryType.getInstance(), new RepositoryLibraryProperties(coord)) {
+                @Override
+                public void addRoots(@NotNull LibraryEditor editor) {
+                  editor.addRoots(roots);
+                }
+              });
             }
           });
-          final boolean nothingRetrieved = artifacts.isEmpty();
-          final StringBuilder sb = new StringBuilder();
-          final String title;
-          if (nothingRetrieved) {
-            title = "No files were downloaded";
-            sb.append("for ").append(coord);
-          }
-          else {
-            title = "The following files were downloaded:";
-            sb.append("<ol>");
-            for (MavenArtifact each : artifacts) {
-              sb.append("<li>");
-              sb.append(each.getFile().getName());
-              final String scope = each.getScope();
-              if (scope != null) {
-                sb.append(" (");
-                sb.append(scope);
-                sb.append(")");
-              }
-              sb.append("</li>");
-            }
-            sb.append("</ol>");
-          }
-          if (nothingRetrieved && ModalityState.current().dominates(ModalityState.NON_MODAL)) {
-            Messages.showErrorDialog(project, sb.toString(), title);
-          }
-          else {
-            Notifications.Bus.notify(new Notification("Repository", title, sb.toString(),
-                                                      nothingRetrieved ? NotificationType.WARNING : NotificationType.INFORMATION), project);
-          }
-          return true;
         }
-      });
-      return callback;
-    }
-    return new ActionCallback.Rejected();
+        final StringBuilder sb = new StringBuilder();
+        final String title;
+        if (nothingRetrieved) {
+          title = "No files were downloaded";
+          sb.append("for ").append(coord);
+        }
+        else {
+          title = "The following files were downloaded:";
+          sb.append("<ol>");
+          for (MavenArtifact each : artifacts) {
+            sb.append("<li>");
+            sb.append(each.getFile().getName());
+            final String scope = each.getScope();
+            if (scope != null) {
+              sb.append(" (");
+              sb.append(scope);
+              sb.append(")");
+            }
+            sb.append("</li>");
+          }
+          sb.append("</ol>");
+        }
+        if (nothingRetrieved && ModalityState.current().dominates(ModalityState.NON_MODAL)) {
+          Messages.showErrorDialog(project, sb.toString(), title);
+        }
+        else {
+          Notifications.Bus.notify(new Notification("Repository", title, sb.toString(),
+                                                    nothingRetrieved ? NotificationType.WARNING : NotificationType.INFORMATION), project);
+        }
+        return true;
+      }
+    });
+    return result.get();
   }
 
-  private static void replaceLibraryData(Project project,
-                                         LibraryEditor libraryEditor,
-                                         Collection<MavenArtifact> artifacts,
-                                         String copyTo) {
-    final String repoUrl = getLocalRepositoryUrl(project);
-    for (OrderRootType type : OrderRootType.getAllTypes()) {
-      for (String url : libraryEditor.getUrls(type)) {
-        if (url.startsWith(repoUrl)) {
-          libraryEditor.removeRoot(url, type);
-        }
-      }
-    }
+  private static List<OrderRoot> createRoots(Collection<MavenArtifact> artifacts, String copyTo) {
+    final List<OrderRoot> result = new ArrayList<OrderRoot>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (MavenArtifact each : artifacts) {
       try {
@@ -158,15 +146,19 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           }
         }
         final String url = VfsUtil.getUrlForLibraryRoot(toFile);
-        manager.refreshAndFindFileByUrl(url);
-        if (MavenExtraArtifactType.DOCS.getDefaultClassifier().equals(each.getClassifier())) {
-          libraryEditor.addRoot(url, JavadocOrderRootType.getInstance());
-        }
-        else if (MavenExtraArtifactType.SOURCES.getDefaultClassifier().equals(each.getClassifier())) {
-          libraryEditor.addRoot(url, OrderRootType.SOURCES);
-        }
-        else {
-          libraryEditor.addRoot(url, OrderRootType.CLASSES);
+        final VirtualFile file = manager.refreshAndFindFileByUrl(url);
+        if (file != null) {
+          OrderRootType rootType;
+          if (MavenExtraArtifactType.DOCS.getDefaultClassifier().equals(each.getClassifier())) {
+            rootType = JavadocOrderRootType.getInstance();
+          }
+          else if (MavenExtraArtifactType.SOURCES.getDefaultClassifier().equals(each.getClassifier())) {
+            rootType = OrderRootType.SOURCES;
+          }
+          else {
+            rootType = OrderRootType.CLASSES;
+          }
+          result.add(new OrderRoot(file, rootType));
         }
       }
       catch (MalformedURLException e) {
@@ -176,11 +168,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         MavenLog.LOG.warn(e);
       }
     }
-  }
-
-  private static String getLocalRepositoryUrl(Project project) {
-    File file = MavenProjectsManager.getInstance(project).getGeneralSettings().getEffectiveLocalRepository();
-    return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(file.getPath()));
+    return result;
   }
 
   public static void searchArtifacts(final Project project, String coord,
@@ -273,41 +261,17 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     });
   }
 
-  private static MavenId getMavenId(final String coord) {
-    final String[] parts = coord.split(":");
-    return new MavenId(parts.length > 0 ? parts[0] : null,
-                       parts.length > 1 ? parts[1] : null,
-                       parts.length > 2 ? parts[2] : null);
-  }
-
-  public static void resolveLibrary(final Project project,
-                                    final String coord,
-                                    final List<MavenExtraArtifactType> extraTypes,
-                                    final Collection<MavenRepositoryInfo> repositories,
-                                    boolean modal,
-                                    final Processor<List<MavenArtifact>> resultProcessor) {
+  private static void resolveLibrary(final Project project,
+                                     final String coord,
+                                     final List<MavenExtraArtifactType> extraTypes,
+                                     final Collection<MavenRepositoryInfo> repositories,
+                                     final Processor<List<MavenArtifact>> resultProcessor) {
     final MavenId mavenId = getMavenId(coord);
-    final Task task;
-    if (modal) {
-      task = new Task.Modal(project, "Maven", false) {
-        public void run(@NotNull ProgressIndicator indicator) {
-          doResolveInner(project, mavenId, extraTypes, repositories, resultProcessor, indicator);
-        }
-      };
-    }
-    else {
-      task = new Task.Backgroundable(project, "Maven", false, PerformInBackgroundOption.DEAF) {
-        public void run(@NotNull ProgressIndicator indicator) {
-          doResolveInner(project, mavenId, extraTypes, repositories, resultProcessor, indicator);
-        }
-
-        @Override
-        public boolean shouldStartInBackground() {
-          return false;
-        }
-      };
-    }
-
+    final Task task = new Task.Modal(project, "Maven", false) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        doResolveInner(project, mavenId, extraTypes, repositories, resultProcessor, indicator);
+      }
+    };
     ProgressManager.getInstance().run(task);
   }
 
@@ -373,5 +337,12 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));
     }
     return result;
+  }
+
+  public static MavenId getMavenId(final String coord) {
+    final String[] parts = coord.split(":");
+    return new MavenId(parts.length > 0 ? parts[0] : null,
+                       parts.length > 1 ? parts[1] : null,
+                       parts.length > 2 ? parts[2] : null);
   }
 }

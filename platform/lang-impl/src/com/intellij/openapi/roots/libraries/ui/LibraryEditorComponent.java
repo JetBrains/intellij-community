@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.libraries.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,4 +40,7 @@ public interface LibraryEditorComponent<P extends LibraryProperties> {
   VirtualFile getExistingRootDirectory();
 
   void updateRootsTree();
+
+  @Nullable
+  Project getProject();
 }

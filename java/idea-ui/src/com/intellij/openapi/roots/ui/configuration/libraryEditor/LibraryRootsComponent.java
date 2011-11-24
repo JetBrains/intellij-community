@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.*;
+import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -184,6 +185,12 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   public JComponent getComponent() {
     return myPanel;
+  }
+
+  @Override
+  @Nullable
+  public Project getProject() {
+    return myProject;
   }
 
   public void setContextModule(Module module) {
