@@ -31,7 +31,6 @@ import java.awt.image.VolatileImage;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673
@@ -46,39 +45,69 @@ public class IdeRepaintManager extends RepaintManager {
 
   public Image getVolatileOffscreenBuffer(Component c, int proposedWidth, int proposedHeight) {
     final Image buffer = super.getVolatileOffscreenBuffer(c, proposedWidth, proposedHeight);
-    clearLeakyImages();
+    clearLeakyImages(false); // DisplayChangedListener might be unavailable
     return buffer;
   }
 
   // sync here is to avoid data race when two(!) AWT threads on startup try to compete for the single myImagesMap
-  private synchronized void clearLeakyImages() {
+  private synchronized void clearLeakyImages(boolean force) {
     if (myImagesMap == null) {
       try {
         Field volMapField = RepaintManager.class.getDeclaredField(FAULTY_FIELD_NAME);
         volMapField.setAccessible(true);
-        myImagesMap = new WeakHashMap<GraphicsConfiguration, VolatileImage>();
-        @SuppressWarnings("unchecked")
-        Map<GraphicsConfiguration, VolatileImage> map =
-          (Map<GraphicsConfiguration, VolatileImage>)volMapField.get(this);
-        if (map != null) {
-          myImagesMap.putAll(map);
-        }
+        myImagesMap = (Map<GraphicsConfiguration, VolatileImage>)volMapField.get(this);
       }
       catch (Exception e) {
         LOG.error(e);
       }
     }
 
-    if (myImagesMap.size() > 3) {
-      for (VolatileImage image : myImagesMap.values()) {
-        if (image != null) {
-          image.flush();
-        }
-      }
-      myImagesMap.clear();
+    if (force ||
+        myImagesMap.size() > 3 /*leave no more than 3 images (usually one per screen) if DisplayChangedListener is not available */
+       ) {
+      //Force the RepaintManager to clear out all of the VolatileImage back-buffers that it has cached.
+      //	See Sun bug 6209673.
+      Dimension size = getDoubleBufferMaximumSize();
+      setDoubleBufferMaximumSize(new Dimension(0, 0));
+      setDoubleBufferMaximumSize(size);
     }
   }
 
+  private class DisplayChangeHandler implements sun.awt.DisplayChangedListener, Runnable {
+    public void displayChanged() {
+      EventQueue.invokeLater( this );
+    }
+
+    public void paletteChanged() {
+      EventQueue.invokeLater( this );
+    }
+
+    public void run() {
+      clearLeakyImages(true);
+    }
+  }
+
+  // We must keep a strong reference to the DisplayChangedListener,
+  //  since SunDisplayChanger keeps only a WeakReference to it.
+  private Object displayChangeHack;
+  
+  {
+    try {
+      GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      GraphicsDevice[] devices = env.getScreenDevices();    // init
+      Class<?> aClass = Class.forName("sun.awt.DisplayChangedListener"); // might be absent
+      displayChangeHack = new DisplayChangeHandler();
+      
+      if (aClass.isInstance(env)) { // Headless env does not implement sun.awt.DisplayChangedListener (and lacks addDisplayChangedListener)
+        env.getClass()
+          .getMethod("addDisplayChangedListener", new Class[]{aClass})
+          .invoke(env, displayChangeHack);
+      }
+    } catch (Throwable t) {
+      LOG.error("Cannot setup display change listener", t);
+    }
+  }
+  
   @Override
   public void validateInvalidComponents() {
     super.validateInvalidComponents();

@@ -17,6 +17,7 @@ package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
@@ -37,6 +38,9 @@ import java.util.*;
  * @author peter
  */
 public abstract class LanguagePerFileMappings<T> implements PersistentStateComponent<Element>, PerFileMappings<T> {
+
+  private static final Logger LOG = Logger.getInstance("com.intellij.lang.LanguagePerFileMappings");
+
   private final Map<VirtualFile, T> myMappings = new HashMap<VirtualFile, T>();
   private final Project myProject;
 
@@ -65,7 +69,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     }
   }
 
-  @Nullable 
+  @Nullable
   public T getMapping(@Nullable VirtualFile file) {
     if (file instanceof VirtualFileWindow) {
       final VirtualFileWindow window = (VirtualFileWindow)file;
@@ -118,7 +122,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
   @Nullable
   public T getImmediateMapping(final VirtualFile file) {
     synchronized (myMappings) {
-      return myMappings.get(file); 
+      return myMappings.get(file);
     }
   }
 
@@ -153,7 +157,13 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
         if (oldFile == null) continue; // project
         oldFile.putUserData(pusher.getFileDataKey(), null);
       }
-      PushedFilePropertiesUpdater.getInstance(myProject).pushAll(pusher);
+      PushedFilePropertiesUpdater updater = PushedFilePropertiesUpdater.getInstance(myProject);
+      if (updater == null) {
+        LOG.error("updater = null. project=" + myProject.getName()+", this="+getClass().getSimpleName());
+      }
+      else {
+        updater.pushAll(pusher);
+      }
     }
     if (shouldReparseFiles()) {
       FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);

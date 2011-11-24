@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiElementPointer<T> {
-  private T myElement;
+  private final T myElement;
   private final PsiFile myFile;
 
   public IdentitySmartPointer(@NotNull T element, @NotNull PsiFile file) {
@@ -37,6 +37,7 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
     this(element, element.getContainingFile());
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myFile.getProject();
@@ -47,6 +48,7 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
     return myFile.getVirtualFile();
   }
 
+  @Override
   public T getElement() {
     T element = myElement;
     if (element != null && !element.isValid()) {
@@ -65,6 +67,7 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
            && SmartPointerManager.getInstance(getProject()).pointToTheSameElement(this, (SmartPsiElementPointer)obj);
   }
 
+  @Override
   public PsiFile getContainingFile() {
     return myFile;
   }

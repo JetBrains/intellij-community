@@ -452,10 +452,12 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           return pluginDescriptor.getName();
         }
       }, ", ");
+      final Set<IdeaPluginDescriptor> pluginDependencies = new HashSet<IdeaPluginDescriptor>();
       final String listOfDependencies = StringUtil.join(deps, new Function<PluginId, String>() {
         public String fun(final PluginId pluginId) {
           final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
           assert pluginDescriptor != null;
+          pluginDependencies.add(pluginDescriptor);
           return pluginDescriptor.getName();
         }
       }, "<br>");
@@ -469,6 +471,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         }
 
         updatePluginDependencies();
+        hideNotApplicablePlugins(newVal, pluginDependencies.toArray(new IdeaPluginDescriptor[pluginDependencies.size()]));
       }
     }
   }

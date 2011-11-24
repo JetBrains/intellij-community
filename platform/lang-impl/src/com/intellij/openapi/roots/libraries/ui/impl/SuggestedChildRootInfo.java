@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.libraryEditor;
+package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.openapi.roots.libraries.ui.RootDetector;
 import com.intellij.openapi.vfs.VirtualFile;

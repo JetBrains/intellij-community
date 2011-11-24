@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ImplicitVariable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +87,7 @@ public class ImplicitVariableElementInfoFactory implements SmartPointerElementIn
 
     @Override
     public VirtualFile getVirtualFile() {
-      return PsiUtilBase.getVirtualFile(myVar);
+      return PsiUtilCore.getVirtualFile(myVar);
     }
 
     @Override

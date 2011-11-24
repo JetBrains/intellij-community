@@ -257,7 +257,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     final String typeId = element.getAttributeValue(LIBRARY_TYPE_ATTR);
     if (typeId == null) return;
 
-    myType = LibraryTypeRegistry.getInstance().findTypeById(typeId);
+    myType = LibraryTypeService.getInstance().findTypeById(typeId);
     if (myType == null) return;
 
     myProperties = myType.createDefaultProperties();

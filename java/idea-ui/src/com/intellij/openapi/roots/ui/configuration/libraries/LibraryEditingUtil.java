@@ -30,18 +30,15 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.*;
-import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ParameterizedRunnable;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,10 +72,6 @@ public class LibraryEditingUtil {
     return false;
   }
 
-  public static String suggestNewLibraryName(LibraryTable.ModifiableModel table, List<OrderRoot> roots) {
-    return suggestNewLibraryName(table, suggestLibraryName(roots));
-  }
-
   public static String suggestNewLibraryName(LibraryTable.ModifiableModel table,
                                              final String baseName) {
     String candidateName = baseName;
@@ -87,13 +80,6 @@ public class LibraryEditingUtil {
       candidateName = baseName + (idx++);
     }
     return candidateName;
-  }
-
-  public static String suggestLibraryName(@NotNull List<OrderRoot> roots) {
-    if (roots.size() >= 1) {
-      return FileUtil.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));
-    }
-    return "Unnamed";
   }
 
   public static Predicate<Library> getNotAddedLibrariesCondition(final ModuleRootModel rootModel) {

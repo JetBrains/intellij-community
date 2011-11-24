@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 public class PlainEnterProcessor implements EnterProcessor {
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     PsiCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
-    if (processExistingBlankLine(editor, block)) {
+    if (processExistingBlankLine(editor, block, psiElement)) {
       return true;
     }
     EditorActionHandler enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
@@ -114,27 +114,39 @@ public class PlainEnterProcessor implements EnterProcessor {
    *  
    * @param editor      target editor
    * @param codeBlock   target code block to which new empty line is going to be inserted
+   * @param element     target element under caret
    * @return            <code>true</code> if it was found out that the given code block starts with the empty line and caret
    *                    is pointed to correct position there, i.e. no additional processing is required;
    *                    <code>false</code> otherwise
    */
-  private static boolean processExistingBlankLine(@NotNull Editor editor, @Nullable PsiCodeBlock codeBlock) {
+  private static boolean processExistingBlankLine(@NotNull Editor editor, @Nullable PsiCodeBlock codeBlock, @Nullable PsiElement element) {
+    PsiWhiteSpace whiteSpace = null;
     if (codeBlock == null) {
-      return false;
+      if (element != null) {
+        final PsiElement next = PsiTreeUtil.nextLeaf(element);
+        if (next instanceof PsiWhiteSpace) {
+          whiteSpace = (PsiWhiteSpace)next;
+        }
+      }
+    }
+    else {
+      whiteSpace = PsiTreeUtil.findChildOfType(codeBlock, PsiWhiteSpace.class);
+      if (whiteSpace == null) {
+        return false;
+      }
+
+      PsiElement lbraceCandidate = whiteSpace.getPrevSibling();
+      if (lbraceCandidate == null) {
+        return false;
+      }
+
+      ASTNode node = lbraceCandidate.getNode();
+      if (node == null || node.getElementType() != JavaTokenType.LBRACE) {
+        return false;
+      }
     }
 
-    PsiWhiteSpace whiteSpace = PsiTreeUtil.findChildOfType(codeBlock, PsiWhiteSpace.class);
     if (whiteSpace == null) {
-      return false;
-    }
-
-    PsiElement lbraceCandidate = whiteSpace.getPrevSibling();
-    if (lbraceCandidate == null) {
-      return false;
-    }
-
-    ASTNode node = lbraceCandidate.getNode();
-    if (node == null || node.getElementType() != JavaTokenType.LBRACE) {
       return false;
     }
 
@@ -147,7 +159,9 @@ public class PlainEnterProcessor implements EnterProcessor {
 
     int i = CharArrayUtil.shiftForward(whiteSpaceText, 0, " \t");
     if (i >= whiteSpaceText.length() - 1) {
-      assert false : String.format("code block: %s, white space: %s", codeBlock.getTextRange(), whiteSpace.getTextRange());
+      assert false : String.format("code block: %s, white space: %s",
+                                   codeBlock == null ? "undefined" : codeBlock.getTextRange(),
+                                   whiteSpace.getTextRange());
       return false;
     }
 

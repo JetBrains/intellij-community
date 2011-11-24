@@ -1095,6 +1095,8 @@
 
     <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes"/>
 
+    <clsStubBuilderFactory implementation="com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory" order="last"/>
+
 
     <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
 

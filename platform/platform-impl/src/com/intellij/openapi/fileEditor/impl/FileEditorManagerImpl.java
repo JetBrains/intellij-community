@@ -781,7 +781,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
     if (newEditorCreated) {
-      window.setPaintBlocked(true);
+      if (window.isShowing()) {
+        window.setPaintBlocked(true);
+      }
       notifyPublisher(new Runnable() {
         @Override
         public void run() {

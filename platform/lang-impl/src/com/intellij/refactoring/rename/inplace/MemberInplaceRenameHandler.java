@@ -50,19 +50,22 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
   public VariableInplaceRenamer doRename(@NotNull final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     if (elementToRename instanceof PsiNameIdentifierOwner) {
-      RenamePsiElementProcessor.forElement(elementToRename).substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
-        @Override
-        public void pass(PsiElement element) {
-          final MemberInplaceRenamer renamer = new MemberInplaceRenamer((PsiNameIdentifierOwner)elementToRename, element, editor);
-          boolean startedRename = renamer.performInplaceRename();
-          if (!startedRename) {
-            performDialogRename(elementToRename, editor, dataContext);
+      final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
+      if (processor.isInplaceRenameSupported()) {
+        processor.substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
+          @Override
+          public void pass(PsiElement element) {
+            final MemberInplaceRenamer renamer = new MemberInplaceRenamer((PsiNameIdentifierOwner)elementToRename, element, editor);
+            boolean startedRename = renamer.performInplaceRename();
+            if (!startedRename) {
+              performDialogRename(elementToRename, editor, dataContext);
+            }
           }
-        }
-      });
-    } else {
-      performDialogRename(elementToRename, editor, dataContext);
+        });
+        return null;
+      }
     }
+    performDialogRename(elementToRename, editor, dataContext);
     return null;
   }
 }

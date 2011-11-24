@@ -93,8 +93,8 @@ public class TextOccurrencesUtil {
                                                           final boolean ignoreReferences,
                                                           @NotNull final PairProcessor<PsiElement, TextRange> processor) {
     PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
-    SearchScope scope = PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(element);
-    scope = scope.intersectWith(GlobalSearchScope.projectScope(element.getProject()));
+    SearchScope scope = helper.getUseScope(element);
+    scope = GlobalSearchScope.projectScope(element.getProject()).intersectWith(scope);
     Processor<PsiElement> commentOrLiteralProcessor = new Processor<PsiElement>() {
       public boolean process(PsiElement literal) {
         return processTextIn(literal, stringToSearch, ignoreReferences, processor);

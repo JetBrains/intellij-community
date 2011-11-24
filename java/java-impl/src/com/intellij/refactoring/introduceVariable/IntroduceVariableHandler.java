@@ -46,10 +46,10 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
                                                boolean declareFinalIfAll,
                                                boolean anyAssignmentLHS,
                                                final InputValidator validator,
-                                               final OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                               PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
     if (replaceChoice != null) {
       return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS, validator,
-                               replaceChoice);
+                               anchor, replaceChoice);
     }
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = null;

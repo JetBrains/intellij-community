@@ -84,7 +84,9 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
   }
 
   protected void update(VcsContext context, Presentation presentation) {
-    presentation.setEnabled(isActive(context));
+    boolean active = isActive(context);
+    presentation.setEnabled(active);
+    presentation.setVisible(active);
   }
 
 

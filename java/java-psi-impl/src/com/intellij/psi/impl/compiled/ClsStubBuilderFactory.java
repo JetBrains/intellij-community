@@ -19,15 +19,26 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.util.cls.ClsFormatException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
-public interface ClsStubBuilderFactory<T extends PsiFile> {
+public abstract class ClsStubBuilderFactory<T extends PsiFile> {
 
-  ExtensionPointName<ClsStubBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.clsStubBuilderFactory");
+  public static final ExtensionPointName<ClsStubBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.clsStubBuilderFactory");
 
-  PsiFileStub<T> buildFileStub(final VirtualFile file, byte[]  bytes);
+  @Nullable
+  public abstract PsiFileStub<T> buildFileStub(final VirtualFile file, byte[]  bytes) throws ClsFormatException;
 
-  boolean canBeProcessed(final VirtualFile file, byte[] bytes); 
+  public abstract boolean canBeProcessed(final VirtualFile file, byte[] bytes);
+
+  /**
+   * Should be fast, because of processing file only according to the name.
+   * It can be inconsistent with 'canBeProcessed' method.
+   * @param file classFile
+   * @return false in case if it's not inner class
+   */
+  public abstract boolean isInnerClass(final VirtualFile file);
 }

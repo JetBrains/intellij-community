@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -60,7 +61,10 @@ public class ShowAllAffectedGenericAction extends AnAction {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
 
-    final String title = VcsBundle.message("paths.affected.in.revision", revision.asString());
+    final String title = VcsBundle.message("paths.affected.in.revision",
+                                           revision instanceof ShortVcsRevisionNumber
+                                               ? ((ShortVcsRevisionNumber) revision).toShortString()
+                                               :  revision.asString());
     final CommittedChangeList[] list = new CommittedChangeList[1];
     final VcsException[] exc = new VcsException[1];
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {

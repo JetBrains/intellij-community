@@ -66,7 +66,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       return null;
     }
     PsiClass psiClass = (PsiClass)resolved;
-    if (Comparing.strEqual(psiClass.getName(), psiClass.getQualifiedName())) return null;
+    if (Comparing.strEqual(psiClass.getName(), psiClass.getQualifiedName()) || psiClass.hasModifierProperty(PsiModifier.PRIVATE)) return null;
     PsiFile file = refExpr.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     PsiImportList importList = ((PsiJavaFile)file).getImportList();

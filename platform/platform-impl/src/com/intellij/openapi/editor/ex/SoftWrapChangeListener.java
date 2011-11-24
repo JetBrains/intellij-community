@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,11 @@ import org.jetbrains.annotations.NotNull;
 public interface SoftWrapChangeListener {
 
   /**
+   * Is called when soft wraps recalculation begins.
+   */
+  void recalculationStarts();
+  
+  /**
    * This method is assumed to be called every new soft wrap is registered.
    *
    * @param softWrap   newly registered soft wrap
@@ -37,4 +42,9 @@ public interface SoftWrapChangeListener {
    * This method is assumed to be called every time soft wrap(s) is removed.
    */
   void softWrapsRemoved();
+
+  /**
+   * Is called when soft wraps recalculation is finished.
+   */
+  void recalculationEnds();
 }

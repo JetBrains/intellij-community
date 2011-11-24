@@ -65,8 +65,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<Pattern> myRegexpResourcePatterns = new ArrayList<Pattern>();
   // extensions of the files considered as resource files. If present, overrides patterns in old regexp format stored in myRegexpResourcePatterns
   private final List<String> myWildcardPatterns = new ArrayList<String>();
-  private final List<Pair<Pattern, Pattern>> myCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
-  private final List<Pair<Pattern, Pattern>> myNegatedCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
+  private final List<CompiledPattern> myCompiledPatterns = new ArrayList<CompiledPattern>();
+  private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<CompiledPattern>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
   private final ModuleManager myModuleManager;
@@ -352,7 +352,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
-    final Pair<Pattern, Pattern> pattern = convertToRegexp(wildcardPattern);
+    final CompiledPattern pattern = convertToRegexp(wildcardPattern);
     if (pattern != null) {
       myWildcardPatterns.add(wildcardPattern);
       if (isPatternNegated(wildcardPattern)) {
@@ -378,12 +378,19 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myNegatedCompiledPatterns.clear();
   }
 
-  private static Pair<Pattern, Pattern> convertToRegexp(String wildcardPattern) {
+  private static CompiledPattern convertToRegexp(String wildcardPattern) {
     if (isPatternNegated(wildcardPattern)) {
       wildcardPattern = wildcardPattern.substring(1);
     }
 
     wildcardPattern = FileUtil.toSystemIndependentName(wildcardPattern);
+
+    String srcRoot = null;
+    int colon = wildcardPattern.indexOf(":");
+    if (colon > 0) {
+      srcRoot = wildcardPattern.substring(0, colon);
+      wildcardPattern = wildcardPattern.substring(colon + 1);
+    }
 
     String dirPattern = null;
     int slash = wildcardPattern.lastIndexOf('/');
@@ -407,7 +414,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     wildcardPattern = optimize(wildcardPattern);
 
     final Pattern dirCompiled = dirPattern == null ? null : compilePattern(dirPattern);
-    return Pair.create(compilePattern(wildcardPattern), dirCompiled);
+    final Pattern srcCompiled = srcRoot == null ? null : compilePattern(optimize(normalizeWildcards(srcRoot)));
+    return new CompiledPattern(compilePattern(wildcardPattern), dirCompiled, srcCompiled);
   }
 
   private static String optimize(String wildcardPattern) {
@@ -466,22 +474,32 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return true;
   }
 
-  private boolean matches(String name, VirtualFile parent, Ref<String> parentRef, Pair<Pattern, Pattern> pair) {
-    if (!matches(name, pair.first)) {
+  private boolean matches(String name, VirtualFile parent, Ref<String> parentRef, CompiledPattern pair) {
+    if (!matches(name, pair.fileName)) {
       return false;
     }
 
-    final Pattern dirPattern = pair.second;
-    if (dirPattern == null || parent == null) {
-      return true;
+    if (parent != null && (pair.dir != null || pair.srcRoot != null)) {
+      VirtualFile srcRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(parent);
+      if (pair.dir != null) {
+        String parentPath = parentRef.get();
+        if (parentPath == null) {
+          parentRef.set(parentPath = srcRoot == null ? parent.getPath() : VfsUtilCore.getRelativePath(parent, srcRoot, '/'));
+        }
+        if (parentPath == null || !matches("/" + parentPath, pair.dir)) {
+          return false;
+        }
+      }
+
+      if (pair.srcRoot != null) {
+        String srcRootName = srcRoot == null ? null : srcRoot.getName();
+        if (srcRootName == null || !matches(srcRootName, pair.srcRoot)) {
+          return false;
+        }
+      }
     }
 
-    String parentPath = parentRef.get();
-    if (parentPath == null) {
-      VirtualFile srcRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(parent);
-      parentRef.set(parentPath = srcRoot == null ? parent.getPath() : VfsUtilCore.getRelativePath(parent, srcRoot, '/'));
-    }
-    return parentPath != null && matches("/" + parentPath, dirPattern);
+    return true;
   }
 
   // property names
@@ -770,4 +788,17 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
     return extensionsString.toString();
   }
+  
+  private static class CompiledPattern {
+    @NotNull final Pattern fileName;
+    @Nullable final Pattern dir;
+    @Nullable final Pattern srcRoot;
+
+    private CompiledPattern(Pattern fileName, Pattern dir, Pattern srcRoot) {
+      this.fileName = fileName;
+      this.dir = dir;
+      this.srcRoot = srcRoot;
+    }
+  }
+  
 }
