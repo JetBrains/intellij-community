@@ -24,6 +24,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class DirectoryEntry extends Entry {
@@ -64,8 +65,15 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public void addChild(Entry child) {
-    checkDoesNotExist(child, child.getName());
+    if (!checkDoesNotExist(child, child.getName())) return;
     unsafeAddChild(child);
+  }
+
+  public void addChildren(Collection<Entry> children) {
+    myChildren.ensureCapacity(myChildren.size() + children.size());
+    for (Entry each : children) {
+      unsafeAddChild(each);
+    }
   }
 
   private void unsafeAddChild(Entry child) {
@@ -73,12 +81,14 @@ public class DirectoryEntry extends Entry {
     child.setParent(this);
   }
 
-  protected void checkDoesNotExist(Entry e, String name) {
+  protected boolean checkDoesNotExist(Entry e, String name) {
     Entry found = findChild(name);
-    if (found == null || found == e) return;
+    if (found == null) return true;
+    if (found == e) return false;
 
     removeChild(found);
     LocalHistoryLog.LOG.warn(String.format("entry '%s' already exists in '%s'", name, getPath()));
+    return true;
   }
 
   @Override
@@ -171,7 +181,7 @@ public class DirectoryEntry extends Entry {
   @Override
   protected void collectDeletedDifferences(List<Difference> result) {
     result.add(new Difference(false, this, null));
-    
+
     for (Entry child : myChildren) {
       child.collectDeletedDifferences(result);
     }

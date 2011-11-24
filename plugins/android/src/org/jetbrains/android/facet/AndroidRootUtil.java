@@ -235,7 +235,7 @@ public class AndroidRootUtil {
           }
           else if (entry instanceof ModuleOrderEntry) {
             Module depModule = ((ModuleOrderEntry)entry).getModule();
-            if (depModule == null || AndroidCompileUtil.isGenModule(depModule)) {
+            if (depModule == null) {
               continue;
             }
             final AndroidFacet facet = AndroidFacet.getInstance(depModule);
@@ -244,12 +244,23 @@ public class AndroidRootUtil {
             CompilerModuleExtension extension = CompilerModuleExtension.getInstance(depModule);
             if (extension != null) {
               VirtualFile classDir = extension.getCompilerOutputPath();
-              if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
-                outputDirs.add(classDir);
+
+              if (libraryProject) {
+                if (classDir != null) {
+                  final VirtualFile packedClassesJar = classDir.findChild(AndroidCompileUtil.CLASSES_JAR_FILE_NAME);
+                  if (packedClassesJar != null) {
+                    outputDirs.add(packedClassesJar);
+                  }
+                }
               }
-              VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
-              if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
-                outputDirs.add(classDirForTests);
+              else {
+                if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
+                  outputDirs.add(classDir);
+                }
+                VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
+                if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
+                  outputDirs.add(classDirForTests);
+                }
               }
             }
             fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, !libraryProject || exportedLibrariesOnly);
@@ -268,7 +279,8 @@ public class AndroidRootUtil {
   }
 
   @NotNull
-  public static Set<VirtualFile> getDependentModules(Module module, VirtualFile moduleOutputDir) {
+  public static Set<VirtualFile> getDependentModules(Module module,
+                                                     VirtualFile moduleOutputDir) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     fillExternalLibrariesAndModules(module, files, null, new HashSet<Module>(), false);
     files.remove(moduleOutputDir);
@@ -304,8 +316,13 @@ public class AndroidRootUtil {
 
   @Nullable
   public static String getRenderscriptGenSourceRootPath(@NotNull Module module) {
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+    if (facet == null) {
+      return null;
+    }
     // todo: return correct path for mavenized module
-    final String moduleDirPath = getModuleDirPath(module);
+    final VirtualFile mainContentRoot = getMainContentRoot(facet);
+    final String moduleDirPath = mainContentRoot != null ? mainContentRoot.getPath() : null;
     return moduleDirPath != null
            ? moduleDirPath + '/' + SdkConstants.FD_GEN_SOURCES
            : null;

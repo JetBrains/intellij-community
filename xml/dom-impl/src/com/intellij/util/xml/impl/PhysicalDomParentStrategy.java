@@ -108,8 +108,8 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
             "navContext?.physical=" + (navContext != null && navContext.isPhysical()) + ";\n" +
             "myElement.physical=" + myElement.isPhysical() + ";\n" +
             "thatElement.physical=" + thatElement.isPhysical() + "\n" + DebugUtil.currentStackTrace(),
-            new Attachment("Including tag text 1", curContext == null ? "null" : curContext.getText()),
-            new Attachment("Including tag text 2", navContext == null ? "null" : navContext.getText())
+            new Attachment("Including tag text 1.xml", curContext == null ? "null" : curContext.getText()),
+            new Attachment("Including tag text 2.xml", navContext == null ? "null" : navContext.getText())
           ));
           throw new AssertionError();
         }

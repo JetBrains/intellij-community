@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -71,7 +71,7 @@ class HardElementInfo implements SmartPointerElementInfo {
 
   @Override
   public VirtualFile getVirtualFile() {
-    return PsiUtilBase.getVirtualFile(myElement);
+    return PsiUtilCore.getVirtualFile(myElement);
   }
 
   @Override

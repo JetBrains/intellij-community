@@ -6,7 +6,6 @@ import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -14,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidExternalApklibDependenciesManager;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -69,15 +69,13 @@ public class AndroidExternalApklibExtractingCompiler implements SourceGenerating
             continue;
           }
 
-          final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-          if (roots.length == 0) {
-            context.addMessage(CompilerMessageCategory.ERROR, "Cannot find any content root in generated module " +
+          final VirtualFile root = AndroidRootUtil.getMainContentRoot(facet);
+          if (root == null) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Cannot find main root in generated module containing AndroidManifest.xml" +
                                                               module.getName() +
                                                               ". Try to force reimport Maven model", null, -1, -1);
             continue;
           }
-
-          final VirtualFile root = roots[0];
 
           result.add(new MyGenerationItem(module, FileUtil.toSystemDependentName(root.getPath()),
                                           FileUtil.toSystemDependentName(artifactFilePath)));

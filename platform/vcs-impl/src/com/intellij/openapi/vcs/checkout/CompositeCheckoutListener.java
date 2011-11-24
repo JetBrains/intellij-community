@@ -76,15 +76,15 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
   }
 
   private void notifyCheckoutListeners(final File directory, final ExtensionPointName<CheckoutListener> epName) {
-    final VcsAwareCheckoutListener[] vcsAwareExtensions = Extensions.getExtensions(VcsAwareCheckoutListener.EP_NAME);
-    for (VcsAwareCheckoutListener extension : vcsAwareExtensions) {
-      myFoundProject = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);
+    final CheckoutListener[] listeners = Extensions.getExtensions(epName);
+    for (CheckoutListener listener: listeners) {
+      myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
       if (myFoundProject) break;
     }
-    final CheckoutListener[] listeners = Extensions.getExtensions(epName);
-    if (! myFoundProject) {
-      for (CheckoutListener listener: listeners) {
-        myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
+    if (!myFoundProject) {
+      final VcsAwareCheckoutListener[] vcsAwareExtensions = Extensions.getExtensions(VcsAwareCheckoutListener.EP_NAME);
+      for (VcsAwareCheckoutListener extension : vcsAwareExtensions) {
+        myFoundProject = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);
         if (myFoundProject) break;
       }
     }

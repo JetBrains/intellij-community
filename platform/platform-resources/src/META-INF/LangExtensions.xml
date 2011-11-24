@@ -114,8 +114,8 @@
   <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryDetectionManager"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryDetectionManagerImpl"/>
 
-  <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTypeRegistry"
-                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTypeRegistryImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTypeService"
+                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl"/>
 
   <applicationService serviceInterface="com.intellij.usageView.UsageTreeColorsScheme"
                       serviceImplementation="com.intellij.usageView.UsageTreeColorsScheme"/>

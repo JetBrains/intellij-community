@@ -29,6 +29,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
@@ -223,11 +224,16 @@ public class TabLabel extends JPanel {
   }
 
   private int getNonSelectedOffset() {
-    return myTabs.isEditorTabs() ? 0 : 2;
+    if (myTabs.isEditorTabs()) {
+      int offset = (TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2);
+      return myTabs.getTabsPosition() == JBTabsPosition.bottom ? -(offset + 1) : -offset + 1;
+    }
+    
+    return 2;
   }
 
   private int getSelectedOffset() {
-    return  myTabs.isEditorTabs() ? 0 : 1;
+    return  myTabs.isEditorTabs() ? -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2) + 1 : 1;
   }
 
   @Override
@@ -236,7 +242,7 @@ public class TabLabel extends JPanel {
 
     final JBTabsPosition pos = myTabs.getTabsPosition();
     switch (pos) {
-      case top: case bottom: size.height += getSelectedOffset(); break;
+      case top: case bottom: size.height += myTabs.isEditorTabs() ? TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT : getSelectedOffset(); break;
       case left: case right: size.width += getSelectedOffset(); break;
     }
 

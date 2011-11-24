@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 /**
  * @author Eugene.Kudelevsky
@@ -103,12 +101,18 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
           }
 
           final List<VirtualFile> externalJars = AndroidRootUtil.getExternalLibraries(module);
-
           final Set<VirtualFile> classFilesDirs = new HashSet<VirtualFile>();
+          final Set<VirtualFile> libClassFilesDirs = new HashSet<VirtualFile>();
+
           AndroidDexCompiler.addModuleOutputDir(classFilesDirs, classFilesDir);
           
           for (VirtualFile file : AndroidRootUtil.getDependentModules(module, classFilesDir)) {
-            AndroidDexCompiler.addModuleOutputDir(classFilesDirs, file);
+            if (file.isDirectory()) {
+              AndroidDexCompiler.addModuleOutputDir(classFilesDirs, file);
+            }
+            else {
+              AndroidDexCompiler.addModuleOutputDir(libClassFilesDirs, file.getParent());
+            }
           }
 
           final String sdkPath = FileUtil.toSystemDependentName(platform.getSdk().getLocation());
@@ -118,6 +122,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
 
           items.add(new MyProcessingItem(module, sdkPath, platform.getTarget(), proguardConfigFile, outputJarOsPath, classFilesDir,
                                          classFilesDirs.toArray(new VirtualFile[classFilesDirs.size()]),
+                                         libClassFilesDirs.toArray(new VirtualFile[libClassFilesDirs.size()]),
                                          externalJars.toArray(new VirtualFile[externalJars.size()]), logsDirOsPath));
         }
         return items.toArray(new ProcessingItem[items.size()]);
@@ -138,11 +143,12 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
 
       final String proguardConfigFileOsPath = FileUtil.toSystemDependentName(processingItem.getProguardConfigFile().getPath());
 
-      final String[] classFilesDirOsPaths = toOsPaths(processingItem.getAllClassFilesDirs());
-      final String[] externalJarOsPaths = toOsPaths(processingItem.getExternalJars());
+      final String[] classFilesDirOsPaths = AndroidCompileUtil.toOsPaths(processingItem.getClassFilesDirs());
+      final String[] libClassFilesDirOsPaths = AndroidCompileUtil.toOsPaths(processingItem.getLibClassFilesDirs());
+      final String[] externalJarOsPaths = AndroidCompileUtil.toOsPaths(processingItem.getExternalJars());
  
       try {
-        final String inputJarOsPath = buildTempInputJar(classFilesDirOsPaths);
+        final String inputJarOsPath = buildTempInputJar(classFilesDirOsPaths, libClassFilesDirOsPaths);
         final String logsDirOsPath = processingItem.getLogsDirectoryOsPath();
 
         final Map<CompilerMessageCategory, List<String>> messages =
@@ -171,31 +177,11 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
   }
 
-  @NotNull
-  private static String[] toOsPaths(@NotNull VirtualFile[] classFilesDirs) {
-    final String[] classFilesDirOsPaths = new String[classFilesDirs.length];
-
-    for (int i = 0; i < classFilesDirs.length; i++) {
-      classFilesDirOsPaths[i] = FileUtil.toSystemDependentName(classFilesDirs[i].getPath());
-    }
-    return classFilesDirOsPaths;
-  }
-
-  private static String buildTempInputJar(@NotNull String[] classFilesDirOsPaths) throws IOException {
+  private static String buildTempInputJar(@NotNull String[] classFilesDirOsPaths, @NotNull String[] libClassFilesDirOsPaths)
+    throws IOException {
     final File inputJar = FileUtil.createTempFile("proguard_input", ".jar");
-    
-    final JarOutputStream jos = new JarOutputStream(new FileOutputStream(inputJar));
-    try {
-      for (String path : classFilesDirOsPaths) {
-        final File firstPackageDir = new File(path);
-        if (firstPackageDir.exists()) {
-          addFileToJar(jos, firstPackageDir, firstPackageDir.getParentFile());
-        }
-      }
-    }
-    finally {
-      jos.close();
-    }
+
+    AndroidCompileUtil.packClassFilesIntoJar(classFilesDirOsPaths, libClassFilesDirOsPaths, inputJar);
     
     return FileUtil.toSystemDependentName(inputJar.getPath());
   }
@@ -259,46 +245,6 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
     return ExecutionUtil.execute(ArrayUtil.toStringArray(commands));
   }
 
-  private static void addFileToJar(@NotNull JarOutputStream jar, @NotNull File file, @NotNull File rootDirectory)
-    throws IOException {
-    
-    if (file.isDirectory()) {
-      for (File child : file.listFiles()) {
-        addFileToJar(jar, child, rootDirectory);
-      }
-    }
-    else if (file.isFile()) {
-      if (!FileUtil.getExtension(file.getName()).equals("class")) {
-        return;
-      }
-
-      final String rootPath = rootDirectory.getAbsolutePath();
-      
-      String path = file.getAbsolutePath();
-      path = FileUtil.toSystemIndependentName(path.substring(rootPath.length()));
-      if (path.charAt(0) == '/') {
-        path = path.substring(1);
-      }
-
-      final JarEntry entry = new JarEntry(path);
-      entry.setTime(file.lastModified());
-      jar.putNextEntry(entry);
-
-      BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-      try {
-        final byte[] buffer = new byte[1024];
-        int count;
-        while ((count = bis.read(buffer)) != -1) {
-          jar.write(buffer, 0, count);
-        }
-        jar.closeEntry();
-      }
-      finally {
-        bis.close();
-      }
-    }
-  }
-
   private static String quotePath(String path) {
     if (path.indexOf(' ') != -1) {
       path = '\'' + path + '\'';
@@ -327,7 +273,8 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
     private final IAndroidTarget myTarget;
     private final String myOutputJarOsPath;
     private final VirtualFile myMainClassFilesDir;
-    private final VirtualFile[] myAllClassFilesDirs; 
+    private final VirtualFile[] myClassFilesDirs; 
+    private final VirtualFile[] myLibClassFilesDirs; 
     private final VirtualFile[] myExternalJars;
     private final String myLogsDirectoryOsPath;
     private final VirtualFile myProguardConfigFile;
@@ -339,7 +286,8 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
                              @NotNull VirtualFile proguardConfigFile,
                              @NotNull String outputJarOsPath,
                              @NotNull VirtualFile mainClassFilesDir,
-                             @NotNull VirtualFile[] allClassFilesDirs,
+                             @NotNull VirtualFile[] classFilesDirs,
+                             @NotNull VirtualFile[] libCLassFilesDirs,
                              @NotNull VirtualFile[] externalJars, 
                              @Nullable String logsDirectoryOsPath) {
       myModule = module;
@@ -348,7 +296,8 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
       myOutputJarOsPath = outputJarOsPath;
       myMainClassFilesDir = mainClassFilesDir;
       mySdkOsPath = sdkOsPath;
-      myAllClassFilesDirs = allClassFilesDirs;
+      myClassFilesDirs = classFilesDirs;
+      myLibClassFilesDirs = libCLassFilesDirs;
       myExternalJars = externalJars;
       myLogsDirectoryOsPath = logsDirectoryOsPath;
     }
@@ -364,8 +313,13 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
     }
 
     @NotNull
-    public VirtualFile[] getAllClassFilesDirs() {
-      return myAllClassFilesDirs;
+    public VirtualFile[] getClassFilesDirs() {
+      return myClassFilesDirs;
+    }
+
+    @NotNull
+    public VirtualFile[] getLibClassFilesDirs() {
+      return myLibClassFilesDirs;
     }
 
     @NotNull
@@ -395,7 +349,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
 
     @Override
     public ValidityState getValidityState() {
-      return new MyValidityState(myTarget, mySdkOsPath, myOutputJarOsPath, myAllClassFilesDirs, myExternalJars, 
+      return new MyValidityState(myTarget, mySdkOsPath, myOutputJarOsPath, myClassFilesDirs, myExternalJars, 
                                  myProguardConfigFile, myLogsDirectoryOsPath);
     }
 

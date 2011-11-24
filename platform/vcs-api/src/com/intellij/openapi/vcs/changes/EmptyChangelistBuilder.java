@@ -65,6 +65,10 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
     return false;
   }
 
+  @Override
+  public void reportAdditionalInfo(final String text) {
+  }
+
   public void reportWarningMessage(final String message) {
   }
 }

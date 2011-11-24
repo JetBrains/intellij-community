@@ -20,16 +20,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
-import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.openapi.roots.libraries.ui.RootDetector;
+import com.intellij.openapi.roots.libraries.LibraryTypeService;
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
@@ -45,9 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -81,38 +76,14 @@ public class CreateNewLibraryAction extends DumbAwareAction {
 
 
   @Nullable
-  public static Library createLibrary(@Nullable final LibraryType type, @NotNull final Component parentComponent,
-                                       @NotNull final Project project, @NotNull final LibrariesModifiableModel modifiableModel) {
-    LibraryRootsComponentDescriptor componentDescriptor = null;
-    if (type != null) {
-      componentDescriptor = type.createLibraryRootsComponentDescriptor();
-    }
-    if (componentDescriptor == null) {
-      componentDescriptor = new DefaultLibraryRootsComponentDescriptor();
-    }
-    final List<? extends RootDetector> rootDetectors = componentDescriptor.getRootDetectors();
-    final List<OrderRoot> roots;
-    if (!rootDetectors.isEmpty()) {
-      final FileChooserDescriptor chooserDescriptor = componentDescriptor.createAttachFilesChooserDescriptor();
-      chooserDescriptor.setTitle("Select Library Files");
-      final VirtualFile[] rootCandidates = FileChooser.chooseFiles(parentComponent, chooserDescriptor, project.getBaseDir());
-      if (rootCandidates.length == 0) {
-        return null;
-      }
+  public static Library createLibrary(@Nullable final LibraryType type, @NotNull final JComponent parentComponent,
+                                      @NotNull final Project project, @NotNull final LibrariesModifiableModel modifiableModel) {
+    final NewLibraryConfiguration configuration = createNewLibraryConfiguration(type, parentComponent, project);
+    if (configuration == null) return null;
+    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, configuration.getDefaultLibraryName()), configuration.getLibraryType());
 
-      roots = RootDetectionUtil
-        .detectRoots(Arrays.asList(rootCandidates), parentComponent, project, rootDetectors,
-                     true);
-      if (roots.isEmpty()) return null;
-    }
-    else {
-      roots = Collections.emptyList();
-    }
-
-    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, roots), type);
-
-    final NewLibraryEditor editor = new NewLibraryEditor(((LibraryEx)library).getType(), ((LibraryEx)library).getProperties());
-    editor.addRoots(roots);
+    final NewLibraryEditor editor = new NewLibraryEditor(configuration.getLibraryType(), configuration.getProperties());
+    configuration.addRoots(editor);
     final Library.ModifiableModel model = library.getModifiableModel();
     editor.applyTo((LibraryEx.ModifiableModelEx)model);
     AccessToken token = WriteAction.start();
@@ -123,6 +94,21 @@ public class CreateNewLibraryAction extends DumbAwareAction {
       token.finish();
     }
     return library;
+  }
+
+  @Nullable
+  public static NewLibraryConfiguration createNewLibraryConfiguration(@Nullable LibraryType type, @NotNull JComponent parentComponent, @NotNull Project project) {
+    final NewLibraryConfiguration configuration;
+    final VirtualFile baseDir = project.getBaseDir();
+    if (type != null) {
+      configuration = type.createNewLibrary(parentComponent, baseDir, project);
+    }
+    else {
+      configuration = LibraryTypeService
+        .getInstance().createLibraryFromFiles(new DefaultLibraryRootsComponentDescriptor(), parentComponent, baseDir, null, project);
+    }
+    if (configuration == null) return null;
+    return configuration;
   }
 
   public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {

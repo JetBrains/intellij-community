@@ -155,7 +155,11 @@ public class ConfigurationContext {
     if (editor != null){
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        element = psiFile.findElementAt(editor.getCaretModel().getOffset());
+        final int offset = editor.getCaretModel().getOffset();
+        element = psiFile.findElementAt(offset);
+        if (element == null && offset > 0 && offset == psiFile.getTextLength()) {
+          element = psiFile.findElementAt(offset-1);
+        }
       }
     }
     if (element == null) {

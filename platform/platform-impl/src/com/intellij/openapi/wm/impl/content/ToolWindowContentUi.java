@@ -70,7 +70,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
-  private DefaultActionGroup ourGroup;
   private static DefaultActionGroup myGroup;
 
   public ToolWindowContentUi(ToolWindowImpl window) {

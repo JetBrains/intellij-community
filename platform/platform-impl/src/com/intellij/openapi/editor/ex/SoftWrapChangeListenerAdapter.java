@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.impl.libraries;
+package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.LibraryTypeRegistry;
+import com.intellij.openapi.editor.SoftWrap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
+ * @author Denis Zhdanov
+ * @since 11/23/11 7:03 PM
  */
-public class LibraryTypeRegistryImpl extends LibraryTypeRegistry {
+public class SoftWrapChangeListenerAdapter implements SoftWrapChangeListener {
+  
+  @Override
+  public void recalculationStarts() {
+  }
 
-  @Nullable
-  public LibraryType<?> findTypeById(@NotNull String typeId) {
-    for (LibraryType type : LibraryType.EP_NAME.getExtensions()) {
-      if (type.getKind().getKindId().equals(typeId)) {
-        return type;
-      }
-    }
-    return null;
+  @Override
+  public void softWrapAdded(@NotNull SoftWrap softWrap) {
+  }
+
+  @Override
+  public void softWrapsRemoved() {
+  }
+
+  @Override
+  public void recalculationEnds() {
   }
 }

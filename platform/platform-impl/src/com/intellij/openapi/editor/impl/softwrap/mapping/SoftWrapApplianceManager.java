@@ -143,11 +143,16 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     });
     updateLastTopLeftCornerOffset();
   }
-  
-  private void recalculateSoftWraps() {
+
+  /**
+   * @return    <code>true</code> if soft wraps were really re-calculated;
+   *            <code>false</code> if it's not possible to do at the moment (e.g. current editor is not shown and we don't
+   *            have information about viewport width)
+   */
+  private boolean recalculateSoftWraps() {
     initListenerIfNecessary();
     if (myVisibleAreaWidth <= 0 || myEventsStorage.getEvents().isEmpty()) {
-      return;
+      return false;
     }
 
     // There is a possible case that new dirty regions are encountered during processing, hence, we iterate on regions snapshot here.
@@ -165,6 +170,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       myActiveEvents.clear();
     }
     updateLastTopLeftCornerOffset();
+    return true;
   }
 
   private void recalculateSoftWraps(IncrementalCacheUpdateEvent event) {
@@ -669,10 +675,14 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
    * There is a possible case that we need to reparse the whole document (e.g. visible area width is changed or user-defined
    * soft wrap indent is changed etc). This method encapsulates that logic, i.e. it checks if necessary conditions are satisfied
    * and updates internal state as necessary.
+   * 
+   * @return <code>true</code> if re-calculation logic was performed;
+   *         <code>false</code> otherwise (e.g. we need to perform re-calculation but current editor is now shown, i.e. we don't
+   *         have information about viewport width
    */
-  public void recalculateIfNecessary() {
+  public boolean recalculateIfNecessary() {
     if (myInProgress) {
-      return;
+      return false;
     }
 
     // Check if we need to recalculate soft wraps due to indent settings change.
@@ -689,8 +699,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     // Check if we need to recalculate soft wraps due to visible area width change.
     int currentVisibleAreaWidth = myWidthProvider.getVisibleAreaWidth();
     if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth) {
-      recalculateSoftWraps(); // Recalculate existing dirty regions if any.
-      return;
+      return recalculateSoftWraps(); // Recalculate existing dirty regions if any.
     }
 
     // We want to adjust viewport's 'y' coordinate on complete recalculation, so, we remember number of soft-wrapped lines
@@ -708,8 +717,11 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     reset();
     myStorage.removeAll();
     myVisibleAreaWidth = currentVisibleAreaWidth;
-    recalculateSoftWraps();
-    
+    final boolean result = recalculateSoftWraps();
+    if (!result) {
+      return false;
+    }
+
     // Adjust viewport's 'y' coordinate if necessary.
     if (softWrapsBefore >= 0) {
       int softWrapsNow = getNumberOfSoftWrapsBefore(anchorOffset);
@@ -724,6 +736,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       }
     }
     updateLastTopLeftCornerOffset();
+    return result;
   }
 
   private void updateLastTopLeftCornerOffset() {

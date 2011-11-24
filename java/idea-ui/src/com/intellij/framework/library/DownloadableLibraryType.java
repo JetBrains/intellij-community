@@ -15,12 +15,16 @@
  */
 package com.intellij.framework.library;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -40,6 +44,13 @@ public class DownloadableLibraryType extends LibraryType<LibraryVersionPropertie
 
   @Override
   public String getCreateActionName() {
+    return null;
+  }
+
+  @Override
+  public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent,
+                                                  @Nullable VirtualFile contextDirectory,
+                                                  @NotNull Project project) {
     return null;
   }
 

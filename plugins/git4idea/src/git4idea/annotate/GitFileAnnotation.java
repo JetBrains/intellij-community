@@ -57,6 +57,7 @@ public class GitFileAnnotation implements FileAnnotation {
    * The project reference
    */
   private final Project myProject;
+  private final VcsRevisionNumber myBaseRevision;
   /**
    * Annotation change listeners
    */
@@ -103,6 +104,7 @@ public class GitFileAnnotation implements FileAnnotation {
       return author == null ? "" : author;
     }
   };
+  private final GitVcs myVcs;
 
   /**
    * A constructor
@@ -110,10 +112,13 @@ public class GitFileAnnotation implements FileAnnotation {
    * @param project     the project of annotation provider
    * @param file        the git root
    * @param monitorFlag if false the file system will not be listened for changes (used for annotated files from the repository).
+   * @param revision
    */
-  public GitFileAnnotation(@NotNull final Project project, @NotNull VirtualFile file, final boolean monitorFlag) {
+  public GitFileAnnotation(@NotNull final Project project, @NotNull VirtualFile file, final boolean monitorFlag, final VcsRevisionNumber revision) {
     myProject = project;
+    myVcs = GitVcs.getInstance(myProject);
     myFile = file;
+    myBaseRevision = revision == null ? (myVcs.getDiffProvider().getCurrentRevision(file)) : revision;
     myMonitorFlag = monitorFlag;
     if (myMonitorFlag) {
       myFileListener = new VirtualFileAdapter() {
@@ -121,6 +126,8 @@ public class GitFileAnnotation implements FileAnnotation {
         public void contentsChanged(final VirtualFileEvent event) {
           if (myFile != event.getFile()) return;
           if (!event.isFromRefresh()) return;
+          final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
+          if (currentRevision != null && currentRevision.equals(revision)) return;
           fireAnnotationChanged();
         }
       };
@@ -391,6 +398,11 @@ public class GitFileAnnotation implements FileAnnotation {
     private void checkAndFire() {
       // for the case of commit changes... remove annotation gutter
       if (FileStatus.NOT_CHANGED.equals(FileStatusManager.getInstance(myProject).getStatus(myFile))) {
+        if (myBaseRevision != null) {
+          final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
+          // revision is not when monitorFlag is true
+          if (currentRevision != null && currentRevision.equals(myBaseRevision)) return;
+        }
         fireAnnotationChanged();
       }
     }

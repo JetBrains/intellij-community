@@ -26,22 +26,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.*;
-import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,8 +55,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.List;
 
@@ -76,7 +68,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private JPanel myPanel;
   private JButton myRemoveButton;
   private JPanel myTreePanel;
-  private JButton myAttachMoreButton;
   private MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
   private JPanel myAttachButtonsPanel;
@@ -167,16 +158,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myAttachButtonsPanel.add(buttonsPanel, BorderLayout.CENTER);
 
     myRemoveButton.addActionListener(new RemoveAction());
-    final LibraryTableAttachHandler[] handlers = LibraryTableAttachHandler.EP_NAME.getExtensions();
-    if (handlers.length == 0 || myProject == null || getLibraryEditor().getType() != null) {
-      myAttachMoreButton.setVisible(false);
-    }
-    else {
-      myAttachMoreButton.addActionListener(new AttachMoreAction(handlers));
-      if (handlers.length == 1) {
-        myAttachMoreButton.setText(handlers[0].getLongName());
-      }
-    }
 
     treeSelectionListener.updateButtons();
     Disposer.register(this, myTreeBuilder);
@@ -184,6 +165,12 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   public JComponent getComponent() {
     return myPanel;
+  }
+
+  @Override
+  @Nullable
+  public Project getProject() {
+    return myProject;
   }
 
   public void setContextModule(Module module) {
@@ -270,6 +257,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return element;
   }
 
+  @Override
   public void renameLibrary(String newName) {
     final LibraryEditor libraryEditor = getLibraryEditor();
     libraryEditor.setName(newName);
@@ -476,96 +464,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         }
       }
       return cls;
-    }
-  }
-
-  private class AttachMoreAction implements ActionListener {
-    private final LibraryTableAttachHandler[] myHandlers;
-
-    public AttachMoreAction(LibraryTableAttachHandler[] handlers) {
-      myHandlers = handlers;
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      final LibraryEditor libraryEditor = getLibraryEditor();
-      final Ref<Library.ModifiableModel> modelRef = Ref.create(null);
-      final NullableComputable<Library.ModifiableModel> computable;
-      if (libraryEditor instanceof ExistingLibraryEditor) {
-        final ExistingLibraryEditor existingLibraryEditor = (ExistingLibraryEditor)libraryEditor;
-        //todo[nik, greg] actually we cannot reliable find target library if the editor is closed so jars are downloaded under the modal progress dialog now
-        computable = new NullableComputable<Library.ModifiableModel>() {
-          public Library.ModifiableModel compute() {
-            if (myTreeBuilder == null) {
-              // The following lines were born in severe pain & suffering, please respect
-              final Library library = existingLibraryEditor.getLibrary();
-              final InvocationHandler invocationHandler = Proxy.isProxyClass(library.getClass())? Proxy.getInvocationHandler(library) : null;
-              final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor? (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler)
-                .getDelegate() : library;
-              final Module module = realLibrary instanceof LibraryImpl && ((LibraryImpl)realLibrary).isDisposed()? ((LibraryImpl)realLibrary).getModule() : null;
-              if (module != null && module.isDisposed()) return null; // no way
-              final Library targetLibrary = module != null? LibraryUtil.findLibrary(module, realLibrary.getName()) : realLibrary;
-              final Library.ModifiableModel model = targetLibrary.getModifiableModel();
-              modelRef.set(model);
-              return model;
-            }
-            else {
-              return existingLibraryEditor.getModel();
-            }
-          }
-        };
-      }
-      else {
-        computable = null;
-      }
-
-      final Runnable successRunnable = new Runnable() {
-        public void run() {
-          if (modelRef.get() != null) {
-            modelRef.get().commit();
-          }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (myTreeBuilder != null) myTreeBuilder.queueUpdate();
-              if (myProject != null && libraryEditor instanceof ExistingLibraryEditor) {
-                ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(((ExistingLibraryEditor)libraryEditor).getLibrary());
-              }
-            }
-          });
-        }
-      };
-      final Runnable rejectRunnable = new Runnable() {
-        public void run() {
-          if (modelRef.get() != null) {
-            Disposer.dispose(modelRef.get());
-          }
-        }
-      };
-      if (myHandlers.length == 1) {
-        myHandlers[0].performAttach(myProject, libraryEditor, computable).doWhenDone(successRunnable).doWhenRejected(rejectRunnable);
-      }
-      else {
-        final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryTableAttachHandler>(null, myHandlers) {
-          @NotNull
-          public String getTextFor(final LibraryTableAttachHandler handler) {
-            return handler.getShortName();
-          }
-
-          public Icon getIconFor(final LibraryTableAttachHandler handler) {
-            return handler.getIcon();
-          }
-
-          public PopupStep onChosen(final LibraryTableAttachHandler handler, final boolean finalChoice) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                handler.performAttach(myProject, libraryEditor, computable).doWhenProcessed(successRunnable).doWhenRejected(rejectRunnable);
-              }
-            });
-            return PopupStep.FINAL_CHOICE;
-          }
-        });
-        popup.showUnderneathOf(myAttachMoreButton);
-
-      }
     }
   }
 }

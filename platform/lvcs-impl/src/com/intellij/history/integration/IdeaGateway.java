@@ -37,16 +37,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class IdeaGateway {
   private static final Key<ContentAndTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
@@ -137,8 +135,8 @@ public class IdeaGateway {
     return result;
   }
 
-  public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return ContainerUtil.emptyIterable();
+  public static Collection<VirtualFile> iterateDBChildren(VirtualFile f) {
+    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
     NewVirtualFile nf = (NewVirtualFile)f;
     return nf.getCachedChildren();
   }
@@ -184,11 +182,14 @@ public class IdeaGateway {
     return newDir;
   }
 
-  private void doCreateChildren(DirectoryEntry parent, Iterable<VirtualFile> children, boolean forDeletion) {
-    for (VirtualFile each : children) {
-      Entry child = doCreateEntry(each, forDeletion);
-      if (child != null) parent.addChild(child);
-    }
+  private void doCreateChildren(DirectoryEntry parent, Collection<VirtualFile> children, final boolean forDeletion) {
+    List<Entry> entries = ContainerUtil.mapNotNull(children, new NullableFunction<VirtualFile, Entry>() {
+      @Override
+      public Entry fun(VirtualFile each) {
+        return doCreateEntry(each, forDeletion);
+      }
+    });
+    parent.addChildren(entries);
   }
 
   public void registerUnsavedDocuments(final LocalHistoryFacade vcs) {

@@ -66,7 +66,7 @@ public class MavenId implements Serializable {
 
   public static void append(StringBuilder builder, String part) {
     if (builder.length() != 0) builder.append(':');
-    builder.append(part);
+    builder.append(part == null ? "<unknown>" : part);
   }
 
   @Override

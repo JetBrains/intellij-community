@@ -373,7 +373,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiMethod defConstructor = getDefaultConstructor(superClass);
     boolean hasImplicitDefConstructor = superClass.getConstructors().length ==0;
 
-    final PsiMethod[] constructors = typeDefinition.getConstructors();
+    final PsiMethod[] constructors = typeDefinition.getCodeConstructors();
     final String qName = superClass.getQualifiedName();
     if (constructors.length == 0) {
       if (!hasImplicitDefConstructor && (defConstructor == null || !PsiUtil.isAccessible(typeDefinition, defConstructor))) {

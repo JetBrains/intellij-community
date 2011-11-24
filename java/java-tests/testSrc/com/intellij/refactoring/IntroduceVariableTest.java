@@ -270,11 +270,11 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    boolean declareFinalIfAll,
                                                    boolean anyAssignmentLHS,
                                                    InputValidator validator,
-                                                   final OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                                   PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
         Assert.assertTrue(type.getPresentableText(), type.getPresentableText().equals("B"));
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
-                                 validator, replaceChoice);
+                                 validator, anchor, replaceChoice);
       }
     });
   }

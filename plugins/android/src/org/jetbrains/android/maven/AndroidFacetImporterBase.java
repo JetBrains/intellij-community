@@ -39,7 +39,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.io.ZipUtil;
 import org.jdom.Element;
-import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidFacetType;
@@ -826,8 +825,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
           final Set<Module> referredModules = new HashSet<Module>();
 
           for (Module module : moduleModel.getModules()) {
-            if (!AndroidMavenUtil.isExtApklibModule(module) &&
-                !AndroidCompileUtil.isGenModule(module)) {
+            if (!AndroidMavenUtil.isExtApklibModule(module)) {
               collectDependenciesRecursively(module, referredModules);
             }
           }
@@ -848,12 +846,6 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
                       LOG.error(e);
                     }
                   }
-
-                  final Module genModule = AndroidCompileUtil.getGenModule(module);
-                  if (genModule != null) {
-                    moduleModel.disposeModule(genModule);
-                  }
-
                   moduleModel.disposeModule(module);
                 }
               }

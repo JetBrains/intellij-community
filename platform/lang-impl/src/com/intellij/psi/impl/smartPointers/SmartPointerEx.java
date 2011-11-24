@@ -18,6 +18,7 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
@@ -25,4 +26,7 @@ public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPoi
   void documentAndPsiInSync();
 
   void unfastenBelt(int offset);
+
+  @NotNull
+  SmartPointerElementInfo getElementInfo();
 }

@@ -60,6 +60,22 @@ class Foo { List a; Map b; }
     assertEquals 0, foldRegion.startOffset
     assertEquals text.indexOf("import") - 1, foldRegion.endOffset
   }
+
+  public void testSubsequentCollapseBlock() {
+    def text = """\
+class Test {
+    void test(int i) {
+        if (i > 1) {
+            <caret>i++;
+        }
+    }
+}
+"""
+    configure text
+    myFixture.performEditorAction 'CollapseBlock'
+    myFixture.performEditorAction 'CollapseBlock'
+    assertEquals(text.indexOf('}', text.indexOf('i++')), myFixture.editor.caretModel.offset)
+  }
   
   private def configure(String text) {
     myFixture.configureByText("a.java", text)

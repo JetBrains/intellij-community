@@ -20,10 +20,8 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -62,13 +60,12 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
 
   @Nullable
   public Library createLibrary() {
-    final NewLibraryEditor libraryEditor;
-    if (myLibraryType == null) {
-      libraryEditor = new NewLibraryEditor();
-    }
-    else {
-      libraryEditor = new NewLibraryEditor(myLibraryType, myLibraryType.createDefaultProperties());
-    }
+    final NewLibraryConfiguration configuration = CreateNewLibraryAction.createNewLibraryConfiguration(myLibraryType, myParentComponent, myProject);
+    if (configuration == null) return null;
+
+    final NewLibraryEditor libraryEditor = new NewLibraryEditor(configuration.getLibraryType(), configuration.getProperties());
+    libraryEditor.setName(configuration.getDefaultLibraryName());
+    configuration.addRoots(libraryEditor);
 
     final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
     List<LibraryTable> tables = Arrays.asList(myRootModel.getModuleLibraryTable(),

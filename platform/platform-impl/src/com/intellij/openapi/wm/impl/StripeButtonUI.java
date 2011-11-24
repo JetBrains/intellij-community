@@ -105,36 +105,35 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     final Color background = button.getBackground();
 
-    boolean toFill = model.isArmed() && model.isPressed() || model.isSelected();
-    if (toFill) {
+    Color toBorder = model.isRollover() ? new Color(0, 0, 0, 50) : null;
+    final boolean vertical = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
+
+    if (model.isArmed() && model.isPressed() || model.isSelected()) {
       g2.setColor(new Color(0, 0, 0, 30));
-      g2.fillRect(0, 0, button.getWidth(), button.getHeight());
+      g2.fillRect(3, 3, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
+      
+      g2.setColor(new Color(0, 0, 0, 120));
+      g2.drawLine(2, 2, 3 + button.getWidth() - (vertical ? 7 : 6), 2);
+      g2.drawLine(2, 3, 2, 3 + button.getHeight() - 7);
+      
+      g2.setColor(new Color(0, 0, 0, 40));
+      g2.drawRect(3, 3, button.getWidth() - (vertical ? 7 : 6), button.getHeight() - 7);
+      
+      g2.setColor(new Color(255, 255, 255, 110));
+      g2.drawLine(3, button.getHeight() - 3, 3 + button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 3);
+      g2.drawLine(3 + button.getWidth() - (vertical ? 6 : 5), 2, 3 + button.getWidth() - (vertical ? 6 : 5), 
+                  3 + button.getHeight() - 7);
+      
+      toBorder = null;
     }
 
-    g.setColor(new Color(0, 0, 0, 90));
-    StripeButton stripeButton = (StripeButton)c;
+    if (toBorder != null) {
+      g.setColor(toBorder);
+      g.drawRect(2, 2, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
+    }
 
     AffineTransform tr=null;
     if(ToolWindowAnchor.RIGHT==anchor||ToolWindowAnchor.LEFT==anchor){
-      boolean oppositeSide = stripeButton.isOppositeSide();
-      if (oppositeSide) {
-        g.drawLine(0, 0, button.getWidth() - 1, 0);
-      } else {
-        g.drawLine(0, button.getHeight() - 1, button.getWidth() - 1, button.getHeight() - 1);
-      }
-      
-      if (toFill) {
-        if (anchor == ToolWindowAnchor.LEFT) {
-          g2.setColor(new Color(0, 0, 0, 30));
-          g2.drawRect(0, stripeButton.isFirst() || oppositeSide ? 1 : 0, button.getWidth() - 2,
-                      button.getHeight() - (oppositeSide ? 2 : stripeButton.isFirst() ? 3 : 2));
-        } else {
-          g2.setColor(new Color(0, 0, 0, 30));
-          g2.drawRect(1, stripeButton.isFirst() || oppositeSide ? 1 : 0, button.getWidth() - 2,
-                      button.getHeight() - (oppositeSide ? 2 : stripeButton.isFirst() ? 3 : 2));
-        }
-      }
-      
       tr=g2.getTransform();
       if(ToolWindowAnchor.RIGHT==anchor){
         if(icon != null){ // do not rotate icon
@@ -151,25 +150,6 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       }
     }
     else{
-      boolean oppositeSide = stripeButton.isOppositeSide();
-      if (oppositeSide) {
-        g.drawLine(0, 0, 0, button.getHeight() - 1);
-        if (stripeButton.isLast()) {
-          g.drawLine(button.getWidth() - 1, 0, button.getWidth() - 1, button.getHeight() - 1);
-        }
-      } else {
-        g.drawLine(button.getWidth() - 1, 0, button.getWidth() - 1, button.getHeight() - 1);
-        if (stripeButton.isFirst()) {
-          g.drawLine(0, 0, 0, button.getHeight() - 1);
-        }
-      }
-      
-      if (toFill) {
-        g2.setColor(new Color(0, 0, 0, 30));
-        g2.drawRect(oppositeSide || stripeButton.isFirst() ? 1 : 0, 1,
-                    button.getWidth() - (stripeButton.isLast() || stripeButton.isFirst() ? 3 : 2), button.getHeight() - 2);
-      }
-
       if(icon!=null){
         icon.paintIcon(c,g2,ourIconRect.x,ourIconRect.y);
       }

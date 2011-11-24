@@ -17,11 +17,14 @@ package com.intellij.framework.library.impl;
 
 import com.intellij.facet.impl.ui.libraries.DownloadingOptionsDialog;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloadSettings;
-import com.intellij.framework.library.*;
+import com.intellij.framework.library.DownloadableLibraryDescription;
+import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
-import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -29,46 +32,26 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.download.DownloadableFileSetVersions;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
-  private JPanel myMainPanel;
-  private JLabel myDescriptionLabel;
-  private JButton myChangeVersionButton;
-  private boolean myModified;
+public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditorBase<LibraryVersionProperties, DownloadableLibraryType> {
   private final DownloadableLibraryDescription myDescription;
-  private final LibraryEditorComponent<LibraryVersionProperties> myEditorComponent;
   private final DownloadableLibraryType myLibraryType;
   private String myCurrentVersionString;
 
-  public DownloadableLibraryEditor(final DownloadableLibraryDescription description,
-                                   final LibraryEditorComponent<LibraryVersionProperties> editorComponent,
-                                   DownloadableLibraryType libraryType) {
+  public DownloadableLibraryPropertiesEditor(DownloadableLibraryDescription description,
+                                              LibraryEditorComponent<LibraryVersionProperties> editorComponent,
+                                              DownloadableLibraryType libraryType) {
+    super(editorComponent, libraryType, "Change &Version...");
     myDescription = description;
-    myEditorComponent = editorComponent;
     myLibraryType = libraryType;
-    updateDescription();
     myCurrentVersionString = myEditorComponent.getProperties().getVersionString();
-    myChangeVersionButton.setVisible(!myEditorComponent.isNewLibrary());
-    myChangeVersionButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        changeVersion();
-      }
-    });
   }
 
-  private void updateDescription() {
-    myDescriptionLabel.setText(myLibraryType.getDescription(myEditorComponent.getProperties()));
-  }
-
-  private void changeVersion() {
+  protected void edit() {
     final ModalityState current = ModalityState.current();
     myDescription.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
       @Override
@@ -90,19 +73,18 @@ public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
             final LibraryDownloadSettings initialSettings = new LibraryDownloadSettings(getCurrentVersion(versions), myLibraryType,
                                                                                         LibrariesContainer.LibraryLevel.PROJECT,
                                                                                         pathForDownloaded);
-            final LibraryDownloadSettings settings = DownloadingOptionsDialog.showDialog(myMainPanel, initialSettings, versions, false);
+            final LibraryDownloadSettings settings = DownloadingOptionsDialog.showDialog(getMainPanel(), initialSettings, versions, false);
             if (settings != null) {
-              final NewLibraryEditor editor = settings.download(myMainPanel);
+              final NewLibraryEditor editor = settings.download(getMainPanel());
               if (editor != null) {
                 final LibraryEditorBase target = (LibraryEditorBase)myEditorComponent.getLibraryEditor();
                 target.removeAllRoots();
-                target.setName(editor.getName());
+                myEditorComponent.renameLibrary(editor.getName());
                 target.setType(myLibraryType);
                 editor.applyTo(target);
                 myEditorComponent.updateRootsTree();
                 myCurrentVersionString = settings.getVersion().getVersionString();
-                updateDescription();
-                myModified = true;
+                setModified();
               }
             }
           }
@@ -120,24 +102,8 @@ public class DownloadableLibraryEditor extends LibraryPropertiesEditor {
     return versions.get(0);
   }
 
-  @NotNull
-  @Override
-  public JComponent createComponent() {
-    return myMainPanel;
-  }
-
   @Override
   public void apply() {
     myEditorComponent.getProperties().setVersionString(myCurrentVersionString);
-  }
-
-  @Override
-  public boolean isModified() {
-    return myModified;
-  }
-
-  @Override
-  public void reset() {
-    updateDescription();
   }
 }

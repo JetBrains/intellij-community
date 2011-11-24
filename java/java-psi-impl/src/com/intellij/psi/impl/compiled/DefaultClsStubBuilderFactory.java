@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -32,8 +31,71 @@ import java.io.IOException;
  * @author max
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class ClsStubBuilder {
-  private ClsStubBuilder() { }
+public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
+  @Override
+  public PsiFileStub buildFileStub(VirtualFile vFile, byte[] bytes) throws ClsFormatException {
+    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("do.not.know.yet", true);
+    try {
+      ClassReader reader = new ClassReader(bytes);
+
+      final StubBuildingVisitor<VirtualFile>
+        classVisitor = new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0);
+      reader.accept(classVisitor, 0);
+
+      final PsiClassStub result = classVisitor.getResult();
+      if (result == null) return null;
+
+      //noinspection unchecked
+      file.setPackageName(getPackageName(result));
+    }
+    catch (Exception e) {
+      throw new ClsFormatException();
+    }
+    return file;
+  }
+
+  @Override
+  public boolean canBeProcessed(VirtualFile file, byte[] bytes) {
+    return true;
+  }
+
+  @Override
+  public boolean isInnerClass(VirtualFile file) {
+    return isInner(file.getNameWithoutExtension(), new ParentDirectory(file));
+  }
+
+  static boolean isInner(final String name, final Directory directory) {
+    return isInner(name, 0, directory);
+  }
+
+  private static boolean isInner(final String name, final int from, final Directory directory) {
+    final int index = name.indexOf('$', from);
+    return index != -1 && (containsPart(directory, name, index) || isInner(name, index + 1, directory));
+  }
+
+  private static boolean containsPart(Directory directory, String name, int endIndex) {
+    return endIndex > 0 && directory.contains(name.substring(0, endIndex));
+  }
+
+  interface Directory {
+    boolean contains(String name);
+  }
+
+  private static class ParentDirectory implements Directory {
+    private final VirtualFile myDirectory;
+    private final String myExtension;
+
+    private ParentDirectory(final VirtualFile file) {
+      myDirectory = file.getParent();
+      myExtension = file.getExtension();
+    }
+
+    @Override
+    public boolean contains(final String name) {
+      final String fullName = myExtension == null ? name : name + "." + myExtension;
+      return myDirectory != null && myDirectory.findChild(fullName) != null;
+    }
+  }
 
   private static class VirtualFileInnerClassStrategy implements InnerClassSourceStrategy<VirtualFile> {
     public static VirtualFileInnerClassStrategy INSTANCE = new VirtualFileInnerClassStrategy();
@@ -60,35 +122,6 @@ public class ClsStubBuilder {
     }
   }
 
-  @Nullable
-  public static PsiFileStub build(final VirtualFile vFile, byte[] bytes) throws ClsFormatException {
-    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
-    for (ClsStubBuilderFactory factory : factories) { 
-      if (factory.canBeProcessed(vFile, bytes)) {
-        return factory.buildFileStub(vFile, bytes);
-      }
-    }
-
-    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("do.not.know.yet", true);
-    try {
-      ClassReader reader = new ClassReader(bytes);
-
-      final StubBuildingVisitor<VirtualFile>
-        classVisitor = new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0);
-      reader.accept(classVisitor, 0);
-      
-      final PsiClassStub result = classVisitor.getResult();
-      if (result == null) return null;
-
-      //noinspection unchecked
-      file.setPackageName(getPackageName(result));
-    }
-    catch (Exception e) {
-      throw new ClsFormatException();
-    }
-    return file;
-  }
-
   private static String getPackageName(final PsiClassStub<PsiClass> result) {
     final String fqn = result.getQualifiedName();
     final String shortName = result.getName();
@@ -98,5 +131,4 @@ public class ClsStubBuilder {
 
     return fqn.substring(0, fqn.lastIndexOf('.'));
   }
-
 }

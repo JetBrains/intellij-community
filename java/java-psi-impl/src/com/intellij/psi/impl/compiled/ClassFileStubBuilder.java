@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.JavaFileElementType;
@@ -28,26 +29,23 @@ import com.intellij.util.cls.ClsFormatException;
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   @Override
   public boolean acceptsFile(final VirtualFile file) {
-    return !isInner(file.getNameWithoutExtension(), new ParentDirectory(file));
-  }
-
-  static boolean isInner(final String name, final Directory directory) {
-    return isInner(name, 0, directory);
-  }
-
-  private static boolean isInner(final String name, final int from, final Directory directory) {
-    final int index = name.indexOf('$', from);
-    return index != -1 && (containsPart(directory, name, index) || isInner(name, index + 1, directory));
-  }
-
-  private static boolean containsPart(Directory directory, String name, int endIndex) {
-    return endIndex > 0 && directory.contains(name.substring(0, endIndex));
+    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
+    for (ClsStubBuilderFactory factory : factories) {
+      if (!factory.isInnerClass(file)) return true;
+    }
+    return false;
   }
 
   @Override
   public StubElement buildStubTree(final VirtualFile file, final byte[] content, final Project project) {
     try {
-      return ClsStubBuilder.build(file, content);
+      final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
+      for (ClsStubBuilderFactory factory : factories) {
+        if (!factory.isInnerClass(file) && factory.canBeProcessed(file, content)) {
+          return factory.buildFileStub(file, content);
+        }
+      }
+      return null;
     }
     catch (ClsFormatException e) {
       return null;
@@ -57,26 +55,5 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   @Override
   public int getStubVersion() {
     return JavaFileElementType.STUB_VERSION + 3;
-  }
-
-
-  interface Directory {
-    boolean contains(String name);
-  }
-
-  private static class ParentDirectory implements Directory {
-    private final VirtualFile myDirectory;
-    private final String myExtension;
-
-    private ParentDirectory(final VirtualFile file) {
-      myDirectory = file.getParent();
-      myExtension = file.getExtension();
-    }
-
-    @Override
-    public boolean contains(final String name) {
-      final String fullName = myExtension == null ? name : name + "." + myExtension;
-      return myDirectory != null && myDirectory.findChild(fullName) != null;
-    }
   }
 }

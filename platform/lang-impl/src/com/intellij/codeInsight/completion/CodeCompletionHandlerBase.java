@@ -393,13 +393,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
       LOG.error(LogMessageEx.createEvent("Inconsistent completion tree", "range=" + range + "\n" + DebugUtil.currentStackTrace(),
                                          createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile),
-                                         new Attachment("Element at caret", insertedElement.getText())));
+                                         new Attachment("Element at caret.txt", insertedElement.getText())));
     }
     return insertedElement;
   }
 
   private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {
-    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree", DebugUtil.psiToString(fileCopy, false));
+    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree.txt", DebugUtil.psiToString(fileCopy, false));
   }
 
   private static Attachment createFileTextAttachment(PsiFile fileCopy, final PsiFile originalFile) {

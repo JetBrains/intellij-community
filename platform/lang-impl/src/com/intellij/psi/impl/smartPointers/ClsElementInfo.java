@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class ClsElementInfo implements SmartPointerElementInfo {
   private final PsiAnchor.StubIndexReference myStubIndexReference;
 
-  public ClsElementInfo(PsiAnchor.StubIndexReference stubReference) {
+  public ClsElementInfo(@NotNull PsiAnchor.StubIndexReference stubReference) {
     myStubIndexReference = stubReference;
   }
 

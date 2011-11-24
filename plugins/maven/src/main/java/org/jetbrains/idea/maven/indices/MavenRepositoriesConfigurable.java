@@ -36,7 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
-import org.jetbrains.idea.maven.utils.RepositoryAttachHandler;
+import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

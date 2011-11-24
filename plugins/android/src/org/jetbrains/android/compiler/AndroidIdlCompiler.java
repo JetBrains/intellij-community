@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
@@ -181,18 +180,6 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
           }
 
           addItem(file, facet, target, packageName, items);
-
-          if (facet.getConfiguration().LIBRARY_PROJECT) {
-            HashSet<Module> usingModules = new HashSet<Module>();
-            AndroidUtils.collectModulesDependingOn(module, usingModules);
-
-            for (Module module1 : usingModules) {
-              AndroidFacet facet1 = AndroidFacet.getInstance(module1);
-              if (facet1 != null) {
-                addItem(file, facet1, target, packageName, items);
-              }
-            }
-          }
         }
       }
       return items.toArray(new GenerationItem[items.size()]);

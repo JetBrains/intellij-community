@@ -615,7 +615,7 @@ public class FileBasedIndex implements ApplicationComponent {
     finally {
       LOG.info("START INDEX SHUTDOWN");
       try {
-        myChangedFilesCollector.forceUpdate(null, null, true);
+        myChangedFilesCollector.forceUpdate(null, null, null, true);
 
         for (ID<?, ?> indexId : myIndices.keySet()) {
           final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
@@ -741,6 +741,11 @@ public class FileBasedIndex implements ApplicationComponent {
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
   public <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
+    ensureUpToDate(indexId, project, filter, null);
+  }
+
+  private <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter,
+                                 @Nullable VirtualFile restrictedFile) {
     if (!needsFileContentLoading(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
     }
@@ -759,8 +764,8 @@ public class FileBasedIndex implements ApplicationComponent {
       if (isUpToDateCheckEnabled()) {
         try {
           checkRebuild(indexId, false);
-          myChangedFilesCollector.forceUpdate(project, filter, false);
-          indexUnsavedDocuments(indexId, project, filter);
+          myChangedFilesCollector.forceUpdate(project, filter, restrictedFile, false);
+          indexUnsavedDocuments(indexId, project, filter, restrictedFile);
         }
         catch (StorageException e) {
           scheduleRebuild(indexId, e);
@@ -867,7 +872,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       final Project project = filter.getProject();
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
-      ensureUpToDate(indexId, project, filter);
+      ensureUpToDate(indexId, project, filter, restrictToFile);
 
       final Lock readLock = index.getReadLock();
       try {
@@ -1114,8 +1119,8 @@ public class FileBasedIndex implements ApplicationComponent {
     return docs;
   }
 
-  private void indexUnsavedDocuments(ID<?, ?> indexId, @Nullable Project project, GlobalSearchScope filter) throws StorageException {
-
+  private void indexUnsavedDocuments(ID<?, ?> indexId, @Nullable Project project, GlobalSearchScope filter,
+                                     VirtualFile restrictedFile) throws StorageException {
     if (myUpToDateIndices.contains(indexId)) {
       return; // no need to index unsaved docs
     }
@@ -1133,7 +1138,7 @@ public class FileBasedIndex implements ApplicationComponent {
         boolean allDocsProcessed = true;
         try {
           for (Document document : documents) {
-            allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter);
+            allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter, restrictedFile);
           }
         }
         finally {
@@ -1210,12 +1215,13 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
 // returns false if doc was not indexed because the file does not fit in scope
-  private boolean indexUnsavedDocument(@NotNull final Document document, @NotNull final ID<?, ?> requestedIndexId, final Project project, GlobalSearchScope filter) throws StorageException {
+  private boolean indexUnsavedDocument(@NotNull final Document document, @NotNull final ID<?, ?> requestedIndexId, final Project project, 
+                                       GlobalSearchScope filter, VirtualFile restrictedFile) throws StorageException {
     final VirtualFile vFile = myFileDocumentManager.getFile(document);
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
       return true;
     }
-    if (filter != null && !filter.accept(vFile)) {
+    if (filter != null && (!filter.accept(vFile) && vFile != restrictedFile)) {
       return false;
     }
     final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
@@ -1771,10 +1777,11 @@ public class FileBasedIndex implements ApplicationComponent {
 
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
 
-    public void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, boolean onlyRemoveOutdatedData) {
+    private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo, 
+                             boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       for (VirtualFile file: getAllFilesToUpdate()) {
-        if (filter == null || filter.accept(file)) {
+        if (filter == null || filter.accept(file) || file == restrictedTo) {
           try {
             myForceUpdateSemaphore.down();
             // process only files that can affect result
@@ -1949,7 +1956,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void removeIndexableSet(IndexableFileSet set) {
-    myChangedFilesCollector.forceUpdate(null, null, true);
+    myChangedFilesCollector.forceUpdate(null, null, null, true);
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
   }

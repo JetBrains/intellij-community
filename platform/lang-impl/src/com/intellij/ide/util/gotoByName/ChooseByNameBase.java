@@ -50,7 +50,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -66,9 +65,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.Matcher;
@@ -87,8 +84,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -97,11 +92,10 @@ public abstract class ChooseByNameBase {
 
   protected final Project myProject;
   protected final ChooseByNameModel myModel;
+  protected ChooseByNameItemProvider myProvider;
   protected final String myInitialText;
   private boolean myPreselectInitialText;
-  private final Reference<PsiElement> myContext;
   private boolean mySearchInAnyPlace = false;
-  private Matcher myLastMatcher;
 
   protected Component myPreviouslyFocusedComponent;
 
@@ -163,41 +157,29 @@ public abstract class ChooseByNameBase {
     myDisposedFlag = disposedFlag;
   }
 
-  private static class MatchesComparator implements Comparator<String> {
-    private final String myOriginalPattern;
-
-    private MatchesComparator(final String originalPattern) {
-      myOriginalPattern = originalPattern.trim();
-    }
-
-    public int compare(final String a, final String b) {
-      boolean aStarts = a.startsWith(myOriginalPattern);
-      boolean bStarts = b.startsWith(myOriginalPattern);
-      if (aStarts && bStarts) return a.compareToIgnoreCase(b);
-      if (aStarts && !bStarts) return -1;
-      if (bStarts && !aStarts) return 1;
-      return a.compareToIgnoreCase(b);
-    }
-  }
-
   /**
    * @param initialText initial text which will be in the lookup text field
    * @param context
    */
-  protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText, final PsiElement context) {
-    this(project, model, initialText, context, 0);
+  protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText, PsiElement context) {
+    this(project, model, new DefaultChooseByNameItemProvider(context), initialText, 0);
+  }
+
+  @SuppressWarnings("UnusedDeclaration") // Used in MPS
+  protected ChooseByNameBase(Project project, ChooseByNameModel model, ChooseByNameItemProvider provider, String initialText) {
+    this(project, model, provider, initialText, 0);
   }
 
   /**
-   * @param initialText initial text which will be in the lookup text field
+   * @param initialText  initial text which will be in the lookup text field
    * @param context
    * @param initialIndex
    */
-  protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText, final PsiElement context, final int initialIndex) {
+  protected ChooseByNameBase(Project project, ChooseByNameModel model, ChooseByNameItemProvider provider, String initialText, final int initialIndex) {
     myProject = project;
     myModel = model;
     myInitialText = initialText;
-    myContext = new WeakReference<PsiElement>(context);
+    myProvider = provider;
     myInitialIndex = initialIndex;
   }
 
@@ -249,6 +231,10 @@ public abstract class ChooseByNameBase {
                      final ModalityState modalityState,
                      boolean allowMultipleSelection) {
     initUI(callback, modalityState, allowMultipleSelection);
+  }
+
+  public ChooseByNameModel getModel() {
+    return myModel;
   }
 
   public class JPanelProvider extends JPanel implements DataProvider {
@@ -673,6 +659,10 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  public String transformPattern(String pattern) {
+    return pattern;
+  }
+
   protected void doClose(final boolean ok) {
     if (checkDisposed()) return;
 
@@ -728,6 +718,10 @@ public abstract class ChooseByNameBase {
         ownerWindow.setCursor(Cursor.getDefaultCursor());
       }
     }
+  }
+
+  public String[] getNames(boolean checkboxState) {
+    return checkboxState ? myNames[1] : myNames[0];
   }
 
   protected abstract boolean isCheckboxVisible();
@@ -841,6 +835,7 @@ public abstract class ChooseByNameBase {
 
                   myListIsUpToDate = true;
                   setElementsToList(pos, elements);
+                  myList.repaint();
                   choosenElementMightChange();
 
                   if (elements.isEmpty() && myTextFieldPanel != null) {
@@ -858,7 +853,7 @@ public abstract class ChooseByNameBase {
 
             final ListCellRenderer cellRenderer = myList.getCellRenderer();
             if (cellRenderer instanceof MatcherHolder) {
-              final String pattern = getNamePattern(text);
+              final String pattern = transformPattern(text);
               final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern + "*" : pattern);
               ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
             }
@@ -963,7 +958,7 @@ public abstract class ChooseByNameBase {
     int bestMatch = Integer.MIN_VALUE;
     final int count = myListModel.getSize();
 
-    Matcher matcher = buildPatternMatcher(getNamePattern(myTextField.getText()));
+    Matcher matcher = buildPatternMatcher(transformPattern(myTextField.getText()));
 
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
@@ -987,26 +982,6 @@ public abstract class ChooseByNameBase {
   @NonNls
   protected String statisticsContext() {
     return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + myTextField.getText();
-  }
-
-  private String getQualifierPattern(String pattern) {
-    final String[] separators = myModel.getSeparators();
-    int lastSeparatorOccurence = 0;
-    for (String separator : separators) {
-      lastSeparatorOccurence = Math.max(lastSeparatorOccurence, pattern.lastIndexOf(separator));
-    }
-    return pattern.substring(0, lastSeparatorOccurence);
-  }
-
-  public String getNamePattern(String pattern) {
-    final String[] separators = myModel.getSeparators();
-    int lastSeparatorOccurence = 0;
-    for (String separator : separators) {
-      final int idx = pattern.lastIndexOf(separator);
-      lastSeparatorOccurence = Math.max(lastSeparatorOccurence, idx == -1 ? idx : idx + separator.length());
-    }
-
-    return pattern.substring(lastSeparatorOccurence);
   }
 
   private interface Cmd {
@@ -1252,8 +1227,7 @@ public abstract class ChooseByNameBase {
     }
 
     private void fillInCommonPrefix(final String pattern) {
-      final ArrayList<String> list = new ArrayList<String>();
-      getNamesByPattern(myCheckBox.isSelected(), null, list, pattern);
+      final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(myCheckBox.isSelected()), pattern);
 
       if (isComplexPattern(pattern)) return; //TODO: support '*'
       final String oldText = myTextField.getText();
@@ -1354,7 +1328,14 @@ public abstract class ChooseByNameBase {
         public void run() {
           try {
             ensureNamesLoaded(myCheckboxState);
-            addElementsByPattern(elements, myPattern);
+            Computable<Boolean> cancelled = new Computable<Boolean>() {
+              public Boolean compute() {
+                return myCancelled;
+              }
+            };
+
+            addElementsByPattern(myPattern, elements, cancelled);
+
             for (Object elem : elements) {
               if (myCancelled) {
                 break;
@@ -1397,6 +1378,28 @@ public abstract class ChooseByNameBase {
       }, myModalityState);
     }
 
+    private void addElementsByPattern(String pattern,
+                                      final Set<Object> elements,
+                                      final Computable<Boolean> cancelled) {
+      myProvider.filterElements(
+        ChooseByNameBase.this, pattern, myCheckboxState,
+        cancelled,
+        new Processor<Object>() {
+          @Override
+          public boolean process(Object o) {
+            if (cancelled.compute()) return false;
+            elements.add(o);
+
+            if (isOverflow(elements)) {
+              elements.add(EXTRA_ELEM);
+              return false;
+            }
+            return true;
+          }
+        }
+      );
+    }
+
     private void showCard(final String card, final int delay) {
       myShowCardAlarm.cancelAllRequests();
       myShowCardAlarm.addRequest(new Runnable() {
@@ -1404,63 +1407,6 @@ public abstract class ChooseByNameBase {
           myCard.show(myCardContainer, card);
         }
       }, delay, myModalityState);
-    }
-
-    protected void addElementsByPattern(Set<Object> elementsArray, String pattern) {
-      String namePattern = getNamePattern(pattern);
-      String qualifierPattern = getQualifierPattern(pattern);
-
-      if (isSearchInAnyPlace() && namePattern.trim().length() > 0) {
-        namePattern = "*" + namePattern + "*";
-      }
-
-      boolean empty = namePattern.length() == 0 || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
-      if (empty && !canShowListForEmptyPattern()) return;
-
-      List<String> namesList = new ArrayList<String>();
-      getNamesByPattern(myCheckboxState, this, namesList, namePattern);
-      if (myCancelled) {
-        throw new ProcessCanceledException();
-      }
-      // Here we sort using namePattern to have similar logic with empty qualified patten case
-      Collections.sort(namesList, new MatchesComparator(namePattern));
-
-      boolean overflow = false;
-      List<Object> sameNameElements = new SmartList<Object>();
-      All:
-      for (String name : namesList) {
-        if (myCancelled) {
-          throw new ProcessCanceledException();
-        }
-        final Object[] elements = myModel.getElementsByName(name, myCheckboxState, namePattern);
-        if (elements.length > 1) {
-          sameNameElements.clear();
-          for (final Object element : elements) {
-            if (matchesQualifier(element, qualifierPattern)) {
-              sameNameElements.add(element);
-            }
-          }
-          sortByProximity(sameNameElements);
-          for (Object element : sameNameElements) {
-            elementsArray.add(element);
-            if (isOverflow(elementsArray)) {
-              overflow = true;
-              break All;
-            }
-          }
-        }
-        else if (elements.length == 1 && matchesQualifier(elements[0], qualifierPattern)) {
-          elementsArray.add(elements[0]);
-          if (isOverflow(elementsArray)) {
-            overflow = true;
-            break;
-          }
-        }
-      }
-
-      if (overflow) {
-        elementsArray.add(EXTRA_ELEM);
-      }
     }
 
     protected boolean isOverflow(Set<Object> elementsArray) {
@@ -1474,114 +1420,13 @@ public abstract class ChooseByNameBase {
     }
   }
 
-  private void sortByProximity(final List<Object> sameNameElements) {
-    Collections.sort(sameNameElements, new PathProximityComparator(myModel, myContext.get()));
-  }
 
-  private List<String> split(String s) {
-    List<String> answer = new ArrayList<String>();
-    for (String token : StringUtil.tokenize(s, StringUtil.join(myModel.getSeparators(), ""))) {
-      if (token.length() > 0) {
-        answer.add(token);
-      }
-    }
-
-    return answer.isEmpty() ? Collections.singletonList(s) : answer;
-  }
-
-  private boolean matchesQualifier(final Object element, final String qualifierPattern) {
-    final String name = myModel.getFullName(element);
-    if (name == null) return false;
-
-    final List<String> suspects = split(name);
-    final List<Pair<String, Matcher>> patternsAndMatchers =
-      ContainerUtil.map2List(split(qualifierPattern), new Function<String, Pair<String, Matcher>>() {
-        public Pair<String, Matcher> fun(String s) {
-          final String pattern = getNamePattern(s);
-          final Matcher matcher = buildPatternMatcher(pattern);
-
-          return new Pair<String, Matcher>(pattern, matcher);
-        }
-      });
-
-    try {
-      int matchPosition = 0;
-      patterns:
-      for (Pair<String, Matcher> patternAndMatcher : patternsAndMatchers) {
-        final String pattern = patternAndMatcher.first;
-        final Matcher matcher = patternAndMatcher.second;
-        if (pattern.length() > 0) {
-          for (int j = matchPosition; j < suspects.size() - 1; j++) {
-            String suspect = suspects.get(j);
-            if (matches(pattern, matcher, suspect)) {
-              matchPosition = j + 1;
-              continue patterns;
-            }
-          }
-
-          return false;
-        }
-      }
-    }
-    catch (Exception e) {
-      // Do nothing. No matches appears valid result for "bad" pattern
-      return false;
-    }
-
-    return true;
-  }
-
-  private void getNamesByPattern(final boolean checkboxState,
-                                 CalcElementsThread calcElementsThread,
-                                 final List<String> list,
-                                 String pattern) throws ProcessCanceledException {
-    if (!canShowListForEmptyPattern()) {
-      LOG.assertTrue(pattern.length() > 0);
-    }
-
-    if (pattern.startsWith("@")) {
-      pattern = pattern.substring(1);
-    }
-
-    final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final Matcher matcher = buildPatternMatcher(pattern);
-
-    try {
-      for (String name : names) {
-        if (calcElementsThread != null && calcElementsThread.myCancelled) {
-          break;
-        }
-        if (matches(pattern, matcher, name)) {
-          list.add(name);
-        }
-      }
-    }
-    catch (Exception e) {
-      // Do nothing. No matches appears valid result for "bad" pattern
-    }
-  }
-
-  private boolean canShowListForEmptyPattern() {
+  public boolean canShowListForEmptyPattern() {
     return isShowListForEmptyPattern() || isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion();
   }
 
   protected boolean lastKeyStrokeIsCompletion() {
      return myTextField.isCompletionKeyStroke();
-  }
-
-  private boolean matches(String pattern, Matcher matcher, String name) {
-    boolean matches = false;
-    if (name != null) {
-      if (myModel instanceof CustomMatcherModel) {
-        if (((CustomMatcherModel)myModel).matches(name, pattern)) {
-          matches = true;
-        }
-      }
-      else if (pattern.length() == 0 || matcher.matches(name)) {
-        matches = true;
-      }
-    }
-    return matches;
   }
 
   private static Matcher buildPatternMatcher(String pattern) {
@@ -1590,23 +1435,6 @@ public abstract class ChooseByNameBase {
 
   private interface CalcElementsCallback {
     void run(Set<?> elements);
-  }
-
-  private static class PathProximityComparator implements Comparator<Object> {
-    private final ChooseByNameModel myModel;
-    private final PsiProximityComparator myProximityComparator;
-
-    private PathProximityComparator(final ChooseByNameModel model, @Nullable final PsiElement context) {
-      myModel = model;
-      myProximityComparator = new PsiProximityComparator(context);
-    }
-
-    public int compare(final Object o1, final Object o2) {
-      int rc = myProximityComparator.compare(o1, o2);
-      if (rc != 0) return rc;
-
-      return Comparing.compare(myModel.getFullName(o1), myModel.getFullName(o2));
-    }
   }
 
   private static class HintLabel extends JLabel {
@@ -1658,11 +1486,11 @@ public abstract class ChooseByNameBase {
         final HashSet<Object> elementsArray = new HashSet<Object>();
         hideHint();
         ProgressManager.getInstance().run(new Task.Modal(myProject, pattern, true){
+          private ChooseByNameBase.CalcElementsThread myCalcElementsThread;
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             ensureNamesLoaded(checkboxState);
             ApplicationManager.getApplication().runReadAction(new Runnable() {
-              private ChooseByNameBase.CalcElementsThread myCalcElementsThread;
 
               public void run() {
                 myCalcElementsThread = new CalcElementsThread(text, checkboxState, null, ModalityState.NON_MODAL, true) {
@@ -1671,7 +1499,12 @@ public abstract class ChooseByNameBase {
                     return false;
                   }
                 };
-                myCalcElementsThread.addElementsByPattern(elementsArray, text);
+
+                myCalcElementsThread.addElementsByPattern(text, elementsArray, new Computable<Boolean>() {
+                  public Boolean compute() {
+                    return false;
+                  }
+                });
               }
             });
           }

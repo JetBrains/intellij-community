@@ -16,12 +16,14 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.util.Pair;
+import com.intellij.codeInsight.lookup.Classifier;
+import com.intellij.codeInsight.lookup.LookupArranger;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +47,8 @@ public class LookupModel {
   private LookupArranger myArranger;
   private Classifier<LookupElement> myRelevanceClassifier;
   @Nullable public LookupElement preselectedItem;
+  private int stamp;
+  private int lastAccess;
 
   public LookupModel(LookupElement preselectedItem) {
     this.preselectedItem = preselectedItem;
@@ -70,6 +74,7 @@ public class LookupModel {
       mySortedItems.add(item); // ProcessCanceledException may occur in these two lines, then this element is considered not added
 
       myItems.add(item);
+      stamp++;
     }
   }
 
@@ -86,17 +91,13 @@ public class LookupModel {
     }
   }
 
-  public Pair<List<LookupElement>, Iterable<List<LookupElement>>> getModelSnapshot() {
+  public Trinity<List<LookupElement>, Iterable<List<LookupElement>>, Boolean> getModelSnapshot() {
     synchronized (lock) {
       final List<LookupElement> sorted = new ArrayList<LookupElement>(mySortedItems);
       final Iterable<List<LookupElement>> groups = myRelevanceClassifier.classify(sorted);
-      return Pair.create(sorted, groups);
-    }
-  }
-
-  public void collectGarbage() {
-    synchronized (lock) {
-      myItemPresentations.keySet().retainAll(new THashSet<LookupElement>(myItems, TObjectHashingStrategy.IDENTITY));
+      boolean changed = lastAccess != stamp;
+      lastAccess = stamp;
+      return Trinity.create(sorted, groups, changed);
     }
   }
 

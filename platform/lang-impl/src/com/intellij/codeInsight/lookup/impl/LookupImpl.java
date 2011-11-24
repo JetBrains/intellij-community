@@ -47,7 +47,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -70,6 +70,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +126,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private volatile String myAdText;
   private volatile int myLookupTextWidth = 50;
   private boolean myChangeGuard;
-  private LookupModel myModel = new LookupModel(EMPTY_LOOKUP_ITEM);
+  private volatile LookupModel myModel = new LookupModel(EMPTY_LOOKUP_ITEM);
   private LookupModel myPresentableModel = myModel;
   @SuppressWarnings("unchecked") private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(TObjectHashingStrategy.IDENTITY);
   private LookupHint myElementHint = null;
@@ -300,6 +301,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
 
     myModel.setItemPresentation(item, presentation);
+  }
+
+  public void requestResize() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myResizePending = true;
   }
 
@@ -350,7 +355,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myAdditionalPrefix += c;
     myInitialPrefix = null;
     myFrozenItems.clear();
-    myResizePending = true;
+    requestResize();
     refreshUi(false);
     ensureSelectionVisible();
   }
@@ -381,7 +386,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
     myInitialPrefix = null;
     myFrozenItems.clear();
-    myResizePending = true;
+    requestResize();
     if (myPresentableModel == myModel) {
       refreshUi(false);
       ensureSelectionVisible();
@@ -390,15 +395,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
-  private void updateList() {
+  private boolean updateList() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
     checkValid();
 
-    final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myPresentableModel.getModelSnapshot();
+    final Trinity<List<LookupElement>, Iterable<List<LookupElement>>, Boolean> snapshot = myPresentableModel.getModelSnapshot();
 
-    final LinkedHashSet<LookupElement> items = matchingItems(snapshot);
+    final LinkedHashSet<LookupElement> items = matchingItems(snapshot.first);
 
     checkMinPrefixLengthChanges(items);
 
@@ -465,6 +470,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         myList.setSelectedIndex(0);
       }
     }
+    return snapshot.third;
   }
 
   private static boolean shouldSkip(LookupElement element) {
@@ -475,9 +481,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myList.getFirstVisibleIndex() <= myList.getSelectedIndex() && myList.getSelectedIndex() <= myList.getLastVisibleIndex();
   }
 
-  private LinkedHashSet<LookupElement> matchingItems(Pair<List<LookupElement>, Iterable<List<LookupElement>>> snapshot) {
+  private LinkedHashSet<LookupElement> matchingItems(final List<LookupElement> elements) {
     final LinkedHashSet<LookupElement> items = new LinkedHashSet<LookupElement>();
-    for (LookupElement element : snapshot.first) {
+    for (LookupElement element : elements) {
       if (prefixMatches(element)) {
         items.add(element);
       }
@@ -554,6 +560,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     model.addElement(item);
 
     updateLookupWidth(item);
+    requestResize();
   }
 
   private static LookupElementPresentation renderItemApproximately(LookupElement item) {
@@ -1329,7 +1336,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     boolean selectionVisible = isSelectionVisible();
 
-    updateList();
+    boolean itemsChanged = updateList();
 
     if (isVisible()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
@@ -1340,13 +1347,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
       updateScrollbarVisibility();
 
-      if (myResizePending) {
+      if (myResizePending || itemsChanged) {
         myMaximumHeight = Integer.MAX_VALUE;
       }
       Rectangle rectangle = calculatePosition();
       myMaximumHeight = rectangle.height;
       
-      if (myResizePending) {
+      if (myResizePending || itemsChanged) {
         myResizePending = false;
         pack();
       }
@@ -1373,12 +1380,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public void markReused() {
     myAdComponent.clearAdvertisements();
     myModel = new LookupModel(null);
-    myResizePending = true;
+    requestResize();
   }
 
-  public void addAdvertisement(@NotNull String text) {
-    myAdComponent.addAdvertisement(text);
-    myResizePending = true;
+  public void addAdvertisement(@NotNull final String text) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (!myDisposed) {
+          myAdComponent.addAdvertisement(text);
+          requestResize();
+          refreshUi(false);
+        }
+      }
+    });
   }
 
   public boolean isLookupDisposed() {

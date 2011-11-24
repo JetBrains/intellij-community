@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -126,7 +128,12 @@ public class VariableInplaceRenamer {
     myElementToRename = elementToRename;
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myProject = project;
-    myRenameOffset = myElementToRename != null && myElementToRename.getTextRange() != null ? myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange()) : null;
+    if (myElementToRename != null) {
+      final PsiFile containingFile = myElementToRename.getContainingFile();
+      if (!notSameFile(containingFile.getVirtualFile(), containingFile)) {
+        myRenameOffset = myElementToRename != null && myElementToRename.getTextRange() != null ? myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange()) : null;
+      }
+    }
   }
 
   public boolean performInplaceRename() {
@@ -190,7 +197,7 @@ public class VariableInplaceRenamer {
     return ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
   }
 
-  protected boolean notSameFile(VirtualFile file, PsiFile containingFile) {
+  protected boolean notSameFile(@Nullable VirtualFile file, PsiFile containingFile) {
     return getTopLevelVirtualFile(containingFile.getViewProvider()) != file;
   }
 
@@ -294,9 +301,21 @@ public class VariableInplaceRenamer {
             myHighlighters = new ArrayList<RangeHighlighter>();
             Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
             topLevelEditor.getCaretModel().moveToOffset(range.getStartOffset());
+            final DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+            final boolean previousUpdate;
+            if (daemonCodeAnalyzer != null) {
+              previousUpdate = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).isUpdateByTimerEnabled();
+              daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
+            }
+            else {
+              previousUpdate = false;
+            }
             TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, new TemplateEditingAdapter() {
               private String myNewName = null;
               public void beforeTemplateFinished(final TemplateState templateState, Template template) {
+                if (daemonCodeAnalyzer != null) {
+                  daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
+                }
                 finish();
 
                 if (snapshot != null && performAutomaticRename()) {
@@ -343,6 +362,9 @@ public class VariableInplaceRenamer {
               }
 
               public void templateCancelled(Template template) {
+                if (daemonCodeAnalyzer != null) {
+                  daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
+                }
                 try {
                   final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
                   documentManager.commitAllDocuments();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
     if (node != null && CONTROL_FLOW_ELEMENT_TYPES.contains(node.getElementType())) {
       return false;
     } 
-
-    boolean leaveCodeBlock = isControlFlowBreak(psiElement) || isValidStatementInsideControlFlowOperator(psiElement, isModified);
+    
+    boolean leaveCodeBlock = isControlFlowBreak(psiElement);
     if (!leaveCodeBlock) {
       return false;
     }
@@ -109,27 +109,5 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
    */
   private static boolean isControlFlowBreak(@Nullable PsiElement element) {
     return element instanceof PsiReturnStatement || element instanceof PsiThrowStatement;
-  }
-  
-  private static boolean isValidStatementInsideControlFlowOperator(final @Nullable PsiElement element, boolean modified) {
-    if (modified || element == null || PsiTreeUtil.hasErrorElements(element)) {
-      return false;
-    }
-    
-    for (PsiElement e = element; e != null; e = e.getParent()) {
-      final ASTNode node = e.getNode();
-      if (node == null) {
-        return false;
-      }
-
-      if (node.getElementType() == JavaElementType.METHOD) {
-        return false;
-      }
-      
-      if (CONTROL_FLOW_ELEMENT_TYPES.contains(node.getElementType())) {
-        return true;
-      } 
-    }
-    return false;
   }
 }

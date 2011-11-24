@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -70,7 +69,7 @@ public class TabAction extends EditorAction {
     final FileType fileType = vFile == null ? null : vFile.getFileType();
 
     int tabSize = settings.getIndentSize(fileType);
-    int spacesToAddCount = tabSize - columnNumber % tabSize;
+    int spacesToAddCount = tabSize - columnNumber % Math.max(1,tabSize);
 
     boolean useTab = editor.getSettings().isUseTabCharacter(project);
 

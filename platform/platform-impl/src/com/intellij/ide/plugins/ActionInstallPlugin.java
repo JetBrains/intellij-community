@@ -104,7 +104,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           }
           final InstalledPluginsTableModel installedPluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
           for (PluginNode node : list) {
-            installedPluginsModel.appendDescriptor(node); 
+            installedPluginsModel.appendOrUpdateDescriptor(node);
           }
           installed.setRequireShutdown(true);
         }
