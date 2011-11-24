@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public abstract class LibraryPropertiesEditorBase<P extends LibraryProperties, T
     myLibraryType = libraryType;
     updateDescription();
     if (editButtonText != null) {
-      myEditButton.setText(editButtonText);
+      myEditButton.setText(UIUtil.replaceMnemonicAmpersand(editButtonText));
     }
     myEditButton.setVisible(!myEditorComponent.isNewLibrary());
     myEditButton.addActionListener(new ActionListener() {
