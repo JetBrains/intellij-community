@@ -56,6 +56,14 @@ public interface PyCallExpression extends PyExpression {
   PyMarkedCallee resolveCallee(PyResolveContext resolveContext);
 
   /**
+   *
+   * @param resolveContext the reference resolve context
+   * @param implicitOffset known from the context implicit offset
+   */
+  @Nullable
+  PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int implicitOffset);
+
+  /**
    * Checks if the unqualified name of the callee matches any of the specified names
    *
    * @param nameCandidates the names to check

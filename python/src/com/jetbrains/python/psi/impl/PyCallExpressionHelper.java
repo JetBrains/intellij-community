@@ -104,6 +104,11 @@ public class PyCallExpressionHelper {
 
   @Nullable
   public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, PyResolveContext resolveContext) {
+    return resolveCallee(us, resolveContext, 0);
+  }
+
+  @Nullable
+  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, PyResolveContext resolveContext, int implicitOffset) {
     PyFunction.Flag wrappedFlag = null;
     boolean isConstructorCall = false;
 
@@ -152,8 +157,8 @@ public class PyCallExpressionHelper {
       PyExpression lastQualifier = qualifiers != null && qualifiers.isEmpty() ? null : qualifiers.get(qualifiers.size()-1);
       boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, resolveContext.getTypeEvalContext());
       final Callable callable = (Callable)resolved;
-      
-      int implicitOffset = getImplicitArgumentCount(callable, flags, isConstructorCall, isByInstance, isByClass);
+
+      implicitOffset += getImplicitArgumentCount(callable, flags, isConstructorCall, isByInstance, isByClass);
       implicitOffset = implicitOffset < 0? 0: implicitOffset; // wrong source can trigger strange behaviour
       return new PyCallExpression.PyMarkedCallee(callable, flags, implicitOffset,
                                                  resolveResult != null ? resolveResult.isImplicit() : false);

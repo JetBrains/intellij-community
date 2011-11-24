@@ -30,9 +30,14 @@ public interface PyArgumentList extends PyElement {
    * Tries to map the argument list to callee's idea of parameters.
    * @return a result object with mappings and diagnostic flags.
    * @param resolveContext the reference resolution context
+   * @param implicitOffset known from the context implicit offset
    */
   @NotNull
+  CallArgumentsMapping analyzeCall(PyResolveContext resolveContext, int implicitOffset);
+
+  @NotNull
   CallArgumentsMapping analyzeCall(PyResolveContext resolveContext);
+
 
   @Nullable
   ASTNode getClosingParen();

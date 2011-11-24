@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
@@ -115,7 +116,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
       throw new RuntimeConfigurationError("Please specify target folder or script");
     }
     if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(getSdkHome()))
-      throw new RuntimeConfigurationWarning("No py.test runner found in selected interpreter");
+      throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "py.test"));
   }
 
   @Override
