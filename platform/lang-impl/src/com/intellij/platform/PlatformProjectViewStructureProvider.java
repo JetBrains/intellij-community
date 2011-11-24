@@ -23,6 +23,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 
@@ -48,7 +49,7 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
         for (AbstractTreeNode moduleChild : moduleChildren) {
           if (moduleChild instanceof PsiDirectoryNode) {
             final PsiDirectory value = ((PsiDirectoryNode)moduleChild).getValue();
-            if (value.getName().equals(".idea")) {
+            if (value.getName().equals(".idea") && Registry.is("projectView.hide.dot.idea")) {
               continue;
             }
           }
