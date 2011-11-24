@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn17.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -36,6 +37,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
   protected final Collection<VcsException> myExceptions;
   protected final UpdatedFiles myPostUpdateFiles;
   protected final boolean myIsTotalUpdate;
+  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn17.update.AbstractUpdateIntegrateCrawler");
 
   protected AbstractUpdateIntegrateCrawler(
     final boolean isTotalUpdate,
@@ -65,6 +67,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
       }
     }
     catch (SVNException e) {
+      LOG.info(e);
       myExceptions.add(new VcsException(e));
     }
   }

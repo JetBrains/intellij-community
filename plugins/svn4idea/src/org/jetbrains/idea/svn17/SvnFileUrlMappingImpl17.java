@@ -378,37 +378,6 @@ class SvnFileUrlMappingImpl17 implements SvnFileUrlMapping17, PersistentStateCom
     }
   }
 
-  private static SVNStatus getExternalItemStatus(final SvnVcs17 vcs, final File file) {
-    final SVNStatusClient statusClient = vcs.createStatusClient();
-    try {
-      if (file.isDirectory()) {
-        return statusClient.doStatus(file, false);
-      } else {
-        final File parent = file.getParentFile();
-        if (parent != null) {
-          statusClient.setFilesProvider(new ISVNStatusFileProvider() {
-            public Map getChildrenFiles(File parent) {
-              return Collections.singletonMap(file.getAbsolutePath(), file);
-            }
-          });
-          final Ref<SVNStatus> refStatus = new Ref<SVNStatus>();
-          statusClient.doStatus(parent, SVNRevision.WORKING, SVNDepth.FILES, false, true, false, false, new ISVNStatusHandler() {
-            public void handleStatus(final SVNStatus status) throws SVNException {
-              if (file.equals(status.getFile())) {
-                refStatus.set(status);
-              }
-            }
-          }, null);
-          return refStatus.get();
-        }
-      }
-    }
-    catch (SVNException e) {
-      //
-    }
-    return null;
-  }
-
   private static class RepositoryRoots {
     private final SvnVcs17 myVcs;
     private final Set<SVNURL> myRoots;
