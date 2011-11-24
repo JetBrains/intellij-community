@@ -57,7 +57,7 @@ public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   protected void doOpenProject(final String projectPath, final Project projectToClose, final boolean forceOpenInNewFrame) {
     final VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath));
     if (projectDir != null) {
-      PlatformProjectOpenProcessor.doOpenProject(projectDir, projectToClose, forceOpenInNewFrame, -1, null, false);
+      PlatformProjectOpenProcessor.doOpenProject(projectDir, projectToClose, forceOpenInNewFrame, -1, null, true);
     }
   }
 }

@@ -77,7 +77,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   public Project doOpenProject(@NotNull final VirtualFile virtualFile, @Nullable final Project projectToClose, final boolean forceOpenInNewFrame) {
-    return doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame, -1, null, true);
+    return doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame, -1, null, false);
   }
 
   @Nullable
@@ -86,7 +86,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
                                       final boolean forceOpenInNewFrame,
                                       final int line,
                                       @Nullable ProjectOpenedCallback callback,
-                                      final boolean allowAttach) {
+                                      final boolean isReopen) {
     VirtualFile baseDir = virtualFile;
     if (!baseDir.isDirectory()) {
       baseDir = virtualFile.getParent();
@@ -110,7 +110,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
 
       if (ProjectAttachProcessor.canAttachToProject()) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, !allowAttach);
+        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, isReopen, isReopen ? "Reopen Project" : "Open Project");
         dialog.show();
         if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
           return null;
