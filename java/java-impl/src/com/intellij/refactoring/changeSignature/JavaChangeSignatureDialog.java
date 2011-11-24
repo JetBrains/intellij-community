@@ -349,7 +349,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
               }
             }
           }
-        }.apply(myNameEditor);
+        }.apply(myNameEditor, item.parameter.getName());
 
         if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
           final JPanel additionalPanel = new JPanel(new BorderLayout());

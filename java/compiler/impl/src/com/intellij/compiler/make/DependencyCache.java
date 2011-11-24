@@ -23,6 +23,7 @@ package com.intellij.compiler.make;
 import com.intellij.compiler.DependencyProcessor;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.*;
+import com.intellij.compiler.impl.ExitException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -391,13 +392,14 @@ public class DependencyCache {
    * @return qualified names of the classes that should be additionally recompiled
    */
   public Pair<int[], Set<VirtualFile>> findDependentClasses(CompileContext context, Project project, Set<VirtualFile> compiledWithErrors)
-    throws CacheCorruptedException {
+    throws CacheCorruptedException, ExitException {
 
     markDependencies(context, project, compiledWithErrors);
     return new Pair<int[], Set<VirtualFile>>(myMarkedInfos.toArray(), Collections.unmodifiableSet(myMarkedFiles));
   }
 
-  private void markDependencies(CompileContext context, Project project, final Set<VirtualFile> compiledWithErrors) throws CacheCorruptedException {
+  private void markDependencies(CompileContext context, Project project, final Set<VirtualFile> compiledWithErrors)
+    throws CacheCorruptedException, ExitException {
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("====================Marking dependent files=====================");
@@ -420,7 +422,7 @@ public class DependencyCache {
           findModifiedConstants(qName, changed, removed);
           if (!changed.isEmpty() || !removed.isEmpty()) {
             new ChangedConstantsDependencyProcessor(
-              project, searcher, this, qName, context.getProgressIndicator().isCanceled(),
+              project, searcher, this, qName, context,
               changed.toArray(new ChangedConstantsDependencyProcessor.FieldChangeInfo[changed.size()]),
               removed.toArray(new ChangedConstantsDependencyProcessor.FieldChangeInfo[removed.size()])
             ).run();

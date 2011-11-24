@@ -68,7 +68,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   public static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_PARAMETER_LIST =
     PsiJavaPatterns.psiElement().withParent(
       psiElement(PsiJavaCodeReferenceElement.class).insideStarting(
-        psiElement().withParent(psiElement(PsiParameterList.class).andNot(psiElement(PsiAnnotationParameterList.class)))));
+        psiElement().withTreeParent(
+          psiElement(PsiParameterList.class).andNot(psiElement(PsiAnnotationParameterList.class)))));
 
   private static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
     new ScopeFilter(new AndFilter(

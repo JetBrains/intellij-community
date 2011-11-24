@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
@@ -86,7 +87,7 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
   protected void update(VcsContext context, Presentation presentation) {
     boolean active = isActive(context);
     presentation.setEnabled(active);
-    presentation.setVisible(active);
+    presentation.setVisible(context.getEditor() != null);
   }
 
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,10 +69,6 @@ public final class GitPusher {
   private final Collection<GitRepository> myRepositories;
   private final GitVcsSettings mySettings;
   private final GitPushSettings myPushSettings;
-
-  public static boolean useNewPush() {
-    return Registry.is("git.new.push");
-  }
 
   public static void showPushDialogAndPerformPush(@NotNull final Project project) {
     final GitPushDialog dialog = new GitPushDialog(project);

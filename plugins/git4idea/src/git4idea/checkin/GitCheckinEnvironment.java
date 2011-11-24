@@ -203,11 +203,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       // push
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          if ( GitPusher.useNewPush()) {
-            GitPusher.showPushDialogAndPerformPush(myProject);
-          } else {
-            GitPushActiveBranchesDialog.showDialogForProject(myProject);
-          }
+          GitPusher.showPushDialogAndPerformPush(myProject);
         }
       });
     }

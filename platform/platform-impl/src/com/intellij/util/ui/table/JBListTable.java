@@ -57,6 +57,12 @@ public abstract class JBListTable extends JPanel {
       public boolean isCellEditable(int rowIndex, int columnIndex) {
         return isRowEditable(rowIndex);
       }
+
+      @Override
+      public void addRow() {
+        myLastEditorIndex.set(null);
+        super.addRow();
+      }
     };
     mainTable = new JBTable(model) {
 
