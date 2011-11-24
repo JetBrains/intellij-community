@@ -1178,15 +1178,18 @@ public class GenericsHighlightUtil {
     HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null, holder);
   }
 
+  @Nullable
   public static HighlightInfo checkEnumSuperConstructorCall(PsiMethodCallExpression expr) {
     PsiReferenceExpression methodExpression = expr.getMethodExpression();
     final PsiElement refNameElement = methodExpression.getReferenceNameElement();
     if (refNameElement != null && PsiKeyword.SUPER.equals(refNameElement.getText())) {
       final PsiMember constructor = PsiUtil.findEnclosingConstructorOrInitializer(expr);
-      if (constructor instanceof PsiMethod && constructor.getContainingClass().isEnum()) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                 expr,
-                                                 JavaErrorMessages.message("call.to.super.is.not.allowed.in.enum.constructor"));
+      if (constructor instanceof PsiMethod) {
+        final PsiClass aClass = constructor.getContainingClass();
+        if (aClass != null && aClass.isEnum()) {
+          final String message = JavaErrorMessages.message("call.to.super.is.not.allowed.in.enum.constructor");
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expr, message);
+        }
       }
     }
     return null;
