@@ -104,6 +104,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
+  @Override
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
     invokeCompletion(project, editor);
   }
@@ -171,6 +172,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       public void run() {
 
         Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
@@ -329,12 +331,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
     final Runnable computeRunnable = new Runnable() {
+      @Override
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
           @Override
           public void run() {
             try {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
                 public void run() {
                   startSemaphore.up();
                   ProgressManager.checkCanceled();
@@ -343,6 +347,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                   ProgressManager.checkCanceled();
 
                   data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<CompletionResult>() {
+                    @Override
                     public void consume(final CompletionResult result) {
                       indicator.addItem(result);
                     }
@@ -585,8 +590,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     CompletionContext context;
     PsiFile injected = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
     if (injected != null) {
-      assert hostStartOffset >= injectedLanguageManager.injectedToHost(injected, 0) : "startOffset before injected";
-      assert hostStartOffset <= injectedLanguageManager.injectedToHost(injected, injected.getTextLength()) : "startOffset after injected";
+      TextRange host = injectedLanguageManager.injectedToHost(injected, injected.getTextRange());
+      assert hostStartOffset >= host.getStartOffset() : "startOffset before injected";
+      assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
 
       EditorWindow injectedEditor = (EditorWindow)InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile, hostStartOffset);
       assert injected == injectedEditor.getInjectedFile();
@@ -670,6 +676,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final Runnable runnable = context.getLaterRunnable();
     if (runnable != null) {
       final Runnable runnable1 = new Runnable() {
+        @Override
         public void run() {
           if (!indicator.getProject().isDisposed()) {
             runnable.run();
@@ -722,6 +729,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final WatchingInsertionContext context = new WatchingInsertionContext(indicator, completionChar, items, editor);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final int idEndOffset = Math.max(caretOffset, indicator.getIdentifierEndOffset());
         indicator.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
@@ -768,6 +776,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return context;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
