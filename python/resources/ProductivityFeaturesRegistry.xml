@@ -113,6 +113,12 @@
       min-usage-count="10"
       first-show="2"
       successive-show="3"/>
+    <feature
+        id="editing.completion.changeSorting"
+        tip-file="ChangeSorting.html"
+        min-usage-count="10"
+        first-show="2"
+        successive-show="3"/>
   </group>
 
   <group id="editing">
