@@ -313,7 +313,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(scrollPane, BorderLayout.CENTER);
-    mySplitter.setShowDividerControls(true);
     mySplitter.setFirstComponent(wrapper);
     content.add(mySplitter, BorderLayout.CENTER);
     content.add(myProgressLabel, BorderLayout.SOUTH);
