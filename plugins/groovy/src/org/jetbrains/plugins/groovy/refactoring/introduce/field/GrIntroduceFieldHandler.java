@@ -127,6 +127,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
     final GrField field = (GrField)added.getVariables()[0];
     GrIntroduceFieldSettings.Init i = settings.initializeIn();
+
     if (i == CONSTRUCTOR) {
       initializeInConstructor(context, settings, field);
     }
@@ -146,7 +147,12 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       }
     }
     else {
-      replaceOccurence(field, context.expression);
+      if (PsiUtil.isExpressionStatement(context.expression)) {
+        context.expression.delete();
+      }
+      else {
+        replaceOccurence(field, context.expression);
+      }
     }
     return field;
   }

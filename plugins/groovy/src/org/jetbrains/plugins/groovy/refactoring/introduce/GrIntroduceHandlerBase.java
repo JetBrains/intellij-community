@@ -360,6 +360,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     PsiElement candidate;
     if (occurrences.length == 1 || !settings.replaceAllOccurrences()) {
       candidate = context.expression;
+      while (candidate != null && !PsiUtil.isExpressionStatement(candidate)) candidate = candidate.getParent();
+      return candidate;
     }
     else {
       GroovyRefactoringUtil.sortOccurrences(occurrences);

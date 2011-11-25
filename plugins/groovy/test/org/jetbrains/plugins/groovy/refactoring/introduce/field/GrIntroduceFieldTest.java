@@ -20,6 +20,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init.*;
@@ -64,13 +65,17 @@ public class GrIntroduceFieldTest extends LightCodeInsightFixtureTestCase {
   public void testIntroduceLocalVarByDeclaration() {
     doTest(false, true, false, FIELD_DECLARATION, true, null);
   }
+  
+  public void testReplaceExpressionWithAssignment() {
+    doTest(false, false, false, CUR_METHOD, false, null);
+  }
 
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,
                       final boolean declareFinal,
                       final GrIntroduceFieldSettings.Init initIn,
                       final boolean replaceAll,
-                      final String selectedType) {
+                      @Nullable final String selectedType) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
 
     final PsiType type =
