@@ -138,6 +138,7 @@ public class FunctionParsing extends Parsing {
     }
 
     boolean first = true;
+    boolean afterStarParameter = false;
     while (myBuilder.getTokenType() != endToken) {
       if (first) {
         first = false;
@@ -155,8 +156,15 @@ public class FunctionParsing extends Parsing {
         parseParameterSubList();
         continue;
       }
+      boolean isStarParameter = atAnyOfTokens(PyTokenTypes.MULT, PyTokenTypes.EXP);
       if (!parseParameter(endToken, isLambda)) {
+        if (afterStarParameter) {
+          myBuilder.error("expression expected");
+        }
         break;
+      }
+      if (isStarParameter) {
+        afterStarParameter = true;
       }
     }
 

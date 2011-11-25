@@ -310,6 +310,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testCommaAfterStarArg() {  // PY-4039
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }
