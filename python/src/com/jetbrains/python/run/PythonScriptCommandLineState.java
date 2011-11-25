@@ -21,6 +21,11 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
+  public boolean isMultiprocessDebug() {
+    return myConfig.isMultiprocessMode();
+  }
+
+  @Override
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
     ParametersList parametersList = commandLine.getParametersList();
     ParamsGroup exe_options = parametersList.getParamsGroup(GROUP_EXE_OPTIONS);

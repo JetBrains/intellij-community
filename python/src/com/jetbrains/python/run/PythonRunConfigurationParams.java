@@ -13,4 +13,8 @@ public interface PythonRunConfigurationParams {
   String getScriptParameters();
 
   void setScriptParameters(String scriptParameters);
+
+  boolean isMultiprocessMode();
+
+  void setMultiprocessMode(boolean multiprocess);
 }

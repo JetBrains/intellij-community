@@ -28,11 +28,14 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PythonRunConfiguration extends AbstractPythonRunConfiguration 
-  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider
-{
+public class PythonRunConfiguration extends AbstractPythonRunConfiguration
+  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider {
+  public static final String SCRIPT_NAME = "SCRIPT_NAME";
+  public static final String PARAMETERS = "PARAMETERS";
+  public static final String MULTIPROCESS = "MULTIPROCESS";
   private String myScriptName;
   private String myScriptParameters;
+  private boolean myMultiprocessMode;
 
   protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
@@ -91,16 +94,28 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myScriptParameters = scriptParameters;
   }
 
+  @Override
+  public boolean isMultiprocessMode() {
+    return myMultiprocessMode;
+  }
+
+  @Override
+  public void setMultiprocessMode(boolean multiprocess) {
+    myMultiprocessMode = multiprocess;
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    myScriptName = JDOMExternalizerUtil.readField(element, "SCRIPT_NAME");
-    myScriptParameters = JDOMExternalizerUtil.readField(element, "PARAMETERS");
+    myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
+    myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);
+    myMultiprocessMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MULTIPROCESS));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    JDOMExternalizerUtil.writeField(element, "SCRIPT_NAME", myScriptName);
-    JDOMExternalizerUtil.writeField(element, "PARAMETERS", myScriptParameters);
+    JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
+    JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
+    JDOMExternalizerUtil.writeField(element, MULTIPROCESS, Boolean.toString(myMultiprocessMode));
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -111,6 +126,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     AbstractPythonRunConfiguration.copyParams(source.getBaseParams(), target.getBaseParams());
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
+    target.setMultiprocessMode(source.isMultiprocessMode());
   }
 
   @Override

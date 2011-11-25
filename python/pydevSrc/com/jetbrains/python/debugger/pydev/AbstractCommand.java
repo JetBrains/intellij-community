@@ -62,11 +62,17 @@ public abstract class AbstractCommand {
     }
 
     ProtocolFrame frame = new ProtocolFrame(myCommandCode, sequence, getPayload());
-    myDebugger.sendFrame(frame);
+    if (!myDebugger.sendFrame(frame)) {
+      throw new PyDebuggerException("Couldn't send frame " + myCommandCode);
+    }
     if (!isResponseExpected()) return;
 
     frame = myDebugger.waitForResponse(sequence);
     if (frame == null) {
+      if (!myDebugger.isConnected()) {
+        throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
+
+      }
       throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
     }
     processResponse(frame);
