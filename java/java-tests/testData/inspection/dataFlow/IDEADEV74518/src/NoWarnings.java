@@ -5,12 +5,17 @@ public class NoWarnings {
         int i = 1;
 
         boolean b = true;
-        while (i < 200) {
-            if (b && i == 1) { // Warning here: i == 1 is always true, but it is not so.
+        while (true) {
+            if (b && i == 1) {
                 b = false;
-            } else {
-                i++;
+            }
+            else {
+                i = g();
             }
         }
+    }
+  
+    public int g() {
+      return 1;
     }
 }

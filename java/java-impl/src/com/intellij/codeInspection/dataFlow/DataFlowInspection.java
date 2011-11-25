@@ -198,6 +198,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
       else if (instruction instanceof BranchingInstruction) {
         PsiElement psiAnchor = ((BranchingInstruction)instruction).getPsiAnchor();
+        boolean underBinary = isAtRHSOfBooleanAnd(psiAnchor);
         if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
           if (visitor.canBeNull((BinopInstruction)instruction)) {
             holder.registerProblem(psiAnchor,
@@ -207,7 +208,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           else {
             final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
             holder.registerProblem(psiAnchor,
-                                   InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(true)),
+                                   InspectionsBundle.message(underBinary ? "dataflow.message.constant.condition.whenriched" : "dataflow.message.constant.condition", Boolean.toString(true)),
                                    localQuickFix==null?null:new LocalQuickFix[]{localQuickFix});
           }
         }
@@ -227,7 +228,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
             boolean report = !(psiAnchor.getParent() instanceof PsiAssertStatement) || !DONT_REPORT_TRUE_ASSERT_STATEMENTS || !evaluatesToTrue;
             if (report) {
               final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
-              holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.constant.condition",
+              holder.registerProblem(psiAnchor, InspectionsBundle.message(underBinary ? "dataflow.message.constant.condition.whenriched" : "dataflow.message.constant.condition",
                                                                           Boolean.toString(evaluatesToTrue)),
                                                 localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
             }
@@ -277,6 +278,22 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
       }
     }
+  }
+
+  private static boolean isAtRHSOfBooleanAnd(PsiElement expr) {
+    PsiElement cur = expr;
+
+    while (cur != null && !(cur instanceof PsiMember)) {
+      PsiElement parent = cur.getParent();
+
+      if (parent instanceof PsiBinaryExpression && cur == ((PsiBinaryExpression)parent).getROperand()) {
+        return true;
+      }
+
+      cur = parent;
+    }
+
+    return false;
   }
 
   private static boolean isCompileConstantInIfCondition(PsiElement element) {
