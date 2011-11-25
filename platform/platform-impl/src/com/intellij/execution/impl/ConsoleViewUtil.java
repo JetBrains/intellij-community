@@ -36,6 +36,11 @@ public class ConsoleViewUtil {
   public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     EditorEx editor = (EditorEx) EditorFactory
       .getInstance().createViewer(((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true), project);
+    setupConsoleEditor(editor, foldingOutlineShown, lineMarkerAreaShown);
+    return editor;
+  }
+
+  public static void setupConsoleEditor(EditorEx editor, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
 
     final EditorSettings editorSettings = editor.getSettings();
@@ -51,7 +56,6 @@ public class ConsoleViewUtil {
     editor.setColorsScheme(scheme);
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
-    return editor;
   }
 
   public static DelegateColorScheme updateConsoleColorScheme(EditorColorsScheme scheme) {

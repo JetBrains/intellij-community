@@ -185,7 +185,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        assert myModuleEditors.isEmpty();
+        if (!myModuleEditors.isEmpty()) {
+          LOG.error("module editors was not disposed");
+          myModuleEditors.clear();
+        }
         final Module[] modules = myModuleModel.getModules();
         if (modules.length > 0) {
           for (Module module : modules) {
