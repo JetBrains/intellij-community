@@ -739,7 +739,7 @@
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
     <extensionPoint qualifiedName="Pythonid.javascriptDebugger"
                     interface="com.jetbrains.django.run.PythonJavaScriptDebuggerStarter" />
-
+    <extensionPoint qualifiedName="Pythonid.visitorFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -752,7 +752,6 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
-    <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>
     <runConfigurationExtension implementation="com.jetbrains.python.coverage.PythonCoverageRunConfigurationExtension"/>
 
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
@@ -783,6 +782,11 @@
     <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
     <typeProvider implementation="com.jetbrains.cython.types.CythonTypeProvider"/>
     <importResolver implementation="com.jetbrains.cython.PyCythonImportResolver"/>
+    <visitorFilter language="Cython" implementationClass="com.jetbrains.cython.CythonVisitorFilter"/>
+
+    <!-- Mako -->
+    <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>
+    <visitorFilter language="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoVisitorFilter"/>
   </extensions>
 
   <project-components>

@@ -5,14 +5,12 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.StatementEffectDocstringQuickFix;
 import com.jetbrains.python.actions.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.actions.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +38,7 @@ public class PyStatementEffectInspection extends PyInspection {
     return true;
   }
 
-  private static class Visitor extends PyInspectionVisitor {
+  public static class Visitor extends PyInspectionVisitor {
 
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
@@ -48,7 +46,7 @@ public class PyStatementEffectInspection extends PyInspection {
 
     @Override
     public void visitPyExpressionStatement(final PyExpressionStatement node) {
-      if (PydevConsoleRunner.isInPydevConsole(node) || MakoLanguage._isDisabledFor(node)) {
+      if (PydevConsoleRunner.isInPydevConsole(node)) {
         return;
       }
       final PyExpression expression = node.getExpression();
