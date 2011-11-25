@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.IPyDebugProcess;
@@ -23,6 +24,8 @@ import java.util.*;
  * @author traff
  */
 public class MultiProcessDebugger implements ProcessDebugger {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.MultiProcessDebugger");
+
   private final IPyDebugProcess myDebugProcess;
   private final ServerSocket myServerSocket;
   private final int myTimeoutInMillis;
@@ -354,6 +357,9 @@ public class MultiProcessDebugger implements ProcessDebugger {
             myMultiProcessDebugger.myDebugProcess.init();
 
             debugger.run();
+          }
+          catch (Exception e) {
+            LOG.warn(e);
           }
           finally {
             if (!socket.isClosed()) {

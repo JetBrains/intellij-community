@@ -24,6 +24,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private RawCommandLineEditor myScriptParametersTextField;
   private JPanel myCommonOptionsPlaceholder;
   private JBLabel myScriptParametersLabel;
+  private JCheckBox myAttachDebuggerToSubprocess;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
 
@@ -82,6 +83,14 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   @Override
   public JComponent getAnchor() {
     return anchor;
+  }
+
+  public boolean isMultiprocessMode() {
+    return myAttachDebuggerToSubprocess.isSelected();
+  }
+
+  public void setMultiprocessMode(boolean multiprocess) {
+    myAttachDebuggerToSubprocess.setSelected(multiprocess);
   }
 
   @Override

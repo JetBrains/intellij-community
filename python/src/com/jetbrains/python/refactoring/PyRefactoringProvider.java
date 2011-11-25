@@ -18,7 +18,7 @@ import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHa
 /**
  * @author Alexey.Ivanov
  */
-public class RefactoringProvider extends RefactoringSupportProvider {
+public class PyRefactoringProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new PyIntroduceVariableHandler();

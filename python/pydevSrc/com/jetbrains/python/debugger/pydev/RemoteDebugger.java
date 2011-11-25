@@ -70,6 +70,7 @@ public class RemoteDebugger implements ProcessDebugger {
     try {
       //noinspection SocketOpenedButNotSafelyClosed
       mySocket = myServerSocket.accept();
+      myConnected = true;
     }
     finally {
       //it is closed in close() method on process termination
@@ -86,7 +87,7 @@ public class RemoteDebugger implements ProcessDebugger {
       throw e;
     }
 
-    myConnected = true;
+
   }
 
   @Override
@@ -301,7 +302,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  void sendFrame(final ProtocolFrame frame) {
+  boolean sendFrame(final ProtocolFrame frame) {
     logFrame(frame, true);
 
     try {
@@ -310,6 +311,7 @@ public class RemoteDebugger implements ProcessDebugger {
         final OutputStream os = mySocket.getOutputStream();
         os.write(packed);
         os.flush();
+        return true;
       }
     }
     catch (SocketException se) {
@@ -319,6 +321,7 @@ public class RemoteDebugger implements ProcessDebugger {
     catch (IOException e) {
       LOG.error(e);
     }
+    return false;
   }
 
   private static void logFrame(ProtocolFrame frame, boolean out) {
