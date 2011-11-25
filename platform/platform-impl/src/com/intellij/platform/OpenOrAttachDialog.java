@@ -41,10 +41,10 @@ public class OpenOrAttachDialog extends DialogWrapper {
   private static final String MODE_NEW = "new";
   private final boolean myHideReplace;
 
-  protected OpenOrAttachDialog(Project project, boolean hideReplace) {
+  protected OpenOrAttachDialog(Project project, boolean hideReplace, final String title) {
     super(project);
     myHideReplace = hideReplace;
-    setTitle("Open Project");
+    setTitle(title);
     init();
     MouseAdapter listener = new MouseAdapter() {
       @Override

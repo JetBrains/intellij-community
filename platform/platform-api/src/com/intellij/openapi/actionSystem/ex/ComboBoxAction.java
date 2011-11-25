@@ -104,7 +104,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setMargin(new Insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
         setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 2));
-        setFont(UIUtil.getLabelFont().deriveFont(11.0f));
+        if (!UIUtil.isUnderGTKLookAndFeel()) {
+          setFont(UIUtil.getLabelFont().deriveFont(11.0f));
+        }
       }
       addActionListener(
         new ActionListener() {

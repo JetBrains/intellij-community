@@ -47,8 +47,9 @@ public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   @Nullable
   protected String getProjectPath(final Project project) {
     final ProjectBaseDirectory baseDir = ProjectBaseDirectory.getInstance(project);
-    if (baseDir.getBaseDir() != null) {
-      return FileUtil.toSystemDependentName(baseDir.getBaseDir().getPath());
+    VirtualFile baseDirVFile = baseDir.getBaseDir() != null ? baseDir.getBaseDir() : project.getBaseDir();   
+    if (baseDirVFile != null) {
+      return FileUtil.toSystemDependentName(baseDirVFile.getPath());
     }
     return null;
   }
@@ -56,7 +57,7 @@ public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   protected void doOpenProject(final String projectPath, final Project projectToClose, final boolean forceOpenInNewFrame) {
     final VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath));
     if (projectDir != null) {
-      PlatformProjectOpenProcessor.doOpenProject(projectDir, projectToClose, forceOpenInNewFrame, -1, null, false);
+      PlatformProjectOpenProcessor.doOpenProject(projectDir, projectToClose, forceOpenInNewFrame, -1, null, true);
     }
   }
 }

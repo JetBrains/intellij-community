@@ -100,8 +100,12 @@ public class InjectedLanguageUtil {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }
 
-  public static Place getShreds(PsiFile injectedFile) {
+  public static Place getShreds(@NotNull PsiFile injectedFile) {
     FileViewProvider viewProvider = injectedFile.getViewProvider();
+    return getShreds(viewProvider);
+  }
+
+  public static Place getShreds(@NotNull FileViewProvider viewProvider) {
     if (!(viewProvider instanceof InjectedFileViewProvider)) return null;
     InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)viewProvider;
     return myFileViewProvider.getShreds();

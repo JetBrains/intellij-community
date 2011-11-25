@@ -151,7 +151,10 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
    */
   private boolean recalculateSoftWraps() {
     initListenerIfNecessary();
-    if (myVisibleAreaWidth <= 0 || myEventsStorage.getEvents().isEmpty()) {
+    if (myEventsStorage.getEvents().isEmpty()) {
+      return true;
+    }
+    if (myVisibleAreaWidth <= 0) {
       return false;
     }
 

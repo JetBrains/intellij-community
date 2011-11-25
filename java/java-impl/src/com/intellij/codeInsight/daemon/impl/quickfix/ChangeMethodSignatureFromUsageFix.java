@@ -405,6 +405,17 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
                                                               Set<String> existingNames) {
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, expression, exprType);
     @NonNls String[] names = nameInfo.names;
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+      if (resolve instanceof PsiVariable) {
+        final VariableKind variableKind = codeStyleManager.getVariableKind((PsiVariable)resolve);
+        final String propertyName = codeStyleManager.variableNameToPropertyName(((PsiVariable)resolve).getName(), variableKind);
+        final String parameterName = codeStyleManager.getPrefixByVariableKind(VariableKind.PARAMETER) +
+                                     propertyName +
+                                     codeStyleManager.getSuffixByVariableKind(VariableKind.PARAMETER);
+        names = ArrayUtil.mergeArrays(new String[]{parameterName}, names);
+      }
+    }
     if (names.length == 0) names = new String[]{"param"};
     int suffix = 0;
     while (true) {

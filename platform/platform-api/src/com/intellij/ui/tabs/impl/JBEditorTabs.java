@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
+import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,14 @@ public class JBEditorTabs extends JBTabsImpl {
       if (isSingleRow() && getPosition() == JBTabsPosition.bottom) {
         _y += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT; 
       } else {
-        _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+        if (isSingleRow()) {
+          _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+        } else {
+          TabInfo info = label.getInfo();
+          if (((TableLayout)getEffectiveLayout()).isLastRow(info)) {
+            _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+          }
+        }
       }
     }
     

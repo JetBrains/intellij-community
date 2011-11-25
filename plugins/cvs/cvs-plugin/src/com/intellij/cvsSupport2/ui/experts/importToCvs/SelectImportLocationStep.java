@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,18 @@ import javax.swing.*;
 public class SelectImportLocationStep extends SelectLocationStep {
   private final ImportTree myImportTree;
 
-  public SelectImportLocationStep(String description, 
-                                  CvsWizard wizard, 
-                                  Project project,
-                                  VirtualFile selectedFile) {
-    super(description, wizard, project);
+  public SelectImportLocationStep(String description, CvsWizard wizard, Project project, VirtualFile selectedFile) {
+    super(description, wizard, project, true);
     myImportTree = new ImportTree(project, myFileSystemTree, wizard);
     init();
     JTree tree = myFileSystemTree.getTree();
     tree.setCellRenderer(myImportTree);
-    if (selectedFile != null)
+    if (selectedFile != null && selectedFile.isDirectory()) {
       myFileSystemTree.select(selectedFile, null);
+    }
+    else if (project != null) {
+      myFileSystemTree.select(project.getBaseDir(), null);
+    }
   }
 
   protected AnAction[] getActions() {

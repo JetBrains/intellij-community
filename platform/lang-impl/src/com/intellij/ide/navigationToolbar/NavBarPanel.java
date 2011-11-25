@@ -227,7 +227,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   boolean isSelectedInPopup(Object object) {
     if (isNodePopupActive()) {
-      return myNodePopup.getSelectedValue() == object;
+      return Arrays.asList(myNodePopup.getSelectedValues()).contains(object);
     }
     return false;
   }

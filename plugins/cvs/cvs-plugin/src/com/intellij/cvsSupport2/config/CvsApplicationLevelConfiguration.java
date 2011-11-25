@@ -61,6 +61,7 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
 
   public boolean DO_OUTPUT = false;
   public boolean SEND_ENVIRONMENT_VARIABLES_TO_SERVER = false;
+  public boolean SHOW_PATH = true;
 
   public CvsApplicationLevelConfiguration() {
     ENCODING = DEFAULT;

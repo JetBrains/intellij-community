@@ -48,6 +48,7 @@ public class FileSystemTreeFactoryImpl implements FileSystemTreeFactory{
     action1.registerCustomShortcutSet(original.getShortcutSet(), fileSystemTree.getTree());
     group.add(action1);
     group.addSeparator();
+    group.add(actionManager.getAction("FileChooser.ShowHiddens"));
 
     return group;
   }
