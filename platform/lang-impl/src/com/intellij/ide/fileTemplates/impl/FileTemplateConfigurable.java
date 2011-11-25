@@ -77,7 +77,7 @@ import java.util.ArrayList;
  * Time: 12:46:00 PM
  */
 
-public class FileTemplateConfigurable implements Configurable {
+public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable");
   @NonNls private static final String CONTENT_TYPE_HTML = "text/html";
   @NonNls private static final String EMPTY_HTML = "<html></html>";
@@ -126,7 +126,7 @@ public class FileTemplateConfigurable implements Configurable {
                      new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                             new Insets(0, 2, 0, 2), 0, 0));
       myTopPanel.add(myExtensionField,
-                     new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+                     new GridBagConstraints(3, 0, 1, 1, .3, 0.0, GridBagConstraints.CENTER,
                                             GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 0), 0, 0));
       myExtensionField.setColumns(7);
     }

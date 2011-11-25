@@ -186,6 +186,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
     final GridBagConstraints gc = new GridBagConstraints();
     gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.insets.bottom = 2;
 
     gc.gridx = GridBagConstraints.REMAINDER;
     gc.gridy = 0;
@@ -202,7 +203,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     gc.gridy ++;
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     panel.add(new FieldPanel(specifiedExceptions,
-                             CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
+                             null,
                              CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
                              openProjects.length == 0 ? null :
                              new ActionListener() {

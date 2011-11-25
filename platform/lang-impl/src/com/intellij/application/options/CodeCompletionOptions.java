@@ -19,6 +19,7 @@ package com.intellij.application.options;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CodeCompletionOptions extends BaseConfigurable implements SearchableConfigurable, EditorOptionsProvider {
+public class CodeCompletionOptions extends BaseConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
   private CodeCompletionPanel myPanel;
 
   public boolean isModified() {

@@ -52,6 +52,11 @@ public abstract class JavaSourceRootDetector extends ProjectStructureDetector {
     return DirectoryProcessingResult.PROCESS_CHILDREN;
   }
 
+  @Override
+  public String getDetectorId() {
+    return "Java";
+  }
+
   @NotNull
   protected abstract String getLanguageName();
 

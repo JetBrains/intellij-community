@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -39,7 +40,7 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings("unchecked")
-public class TaskRepositoriesConfigurable extends BaseConfigurable {
+public class TaskRepositoriesConfigurable extends BaseConfigurable implements Configurable.NoScroll {
 
   private JPanel myPanel;
   private JPanel myServersPanel;

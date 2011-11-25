@@ -39,7 +39,7 @@ import java.util.Vector;
  * @author Eugene Zhuravlev
  *         Date: Mar 30, 2004
  */
-public class JavaCompilersTab implements SearchableConfigurable {
+public class JavaCompilersTab implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
   private JPanel myContentPanel;
   private JComboBox myCompiler;

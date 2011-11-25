@@ -95,7 +95,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
+    final JComponent panel = new JPanel(new BorderLayout());
 
     final ListTable table =
       new ListTable(new ListWrappingTableModel(exceptions,
@@ -113,23 +113,9 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
       "bad.exception.declared.ignore.exceptions.declared.in.tests.option"),
                                            this, "ignoreTestCases");
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.insets.left = 4;
-    constraints.insets.right = 4;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(toolbar.getComponent(), constraints);
-
-    constraints.gridy = 1;
-    panel.add(scrollPane, constraints);
-
-    constraints.gridy = 2;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(checkBox, constraints);
+    panel.add(toolbar.getComponent(), BorderLayout.NORTH);
+    panel.add(scrollPane, BorderLayout.CENTER);
+    panel.add(checkBox, BorderLayout.SOUTH);
 
     return panel;
   }

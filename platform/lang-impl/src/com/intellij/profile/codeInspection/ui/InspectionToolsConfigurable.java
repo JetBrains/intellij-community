@@ -38,6 +38,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -50,6 +51,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
@@ -66,7 +68,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable, SearchableConfigurable {
+public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable, SearchableConfigurable,
+                                                                                      Configurable.NoScroll {
   private final CardLayout myLayout = new CardLayout();
   private JPanel myPanel;
 
@@ -83,6 +86,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private JButton myExportButton;
   private JCheckBox myShareProfileCheckBox;
   private JButton myCopyButton;
+  private JBScrollPane myJBScrollPane;
 
   private final ArrayList<String> myDeletedProfiles = new ArrayList<String>();
   protected final InspectionProfileManager myProfileManager;
@@ -225,6 +229,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
     myProjectProfileManager = projectProfileManager;
     myProfileManager = profileManager;
+
+    myJBScrollPane.setBorder(null);
   }
 
   private void addProfile(InspectionProfileImpl model) {

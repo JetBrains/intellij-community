@@ -60,7 +60,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         }
       }
     });
-    myActionsPanel.add(manageRepositoriesBtn);
+    myActionsPanel.add(manageRepositoriesBtn, BorderLayout.EAST);
 
     final JButton httpProxySettingsButton = new JButton(IdeBundle.message("button.http.proxy.settings"));
     httpProxySettingsButton.addActionListener(new ActionListener() {
@@ -73,7 +73,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         }
       }
     });
-    myActionsPanel.add(httpProxySettingsButton, BorderLayout.NORTH);
+    myActionsPanel.add(httpProxySettingsButton, BorderLayout.WEST);
   }
 
   @Override

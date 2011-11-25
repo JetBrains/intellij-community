@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
@@ -120,17 +121,8 @@ public abstract class PluginManagerMain implements Disposable {
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(true), true);
     final JComponent component = myActionToolbar.getComponent();
-    component.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
-    JPanel panel = new JPanel(new BorderLayout()) {
-      @Override
-      public Dimension getMinimumSize() {
-        return getPreferredSize();
-      }
-    };
-    panel.add(component, BorderLayout.CENTER);
-    myToolbarPanel.add(panel, BorderLayout.WEST);
-    myFilter.setMinimumSize(new Dimension(150, -1));
-    myToolbarPanel.add(myFilter, BorderLayout.CENTER);
+    myToolbarPanel.add(component, BorderLayout.WEST);
+    myToolbarPanel.add(myFilter, BorderLayout.EAST);
   }
 
   protected abstract JScrollPane createTable();

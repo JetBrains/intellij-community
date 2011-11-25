@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
@@ -24,7 +25,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class GantConfigurable extends SdkHomeConfigurable {
+public class GantConfigurable extends SdkHomeConfigurable implements Configurable.NoScroll {
 
   public GantConfigurable(Project project) {
     super(project, "Gant");

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Arrays;
 
-public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract {
+public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
   private final Project myProject;
   private final TemplateCommentPanel myPanel;
 

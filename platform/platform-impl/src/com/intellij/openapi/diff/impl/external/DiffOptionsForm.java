@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -31,7 +32,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class DiffOptionsForm implements SearchableConfigurable {
+public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoScroll {
   private JComponent myPanel;
   // Garbage
   private JCheckBox myEnableFolders;

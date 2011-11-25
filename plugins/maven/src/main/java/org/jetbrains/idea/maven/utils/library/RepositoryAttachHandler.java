@@ -67,7 +67,7 @@ public class RepositoryAttachHandler {
   @Nullable
   public static NewLibraryConfiguration chooseLibraryAndDownload(final @NotNull Project project, final @Nullable String initialFilter) {
     final RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, false, initialFilter);
-    dialog.setTitle("Attach Classes from Repository...");
+    dialog.setTitle("Download Library from Maven Repository");
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return null;

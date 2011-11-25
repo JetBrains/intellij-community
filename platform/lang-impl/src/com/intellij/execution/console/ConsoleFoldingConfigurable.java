@@ -1,5 +1,6 @@
 package com.intellij.execution.console;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
@@ -18,7 +19,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class ConsoleFoldingConfigurable implements SearchableConfigurable {
+public class ConsoleFoldingConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainComponent;
   private MyAddDeleteListPanel myPositivePanel;
   private MyAddDeleteListPanel myNegativePanel;
