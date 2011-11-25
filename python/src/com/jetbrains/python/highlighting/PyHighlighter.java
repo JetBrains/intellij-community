@@ -3,6 +3,7 @@ package com.jetbrains.python.highlighting;
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
@@ -108,11 +109,15 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_BUILTIN_NAME = TextAttributesKey.createTextAttributesKey(
     "PY.BUILTIN_NAME", new TextAttributes(KEYWORD.getDefaultAttributes().getForegroundColor(), null, null, null, Font.PLAIN)
   );
+  
+  public static final TextAttributesKey PY_PARAMETER =_copy("PY.PARAMETER", CodeInsightColors.PARAMETER_ATTRIBUTES);
+  public static final TextAttributesKey PY_SELF_PARAMETER = TextAttributesKey.createTextAttributesKey(
+    "PY.SELF_PARAMETER", new TextAttributes(new Color(148, 85, 141), null, null, null, Font.PLAIN));
 
   public static final TextAttributesKey PY_VALID_STRING_ESCAPE = _copy("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
 
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = _copy("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
-
+  
   /**
    * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
    * @param languageLevel

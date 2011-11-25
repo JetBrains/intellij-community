@@ -27,6 +27,7 @@ public class PythonLanguage extends Language {
   {
     _annotators.add(AssignTargetAnnotator.class);
     _annotators.add(ParameterListAnnotator.class);
+    _annotators.add(HighlightingAnnotator.class);
     _annotators.add(ReturnAnnotator.class);
     _annotators.add(TryExceptAnnotator.class);
     _annotators.add(BreakContinueAnnotator.class);
