@@ -119,6 +119,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
   @Nullable
   public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
     try {
+      getBuilder().setUpdate(false);
       final WizardContext wizardContext = new WizardContext(null);
       if (virtualFile.isDirectory()) {
         final String[] supported = getSupportedExtensions();
