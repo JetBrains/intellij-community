@@ -15,10 +15,17 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetector;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 /**
  * @author nik
@@ -41,9 +48,47 @@ public class GroovySourceRootDetector extends JavaSourceRootDetector {
     return new NullableFunction<CharSequence, String>() {
       @Override
       public String fun(CharSequence charSequence) {
-        //todo[nik] implement groovy-specific package name parsing?
-        return JavaSourceRootDetectionUtil.getPackageName(charSequence);
+        return getPackageName(charSequence);
       }
     };
+  }
+
+  @Nullable
+  public static String getPackageName(CharSequence text) {
+    Lexer lexer = new GroovyLexer();
+    lexer.start(text);
+    skipWhitespacesAndComments(lexer);
+    final IElementType firstToken = lexer.getTokenType();
+    if (firstToken != GroovyTokenTypes.kPACKAGE) {
+      return "";
+    }
+    lexer.advance();
+    skipWhitespacesAndComments(lexer);
+
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      while(true){
+        if (lexer.getTokenType() != GroovyTokenTypes.mIDENT) break;
+        buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
+        lexer.advance();
+        skipWhitespacesAndComments(lexer);
+        if (lexer.getTokenType() != GroovyTokenTypes.mDOT) break;
+        buffer.append('.');
+        lexer.advance();
+        skipWhitespacesAndComments(lexer);
+      }
+      String packageName = buffer.toString();
+      if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
+      return packageName;
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
+  }
+
+  private static void skipWhitespacesAndComments(Lexer lexer) {
+    while(TokenSets.ALL_COMMENT_TOKENS.contains(lexer.getTokenType()) || TokenSets.WHITE_SPACES_SET.contains(lexer.getTokenType())) {
+      lexer.advance();
+    }
   }
 }
