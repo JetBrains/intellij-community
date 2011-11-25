@@ -36,7 +36,7 @@ public class GitConfigTest {
   @DataProvider(name = "provider")
   public Object[][] loadData() throws IOException {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-    File dataDir = new File(new File(pluginRoot, "testData"), "config");
+    File dataDir = new File(new File(new File(pluginRoot, "testData"), "config"), "remote");
     File[] tests = dataDir.listFiles();
     Object[][] data = new Object[tests.length][];
     for (int i = 0; i < tests.length; i++) {
