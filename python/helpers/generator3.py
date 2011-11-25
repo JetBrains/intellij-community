@@ -2173,6 +2173,7 @@ def cut_binary_lib_suffix(path, f):
 mac_stdlib_pattern = re.compile("/System/Library/Frameworks/Python\\.framework/Versions/(.+)/lib/python\\1/(.+)")
 mac_skip_modules = ["test", "ctypes/test", "distutils/tests", "email/test",
                     "importlib/test", "json/tests", "lib2to3/tests",
+                    "bsddb/test",
                     "sqlite3/test", "tkinter/test", "idlelib", "antigravity"]
 
 posix_skip_modules = ["vtemodule", "PAMmodule", "_snackmodule", "/quodlibet/_mmkeys"]
