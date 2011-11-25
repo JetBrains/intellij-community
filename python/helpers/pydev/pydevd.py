@@ -674,7 +674,7 @@ class PyDB:
                         source = f.read()
                         self.cmdFactory.makeLoadSourceMessage(seq, source, self)
                     except:
-                        return self.cmdFactory.makeErrorMessage(seq, GetExceptionTracebackStr())
+                        return self.cmdFactory.makeErrorMessage(seq, pydevd_tracing.GetExceptionTracebackStr())
 
                 elif cmd_id == CMD_ADD_DJANGO_EXCEPTION_BREAK:
                     exception = text
@@ -909,33 +909,35 @@ class PyDB:
 
 
 
-    def SetTraceForFrameAndParents(self, frame, also_add_to_passed_frame=True):
+    def SetTraceForFrameAndParents(self, frame, also_add_to_passed_frame=True, overwrite_prev=False):
         dispatch_func = self.trace_dispatch
 
         if also_add_to_passed_frame:
             if frame.f_trace is None:
                 frame.f_trace = dispatch_func
             else:
-                try:
-                    #If it's the trace_exception, go back to the frame trace dispatch!
-                    if frame.f_trace.im_func.__name__ == 'trace_exception':
-                        frame.f_trace = frame.f_trace.im_self.trace_dispatch
-                except AttributeError:
-                    pass
+                self.update_trace(frame, dispatch_func, overwrite_prev)
 
         frame = frame.f_back
         while frame:
-            if frame.f_trace is None:
-                frame.f_trace = dispatch_func
-            else:
-                try:
-                    #If it's the trace_exception, go back to the frame trace dispatch!
-                    if frame.f_trace.im_func.__name__ == 'trace_exception':
-                        frame.f_trace = frame.f_trace.im_self.trace_dispatch
-                except AttributeError:
-                    pass
+            self.update_trace(frame, dispatch_func, overwrite_prev)
+
             frame = frame.f_back
         del frame
+
+    def update_trace(self, frame, dispatch_func, overwrite_prev):
+        if overwrite_prev:
+            frame.f_trace = dispatch_func
+        else:
+            try:
+                #If it's the trace_exception, go back to the frame trace dispatch!
+                if frame.f_trace.im_func.__name__ == 'trace_exception':
+                    frame.f_trace = frame.f_trace.im_self.trace_dispatch
+            except AttributeError:
+                pass
+            frame = frame.f_back
+        del frame
+
 
 
     def run(self, file, globals=None, locals=None):
@@ -1079,7 +1081,7 @@ def initStderrRedirect():
         sys.stderrBuf = pydevd_io.IOBuf()
         sys.stderr = pydevd_io.IORedirector(sys.stderr, sys.stderrBuf) #@UndefinedVariable
 
-def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=5678, suspend=True, trace_only_current_thread=False):
+def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=5678, suspend=True, trace_only_current_thread=False, overwrite_prev_trace=False):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
 
     @param host: the user may specify another host, if the debug server is not in the same machine
@@ -1093,13 +1095,13 @@ def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=
     '''
     _set_trace_lock.acquire()
     try:
-        _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_only_current_thread)
+        _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_only_current_thread, overwrite_prev_trace)
     finally:
         _set_trace_lock.release()
 
 _set_trace_lock = threading.Lock()
 
-def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_only_current_thread):
+def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_only_current_thread, overwrite_prev_trace):
     if host is None:
         import pydev_localhost
         host = pydev_localhost.get_localhost()
@@ -1132,7 +1134,7 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
         if bufferStdErrToServer:
             initStderrRedirect()
 
-        debugger.SetTraceForFrameAndParents(GetFrame(), False)
+        debugger.SetTraceForFrameAndParents(GetFrame(), False, overwrite_prev=overwrite_prev_trace)
 
         t = threadingCurrentThread()
         try:

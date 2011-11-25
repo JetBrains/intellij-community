@@ -79,7 +79,8 @@ def ReplaceSysSetTraceFunc():
         sys.settrace = _InternalSetTrace
 
 def RestoreSysSetTraceFunc():
-    if TracingFunctionHolder._original_tracing is None:
+    if TracingFunctionHolder._original_tracing is not None:
         sys.settrace = TracingFunctionHolder._original_tracing
+        TracingFunctionHolder._original_tracing = None
 
     

@@ -31,10 +31,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -430,9 +427,10 @@ public class PythonSdkType extends SdkType {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           sdkModificator.removeAllRoots();
-          updateSdkRootsFromSysPath(sdkModificator, indicator, (PythonSdkType)sdk.getSdkType());
+          updateSdkRootsFromSysPath(sdkModificator, indicator);
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
             new PySkeletonRefresher(sdk, getSkeletonsPath(sdk.getHomePath()), indicator).regenerateSkeletons(null);
+            PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
           }
           //sdkModificator.commitChanges() must happen outside, in dispatch thread.
         }
@@ -459,7 +457,7 @@ public class PythonSdkType extends SdkType {
 
   private final static Pattern PYTHON_NN_RE = Pattern.compile("python\\d\\.\\d.*");
 
-  public static void updateSdkRootsFromSysPath(SdkModificator sdkModificator, ProgressIndicator indicator, PythonSdkType sdkType) {
+  public static void updateSdkRootsFromSysPath(SdkModificator sdkModificator, ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
     boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
 
@@ -471,7 +469,7 @@ public class PythonSdkType extends SdkType {
       indicator.setText("Adding library roots");
     }
     // Add folders from sys.path
-    final List<String> paths = sdkType.getSysPath(bin_path);
+    final List<String> paths = getSysPath(bin_path);
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
       for (String path : paths) {
@@ -507,12 +505,11 @@ public class PythonSdkType extends SdkType {
           }
         }
       }
-      sdkType.addHardcodedPaths(sdkModificator);
+      addHardcodedPaths(sdkModificator);
     }
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
-  protected void addHardcodedPaths(SdkModificator sdkModificator) {
+  protected static void addHardcodedPaths(SdkModificator sdkModificator) {
     // Add python-django installed as package in Linux
     // NOTE: fragile and arbitrary
     if (SystemInfo.isLinux) {
@@ -654,7 +651,6 @@ public class PythonSdkType extends SdkType {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
     final List<String> failed_sdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final List<Sdk> sdkList = getAllSdks();
     List<String> sdk_errors;
     Ref<Boolean> migration_flag = new Ref<Boolean>(false);
     final String homePath = sdk.getHomePath();
@@ -707,9 +703,9 @@ public class PythonSdkType extends SdkType {
   public static boolean isStdLib(VirtualFile vFile, Sdk pythonSdk) {
     if (pythonSdk != null) {
       final VirtualFile libDir = PyClassNameIndex.findLibDir(pythonSdk);
-      if (libDir != null && VfsUtil.isAncestor(libDir, vFile, false)) {
+      if (libDir != null && VfsUtilCore.isAncestor(libDir, vFile, false)) {
         final VirtualFile sitePackages = libDir.findChild("site-packages");
-        if (sitePackages != null && VfsUtil.isAncestor(sitePackages, vFile, false)) {
+        if (sitePackages != null && VfsUtilCore.isAncestor(sitePackages, vFile, false)) {
           return false;
         }
         return true;

@@ -7,11 +7,11 @@ def <info descr="null" type="INFORMATION" foreground="0xff0000" background="0x00
   pass
 
 class <info descr="null" type="INFORMATION" foreground="0x0000ff" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">Moo</info>:
-  def <info descr="null" type="INFORMATION" foreground="0x00ff00" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">__init__</info>(self):
+  def <info descr="null" type="INFORMATION" foreground="0x00ff00" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">__init__</info>(<info descr="null">self</info>):
     pass
   
-  def <info descr="null" type="INFORMATION" foreground="0xff0000" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">doodle</info>(self):
+  def <info descr="null" type="INFORMATION" foreground="0xff0000" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">doodle</info>(<info descr="null">self</info>):
     pass
 
-  def <info descr="null" type="INFORMATION" foreground="0xff0000" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">__made_up__</info>(self):
+  def <info descr="null" type="INFORMATION" foreground="0xff0000" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">__made_up__</info>(<info descr="null">self</info>):
     return <info type="INFORMATION">None</info>

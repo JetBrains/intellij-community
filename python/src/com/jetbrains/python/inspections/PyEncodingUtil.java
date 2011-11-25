@@ -24,32 +24,32 @@ public class PyEncodingUtil {
   public static String[] ENCODING_FORMAT_PATTERN = new String[]{"# coding=%s", "# -*- coding: %s -*-", "# vim: set fileencoding=%s :"};
 
   public static JComponent createEncodingOptionsPanel(JComboBox defaultEncoding, JComboBox encodingFormat) {
-    GridBagLayout layout = new GridBagLayout();
-    final JPanel optionsPanel = new JPanel();
-    optionsPanel.setLayout(layout);
-
+    final JPanel optionsPanel = new JPanel(new GridBagLayout());
     GridBagConstraints c = new GridBagConstraints();
-    c.anchor = GridBagConstraints.WEST;
+
+    c.anchor = GridBagConstraints.BASELINE_LEADING;
+    c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
     c.gridy = 0;
+    c.weightx = 0;
     optionsPanel.add(new JLabel("Select default encoding: "), c);
-    GridBagConstraints c1 = new GridBagConstraints();
-    c1.anchor = GridBagConstraints.WEST;
-    c1.gridx = 1;
-    c1.gridy = 0;
-    c1.fill = GridBagConstraints.HORIZONTAL;
-    optionsPanel.add(defaultEncoding, c1);
+    
+    c.gridx = 1;
+    c.gridy = 0;
+    c.weightx = 1;
+    optionsPanel.add(defaultEncoding, c);
 
-    GridBagConstraints c2 = new GridBagConstraints();
-    c2.anchor = GridBagConstraints.WEST;
-    c2.gridx = 0;
-    c2.gridy = 1;
-    optionsPanel.add(new JLabel("Encoding comment format "), c2);
-    GridBagConstraints c3 = new GridBagConstraints();
-    c3.anchor = GridBagConstraints.WEST;
-    c3.gridx = 1;
-    c3.gridy = 1;
-    optionsPanel.add(encodingFormat, c3);
+    c.gridx = 0;
+    c.gridy = 1;
+    c.weightx = 0;
+    optionsPanel.add(new JLabel("Encoding comment format:"), c);
+    
+    c.gridx = 1;
+    c.gridy = 1;
+    c.weightx = 1;
+    c.weighty = 1;
+    optionsPanel.add(encodingFormat, c);
+    
     return optionsPanel;
   }
 }
