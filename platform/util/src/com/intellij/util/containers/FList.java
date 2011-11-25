@@ -15,7 +15,7 @@
  */
 package com.intellij.util.containers;
 
-import java.util.AbstractList;
+import java.util.*;
 
 /**
  * Immutable list in functional style
@@ -28,6 +28,8 @@ public class FList<E> extends AbstractList<E> {
   private FList<E> myTail;
   private int mySize;
 
+  private List<E> myReversedList;
+  
   private FList() {
   }
 
@@ -79,6 +81,35 @@ public class FList<E> extends AbstractList<E> {
     return this;
   }
 
+  @Override
+  public Iterator<E> iterator() {
+    return new Iterator<E>() {
+      
+      private FList<E> list = FList.this;
+      
+      @Override
+      public boolean hasNext() {
+        return list.size() > 0;
+      }
+
+      @Override
+      public E next() {
+        if (list.size() == 0) throw new NoSuchElementException();
+        
+        E res = list.myHead;
+        list = list.getTail();
+        assert list != null;
+        
+        return res;
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
+
   public FList<E> getTail() {
     return myTail;
   }
@@ -86,6 +117,18 @@ public class FList<E> extends AbstractList<E> {
   @Override
   public int size() {
     return mySize;
+  }
+
+  public List<E> getReversedList() {
+    List<E> res = myReversedList;
+    if (res == null) {
+      res = new ArrayList<E>(this);
+      Collections.reverse(res);
+
+      myReversedList = res;
+    }
+    
+    return res;
   }
 
   public static <E> FList<E> emptyList() {
