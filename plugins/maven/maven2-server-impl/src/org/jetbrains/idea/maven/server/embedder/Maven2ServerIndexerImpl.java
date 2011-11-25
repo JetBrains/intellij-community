@@ -72,7 +72,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
   }
 
   public int createIndex(@NotNull String indexId,
-                         @Nullable String repositoryId,
+                         @NotNull String repositoryId,
                          @Nullable File file,
                          @Nullable String url,
                          @NotNull File indexDir) throws MavenServerIndexerException {

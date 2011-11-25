@@ -35,7 +35,7 @@ import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
+public class MavenServerEmbedderTest extends MavenImportingTestCase {
   private MavenEmbedderWrapper myEmbedder;
   private Maven2ServerEmbedderImpl myEmbedderImpl;
 
