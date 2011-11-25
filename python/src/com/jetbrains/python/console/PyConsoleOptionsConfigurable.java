@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author traff
  */
-public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.Abstract {
+public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll{
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE = "reference.project.settings.console";
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON = "reference.project.settings.console.python";
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE_DJANGO = "reference.project.settings.console.django";

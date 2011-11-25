@@ -1,39 +1,34 @@
 package com.jetbrains.python.configuration;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.facet.impl.ui.FacetErrorPanel;
+import com.intellij.facet.ui.FacetEditorValidator;
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.util.FileContentUtil;
-import com.jetbrains.django.lang.template.DjangoTemplateFileType;
-import com.jetbrains.python.templateLanguages.TemplatesConfigurationsModel;
-import com.jetbrains.python.templateLanguages.TemplatesService;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
+import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import com.jetbrains.rest.ReSTService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -48,6 +43,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   private final PyDocumentationSettings myDocumentationSettings;
   private TextFieldWithBrowseButton myWorkDir;
   private JCheckBox txtIsRst;
+  private JPanel myErrorPanel;
 
   public PyIntegratedToolsConfigurable(Project project) {
     myProject = project;
@@ -59,7 +55,40 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     ReSTService service = ReSTService.getInstance(myProject);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
+    initErrorValidation();
   }
+
+  private void initErrorValidation() {
+    FacetErrorPanel facetErrorPanel = new FacetErrorPanel();
+    myErrorPanel.add(facetErrorPanel.getComponent(), BorderLayout.CENTER);
+
+    facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
+      @Override
+      public ValidationResult check() {
+        Module[] modules = ModuleManager.getInstance(myProject).getModules();
+        if (modules.length == 0) return ValidationResult.OK;
+        final Sdk sdk = PythonSdkType.findPythonSdk(modules[0]);
+        if (sdk != null) {
+          if (myTestRunnerComboBox.getSelectedItem() == PythonTestConfigurationsModel.PY_TEST_NAME) {
+            if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk.getHomePath()))
+              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "py.test"));
+          }
+          else if (myTestRunnerComboBox.getSelectedItem() == PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) {
+            if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk.getHomePath()))
+              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"));
+          }
+          else if (myTestRunnerComboBox.getSelectedItem() == PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME) {
+            if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdk.getHomePath()))
+              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "attest"));
+          }
+        }
+        return ValidationResult.OK;
+      }
+    }, myTestRunnerComboBox);
+
+    facetErrorPanel.getValidatorsManager().validate();
+  }
+
 
   @Nls
   @Override

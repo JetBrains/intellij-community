@@ -74,7 +74,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Override
   public Icon getIcon(int flags) {
-    return PlatformIcons.METHOD_ICON;
+    return getProperty() != null ? PlatformIcons.PROPERTY_ICON : PlatformIcons.METHOD_ICON;
   }
 
   @Nullable

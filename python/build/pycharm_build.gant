@@ -500,6 +500,12 @@ def layoutMac(Map args, String target) {
     dir("bin") {
       fileset(dir: "$home/bin", includes: "*.jnilib")
     }
+
+    dir("skeletons") {
+      fileset(dir: "$home/python/skeletons") {
+        include(name: "skeletons-mac*.zip")
+      }
+    }
   }
 
   args.buildNumber = buildName
@@ -529,7 +535,13 @@ def layoutWin(String target) {
         include(name: "pycharm.bat")
       }
     }
+    dir("skeletons") {
+      fileset(dir: "$home/python/skeletons") {
+        include(name: "skeletons-win*.zip")
+      }
+    }
   }
+
   ant.replace(file: "$target/bin/pycharm.bat") {
     replacefilter(token: "@@system_selector@@", value: system_selector)
   }

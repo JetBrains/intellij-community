@@ -238,6 +238,11 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
   @NotNull
   public CallArgumentsMapping analyzeCall(PyResolveContext resolveContext) {
+    return analyzeCall(resolveContext, 0);
+  }
+
+  @NotNull
+  public CallArgumentsMapping analyzeCall(PyResolveContext resolveContext, int offset) {
     final CallArgumentsMappingImpl ret = new CallArgumentsMappingImpl(this);
     // declaration-based checks
     // proper arglist is: [positional,...][name=value,...][*tuple,][**dict]
@@ -245,7 +250,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     // following the spec: http://docs.python.org/ref/calls.html
     PyCallExpression call = getCallExpression();
     if (call != null) {
-      PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(resolveContext);
+      PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(resolveContext, offset);
       if (resolved_callee != null) ret.mapArguments(resolved_callee, resolveContext.getTypeEvalContext());
     }
     return ret;

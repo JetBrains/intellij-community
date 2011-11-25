@@ -22,6 +22,7 @@ public class IntroduceOperation {
   private String myName;
   private EnumSet<IntroduceHandler.InitPlace> myAvailableInitPlaces = EnumSet.of(IntroduceHandler.InitPlace.SAME_METHOD);
   private IntroduceHandler.InitPlace myInitPlace = IntroduceHandler.InitPlace.SAME_METHOD;
+  private IntroduceHandler.InitPlace myInplaceInitPlace = IntroduceHandler.InitPlace.SAME_METHOD;
   private Boolean myReplaceAll;
   private PsiElement myElement;
   private PyExpression myInitializer;
@@ -116,5 +117,13 @@ public class IntroduceOperation {
 
   public void setSuggestedNames(Collection<String> suggestedNames) {
     mySuggestedNames = suggestedNames;
+  }
+
+  public IntroduceHandler.InitPlace getInplaceInitPlace() {
+    return myInplaceInitPlace;
+  }
+
+  public void setInplaceInitPlace(IntroduceHandler.InitPlace inplaceInitPlace) {
+    myInplaceInitPlace = inplaceInitPlace;
   }
 }

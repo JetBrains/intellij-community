@@ -2,16 +2,20 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.inspections.PythonVisitorFilter;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyReferenceOwner;
@@ -56,7 +60,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof PyElementVisitor) {
+    if (visitor instanceof PyElementVisitor && isAcceptedFor(this, visitor.getClass())) {
       acceptPyVisitor(((PyElementVisitor)visitor));
     }
     else {
@@ -66,6 +70,20 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyElement(this);
+  }
+
+  public static boolean isAcceptedFor(@NotNull final PsiElement element, @NotNull Class clazz) {
+    PsiFile file = PsiTreeUtil.getNonStrictParentOfType(element, PsiFile.class);
+    if (file != null) {
+      Language lang = file.getLanguage();
+      FileViewProvider vProvider = file.getViewProvider();
+      if (vProvider instanceof TemplateLanguageFileViewProvider) {
+        lang = vProvider.getBaseLanguage();
+      }
+      PythonVisitorFilter filter = PythonVisitorFilter.INSTANCE.forLanguage(lang);
+      return filter != null ? filter.isSupported(clazz, element) : true;
+    }
+    return true;
   }
 
   @NotNull
