@@ -144,8 +144,36 @@ def new_spawnve(mode, file, args, env):
     import os
     return os.original_spawnve(mode, file, patch_args(args), env)
 
+def new_fork():
+    import os
+    import sys
+    child_process = os.original_fork()
+    if child_process == 0:
+        argv = sys.original_argv[:]
+        import pydevd
+        setup = pydevd.processCommandLine(argv)
+
+
+#        pydevd.debugger.FinishDebuggingSession()
+#        for t in pydevd.threadingEnumerate():
+#            if hasattr(t, 'doKillPydevThread'):
+#                t.killReceived = True
+        import pydevd_tracing
+        pydevd_tracing.RestoreSysSetTraceFunc()
+
+        pydevd.dispatcher = pydevd.Dispatcher()
+        pydevd.dispatcher.connect(setup)
+
+        if pydevd.dispatcher.port is not None:
+            port = pydevd.dispatcher.port
+            pydevd.connected = False
+            pydevd.settrace(setup['client'], port=port, suspend=False, overwrite_prev_trace=True)
+    return child_process
+
 def patch_new_process_functions():
     import os
     os.original_spawnve = os.spawnve
     os.spawnve = new_spawnve
+    os.original_fork = os.fork
+    os.fork = new_fork
 
