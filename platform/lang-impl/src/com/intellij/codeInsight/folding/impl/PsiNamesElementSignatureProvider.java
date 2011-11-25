@@ -76,6 +76,12 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
           return null;
         }
       }
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format(
+          "Finished processing of '%s' provider because all of its top-level children have been processed: %s",
+          getClass().getName(), Arrays.toString(children)
+        ));
+      }
       return result;
     }
     else if (DOC_COMMENT_MARKER.equals(elementMarker)) {
@@ -141,12 +147,16 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
   private static StringBuilder getSignature(@NotNull PsiElement element, @Nullable StringBuilder buffer) {
     if (element instanceof PsiNamedElement) {
       PsiNamedElement named = (PsiNamedElement)element;
-      int index = getChildIndex(named, element.getParent(), named.getName(), (Class<PsiNamedElement>)named.getClass());
+      final String name = named.getName();
+      if (name == null) {
+        return null;
+      }
+      int index = getChildIndex(named, element.getParent(), name, (Class<PsiNamedElement>)named.getClass());
       StringBuilder bufferToUse = buffer;
       if (bufferToUse == null) {
         bufferToUse = new StringBuilder();
       }
-      bufferToUse.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(named.getName())
+      bufferToUse.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(name)
         .append(ELEMENT_TOKENS_SEPARATOR).append(index);
       return bufferToUse;
     }
