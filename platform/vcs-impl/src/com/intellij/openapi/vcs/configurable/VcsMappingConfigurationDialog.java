@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
-import com.sun.xml.internal.ws.util.StringUtils;
 
 import javax.swing.*;
 import java.awt.*;
