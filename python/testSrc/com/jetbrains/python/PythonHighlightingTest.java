@@ -70,7 +70,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
   
   public void testBreakOutsideOfLoop() {
-    doTest();
+    doTest(true, false);
   }
 
   public void testReturnOutsideOfFunction() {
