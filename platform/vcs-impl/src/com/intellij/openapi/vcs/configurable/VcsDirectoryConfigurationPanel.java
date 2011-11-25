@@ -21,10 +21,12 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
@@ -163,7 +165,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
-    myProjectMessage = VcsDirectoryMapping.PROJECT_CONSTANT + " - " + VcsMappingConfigurationDialog.getProjectMessage(myProject).replace('\n', ' ');
+    myProjectMessage = "<html>" + StringUtil.escapeXml(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " + VcsMappingConfigurationDialog.getProjectMessage(myProject).replace('\n', ' ') + "</html>";
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
@@ -320,20 +322,22 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     panel.add(scroll, BorderLayout.CENTER);
     final JPanel wrapper = new JPanel(new BorderLayout());
     myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
-    final JLabel label = new JLabel(myProjectMessage);
-    label.setForeground(UIUtil.getInactiveTextColor());
-    label.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+    final JBLabel label = new JBLabel(myProjectMessage);
+    label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    label.setFontColor(UIUtil.FontColor.BRIGHTER);
+    label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 0));
     wrapper.add(label, BorderLayout.CENTER);
-    final JLabel noteLabel = new JLabel("File texts bigger than " + VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
-    noteLabel.setForeground(UIUtil.getInactiveTextColor());
+    final JBLabel noteLabel = new JBLabel("File texts bigger than " + VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
+    noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
+    noteLabel.setBorder(BorderFactory.createEmptyBorder(2, 25, 5, 0));
     final JPanel twoPanel = new JPanel(new BorderLayout());
     twoPanel.add(myBaseRevisionTexts, BorderLayout.NORTH);
     twoPanel.add(noteLabel, BorderLayout.SOUTH);
     final JPanel wr2 = new JPanel(new BorderLayout());
     wr2.add(twoPanel, BorderLayout.WEST);
 
-    myBaseRevisionTexts.setBorder(BorderFactory.createEmptyBorder(5,5,0,0));
-    noteLabel.setBorder(BorderFactory.createEmptyBorder(0,5,5,0));
+    myBaseRevisionTexts.setBorder(BorderFactory.createEmptyBorder(5,0,0,0));
 
     final JPanel wr3 = new JPanel(new BorderLayout());
     wr3.add(wr2, BorderLayout.NORTH);

@@ -43,7 +43,7 @@ import java.util.List;
 
 public class CompilerConfigurable implements SearchableConfigurable.Parent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerConfigurable");
-  
+
   private final Project myProject;
   private static final Icon ICON = IconLoader.getIcon("/general/configurableCompiler.png");
   private final CompilerUIConfigurable myCompilerUIConfigurable;
@@ -111,13 +111,14 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
       CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
       final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
 
-      final ExcludedEntriesConfigurable excludes = new ExcludedEntriesConfigurable(myProject, descriptor, compilerConfiguration.getExcludedEntriesConfiguration()) {
-        public void apply() {
-          super.apply();
-          FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
-          //ProjectView.getInstance(myProject).refresh();
-        }
-      };
+      final ExcludedEntriesConfigurable excludes =
+        new ExcludedEntriesConfigurable(myProject, descriptor, compilerConfiguration.getExcludedEntriesConfiguration()) {
+          public void apply() {
+            super.apply();
+            FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
+            //ProjectView.getInstance(myProject).refresh();
+          }
+        };
 
       kids.add(createExcludesWrapper(excludes));
 
@@ -145,50 +146,50 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
 
       additional.add(0, new RmicConfigurable(RmicConfiguration.getSettings(myProject)));
       additional.add(0, new AnnotationProcessorsConfigurable(myProject));
-      additional.add(0, new JavaCompilersTab(myProject, compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler()));
+      additional.add(0, new JavaCompilersTab(myProject, compilerConfiguration.getRegisteredJavaCompilers(),
+                                             compilerConfiguration.getDefaultCompiler()));
 
       kids.addAll(additional);
       myKids = kids.toArray(new Configurable[kids.size()]);
     }
 
     return myKids;
-
   }
 
   private static Configurable createExcludesWrapper(final ExcludedEntriesConfigurable excludes) {
-    return new SearchableConfigurable(){
-        @Nls
-        public String getDisplayName() {
-          return "Excludes";
-        }
+    return new SearchableConfigurable() {
+      @Nls
+      public String getDisplayName() {
+        return "Excludes";
+      }
 
-        public Icon getIcon() {
-          return null;
-        }
+      public Icon getIcon() {
+        return null;
+      }
 
-        public String getHelpTopic() {
-          return "reference.projectsettings.compiler.excludes";
-        }
+      public String getHelpTopic() {
+        return "reference.projectsettings.compiler.excludes";
+      }
 
-        public JComponent createComponent() {
-          return excludes.createComponent();
-        }
+      public JComponent createComponent() {
+        return excludes.createComponent();
+      }
 
-        public void apply() {
-          excludes.apply();
-        }
+      public void apply() {
+        excludes.apply();
+      }
 
-        public boolean isModified() {
-          return excludes.isModified();
-        }
+      public boolean isModified() {
+        return excludes.isModified();
+      }
 
-        public void reset() {
-          excludes.reset();
-        }
+      public void reset() {
+        excludes.reset();
+      }
 
-        public void disposeUIResources() {
-          excludes.disposeUIResources();
-        }
+      public void disposeUIResources() {
+        excludes.disposeUIResources();
+      }
 
       @NotNull
       public String getId() {

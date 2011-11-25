@@ -17,6 +17,7 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -29,7 +30,7 @@ import javax.swing.*;
  * User: anna
  * Date: Mar 17, 2005
  */
-public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable{
+public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private CustomizableActionsPanel myPanel;
 
   public JComponent createComponent() {

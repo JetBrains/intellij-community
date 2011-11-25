@@ -22,6 +22,7 @@ import com.intellij.compiler.MalformedPatternException;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class CompilerUIConfigurable implements SearchableConfigurable {
+public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
   private final Project myProject;
 

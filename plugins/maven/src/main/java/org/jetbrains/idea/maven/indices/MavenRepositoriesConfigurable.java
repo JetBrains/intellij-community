@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -55,7 +56,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenRepositoriesConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class MavenRepositoriesConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;

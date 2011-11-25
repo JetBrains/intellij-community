@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -52,7 +53,7 @@ import java.util.List;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class TodoConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   /*
    * UI resources
    */
@@ -373,12 +374,11 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
 
     //
     myPanel = new JPanel(new GridBagLayout());
-    myPanel.add(patternsPanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+    myPanel.add(patternsPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                                                       new Insets(0,0,0,0), 0, 0));
-    myPanel.add(filtersPanel, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+    myPanel.add(filtersPanel, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                                                      new Insets(0,0,0,0), 0, 0));
 
-    myPanel.setPreferredSize(new Dimension(Math.max(700, myPanel.getPreferredSize().width), myPanel.getPreferredSize().height));
     return myPanel;
   }
 
