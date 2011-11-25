@@ -20,6 +20,7 @@ import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.DispatchThreadProgressWindow;
@@ -43,7 +44,7 @@ import javax.swing.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GuiDesignerConfigurable implements SearchableConfigurable {
+public final class GuiDesignerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiDesignerConfigurable");
   private final Project myProject;
   private MyGeneralUI myGeneralUI;

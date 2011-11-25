@@ -23,10 +23,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
@@ -34,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class FileAssociationsConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable {
+public class FileAssociationsConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable, Configurable.NoScroll {
     private final Project myProject;
     private final UIState myState;
     private AssociationsEditor myEditor;

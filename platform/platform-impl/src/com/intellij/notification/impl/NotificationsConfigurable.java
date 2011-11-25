@@ -29,7 +29,7 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class NotificationsConfigurable implements Configurable, SearchableConfigurable, OptionalConfigurable {
+public class NotificationsConfigurable implements Configurable, SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
   public static final String DISPLAY_NAME = "Notifications";
   private NotificationsConfigurablePanel myComponent;
 

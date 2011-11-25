@@ -47,14 +47,14 @@ public class MavenImportingSettingsForm {
   private JCheckBox myDownloadDocsCheckBox;
 
   private JPanel myAdditionalSettingsPanel;
+  private JPanel mySeparateModulesDirPanel;
 
   public MavenImportingSettingsForm(boolean isImportStep) {
     if (!isImportStep) {
       mySearchRecursivelyCheckBox.setVisible(false);
       myProjectFormatLabel.setVisible(false);
       myProjectFormatComboBox.setVisible(false);
-      mySeparateModulesDirCheckBox.setVisible(false);
-      mySeparateModulesDirChooser.setVisible(false);
+      mySeparateModulesDirPanel.setVisible(false);
     }
 
     ActionListener listener = new ActionListener() {

@@ -21,6 +21,7 @@ import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class GroovyCompilerConfigurable implements SearchableConfigurable {
+public class GroovyCompilerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JTextField myHeapSize;
   private JPanel myMainPanel;
   private JPanel myExcludesPanel;

@@ -131,28 +131,9 @@ public class ToolEditorDialog extends DialogWrapper {
     panel.add(myDescriptionField, constr);
 
     // check boxes
-    JPanel panel0 = new JPanel(new GridBagLayout());
-    constr = new GridBagConstraints();
-    constr.gridheight = 2;
-    panel0.add(getShowInPanel(), constr);
-    constr = new GridBagConstraints();
-    constr.gridx = 1;
-    constr.weightx = 1.0;
-    constr.anchor = GridBagConstraints.NORTHEAST;
-    constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.insets = new Insets(5, 10, 0, 0);
-    panel0.add(myUseConsoleCheckbox, constr);
-    constr = new GridBagConstraints();
-    constr.gridx = 1;
-    constr.gridy = 1;
-    constr.weightx = 1.0;
-    constr.anchor = GridBagConstraints.NORTHEAST;
-    constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.insets = new Insets(0, 10, 0, 0);
-    panel0.add(mySynchronizedAfterRunCheckbox, constr);
-
-    // Placed temporarily here, might be moved elsewhere in the future.
-    panel0.add(myOutputFiltersButton);
+    JPanel panel0 = new JPanel(new BorderLayout());
+    panel0.add(getOptionsPanel(), BorderLayout.NORTH);
+    panel0.add(getShowInPanel(), BorderLayout.SOUTH);
 
     constr = new GridBagConstraints();
     constr.gridy = 4;
@@ -161,14 +142,6 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.weightx = 1.0;
     constr.insets = new Insets(5, 0, 0, 0);
     panel.add(panel0, constr);
-
-    constr = new GridBagConstraints();
-    constr.gridx = 0;
-    constr.gridy = 6;
-    constr.gridwidth = 2;
-    constr.anchor = GridBagConstraints.WEST;
-    constr.insets = new Insets(10, 0, 0, 0);
-    panel.add(Box.createVerticalStrut(10), constr);
 
     // custom panels (put into same place)
     constr = new GridBagConstraints();
@@ -461,12 +434,20 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   private JPanel getShowInPanel() {
-    JPanel panel = new JPanel(new GridLayout(2, 2, 10, 3));
+    JPanel panel = new JPanel(new GridLayout(1, 4, 10, 0));
     panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.menu.group"), false, true, true));
     panel.add(myShowInMainMenuCheckbox);
     panel.add(myShowInEditorCheckbox);
     panel.add(myShowInProjectTreeCheckbox);
     panel.add(myShowInSearchResultsPopupCheckbox);
+    return panel;
+  }
+
+  private JPanel getOptionsPanel() {
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    panel.add(mySynchronizedAfterRunCheckbox);
+    panel.add(myUseConsoleCheckbox);
+    panel.add(myOutputFiltersButton);
     return panel;
   }
 
