@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -20,7 +21,7 @@ import java.util.HashSet;
 /**
  * @author yole
  */
-public class PythonDocumentationConfigurable implements SearchableConfigurable {
+public class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
 
   @NotNull
