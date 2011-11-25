@@ -35,7 +35,7 @@ public class PyExecutionStack extends XExecutionStack {
   @Override
   public void computeStackFrames(int firstFrameIndex, XStackFrameContainer container) {
     if (myThreadInfo.getState() != PyThreadInfo.State.SUSPENDED) {
-      container.errorOccured("Frames not available in non-suspended state");
+      container.errorOccurred("Frames not available in non-suspended state");
       return;
     }
 
