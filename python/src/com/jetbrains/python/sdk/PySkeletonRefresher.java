@@ -437,8 +437,6 @@ public class PySkeletonRefresher {
    * (Re-)generates skeletons for all binary python modules. Up-to-date skeletons are not regenerated.
    * Does one module at a time: slower, but avoids certain conflicts.
    *
-   * @param binaryPath   where to find interpreter.
-   * @param checker   to check if a skeleton is up to date.
    * @param binaries  output of generator3 -L, list of prospective binary modules
    * @return blacklist data; whatever was not generated successfully is put here.
    */
