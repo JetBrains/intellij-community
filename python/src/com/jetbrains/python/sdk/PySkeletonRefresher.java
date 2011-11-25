@@ -138,7 +138,6 @@ public class PySkeletonRefresher {
   ) {
     List<String> error_list = new SmartList<String>();
     String home_path = mySdk.getHomePath();
-    final String parent_dir = new File(home_path).getParent();
     final File skel_dir = new File(mySkeletonsPath);
     if (!skel_dir.exists()) skel_dir.mkdirs();
     final String readable_path = PythonSdkType.shortenDirName(home_path);
@@ -148,26 +147,7 @@ public class PySkeletonRefresher {
     indicate(PyBundle.message("sdk.gen.querying.$0", readable_path));
     // get generator version and binary libs list in one go
 
-    long start_time = System.currentTimeMillis();
-    final ProcessOutput run_result = SdkUtil.getProcessOutput(
-      parent_dir,
-      new String[]{home_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", getExtraSyspath()},
-      PythonSdkType.getVirtualEnvAdditionalEnv(home_path),
-      MINUTE * 4 // see PY-3898
-    );
-    LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - start_time) + " ms");
-    if (run_result.getExitCode() != 0) {
-      StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(home_path);
-      if (run_result.isTimeout()) sb.append(": timed out.");
-      else {
-        sb.append(", exit code ").append(run_result.getExitCode()).append(", stderr: \n-----\n");
-        for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
-        sb.append("-----");
-      }
-      throw new InvalidSdkException(sb.toString());
-    }
-    // stdout contains version in the first line and then the list of binaries
-    final List<String> binaries_output = run_result.getStdoutLines();
+    final List<String> binaries_output = listBinaries();
     if (binaries_output.size() < 1) {
       throw new InvalidSdkException("Empty output from " + GENERATOR3 + " for " + home_path);
     }
@@ -235,6 +215,31 @@ public class PySkeletonRefresher {
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
     return error_list;
+  }
+
+  private List<String> listBinaries() {
+    String homePath = mySdk.getHomePath();
+    final String parent_dir = new File(homePath).getParent();
+    long start_time = System.currentTimeMillis();
+    final ProcessOutput run_result = SdkUtil.getProcessOutput(
+      parent_dir,
+      new String[]{homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", getExtraSyspath()},
+      PythonSdkType.getVirtualEnvAdditionalEnv(homePath),
+      MINUTE * 4 // see PY-3898
+    );
+    LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - start_time) + " ms");
+    if (run_result.getExitCode() != 0) {
+      StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(homePath);
+      if (run_result.isTimeout()) sb.append(": timed out.");
+      else {
+        sb.append(", exit code ").append(run_result.getExitCode()).append(", stderr: \n-----\n");
+        for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
+        sb.append("-----");
+      }
+      throw new InvalidSdkException(sb.toString());
+    }
+    // stdout contains version in the first line and then the list of binaries
+    return run_result.getStdoutLines();
   }
 
   static final Pattern ourVersionLinePat = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
