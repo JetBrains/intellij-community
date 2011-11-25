@@ -165,7 +165,6 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
       commitPanel.add(commitMessageScroll, BorderLayout.CENTER);
 
       splitter.setSecondComponent(commitPanel);
-      splitter.setShowDividerControls(true);
     }
     mainPanel.add(splitter, BorderLayout.CENTER);
 
