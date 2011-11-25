@@ -120,6 +120,7 @@ class PyDBCommandThread(PyDBDaemonThread):
 
         run_traced = True
 
+        import pydevd_vm_type
         if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
             #don't run untraced threads if we're in jython 2.2.1 or lower
             #jython bug: if we start a thread and another thread changes the tracing facility
@@ -127,6 +128,7 @@ class PyDBCommandThread(PyDBDaemonThread):
             #Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
             run_traced = False
 
+        import pydevd_tracing
         if run_traced:
             pydevd_tracing.SetTrace(None) # no debugging on this thread
 
