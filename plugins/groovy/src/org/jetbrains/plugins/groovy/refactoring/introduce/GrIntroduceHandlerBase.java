@@ -128,15 +128,19 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     else if (!Character.isJavaIdentifierPart(text.charAt(offset))) {
       correctedOffset--;
     }
+
     if (correctedOffset < 0) {
       correctedOffset = offset;
     }
-    else if (!Character.isJavaIdentifierPart(text.charAt(correctedOffset))) {
-      if (text.charAt(correctedOffset) == ';') {//initially caret on the end of line
-        correctedOffset--;
-      }
-      if (text.charAt(correctedOffset) != ')') {
-        correctedOffset = offset;
+    else {
+      final char c = text.charAt(correctedOffset);
+      if (!Character.isJavaIdentifierPart(c)) {
+        if (c == ';') {//initially caret on the end of line
+          correctedOffset--;
+        }
+        if (c != ')' && c != ']' && c!='}' && c!='\'' && c!='"' && c!='/') {
+          correctedOffset = offset;
+        }
       }
     }
     return correctedOffset;
