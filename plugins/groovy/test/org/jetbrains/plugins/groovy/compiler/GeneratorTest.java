@@ -28,6 +28,7 @@ public class GeneratorTest extends LightGroovyTestCase {
   public void testExtends1() throws Throwable { doTest(); }
   public void testExtendsImplements() throws Throwable { doTest(); }
   public void testGetterAlreadyDefined() throws Throwable { doTest(); }
+  public void testScriptWithMainMethod() {doTest();}
   public void testGrvy1098() throws Throwable { doTest(); }
   public void testGrvy118() throws Throwable { doTest(); }
   public void testGrvy1358() throws Throwable { doTest(); }
@@ -101,7 +102,7 @@ public class GeneratorTest extends LightGroovyTestCase {
     doTest();
   }
 
-  public void doTest() throws Exception {
+  public void doTest() {
     final String relTestPath = getTestName(true) + ".test";
     final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + relTestPath);
 

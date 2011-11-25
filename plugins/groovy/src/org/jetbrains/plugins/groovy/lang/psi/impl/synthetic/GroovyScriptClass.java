@@ -212,10 +212,18 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   @NotNull
   public PsiMethod[] getMethods() {
     GrMethod[] methods = myFile.getMethods();
-    PsiMethod[] result = new PsiMethod[methods.length + 2];
-    result[0] = myMainMethod;
-    result[1] = myRunMethod;
-    System.arraycopy(methods, 0, result, 2, methods.length);
+    byte hasMain = 1;
+    byte hasRun = 1;
+    for (GrMethod method : methods) {
+      if (method.isEquivalentTo(myMainMethod)) hasMain = 0;
+      else if (method.isEquivalentTo(myRunMethod)) hasRun = 0;
+    }
+    if (hasMain + hasRun == 0) return methods;
+
+    PsiMethod[] result = new PsiMethod[methods.length + hasMain + hasRun];
+    if (hasMain == 1) result[0] = myMainMethod;
+    if (hasRun == 1) result[hasMain] = myRunMethod;
+    System.arraycopy(methods, 0, result, hasMain + hasRun, methods.length);
     return result;
   }
 

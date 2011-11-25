@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -53,13 +54,15 @@ import java.util.Iterator;
  * @author Maxim.Medvedev
  */
 public class MoveGroovyClassHandler implements MoveClassHandler {
+  Logger LOG = Logger.getInstance(MoveGroovyClassHandler.class);
+
   public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
     if (!aClass.getLanguage().equals(GroovyFileType.GROOVY_LANGUAGE)) return null;
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof GroovyFile)) return null;
 
     final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
-    assert newPackage != null;
+    LOG.assertTrue(newPackage != null);
 
     PsiClass newClass = null;
 
@@ -215,6 +218,10 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
     //remove all alias-imported usages from collection
     for (Iterator<UsageInfo> iterator = results.iterator(); iterator.hasNext(); ) {
       UsageInfo info = iterator.next();
+      if (info == null) {
+        LOG.debug("info==null");
+        continue;
+      }
       final PsiReference ref = info.getReference();
       if (ref==null) continue;
 

@@ -67,11 +67,12 @@ public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspecti
             return "Make return implicit";
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
+        public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
             final GrReturnStatement returnStatement = (GrReturnStatement) returnKeywordElement.getParent();
-            assert returnStatement != null;
+            if (returnStatement == null) return;
+            if (returnStatement.getReturnValue() == null) return;
             replaceStatement(returnStatement, returnStatement.getReturnValue().getText());
         }
     }
