@@ -64,7 +64,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
   private final JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider = new JavaDebuggerSettingsPanelProvider();
   private final MuteBreakpointsActionHandler myMuteBreakpointsHandler = new MuteBreakpointsActionHandler();
-  private final DebuggerActionHandler mySmartStepIntoHandler = new SmartStepIntoActionHandler();
+  private final DebuggerActionHandler mySmartStepIntoHandler = new JvmSmartStepIntoActionHandler();
   private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
   private JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
 

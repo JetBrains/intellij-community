@@ -479,7 +479,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showMessageDialog(project,
-                                       XmlBundle.message("invalid.uril.message", dtdUrl),
+                                       XmlBundle.message("invalid.url.message", dtdUrl),
                                        XmlBundle.message("invalid.url.title"),
                                        Messages.getErrorIcon());
           }
