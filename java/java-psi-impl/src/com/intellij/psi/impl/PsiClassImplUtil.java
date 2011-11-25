@@ -398,7 +398,7 @@ public class PsiClassImplUtil {
   public static boolean processDeclarationsInClass(PsiClass aClass,
                                                    PsiScopeProcessor processor,
                                                    ResolveState state,
-                                                   Set<PsiClass> visited,
+                                                   @Nullable Set<PsiClass> visited,
                                                    PsiElement last,
                                                    PsiElement place,
                                                    boolean isRaw) {
@@ -421,7 +421,7 @@ public class PsiClassImplUtil {
   private static boolean processCachedMembersByName(PsiClass aClass,
                                                     PsiScopeProcessor processor,
                                                     ResolveState state,
-                                                    Set<PsiClass> visited,
+                                                    @Nullable Set<PsiClass> visited,
                                                     PsiElement last,
                                                     PsiElement place,
                                                     boolean isRaw,
@@ -553,7 +553,10 @@ public class PsiClassImplUtil {
     return ((PsiClassType)type).resolveGenerics().getSubstitutor();
   }
 
-  private static boolean processDeclarationsInClassNotCached(PsiClass aClass, PsiScopeProcessor processor, ResolveState state, Set<PsiClass> visited,
+  private static boolean processDeclarationsInClassNotCached(PsiClass aClass,
+                                                             PsiScopeProcessor processor,
+                                                             ResolveState state,
+                                                             @Nullable Set<PsiClass> visited,
                                                              PsiElement last,
                                                              PsiElement place,
                                                              boolean isRaw) {
