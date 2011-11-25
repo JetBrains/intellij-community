@@ -111,7 +111,18 @@ public class TableLayout extends TabLayout {
 
     return data;
   }
-
+                                           
+  public boolean isLastRow(TabInfo info) {
+    if (info == null) return false;
+    List<TableRow> rows = myLastTableLayout.table;
+    if (rows.size() > 0) {
+      for (TabInfo tabInfo : rows.get(rows.size() - 1).myColumns) {
+        if (tabInfo == info) return true;
+      }
+    }
+    
+    return false; 
+  }
 
   public LayoutPassInfo layoutTable(List<TabInfo> visibleInfos) {
     myTabs.resetLayout(true);
