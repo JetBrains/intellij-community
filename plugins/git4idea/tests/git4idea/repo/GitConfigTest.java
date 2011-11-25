@@ -23,6 +23,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -33,11 +34,25 @@ import static org.testng.Assert.assertNotNull;
  */
 public class GitConfigTest {
 
-  @DataProvider(name = "provider")
-  public Object[][] loadData() throws IOException {
+  @DataProvider(name = "remote")
+  public Object[][] loadRemotes() throws IOException {
+    return loadData("remote");
+  }
+  
+  @DataProvider(name = "branch")
+  public Object[][] loadBranches() throws IOException {
+    return loadData("branch");
+  }
+
+  public static Object[][] loadData(String subfolder) throws IOException {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-    File dataDir = new File(new File(new File(pluginRoot, "testData"), "config"), "remote");
-    File[] tests = dataDir.listFiles();
+    File dataDir = new File(new File(new File(pluginRoot, "testData"), "config"), subfolder);
+    File[] tests = dataDir.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return !name.startsWith(".");
+      }
+    });
     Object[][] data = new Object[tests.length][];
     for (int i = 0; i < tests.length; i++) {
       File testDir = tests[i];
@@ -67,13 +82,44 @@ public class GitConfigTest {
     return data;
   }
 
-  @Test(dataProvider = "provider")
-  public void test(String testName, File configFile, File resultFile) throws IOException {
+  @Test(dataProvider = "remote")
+  public void testRemotes(String testName, File configFile, File resultFile) throws IOException {
     GitConfig config = GitConfig.read(configFile);
-    GitTestUtil.assertEqualCollections(config.getRemotes(), readResults(resultFile));
+    GitTestUtil.assertEqualCollections(config.getRemotes(), readRemoteResults(resultFile));
   }
   
-  private static Set<GitRemote> readResults(File resultFile) throws IOException {
+  @Test(dataProvider = "branch")
+  public void testBranches(String testName, File configFile, File resultFile) throws IOException {
+    GitConfig config = GitConfig.read(configFile);
+    GitTestUtil.assertEqualCollections(config.getBranchTrackInfos(), readBranchResults(resultFile));
+  }
+
+  private static Collection<GitBranchTrackInfo> readBranchResults(File file) throws IOException {
+    String content = FileUtil.loadFile(file);
+    Collection<GitBranchTrackInfo> remotes = new ArrayList<GitBranchTrackInfo>();
+    String[] remStrings = content.split("BRANCH\n");
+    for (String remString : remStrings) {
+      if (StringUtil.isEmptyOrSpaces(remString)) {
+        continue;
+      }
+      String[] info = remString.split("\n");
+      String branch = info[0];
+      GitRemote remote = getRemote(info[1]);
+      String remoteSpec = info[2];
+      String remoteBranchName = info[3];
+      boolean merge = info[4].equals("merge");
+      remotes.add(new GitBranchTrackInfo(branch, remote, remoteSpec, merge));
+    }
+    return remotes;
+  }
+
+  private static GitRemote getRemote(String remoteString) {
+    String[] remoteInfo = remoteString.split(" ");
+    return new GitRemote(getOrEmpty(remoteInfo, 0), Collections.singletonList(getOrEmpty(remoteInfo, 1)),
+                         Collections.singletonList(getOrEmpty(remoteInfo, 2)), getOrEmpty(remoteInfo, 3), getOrEmpty(remoteInfo, 4));
+  }
+
+  private static Set<GitRemote> readRemoteResults(File resultFile) throws IOException {
     String content = FileUtil.loadFile(resultFile);
     Set<GitRemote> remotes = new HashSet<GitRemote>();
     String[] remStrings = content.split("REMOTE\n");
