@@ -68,7 +68,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     sequence.addCommonStep(new RootsDetectionStep(projectBuilder, context, sequence, icon, "reference.dialogs.new.project.fromCode.source"));
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
       for (ModuleWizardStep step : detector.createWizardSteps(projectBuilder, projectBuilder.getProjectDescriptor(detector), icon)) {
-        sequence.addSpecificStep(detector.getClass().getName(), step);
+        sequence.addSpecificStep(detector.getDetectorId(), step);
       }
     }
 
