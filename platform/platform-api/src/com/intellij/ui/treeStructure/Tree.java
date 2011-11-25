@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
+import com.intellij.ui.LoadingNode;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
@@ -106,7 +107,19 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     TreeModel model = getModel();
     if (model == null) return true;
     if (model.getRoot() == null) return true;
-    return !isRootVisible() && model.getChildCount(model.getRoot()) == 0;
+    if (!isRootVisible()) {
+      final int childCount = model.getChildCount(model.getRoot());
+      if (childCount == 0) {
+        return true;
+      }
+      if (childCount == 1) {
+        final Object node = model.getChild(model.getRoot(), 0);
+        if (node instanceof LoadingNode) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   protected boolean isCustomUI() {
