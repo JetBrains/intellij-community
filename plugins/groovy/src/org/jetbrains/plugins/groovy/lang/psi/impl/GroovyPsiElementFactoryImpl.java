@@ -305,7 +305,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     LOG.assertTrue(file.getTopStatements().length == 1 && (GrVariableDeclaration)file.getTopStatements()[0] instanceof GrVariableDeclaration, qName);
     GrVariableDeclaration varDecl = (GrVariableDeclaration) file.getTopStatements()[0];
     final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
-    assert typeElement != null;
+    LOG.assertTrue(typeElement != null, qName);
     return typeElement.getReferenceElement();
   }
 
