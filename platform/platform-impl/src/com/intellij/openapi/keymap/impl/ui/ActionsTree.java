@@ -29,9 +29,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.Gray;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.Alarm;
@@ -43,8 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -72,22 +70,24 @@ public class ActionsTree {
     myRoot = new DefaultMutableTreeNode(ROOT);
 
     myTree = new Tree(new MyModel(myRoot)) {
-      Rectangle lastViewRect = null;
       @Override
-      public boolean getScrollableTracksViewportWidth() {
-        return true;
-      }
+      public void paint(Graphics g) {
+        super.paint(g);
+        Rectangle visibleRect = getVisibleRect();
+        Rectangle clip = g.getClipBounds();
+        for (int row = 0; row < getRowCount(); row++) {
+          Rectangle rowBounds = getRowBounds(row);
+          if (rowBounds.intersects(clip)) {
+            Object node = getPathForRow(row).getLastPathComponent();
 
-      @Override
-      public Dimension getPreferredSize() {
-        final TreeUI treeUI = getUI();
-        final Rectangle currentViewRect = getVisibleRect();
-        if (!Comparing.equal(lastViewRect, currentViewRect) && treeUI instanceof BasicTreeUI) {
-          ((BasicTreeUI)treeUI).setLeftChildIndent(((BasicTreeUI)treeUI).getLeftChildIndent());
+            if (node instanceof DefaultMutableTreeNode) {
+              Object data = ((DefaultMutableTreeNode)node).getUserObject();
+              Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
+              paintRowData(this, data, fullRowRect, (Graphics2D)g);
+            }
+          }
         }
-        lastViewRect = currentViewRect;
-
-        return new Dimension(30, super.getPreferredSize().height);
+        
       }
     };
     myTree.setRootVisible(false);
@@ -442,7 +442,6 @@ public class ActionsTree {
       Icon icon = null;
       String text;
       boolean bound = false;
-      Shortcut[] shortcuts = null;
 
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
@@ -470,8 +469,6 @@ public class ActionsTree {
             if (actionIcon != null) {
               icon = actionIcon;
             }
-            
-            shortcuts = myKeymap.getShortcuts(actionId);            
           }
           else {
             text = actionId;
@@ -482,7 +479,6 @@ public class ActionsTree {
           QuickList list = (QuickList)userObject;
           icon = QUICK_LIST_ICON;
           text = list.getDisplayName();
-          shortcuts = myKeymap.getShortcuts(list.getActionId());
 
           changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);
         }
@@ -517,45 +513,49 @@ public class ActionsTree {
         }
         SearchUtil.appendFragments(myFilter, text, Font.PLAIN, foreground,
                                    selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), this);
-
-        if (shortcuts != null && shortcuts.length > 0) {
-          final TreePath currentPath = tree.getPathForRow(row);
-          if (currentPath != null) {
-            int textWidth = 0;
-            final FontMetrics metrics = getFontMetrics(getFont());
-            for (Shortcut shortcut : shortcuts) {
-              textWidth += metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
-            }
-            textWidth += metrics.stringWidth(" ") * shortcuts.length * 2;
-            
-            final int rowX = getRowX(tree, currentPath.getPathCount() - 1);
-
-            final int treeWidth  = tree.getVisibleRect().width;
-            appendAlign(treeWidth - rowX - textWidth - 5);
-
-            for (Shortcut shortcut : shortcuts) {
-              append(KeymapUtil.getShortcutText(shortcut),
-                     new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, Color.blue, Color.red));
-              append("  ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-            }
-          }
-        }
       }
     }
   }
-
-  public static int getRowX(JTree tree, int depth) {
-    if (tree == null) return 0;
-
-    final TreeUI ui = tree.getUI();
-    if (ui instanceof BasicTreeUI) {
-      final BasicTreeUI treeUI = ((BasicTreeUI)ui);
-      return (treeUI.getLeftChildIndent() + treeUI.getRightChildIndent()) * depth;
+  
+  private void paintRowData(Tree tree, Object data, Rectangle bounds, Graphics2D g) {
+    Shortcut[] shortcuts;
+    if (data instanceof String) {
+      shortcuts = myKeymap.getShortcuts((String)data);            
+    }
+    else if (data instanceof QuickList) {
+      shortcuts = myKeymap.getShortcuts(((QuickList)data).getActionId());
+    }
+    else {
+      shortcuts = null;
     }
 
-    final int leftIndent = UIUtil.getTreeLeftChildIndent();
-    final int rightIndent = UIUtil.getTreeRightChildIndent();
+    if (shortcuts != null && shortcuts.length > 0) {
+      int totalWidth = 0;
+      final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
+      for (Shortcut shortcut : shortcuts) {
+        totalWidth += metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
+        totalWidth += 10;
+      }
+      totalWidth -= 5;
 
-    return (leftIndent + rightIndent) * depth;
+      int x = bounds.x + bounds.width - totalWidth;
+      int fontHeight = (int)metrics.getMaxCharBounds(g).getHeight();
+
+      Color c1 = new Color(234, 200, 162);
+      Color c2 = new Color(208, 200, 66);
+
+      g.translate(0, bounds.y - 1);
+      
+      for (Shortcut shortcut : shortcuts) {
+        int width = metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
+        UIUtil.drawSearchMatch(g, x, x + width, bounds.height, c1, c2);
+        g.setColor(Gray._50);
+        g.drawString(KeymapUtil.getShortcutText(shortcut), x, fontHeight);
+
+        x += width;
+        x += 10;
+      }
+      g.translate(0, -bounds.y + 1);
+    }
   }
 }
