@@ -57,11 +57,13 @@ import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -140,6 +142,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       GridBagConstraints gc = new GridBagConstraints();
       gc.weightx = 1;
       gc.weighty = 0;
+      gc.insets = new Insets(0, IdeBorderFactory.TITLED_BORDER_INDENT, 2, 0);
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
@@ -203,6 +206,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       final JButton configureAnnotations = EntryPointsManagerImpl.createConfigureAnnotationsBtn(this);
       gc.fill = GridBagConstraints.NONE;
       gc.gridy++;
+      gc.insets.top = 10;
+      gc.weighty = 1;
 
       add(configureAnnotations, gc);
     }

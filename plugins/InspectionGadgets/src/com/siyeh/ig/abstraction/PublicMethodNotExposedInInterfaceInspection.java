@@ -68,14 +68,18 @@ public class PublicMethodNotExposedInInterfaceInspection
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
+    constraints.weighty = 1.0;
     constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.anchor = GridBagConstraints.CENTER;
+    constraints.fill = GridBagConstraints.BOTH;
     panel.add(annotationsListControl, constraints);
     final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
       "public.method.not.in.interface.option"),
                                            this, "onlyWarnIfContainingClassImplementsAnInterface");
     constraints.gridy = 1;
+    constraints.weighty = 0.0;
+    constraints.anchor = GridBagConstraints.WEST;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
     panel.add(checkBox, constraints);
     return panel;
   }

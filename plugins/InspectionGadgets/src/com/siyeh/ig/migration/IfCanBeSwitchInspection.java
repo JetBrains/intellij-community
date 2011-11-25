@@ -108,15 +108,16 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
-    constraints.insets.left = 4;
-    constraints.insets.top = 4;
+    constraints.insets.bottom = 4;
     constraints.weightx = 0.0;
     constraints.anchor = GridBagConstraints.BASELINE_LEADING;
     constraints.fill = GridBagConstraints.NONE;
+    constraints.insets.right = 10;
     panel.add(label, constraints);
     constraints.gridx = 1;
     constraints.gridy = 0;
     constraints.weightx = 1.0;
+    constraints.insets.right = 0;
     panel.add(valueField, constraints);
     constraints.gridx = 0;
     constraints.gridy = 1;

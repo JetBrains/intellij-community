@@ -17,6 +17,7 @@ package com.siyeh.ig.classmetrics;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -78,15 +79,17 @@ public class ClassCouplingInspection
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
-    constraints.weightx = 1.0;
+    constraints.weightx = 0.0;
     constraints.anchor = GridBagConstraints.WEST;
     constraints.fill = GridBagConstraints.NONE;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(label, constraints);
     constraints.gridx = 1;
     constraints.gridy = 0;
     constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.insets.right = 0;
+    constraints.anchor = GridBagConstraints.NORTHWEST;
     constraints.fill = GridBagConstraints.NONE;
     panel.add(valueField, constraints);
 
@@ -106,6 +109,7 @@ public class ClassCouplingInspection
 
     constraints.gridx = 0;
     constraints.gridy = 2;
+    constraints.weighty = 1;
     constraints.gridwidth = 2;
     panel.add(objectCheckBox, constraints);
     return panel;

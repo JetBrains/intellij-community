@@ -111,13 +111,10 @@ public abstract class ConventionInspection extends BaseInspection {
 
     final JLabel patternLabel = new JLabel(
       InspectionGadgetsBundle.message("convention.pattern.option"));
-    patternLabel.setHorizontalAlignment(SwingConstants.TRAILING);
     final JLabel minLengthLabel = new JLabel(
       InspectionGadgetsBundle.message("convention.min.length.option"));
-    minLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
     final JLabel maxLengthLabel = new JLabel(
       InspectionGadgetsBundle.message("convention.max.length.option"));
-    maxLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
     final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
     numberFormat.setParseIntegerOnly(true);
@@ -178,50 +175,51 @@ public abstract class ConventionInspection extends BaseInspection {
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.EAST;
+    constraints.weightx = 0.0;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
+    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
     panel.add(patternLabel, constraints);
 
     constraints.gridx = 1;
     constraints.gridy = 0;
-    constraints.gridwidth = 3;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.weightx = 1.0;
+    constraints.insets.right = 0;
     panel.add(regexField, constraints);
 
     constraints.gridx = 0;
     constraints.gridy = 1;
-    constraints.gridwidth = 1;
-    constraints.anchor = GridBagConstraints.EAST;
+    constraints.weightx = 0.0;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
     panel.add(minLengthLabel, constraints);
 
     constraints.gridx = 1;
     constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.weightx = 1;
+    constraints.insets.right = 0;
     panel.add(minLengthField, constraints);
 
-    constraints.gridx = 2;
-    constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.EAST;
+    constraints.gridx = 0;
+    constraints.gridy = 2;
+    constraints.weightx = 0;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
     panel.add(maxLengthLabel, constraints);
 
-    constraints.gridx = 3;
-    constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.gridx = 1;
+    constraints.gridy = 2;
+    constraints.weightx = 1;
+    constraints.insets.right = 0;
     panel.add(maxLengthField, constraints);
 
     final Collection<? extends JComponent> extraOptions =
       createExtraOptions();
     constraints.gridx = 0;
-    constraints.gridwidth = 4;
-    constraints.insets.top = 0;
-    constraints.insets.bottom = 0;
+    constraints.gridwidth = 2;
     for (JComponent extraOption : extraOptions) {
       constraints.gridy++;
       panel.add(extraOption, constraints);
     }
 
-    constraints.gridx = 0;
     constraints.gridy++;
     constraints.weighty = 1.0;
     panel.add(new BlankFiller(), constraints);

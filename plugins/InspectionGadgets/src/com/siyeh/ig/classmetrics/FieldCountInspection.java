@@ -20,12 +20,14 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class FieldCountInspection extends ClassMetricInspection {
@@ -90,25 +92,29 @@ public class FieldCountInspection extends ClassMetricInspection {
     constraints.gridx = 0;
     constraints.gridy = 0;
     constraints.weightx = 0.0;
+    constraints.weighty = 0.0;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
     constraints.anchor = GridBagConstraints.WEST;
     constraints.fill = GridBagConstraints.NONE;
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(label, constraints);
     constraints.gridx = 1;
     constraints.gridy = 0;
-    constraints.gridwidth = 3;
+    constraints.gridwidth = 1;
     constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.insets.right = 0;
+    constraints.anchor = GridBagConstraints.NORTHWEST;
     constraints.fill = GridBagConstraints.NONE;
     panel.add(valueField, constraints);
     constraints.gridx = 0;
     constraints.gridy = 1;
-    constraints.gridwidth = 4;
+    constraints.gridwidth = 2;
     constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.anchor = GridBagConstraints.NORTHWEST;
     constraints.fill = GridBagConstraints.NONE;
     panel.add(includeCheckBox, constraints);
     constraints.gridy = 2;
+    constraints.weighty = 1;
     panel.add(considerCheckBox, constraints);
     return panel;
   }
