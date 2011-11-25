@@ -127,7 +127,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testElseIfsSpecial() throws Throwable { doTest(); }
   public void testVarargDeclaration() throws Throwable { doTest(); }
   public void testPreserveSpaceBeforeClosureParameters() throws Throwable { doTest(); }
-  
+  public void testPreserveGroovydoc() throws Throwable { doTest(); }
+
   public void testCaseInSwitch() throws Throwable {
     getGroovySettings().INDENT_CASE_FROM_SWITCH = false;
     doTest();
