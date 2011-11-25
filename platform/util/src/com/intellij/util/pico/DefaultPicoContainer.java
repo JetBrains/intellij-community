@@ -352,7 +352,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     private final ConcurrentHashMap<T, T> concurrentSet = new ConcurrentHashMap<T, T>();
     
     public boolean contains(@Nullable T element) {
-      return element != null || concurrentSet.containsKey(element);
+      return element != null && concurrentSet.containsKey(element);
     }
     
     public void add(@NotNull T element) {
