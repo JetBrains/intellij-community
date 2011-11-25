@@ -25,37 +25,45 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 public class GroovyOctalIntegerInspection extends BaseInspection {
 
-    @Nls
-    @NotNull
-    public String getGroupDisplayName() {
-        return CONFUSING_CODE_CONSTRUCTS;
-    }
+  @Nls
+  @NotNull
+  public String getGroupDisplayName() {
+    return CONFUSING_CODE_CONSTRUCTS;
+  }
 
-    @Nls
-    @NotNull
-    public String getDisplayName() {
-        return "Octal integer";
-    }
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return "Octal integer";
+  }
 
-    @Nullable
-    protected String buildErrorString(Object... args) {
-        return "Octal integer #ref #loc";
-    }
+  @Nullable
+  protected String buildErrorString(Object... args) {
+    return "Octal integer #ref #loc";
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new Visitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new BaseInspectionVisitor() {
+      public void visitLiteralExpression(GrLiteral literal) {
+        super.visitLiteralExpression(literal);
+        @NonNls final String text = literal.getText();
+        if (!text.startsWith("0")) return;
 
-    private static class Visitor extends BaseInspectionVisitor {
-        public void visitLiteralExpression(GrLiteral literal) {
-            super.visitLiteralExpression(literal);
-            @NonNls final String text = literal.getText();
-            if (text.startsWith("0") && !"0".equals(text) &&
-                    !text.startsWith("0x") && !text.startsWith("0X") &&
-                    !text.startsWith("0b") && !text.startsWith("0B") &&
-                    !text.contains(".") && !text.contains("e") && !text.contains("E")) {
-                registerError(literal);
-            }
-        }
-    }
+        if (text.replaceAll("0", "").isEmpty()) return;
+        if ("0g".equals(text) || "0G".equals(text)) return;
+        if ("0i".equals(text) || "0I".equals(text)) return;
+        if ("0l".equals(text) || "0L".equals(text)) return;
+
+        if (text.startsWith("0x") || text.startsWith("0X")) return;
+        if (text.startsWith("0b") || text.startsWith("0B")) return;
+
+        if (text.endsWith("d") || text.endsWith("D")) return;
+        if (text.endsWith("f") || text.endsWith("F")) return;
+
+        if (text.contains(".") || text.contains("e") || text.contains("E")) return;
+        
+        registerError(literal);
+      }
+    };
+  }
 }

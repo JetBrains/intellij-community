@@ -77,7 +77,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar) {
     final boolean floating = navbar.isInFloatingMode();
-    
+    boolean toolbar = UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+
     Icon icon = item.getIcon();
     int w = item.getWidth();
     int h = item.getHeight();
@@ -106,7 +107,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     endShape.lineTo(w, h / 2);
     endShape.closePath();
     
-    if (bg != null) {
+    if (bg != null && toolbar) {
       g2.setPaint(bg);
       g2.fill(shape);
       if (!item.isLastElement() || floating) {
@@ -115,17 +116,52 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     }
 
     if (selected) {
+      Path2D.Double focusShape = new Path2D.Double();
+      if (toolbar || floating) {
+        focusShape.moveTo(w-getDecorationOffset(), 0);
+      } else {
+        focusShape.moveTo(0, 0);
+        focusShape.lineTo(w - getDecorationOffset(), 0);
+      }
+      focusShape.lineTo(w - 1, h / 2);
+      focusShape.lineTo(w - getDecorationOffset(), h - 1);
+      if (!toolbar && !floating) {
+        focusShape.lineTo(0, h - 1);
+        
+      }
+
       g2.setColor(selection);
       if (floating && item.isLastElement()) {
         g2.fillRect(0, 0, w, h);
       } else {
         g2.fill(shape);
+        
+        g2.setColor(new Color(0, 0, 0, 70));
+        g2.draw(focusShape);
       }
     }
 
     if (item.isNextSelected() && navbar.hasFocus()) {
       g2.setColor(selection);
       g2.fill(endShape);
+      
+      Path2D.Double endFocusShape = new Path2D.Double();
+      if (toolbar || floating) {
+        endFocusShape.moveTo(w - getDecorationOffset(), 0);
+      } else {
+        endFocusShape.moveTo(w, 0);
+        endFocusShape.lineTo(w - getDecorationOffset(), 0);
+      }
+      
+      endFocusShape.lineTo(w - 1, h / 2);
+      endFocusShape.lineTo(w - getDecorationOffset(), h - 1);
+      
+      if (!toolbar && !floating) {
+        endFocusShape.lineTo(w, h - 1);
+      }
+
+      g2.setColor(new Color(0, 0, 0, 70));
+      g2.draw(endFocusShape);
     }
 
     final int offset = item.isFirstElement() ? getFirstElementLeftOffset() : 0;
@@ -138,19 +174,49 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     int off = getDecorationOffset() - 1;
 
     if (!floating || !item.isLastElement()) {
-      g2.setColor(new Color(0, 0, 0, 70));
-      g2.drawLine(0, 0, off, h / 2 - 1);
-      g2.drawLine(off, h / 2 - 1, 0, h);
-    }
-    
-    if (!selected && !floating) {
-      g2.translate(-1, 0);
-      g2.setColor(new SameColor(205));
-      g2.drawLine(0, 0, off, h / 2 - 1);
-      g2.drawLine(off, h / 2 - 1, 0, h);
+      if (toolbar || floating) {
+        if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
+          drawArrow(g2, new Color(0, 0, 0, 70), new SameColor(205), off, h, !selected && !floating, false);
+        }
+      } else {
+        if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
+          drawArrow(g2, new Color(0, 0, 0, 150), new Color(255, 255, 255, 200), off, h, !selected && !floating, true);
+        }
+      }
     }
     
     g2.dispose();
+  }
+  
+  private static void drawArrow(Graphics2D g2d, Color c, Color light, int decorationOffset, int h, boolean highlight, boolean gradient) {
+    int off = decorationOffset - 1;
+    
+    g2d.setColor(c);
+    if (gradient) {
+      g2d.setPaint(new GradientPaint(0, 0, new Color(c.getRed(), c.getGreen(), c.getBlue(), 10), 0, h / 2, c));
+    }
+    g2d.drawLine(0, 0, off, h / 2);
+
+    if (gradient) {
+      g2d.setPaint(new GradientPaint(0, h / 2, c, 0, h, new Color(c.getRed(), c.getGreen(), c.getBlue(), 10)));
+    }
+    g2d.drawLine(off, h / 2, 0, h);
+
+    if (highlight) {
+      g2d.translate(-1, 0);
+      g2d.setColor(light);
+      
+      if (gradient) {
+        g2d.setPaint(new GradientPaint(0, 0, new Color(light.getRed(), light.getGreen(), light.getBlue(), 10), 0, h / 2, light));
+      }
+      g2d.drawLine(0, 0, off, h / 2);
+
+
+      if (gradient) {
+        g2d.setPaint(new GradientPaint(0, h / 2, light, 0, h, new Color(light.getRed(), light.getGreen(), light.getBlue(), 10)));
+      }
+      g2d.drawLine(off, h / 2, 0, h);
+    }
   }
 
   private int getDecorationOffset() {
@@ -187,6 +253,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
     g.setColor(getBackgroundColor());
-    g.fillRect(0, 0, r.width, r.height);
+    if (mainToolbarVisible) {
+      g.fillRect(0, 0, r.width, r.height);
+    }
   }
 }

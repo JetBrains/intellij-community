@@ -31,7 +31,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.components.JBLabel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +51,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   private JPanel myVcsConfigurablePlaceholder;
   private JRadioButton myProjectRadioButton;
   private JRadioButton myDirectoryRadioButton;
-  private JLabel myProjectButtonComment;
+  private JBLabel myProjectButtonComment;
   private UnnamedConfigurable myVcsConfigurable;
   private VcsDirectoryMapping myMappingCopy;
   private JComponent myVcsConfigurableComponent;
@@ -175,22 +175,20 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       ".idea directory contents"};
     final StringBuilder sb = new StringBuilder(parts[0]);
     if (isDirectoryBased) {
-      sb.append(",\n");
+      sb.append(", ");
     } else {
-      sb.append(", and\n");
+      sb.append(", and ");
     }
     sb.append(parts[1]);
     if (isDirectoryBased) {
-      sb.append(", and\n");
+      sb.append(", and ");
       sb.append(parts[2]);
     }
     return sb.toString();
   }
 
   public void initProjectMessage() {
-    myProjectButtonComment.setForeground(UIUtil.getInactiveTextColor());
-    myProjectButtonComment.setText(getProjectMessage(myProject));
-    myProjectButtonComment.setUI(new MultiLineLabelUI());
+    myProjectButtonComment.setText("<html>" + getProjectMessage(myProject) + "</html>");
   }
 
   private class MyBrowseFolderListener extends ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> {

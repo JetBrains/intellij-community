@@ -477,7 +477,110 @@ calculate(3, 4)
     '''
     doTest(before, toPaste2, expected)
   }
-  
+
+  void testPasteTextThatStartsWithLineFeedAfterNonEmptyLine() {
+    def before = '''\
+class Test {
+    void test() {
+        foo(1);
+    }<caret>
+}\
+'''
+
+    def toPaste1 =
+      '''
+    void test() {
+        foo(1);
+    }\
+'''
+
+    def expected1 = '''\
+class Test {
+    void test() {
+        foo(1);
+    }
+    void test() {
+        foo(1);
+    }
+}\
+'''
+    doTest(before, toPaste1, expected1)
+
+    def toPaste2 =
+      '''
+
+
+    void test() {
+        foo(1);
+    }\
+'''
+
+    def expected2 = '''\
+class Test {
+    void test() {
+        foo(1);
+    }
+
+
+    void test() {
+        foo(1);
+    }
+}\
+'''
+    doTest(before, toPaste2, expected2)
+  }
+
+  void testPasteTextThatStartsWithLineFeedToNewLine() {
+    def before = '''\
+class Test {
+    void test(int i) {
+        if (i > 0) {<caret>
+        }
+    }
+}\
+'''
+
+    def toPaste1 =
+      '''
+    if (i > 2) {
+    }\
+'''
+
+    def expected1 = '''\
+class Test {
+    void test(int i) {
+        if (i > 0) {
+            if (i > 2) {
+            }
+        }
+    }
+}\
+'''
+    doTest(before, toPaste1, expected1)
+
+    def toPaste2 =
+      '''
+
+
+    if (i > 2) {
+    }\
+'''
+
+    def expected2 = '''\
+class Test {
+    void test(int i) {
+        if (i > 0) {
+
+
+            if (i > 2) {
+            }
+        }
+    }
+}\
+'''
+    doTest(before, toPaste2, expected2)
+  }
+
   def testPlainTextPaste() {
     def before = '''\
   line1
@@ -538,6 +641,41 @@ line to paste #1
 line to paste #2
 '''
     doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
+  }
+
+  def testPlainTextThatStartsByLineFeed() {
+    def before = '''\
+line 1
+  # item1<caret>
+'''
+
+    def toPaste1 =
+      '''
+  # item2\
+'''
+    
+    def expected1 = '''\
+line 1
+  # item1
+  # item2
+'''
+    doTest(before, toPaste1, expected1, StdFileTypes.PLAIN_TEXT)
+
+    def toPaste2 =
+      '''
+
+
+  # item2\
+'''
+
+    def expected2 = '''\
+line 1
+  # item1
+
+
+  # item2
+'''
+    doTest(before, toPaste2, expected2, StdFileTypes.PLAIN_TEXT)
   }
   
   def doTest(String before, toPaste, expected, FileType fileType = StdFileTypes.JAVA) {

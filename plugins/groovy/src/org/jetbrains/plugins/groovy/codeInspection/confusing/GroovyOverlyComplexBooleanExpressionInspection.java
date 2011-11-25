@@ -53,7 +53,7 @@ public class GroovyOverlyComplexBooleanExpressionInspection extends BaseInspecti
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum number of terms",
+    return new SingleIntegerFieldOptionsPanel("Maximum number of terms:",
         this, "m_limit");
   }
 

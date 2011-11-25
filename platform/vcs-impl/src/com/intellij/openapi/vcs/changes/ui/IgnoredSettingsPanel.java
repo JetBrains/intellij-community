@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -40,7 +41,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class IgnoredSettingsPanel implements SearchableConfigurable {
+public class IgnoredSettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
   private JBList myList;
   private JButton myAddButton;
   private JButton myEditButton;

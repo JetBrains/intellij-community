@@ -17,6 +17,7 @@ package com.intellij.facet.frameworks;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -71,7 +72,10 @@ public abstract class SettingsConnectionService {
       final Document document = JDOMUtil.loadDocument(is);
       final Element root = document.getRootElement();
       for (String s : attributes) {
-          settings.put(s, root.getAttributeValue(s));
+        final String attributeValue = root.getAttributeValue(s);
+        if (StringUtil.isNotEmpty(attributeValue)) {
+          settings.put(s, attributeValue);
+        }
       }
     }
     catch (MalformedURLException e) {

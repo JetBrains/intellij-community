@@ -37,7 +37,7 @@ public class AndroidDexCompilerSettingsFactory implements CompilerSettingsFactor
     return new AndroidDexCompilerSettingsConfigurable(project);
   }
 
-  private static class AndroidDexCompilerSettingsConfigurable implements SearchableConfigurable {
+  private static class AndroidDexCompilerSettingsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
     private final AndroidDexCompilerConfiguration myConfig;
     private JPanel myContentPanel;
     private JSpinner myHeapSizeSpinner;

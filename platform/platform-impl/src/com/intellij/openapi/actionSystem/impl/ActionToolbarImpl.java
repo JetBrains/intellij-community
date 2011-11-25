@@ -1178,8 +1178,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       setBorder(new EmptyBorder(0, 0, 0, 0));
       setOpaque(false);
     } else {
+      if (isInsideNavBar()) {
+        setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+      }
+      else {
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      }
+
       setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
-      setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }

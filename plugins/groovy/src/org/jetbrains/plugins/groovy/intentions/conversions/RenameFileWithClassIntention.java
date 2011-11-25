@@ -34,7 +34,7 @@ public class RenameFileWithClassIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    final GrTypeDefinition psiClass = (GrTypeDefinition)element;
+    final GrTypeDefinition psiClass = (GrTypeDefinition)element.getParent();
     final String name = psiClass.getName();
 
     final PsiFile file = psiClass.getContainingFile();

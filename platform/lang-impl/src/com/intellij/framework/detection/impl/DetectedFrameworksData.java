@@ -40,13 +40,11 @@ import java.util.*;
  */
 public class DetectedFrameworksData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.DetectedFrameworksData");
-  private final Project myProject;
   private PersistentHashMap<Integer,TIntHashSet> myExistentFrameworkFiles;
   private TIntObjectHashMap<TIntHashSet> myNewFiles;
   private MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
 
   public DetectedFrameworksData(Project project) {
-    myProject = project;
     myDetectedFrameworks = new MultiMap<Integer, DetectedFrameworkDescription>();
     File file = new File(FrameworkDetectorRegistryImpl.getDetectionDirPath() + File.separator + project.getName() + "." + project.getLocationHash() +
                          File.separator + "files");
@@ -105,8 +103,8 @@ public class DetectedFrameworksData {
     return newFiles;
   }
 
-  public MultiMap<Integer, DetectedFrameworkDescription> getDetectedFrameworks() {
-    return myDetectedFrameworks;
+  public Set<Integer> getDetectorsForDetectedFrameworks() {
+    return myDetectedFrameworks.keySet();
   }
 
   public Collection<? extends DetectedFrameworkDescription> updateFrameworksList(Integer detectorId,

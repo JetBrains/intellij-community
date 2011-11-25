@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.Abstract {
+public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll{
   private final Project project;
   private ProjectSettingsPanel optionsPanel = null;
 

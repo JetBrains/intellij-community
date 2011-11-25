@@ -53,7 +53,6 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
 
 
-
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
@@ -124,13 +123,9 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
       myReportUnusedParametersInPublics.addActionListener(listener);
-      final GridBagConstraints gc =
-            new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                   new Insets(0, 0, 0, 0), 0, 0);
-      myAnnos.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(myPanel), gc);
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      myAnnos.add(Box.createHorizontalBox(), gc);
+      myAnnos.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(myPanel),
+                  new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                         new Insets(10, 0, 0, 0), 0, 0));
     }
 
     public JComponent getPanel() {
