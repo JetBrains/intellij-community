@@ -115,7 +115,7 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
                                     }
                                     return TEXT;
                                 }
-":"                             {   return COLON; }
+":" / ({WHITE_SPACE} | {EOL})   {   return COLON; }
 "?"                             {   return QUESTION; }
 
 }
