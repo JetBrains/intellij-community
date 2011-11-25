@@ -6,7 +6,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -14,6 +16,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +55,20 @@ public class ImportToggleAliasIntention implements IntentionAction {
 
     public boolean isAvailable() {
       if (myFromImportStatement != null) {
-        return myFromImportStatement.isValid() && !myFromImportStatement.isFromFuture();
+        if (!myFromImportStatement.isValid() || myFromImportStatement.isFromFuture()) {
+          return false;
+        }
       }
       else {
-        return myImportStatement != null && myImportStatement.isValid();
+        if (myImportStatement == null || !myImportStatement.isValid()) {
+          return false;
+        }
       }
+      final PyReferenceExpression referenceExpression = myImportElement.getImportReference();
+      if (referenceExpression == null || referenceExpression.getReference().resolve() == null) {
+        return false;
+      }
+      return true;
     }
 
     public String getText() {
@@ -112,11 +124,22 @@ public class ImportToggleAliasIntention implements IntentionAction {
         // ask for and add alias
         Application application = ApplicationManager.getApplication();
         if (application != null && !application.isUnitTestMode()) {
-          AskNameDialog dialog = new AskNameDialog(project);
-          dialog.setTitle(PyBundle.message("INTN.alias.for.$0.dialog.title", imported_name));
-          dialog.show();
-          if (!dialog.isOK()) return; // 'Cancel' button cancels everything
-          target_name = dialog.getAlias();
+          String alias = Messages.showInputDialog(project, PyBundle.message("INTN.alias.for.$0.dialog.title", imported_name),
+                                                  "Add Alias", Messages.getQuestionIcon(), "", new InputValidator() {
+            @Override
+            public boolean checkInput(String inputString) {
+              return PyNames.isIdentifier(inputString);
+            }
+
+            @Override
+            public boolean canClose(String inputString) {
+              return PyNames.isIdentifier(inputString);
+            }
+          });
+          if (alias == null) {
+            return;
+          }
+          target_name = alias;
         }
         else { // test mode
           target_name = "alias";
