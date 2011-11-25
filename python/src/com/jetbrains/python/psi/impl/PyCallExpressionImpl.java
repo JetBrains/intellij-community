@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -177,19 +178,21 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @Nullable
-  private static PyType getSuperCallType(TypeEvalContext context, PyClass first_class, PyExpression second_arg) {
+  private static PyType getSuperCallType(TypeEvalContext context, PyClass firstClass, PyExpression second_arg) {
     // check 2nd argument, too; it should be an instance
     if (second_arg != null) {
       PyType second_type = context.getType(second_arg);
       if (second_type instanceof PyClassType) {
         // imitate isinstance(second_arg, possible_class)
-        PyClass second_class = ((PyClassType)second_type).getPyClass();
-        if (CompletionUtil.getOriginalOrSelf(first_class) == second_class) {
-          return getSuperClassUnionType(first_class);
+        PyClass secondClass = ((PyClassType)second_type).getPyClass();
+        if (CompletionUtil.getOriginalOrSelf(firstClass) == secondClass) {
+          return getSuperClassUnionType(firstClass);
         }
-        if (second_class != null && second_class.isSubclass(first_class)) {
-          // TODO: super(Foo, Bar) is a superclass of Foo directly preceding Bar in MRO
-          return new PyClassType(first_class, false); // super(Foo, self) has type of Foo, modulo __get__()
+        if (secondClass != null && secondClass.isSubclass(firstClass)) {
+          final Iterator<PyClass> iterator = firstClass.iterateAncestorClasses().iterator();
+          if (iterator.hasNext()) {
+            return new PyClassType(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
+          }
         }
       }
     }

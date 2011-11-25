@@ -41,10 +41,20 @@ public class PyCodeBlockProvider implements CodeBlockProvider {
       }
       if (statement != null) {
         // if we're in the beginning of the statement already, pressing Ctrl-[ again should move the caret one statement higher
-        if (caretOffset == statement.getTextRange().getStartOffset()) {
+        final int statementStart = statement.getTextRange().getStartOffset();
+        int statementEnd = statement.getTextRange().getEndOffset();
+        while (statementEnd > statementStart && psiFile.findElementAt(statementEnd) instanceof PsiWhiteSpace) {
+          statementEnd--;
+        }
+        if (caretOffset == statementStart || caretOffset == statementEnd) {
           final PyStatement statementAbove = PsiTreeUtil.getParentOfType(statement, PyStatement.class);
           if (statementAbove != null) {
-            return new TextRange(statementAbove.getTextRange().getStartOffset(), statement.getTextRange().getEndOffset());
+            if (caretOffset == statementStart) {
+              return new TextRange(statementAbove.getTextRange().getStartOffset(), statementEnd);
+            }
+            else {
+              return new TextRange(statementStart, statementAbove.getTextRange().getEndOffset());
+            }
           }
         }
         return statement.getTextRange();

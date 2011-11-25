@@ -106,6 +106,9 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     if (ImportFromExistingAction.isResolved(myReference)) {
       return false;
     }
+    if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
+      return false;
+    }
     if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).getQualifier() != null))) return false; // we cannot be qualified
     final String message = ShowAutoImportPass.getMessage(
       myImports.size() > 1,

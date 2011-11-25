@@ -19,6 +19,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.FunctionUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -306,6 +307,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   private static class PyInplaceFieldIntroducer extends InplaceVariableIntroducer<PsiElement> {
     private final PyTargetExpression myTarget;
+    private final IntroduceOperation myOperation;
     private final PyIntroduceFieldPanel myPanel;
 
     public PyInplaceFieldIntroducer(PyTargetExpression target,
@@ -314,6 +316,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
             occurrences.toArray(new PsiElement[occurrences.size()]), null);
       myTarget = target;
+      myOperation = operation;
       if (operation.getAvailableInitPlaces().size() > 1) {
         myPanel = new PyIntroduceFieldPanel(myProject, operation.getAvailableInitPlaces());
       }
@@ -334,23 +337,27 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
 
     @Override
     protected void moveOffsetAfter(boolean success) {
-      if (success && myPanel != null && myPanel.getInitPlace() != InitPlace.SAME_METHOD) {
+      if (success && (myPanel != null && myPanel.getInitPlace() != InitPlace.SAME_METHOD) || myOperation.getInplaceInitPlace() != InitPlace.SAME_METHOD) {
         final AccessToken accessToken = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
         try {
           final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
           assert initializer != null;
-          final Function<String, PyStatement> callback = new Function<String, PyStatement>() {
-            @Override
-            public PyStatement fun(String s) {
-              return initializer;
-            }
-          };
+          final Function<String, PyStatement> callback = FunctionUtil.<String, PyStatement>constant(initializer);
           final PyClass pyClass = PyUtil.getContainingClassOrSelf(initializer);
-          if (myPanel.getInitPlace() == InitPlace.CONSTRUCTOR) {
+          InitPlace initPlace = myPanel != null ? myPanel.getInitPlace() : myOperation.getInplaceInitPlace();
+          if (initPlace == InitPlace.CONSTRUCTOR) {
             AddFieldQuickFix.addFieldToInit(myProject, pyClass, "", callback);
           }
-          else if (myPanel.getInitPlace() == InitPlace.SET_UP) {
+          else if (initPlace == InitPlace.SET_UP) {
             addFieldToSetUp(pyClass, callback);
+          }
+          if (myOperation.getOccurrences().size() > 0) {
+            initializer.delete();
+          }
+          else {
+            final PyExpression copy =
+              PyElementGenerator.getInstance(myProject).createExpressionFromText(LanguageLevel.forElement(myTarget), myTarget.getText());
+            initializer.replace(copy);
           }
           initializer.delete();
         }
