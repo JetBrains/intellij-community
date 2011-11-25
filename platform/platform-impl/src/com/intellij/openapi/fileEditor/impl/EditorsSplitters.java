@@ -42,7 +42,6 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
@@ -148,14 +147,19 @@ public class EditorsSplitters extends JPanel {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     
+    if (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) {
+      g.setColor(new Color(0, 0, 0, 50));
+      g.drawLine(0, 0, getWidth(), 0);
+    }
+    
     if (showEmptyText()) {
       final boolean darkerColors = UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderGTKLookAndFeel();
       UIUtil.applyRenderingHints(g);
-      g.setColor(darkerColors ? Gray._100 : Color.LIGHT_GRAY);
+      g.setColor(darkerColors ? Gray._100 : Color.DARK_GRAY);
       g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.4f);
-      painter.appendLine("No files are open").underlined(darkerColors ? Gray._150 : Color.LIGHT_GRAY)
+      painter.appendLine("No files are open").underlined(darkerColors ? Gray._150 : Color.DARK_GRAY)
         .appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
           KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet()
         .appendLine("Open Recent files with " + getActionShortcutText("RecentFiles")).smaller().withBullet()

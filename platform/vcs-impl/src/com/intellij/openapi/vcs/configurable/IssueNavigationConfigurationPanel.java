@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -40,7 +41,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable {
+public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
   private JBTable myLinkTable;
   private JButton myAddButton;
@@ -69,7 +70,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     myProject = project;
     add(myPanel, BorderLayout.CENTER);
     myDescriptionLabel.setText("<html>" + ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
-                               "checkin comments <br/>and link them to issues in your issue tracker:</html>");
+                               "checkin comments and link them to issues in your issue tracker:</html>");
     reset();
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

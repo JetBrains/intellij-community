@@ -50,7 +50,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
   }
 
   public synchronized int createIndex(@NotNull final String indexId,
-                                      @Nullable final String repositoryId,
+                                      @NotNull final String repositoryId,
                                       @Nullable final File file,
                                       @Nullable final String url,
                                       @NotNull final File indexDir) throws MavenServerIndexerException {
@@ -186,7 +186,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     private int remoteId = -1;
 
     private final @NotNull String indexId;
-    private final @Nullable String repositoryId;
+    private final @NotNull String repositoryId;
     private final @Nullable File file;
     private final @Nullable String url;
     private final @NotNull File indexDir;

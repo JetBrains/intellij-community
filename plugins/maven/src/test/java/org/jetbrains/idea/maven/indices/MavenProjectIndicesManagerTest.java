@@ -104,6 +104,36 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
                            "  <mirrors>" +
                            "    <mirror>" +
                            "      <id>nexus</id>" +
+                           "      <mirrorOf>anotherRepoId</mirrorOf>" +
+                           "      <url>file:///" + myIndicesFixture.getRepositoryHelper().getTestDataPath("remote_mirror") + "</url>" +
+                           "    </mirror>" +
+                           "  </mirrors>" +
+                           "</settings>");
+
+    myIndicesFixture.getProjectIndicesManager().scheduleUpdateAll();
+    assertUnorderedElementsAreEqual(myIndicesFixture.getProjectIndicesManager().getGroupIds(), "test", "jmock");
+
+    updateSettingsXmlFully("<settings>" +
+                           "  <mirrors>" +
+                           "    <mirror>" +
+                           "      <id>nexus</id>" +
+                           "      <mirrorOf>central</mirrorOf>" +
+                           "      <url>file:///" + myIndicesFixture.getRepositoryHelper().getTestDataPath("remote_mirror") + "</url>" +
+                           "    </mirror>" +
+                           "  </mirrors>" +
+                           "</settings>");
+
+    myIndicesFixture.getProjectIndicesManager().scheduleUpdateAll();
+    assertUnorderedElementsAreEqual(myIndicesFixture.getProjectIndicesManager().getGroupIds(), "test", "jmock", "junit");
+
+    myIndicesFixture.tearDown();
+    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject, "local2", "remote_mirror");
+    myIndicesFixture.setUp();
+
+    updateSettingsXmlFully("<settings>" +
+                           "  <mirrors>" +
+                           "    <mirror>" +
+                           "      <id>nexus</id>" +
                            "      <mirrorOf>*</mirrorOf>" +
                            "      <url>file:///" + myIndicesFixture.getRepositoryHelper().getTestDataPath("remote_mirror") + "</url>" +
                            "    </mirror>" +
@@ -112,6 +142,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
 
     myIndicesFixture.getProjectIndicesManager().scheduleUpdateAll();
     assertUnorderedElementsAreEqual(myIndicesFixture.getProjectIndicesManager().getGroupIds(), "test", "jmock", "junit");
+
   }
 
   public void testCheckingLocalRepositoryForAbsentIndices() throws Exception {

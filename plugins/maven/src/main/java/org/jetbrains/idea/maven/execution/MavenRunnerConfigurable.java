@@ -17,6 +17,7 @@
 
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public abstract class MavenRunnerConfigurable implements SearchableConfigurable {
+public abstract class MavenRunnerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private final boolean myRunConfigurationMode;
 

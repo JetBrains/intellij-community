@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,7 +32,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 
-public class MavenIgnoredFilesConfigurable implements SearchableConfigurable {
+public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final char SEPARATOR = ',';
 
   private final MavenProjectsManager myManager;

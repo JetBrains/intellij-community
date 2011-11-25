@@ -140,7 +140,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
     final Set<String> selectedTypes = new HashSet<String>();
     for (DetectedRootData rootData : myDetectedRootsChooser.getMarkedElements()) {
       for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
-        selectedTypes.add(detector.getClass().getName());
+        selectedTypes.add(detector.getDetectorId());
       }
     }
     mySequence.setTypes(selectedTypes);

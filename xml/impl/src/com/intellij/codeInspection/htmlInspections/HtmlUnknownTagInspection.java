@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -87,10 +88,8 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
   public JComponent createOptionsPanel() {
     final JPanel result = new JPanel(new BorderLayout());
 
-    final JPanel internalPanel = new JPanel();
-    internalPanel.setLayout(new BoxLayout(internalPanel, BoxLayout.Y_AXIS));
-
-    result.add(internalPanel, BorderLayout.SOUTH);
+    final JPanel internalPanel = new JPanel(new BorderLayout());
+    result.add(internalPanel, BorderLayout.NORTH);
 
     final FieldPanel additionalAttributesPanel = new FieldPanel(null, getPanelTitle(), null, null);
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -120,8 +119,8 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
       }
     });
 
-    internalPanel.add(checkBox);
-    internalPanel.add(additionalAttributesPanel);
+    internalPanel.add(checkBox, BorderLayout.NORTH);
+    internalPanel.add(additionalAttributesPanel, BorderLayout.CENTER);
 
     additionalAttributesPanel.setPreferredSize(new Dimension(150, additionalAttributesPanel.getPreferredSize().height));
     additionalAttributesPanel.setEnabled(myCustomValuesEnabled);

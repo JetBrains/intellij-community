@@ -16,6 +16,7 @@
 
 package com.intellij.tools;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 
-public class ToolConfigurable implements SearchableConfigurable {
+public class ToolConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Icon ourIcon = IconLoader.getIcon("/general/externalTools.png");
   private ToolsPanel myPanel;
 
