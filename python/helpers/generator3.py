@@ -2220,6 +2220,7 @@ def find_binaries(paths):
         return {}
     paths = sortedNoCase(paths)
     for path in paths:
+        if path == os.path.dirname(sys.argv[0]): continue
         for root, dirs, files in os.walk(path):
             if root.endswith('__pycache__'): continue
             dirs_copy = list(dirs)
