@@ -49,9 +49,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     myCbUseCompileServer.setVisible(ApplicationManager.getApplication().isInternal());
     myPatternLegendLabel.setText("<html>" +
                                  "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern.<br/>" +
-                                 "Accepted wildcards: <b>?</b> - exactly one symbol; <b>*</b> - zero or more symbols;<br/>" +
-                                 "&nbsp;&nbsp;<b>/</b> - path separator; <b>/**/</b> - any number of directories;<br>" +
-                                 "&nbsp;&nbsp;<i>resources</i>:* - for everything under a source root named <i>resources</i>" +
+                                 "Accepted wildcards: <b>?</b> &mdash; exactly one symbol; <b>*</b> &mdash; zero or more symbols;<br/>" +
+                                 "&nbsp;&nbsp;<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories;<br>" +
+                                 "&nbsp;&nbsp;<i>&lt;dir_name&gt;</i>:&lt;pattern&gt; &mdash; restrict to source roots with the specified name" +
                                  "</html>");
   }
 

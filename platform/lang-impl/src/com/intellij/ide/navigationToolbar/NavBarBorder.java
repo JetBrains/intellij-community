@@ -41,16 +41,7 @@ class NavBarBorder implements Border {
 
       g.setColor(new Color(0, 0, 0, 50));
       g.drawLine(x, y + 1, x + width, y + 1);
-    } else if (NavBarRootPaneExtension.runToolbarExists()) {
-      g.setColor(new Color(0, 0, 0, 50));
-      g.drawLine(x, y, x + width, y);
     }
-    
-    if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR && NavBarRootPaneExtension.runToolbarExists()) {
-      g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
-      g.drawLine(x, y + height - 1, x + width - 1, y + height - 1);
-    }
-    
   }
 
   public Insets getBorderInsets(final Component c) {
