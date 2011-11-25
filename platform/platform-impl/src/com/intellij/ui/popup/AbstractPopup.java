@@ -61,6 +61,7 @@ public class AbstractPopup implements JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
   private static final Image ourMacCorner = ImageLoader.loadFromResource("/general/macCorner.png");
+  private static final Object SUPPRESS_MAC_CORNER = new Object();
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
@@ -306,8 +307,21 @@ public class AbstractPopup implements JBPopup {
     return new MyContentPanel(resizable, border, isToDrawMacCorner);
   }
 
-  public static boolean isToDrawMacCorner() {
-    return SystemInfo.isMac;
+  public boolean isToDrawMacCorner() {
+    if (!SystemInfo.isMac) {
+      return false;
+    }
+
+    Component component = myComponent.getComponent(0);
+    if (component instanceof JComponent && Boolean.TRUE.equals(((JComponent)component).getClientProperty(SUPPRESS_MAC_CORNER))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public static void suppressMacCornerFor(JComponent popupComponent) {
+    popupComponent.putClientProperty(SUPPRESS_MAC_CORNER, Boolean.TRUE);
   }
 
 
