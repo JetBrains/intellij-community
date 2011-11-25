@@ -56,7 +56,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
-import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -394,7 +393,6 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
     RecentsManager.getInstance(myContext.project).registerRecentEntry(RECENTS_KEY, targetClassName);
 
-    GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY = getSelectedType() != null;
     super.doOKAction();
   }
 
