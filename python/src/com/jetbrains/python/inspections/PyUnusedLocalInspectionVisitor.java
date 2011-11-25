@@ -19,7 +19,6 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -73,7 +72,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private void processScope(final ScopeOwner owner) {
-    if ((owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)) ||
+    if ((owner.getContainingFile() instanceof PyExpressionCodeFragment) ||
         callsLocals(owner)) {
       return;
     }
