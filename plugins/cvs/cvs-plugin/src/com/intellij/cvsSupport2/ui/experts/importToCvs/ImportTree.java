@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -55,6 +56,7 @@ import java.util.Map;
  */
 public class ImportTree extends NodeRenderer {
   private final Collection<VirtualFile> myExcludedFiles = new HashSet<VirtualFile>();
+  private final Collection<VirtualFile> myIncludedFiles = new HashSet<VirtualFile>();
   private final Project myProject;
   private final FileSystemTree myFileSystemTree;
   private final CvsWizard myWizard;
@@ -65,51 +67,50 @@ public class ImportTree extends NodeRenderer {
     myWizard = wizard;
   }
 
-  public void customizeCellRenderer(JTree tree,
-                                    Object value,
-                                    boolean selected,
-                                    boolean expanded,
-                                    boolean leaf,
-                                    int row,
-                                    boolean hasFocus) {
-    if (value instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-      Object userObject = node.getUserObject();
-      if (userObject instanceof NodeDescriptor) {
-        NodeDescriptor descriptor = (NodeDescriptor)userObject;
-        Object element = descriptor.getElement();
-        if (element instanceof FileElement) {
-          FileElement fileElement = (FileElement)element;
-          if (isExcluded(fileElement)) {
-            if (expanded) {
-              setIcon(IconLoader.getDisabledIcon(descriptor.getOpenIcon()));
-            }
-            else {
-              setIcon(IconLoader.getDisabledIcon(descriptor.getClosedIcon()));
-            }
-            String text = tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
-            append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT,
-                                                  tree.getForeground()));
-            return;
-          }
-        }
-      }
-    }
-
-
+  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    if (customize(tree, value, selected, expanded, leaf, row, hasFocus)) return;
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+  }
+
+  private boolean customize(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    if (!(value instanceof DefaultMutableTreeNode)) {
+      return false;
+    }
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+    final Object userObject = node.getUserObject();
+    if (!(userObject instanceof NodeDescriptor)) {
+      return false;
+    }
+    final NodeDescriptor descriptor = (NodeDescriptor)userObject;
+    final Object element = descriptor.getElement();
+    if (!(element instanceof FileElement)) {
+      return false;
+    }
+    final FileElement fileElement = (FileElement)element;
+    if (!isExcluded(fileElement)) {
+      return false;
+    }
+    if (expanded) {
+      setIcon(IconLoader.getDisabledIcon(descriptor.getOpenIcon()));
+    }
+    else {
+      setIcon(IconLoader.getDisabledIcon(descriptor.getClosedIcon()));
+    }
+    final String text = tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
+    append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, tree.getForeground()));
+    return true;
   }
 
   public AnAction createExcludeAction() {
     return new AnAction(CvsBundle.message("import.wizard.exclude.from.import.action.name"), null, PlatformIcons.DELETE_ICON) {
       public void update(AnActionEvent e) {
-        VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
-        Presentation presentation = e.getPresentation();
-        presentation.setEnabled(allFilesAreIncluded(selectedFiles));
+        final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
+        final Presentation presentation = e.getPresentation();
+        presentation.setEnabled(isAtLeastOneFileIncluded(selectedFiles));
       }
 
       public void actionPerformed(AnActionEvent e) {
-        VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
+        final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         for (VirtualFile selectedFile : selectedFiles) {
           exclude(selectedFile);
         }
@@ -119,24 +120,26 @@ public class ImportTree extends NodeRenderer {
     };
   }
 
-  private boolean allFilesAreIncluded(VirtualFile[] selectedFiles) {
+  private boolean isAtLeastOneFileIncluded(VirtualFile[] selectedFiles) {
     if (selectedFiles == null || selectedFiles.length == 0) return false;
     for (VirtualFile selectedFile : selectedFiles) {
-      if (isExcluded(selectedFile)) return false;
+      if (!isExcluded(selectedFile)) {
+        return true;
+      }
     }
-    return true;
+    return false;
   }
 
   public AnAction createIncludeAction() {
     return new AnAction(CvsBundle.message("import.wizard.include.to.import.action.name"), null, PlatformIcons.ADD_ICON) {
       public void update(AnActionEvent e) {
-        VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
-        Presentation presentation = e.getPresentation();
-        presentation.setEnabled(allFilesAreInExcluded(selectedFiles));
+        final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
+        final Presentation presentation = e.getPresentation();
+        presentation.setEnabled(isAtLeastOneFileExcluded(selectedFiles));
       }
 
       public void actionPerformed(AnActionEvent e) {
-        VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
+        final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         for (VirtualFile selectedFile : selectedFiles) {
           include(selectedFile);
         }
@@ -148,64 +151,112 @@ public class ImportTree extends NodeRenderer {
 
   private void include(VirtualFile selectedFile) {
     myExcludedFiles.remove(selectedFile);
-
+    if (myProject == null) {
+      return;
+    }
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    if (!fileIndex.isIgnored(selectedFile)) {
+      return;
+    }
+    final VirtualFile parent = selectedFile.getParent();
+    if (parent != null && fileIndex.isIgnored(parent)) {
+      return;
+    }
+    for (final VirtualFile excludedFile : myExcludedFiles) {
+      if (VfsUtil.isAncestor(excludedFile, selectedFile, true)) {
+        return;
+      }
+    }
+    myIncludedFiles.add(selectedFile);
   }
 
   private void exclude(VirtualFile selectedFile) {
     myExcludedFiles.add(selectedFile);
+    myIncludedFiles.remove(selectedFile);
   }
 
-  private boolean allFilesAreInExcluded(VirtualFile[] selectedFiles) {
-    if (selectedFiles == null || selectedFiles.length == 0) return false;
-    for (VirtualFile selectedFile : selectedFiles) {
-      if (!myExcludedFiles.contains(selectedFile)) return false;
+  private boolean isAtLeastOneFileExcluded(VirtualFile[] selectedFiles) {
+    if (selectedFiles == null || selectedFiles.length == 0) {
+      return false;
     }
-    return true;
-  }
-
-  private boolean isExcluded(FileElement fileElement) {
-    VirtualFile file = fileElement.getFile();
-    return file != null && isExcluded(file);
-  }
-
-  public boolean isExcluded(VirtualFile file) {
-    for (final VirtualFile virtualFile : myExcludedFiles) {
-      if (VfsUtil.isAncestor(virtualFile, file, false)) return true;
+    for (VirtualFile selectedFile : selectedFiles) {
+      if (myExcludedFiles.contains(selectedFile)) {
+        return true;
+      }
+      if (myProject == null) {
+        continue;
+      }
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      if (!fileIndex.isIgnored(selectedFile)) {
+        continue;
+      }
+      final VirtualFile parent = selectedFile.getParent();
+      if (parent == null || fileIndex.isIgnored(parent) || myExcludedFiles.contains(parent)) {
+        continue;
+      }
+      if (!myIncludedFiles.contains(selectedFile)) {
+        return true;
+      }
     }
     return false;
   }
 
-  public IIgnoreFileFilter getIgnoreFileFilter() {
-    final Collection<File> ignoredFiles = new HashSet<File>();
-    for (final VirtualFile myExcludedFile : myExcludedFiles) {
-      ignoredFiles.add(CvsVfsUtil.getFileFor(myExcludedFile));
-
+  private boolean isExcluded(FileElement fileElement) {
+    final VirtualFile file = fileElement.getFile();
+    if (file == null) {
+      return false;
     }
+    return isExcluded(file);
+  }
+
+  public boolean isExcluded(VirtualFile file) {
+    for (final VirtualFile excludedFile : myExcludedFiles) {
+      if (VfsUtil.isAncestor(excludedFile, file, false)) {
+        return true;
+      }
+    }
+    if (myProject == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) {
+      return false;
+    }
+    for (VirtualFile includedFile : myIncludedFiles) {
+      if (VfsUtil.isAncestor(includedFile, file, false)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public IIgnoreFileFilter getIgnoreFileFilter() {
+    final Collection<File> excludedFiles = new HashSet<File>();
+    for (final VirtualFile excludedFile : myExcludedFiles) {
+      excludedFiles.add(CvsVfsUtil.getFileFor(excludedFile));
+    }
+    final Collection<File> includedFiles = new HashSet<File>();
+    for (VirtualFile includedFile : myIncludedFiles) {
+      includedFiles.add(CvsVfsUtil.getFileFor(includedFile));
+    }
+
     return new IIgnoreFileFilter() {
       private final Map<File, IgnoredFilesInfo> myParentToIgnoresMap = new HashMap<File, IgnoredFilesInfo>();
 
       public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
-        File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
+        final File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
         if (file.isDirectory() && file.getName().equals(CvsUtil.CVS)) return true;
 
         if (FileTypeManager.getInstance().isFileIgnored(abstractFileObject.getName())) return true;
-        if (myProject != null) {
+        if (myProject != null && !includedFiles.contains(file)) {
           final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
           if (vFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(vFile)) {
             return true;
           }
         }
 
-        if (ignoredFiles.contains(file)) return true;
-        File parentFile = file.getParentFile();
+        if (excludedFiles.contains(file)) return true;
+        final File parentFile = file.getParentFile();
         if (parentFile == null) return false;
         if (!myParentToIgnoresMap.containsKey(parentFile)) {
-          myParentToIgnoresMap.put(parentFile,
-                                   IgnoredFilesInfoImpl.createForFile(
-                                     new File(parentFile,
-                                              CvsUtil.CVS_IGNORE_FILE)));
+          myParentToIgnoresMap.put(parentFile, IgnoredFilesInfoImpl.createForFile(new File(parentFile, CvsUtil.CVS_IGNORE_FILE)));
         }
-
         return myParentToIgnoresMap.get(parentFile).shouldBeIgnored(file.getName());
       }
     };

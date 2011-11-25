@@ -30,7 +30,6 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
@@ -76,16 +75,7 @@ public abstract class SelectLocationStep extends WizardStep {
 
   public SelectLocationStep(String description, CvsWizard wizard, @Nullable final Project project, boolean showFiles) {
     super(description, wizard);
-    myChooserDescriptor = new FileChooserDescriptor(showFiles, true, false, false, false, false) {
-      public boolean isFileVisible(final VirtualFile file, final boolean showHiddenFiles) {
-        if (!super.isFileVisible(file, showHiddenFiles)) return false;
-        final boolean ignored = ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file);
-        if (!showHiddenFiles && project != null && !project.isDefault() && ignored) {
-          return false;
-        }
-        return true;
-      }
-    };
+    myChooserDescriptor = new FileChooserDescriptor(showFiles, true, false, false, false, true);
     myFileSystemTree = FileSystemTreeFactory.SERVICE.getInstance().createFileSystemTree(project, myChooserDescriptor);
     myFileSystemTree.updateTree();
 
@@ -99,8 +89,22 @@ public abstract class SelectLocationStep extends WizardStep {
     myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
     myPathTextFieldWrapper.add(myPathTextField.getField(), BorderLayout.CENTER);
     myTextFieldAction = new TextFieldAction();
+  }
 
-    JTree tree = myFileSystemTree.getTree();
+  protected void init() {
+    final DefaultActionGroup fileSystemActionGroup = createFileSystemActionGroup();
+    myFileSystemToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fileSystemActionGroup, true);
+
+    final JTree tree = myFileSystemTree.getTree();
+    tree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
+    tree.setCellRenderer(new NodeRenderer());
+    tree.addMouseListener(new PopupHandler() {
+      public void invokePopup(Component comp, int x, int y) {
+        final ActionPopupMenu popupMenu =
+          ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UPDATE_POPUP, fileSystemActionGroup);
+        popupMenu.getComponent().show(comp, x, y);
+      }
+    });
     tree.addSelectionPath(tree.getPathForRow(0));
     new FileDrop(tree, new FileDrop.Target() {
       public FileChooserDescriptor getDescriptor() {
@@ -113,30 +117,15 @@ public abstract class SelectLocationStep extends WizardStep {
 
       public void dropFiles(final List<VirtualFile> files) {
         if (files.size() > 0) {
-          selectInTree(files.get(0));
+          selectInTree(files.toArray(new VirtualFile[files.size()]));
         }
-      }
-    });
-  }
-
-  protected void init() {
-    final DefaultActionGroup fileSystemActionGroup = createFileSystemActionGroup();
-    myFileSystemToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fileSystemActionGroup, true);
-
-    final JTree tree = myFileSystemTree.getTree();
-    tree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
-    tree.setCellRenderer(new NodeRenderer());
-    tree.addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UPDATE_POPUP, fileSystemActionGroup);
-        popupMenu.getComponent().show(comp, x, y);
       }
     });
     super.init();
   }
 
   protected JComponent createComponent() {
-    JPanel panel = new MyPanel();
+    final JPanel panel = new MyPanel();
     final JPanel toolbarPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
@@ -166,8 +155,8 @@ public abstract class SelectLocationStep extends WizardStep {
   }
 
   public boolean nextIsEnabled() {
-    final VirtualFile selectedFile = myFileSystemTree.getSelectedFile();
-    return selectedFile != null && selectedFile.isDirectory();
+    final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
+    return selectedFiles.length == 1 && selectedFiles[0].isDirectory();
   }
 
   public boolean setActive() {
@@ -175,8 +164,8 @@ public abstract class SelectLocationStep extends WizardStep {
   }
 
   private DefaultActionGroup createFileSystemActionGroup() {
-    DefaultActionGroup group = FileSystemTreeFactory.SERVICE.getInstance().createDefaultFileSystemActions(myFileSystemTree);
-    AnAction[] actions = getActions();
+    final DefaultActionGroup group = FileSystemTreeFactory.SERVICE.getInstance().createDefaultFileSystemActions(myFileSystemTree);
+    final AnAction[] actions = getActions();
     if (actions.length > 0) group.addSeparator();
 
     for (AnAction action : actions) {
@@ -229,15 +218,14 @@ public abstract class SelectLocationStep extends WizardStep {
       return;
     }
     if (fromText == null || fromText.equalsIgnoreCase(myPathTextField.getTextFieldText())) {
-      selectInTree(vFile);
+      selectInTree(new VirtualFile[]{vFile});
     }
     myTreeIsUpdating = false;
   }
 
-  private void selectInTree(final VirtualFile vFile) {
-    if (vFile != null && !vFile.equals(myFileSystemTree.getSelectedFile())) {
-      myFileSystemTree.select(vFile, null);
-    }
+  private void selectInTree(VirtualFile[] vFiles) {
+    if (vFiles.length == 0) return;
+    myFileSystemTree.select(vFiles, null);
   }
 
   public void toggleShowTextField() {
@@ -272,9 +260,9 @@ public abstract class SelectLocationStep extends WizardStep {
       }
     }
     else {
-      List<VirtualFile> roots = myChooserDescriptor.getRoots();
+      final List<VirtualFile> roots = myChooserDescriptor.getRoots();
       if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
-        VirtualFile vFile = roots.get(0);
+        final VirtualFile vFile = roots.get(0);
         if (vFile.isInLocalFileSystem()) {
           text = vFile.getPresentableUrl();
         }
