@@ -173,6 +173,13 @@ public class JavaCompletionUtil {
   public static boolean isInExcludedPackage(@NotNull final PsiMember member) {
     final String name = StaticImportMethodFix.getMemberQualifiedName(member);
     if (name == null) return false;
+
+    if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+      if (member instanceof PsiMethod || member instanceof PsiField || member instanceof PsiClass && member.getContainingClass() != null) {
+        return false;
+      }
+    }
+
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     for (String excluded : cis.EXCLUDED_PACKAGES) {
       if (name.equals(excluded) || name.startsWith(excluded + ".")) {
