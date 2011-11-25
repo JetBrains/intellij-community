@@ -143,6 +143,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
             }
           }
         };
+        if (ApplicationInfoImpl.getShadowInstance().isEAP() && i > 10) {
+          LOG.info("Not enough pooled threads; creating one at:", new Throwable());
+        }
         thread.setPriority(Thread.NORM_PRIORITY - 1);
         return thread;
       }
