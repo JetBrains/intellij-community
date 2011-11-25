@@ -72,7 +72,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel versionPanel = new JPanel();
+    final JPanel versionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
     final JComboBox fromComboBox = new JComboBox(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
     fromComboBox.setSelectedItem(fromVersion);
@@ -95,7 +95,7 @@ public class PyCompatibilityInspection extends PyInspection {
       }
     });
 
-    versionPanel.add(new JLabel("Check for compatibility with python from"), BorderLayout.WEST);
+    versionPanel.add(new JLabel("Check for compatibility with python from"));
     versionPanel.add(fromComboBox);
     versionPanel.add(new JLabel("to"));
     versionPanel.add(toComboBox);
