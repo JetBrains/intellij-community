@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 
@@ -56,14 +57,17 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.EAST;
+    constraints.weightx = 0.0;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
+    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
     constraints.fill = GridBagConstraints.NONE;
     add(label, constraints);
     constraints.gridx = 1;
     constraints.gridy = 0;
     constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.weighty = 1.0;
+    constraints.insets.right = 0;
+    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
     constraints.fill = GridBagConstraints.NONE;
     add(valueField, constraints);
   }

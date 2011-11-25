@@ -109,7 +109,8 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(project);
     final AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
           final PsiModifierListOwner element = refMethod.getElement();
@@ -132,15 +133,16 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
                       final PsiParameter[] parameters = derived[i].getParameterList().getParameters();
                       if (parameters.length >= idx) continue;
                       PsiParameter psiParameter = parameters[idx];
-                      ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false).forEach(new PsiReferenceProcessorAdapter(
-                        new PsiReferenceProcessor() {
-                                          public boolean execute(PsiReference element) {
-                                            refParameter.parameterReferenced(false);
-                                            processor.ignoreElement(refParameter);
-                                            found[0] = true;
-                                            return false;
-                                          }
-                                        }));
+                      ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false)
+                        .forEach(new PsiReferenceProcessorAdapter(
+                          new PsiReferenceProcessor() {
+                            public boolean execute(PsiReference element) {
+                              refParameter.parameterReferenced(false);
+                              processor.ignoreElement(refParameter);
+                              found[0] = true;
+                              return false;
+                            }
+                          }));
                     }
                   }
                 }
@@ -222,13 +224,9 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gc =
-      new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(5, 0, 0, 0), 0, 0);
-    panel.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(panel), gc);
-    gc.weightx = 1;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(Box.createHorizontalBox(), gc);
+    panel.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(panel),
+              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(0, 0, 0, 0), 0, 0));
     return panel;
   }
 
@@ -305,6 +303,5 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
       csp.run();
     }
-
   }
 }

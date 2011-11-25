@@ -17,6 +17,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JFormattedTextField;
@@ -47,8 +48,7 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.insets.left = 4;
-        constraints.insets.top = 4;
+        constraints.insets.right = UIUtil.DEFAULT_HGAP;
         constraints.weightx = 0.0;
         constraints.anchor = GridBagConstraints.BASELINE_LEADING;
         constraints.fill = GridBagConstraints.NONE;
@@ -57,6 +57,7 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
         constraints.gridy = 0;
         constraints.weightx = 1.0;
         constraints.weighty = 1.0;
+        constraints.insets.right = 0;
         constraints.anchor = GridBagConstraints.BASELINE_LEADING;
         constraints.fill = GridBagConstraints.NONE;
         add(valueField, constraints);

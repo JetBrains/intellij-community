@@ -99,7 +99,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
 
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
-    panel.add(listPanel, BorderLayout.NORTH);
+    panel.add(listPanel, BorderLayout.CENTER);
     return panel;
   }
 

@@ -151,8 +151,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
     panel.add(new JLabel("Forbid API usages:"));
 
     final JRadioButton projectRb = new JRadioButton("Respecting to project language level settings");
@@ -191,7 +190,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       }
     });
     final JPanel comboPanel = new JPanel(new BorderLayout());
-    comboPanel.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
+    comboPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
     comboPanel.add(llCombo, BorderLayout.WEST);
     panel.add(comboPanel);
 

@@ -78,7 +78,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
       }
     });
 
-    JPanel depPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    JPanel depPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     depPanel.add(editDependencies);
     return depPanel;
   }
