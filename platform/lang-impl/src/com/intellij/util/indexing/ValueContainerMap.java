@@ -14,16 +14,20 @@ import java.util.Iterator;
  * @author Dmitry Avdeev
  *         Date: 8/10/11
  */
-public class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContainer<Value>> {
+class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContainer<Value>> {
 
   private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
 
-  public ValueContainerMap(final File file,
+  ValueContainerMap(final File file,
                            KeyDescriptor<Key> keyKeyDescriptor,
                            DataExternalizer<Value> valueExternalizer) throws IOException {
 
     super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
     myValueContainerExternalizer = (ValueContainerExternalizer<Value>)myValueExternalizer;
+  }
+
+  Object getDataAccessLock() {
+    return myEnumerator;
   }
 
   @Override
