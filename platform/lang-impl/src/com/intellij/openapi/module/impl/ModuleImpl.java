@@ -40,7 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.StripedLockConcurrentHashMap;
+import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +49,6 @@ import org.picocontainer.MutablePicoContainer;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
-import static com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope.*;
 
 /**
  * @author max
@@ -63,7 +61,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
 
-  private final Map<Integer, GlobalSearchScope> myScopeCache = new StripedLockConcurrentHashMap<Integer, GlobalSearchScope>();
+  private final StripedLockIntObjectConcurrentHashMap<GlobalSearchScope> myScopeCache = new StripedLockIntObjectConcurrentHashMap<GlobalSearchScope>();
 
   private GlobalSearchScope myModuleWithDependentsScope;
   private GlobalSearchScope myModuleTestsWithDependentsScope;
@@ -239,24 +237,26 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   public GlobalSearchScope getModuleScope() {
-    return getCachedScope(COMPILE | TESTS);
+    return getCachedScope(ModuleWithDependenciesScope.COMPILE | ModuleWithDependenciesScope.TESTS);
   }
 
   @Override
   public GlobalSearchScope getModuleScope(boolean includeTests) {
-    return getCachedScope(COMPILE | (includeTests ? TESTS : 0));
+    return getCachedScope(ModuleWithDependenciesScope.COMPILE | (includeTests ? ModuleWithDependenciesScope.TESTS : 0));
   }
 
   public GlobalSearchScope getModuleWithLibrariesScope() {
-    return getCachedScope(COMPILE | TESTS | LIBRARIES);
+    return getCachedScope(ModuleWithDependenciesScope.COMPILE | ModuleWithDependenciesScope.TESTS | ModuleWithDependenciesScope.LIBRARIES);
   }
 
   public GlobalSearchScope getModuleWithDependenciesScope() {
-    return getCachedScope(COMPILE | TESTS | MODULES);
+    return getCachedScope(ModuleWithDependenciesScope.COMPILE | ModuleWithDependenciesScope.TESTS | ModuleWithDependenciesScope.MODULES);
   }
 
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
-    return getCachedScope(COMPILE | MODULES | LIBRARIES | (includeTests ? TESTS : 0));
+    return getCachedScope(ModuleWithDependenciesScope.COMPILE |
+                          ModuleWithDependenciesScope.MODULES |
+                          ModuleWithDependenciesScope.LIBRARIES | (includeTests ? ModuleWithDependenciesScope.TESTS : 0));
   }
 
   public GlobalSearchScope getModuleWithDependentsScope() {
@@ -274,7 +274,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
-    return getCachedScope(MODULES | LIBRARIES | (includeTests ? TESTS : 0));
+    return getCachedScope(
+      ModuleWithDependenciesScope.MODULES | ModuleWithDependenciesScope.LIBRARIES | (includeTests ? ModuleWithDependenciesScope.TESTS : 0));
   }
 
   @NotNull
