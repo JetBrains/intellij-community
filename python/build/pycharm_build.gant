@@ -206,7 +206,7 @@ target('default': "Build artifacts") {
 
   ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
 
-  def root = isEap() ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
+  def root = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
 
   ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
     tarfileset(dir: paths.distAll, prefix: root) {

@@ -34,7 +34,7 @@ public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
   private final Set<String> myAlreadyUpdated = new HashSet<String>();
-  
+
   public static PythonSdkUpdater getInstance() {
     final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
     for (StartupActivity extension : extensions) {
@@ -43,6 +43,10 @@ public class PythonSdkUpdater implements StartupActivity {
       }
     }
     throw new UnsupportedOperationException("could not find self");
+  }
+
+  public void markAlreadyUpdated(String path) {
+    myAlreadyUpdated.add(path);
   }
 
   @Override

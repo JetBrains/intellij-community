@@ -430,6 +430,7 @@ public class PythonSdkType extends SdkType {
           updateSdkRootsFromSysPath(sdkModificator, indicator);
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
             new PySkeletonRefresher(sdk, getSkeletonsPath(sdk.getHomePath()), indicator).regenerateSkeletons(null);
+            PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
           }
           //sdkModificator.commitChanges() must happen outside, in dispatch thread.
         }

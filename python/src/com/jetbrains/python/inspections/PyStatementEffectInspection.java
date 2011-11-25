@@ -9,7 +9,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.StatementEffectDocstringQuickFix;
 import com.jetbrains.python.actions.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.actions.StatementEffectIntroduceVariableQuickFix;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
@@ -46,9 +45,6 @@ public class PyStatementEffectInspection extends PyInspection {
 
     @Override
     public void visitPyExpressionStatement(final PyExpressionStatement node) {
-      if (PydevConsoleRunner.isInPydevConsole(node)) {
-        return;
-      }
       final PyExpression expression = node.getExpression();
       if (PsiTreeUtil.hasErrorElements(expression))
         return;

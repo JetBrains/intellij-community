@@ -16,7 +16,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
@@ -50,7 +49,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     }
     @Override
     public void visitPyReferenceExpression(final PyReferenceExpression node) {
-      if (node.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(node)) {
+      if (node.getContainingFile() instanceof PyExpressionCodeFragment) {
         return;
       }
       // Ignore global statements arguments

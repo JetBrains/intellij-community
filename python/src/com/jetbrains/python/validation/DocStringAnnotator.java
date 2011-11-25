@@ -3,7 +3,6 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.PythonDocStringFinder;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.*;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
@@ -49,10 +48,6 @@ public class DocStringAnnotator extends PyAnnotator {
 
   private void annotateDocStringStmt(final PyStringLiteralExpression stmt) {
     if (stmt != null) {
-      if (PydevConsoleRunner.isInPydevConsole(stmt)){
-        return;
-      }
-
       final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(stmt.getProject());
       if (settings.isPlain(stmt.getContainingFile()))
         return;       // nothing to annotate if docstrings are plain
