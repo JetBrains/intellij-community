@@ -61,6 +61,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ObjectUtils;
@@ -144,6 +145,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     setForceShowAsPopup(true);
     setCancelOnClickOutside(false);
     setResizable(true);
+    AbstractPopup.suppressMacCornerFor(getComponent());
+
     myProject = project;
     myEditor = editor;
 
@@ -201,6 +204,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     mySortingLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
         UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = !UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
         updateSorting();
       }
