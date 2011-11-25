@@ -410,4 +410,8 @@ public class SearchTextField extends JPanel {
   protected boolean preprocessEventForTextField(KeyEvent e) {
     return false;
   }
+  
+  public void setSearchIcon(final Icon icon) {
+    myToggleHistoryLabel.setIcon(icon);
+  }
 }
