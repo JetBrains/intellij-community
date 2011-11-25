@@ -229,11 +229,11 @@ public class FileTemplateUtil{
     try {
       Velocity.evaluate(context, stringWriter, "", templateContent);
     }
-    catch (VelocityException e) {
+    catch (final VelocityException e) {
       LOG.error("Error evaluating template:\n"+templateContent,e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template"),
+          Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
                                    IdeBundle.message("title.velocity.error"));
         }
       });
