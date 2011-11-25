@@ -4,7 +4,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -32,7 +31,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  private static class Visitor extends PyInspectionVisitor {
+  public static class Visitor extends PyInspectionVisitor {
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
@@ -61,9 +60,6 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
 
     private void checkCallable(@NotNull PyElement node, @Nullable PyExpression callee, @Nullable PyType type) {
-      if (CythonLanguageDialect._isDisabledFor(node)) {
-        return;
-      }
       final Boolean callable = callee != null ? isCallable(callee, myTypeEvalContext) : isCallable(type, node);
       if (callable == null) {
         return;

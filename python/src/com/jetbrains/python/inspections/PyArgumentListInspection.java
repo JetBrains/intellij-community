@@ -5,14 +5,15 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.cython.CythonLanguageDialect;
-import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyABCUtil;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeReference;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,9 +45,6 @@ public class PyArgumentListInspection extends PyInspection {
 
     @Override
     public void visitPyArgumentList(final PyArgumentList node) {
-      if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
-        return;
-      }
       // analyze
       inspectPyArgumentList(node, getHolder(), myTypeEvalContext);
     }

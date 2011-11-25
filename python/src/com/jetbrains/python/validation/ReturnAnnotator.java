@@ -1,7 +1,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.psi.*;
 
 /**
@@ -9,8 +8,6 @@ import com.jetbrains.python.psi.*;
  */
 public class ReturnAnnotator extends PyAnnotator {
   public void visitPyReturnStatement(final PyReturnStatement node) {
-    if (MakoLanguage._isDisabledFor(node))
-      return;
     PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
     if (function == null) {
       getHolder().createErrorAnnotation(node, "'return' outside of function");
