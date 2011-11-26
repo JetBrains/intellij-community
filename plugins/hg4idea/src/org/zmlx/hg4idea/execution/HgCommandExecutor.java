@@ -25,6 +25,7 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,7 +85,7 @@ public final class HgCommandExecutor {
   }
 
   public void execute(@Nullable final VirtualFile repo, final String operation, final List<String> arguments, @Nullable final HgCommandResultHandler handler) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
       @Override
       public void run() {
         final HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
