@@ -166,10 +166,9 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     return getHelpFile(antElement, documentationRoot);
   }
   
-  @NonNls private static final String CORE_TASKS_FOLDER_NAME = "CoreTasks";
-  @NonNls private static final String CORE_TYPES_FOLDER_NAME = "CoreTypes";
-  @NonNls private static final String OPTIONAL_TYPES_FOLDER_NAME = "OptionalTypes";
-  @NonNls private static final String OPTIONAL_TASKS_FOLDER_NAME = "OptionalTasks";
+  public static final String[] DOC_FOLDER_NAMES = new String[] {
+    "Tasks", "Types", "CoreTasks", "OptionalTasks", "CoreTypes", "OptionalTypes"
+  };
 
   @Nullable
   private static VirtualFile getHelpFile(AntDomElement antElement, final VirtualFile documentationRoot) {
@@ -179,28 +178,15 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     }
     @NonNls final String helpFileShortName = "/" + xmlTag.getName() + ".html";
 
-    VirtualFile candidateHelpFile = documentationRoot.findFileByRelativePath(CORE_TASKS_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile != null) {
-      return candidateHelpFile;
-    }
-
-    candidateHelpFile = documentationRoot.findFileByRelativePath(OPTIONAL_TASKS_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile != null) {
-      return candidateHelpFile;
-    }
-
-    candidateHelpFile = documentationRoot.findFileByRelativePath(CORE_TYPES_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile != null) {
-      return candidateHelpFile;
-    }
-
-    candidateHelpFile = documentationRoot.findFileByRelativePath(OPTIONAL_TYPES_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile != null) {
-      return candidateHelpFile;
+    for (String folderName : DOC_FOLDER_NAMES) {
+      final VirtualFile candidateHelpFile = documentationRoot.findFileByRelativePath(folderName + helpFileShortName);
+      if (candidateHelpFile != null) {
+        return candidateHelpFile;
+      }
     }
 
     if(antElement instanceof AntDomTarget|| antElement instanceof AntDomProject) {
-      candidateHelpFile = documentationRoot.findFileByRelativePath("using.html");
+      final VirtualFile candidateHelpFile = documentationRoot.findFileByRelativePath("using.html");
       if (candidateHelpFile != null) {
         return candidateHelpFile;
       }
