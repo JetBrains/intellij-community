@@ -37,6 +37,8 @@ public enum GitVersionSpecialty {
 
   /**
    * This version of git has "--progress" parameter in long-going commands (such as clone or fetch).
+   * Note that while pull, clone and fetch received the parameter since 1.7.1.1,
+   * some other commands (like merge) might have achieved it later.
    */
   ABLE_TO_USE_PROGRESS {
     @Override
