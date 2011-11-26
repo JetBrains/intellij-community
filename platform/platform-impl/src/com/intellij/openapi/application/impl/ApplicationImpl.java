@@ -59,6 +59,7 @@ import com.intellij.ui.Splash;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.Restarter;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -243,13 +244,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       });
     }
 
-    final String s = System.getProperty("jb.restart.code");
-    if (s != null) {
-      try {
-        myRestartCode = Integer.parseInt(s);
-      } catch (NumberFormatException ignore) {
-      }
-    }
+    myRestartCode = Restarter.getRestartCode();
 
     registerFont("/fonts/Inconsolata.ttf");
   }
@@ -1294,23 +1289,23 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isRestartCapable() {
-    return SystemInfo.isWindows || SystemInfo.isMacOSSnowLeopard || myRestartCode > 0;
+    return Restarter.isSupported() || myRestartCode > 0;
   }
 
   public void restart() {
-    if (SystemInfo.isWindows) {
-      Win32Restarter.restart();
+    boolean restarted = false;
+    try {
+      restarted = Restarter.restart();
     }
-    else if (SystemInfo.isMacOSSnowLeopard) {
-      MacRestarter.restart();
+    catch (Restarter.CannotRestartException e) {
+      LOG.warn(e);
     }
-    else if (myRestartCode > 0) {
+
+    if (!restarted) {
       myExitCode = myRestartCode;
-      exit(true);
     }
-    else {
-      exit(true);
-    }
+
+    exit(true);
   }
 
   public boolean isSaving() {

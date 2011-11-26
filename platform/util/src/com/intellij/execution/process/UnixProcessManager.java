@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.execution.process;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -25,16 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.util.*;
 
-/**
- * Utility class to terminate unix processes.
- *
- * @author traff
- */
 public class UnixProcessManager {
   public static final int SIGINT = 2;
   public static final int SIGKILL = 9;
@@ -54,6 +44,25 @@ public class UnixProcessManager {
   }
 
   private UnixProcessManager() {
+  }
+
+  public static int getProcessPid() {
+    checkCLib();
+    return C_LIB.getpid();
+  }
+
+  public static int getProcessPid(Process process) {
+    try {
+      Field f = process.getClass().getDeclaredField("pid");
+      f.setAccessible(true);
+      return ((Number)f.get(process)).intValue();
+    }
+    catch (NoSuchFieldException e) {
+      throw new IllegalStateException("system is not unix", e);
+    }
+    catch (IllegalAccessException e) {
+      throw new IllegalStateException("system is not unix", e);
+    }
   }
 
   public static void sendSignal(Process process, int signal) {
@@ -99,11 +108,11 @@ public class UnixProcessManager {
 
       @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
       BufferedReader stdInput = new BufferedReader(new
-                                                     InputStreamReader(p.getInputStream()));
+                                                   InputStreamReader(p.getInputStream()));
       BufferedReader stdError = new BufferedReader(new
-                                                     InputStreamReader(p.getErrorStream()));
+                                                   InputStreamReader(p.getErrorStream()));
 
-      List<Integer> childrenPids = Lists.newArrayList();
+      List<Integer> childrenPids = new ArrayList<Integer>();
 
       boolean result;
       try {
@@ -162,20 +171,6 @@ public class UnixProcessManager {
     }
   }
 
-  public static int getProcessPid(Process process) {
-    try {
-      Field f = process.getClass().getDeclaredField("pid");
-      f.setAccessible(true);
-      return ((Number)f.get(process)).intValue();
-    }
-    catch (NoSuchFieldException e) {
-      throw new IllegalStateException("system is not unix", e);
-    }
-    catch (IllegalAccessException e) {
-      throw new IllegalStateException("system is not unix", e);
-    }
-  }
-
   public static String[] getPSCmd(boolean commandLineOnly) {
     if (SystemInfo.isLinux) {
       return new String[]{"ps", "-e", "e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
@@ -210,11 +205,11 @@ public class UnixProcessManager {
   }
 
   private static class ProcessInfo {
-    private Map<Integer, List<Integer>> BY_PARENT = Maps.newTreeMap(); // pid -> list of children pids
+    private Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {
       List<Integer> children = BY_PARENT.get(parentPid);
-      if (children == null) children = Lists.newLinkedList();
+      if (children == null) children = new LinkedList<Integer>();
       children.add(pid);
       BY_PARENT.put(parentPid, children);
     }
