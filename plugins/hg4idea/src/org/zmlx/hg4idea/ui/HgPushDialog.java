@@ -17,13 +17,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgPusher;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgShowConfigCommand;
 import org.zmlx.hg4idea.command.HgTagBranch;
-import org.zmlx.hg4idea.command.HgTagBranchCommand;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -48,9 +47,13 @@ public class HgPushDialog extends DialogWrapper {
   private JCheckBox branchCheckBox;
   private JComboBox branchComboBox;
 
-  public HgPushDialog(Project project) {
+  public HgPushDialog(Project project, Collection<VirtualFile> repos, String defaultPushPath, List<HgTagBranch> branches) {
     super(project, false);
     myProject = project;
+
+    hgRepositorySelectorComponent.setRoots(repos);
+    updateBranchComboBox(branches);
+    updateRepositoryUrlText(defaultPushPath);
 
     hgRepositorySelectorComponent.setTitle("Select repository to push from");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
@@ -66,12 +69,8 @@ public class HgPushDialog extends DialogWrapper {
     revisionTxt.getDocument().addDocumentListener(updatingListener);
 
     setTitle(HgVcsMessages.message("hg4idea.push.dialog.title"));
+    setOKButtonText("Push");
     init();
-  }
-
-  public void setRoots(Collection<VirtualFile> repos) {
-    hgRepositorySelectorComponent.setRoots(repos);
-    updateRepository();
   }
 
   public VirtualFile getRepository() {
@@ -105,37 +104,31 @@ public class HgPushDialog extends DialogWrapper {
     return "reference.mercurial.push.dialog";
   }
 
-  private void updateRepository() {
+  public void updateRepository() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
-        final HgShowConfigCommand configCommand = new HgShowConfigCommand(myProject);
-        final String defaultPath = configCommand.getDefaultPushPath(repo);
-        loadBranches(repo);
+        final String defaultPath = HgPusher.getDefaultPushPath(myProject, repo);
+        final List<HgTagBranch> branches = HgPusher.getBranches(myProject, repo);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            repositoryTxt.setText(defaultPath);
-            update();
+            updateRepositoryUrlText(defaultPath);
+            updateBranchComboBox(branches);
           }
         }, ModalityState.stateForComponent(getRootPane()));
       }
     });
   }
 
-  private void loadBranches(VirtualFile root) {
-    new HgTagBranchCommand(myProject, root).listBranches(new Consumer<List<HgTagBranch>>() {
-      @Override
-      public void consume(final List<HgTagBranch> branches) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
-          }
-        }, ModalityState.stateForComponent(getRootPane()));
-      }
-    });
+  private void updateRepositoryUrlText(String defaultPath) {
+    repositoryTxt.setText(defaultPath);
+    update();
+  }
+
+  private void updateBranchComboBox(@NotNull List<HgTagBranch> branches) {
+    branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
   }
 
   private void update() {
@@ -148,6 +141,11 @@ public class HgPushDialog extends DialogWrapper {
     return StringUtils.isNotBlank(repositoryTxt.getText())
       && !(revisionCbx.isSelected() && StringUtils.isBlank(revisionTxt.getText()))
       && !(branchCheckBox.isSelected() && (branchComboBox.getSelectedItem() == null));
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return HgPushDialog.class.getName();
   }
 
   /**
