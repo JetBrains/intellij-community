@@ -160,15 +160,25 @@
         <groupId>com.intellij.idea</groupId>
         <artifactId>openapi</artifactId>
         <version>${idea.version}</version>
-        <scope>system</scope>
-        <systemPath>${idea.home}/lib/openapi.jar</systemPath>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.intellij.idea</groupId>
         <artifactId>util</artifactId>
         <version>${idea.version}</version>
-        <scope>system</scope>
-        <systemPath>${idea.home}/lib/util.jar</systemPath>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.intellij.idea</groupId>
+        <artifactId>annotations</artifactId>
+        <version>${idea.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.intellij.idea</groupId>
+        <artifactId>idea</artifactId>
+        <version>${idea.version}</version>
+        <scope>provided</scope>
       </dependency>
 
       <dependency>
@@ -177,22 +187,6 @@
         <version>${idea.version}</version>
         <scope>system</scope>
         <systemPath>${idea.home}/lib/extensions.jar</systemPath>
-      </dependency>
-
-      <dependency>
-        <groupId>com.intellij.idea</groupId>
-        <artifactId>annotations</artifactId>
-        <version>${idea.version}</version>
-        <scope>system</scope>
-        <systemPath>${idea.home}/lib/annotations.jar</systemPath>
-      </dependency>
-
-      <dependency>
-        <groupId>com.intellij.idea</groupId>
-        <artifactId>idea</artifactId>
-        <version>${idea.version}</version>
-        <scope>system</scope>
-        <systemPath>${idea.home}/lib/idea.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>com.intellij.idea</groupId>
@@ -216,11 +210,18 @@
         <scope>system</scope>
         <systemPath>${idea.home}/lib/picocontainer.jar</systemPath>
       </dependency>
+      <dependency>
+        <groupId>org.jdom</groupId>
+        <artifactId>jdom</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/jdom.jar</systemPath>
+      </dependency>
 
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.8.2</version>
+        <version>4.8.10</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -229,20 +230,17 @@
         <version>1.2.16</version>
         <scope>test</scope>
       </dependency>
-
-      <dependency>
-        <groupId>org.jdom</groupId>
-        <artifactId>jdom</artifactId>
-        <version>${idea.version}</version>
-        <scope>system</scope>
-        <systemPath>${idea.home}/lib/jdom.jar</systemPath>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.3.1</version>
+        </plugin>
+
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>2.3.2</version>
@@ -297,6 +295,71 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <id>install_openapi</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <file>${idea.home}/lib/openapi.jar</file>
+              <groupId>com.intellij.idea</groupId>
+              <artifactId>openapi</artifactId>
+              <packaging>jar</packaging>
+              <version>${idea.version}</version>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install_util</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <file>${idea.home}/lib/util.jar</file>
+              <groupId>com.intellij.idea</groupId>
+              <artifactId>util</artifactId>
+              <packaging>jar</packaging>
+              <version>${idea.version}</version>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install_annotations</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <file>${idea.home}/lib/annotations.jar</file>
+              <groupId>com.intellij.idea</groupId>
+              <artifactId>annotations</artifactId>
+              <packaging>jar</packaging>
+              <version>${idea.version}</version>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install_idea</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <file>${idea.home}/lib/idea.jar</file>
+              <groupId>com.intellij.idea</groupId>
+              <artifactId>idea</artifactId>
+              <packaging>jar</packaging>
+              <version>${idea.version}</version>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 
   <distributionManagement>
