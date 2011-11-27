@@ -46,7 +46,12 @@ public class FileSystemUtil {
           mediator.isSymLink("/");  // quick test
         }
         catch (Throwable t) {
-          LOG.error(t);
+          if ("1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
+            LOG.warn(t);
+          }
+          else {
+            LOG.error(t);
+          }
           mediator = null;
         }
       }
