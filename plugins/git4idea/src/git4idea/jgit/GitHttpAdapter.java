@@ -47,6 +47,7 @@ import java.net.ProxySelector;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 /**
  * Handles remote operations over HTTP via JGit library.
@@ -56,6 +57,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class GitHttpAdapter {
 
   private static final Logger LOG = Logger.getInstance(GitHttpAdapter.class);
+
+  private static final Pattern HTTP_URL_WITH_USERNAME_AND_PASSWORD = Pattern.compile("http(s?)://([^\\s^@:]+):([^\\s^@:]+)@.*");
+
+  public static boolean isHttpUrl(@NotNull String url) {
+    // if username & password are specified in the url, give it to the native Git
+    return url.startsWith("http") && !HTTP_URL_WITH_USERNAME_AND_PASSWORD.matcher(url).matches();
+  }
 
   /**
    * Nothing more than Runnable with exceptions.
@@ -378,10 +386,6 @@ public final class GitHttpAdapter {
   private static boolean authError(@NotNull JGitInternalException e) {
     Throwable cause = e.getCause();
     return (cause instanceof TransportException && cause.getMessage().contains("not authorized"));
-  }
-
-  public static boolean isHttpUrl(@NotNull String url) {
-    return url.startsWith("http");
   }
 
   /**
