@@ -36,7 +36,7 @@ public class GitHttpCredentialsProvider extends CredentialsProvider {
   private static final Pattern HTTP_URL_PATTERN = Pattern.compile("http(?:s?)://(?:([\\S^@\\.]*)@)?.*");
 
   private final Project myProject;
-  private final String myRemoteUrl;
+  private String myRemoteUrl;
 
   private boolean myCancelled;
   private boolean myRememberPassword;
@@ -155,6 +155,10 @@ public class GitHttpCredentialsProvider extends CredentialsProvider {
   @NotNull
   public String getUrl() {
     return myRemoteUrl;
+  }
+  
+  public void setUrl(@NotNull String url) {
+    myRemoteUrl = url;
   }
 
   public void fillAuthDataIfNotFilled(@NotNull String login, @NotNull String password) {
