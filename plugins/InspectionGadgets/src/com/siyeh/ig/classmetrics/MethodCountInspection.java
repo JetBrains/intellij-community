@@ -19,6 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -59,13 +60,11 @@ public class MethodCountInspection extends BaseInspection {
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
-    constraints.insets.left = 4;
-    constraints.insets.right = 4;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
     constraints.anchor = GridBagConstraints.WEST;
     panel.add(label, constraints);
     constraints.gridx = 1;
     constraints.weightx = 1.0;
-    constraints.insets.left = 0;
     constraints.insets.right = 0;
     panel.add(valueField, constraints);
 

@@ -257,7 +257,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     LOG.assertTrue(anchorElement != null);
     PsiElement realContainer = anchorElement.getParent();
 
-    assert GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(realContainer);
+    LOG.assertTrue(GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(realContainer));
 
     if (!(realContainer instanceof GrLoopStatement)) {
       if (realContainer instanceof GrStatementOwner) {

@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract {
+public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
   public static final Icon ICON = IconLoader.getIcon("/general/configurableVcs.png");
   private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;

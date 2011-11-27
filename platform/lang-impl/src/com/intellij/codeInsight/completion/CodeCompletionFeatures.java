@@ -34,4 +34,5 @@ public interface CodeCompletionFeatures {
 
   @NonNls String EDITING_COMPLETION_CONTROL_ENTER = "editing.completion.finishByControlEnter";
   @NonNls String EDITING_COMPLETION_CONTROL_ARROWS = "editing.completion.cancelByControlArrows";
+  @NonNls String EDITING_COMPLETION_CHANGE_SORTING = "editing.completion.changeSorting";
 }

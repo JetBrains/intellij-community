@@ -58,7 +58,7 @@ public class VcsContentAnnotationConfigurable implements Configurable {
 
   @Override
   public JComponent createComponent() {
-    JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     myHighlightRecentlyChanged = new JCheckBox("Show changed in last");
     myHighlightRecentlyChanged.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     myHighlightInterval = new JSpinner(new SpinnerNumberModel(1, 1, VcsContentAnnotationSettings.ourMaxDays, 1));

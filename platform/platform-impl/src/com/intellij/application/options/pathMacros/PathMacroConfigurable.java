@@ -16,6 +16,7 @@
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,7 @@ import javax.swing.*;
 /**
  * @author dsl
  */
-public class PathMacroConfigurable implements SearchableConfigurable {
+public class PathMacroConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final Icon ICON = IconLoader.getIcon("/general/pathVariables.png");
   @NonNls
   public static final String HELP_ID = "preferences.pathVariables";

@@ -62,15 +62,12 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
 
   @Nullable
   public JComponent createOptionsPanel() {
-    return createAdditionalNotRequiredHtmlAttributesPanel();
-  }
-
-  public FieldPanel createAdditionalNotRequiredHtmlAttributesPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
     FieldPanel additionalAttributesPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.html.not.required.label.text"),
                                                           InspectionsBundle.message("inspection.javadoc.html.not.required.dialog.title"),
                                                           null, null);
 
-    additionalAttributesPanel.setPreferredSize(new Dimension(150, additionalAttributesPanel.getPreferredSize().height));
+    panel.add(additionalAttributesPanel, BorderLayout.NORTH);
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         final Document document = e.getDocument();
@@ -86,7 +83,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
       }
     });
     additionalAttributesPanel.setText(myAdditionalRequiredHtmlAttributes);
-    return additionalAttributesPanel;
+    return panel;
   }
 
   public IntentionAction getIntentionAction(String name, int type) {

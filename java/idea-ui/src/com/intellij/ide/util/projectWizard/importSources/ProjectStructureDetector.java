@@ -68,6 +68,10 @@ public abstract class ProjectStructureDetector {
     return Collections.emptyList();
   }
 
+  public String getDetectorId() {
+    return getClass().getName();
+  }
+
   /**
    * Setup modules and libraries for the selected roots
    */

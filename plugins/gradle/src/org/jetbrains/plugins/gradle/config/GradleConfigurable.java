@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author peter
  */
-public class GradleConfigurable implements SearchableConfigurable {
+public class GradleConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
   @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
 

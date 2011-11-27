@@ -18,6 +18,7 @@ package git4idea.repo;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +53,14 @@ class GitConfig {
 
   private static final Pattern REMOTE_SECTION = Pattern.compile("remote \"(.*)\"");
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"");
+  private static final Pattern BRANCH_SECTION = Pattern.compile("branch \"(.*)\"");
 
   private final Collection<GitRemote> myRemotes;
+  private final Collection<GitBranchTrackInfo> myBranchTrackInfos;
 
-  private GitConfig(Collection<GitRemote> remotes) {
+  private GitConfig(Collection<GitRemote> remotes, @NotNull Collection<GitBranchTrackInfo> branchTrackInfos) {
     myRemotes = remotes;
+    myBranchTrackInfos = branchTrackInfos;
   }
 
   /**
@@ -75,8 +79,17 @@ class GitConfig {
    * </p>
    * @return Git remotes defined in {@code .git/config}.
    */
+  @NotNull
   Collection<GitRemote> getRemotes() {
     return myRemotes;
+  }
+
+  /**
+   * @return branch tracking information defined in {@code .git/config}.
+   */
+  @NotNull
+  public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
+    return myBranchTrackInfos;
   }
 
   /**
@@ -102,6 +115,76 @@ class GitConfig {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManager.getPluginByClassName(GitConfig.class.getName()));
     ClassLoader classLoader = plugin == null ? null : plugin.getPluginClassLoader(); // null if IDEA is started from IDEA
 
+    Collection<GitRemote> gitRemotes = parseRemotes(ini, classLoader);
+    Collection<GitBranchTrackInfo> trackedInfos = parseTrackedInfos(ini, classLoader, gitRemotes);
+    
+    return new GitConfig(gitRemotes, trackedInfos);
+  }
+
+  private static Collection<GitBranchTrackInfo> parseTrackedInfos(Ini ini, ClassLoader classLoader, Collection<GitRemote> remotes) {
+    Collection<GitBranchTrackInfo> branchTrackInfos = new ArrayList<GitBranchTrackInfo>();
+    for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
+      String sectionName = stringSectionEntry.getKey();
+      Profile.Section section = stringSectionEntry.getValue();
+      if (sectionName.startsWith("branch")) {
+        BranchConfig branchConfig = parseBranchSection(sectionName, section,  classLoader);
+        GitBranchTrackInfo branchTrackInfo = convertBranchConfig(branchConfig, remotes);
+        if (branchTrackInfo != null) {
+          branchTrackInfos.add(branchTrackInfo);
+        }
+      }
+    }
+    return branchTrackInfos;
+  }
+
+  @Nullable
+  private static GitBranchTrackInfo convertBranchConfig(@Nullable BranchConfig branchConfig, @NotNull Collection<GitRemote> remotes) {
+    if (branchConfig == null) {
+      return null;
+    }
+    String branchName = branchConfig.getName();
+    String remoteName = branchConfig.getBean().getRemote();
+    String mergeName = branchConfig.getBean().getMerge();
+    String rebaseName = branchConfig.getBean().getRebase();
+
+    if (StringUtil.isEmptyOrSpaces(mergeName) && StringUtil.isEmptyOrSpaces(rebaseName)) {
+      LOG.info("No branch." + branchName + ".merge/rebase item in the .git/config");
+      return null;
+    }
+    if (StringUtil.isEmptyOrSpaces(remoteName)) {
+      LOG.info("No branch." + branchName + ".remote item in the .git/config");
+      return null;
+    }
+    boolean merge = mergeName != null;
+    String remoteBranch = (merge ? mergeName : rebaseName);
+
+    GitRemote branchRemote = null;
+    for (GitRemote remote : remotes) {
+      if (remote.getName().equals(remoteName)) {
+        branchRemote = remote;
+        break;
+      }
+    }
+    if (branchRemote == null) {
+      LOG.info("No remote found with name " + remoteName);
+      return null;
+    }
+
+    return new GitBranchTrackInfo(branchName, branchRemote, remoteBranch, merge);
+  }
+
+  @Nullable
+  private static BranchConfig parseBranchSection(String sectionName, Profile.Section section, ClassLoader classLoader) {
+    BranchBean branchBean = section.as(BranchBean.class, classLoader);
+    Matcher matcher = BRANCH_SECTION.matcher(sectionName);
+    if (matcher.matches()) {
+      return new BranchConfig(matcher.group(1), branchBean);
+    }
+    LOG.error(String.format("Invalid branch section format in .git/config. sectionName: %s section: %s", sectionName, section));
+    return null;
+  }
+
+  private static Collection<GitRemote> parseRemotes(Ini ini, ClassLoader classLoader) {
     Collection<Remote> remotes = new ArrayList<Remote>();
     Collection<Url> urls = new ArrayList<Url>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
@@ -122,9 +205,7 @@ class GitConfig {
       }
     }
 
-    Collection<GitRemote> gitRemotes = makeGitRemotes(remotes, urls);
-    return new GitConfig(gitRemotes);
-
+    return makeGitRemotes(remotes, urls);
   }
 
   // populate GitRemotes with substituting urls when needed
@@ -344,6 +425,30 @@ class GitConfig {
   private interface UrlBean {
     @Nullable String getInsteadOf();
     @Nullable String getPushInsteadOf();
+  }
+  
+  private static class BranchConfig {
+    private final String myName;
+    private final BranchBean myBean;
+
+    public BranchConfig(String name, BranchBean bean) {
+      myName = name;
+      myBean = bean;
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    public BranchBean getBean() {
+      return myBean;
+    }
+  }
+  
+  private interface BranchBean {
+    @Nullable String getRemote();
+    @Nullable String getMerge();
+    @Nullable String getRebase();
   }
 
   @NotNull

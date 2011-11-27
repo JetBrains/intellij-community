@@ -21,10 +21,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -58,8 +61,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   private void initMapAndCache() throws IOException {
-    final PersistentMap<Key, ValueContainer<Value>> map =
-      new ValueContainerMap<Key, Value>(myStorageFile, myKeyDescriptor, myDataExternalizer);
+    final ValueContainerMap<Key, Value> map = new ValueContainerMap<Key, Value>(myStorageFile, myKeyDescriptor, myDataExternalizer);
     myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/) {
       @Override
       @NotNull
@@ -67,7 +69,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
           @Override
           public Object getLock() {
-            return map;
+            return map.getDataAccessLock();
           }
 
           @Override
