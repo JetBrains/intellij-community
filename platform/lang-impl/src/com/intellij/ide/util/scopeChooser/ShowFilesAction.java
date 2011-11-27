@@ -31,7 +31,7 @@ public final class ShowFilesAction extends ToggleAction {
 
   public ShowFilesAction(final Runnable update) {
     super(IdeBundle.message("action.show.files"),
-          IdeBundle.message("action.description.show.files"), IconLoader.getIcon("/fileTypes/java.png"));
+          IdeBundle.message("action.description.show.files"), IconLoader.getIcon("/fileTypes/unknown.png"));
     myUpdate = update;
   }
 
