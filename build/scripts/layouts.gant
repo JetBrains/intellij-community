@@ -215,6 +215,8 @@ public def layoutCommunityPlugins(String home) {
         module("maven2-server-impl")
       }
       fileset(dir: "$home/plugins/maven/lib")
+      fileset(dir: "$home/lib/") { include(name: "gson-1.7.1.jar")}
+      fileset(dir: "$home/lib/") { include(name: "jaxb*.jar")}
       fileset(dir: "$home/plugins/maven/maven-server-api/lib")
       fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
     }

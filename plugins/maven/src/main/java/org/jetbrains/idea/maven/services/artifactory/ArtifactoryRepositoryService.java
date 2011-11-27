@@ -70,24 +70,28 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
       final Gson gson = new Gson();
       final String className = template.getClassNames();
       if (className == null || className.length() == 0) {
+        final boolean canTrySwitchGAV = template.getArtifactId() == null && template.getGroupId() != null;
         final InputStream stream = new Endpoint.Search.Gavc(url).
           getGavcSearchResultJson(template.getGroupId(), template.getArtifactId(), template.getVersion(), template.getClassifier(), null)
           .getInputStream();
 
-        final boolean canTrySwitchGAV = template.getArtifactId() == null && template.getGroupId() != null;
         final ArtifactoryModel.GavcResults results = gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.GavcResults.class);
-        for (ArtifactoryModel.GavcResult result : results.results) {
-          if (!result.uri.endsWith(packaging)) continue;
-          artifacts.add(convertArtifactInfo(result.uri, url, null));
+        if (results != null && results.results != null) {
+          for (ArtifactoryModel.GavcResult result : results.results) {
+            if (!result.uri.endsWith(packaging)) continue;
+            artifacts.add(convertArtifactInfo(result.uri, url, null));
+          }
         }
         if (canTrySwitchGAV) {
           final InputStream stream2 = new Endpoint.Search.Gavc(url).
             getGavcSearchResultJson(null, template.getGroupId(), template.getVersion(), template.getClassifier(), null)
             .getInputStream();
           final ArtifactoryModel.GavcResults results2 = gson.fromJson(new InputStreamReader(stream2), ArtifactoryModel.GavcResults.class);
-          for (ArtifactoryModel.GavcResult result : results2.results) {
-            if (!result.uri.endsWith(packaging)) continue;
-            artifacts.add(convertArtifactInfo(result.uri, url, null));
+          if (results2 != null && results2.results != null) {
+            for (ArtifactoryModel.GavcResult result : results2.results) {
+              if (!result.uri.endsWith(packaging)) continue;
+              artifacts.add(convertArtifactInfo(result.uri, url, null));
+            }
           }
         }
       }
@@ -97,10 +101,12 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
         final InputStream stream = new Endpoint.Search.Archive(url).getArchiveSearchResultJson(searchString, null).getInputStream();
 
         final ArtifactoryModel.ArchiveResults results = gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.ArchiveResults.class);
-        for (ArtifactoryModel.ArchiveResult result : results.results) {
-          for (String uri : result.archiveUris) {
-            if (!uri.endsWith(packaging)) continue;
-            artifacts.add(convertArtifactInfo(uri, url, result.entry));
+        if (results != null && results.results != null) {
+          for (ArtifactoryModel.ArchiveResult result : results.results) {
+            for (String uri : result.archiveUris) {
+              if (!uri.endsWith(packaging)) continue;
+              artifacts.add(convertArtifactInfo(uri, url, result.entry));
+            }
           }
         }
       }

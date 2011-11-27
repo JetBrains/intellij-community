@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
@@ -41,7 +42,7 @@ import java.util.List;
  * Time: 9:30:44 PM
  * To change this template use Options | File Templates.
  */
-public class PluginManagerConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class PluginManagerConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
   @NonNls private static final String POSTPONE = "&Postpone";
   public boolean EXPANDED = false;

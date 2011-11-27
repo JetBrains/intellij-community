@@ -79,6 +79,7 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testconstantExpr() throws Exception { doTest(); }
 
   public void testIDEADEV74518() throws Exception { doTest(); }
+  public void testIDEADEV74518_2() throws Exception { doTest(); }
 
   public void testNotNullable() throws Exception { doTest15(); }
 

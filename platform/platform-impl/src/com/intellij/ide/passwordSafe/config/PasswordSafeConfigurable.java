@@ -1,6 +1,7 @@
 package com.intellij.ide.passwordSafe.config;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
@@ -11,7 +12,7 @@ import javax.swing.*;
 /**
  * A configurable for password safe
  */
-public class PasswordSafeConfigurable implements SearchableConfigurable {
+public class PasswordSafeConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   /**
    * The settings for the password safe
    */

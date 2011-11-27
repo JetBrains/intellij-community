@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -63,7 +64,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class KeymapPanel extends JPanel implements SearchableConfigurable {
+public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
   private JComboBox myKeymapList;
 
   private final DefaultComboBoxModel myKeymapListModel = new DefaultComboBoxModel();

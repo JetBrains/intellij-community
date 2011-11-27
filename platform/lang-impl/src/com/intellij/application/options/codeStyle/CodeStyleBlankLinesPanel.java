@@ -85,8 +85,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel);
     scroll.setBorder(null);
-    scroll.setMinimumSize(new Dimension(optionsPanel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5,
-                                        optionsPanel.getPreferredSize().height));
+    scroll.setMinimumSize(new Dimension(optionsPanel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
     scroll.setPreferredSize(scroll.getMinimumSize());
 
     myPanel

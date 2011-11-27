@@ -56,20 +56,13 @@ public class PublicFieldInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(annotationsListControl, constraints);
+    panel.add(annotationsListControl, BorderLayout.CENTER);
     final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
       "public.field.ignore.enum.type.fields.option"), this, "ignoreEnums");
-    constraints.gridy = 1;
-    panel.add(checkBox, constraints);
+    panel.add(checkBox, BorderLayout.SOUTH);
     return panel;
   }
 

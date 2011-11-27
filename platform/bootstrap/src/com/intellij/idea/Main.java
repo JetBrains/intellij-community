@@ -19,6 +19,7 @@ package com.intellij.idea;
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -39,12 +40,38 @@ public class Main {
 
   public static void main(final String[] args) {
     if (installPatch()) {
+
+      boolean restarted = false;
       try {
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        restarted = Restarter.restart();
       }
-      catch (Exception ignore) { }
-      JOptionPane.showMessageDialog(null, "The application cannot start right away since some critical files have been changed, " +
-                                          "please restart it manually.");
+      catch (Restarter.CannotRestartException e) {
+        // noinspection CallToPrintStackTrace
+        e.printStackTrace();
+      }
+
+      final int restartCode = Restarter.getRestartCode();
+
+      if (!restarted && restartCode == 0) {
+        try {
+          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }
+        catch (Exception ignore) {
+        }
+        JOptionPane.showMessageDialog(null,
+                                      "The application cannot start right away since some critical files have been changed.\n" +
+                                      "Please restart it manually.",
+                                      "Update",
+                                      JOptionPane.INFORMATION_MESSAGE);
+      }
+
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          System.exit(restartCode);
+        }
+      });
+
       return;
     }
 
@@ -69,11 +96,11 @@ public class Main {
       return false;
     }
     final String firstArg = args[0];
-    return  forceEnabledHeadlessMode ||
-             Comparing.strEqual(firstArg, antAppCode) ||
-             Comparing.strEqual(firstArg, duplocateCode) ||
-             Comparing.strEqual(firstArg, traverseUI) ||
-             (firstArg.length() < 20 && firstArg.endsWith("inspect"));
+    return forceEnabledHeadlessMode ||
+           Comparing.strEqual(firstArg, antAppCode) ||
+           Comparing.strEqual(firstArg, duplocateCode) ||
+           Comparing.strEqual(firstArg, traverseUI) ||
+           (firstArg.length() < 20 && firstArg.endsWith("inspect"));
   }
 
   public static boolean isUITraverser(final String[] args) {

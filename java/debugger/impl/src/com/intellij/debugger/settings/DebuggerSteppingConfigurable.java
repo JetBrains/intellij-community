@@ -17,6 +17,7 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.classFilter.ClassFilterEditor;
@@ -27,7 +28,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class DebuggerSteppingConfigurable implements SearchableConfigurable {
+public class DebuggerSteppingConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JCheckBox myCbStepInfoFiltersEnabled;
   private JCheckBox myCbSkipSyntheticMethods;
   private JCheckBox myCbSkipConstructors;

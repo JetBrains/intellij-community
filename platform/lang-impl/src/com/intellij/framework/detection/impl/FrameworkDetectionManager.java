@@ -44,7 +44,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -264,31 +263,12 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   }
 
   private List<? extends DetectedFrameworkDescription> getValidDetectedFrameworks() {
-    final MultiMap<Integer,DetectedFrameworkDescription> frameworksMap = myDetectedFrameworksData.getDetectedFrameworks();
+    final Set<Integer> detectors = myDetectedFrameworksData.getDetectorsForDetectedFrameworks();
     List<DetectedFrameworkDescription> descriptions = new ArrayList<DetectedFrameworkDescription>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(myProject);
-    for (Integer id : frameworksMap.keySet()) {
-      final Collection<VirtualFile> acceptedFiles = index.getContainingFiles(FrameworkDetectionIndex.NAME, id,
-                                                                             GlobalSearchScope.projectScope(myProject));
-      boolean obsolete = false;
-      for (DetectedFrameworkDescription description : frameworksMap.get(id)) {
-        if (!acceptedFiles.containsAll(description.getRelatedFiles())) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Some files from " + description.getRelatedFiles() + " aren't accepted by detector any more (accepted = " + acceptedFiles + ")");
-          }
-          obsolete = true;
-          break;
-        }
-      }
-      final Collection<? extends DetectedFrameworkDescription> frameworks;
-      if (obsolete) {
-        frameworks = runDetector(id, index, excludesConfiguration, false);
-      }
-      else {
-        frameworks = frameworksMap.get(id);
-      }
-
+    for (Integer id : detectors) {
+      final Collection<? extends DetectedFrameworkDescription> frameworks = runDetector(id, index, excludesConfiguration, false);
       for (DetectedFrameworkDescription framework : frameworks) {
         descriptions.add(framework);
       }

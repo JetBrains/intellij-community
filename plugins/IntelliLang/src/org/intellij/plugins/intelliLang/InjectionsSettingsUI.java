@@ -72,7 +72,7 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonDefaultProjectConfigurable {
+public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonDefaultProjectConfigurable, Configurable.NoScroll {
 
   private final Project myProject;
   private final CfgInfo[] myInfos;

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.net;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nls;
@@ -33,7 +34,7 @@ import java.awt.event.ActionListener;
  * Time: 3:52:47 PM
  * To change this template use Options | File Templates.
  */
-public class HTTPProxySettingsPanel implements SearchableConfigurable {
+public class HTTPProxySettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
 
   private JTextField myProxyLoginTextField;

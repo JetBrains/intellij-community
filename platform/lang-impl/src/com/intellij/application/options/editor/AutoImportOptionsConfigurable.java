@@ -52,12 +52,16 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
 
   public JComponent createComponent() {
     myProvidersPanel.removeAll();
-    for (AutoImportOptionsProvider provider : getConfigurables()) {
-      myProvidersPanel.add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0,
+    for (int i = 0; i < getConfigurables().size(); i++) {
+      AutoImportOptionsProvider provider = getConfigurables().get(i);
+      myProvidersPanel.add(provider.createComponent(), new GridBagConstraints(0, i, 1, 1, 0, 0,
                                                                      GridBagConstraints.NORTH,
                                                                      GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
     }
-    myProvidersPanel.add(Box.createVerticalGlue(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1,
+    myProvidersPanel.add(Box.createVerticalGlue(), new GridBagConstraints(0, getConfigurables().size(), 1, 1, 0, 1,
+                                                                     GridBagConstraints.NORTH,
+                                                                     GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
+    myProvidersPanel.add(Box.createVerticalGlue(), new GridBagConstraints(1, 0, getConfigurables().size() + 1, 1, 1, 0,
                                                                      GridBagConstraints.NORTH,
                                                                      GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
     return myPanel;

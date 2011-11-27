@@ -48,15 +48,15 @@ public abstract class ConventionInspection extends BaseInspection {
   /**
    * public fields for the DefaultJDomExternalizer
    *
-   * @noinspection PublicField,WeakerAccess
+   * @noinspection PublicField, WeakerAccess
    */
   public String m_regex = getDefaultRegex();
   /**
-   * @noinspection PublicField,WeakerAccess
+   * @noinspection PublicField, WeakerAccess
    */
   public int m_minLength = getDefaultMinLength();
   /**
-   * @noinspection PublicField,WeakerAccess
+   * @noinspection PublicField, WeakerAccess
    */
   public int m_maxLength = getDefaultMaxLength();
 
@@ -107,27 +107,21 @@ public abstract class ConventionInspection extends BaseInspection {
     final GridBagLayout layout = new GridBagLayout();
     final JPanel panel = new JPanel(layout);
 
-    final JLabel patternLabel = new JLabel(
-        "Pattern:");
-    patternLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-    final JLabel minLengthLabel = new JLabel(
-        "Min Length:");
-    minLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-    final JLabel maxLengthLabel = new JLabel(
-        "Max Length:");
-    maxLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+    final JLabel patternLabel = new JLabel("Pattern:");
+    final JLabel minLengthLabel = new JLabel("Min Length:");
+    final JLabel maxLengthLabel = new JLabel("Max Length:");
 
     final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
     numberFormat.setParseIntegerOnly(true);
     numberFormat.setMinimumIntegerDigits(1);
     numberFormat.setMaximumIntegerDigits(2);
     final InternationalFormatter formatter =
-        new InternationalFormatter(numberFormat);
+      new InternationalFormatter(numberFormat);
     formatter.setAllowsInvalid(false);
     formatter.setCommitsOnValidEdit(true);
 
     final JFormattedTextField minLengthField =
-        new JFormattedTextField(formatter);
+      new JFormattedTextField(formatter);
     final Font panelFont = panel.getFont();
     minLengthField.setFont(panelFont);
     minLengthField.setValue(m_minLength);
@@ -135,14 +129,14 @@ public abstract class ConventionInspection extends BaseInspection {
     UIUtil.fixFormattedField(minLengthField);
 
     final JFormattedTextField maxLengthField =
-        new JFormattedTextField(formatter);
+      new JFormattedTextField(formatter);
     maxLengthField.setFont(panelFont);
     maxLengthField.setValue(m_maxLength);
     maxLengthField.setColumns(2);
     UIUtil.fixFormattedField(maxLengthField);
 
     final JFormattedTextField regexField =
-        new JFormattedTextField(new RegExFormatter());
+      new JFormattedTextField(new RegExFormatter());
     regexField.setFont(panelFont);
     regexField.setValue(m_regexPattern);
     regexField.setColumns(REGEX_COLUMN_COUNT);
@@ -155,11 +149,12 @@ public abstract class ConventionInspection extends BaseInspection {
           regexField.commitEdit();
           minLengthField.commitEdit();
           maxLengthField.commitEdit();
-          m_regexPattern = (Pattern) regexField.getValue();
+          m_regexPattern = (Pattern)regexField.getValue();
           m_regex = m_regexPattern.pattern();
-          m_minLength = ((Number) minLengthField.getValue()).intValue();
-          m_maxLength = ((Number) maxLengthField.getValue()).intValue();
-        } catch (ParseException ignore) {
+          m_minLength = ((Number)minLengthField.getValue()).intValue();
+          m_maxLength = ((Number)maxLengthField.getValue()).intValue();
+        }
+        catch (ParseException ignore) {
           // No luck this time
         }
       }
@@ -174,36 +169,41 @@ public abstract class ConventionInspection extends BaseInspection {
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.EAST;
+    constraints.weightx = 0.0;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
+    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
     constraints.fill = GridBagConstraints.HORIZONTAL;
     panel.add(patternLabel, constraints);
 
     constraints.gridx = 1;
     constraints.gridy = 0;
-    constraints.gridwidth = 3;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.weightx = 1.0;
+    constraints.insets.right = 0;
     panel.add(regexField, constraints);
 
     constraints.gridx = 0;
     constraints.gridy = 1;
-    constraints.gridwidth = 1;
-    constraints.anchor = GridBagConstraints.EAST;
+    constraints.weightx = 0.0;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
     panel.add(minLengthLabel, constraints);
 
     constraints.gridx = 1;
     constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.weightx = 1;
+    constraints.insets.right = 0;
     panel.add(minLengthField, constraints);
 
-    constraints.gridx = 2;
-    constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.EAST;
+    constraints.gridx = 0;
+    constraints.gridy = 2;
+    constraints.weightx = 0;
+    constraints.insets.right = UIUtil.DEFAULT_HGAP;
     panel.add(maxLengthLabel, constraints);
 
-    constraints.gridx = 3;
-    constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.gridx = 1;
+    constraints.gridy = 2;
+    constraints.weightx = 1;
+    constraints.weighty = 1;
+    constraints.insets.right = 0;
     panel.add(maxLengthField, constraints);
 
     return panel;

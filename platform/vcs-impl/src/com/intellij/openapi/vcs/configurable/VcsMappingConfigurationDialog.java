@@ -25,12 +25,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -51,7 +53,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   private JPanel myVcsConfigurablePlaceholder;
   private JRadioButton myProjectRadioButton;
   private JRadioButton myDirectoryRadioButton;
-  private JLabel myProjectButtonComment;
+  private JBLabel myProjectButtonComment;
   private UnnamedConfigurable myVcsConfigurable;
   private VcsDirectoryMapping myMappingCopy;
   private JComponent myVcsConfigurableComponent;
@@ -175,22 +177,20 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       ".idea directory contents"};
     final StringBuilder sb = new StringBuilder(parts[0]);
     if (isDirectoryBased) {
-      sb.append(",\n");
+      sb.append(", ");
     } else {
-      sb.append(", and\n");
+      sb.append(", and ");
     }
     sb.append(parts[1]);
     if (isDirectoryBased) {
-      sb.append(", and\n");
+      sb.append(", and ");
       sb.append(parts[2]);
     }
     return sb.toString();
   }
 
   public void initProjectMessage() {
-    myProjectButtonComment.setForeground(UIUtil.getInactiveTextColor());
-    myProjectButtonComment.setText(getProjectMessage(myProject));
-    myProjectButtonComment.setUI(new MultiLineLabelUI());
+    myProjectButtonComment.setText("<html>" + getProjectMessage(myProject) + "</html>");
   }
 
   private class MyBrowseFolderListener extends ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> {

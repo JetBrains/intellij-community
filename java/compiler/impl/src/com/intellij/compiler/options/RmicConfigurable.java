@@ -17,6 +17,7 @@ package com.intellij.compiler.options;
 
 import com.intellij.compiler.impl.rmiCompiler.RmicSettings;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.ui.RawCommandLineEditor;
@@ -30,7 +31,7 @@ import java.awt.event.ItemListener;
  * @author Eugene Zhuravlev
  *         Date: Mar 30, 2004
  */
-public class RmicConfigurable implements SearchableConfigurable {
+public class RmicConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
   private JCheckBox myCbEnabled;
   private JCheckBox myCbGenerateIiopStubs;

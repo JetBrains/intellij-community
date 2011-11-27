@@ -49,7 +49,7 @@ public class GroovyIfStatementWithTooManyBranchesInspection extends BaseInspecti
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum number of branches", this, "m_limit");
+    return new SingleIntegerFieldOptionsPanel("Maximum number of branches:", this, "m_limit");
   }
 
   protected String buildErrorString(Object... args) {

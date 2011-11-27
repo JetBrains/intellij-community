@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.conflicts;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.binding.BindControl;
@@ -36,7 +37,7 @@ import java.util.Collection;
 /**
  * @author Dmitry Avdeev
  */
-public class ChangelistConflictConfigurable extends BindableConfigurable implements SearchableConfigurable {
+public class ChangelistConflictConfigurable extends BindableConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
   private JPanel myPanel;
   private JPanel myOptionsPanel;
