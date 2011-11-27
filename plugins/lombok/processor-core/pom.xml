@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
@@ -21,18 +22,22 @@
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>openapi</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>idea</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>util</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>annotations</artifactId>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>

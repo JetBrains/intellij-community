@@ -16,20 +16,24 @@
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>openapi</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>util</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>annotations</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>idea</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
   <build>
