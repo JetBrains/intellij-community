@@ -17,7 +17,7 @@ import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Setter;
-import lombok.core.handlers.TransformationsUtil;
+import lombok.core.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

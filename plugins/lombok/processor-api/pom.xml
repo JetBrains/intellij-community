@@ -55,7 +55,7 @@
                   <outputDirectory>${project.build.directory}/generated-sources/lombok</outputDirectory>
                 </artifactItem>
               </artifactItems>
-              <includes>lombok/extern/**,lombok/core/handlers/TransformationsUtil.java,
+              <includes>lombok/extern/**,lombok/core/TransformationsUtil.java,
                 lombok/AccessLevel.java,lombok/*ArgsConstructor.java,lombok/Cleanup.java,lombok/Data.java,lombok/Delegate.java,
                 lombok/Getter.java,lombok/Setter.java,lombok/Equals*.java,lombok/NonNull.java,lombok/Synchronized.java,
                 lombok/ToString.java,lombok/SneakyThrows.java,lombok/val.java

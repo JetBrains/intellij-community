@@ -18,7 +18,7 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Getter;
-import lombok.core.handlers.TransformationsUtil;
+import lombok.core.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

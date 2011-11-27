@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.lombok;
 
-import lombok.core.handlers.TransformationsUtil;
+import lombok.core.TransformationsUtil;
 
 import java.util.regex.Pattern;
 

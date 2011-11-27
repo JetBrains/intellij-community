@@ -140,7 +140,7 @@
     <plugin.vendor>${project.organization.name}</plugin.vendor>
     <plugin.vendor.url>${project.organization.url}</plugin.vendor.url>
     <plugin.vendor.email>michail@plushnikov.de</plugin.vendor.email>
-    <lombok.version>0.10.1</lombok.version>
+    <lombok.version>0.10.4</lombok.version>
   </properties>
 
   <prerequisites>
