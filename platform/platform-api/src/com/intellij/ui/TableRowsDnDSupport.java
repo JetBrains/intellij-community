@@ -53,6 +53,7 @@ public class TableRowsDnDSupport {
           final Point p = event.getPoint();
           if (o instanceof Integer) {
             int oldIndex = ((Integer)o).intValue();
+            if (oldIndex == -1) return;
             int newIndex = table.rowAtPoint(p);
             if (newIndex == -1) {
               newIndex = table.getRowCount() - 1;
