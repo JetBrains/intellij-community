@@ -116,7 +116,8 @@ public class GitConfigTest {
   private static GitRemote getRemote(String remoteString) {
     String[] remoteInfo = remoteString.split(" ");
     return new GitRemote(getOrEmpty(remoteInfo, 0), Collections.singletonList(getOrEmpty(remoteInfo, 1)),
-                         Collections.singletonList(getOrEmpty(remoteInfo, 2)), getOrEmpty(remoteInfo, 3), getOrEmpty(remoteInfo, 4));
+                         Collections.singletonList(getOrEmpty(remoteInfo, 2)), Collections.singletonList(getOrEmpty(remoteInfo, 3)),
+                         Collections.singletonList(getOrEmpty(remoteInfo, 4)));
   }
 
   private static Set<GitRemote> readRemoteResults(File resultFile) throws IOException {
@@ -129,17 +130,17 @@ public class GitConfigTest {
       }
       String[] info = remString.split("\n");
       String name = info[0];
-      List<String> urls = getUrls(info[1]);
-      Collection<String> pushUrls = getUrls(info[2]);
-      String fetchSpec = getOrEmpty(info, 3);
-      String pushSpec = getOrEmpty(info, 4);
+      List<String> urls = getSpaceSeparatedStrings(info[1]);
+      Collection<String> pushUrls = getSpaceSeparatedStrings(info[2]);
+      List<String> fetchSpec = getSpaceSeparatedStrings(info[3]);
+      List<String> pushSpec = getSpaceSeparatedStrings(info[4]);
       GitRemote remote = new GitRemote(name, urls, pushUrls, fetchSpec, pushSpec);
       remotes.add(remote);
     }
     return remotes;
   }
 
-  private static List<String> getUrls(String line) {
+  private static List<String> getSpaceSeparatedStrings(String line) {
     if (StringUtil.isEmptyOrSpaces(line)) {
       return Collections.emptyList();
     }

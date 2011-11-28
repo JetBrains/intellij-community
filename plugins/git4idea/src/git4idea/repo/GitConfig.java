@@ -222,14 +222,13 @@ class GitConfig {
   @NotNull
   private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
     UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
-    return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(), remote.getFetchSpec(), computePushSpec(remote));
+    return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(), remote.getFetchSpecs(), computePushSpec(remote));
   }
 
   @NotNull
-  private static String computePushSpec(@NotNull Remote remote) {
-    // supressing @Nullable - @NotNull warning: remote is immutable and remote.getPushSpec can't change.
-    //noinspection ConstantConditions
-    return remote.getPushSpec() == null ? remote.getFetchSpec() : remote.getPushSpec();
+  private static List<String> computePushSpec(@NotNull Remote remote) {
+    List<String> pushSpec = remote.getPushSpec();
+    return pushSpec == null ? remote.getFetchSpecs() : pushSpec;
   }
 
   /**
@@ -382,20 +381,21 @@ class GitConfig {
 
     @Nullable
     // no need in wrapping null here - we check for it in #computePushSpec 
-    private String getPushSpec() {
-      return myRemoteBean.getPush();
+    private List<String> getPushSpec() {
+      String[] push = myRemoteBean.getPush();
+      return push == null ? null : Arrays.asList(push);
     }
 
     @NotNull
-    private String getFetchSpec() {
-      return notNull(myRemoteBean.getFetch());
+    private List<String> getFetchSpecs() {
+      return Arrays.asList(notNull(myRemoteBean.getFetch()));
     }
     
   }
 
   private interface RemoteBean {
-    @Nullable String   getFetch();
-    @Nullable String   getPush();
+    @Nullable String[]   getFetch();
+    @Nullable String[]   getPush();
     @Nullable String[] getUrl();
     @Nullable String[] getPushUrl();
   }
@@ -454,6 +454,11 @@ class GitConfig {
   @NotNull
   private static String notNull(@Nullable String s) {
     return s == null ? "" : s;
+  }
+  
+  @NotNull
+  private static String[] notNull(@Nullable String[] s) {
+    return s == null ? new String[0] : s;
   }
 
   @NotNull

@@ -41,7 +41,7 @@ import java.util.List;
  *   This is made to avoid urls transformation logic from the code using GitRemote, leaving it all in GitConfig parsing.
  * </p>
  * <p>
- *   Same applies to fetch and push specs: {@link #getPushRefSpec()} returns the spec,
+ *   Same applies to fetch and push specs: {@link #getPushRefSpecs()} returns the spec,
  *   even if there are no separate record in {@code .git/config}
  * </p>
  * 
@@ -62,15 +62,15 @@ public final class GitRemote implements Comparable<GitRemote> {
   private final String myName;
   private final List<String> myUrls;
   private final Collection<String> myPushUrls;
-  private final String myFetchRefSpec;
-  private final String myPushRefSpec;
+  private final List<String> myFetchRefSpecs;
+  private final List<String> myPushRefSpecs;
 
-  GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls, @NotNull String fetchRefSpec, @NotNull String pushRefSpec) {
+  GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls, @NotNull List<String> fetchRefSpecs, @NotNull List<String> pushRefSpecs) {
     myName = name;
     myUrls = urls;
     myPushUrls = pushUrls;
-    myFetchRefSpec = fetchRefSpec;
-    myPushRefSpec = pushRefSpec;
+    myFetchRefSpecs = fetchRefSpecs;
+    myPushRefSpecs = pushRefSpecs;
   }
 
   public String getName() {
@@ -98,12 +98,12 @@ public final class GitRemote implements Comparable<GitRemote> {
     return myPushUrls;
   }
 
-  public String getFetchRefSpec() {
-    return myFetchRefSpec;
+  public List<String> getFetchRefSpecs() {
+    return myFetchRefSpecs;
   }
 
-  public String getPushRefSpec() {
-    return myPushRefSpec;
+  public List<String> getPushRefSpecs() {
+    return myPushRefSpecs;
   }
 
   @Override
@@ -113,9 +113,9 @@ public final class GitRemote implements Comparable<GitRemote> {
 
     GitRemote gitRemote = (GitRemote)o;
 
-    if (!myFetchRefSpec.equals(gitRemote.myFetchRefSpec)) return false;
+    if (!myFetchRefSpecs.equals(gitRemote.myFetchRefSpecs)) return false;
     if (!myName.equals(gitRemote.myName)) return false;
-    if (!myPushRefSpec.equals(gitRemote.myPushRefSpec)) return false;
+    if (!myPushRefSpecs.equals(gitRemote.myPushRefSpecs)) return false;
     if (!myPushUrls.equals(gitRemote.myPushUrls)) return false;
     if (!myUrls.equals(gitRemote.myUrls)) return false;
 
@@ -127,15 +127,15 @@ public final class GitRemote implements Comparable<GitRemote> {
     int result = myName.hashCode();
     result = 31 * result + myUrls.hashCode();
     result = 31 * result + myPushUrls.hashCode();
-    result = 31 * result + myFetchRefSpec.hashCode();
-    result = 31 * result + myPushRefSpec.hashCode();
+    result = 31 * result + myFetchRefSpecs.hashCode();
+    result = 31 * result + myPushRefSpecs.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
     return String.format("GitRemote{myName='%s', myUrls=%s, myPushUrls=%s, myFetchRefSpec='%s', myPushRefSpec='%s'}",
-                         myName, myUrls, myPushUrls, myFetchRefSpec, myPushRefSpec);
+                         myName, myUrls, myPushUrls, myFetchRefSpecs, myPushRefSpecs);
   }
 
   @Override

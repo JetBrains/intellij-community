@@ -137,9 +137,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
           final String responce = method.getResponseBodyAsString();
           // TODO[oleg] fix it when github API v3 becomes public
           // http://developer.github.com/v3/gists/
-          final Matcher matcher = Pattern.compile("\\d+").matcher(responce);
+          final Matcher matcher = Pattern.compile("href=\"[^\"]*").matcher(responce);
           matcher.find();
-          url.set("https://gist.github.com/" + matcher.group());
+          url.set(matcher.group().substring(6));
         }
         catch (IOException e1) {
           LOG.error("Failed to create gist: " + e1);

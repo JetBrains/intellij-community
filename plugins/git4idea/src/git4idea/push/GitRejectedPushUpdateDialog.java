@@ -46,7 +46,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
   private static final String HTML_IDENT = "&nbsp;&nbsp;&nbsp;&nbsp;";
   public static final String DESCRIPTION_START = "<html>Push of current branch ";
   public static final String DESCRIPTION_ENDING =
-    "Remote changes need to be merged before pushing.<br/>To push anyway you may merge or rebase now.</html>";
+    "Remote changes need to be merged before pushing.<br/>To push anyway you can merge or rebase now.</html>";
 
   private final Project myProject;
   private final Collection<GitRepository> myRepositories;
@@ -63,7 +63,9 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     myRepositories = repositories;
 
     myUpdateAllRoots = new JCheckBox("Update not rejected repositories as well", initialSettings.shouldUpdateAllRoots());
-    myAutoUpdateInFuture = new JCheckBox("<html>Remember the update method choice and silently update in future <br/>(you may change this in the Settings)</html>");
+    myUpdateAllRoots.setMnemonic('u');
+    myAutoUpdateInFuture = new JCheckBox("<html>Remember the update method choice and <u>s</u>ilently update in future <br/>(you may change this in the Settings)</html>");
+    myAutoUpdateInFuture.setMnemonic('s');
 
     myMergeAction = new MergeAction(this);
     myRebaseAction = new RebaseAction(this);
@@ -190,7 +192,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     private final DialogWrapper myDialog;
 
     MergeAction(DialogWrapper dialog) {
-      super("Merge");
+      super("&Merge");
       myDialog = dialog;
     }
 
@@ -204,7 +206,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     private final DialogWrapper myDialog;
 
     RebaseAction(DialogWrapper dialog) {
-      super("Rebase");
+      super("&Rebase");
       myDialog = dialog;
     }
 

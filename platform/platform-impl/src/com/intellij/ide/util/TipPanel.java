@@ -93,6 +93,14 @@ public class TipPanel extends JPanel {
     }
     catch (Exception exception) {//
     }
+
+    for (ProductivityFeaturesProvider provider : ProductivityFeaturesProvider.EP_NAME.getExtensions()) {
+      final FeatureDescriptor[] descriptors = provider.getFeatureDescriptors();
+      for (int j = 0; descriptors != null && j < descriptors.length; j++) {
+        FeatureDescriptor descriptor = descriptors[j];
+        myPathsToProviderMap.put(descriptor.getTipFileName(), descriptor.getProvider());
+      }
+    }
   }
 
   public Dimension getPreferredSize() {
@@ -151,14 +159,6 @@ public class TipPanel extends JPanel {
     for (Object o : document.getRootElement().getChildren(ELEMENT_TIP)) {
       Element tip = (Element)o;
       myTipPaths.add(tip.getAttributeValue(ATTRIBUTE_FILE));
-    }
-
-    for (ProductivityFeaturesProvider provider : ProductivityFeaturesProvider.EP_NAME.getExtensions()) {
-      final FeatureDescriptor[] descriptors = provider.getFeatureDescriptors();
-      for (int j = 0; descriptors != null && j < descriptors.length; j++) {
-        FeatureDescriptor descriptor = descriptors[j];
-        myPathsToProviderMap.put(descriptor.getTipFileName(), descriptor.getProvider());
-      }
     }
   }
 }

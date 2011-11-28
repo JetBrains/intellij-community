@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.NonClasspathDirectoryScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
@@ -57,6 +58,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -150,7 +152,8 @@ public class GradleScriptType extends GroovyScriptType {
 
       @Override
       public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
-        if (GradleLibraryPresentationProvider.getSdkHome(module, project) == null) {
+        final GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
+        if (libraryManager.getGradleHome(module, project) == null) {
           // TODO den internationalise
           int result = Messages.showOkCancelDialog(
             "Gradle is not configured. Do you want to configure it?",
@@ -160,7 +163,7 @@ public class GradleScriptType extends GroovyScriptType {
           if (result == 0) {
             ShowSettingsUtil.getInstance().editConfigurable(project, new GradleConfigurable(project));
           }
-          if (GradleLibraryPresentationProvider.getSdkHome(module, project) == null) {
+          if (libraryManager.getGradleHome(module, project) == null) {
             return false;
           }
         }
@@ -173,7 +176,8 @@ public class GradleScriptType extends GroovyScriptType {
                                        boolean tests,
                                        VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
         final Project project = configuration.getProject();
-        final VirtualFile gradleHome = GradleLibraryPresentationProvider.getSdkHome(module, project);
+        final GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
+        final VirtualFile gradleHome = libraryManager.getGradleHome(module, project);
         assert gradleHome != null;
 
         params.setMainClass(findMainClass(gradleHome, script, project));
@@ -192,9 +196,10 @@ public class GradleScriptType extends GroovyScriptType {
         if (StringUtil.isNotEmpty(userDefinedClasspath)) {
           params.getClassPath().add(userDefinedClasspath);
         } else {
-          // TODO den implement
-          //params.getClassPath().addAllFiles(
-          //  GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryPresentationProvider.ANY_GRADLE_JAR_FILE_PATTERN));
+          final Collection<VirtualFile> roots = libraryManager.getClassRoots(project);
+          if (roots != null) {
+            params.getClassPath().addVirtualFiles(roots);
+          }
         }
 
         params.getVMParametersList().addParametersString(configuration.getVMParameters());
@@ -248,29 +253,22 @@ public class GradleScriptType extends GroovyScriptType {
   @Override
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
+    final GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
     if (module != null) {
-      if (GradleLibraryPresentationProvider.getSdkHomeFromClasspath(module) != null) {
+      if (libraryManager.getGradleHome(module) != null) {
         return baseScope;
       }
     }
 
-    final GradleSettings gradleSettings = GradleSettings.getInstance(file.getProject());
-    // TODO den implement
-    //final VirtualFile home = gradleSettings.getSdkHome();
-    //if (home == null) {
-    //  return baseScope;
-    //}
-    //
-    //final List<VirtualFile> files = gradleSettings.getClassRoots();
-    //if (files.isEmpty()) {
-    //  return baseScope;
-    //}
+    final Collection<VirtualFile> files = libraryManager.getClassRoots(file.getProject());
+    if (files == null || files.isEmpty()) {
+      return baseScope;
+    }
 
     GlobalSearchScope result = baseScope;
-    // TODO den implement
-    //for (final VirtualFile root : files) {
-    //  result = result.uniteWith(new NonClasspathDirectoryScope(root));
-    //}
+    for (final VirtualFile root : files) {
+      result = result.uniteWith(new NonClasspathDirectoryScope(root));
+    }
     return result;
   }
 

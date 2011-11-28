@@ -22,22 +22,20 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import git4idea.push.GitSimplePushResult;
 import git4idea.remote.GitRememberedInputs;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitFetchResult;
-import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.errors.NoRemoteRepositoryException;
+import org.eclipse.jgit.errors.NotSupportedException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.PushResult;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.transport.RefSpec;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +43,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ProxySelector;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Handles remote operations over HTTP via JGit library.
@@ -57,13 +55,13 @@ public final class GitHttpAdapter {
 
   private static final Logger LOG = Logger.getInstance(GitHttpAdapter.class);
 
-  /**
-   * Nothing more than Runnable with exceptions.
-   */
-  private interface MyRunnable {
-    void run() throws IOException, InvalidRemoteException;
+  private static final Pattern HTTP_URL_WITH_USERNAME_AND_PASSWORD = Pattern.compile("http(s?)://([^\\s^@:]+):([^\\s^@:]+)@.*");
+
+  public static boolean isHttpUrl(@NotNull String url) {
+    // if username & password are specified in the url, give it to the native Git
+    return url.startsWith("http") && !HTTP_URL_WITH_USERNAME_AND_PASSWORD.matcher(url).matches();
   }
-  
+
   private enum GeneralResult {
     SUCCESS,
     CANCELLED,
@@ -78,30 +76,35 @@ public final class GitHttpAdapter {
    * Asks username and password if needed.
    */
   @NotNull
-  public static GitFetchResult fetch(@NotNull final GitRepository repository, @NotNull final String remoteName, @NotNull final String remoteUrl)  {
+  public static GitFetchResult fetch(@NotNull final GitRepository repository, @NotNull final GitRemote remote, @NotNull String remoteUrl)  {
     GitFetchResult.Type resultType;
     try {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
-      GeneralResult result = callWithAuthRetry(new MyRunnable() {
-        @Override
-        public void run() throws InvalidRemoteException {
-          FetchCommand fetchCommand = git.fetch();
-          fetchCommand.setRemote(remoteName);
-          fetchCommand.setCredentialsProvider(provider);
-          fetchCommand.call();
-        }
-      }, provider, null);
+      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Fetch(git, provider, remoteUrl, convertRefSpecs(remote.getFetchRefSpecs())));
       resultType = convertToFetchResultType(result);
     } catch (IOException e) {
-      LOG.info("Exception while fetching " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
+      logException(repository, remote.getName(), remoteUrl, e, "fetching");
       return GitFetchResult.error(e);
     }
     catch (InvalidRemoteException e) {
-      LOG.info("Exception while fetching " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
+      logException(repository, remote.getName(), remoteUrl, e, "fetching");
       return GitFetchResult.error(e);
     }
     return new GitFetchResult(resultType);
+  }
+
+  @NotNull
+  private static List<RefSpec> convertRefSpecs(@NotNull List<String> refSpecs) {
+    List<RefSpec> jgitSpecs = new ArrayList<RefSpec>();
+    for (String spec : refSpecs) {
+      jgitSpecs.add(new RefSpec(spec));
+    }
+    return jgitSpecs;
+  }
+
+  private static void logException(GitRepository repository, String remoteName, String remoteUrl, Exception e, String operation) {
+    LOG.info("Exception while " + operation + " " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
   }
 
   private static GitFetchResult.Type convertToFetchResultType(GeneralResult result) {
@@ -114,35 +117,31 @@ public final class GitHttpAdapter {
   }
 
   @NotNull
-  public static GitSimplePushResult push(@NotNull final GitRepository repository, @Nullable final String remoteName, @NotNull final String remoteUrl) {
+  public static GitSimplePushResult push(@NotNull final GitRepository repository, @NotNull final GitRemote remote, @NotNull final String remoteUrl) {
     try {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
-      final AtomicReference<GitSimplePushResult> pushResult = new AtomicReference<GitSimplePushResult>();
-      GeneralResult result = callWithAuthRetry(new MyRunnable() {
-        @Override
-        public void run() throws InvalidRemoteException {
-          PushCommand pushCommand = git.push();
-          if (remoteName != null) {
-            pushCommand.setRemote(remoteName);
-          }
-          pushCommand.setCredentialsProvider(provider);
-          Iterable<PushResult> results = pushCommand.call();
-          pushResult.set(analyzeResults(results));
-        }
-      }, provider, null);
-      if (pushResult.get() == null) {
+      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remoteUrl, convertRefSpecs(remote.getPushRefSpecs()));
+      GeneralResult result = callWithAuthRetry(pushCommand);
+      GitSimplePushResult pushResult = pushCommand.getResult();
+      if (pushResult == null) {
         return convertToPushResultType(result);
       } else {
-        return pushResult.get();
+        return pushResult;
       }
     }
+    catch (SmartPushNotSupportedException e) {
+      return GitSimplePushResult.error("Remote <code>" + remoteUrl + "</code> doesn't support <a href=\"http://progit.org/2010/03/04/smart-http.html\">" +
+                                       "smart HTTP push. </a><br/>" +
+                                       "Please set the server to use smart push or use other protocol (SSH for example). <br/>" +
+                                       "If neither is possible, as a workaround you may add authentication data directly to the remote url in <code>.git/config</code>.");
+    }
     catch (InvalidRemoteException e) {
-      LOG.info("Exception while pushing " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
+      logException(repository, remote.getName(), remoteUrl, e, "pushing");
       return makeErrorResultFromException(e);
     }
     catch (IOException e) {
-      LOG.info("Exception while pushing " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
+      logException(repository, remote.getName(), remoteUrl, e, "pushing");
       return makeErrorResultFromException(e);
     }
   }
@@ -152,23 +151,7 @@ public final class GitHttpAdapter {
     GitFetchResult.Type resultType;
     try {
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(project, url);
-      GeneralResult result = callWithAuthRetry(new MyRunnable() {
-        @Override
-        public void run() throws InvalidRemoteException {
-          CloneCommand cloneCommand = Git.cloneRepository();
-          cloneCommand.setDirectory(directory);
-          cloneCommand.setURI(url);
-          cloneCommand.setCredentialsProvider(provider);
-          cloneCommand.call();
-        }
-      }, provider, new MyRunnable() {
-        @Override
-        public void run() throws IOException, InvalidRemoteException {
-          if (directory.exists()) {
-            FileUtil.delete(directory);
-          }
-        }
-      });
+      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Clone(directory,  provider, url));
       resultType = convertToFetchResultType(result);
     }
     catch (InvalidRemoteException e) {
@@ -196,36 +179,6 @@ public final class GitHttpAdapter {
     }
   }
 
-  @NotNull
-  private static GitSimplePushResult analyzeResults(@NotNull Iterable<PushResult> results) {
-    Collection<String> rejectedBranches = new ArrayList<String>();
-    StringBuilder errorReport = new StringBuilder();
-    
-    for (PushResult result : results) {
-      for (RemoteRefUpdate update : result.getRemoteUpdates()) {
-        switch (update.getStatus()) {
-          case REJECTED_NONFASTFORWARD:
-            rejectedBranches.add(update.getSrcRef());
-            // no break: add reject to the output
-          case NON_EXISTING:
-          case REJECTED_NODELETE:
-          case REJECTED_OTHER_REASON:
-          case REJECTED_REMOTE_CHANGED:
-            errorReport.append(update.getSrcRef() + ": " + update.getStatus() + "<br/>");
-          default:
-            // on success do nothing
-        }
-      }
-    }
-
-    if (!rejectedBranches.isEmpty()) {
-      return GitSimplePushResult.reject(rejectedBranches);
-    } else if (errorReport.toString().isEmpty()) {
-      return GitSimplePushResult.success();
-    } else {
-      return GitSimplePushResult.error(errorReport.toString());
-    }
-  }
 
   @NotNull
   private static GitSimplePushResult makeErrorResultFromException(Exception e) {
@@ -236,17 +189,19 @@ public final class GitHttpAdapter {
    * Calls the given runnable.
    * If user cancels the authentication dialog, returns.
    * If user enters incorrect data, he has 2 more attempts to go before failure.
-   * 
-   * @param cleanup executed after each incorrect attempt to enter password, and after other retriable actions.
+   * Cleanups are executed after each incorrect attempt to enter password, and after other retriable actions.
    */
-  private static GeneralResult callWithAuthRetry(@NotNull MyRunnable command, @NotNull GitHttpCredentialsProvider provider,
-                                                 @Nullable MyRunnable cleanup) throws InvalidRemoteException, IOException {
+  private static GeneralResult callWithAuthRetry(@NotNull GitHttpRemoteCommand command) throws InvalidRemoteException, IOException {
     ProxySelector defaultProxySelector = ProxySelector.getDefault();
     if (GitHttpProxySupport.shouldUseProxy()) {
       ProxySelector.setDefault(GitHttpProxySupport.newProxySelector());
-      GitHttpProxySupport.init(provider.getUrl());
+      GitHttpProxySupport.init();
     }
 
+    boolean httpTransportErrorFixTried = false;
+    boolean noRemoteWithoutGitErrorFixTried = false;
+    String url = command.getUrl();
+    GitHttpCredentialsProvider provider = command.getCredentialsProvider();
     try {
       for (int i = 0; i < 3; i++) {
         try {
@@ -262,15 +217,37 @@ public final class GitHttpAdapter {
           command.run();
           rememberPassword(provider);
           return GeneralResult.SUCCESS;
-        } catch (JGitInternalException e) {
+        }
+        catch (JGitInternalException e) {
           if (authError(e)) {
             if (provider.wasCancelled()) {  // if user cancels the dialog, just return
               return GeneralResult.CANCELLED;
             }
             // otherwise give more tries to enter password
-            if (cleanup != null) {
-              cleanup.run();
-            }
+            command.cleanup();
+          }
+          else if (!httpTransportErrorFixTried && isTransportExceptionForHttp(e, url)) {
+            url = url.replaceFirst("http", "https");
+            command.setUrl(url);
+            provider.setUrl(url);
+            httpTransportErrorFixTried = true;
+            // don't "eat" one password entering attempt
+            //noinspection AssignmentToForLoopParameter
+            i--;
+            command.cleanup();
+          }
+          else if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
+            url += ".git";
+            command.setUrl(url);
+            provider.setUrl(url);
+            noRemoteWithoutGitErrorFixTried = true;
+            // don't "eat" one password entering attempt
+            //noinspection AssignmentToForLoopParameter
+            i--;
+            command.cleanup();
+          }
+          else if (smartHttpPushNotSupported(e)) {
+            throw new SmartPushNotSupportedException(e.getCause().getMessage());
           }
           else {
             throw e;
@@ -283,6 +260,29 @@ public final class GitHttpAdapter {
       ProxySelector.setDefault(defaultProxySelector);
     }
   }
+
+  private static boolean smartHttpPushNotSupported(JGitInternalException e) {
+    if (e.getCause() instanceof NotSupportedException) {
+      NotSupportedException nse = (NotSupportedException)e.getCause();
+      return nse.getMessage().toLowerCase().contains("smart http push");
+    }
+    return false;
+  }
+
+  private static boolean isNoRemoteWithoutDotGitError(Throwable e, String url) {
+    Throwable cause = e.getCause();
+    if (!(cause instanceof NoRemoteRepositoryException) && !(cause.getCause() instanceof NoRemoteRepositoryException)) {
+      return false;
+    }
+    return !url.toLowerCase().endsWith(".git");
+  }
+
+  private static boolean isTransportExceptionForHttp(@NotNull JGitInternalException e, @NotNull String url) {
+     if (!(e.getCause() instanceof TransportException)) {
+       return false;
+     }
+     return url.toLowerCase().startsWith("http") && !url.toLowerCase().startsWith("https");
+   }
 
   private static void rememberPassword(@NotNull GitHttpCredentialsProvider credentialsProvider) {
     if (!credentialsProvider.wasDialogShown()) { // the dialog is not shown => everything is already stored
@@ -380,10 +380,6 @@ public final class GitHttpAdapter {
     return (cause instanceof TransportException && cause.getMessage().contains("not authorized"));
   }
 
-  public static boolean isHttpUrl(@NotNull String url) {
-    return url.startsWith("http");
-  }
-
   /**
    * Converts {@link GitRepository} to JGit's {@link Repository}.
    */
@@ -403,4 +399,9 @@ public final class GitHttpAdapter {
     return Git.wrap(convert(repository));
   }
 
+  private static class SmartPushNotSupportedException extends NotSupportedException {
+    private SmartPushNotSupportedException(String message) {
+      super(message);
+    }
+  }
 }

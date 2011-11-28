@@ -19,9 +19,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
+import org.zmlx.hg4idea.command.HgShowConfigCommand;
+import org.zmlx.hg4idea.command.HgTagBranch;
+import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.ui.HgPushDialog;
@@ -29,6 +36,7 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,12 +58,42 @@ public class HgPusher {
   }
 
   public void showDialogAndPush() {
-    HgPushDialog dialog = new HgPushDialog(myProject);
-    dialog.setRoots(HgUtil.getHgRepositories(myProject));
-    dialog.show();
-    if (dialog.isOK()) {
-      push(myProject, dialog);
-    }
+    HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
+      public void run() {
+        List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
+        VirtualFile firstRepo = repositories.get(0);
+        String defaultPushPath = getDefaultPushPath(myProject, firstRepo);
+        List<HgTagBranch> branches = getBranches(myProject, firstRepo);
+
+        final HgPushDialog dialog = new HgPushDialog(myProject, repositories, defaultPushPath, branches);
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            dialog.show();
+          }
+        });
+
+        if (dialog.isOK()) {
+          push(myProject, dialog);
+        }
+      }
+    });    
+  }
+
+  public static String getDefaultPushPath(@NotNull Project project, @NotNull VirtualFile repo) {
+    final HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
+    return configCommand.getDefaultPushPath(repo);
+  }
+  
+  public static List<HgTagBranch> getBranches(@NotNull Project project, @NotNull VirtualFile root) {
+    final AtomicReference<List<HgTagBranch>> branchesRef = new AtomicReference<List<HgTagBranch>>();
+    new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
+      @Override
+      public void consume(final List<HgTagBranch> branches) {
+        branchesRef.set(branches);
+      }
+    });
+    return branchesRef.get();
   }
 
   private static void push(final Project project, HgPushDialog dialog) {
