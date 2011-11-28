@@ -216,9 +216,11 @@ public class XFramesView extends XDebugViewBase {
     public void errorOccurred(final String errorMessage) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          myErrorMessage = errorMessage;
-          addFrameListElements(Collections.singletonList(errorMessage), true);
-          myRunning = false;
+          if (myErrorMessage == null) {
+            myErrorMessage = errorMessage;
+            addFrameListElements(Collections.singletonList(errorMessage), true);
+            myRunning = false;
+          }
         }
       });
     }
@@ -253,7 +255,7 @@ public class XFramesView extends XDebugViewBase {
     }
 
     public void start() {
-      if (myExecutionStack == null) {
+      if (myExecutionStack == null || myErrorMessage != null) {
         return;
       }
       myRunning = true;
