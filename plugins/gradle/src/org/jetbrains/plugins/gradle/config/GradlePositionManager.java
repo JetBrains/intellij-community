@@ -37,6 +37,7 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -51,10 +52,17 @@ import java.util.regex.Pattern;
  * @author John Murph
  */
 public class GradlePositionManager extends ScriptPositionManagerHelper {
+  
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.gradle.config.GradlePositionManager");
   private static final Pattern GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
   private static final Key<CachedValue<ClassLoader>> GRADLE_CLASS_LOADER = Key.create("GRADLE_CLASS_LOADER");
   private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
+  
+  private final GradleLibraryManager myLibraryManager;
+
+  public GradlePositionManager(@NotNull GradleLibraryManager manager) {
+    myLibraryManager = manager;
+  }
 
   public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
     return GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
@@ -104,7 +112,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   @Nullable
-  private static ClassLoader getGradleClassLoader(@NotNull final Module module) {
+  private ClassLoader getGradleClassLoader(@NotNull final Module module) {
     final Project project = module.getProject();
     return CachedValuesManager.getManager(project).getCachedValue(module, GRADLE_CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
         public Result<ClassLoader> compute() {
@@ -114,8 +122,8 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   @Nullable
-  private static ClassLoader createGradleClassLoader(@NotNull Module module) {
-    final VirtualFile sdkHome = GradleLibraryPresentationProvider.getSdkHome(module, module.getProject());
+  private ClassLoader createGradleClassLoader(@NotNull Module module) {
+    final VirtualFile sdkHome = myLibraryManager.getGradleHome(module, module.getProject());
     if (sdkHome == null) {
       return null;
     }
@@ -132,7 +140,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     return new UrlClassLoader(urls, null);
   }
 
-  private static class ScriptSourceMapCalculator implements CachedValueProvider<FactoryMap<File, String>> {
+  private class ScriptSourceMapCalculator implements CachedValueProvider<FactoryMap<File, String>> {
     private final Module myModule;
 
     public ScriptSourceMapCalculator(Module module) {
