@@ -346,7 +346,11 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       type = TypeConversionUtil.erasure(type);
     } else if ((options & SHOW_RAW_NON_TOP_TYPE) != 0) {
       if (!(PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter)) {
+        final boolean preserveEllipsis = type instanceof PsiEllipsisType;
         type = TypeConversionUtil.erasure(type);
+        if (preserveEllipsis && type instanceof PsiArrayType) {
+          type = new PsiEllipsisType(((PsiArrayType)type).getComponentType());
+        }
       }
     }
     return (options & SHOW_FQ_CLASS_NAMES) == 0 ? type.getPresentableText() : type.getInternalCanonicalText();
