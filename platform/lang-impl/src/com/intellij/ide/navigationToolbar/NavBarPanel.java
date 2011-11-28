@@ -165,6 +165,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         }
       }
     });
+    
+    getNavBarUI().clearItems();
   }
 
   public NavBarUpdateQueue getUpdateQueue() {

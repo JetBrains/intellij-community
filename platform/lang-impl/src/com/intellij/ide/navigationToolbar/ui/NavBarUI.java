@@ -88,4 +88,7 @@ public interface NavBarUI {
   void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar);
 
   void doPaintNavBarPanel(Graphics2D g, Rectangle bounds, boolean mainToolbarVisible, boolean undocked);
+
+
+  void clearItems();
 }
