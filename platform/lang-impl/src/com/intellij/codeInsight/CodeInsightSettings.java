@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializationException;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
@@ -141,9 +141,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public void loadState(final Element state) {
     try {
-      DefaultJDOMExternalizer.readExternal(this, state);
+      XmlSerializer.deserializeInto(this, state);
     }
-    catch (InvalidDataException e) {
+    catch (XmlSerializationException e) {
       LOG.info(e);
     }
     final List list = state.getChildren(EXCLUDED_PACKAGE);
@@ -161,9 +161,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public void writeExternal(final Element element) {
     try {
-      DefaultJDOMExternalizer.writeExternal(this, element);
+      XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
     }
-    catch (WriteExternalException e) {
+    catch (XmlSerializationException e) {
       LOG.info(e);
     }
     for(String s: EXCLUDED_PACKAGES) {
