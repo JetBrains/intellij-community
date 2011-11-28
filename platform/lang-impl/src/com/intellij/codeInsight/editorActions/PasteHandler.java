@@ -519,7 +519,19 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
       return;
     }
-
+    
+    // We've pasted text to the non-first column and exact white space between the line start and caret position on the moment of paste
+    // has been removed by formatter during 'adjust line indent'
+    // Example:
+    //       copied text:
+    //                 '   line1
+    //                       line2'
+    //       after paste:
+    //          line start -> '   I   line1
+    //                              line2' (I - caret position during 'paste')
+    //       formatter removed white space between the line start and caret position, so, current document state is:
+    //                        '   line1
+    //                              line2'
     if (anchorLine == firstLine && -diff == startOffset - firstLineStart) {
       return;
     }
