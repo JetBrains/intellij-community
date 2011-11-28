@@ -259,18 +259,15 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
     LOG.assertTrue(GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(realContainer));
 
-    if (!(realContainer instanceof GrLoopStatement)) {
-      if (realContainer instanceof GrStatementOwner) {
-        GrStatementOwner block = (GrStatementOwner)realContainer;
-        varDecl = (GrVariableDeclaration)block.addStatementBefore(varDecl, anchorElement);
-      }
-    }
-    else {
+    if (realContainer instanceof GrLoopStatement || realContainer instanceof GrIfStatement) {
+      boolean isThenBranch = realContainer instanceof GrIfStatement && anchorElement.equals(((GrIfStatement)realContainer).getThenBranch());
+
       // To replace branch body correctly
       String refId = varDecl.getVariables()[0].getName();
+
       GrBlockStatement newBody;
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
-      if (anchorElement.equals(context.expression)) {
+      if (context.expression.equals(PsiUtil.skipParentheses(anchorElement, false))) {
         newBody = factory.createBlockStatement(varDecl);
       }
       else {
@@ -280,8 +277,25 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
       varDecl = (GrVariableDeclaration)newBody.getBlock().getStatements()[0];
 
-      GrCodeBlock tempBlock = ((GrLoopStatement)realContainer).replaceBody(newBody).getBlock();
+      GrCodeBlock tempBlock;
+      if (realContainer instanceof GrIfStatement) {
+        if (isThenBranch) {
+          tempBlock = ((GrIfStatement)realContainer).replaceThenBranch(newBody).getBlock();
+        }
+        else {
+          tempBlock = ((GrIfStatement)realContainer).replaceElseBranch(newBody).getBlock();
+        }
+      }
+      else {
+        tempBlock = ((GrLoopStatement)realContainer).replaceBody(newBody).getBlock();
+      }
       refreshPositionMarker(tempBlock.getStatements()[tempBlock.getStatements().length - 1]);
+    }
+    else {
+      if (realContainer instanceof GrStatementOwner) {
+        GrStatementOwner block = (GrStatementOwner)realContainer;
+        varDecl = (GrVariableDeclaration)block.addStatementBefore(varDecl, anchorElement);
+      }
     }
 
     return varDecl.getVariables()[0];
@@ -295,7 +309,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(stmt.getProject());
     GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(refText);
     if (!replaceAllOccurrences) {
-      expr.replaceWithExpression(refExpr, true);
+      expr.replaceWithExpression(refExpr, false);
     }
     else {
       PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(expr, stmt);

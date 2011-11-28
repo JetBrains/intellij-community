@@ -188,7 +188,8 @@ public abstract class GroovyRefactoringUtil {
         tempContainer instanceof GrClosableBlock ||
         tempContainer instanceof GroovyFileBase ||
         tempContainer instanceof GrCaseSection ||
-        tempContainer instanceof GrLoopStatement;
+        tempContainer instanceof GrLoopStatement ||
+        tempContainer instanceof GrIfStatement;
   }
 
   public static void sortOccurrences(PsiElement[] occurences) {
