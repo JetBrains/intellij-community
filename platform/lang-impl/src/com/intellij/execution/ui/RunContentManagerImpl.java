@@ -469,13 +469,16 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     myListeners.put(listener, disposable);
   }
 
-  public RunContentDescriptor[] getAllDescriptors() {
-    final List<RunContentDescriptor> descriptors = new ArrayList<RunContentDescriptor>();
+  @NotNull
+  public List<RunContentDescriptor> getAllDescriptors() {
+    if (myToolwindowIdToContentManagerMap.isEmpty()) {
+      return Collections.emptyList();
+    }
     final String[] ids = myToolwindowIdToContentManagerMap.keySet().toArray(new String[myToolwindowIdToContentManagerMap.size()]);
+    final List<RunContentDescriptor> descriptors = new ArrayList<RunContentDescriptor>();
     for (String id : ids) {
       final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(id);
-      final Content[] contents = contentManager.getContents();
-      for (final Content content : contents) {
+      for (final Content content : contentManager.getContents()) {
         final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
         if (descriptor != null) {
           descriptors.add(descriptor);
@@ -483,7 +486,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
     }
 
-    return descriptors.toArray(new RunContentDescriptor[descriptors.size()]);
+    return descriptors;
   }
 
   public void removeRunContentListener(final RunContentListener listener) {
