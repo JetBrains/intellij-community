@@ -97,16 +97,22 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     // Paint button's background
 
-    final Graphics2D g2=(Graphics2D)g;
+    final Graphics2D g2 = (Graphics2D)g.create();
+
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
     g2.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
 
     final ButtonModel model=button.getModel();
 
     final Color background = button.getBackground();
+    
 
     Color toBorder = model.isRollover() ? new Color(0, 0, 0, 50) : null;
     final boolean vertical = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
+
+    if (anchor == ToolWindowAnchor.RIGHT) {
+      g2.translate(1, 0);
+    }
 
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
       g2.setColor(new Color(0, 0, 0, 30));
@@ -128,8 +134,12 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     }
 
     if (toBorder != null) {
-      g.setColor(toBorder);
-      g.drawRect(2, 2, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
+      g2.setColor(toBorder);
+      g2.drawRect(2, 2, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
+    }
+
+    if (anchor == ToolWindowAnchor.RIGHT) {
+      g2.translate(-1, 0);
     }
 
     AffineTransform tr=null;
@@ -160,30 +170,32 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     if(text!=null){
       if(model.isEnabled()){
         if(model.isArmed()&&model.isPressed()||model.isSelected()){
-          g.setColor(background);
+          g2.setColor(background);
         } else{
-          g.setColor(button.getForeground());
+          g2.setColor(button.getForeground());
         }
       } else{
-        g.setColor(background.darker());
+        g2.setColor(background.darker());
       }
       /* Draw the Text */
       if(model.isEnabled()){
         /*** paint the text normally */
-        g.setColor(button.getForeground());
-        BasicGraphicsUtils.drawString(g,clippedText,button.getMnemonic2(),ourTextRect.x,ourTextRect.y+fm.getAscent());
+        g2.setColor(button.getForeground());
+        BasicGraphicsUtils.drawString(g2,clippedText,button.getMnemonic2(),ourTextRect.x,ourTextRect.y+fm.getAscent());
       } else{
         /*** paint the text disabled ***/
         if(model.isSelected()){
-          g.setColor(c.getBackground());
+          g2.setColor(c.getBackground());
         } else{
-          g.setColor(getDisabledTextColor());
+          g2.setColor(getDisabledTextColor());
         }
-        BasicGraphicsUtils.drawString(g,clippedText,button.getMnemonic2(),ourTextRect.x,ourTextRect.y+fm.getAscent());
+        BasicGraphicsUtils.drawString(g2,clippedText,button.getMnemonic2(),ourTextRect.x,ourTextRect.y+fm.getAscent());
       }
     }
     if(ToolWindowAnchor.RIGHT==anchor||ToolWindowAnchor.LEFT==anchor){
       g2.setTransform(tr);
     }
+    
+    g2.dispose();
   }
 }
