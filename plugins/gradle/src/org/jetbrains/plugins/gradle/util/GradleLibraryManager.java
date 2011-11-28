@@ -1,7 +1,10 @@
 package org.jetbrains.plugins.gradle.util;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +20,6 @@ import java.util.regex.Pattern;
  * Encapsulates algorithm of gradle libraries discovery.
  * <p/>
  * Thread-safe.
- * <p/>
- * This class is not singleton but offers single-point-of-usage field - {@link #INSTANCE}.
  * 
  * @author Denis Zhdanov
  * @since 8/4/11 11:06 AM
@@ -101,6 +102,47 @@ public class GradleLibraryManager {
     }
     result = getGradleHomeFromPath();
     return result == null ? getGradleHomeFromEnvProperty() : result;
+  }
+
+  /**
+   * Tries to return gradle home that is defined as a dependency to the given module.
+   * 
+   * @param module  target module
+   * @return        file handle that points to the gradle installation home defined as a dependency of the given module (if any)
+   */
+  @Nullable
+  public VirtualFile getGradleHome(@Nullable Module module) {
+    if (module == null) {
+      return null;
+    }
+    final VirtualFile[] roots = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
+    if (roots == null) {
+      return null;
+    }
+    for (VirtualFile root : roots) {
+      if (root != null && isGradleSdkHome(root)) {
+        return root;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Tries to return gradle home defined as a dependency of the given module; falls back to the project-wide settings otherwise.
+   * 
+   * @param module   target module that can have gradle home as a dependency
+   * @param project  target project which gradle home setting should be used if module-specific gradle location is not defined
+   * @return         gradle home derived from the settings of the given entities (if any); <code>null</code> otherwise
+   */
+  @Nullable
+  public VirtualFile getGradleHome(@Nullable Module module, @Nullable Project project) {
+    final VirtualFile result = getGradleHome(module);
+    if (result != null) {
+      return result;
+    }
+
+    final File home = getGradleHome(project);
+    return LocalFileSystem.getInstance().findFileByIoFile(home);
   }
   
   /**
@@ -231,5 +273,27 @@ public class GradleLibraryManager {
       }
     }
     return null;
+  }
+
+  /**
+   * Allows to ask for the gradle class roots.
+   * 
+   * @param project  target project to use for gradle home retrieval
+   * @return         collection of the gradle class roots (if any); <code>null</code> otherwise
+   */
+  @Nullable
+  public Collection<VirtualFile> getClassRoots(@Nullable Project project) {
+    final Collection<File> libraries = getAllLibraries(project);
+    if (libraries == null) {
+      return null;
+    }
+    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (File file : libraries) {
+      if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()) {
+        result.add(fileSystem.findFileByIoFile(file));
+      }
+    }
+    return result;
   }
 }
