@@ -17,6 +17,8 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class VcsModifiableDirtyScope extends VcsDirtyScope {

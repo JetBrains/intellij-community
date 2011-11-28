@@ -111,6 +111,11 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   }
 
   @Override
+  public void iterateExistingInsideScope(Processor<VirtualFile> vf) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isEmpty() {
     return myDirtyFiles.isEmpty();
   }

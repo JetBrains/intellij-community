@@ -271,6 +271,35 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @Override
+  public void iterateExistingInsideScope(Processor<VirtualFile> processor) {
+    if (myProject.isDisposed()) return;
+
+    for (VirtualFile root : myAffectedContentRoots) {
+      THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(root);
+      if (dirsByRoot != null) {
+        for (FilePath dir : dirsByRoot) {
+          final VirtualFile vFile = dir.getVirtualFile();
+          if (vFile != null && vFile.isValid()) {
+            myVcsManager.iterateVfUnderVcsRoot(vFile, processor);
+          }
+        }
+      }
+    }
+
+    for (FilePath file : myDirtyFiles) {
+      if (file.getVirtualFile() != null) {
+        processor.process(file.getVirtualFile());
+      }
+      final VirtualFile vFile = file.getVirtualFile();
+      if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
+        for (VirtualFile child : vFile.getChildren()) {
+          processor.process(child);
+        }
+      }
+    }
+  }
+
+  @Override
   public boolean isEmpty() {
     return myDirtyDirectoriesRecursively.isEmpty() && myDirtyFiles.isEmpty();
   }

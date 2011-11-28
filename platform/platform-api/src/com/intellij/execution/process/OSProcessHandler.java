@@ -22,10 +22,15 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
+
+  public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, final Charset defaultCharset) {
+    super(process, commandLine, defaultCharset);
+  }
 
   public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine) {
     super(process, commandLine, EncodingManager.getInstance().getDefaultCharset());

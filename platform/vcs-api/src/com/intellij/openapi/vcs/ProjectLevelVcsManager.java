@@ -42,6 +42,8 @@ import java.util.List;
 public abstract class ProjectLevelVcsManager {
   @NonNls public static final String FILE_VIEW_TOOL_WINDOW_ID = "File View";
 
+  public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor);
+
   /**
    * Returns the <code>ProjectLevelVcsManager<code> instance for the specified project.
    *

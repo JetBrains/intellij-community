@@ -77,6 +77,10 @@ public class AlienDirtyScope extends VcsDirtyScope {
   }
 
   @Override
+  public void iterateExistingInsideScope(Processor<VirtualFile> vf) {
+  }
+
+  @Override
   public boolean isEmpty() {
     return myFiles.isEmpty() && myDirs.isEmpty();
   }
