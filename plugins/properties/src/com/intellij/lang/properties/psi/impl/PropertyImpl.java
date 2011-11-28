@@ -23,10 +23,12 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyStub;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -237,7 +239,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
           int value = 0;
           boolean error = false;
           for (int i = 0; i < 4; i++) {
-            aChar = s.charAt(off++);
+            aChar = off < s.length() ? s.charAt(off++) : 0;
             switch (aChar) {
               case '0':
               case '1':
