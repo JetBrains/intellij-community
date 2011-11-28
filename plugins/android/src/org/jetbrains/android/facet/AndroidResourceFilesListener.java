@@ -154,7 +154,9 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
         return;
       }
 
-      if (compilerToRun instanceof AndroidAptCompiler) {
+      if (compilerToRun instanceof AndroidAptCompiler &&
+          AndroidRootUtil.getManifestFile(myFacet.getModule()) != myEvent.getFile()) {
+
         final HashSet<ResourceEntry> resourceSet = new HashSet<ResourceEntry>();
 
         DumbService.getInstance(myFacet.getModule().getProject()).waitForSmartMode();
