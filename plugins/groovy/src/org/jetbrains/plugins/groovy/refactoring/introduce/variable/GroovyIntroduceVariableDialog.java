@@ -205,7 +205,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
   private void createUIComponents() {
-    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression);
+    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression, true);
   }
 
   class DataChangedListener implements EventListener {
