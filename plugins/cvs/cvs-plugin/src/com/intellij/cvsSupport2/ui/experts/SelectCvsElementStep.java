@@ -22,6 +22,8 @@ import com.intellij.cvsSupport2.connections.CvsRootException;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
 import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -90,7 +92,7 @@ public class SelectCvsElementStep extends WizardStep {
 
   @Override
   public boolean preNextCheck() {
-    CvsRootConfiguration selectedConfiguration = mySelectCVSConfigurationStep.getSelectedConfiguration();
+    final CvsRootConfiguration selectedConfiguration = mySelectCVSConfigurationStep.getSelectedConfiguration();
     if (selectedConfiguration == null) {
       return false;
     }
@@ -119,7 +121,7 @@ public class SelectCvsElementStep extends WizardStep {
   }
 
   public CvsElement getSelectedCvsElement() {
-    CvsElement[] selection = myCvsTree.getCurrentSelection();
+    final CvsElement[] selection = myCvsTree.getCurrentSelection();
     if (selection.length == 0) return null;
     return selection[0];
   }
@@ -128,9 +130,15 @@ public class SelectCvsElementStep extends WizardStep {
   protected JComponent createComponent() {
     myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles, new Consumer<VcsException>() {
       @Override
-      public void consume(VcsException e) {
+      public void consume(final VcsException e) {
         myErrors.set(Boolean.TRUE);
-        Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.cvs.error"));
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+          @Override
+          public void run() {
+            Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.cvs.error"));
+          }
+        }, ModalityState.any());
       }
     });
     myCvsTree.init();
@@ -153,5 +161,4 @@ public class SelectCvsElementStep extends WizardStep {
   public Component getPreferredFocusedComponent() {
     return myCvsTree.getTree();
   }
-
 }

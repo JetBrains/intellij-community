@@ -20,12 +20,14 @@ import com.intellij.openapi.components.ServiceManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+
 /**
  * author: lesya
  */
-
 public class ImportConfiguration extends AbstractConfiguration {
+
   public String VENDOR;
   public String RELEASE_TAG;
   public String LOG_MESSAGE;
@@ -42,13 +44,13 @@ public class ImportConfiguration extends AbstractConfiguration {
   }
 
   public Collection<FileExtension> getExtensions() {
-    ArrayList<FileExtension> result = new ArrayList<FileExtension>();
-    if (KEYWORD_SUBSTITUTION_WRAPPERS == null || KEYWORD_SUBSTITUTION_WRAPPERS.length() == 0)
-      return result;
-
-    String[] wrappers = KEYWORD_SUBSTITUTION_WRAPPERS.split(";");
+    if (KEYWORD_SUBSTITUTION_WRAPPERS == null || KEYWORD_SUBSTITUTION_WRAPPERS.length() == 0) {
+      return Collections.emptyList();
+    }
+    final ArrayList<FileExtension> result = new ArrayList<FileExtension>();
+    final String[] wrappers = KEYWORD_SUBSTITUTION_WRAPPERS.split(";");
     for (String wrapper : wrappers) {
-      String[] extAndSubstitution = wrapper.split(" ");
+      final String[] extAndSubstitution = wrapper.split(" ");
       if (extAndSubstitution.length != 2) continue;
       result.add(new FileExtension(extAndSubstitution[0], extAndSubstitution[1]));
     }
@@ -56,7 +58,7 @@ public class ImportConfiguration extends AbstractConfiguration {
   }
 
   public void setExtensions(List<FileExtension> items) {
-    StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder();
     for (FileExtension extension : items) {
       buffer.append(extension.getExtension());
       buffer.append(" ");
@@ -65,5 +67,4 @@ public class ImportConfiguration extends AbstractConfiguration {
     }
     KEYWORD_SUBSTITUTION_WRAPPERS = buffer.toString();
   }
-
 }
