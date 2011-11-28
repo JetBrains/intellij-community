@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.SweepProcessor;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Segment;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -206,12 +207,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         }
         checkMax(true);
         for (IntervalNode<T> node : affected) {
-          List<Getable<T>> keys = node.intervals;
+          List<Getter<T>> keys = node.intervals;
           if (keys.isEmpty()) continue; // collected away
 
           RangeMarkerImpl marker = null;
           for (int i = keys.size() - 1; i >= 0; i--) {
-            Getable<T> key = keys.get(i);
+            Getter<T> key = keys.get(i);
             marker = (RangeMarkerImpl)key.get();
             if (marker != null) {
               if (!marker.isValid()) {
@@ -229,7 +230,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
             // can change if two range become the one
             if (insertedNode != node) {
               // merge happened
-              for (Getable<T> key : keys) {
+              for (Getter<T> key : keys) {
                 T interval = key.get();
                 if (interval == null) continue;
                 insertedNode.addInterval(interval);

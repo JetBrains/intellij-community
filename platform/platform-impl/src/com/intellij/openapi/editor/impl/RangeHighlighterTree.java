@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -61,7 +62,7 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
 
     //range highlighters are strongly referenced
     @Override
-    protected Getable<RangeHighlighterEx> createGetable(@NotNull RangeHighlighterEx interval) {
+    protected Getter<RangeHighlighterEx> createGetter(@NotNull RangeHighlighterEx interval) {
       return (RangeHighlighterImpl)interval;
     }
   }

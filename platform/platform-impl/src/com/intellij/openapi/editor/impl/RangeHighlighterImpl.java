@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ import java.awt.*;
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getable<RangeHighlighterEx> {
+class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
   private final RangeHighlighterData data;
 
   RangeHighlighterImpl(@NotNull MarkupModel model,

@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.DisposableIterator;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.IncorrectOperationException;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -50,7 +52,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     private volatile int myStart;
     private volatile int myEnd;
     private volatile boolean isValid = true;
-    protected final List<Getable<E>> intervals;
+    protected final List<Getter<E>> intervals;
     protected int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
 
@@ -62,7 +64,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       myIntervalTree = intervalTree;
       myStart = start;
       myEnd = end;
-      intervals = new SmartList<Getable<E>>(createGetable(key));
+      intervals = new SmartList<Getter<E>>(createGetter(key));
     }
 
 
@@ -85,7 +87,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     public boolean processAliveKeys(@NotNull Processor<? super E> processor) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < intervals.size(); i++) {
-        Getable<E> interval = intervals.get(i);
+        Getter<E> interval = intervals.get(i);
         E key = interval.get();
         if (key != null && !processor.process(key)) return false;
       }
@@ -96,7 +98,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     public boolean hasAliveKey(boolean purgeDead) {
       boolean hasAliveInterval = false;
       for (int i = intervals.size() - 1; i >= 0; i--) {
-        Getable<E> interval = intervals.get(i);
+        Getter<E> interval = intervals.get(i);
         if (interval.get() != null) {
           hasAliveInterval = true;
           if (purgeDead) {
@@ -120,7 +122,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       myIntervalTree.checkBelongsToTheTree(key, true);
       myIntervalTree.assertUnderWriteLock();
       for (int i = intervals.size() - 1; i >= 0; i--) {
-        Getable<E> interval = intervals.get(i);
+        Getter<E> interval = intervals.get(i);
         E t = interval.get();
         if (t == key) {
           removeIntervalInternal(i);
@@ -143,13 +145,19 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     public void addInterval(@NotNull E interval) {
       myIntervalTree.assertUnderWriteLock();
-      intervals.add(createGetable(interval));
+      intervals.add(createGetter(interval));
       myIntervalTree.keySize++;
       myIntervalTree.setNode(interval, this);
     }
 
-    protected Getable<E> createGetable(@NotNull E interval) {
-      return new WeakReferencedGetable<E>(interval, myIntervalTree.myReferenceQueue);
+    protected Getter<E> createGetter(@NotNull E interval) {
+      return new WeakReferencedGetter<E>(interval, myIntervalTree.myReferenceQueue);
+    }
+
+    private static class WeakReferencedGetter<T> extends WeakReference<T> implements Getter<T> {
+      public WeakReferencedGetter(T referent, ReferenceQueue<? super T> q) {
+        super(referent, q);
+      }
     }
 
     protected int computeDeltaUpToRoot() {
