@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -37,6 +38,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
 
   private final ProjectFileIndex myProjectFileIndex;
   private final Set<Module> myModules;
+  private final GlobalSearchScope myProjectScope;
 
   public ModuleWithDependentsScope(Module module, boolean onlyTests) {
     super(module.getProject());
@@ -44,6 +46,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     myOnlyTests = onlyTests;
 
     myProjectFileIndex = ProjectRootManager.getInstance(myModule.getProject()).getFileIndex();
+    myProjectScope = ProjectScope.getProjectScope(myModule.getProject());
 
     myModules = new HashSet<Module>();
     myModules.add(myModule);
@@ -80,8 +83,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     if (moduleOfFile == null) return false;
     if (!myModules.contains(moduleOfFile)) return false;
     if (myOnlyTests && !myProjectFileIndex.isInTestSourceContent(file)) return false;
-    if (myProjectFileIndex.isInLibraryClasses(file) && !myProjectFileIndex.isInSourceContent(file)) return false;
-    return true;
+    return myProjectScope.contains(file);
   }
 
   public int compare(VirtualFile file1, VirtualFile file2) {
