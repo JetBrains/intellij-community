@@ -19,6 +19,7 @@ import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
@@ -27,11 +28,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
+import java.awt.image.BufferedImage;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class AbstractNavBarUI implements NavBarUI {
+  
+  private Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new HashMap<NavBarItem, Map<ImageType, BufferedImage>>(); 
+  
+  private enum ImageType {
+    INACTIVE, NEXT_ACTIVE, ACTIVE, INACTIVE_FLOATING, NEXT_ACTIVE_FLOATING, ACTIVE_FLOATING,
+    INACTIVE_NO_TOOLBAR, NEXT_ACTIVE_NO_TOOLBAR, ACTIVE_NO_TOOLBAR
+  }
+  
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
     return isPopupElement ? new Insets(1, 2, 1, 2) : JBInsets.NONE;
@@ -77,18 +88,54 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar) {
     final boolean floating = navbar.isInFloatingMode();
-    boolean toolbar = UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+    boolean toolbarVisible = UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+    final boolean selected = item.isSelected() && item.isFocused();
+    boolean nextSelected = item.isNextSelected() && navbar.hasFocus();
 
+    Map<ImageType, BufferedImage> cached = myCache.get(item);
+    
+    ImageType type;
+    if (floating) {
+      type = selected ? ImageType.ACTIVE_FLOATING : nextSelected ? ImageType.NEXT_ACTIVE_FLOATING : ImageType.INACTIVE_FLOATING;
+    } else {
+      if (toolbarVisible) {
+        type = selected ? ImageType.ACTIVE : nextSelected ? ImageType.NEXT_ACTIVE : ImageType.INACTIVE;
+      } else {
+        type = selected ? ImageType.ACTIVE_NO_TOOLBAR : nextSelected ? ImageType.NEXT_ACTIVE_NO_TOOLBAR : ImageType.INACTIVE_NO_TOOLBAR;
+      }
+    }
+
+    if (cached == null) {
+      cached = new HashMap<ImageType, BufferedImage>();
+      myCache.put(item, cached);
+    }
+    
+    BufferedImage image = cached.get(type);
+    if (image == null) {
+      image = drawToBuffer(item, floating, toolbarVisible, selected, navbar);
+      cached.put(type, image);
+    }
+
+    g.drawImage(image, 0, 0, null);
+    
     Icon icon = item.getIcon();
+    final int offset = item.isFirstElement() ? getFirstElementLeftOffset() : 0;
+    final int iconOffset = getElementPadding().left + offset;
+    icon.paintIcon(item, g, iconOffset, (item.getHeight() - icon.getIconHeight()) / 2);
+    final int textOffset = icon.getIconWidth() + getElementPadding().width() + offset;
+    item.doPaintText(g, textOffset);
+  }
+  
+  private BufferedImage drawToBuffer(NavBarItem item, boolean floating, boolean toolbarVisible, boolean selected, NavBarPanel navbar) {
     int w = item.getWidth();
     int h = item.getHeight();
+
+    BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
     final Paint bg = floating ? Color.WHITE : new GradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
     final Color selection = UIUtil.getListSelectionBackground();
     
-    final boolean selected = item.isSelected() && item.isFocused();
-    
-    Graphics2D g2 = (Graphics2D) g.create();
+    Graphics2D g2 = result.createGraphics();
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     Path2D.Double shape = new Path2D.Double();
@@ -107,7 +154,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     endShape.lineTo(w, h / 2);
     endShape.closePath();
     
-    if (bg != null && toolbar) {
+    if (bg != null && toolbarVisible) {
       g2.setPaint(bg);
       g2.fill(shape);
       if (!item.isLastElement() || floating) {
@@ -117,7 +164,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
     if (selected) {
       Path2D.Double focusShape = new Path2D.Double();
-      if (toolbar || floating) {
+      if (toolbarVisible || floating) {
         focusShape.moveTo(w-getDecorationOffset(), 0);
       } else {
         focusShape.moveTo(0, 0);
@@ -125,7 +172,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       }
       focusShape.lineTo(w - 1, h / 2);
       focusShape.lineTo(w - getDecorationOffset(), h - 1);
-      if (!toolbar && !floating) {
+      if (!toolbarVisible && !floating) {
         focusShape.lineTo(0, h - 1);
         
       }
@@ -146,7 +193,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       g2.fill(endShape);
       
       Path2D.Double endFocusShape = new Path2D.Double();
-      if (toolbar || floating) {
+      if (toolbarVisible || floating) {
         endFocusShape.moveTo(w - getDecorationOffset(), 0);
       } else {
         endFocusShape.moveTo(w, 0);
@@ -156,7 +203,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       endFocusShape.lineTo(w - 1, h / 2);
       endFocusShape.lineTo(w - getDecorationOffset(), h - 1);
       
-      if (!toolbar && !floating) {
+      if (!toolbarVisible && !floating) {
         endFocusShape.lineTo(w, h - 1);
       }
 
@@ -164,17 +211,12 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       g2.draw(endFocusShape);
     }
 
-    final int offset = item.isFirstElement() ? getFirstElementLeftOffset() : 0;
-    final int iconOffset = getElementPadding().left + offset;
-    icon.paintIcon(item, g2, iconOffset, (h - icon.getIconHeight()) / 2);
-    final int textOffset = icon.getIconWidth() + getElementPadding().width() + offset;
-    item.doPaintText(g2, textOffset);
     
     g2.translate(w - getDecorationOffset(), 0);
     int off = getDecorationOffset() - 1;
 
     if (!floating || !item.isLastElement()) {
-      if (toolbar || floating) {
+      if (toolbarVisible || floating) {
         if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
           drawArrow(g2, new Color(0, 0, 0, 70), new SameColor(205), off, h, !selected && !floating, false);
         }
@@ -186,6 +228,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     }
     
     g2.dispose();
+    return result;
   }
   
   private static void drawArrow(Graphics2D g2d, Color c, Color light, int decorationOffset, int h, boolean highlight, boolean gradient) {
@@ -256,5 +299,10 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (mainToolbarVisible) {
       g.fillRect(0, 0, r.width, r.height);
     }
+  }
+
+  @Override
+  public void clearItems() {
+    myCache.clear();
   }
 }
