@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   public static final ExtensionPointName<DequotingFilter> EP_NAME =
     ExtensionPointName.create("com.intellij.selectionDequotingFilter");
   private TextRange myReplacedTextRange;
+  private int myCaretPosition;
 
   @Override
   public Result checkAutoPopup(char c, Project project, Editor editor, PsiFile psiFile) {
@@ -44,8 +46,8 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (selectedText.length() < 1) {
         return super.checkAutoPopup(c, project, editor, psiFile);
       }
-      char c2 = getMatchingDelimiter(c);
-      if (selectedText.length() > 1) {
+      myCaretPosition = editor.getCaretModel().getOffset();
+      if (selectedText.length() > 1 && !Registry.is("editor.smarterSelectionQuoting")) {
         final char firstChar = selectedText.charAt(0);
         if (isSimilarDelimiters(firstChar, c) &&
             selectedText.charAt(selectedText.length() - 1) == getMatchingDelimiter(firstChar) &&
@@ -55,10 +57,15 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
           selectedText = selectedText.substring(1, selectedText.length() - 1);
         }
       }
-      int caretOffset = editor.getSelectionModel().getSelectionStart();
+      final int caretOffset = editor.getSelectionModel().getSelectionStart();
+      final char c2 = getMatchingDelimiter(c);
       final String newText = String.valueOf(c) + selectedText + c2;
       EditorModificationUtil.insertStringAtCaret(editor, newText);
-      myReplacedTextRange = new TextRange(caretOffset, caretOffset + newText.length());
+      if (Registry.is("editor.smarterSelectionQuoting")) {
+        myReplacedTextRange = new TextRange(caretOffset + 1, caretOffset + newText.length() - 1);
+      } else {
+        myReplacedTextRange = new TextRange(caretOffset, caretOffset + newText.length());
+      }
       return Result.STOP;
     }
     return super.checkAutoPopup(c, project, editor, psiFile);
@@ -101,6 +108,9 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     if (myReplacedTextRange != null) {
       if (myReplacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
         editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
+        if (Registry.is("editor.smarterSelectionQuoting")) {
+          editor.getCaretModel().moveToOffset(myCaretPosition + 1);
+        }
       }
       myReplacedTextRange = null;
       return Result.STOP;

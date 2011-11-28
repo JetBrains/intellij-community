@@ -35,7 +35,7 @@ public class RepositoryInfo {
   }
 
   public String getUrl() {
-    return myRepository.getChildText("url");
+    return myRepository.getChildText("url") + ".git";
   }
 
   @Override

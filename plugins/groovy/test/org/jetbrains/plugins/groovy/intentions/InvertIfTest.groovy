@@ -112,4 +112,16 @@ i<caret>f (a) {
 '''
   }
 
+  public void testEmptyThenBlockIsRemoved() throws Exception {
+    doTest '''
+i<caret>f (a) {
+} else {
+    no_succes
+}
+''', '''i<caret>f (!a) {
+    no_succes
+}
+'''
+  }
+
 }
