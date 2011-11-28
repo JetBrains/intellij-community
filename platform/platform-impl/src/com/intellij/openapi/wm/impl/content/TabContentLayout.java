@@ -30,6 +30,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +45,8 @@ class TabContentLayout extends ContentLayout {
 
   ArrayList<ContentTabLabel> myTabs = new ArrayList<ContentTabLabel>();
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<Content, ContentTabLabel>();
+
+  private Map<String, BufferedImage> myCached = new com.intellij.util.containers.HashMap<String, BufferedImage>();
 
   BaseLabel myIdLabel;
 
@@ -247,7 +250,6 @@ class TabContentLayout extends ContentLayout {
     myLastLayout = data;
   }
 
-
   static void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
     data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
     data.toDrop.add(toDropLabel);
@@ -287,76 +289,91 @@ class TabContentLayout extends ContentLayout {
   public void paintComponent(Graphics g) {
     if (!isToDrawTabs()) return;
 
-    final Graphics2D g2d = (Graphics2D)g;
-
-    final GraphicsConfig c = new GraphicsConfig(g);
-    c.setAntialiasing(true);
-
     boolean prevSelected = false;
     for (int i = 0; i < myTabs.size(); i++) {
       boolean last = i == myTabs.size() - 1;
       ContentTabLabel each = myTabs.get(i);
       Rectangle r = each.getBounds();
+
+      StringBuilder key = new StringBuilder().append(i);
+      if (each.isSelected()) key.append('s');
+      if (prevSelected) key.append('p');
+      if (last) key.append('l');
+      if (myUi.myWindow.isActive()) key.append('a');
+
+      BufferedImage image = myCached.get(key.toString());
+      if (image == null || image.getWidth() != r.width || image.getHeight() != r.height) {
+        image = drawToBuffer(r, each.isSelected(), last, prevSelected, myUi.myWindow.isActive());
+        myCached.put(key.toString(), image);
+      }
       
-      if (each.isSelected()) {
-        g2d.setColor(new Color(0, 0, 0, 150));
-        g2d.fillRect(r.x, r.y, r.width, r.height);
-
-        g2d.setColor(new Color(0, 0, 0, 90));
-        g2d.drawLine(r.x, r.y, r.x + r.width - 1, r.y);
-        g2d.drawLine(r.x, r.y + 1, r.x, r.y + r.height - 1);
-        
-        g2d.setColor(new Color(0, 0, 0, 20));
-        g2d.drawLine(r.x + 1, r.y + 1, r.x + r.width - 1, r.y + 1);
-        g2d.drawLine(r.x + 1, r.y + 2, r.x + 1, r.y + r.height - 2);
-        
-        g2d.setColor(new Color(0, 0, 0, 20));
-        g2d.drawLine(r.x + r.width - 1, r.y + 2, r.x + r.width - 1, r.y + r.height - 2);
-        g2d.drawLine(r.x + 1, r.y + r.height - 1, r.x + r.width - 1, r.y + r.height - 1);
-        
-        if (myUi.myWindow.isActive()) {
-          g2d.setColor(new Color(100, 150, 230, 50));
-          g2d.fill(r);
-        }
-      }
-      else {
-        g2d.setPaint(new GradientPaint(r.x, r.y, new Color(0, 0, 0, 10), r.x, r.y + r.height, new Color(0, 0, 0, 30)));
-        g2d.fillRect(r.x, r.y, r.width, r.height);
-        
-        if (last) {
-          if (prevSelected) {
-            g2d.setColor(new Color(255, 255, 255, 80));
-            g2d.drawRect(r.x, r.y, r.width - 1, r.height - 1);
-
-          } else {
-            g2d.setColor(new Color(255, 255, 255, 80));
-            g2d.drawRect(r.x + 1, r.y, r.width - 2, r.height - 1);
-
-            g2d.setColor(new Color(0, 0, 0, 60));
-            g2d.drawLine(r.x, r.y, r.x, r.y + r.height);
-          }
-
-          g2d.setColor(new Color(0, 0, 0, 60));
-          g2d.drawLine(r.x + r.width, r.y, r.x + r.width, r.y + r.height);
-        } else {
-          if (prevSelected) {
-            g2d.setColor(new Color(255, 255, 255, 80));
-            g2d.drawRect(r.x, r.y, r.width - 1, r.height - 1);
-          }
-          else {
-            g2d.setColor(new Color(255, 255, 255, 80));
-            g2d.drawRect(r.x + 1, r.y, r.width - 2, r.height - 1);
-
-            g2d.setColor(new Color(0, 0, 0, 60));
-            g2d.drawLine(r.x, r.y, r.x, r.y + r.height);
-          }
-        }
-      }
+      g.drawImage(image, r.x, r.y, null);
       
       prevSelected = each.isSelected();
     }
+  }
+  
+  private static BufferedImage drawToBuffer(Rectangle r, boolean selected, boolean last, boolean prevSelected, boolean active) {
+    BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g2d = image.createGraphics();
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    
+    if (selected) {
+      g2d.setColor(active ? new Color(0, 0, 0, 70) : new Color(0, 0, 0, 90));
+      g2d.fillRect(0, 0, r.width, r.height);
 
-    c.restore();
+      g2d.setColor(new Color(0, 0, 0, 140));
+      g2d.drawLine(0, 0, r.width - 1, 0);
+      g2d.drawLine(0, 1, 0, r.height - 1);
+      
+      g2d.setColor(new Color(0, 0, 0, 20));
+      g2d.drawLine(1, 1, r.width - 1, 1);
+      g2d.drawLine(1, 2, 1, r.height - 2);
+      g2d.drawLine(1, r.height - 1, r.width - 1, r.height - 1);
+      
+      g2d.setColor(new Color(0, 0, 0, 60));
+      g2d.drawLine(r.width - 1, 1, r.width - 1, r.height - 2);
+      
+      if (active) {
+        g2d.setColor(new Color(100, 150, 230, 50));
+        g2d.fill(new Rectangle(0, 0, r.width, r.height));
+      }
+    }
+    else {
+      g2d.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
+      g2d.fillRect(0, 0, r.width, r.height);
+      
+      if (last) {
+        if (prevSelected) {
+          g2d.setColor(new Color(255, 255, 255, 80));
+          g2d.drawRect(0, 0, r.width - 2, r.height - 1);
+        } else {
+          g2d.setColor(new Color(255, 255, 255, 80));
+          g2d.drawRect(1, 0, r.width - 3, r.height - 1);
+
+          g2d.setColor(new Color(0, 0, 0, 60));
+          g2d.drawLine(0, 0, 0, r.height);
+        }
+
+        g2d.setColor(new Color(0, 0, 0, 60));
+        g2d.drawLine(r.width - 1, 0, r.width - 1, r.height);
+      } else {
+        if (prevSelected) {
+          g2d.setColor(new Color(255, 255, 255, 80));
+          g2d.drawRect(0, 0, r.width - 1, r.height - 1);
+        }
+        else {
+          g2d.setColor(new Color(255, 255, 255, 80));
+          g2d.drawRect(1, 0, r.width - 2, r.height - 1);
+
+          g2d.setColor(new Color(0, 0, 0, 60));
+          g2d.drawLine(0, 0, 0, r.height);
+        }
+      }
+    }
+    
+    g2d.dispose();
+    return image;
   }
 
   @Override
@@ -388,6 +405,8 @@ class TabContentLayout extends ContentLayout {
       myUi.add(each);
       myUi.initMouseListeners(each, myUi);
     }
+    
+    myCached.clear();
   }
 
   @Override
@@ -395,6 +414,8 @@ class TabContentLayout extends ContentLayout {
     final ContentTabLabel tab = new ContentTabLabel(event.getContent(), this);
     myTabs.add(event.getIndex(), tab);
     myContent2Tabs.put(event.getContent(), tab);
+    
+    myCached.clear();
   }
 
   @Override
@@ -404,6 +425,13 @@ class TabContentLayout extends ContentLayout {
       myTabs.remove(tab);
       myContent2Tabs.remove(event.getContent());
     }
+    
+    myCached.clear();
+  }
+
+  @Override
+  public boolean shouldDrawDecorations() {
+    return isToDrawTabs();
   }
 
   @Override
