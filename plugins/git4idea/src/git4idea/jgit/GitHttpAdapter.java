@@ -264,7 +264,8 @@ public final class GitHttpAdapter {
   private static boolean smartHttpPushNotSupported(JGitInternalException e) {
     if (e.getCause() instanceof NotSupportedException) {
       NotSupportedException nse = (NotSupportedException)e.getCause();
-      return nse.getMessage().toLowerCase().contains("smart http push");
+      String message = nse.getMessage();
+      return message != null && message.toLowerCase().contains("smart http push");
     }
     return false;
   }
