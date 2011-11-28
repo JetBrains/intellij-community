@@ -67,8 +67,8 @@ public class AndroidTestListener implements ITestRunListener {
   public void testRunStarted(String runName, int testCount) {
     ProcessHandler handler = getProcessHandler();
     handler.notifyTextAvailable("Test running started\n", ProcessOutputTypes.STDOUT);
-    ServiceMessageBuilder builder = new ServiceMessageBuilder("testCount");
-    builder.addAttribute("count", Integer.toString(testCount));
+
+    final ServiceMessageBuilder builder = new ServiceMessageBuilder("enteredTheMatrix");
     handler.notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
   }
 
