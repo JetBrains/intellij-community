@@ -214,15 +214,11 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         PsiType lType = PsiImplUtil.inferExpectedTypeForDiamond(listOrMap);
 
         if (lType instanceof PsiClassType && InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_LIST)) {
-          PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)lType).resolveGenerics();
-          PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-          
-          PsiClass list = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, scope);
           PsiClass arrayList = facade.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST, scope);
-
-          if (list != null && arrayList != null) {
-            PsiSubstitutor arrayListSubstitutor =
-              PsiSubstitutor.EMPTY.put(arrayList.getTypeParameters()[0], substitutor.substitute(list.getTypeParameters()[0]));
+          if (arrayList == null) arrayList = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, scope);
+          if (arrayList != null) {
+            PsiSubstitutor arrayListSubstitutor = PsiSubstitutor.EMPTY.
+              put(arrayList.getTypeParameters()[0], com.intellij.psi.util.PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_LIST, 0, false));
             return facade.getElementFactory().createType(arrayList, arrayListSubstitutor);
           }
         }
