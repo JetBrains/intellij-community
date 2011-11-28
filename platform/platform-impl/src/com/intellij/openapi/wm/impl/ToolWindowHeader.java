@@ -38,8 +38,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.PanelUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -63,6 +65,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   private ToolWindow myToolWindow;
   private WindowInfoImpl myInfo;
   private final ToolWindowHeader.ActionButton myHideButton;
+  private BufferedImage myImage;
+  private BufferedImage myActiveImage;
 
   public ToolWindowHeader(final ToolWindowImpl toolWindow, WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
     setLayout(new BorderLayout());
@@ -213,40 +217,80 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   @Override
   protected void paintComponent(Graphics g) {
     Rectangle r = getBounds();
-
     Graphics2D g2d = (Graphics2D)g;
-
     Shape clip = g2d.getClip();
 
-    g2d.setColor(UIUtil.getPanelBackground());
-    g2d.fill(clip);
-
-    g2d.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 5), 0, r.height, new Color(0, 0, 0, 20)));
-    g2d.fill(clip);
-
-    g2d.setColor(new Color(0, 0, 0, 90));
-    g2d.drawLine(r.x, r.y, r.width - 1, r.y);
-    g2d.drawLine(r.x, r.height - 1, r.width - 1, r.height - 1);
-
-    g2d.setColor(new Color(255, 255, 255, 100));
-    g2d.drawLine(r.x, r.y + 1, r.width - 1, r.y + 1);
-
+    Image image;
     if (isActive()) {
-      g2d.setColor(new Color(100, 150, 230, 50));
-      g2d.fill(clip);
+      if (myActiveImage == null || myActiveImage.getHeight() != r.height) {
+        myActiveImage = drawToBuffer(true, r.height);
+      }
+      
+      image = myActiveImage;
+    } else {
+      if (myImage == null || myImage.getHeight() != r.height) {
+        myImage = drawToBuffer(false, r.height);
+      }
+      
+      image = myImage;
     }
+
+    Rectangle clipBounds = clip.getBounds();
+    for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x+=150) {
+      g2d.drawImage(image, x, 0, null);
+    }
+  }
+  
+  private static BufferedImage drawToBuffer(boolean active, int height) {
+    final int width = 150;
+    
+    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D _g = image.createGraphics();
+
+    _g.setColor(UIUtil.getPanelBackground());
+    _g.fillRect(0, 0, width, height);
+
+    _g.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
+    _g.fillRect(0, 0, width, height);
+
+    _g.setColor(new Color(0, 0, 0, 90));
+    _g.drawLine(0, 0, width, 0);
+    _g.drawLine(0, height - 1, width, height - 1);
+
+    _g.setColor(new Color(255, 255, 255, 100));
+    _g.drawLine(0, 1, width, 1);
+
+    if (active) {
+      _g.setColor(new Color(100, 150, 230, 50));
+      _g.fillRect(0, 0, width, height);
+    }
+    
+    _g.dispose();
+    return image; 
+  }
+
+  @Override
+  public void setUI(PanelUI ui) {
+    myImage = null;
+    myActiveImage = null;
+    
+    super.setUI(ui);
   }
 
   @Override
   protected void paintChildren(Graphics g) {
-    super.paintChildren(g);
+    Graphics2D graphics = (Graphics2D) g.create();
+
+    UIUtil.applyRenderingHints(graphics);
+    super.paintChildren(graphics);
 
     Rectangle r = getBounds();
-    Graphics2D g2d = (Graphics2D)g;
     if (!isActive()) {
-      g2d.setColor(new Color(255, 255, 255, 30));
-      g2d.fill(r);
+      graphics.setColor(new Color(255, 255, 255, 30));
+      graphics.fill(r);
     }
+    
+    graphics.dispose();
   }
 
   protected abstract boolean isActive();

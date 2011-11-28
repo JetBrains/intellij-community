@@ -67,6 +67,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.PanelUI;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -167,6 +168,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     });
     
     getNavBarUI().clearItems();
+  }
+
+  @Override
+  public void setUI(PanelUI ui) {
+    getNavBarUI().clearItems();
+    super.setUI(ui);
   }
 
   public NavBarUpdateQueue getUpdateQueue() {
