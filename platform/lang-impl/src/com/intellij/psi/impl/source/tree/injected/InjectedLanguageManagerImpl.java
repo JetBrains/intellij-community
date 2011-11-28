@@ -369,7 +369,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @Override
   public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
-    return InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(hostFile, hostDocumentOffset);
+    return InjectedLanguageUtil.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
   }
 
   @Override

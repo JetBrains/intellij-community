@@ -271,33 +271,29 @@ public class InjectedLanguageUtil {
     return deps;
   }
 
-  @Nullable
-  public static PsiElement findInjectedElementNoCommitWithOffset(@NotNull PsiFile file, final int offset) {
-    if (file instanceof PsiCompiledElement) return null;
-    Project project = file.getProject();
-    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) return null;
+  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
+    if (hostFile instanceof PsiCompiledElement) return null;
+    Project project = hostFile.getProject();
+    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(hostFile)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
-    FileViewProvider provider = file.getViewProvider();
+    FileViewProvider provider = hostFile.getViewProvider();
     for (Language language : provider.getLanguages()) {
-
       PsiElement element = provider.findElementAt(offset, language);
-      if (element == null) {
-        continue;
+      if (element != null) {
+        PsiElement injected = findInside(element, hostFile, offset, documentManager);
+        if (injected != null) return injected;
       }
-      PsiElement injected = findInside(element, file, offset, documentManager);
-      if (injected != null) return injected;
+      // maybe we are at the border between two psi elements, then try to find injection at the end of the left element
+      if (offset != 0) {
+        element = provider.findElementAt(offset-1, language);
+        if (element != null && element.getTextRange().getEndOffset() == offset) {
+          PsiElement injected = findInside(element, hostFile, offset, documentManager);
+          if (injected != null) return injected;
+        }
+      }
     }
     return null;
-  }
-
-  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
-    PsiElement inj = findInjectedElementNoCommitWithOffset(hostFile, offset);
-    if (inj != null) return inj;
-    if (offset != 0) {
-      inj = findInjectedElementNoCommitWithOffset(hostFile, offset - 1);
-    }
-    return inj;
   }
 
   private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile hostFile, final int hostOffset, @NotNull final PsiDocumentManager documentManager) {
