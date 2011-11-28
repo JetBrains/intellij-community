@@ -23,6 +23,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -304,5 +305,10 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public void clearItems() {
     myCache.clear();
+  }
+
+  @Override
+  public int getPopupOffset(@NotNull NavBarItem item) {
+    return item.isFirstElement() ? 0 : 5; 
   }
 }
