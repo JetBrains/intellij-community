@@ -31,6 +31,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.NoRemoteRepositoryException;
+import org.eclipse.jgit.errors.NotSupportedException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -128,6 +129,12 @@ public final class GitHttpAdapter {
       } else {
         return pushResult;
       }
+    }
+    catch (SmartPushNotSupportedException e) {
+      return GitSimplePushResult.error("Remote <code>" + remoteUrl + "</code> doesn't support <a href=\"http://progit.org/2010/03/04/smart-http.html\">" +
+                                       "smart HTTP push. </a><br/>" +
+                                       "Please set the server to use smart push or use other protocol (SSH for example). <br/>" +
+                                       "If neither is possible, as a workaround you may add authentication data directly to the remote url in <code>.git/config</code>.");
     }
     catch (InvalidRemoteException e) {
       logException(repository, remote.getName(), remoteUrl, e, "pushing");
@@ -239,6 +246,9 @@ public final class GitHttpAdapter {
             i--;
             command.cleanup();
           }
+          else if (smartHttpPushNotSupported(e)) {
+            throw new SmartPushNotSupportedException(e.getCause().getMessage());
+          }
           else {
             throw e;
           }
@@ -249,6 +259,14 @@ public final class GitHttpAdapter {
     finally {
       ProxySelector.setDefault(defaultProxySelector);
     }
+  }
+
+  private static boolean smartHttpPushNotSupported(JGitInternalException e) {
+    if (e.getCause() instanceof NotSupportedException) {
+      NotSupportedException nse = (NotSupportedException)e.getCause();
+      return nse.getMessage().toLowerCase().contains("smart http push");
+    }
+    return false;
   }
 
   private static boolean isNoRemoteWithoutDotGitError(Throwable e, String url) {
@@ -381,4 +399,9 @@ public final class GitHttpAdapter {
     return Git.wrap(convert(repository));
   }
 
+  private static class SmartPushNotSupportedException extends NotSupportedException {
+    private SmartPushNotSupportedException(String message) {
+      super(message);
+    }
+  }
 }
