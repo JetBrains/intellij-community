@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -103,7 +104,6 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
   protected void update(VcsContext vcsContext, Presentation presentation) {
     final AbstractVcs vcs = AbstractShowDiffAction.isEnabled(vcsContext, null);
     presentation.setEnabled(vcs != null);
-    presentation.setVisible(isVisible(vcsContext));
   }
   
   private static boolean isVisible(VcsContext vcsContext) {
