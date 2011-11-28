@@ -36,27 +36,24 @@ public class GrTypeComboBox extends JComboBox {
 
   private static final Logger LOG = Logger.getInstance(GrTypeComboBox.class);
 
-  public static GrTypeComboBox createTypeComboboxFromBounds(@Nullable PsiType max,
-                                                            @Nullable PsiType min,
-                                                            PsiManager manager,
-                                                            GlobalSearchScope scope) {
-    return new GrTypeComboBox(max, min, min == null, manager, scope);
-  }
-
   public static GrTypeComboBox createTypeComboBoxWithDefType(@Nullable PsiType type) {
-    return new GrTypeComboBox(type, null, true, null, null);
+    return new GrTypeComboBox(type, null, true, null, null, false);
   }
 
   public static GrTypeComboBox createTypeComboBoxFromExpression(GrExpression expression) {
+    return createTypeComboBoxFromExpression(expression, false);
+  }
+
+  public static GrTypeComboBox createTypeComboBoxFromExpression(GrExpression expression, boolean selectDef) {
     PsiType type = expression.getType();
 
     if (GroovyRefactoringUtil.isDiamondNewOperator(expression)) {
       LOG.assertTrue(expression instanceof GrNewExpression);
       PsiType expected = PsiImplUtil.inferExpectedTypeForDiamond(expression);
-      return createTypeComboboxFromBounds(type, expected, expression.getManager(), expression.getResolveScope());
+      return new GrTypeComboBox(type, expected, expected == null, expression.getManager(), expression.getResolveScope(), selectDef);
     }
     else {
-      return createTypeComboBoxWithDefType(type);
+      return new GrTypeComboBox(type, null, true, null, null, selectDef);
     }
   }
 
@@ -71,7 +68,8 @@ public class GrTypeComboBox extends JComboBox {
                          @Nullable PsiType min,
                          boolean createDef,
                          @Nullable PsiManager manager,
-                         @Nullable GlobalSearchScope scope) {
+                         @Nullable GlobalSearchScope scope,
+                         boolean selectDef) {
     LOG.assertTrue(min == null || manager != null);
     LOG.assertTrue(min == null || scope != null);
 
@@ -91,7 +89,7 @@ public class GrTypeComboBox extends JComboBox {
       addItem(new PsiTypeItem(types.get(typeName)));
     }
 
-    if (createDef && getItemCount() > 1) {
+    if (!selectDef && createDef && getItemCount() > 1) {
       setSelectedIndex(1);
     }
   }
