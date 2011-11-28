@@ -20,7 +20,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.border.IdeaTitledBorder;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * author: lesya
@@ -72,7 +71,7 @@ public abstract class WizardStep extends StepAdapter{
 
   public void saveState(){}
 
-  public Component getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myComponent;
   }
 }

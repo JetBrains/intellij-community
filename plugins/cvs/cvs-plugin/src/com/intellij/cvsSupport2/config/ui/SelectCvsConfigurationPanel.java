@@ -120,7 +120,7 @@ public class SelectCvsConfigurationPanel extends JPanel {
     return mySelection;
   }
 
-  public Component getJList() {
+  public JComponent getPreferredFocusedComponent() {
     return myList;
   }
 }

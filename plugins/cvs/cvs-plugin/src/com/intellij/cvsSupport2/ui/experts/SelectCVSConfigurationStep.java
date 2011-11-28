@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
 
 /**
  * author: lesya
@@ -69,7 +68,7 @@ public class SelectCVSConfigurationStep extends WizardStep{
   }
 
   @Override
-  public Component getPreferredFocusedComponent() {
-    return mySelectCvsConfigurationPanel.getJList();
+  public JComponent getPreferredFocusedComponent() {
+    return mySelectCvsConfigurationPanel.getPreferredFocusedComponent();
   }
 }
