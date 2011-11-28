@@ -349,6 +349,12 @@ public abstract class VcsVFSListener implements Disposable {
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOldParent());
       if (oldVcs != myVcs) {
         myAddedFiles.add(event.getFile());
+      } else {
+        if (event.getFile().isDirectory()) {
+          myDirtyScopeManager.dirDirtyRecursively(event.getFile());
+        } else {
+          myDirtyScopeManager.fileDirty(event.getFile());
+        }
       }
     }
 
