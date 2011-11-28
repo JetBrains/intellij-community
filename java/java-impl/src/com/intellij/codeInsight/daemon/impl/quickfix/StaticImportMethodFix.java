@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -104,6 +105,7 @@ public class StaticImportMethodFix implements IntentionAction {
     GlobalSearchScope scope = element.getResolveScope();
     PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 20);
     List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       if (JavaCompletionUtil.isInExcludedPackage(method)) continue;
@@ -114,7 +116,10 @@ public class StaticImportMethodFix implements IntentionAction {
           && ((PsiJavaFile)file).getPackageName().length() != 0
           && PsiUtil.isAccessible(method, element, method.getContainingClass())) {
         list.add(method);
-        if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, argumentList)) {
+        PsiSubstitutor substitutorForMethod = resolveHelper
+          .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(), argumentList.getExpressions(),
+                              PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
+        if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
           applicableList.add(method);
         }
       }
@@ -192,6 +197,10 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   private void chooseAndImport(Editor editor, final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      doImport(candidates.get(0));
+      return;
+    }
     final BaseListPopupStep<PsiMethod> step =
       new BaseListPopupStep<PsiMethod>(QuickFixBundle.message("class.to.import.chooser.title"), candidates) {
 

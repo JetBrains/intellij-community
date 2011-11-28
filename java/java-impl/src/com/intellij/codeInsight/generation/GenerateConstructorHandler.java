@@ -178,6 +178,11 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return constructors;
   }
 
+  @Override
+  protected String getNothingFoundMessage() {
+    return "Constructor already exist";
+  }
+
   public static PsiMethod generateConstructorPrototype(PsiClass aClass, PsiMethod baseConstructor, boolean copyJavaDoc, PsiField[] fields) throws IncorrectOperationException {
     PsiManager manager = aClass.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

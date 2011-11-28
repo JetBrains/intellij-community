@@ -28,8 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -85,10 +84,15 @@ public final class AndroidApt {
         messages.get(CompilerMessageCategory.ERROR).add("Unable to delete " + rJavaFile.getPath());
       }
     }
+    
+    final File[] libRJavaFiles = new File[libPackages.length];
+    
+    for (int i = 0; i < libPackages.length; i++) {
+      final String libPackageFolderOsPath = FileUtil.toSystemDependentName(outDirOsPath + '/' + libPackages[i].replace('.', '/'));
+      libRJavaFiles[i] = new File(libPackageFolderOsPath + File.separatorChar + AndroidUtils.R_JAVA_FILENAME);
+    }
 
-    for (String libPackage : libPackages) {
-      final String libPackageFolderOsPath = FileUtil.toSystemDependentName(outDirOsPath + '/' + libPackage.replace('.', '/'));
-      final File libRJavaFile = new File(libPackageFolderOsPath + File.separatorChar + AndroidUtils.R_JAVA_FILENAME);
+    for (File libRJavaFile : libRJavaFiles) {
       if (libRJavaFile.exists()) {
         if (!FileUtil.delete(libRJavaFile)) {
           messages.get(CompilerMessageCategory.ERROR).add("Unable to delete " + libRJavaFile.getPath());
@@ -99,6 +103,11 @@ public final class AndroidApt {
     if (platformToolsRevision < 0 || platformToolsRevision > 7) {
       Map<CompilerMessageCategory, List<String>> map =
         doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, isLibrary);
+
+      if (map.get(CompilerMessageCategory.ERROR).isEmpty()) {
+        makeFieldsNotFinal(libRJavaFiles);
+      }
+
       AndroidCompileUtil.addMessages(messages, map);
       return messages;
     }
@@ -113,6 +122,27 @@ public final class AndroidApt {
         AndroidCompileUtil.addMessages(messages, map);
       }
       return messages;
+    }
+  }
+
+  private static void makeFieldsNotFinal(@NotNull File[] libRJavaFiles) throws IOException {
+    for (File file : libRJavaFiles) {
+      final String fileContent = readFile(file);
+      FileUtil.writeToFile(file, fileContent.replace("public static final int ", "public static int "));
+    }
+  }
+
+  @NotNull
+  private static String readFile(@NotNull File file) throws IOException {
+    final InputStream is = new BufferedInputStream(new FileInputStream(file));
+    try {
+      final byte[] data = new byte[is.available()];
+      //noinspection ResultOfMethodCallIgnored
+      is.read(data);
+      return new String(data);
+    }
+    finally {
+      is.close();
     }
   }
 

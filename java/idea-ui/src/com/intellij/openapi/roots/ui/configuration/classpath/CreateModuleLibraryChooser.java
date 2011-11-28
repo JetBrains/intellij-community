@@ -68,7 +68,9 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
       if (descriptor == null) {
         descriptor = myDefaultDescriptor;
       }
-      myLibraryTypes.put(descriptor, libraryType);
+      if (!myLibraryTypes.containsKey(descriptor)) {
+        myLibraryTypes.put(descriptor, libraryType);
+      }
     }
   }
 

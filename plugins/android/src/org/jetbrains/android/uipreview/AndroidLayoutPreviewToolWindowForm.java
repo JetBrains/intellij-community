@@ -657,7 +657,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
     final IAndroidTarget oldSelectedTarget = (IAndroidTarget)myTargetCombo.getSelectedItem();
     final String selectedTargetHashString = oldSelectedTarget != null ? oldSelectedTarget.hashString() : null;
-    IAndroidTarget newSelectedTarget = platform != null ? platform.getTarget() : null;
+    IAndroidTarget newSelectedTarget = null;
 
     final List<IAndroidTarget> targets;
     if (sdkObject != null) {
@@ -673,6 +673,31 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
     else {
       targets = Collections.emptyList();
+    }
+    
+    if (newSelectedTarget == null) {
+      IAndroidTarget targetFromModule = platform != null ? platform.getTarget() : null;
+      
+      if (targetFromModule != null) {
+        String modulePlatformHash = null;
+        
+        if (targetFromModule.isPlatform()) {
+          modulePlatformHash = targetFromModule.hashString();
+        }
+        else {
+          final IAndroidTarget parent = targetFromModule.getParent();
+          if (parent != null) {
+            modulePlatformHash = parent.hashString();
+          }
+        }
+        
+        if (modulePlatformHash != null) {
+          targetFromModule = sdkObject.findTargetByHashString(modulePlatformHash);
+          if (targetFromModule != null && targets.indexOf(targetFromModule) >= 0) {
+            newSelectedTarget = targetFromModule;
+          }
+        }
+      }
     }
 
     if (newSelectedTarget == null && targets.size() > 0) {

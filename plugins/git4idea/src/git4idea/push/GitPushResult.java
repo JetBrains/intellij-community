@@ -17,6 +17,7 @@ package git4idea.push;
 
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -258,12 +259,17 @@ class GitPushResult {
     NotificationListener viewUpdateFilesListener = new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED) && event.getDescription().equals("UpdatedFiles")) {
-          ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
-          UpdateInfoTree tree = vcsManager.showUpdateProjectInfo(updatedFiles, "Update", ActionInfo.UPDATE, false);
-          tree.setBefore(myBeforeUpdateLabel);
-          tree.setAfter(LocalHistory.getInstance().putSystemLabel(myProject, "After push"));
-        }
+        if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+          if (event.getDescription().equals("UpdatedFiles")) {
+            ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
+            UpdateInfoTree tree = vcsManager.showUpdateProjectInfo(updatedFiles, "Update", ActionInfo.UPDATE, false);
+            tree.setBefore(myBeforeUpdateLabel);
+            tree.setAfter(LocalHistory.getInstance().putSystemLabel(myProject, "After push"));
+          }
+          else {
+            BrowserUtil.launchBrowser(event.getDescription());
+          }
+        }         
       }
     };
 

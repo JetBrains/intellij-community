@@ -60,6 +60,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                                    GitBundle.message("git.commit.message.empty.title"), Messages.getErrorIcon());
         return ReturnResult.CANCEL;
       }
+      
+      if (!commitOrCommitAndPush(executor)) {
+        return ReturnResult.COMMIT;
+      }
 
       // Warning: commit on a detached HEAD
       DetachedRoot detachedRoot = getDetachedRoot();
@@ -92,6 +96,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       } else {
         return ReturnResult.CLOSE_WINDOW;
       }
+    }
+
+    private boolean commitOrCommitAndPush(@Nullable CommitExecutor executor) {
+      return executor == null || executor instanceof GitCommitAndPushExecutor;
     }
 
     private String readMore(String link, String message) {

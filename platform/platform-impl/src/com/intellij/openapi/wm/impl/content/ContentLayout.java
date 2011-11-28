@@ -63,8 +63,10 @@ abstract class ContentLayout {
 
   public abstract void contentRemoved(ContentManagerEvent event);
 
+  public abstract boolean shouldDrawDecorations();
+  
   protected void updateIdLabel(BaseLabel label) {
-    label.setText(myUi.myWindow.getId());
+    label.setText(myUi.myWindow.getId() + (shouldDrawDecorations() ? ":" : ""));
     label.setBorder(new EmptyBorder(0, 2, 0, 8));
 
     if (myUi.myManager.getContentCount() == 1) {

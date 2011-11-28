@@ -236,6 +236,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
             actionManager.fireBeforeActionPerformed(action, myContext, event);
             Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
             if (component != null && !isInTree(component)) {
+              typeahead.setDone();
               return;
             }
 
@@ -258,6 +259,8 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
 
             action.actionPerformed(event);
             actionManager.queueActionPerformedEvent(action, myContext, event);
+          } else {
+            typeahead.setDone();
           }
         }
       });
