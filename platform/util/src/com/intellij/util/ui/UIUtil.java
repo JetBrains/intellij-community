@@ -1750,7 +1750,12 @@ public class UIUtil {
     }
   }
 
+  /** @deprecated use {@linkplain #initDefaultLAF()} (to remove in IDEA 12) */
   public static void initDefaultLAF(final String productName) {
+    initDefaultLAF();
+  }
+
+  public static void initDefaultLAF() {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }
