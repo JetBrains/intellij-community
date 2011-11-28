@@ -580,7 +580,44 @@ class Test {
 '''
     doTest(before, toPaste2, expected2)
   }
-
+  
+  void testPasteMultilineTextThatStartsWithLineFeedToNewLineWithBigCaretIndent() {
+      def before = '''\
+  class Test {
+      void test(int i) {
+          if (i > 0) {
+                   <caret>
+          }
+      }
+  }\
+'''
+  
+      def toPaste = '''
+                       test(1);
+                       test(1);\
+'''
+  
+      def expected = '''\
+  class Test {
+      void test(int i) {
+          if (i > 0) {
+                   
+              test(1);
+              test(1);
+          }
+      }
+  }\
+'''
+      doTest(before, toPaste, expected)
+    
+    
+    def toPaste2 = '''
+     test(1);
+     test(1);\
+'''
+    doTest(before, toPaste2, expected)
+  } 
+  
   def testPlainTextPaste() {
     def before = '''\
   line1

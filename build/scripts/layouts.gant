@@ -245,9 +245,6 @@ public def layoutCommunityPlugins(String home) {
     layoutPlugin("svn4ideaOld") {
       fileset(dir: "$home/plugins/svn4ideaOld/lib", excludes: "**/svnkitsrc.zip")
     }
-    layoutPlugin("svn4idea") {
-      fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
-    }
 
     layoutPlugin("junit", "junit", "idea-junit") {
       jar("junit-rt.jar") {

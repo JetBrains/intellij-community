@@ -301,6 +301,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @Nullable
   public static GrExpression findExpression(GroovyFileBase file, int startOffset, int endOffset) {
     GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
+    while (selectedExpr instanceof GrParenthesizedExpression) selectedExpr = ((GrParenthesizedExpression)selectedExpr).getOperand();
     if (selectedExpr == null) return null;
     PsiType type = selectedExpr.getType();
     if (type != null) type = TypeConversionUtil.erasure(type);
@@ -360,19 +361,23 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     PsiElement candidate;
     if (occurrences.length == 1 || !settings.replaceAllOccurrences()) {
       candidate = context.expression;
-      while (candidate != null && !PsiUtil.isExpressionStatement(candidate)) candidate = candidate.getParent();
-      return candidate;
+      candidate = findContainingStatement(candidate);
     }
     else {
       GroovyRefactoringUtil.sortOccurrences(occurrences);
       candidate = occurrences[0];
+      while (candidate != null && !container.equals(candidate.getParent())) {
+        candidate = candidate.getParent();
+      }
     }
-    while (candidate != null && !container.equals(candidate.getParent())) {
-      candidate = candidate.getParent();
+
+    final GrStringInjection injection = PsiTreeUtil.getParentOfType(candidate, GrStringInjection.class);
+    if (injection != null && !injection.getText().contains("\n")) {
+      candidate = findContainingStatement(injection);
     }
-    if (candidate == null) {
-      return null;
-    }
+
+    if (candidate == null) return null;
+    
     if ((container instanceof GrWhileStatement) &&
         candidate.equals(((GrWhileStatement)container).getCondition())) {
       return container;
@@ -385,6 +390,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         candidate.equals(((GrForStatement)container).getClause())) {
       return container;
     }
+    return candidate;
+  }
+
+  @Nullable
+  private static PsiElement findContainingStatement(PsiElement candidate) {
+    while (candidate != null && !PsiUtil.isExpressionStatement(candidate)) candidate = candidate.getParent();
     return candidate;
   }
 
