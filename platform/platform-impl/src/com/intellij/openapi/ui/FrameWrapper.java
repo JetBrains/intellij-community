@@ -121,12 +121,17 @@ public class FrameWrapper implements Disposable, DataProvider {
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     WindowAdapter focusListener = new WindowAdapter() {
       public void windowOpened(WindowEvent e) {
-        if (myPreferedFocus != null) {
-          myPreferedFocus.requestFocusInWindow();
-          myFocusTrackback.registerFocusComponent(myPreferedFocus);
+        IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
+        JComponent toFocus = myPreferedFocus;
+        if (toFocus == null) {
+          toFocus = fm.getFocusTargetFor(myComponent);
         }
 
-        myFocusedCallback.setDone();
+        if (toFocus != null) {
+          fm.requestFocus(myPreferedFocus, true).notify(myFocusedCallback);
+        } else {
+          myFocusedCallback.setRejected();
+        }
       }
     };
     frame.addWindowListener(focusListener);

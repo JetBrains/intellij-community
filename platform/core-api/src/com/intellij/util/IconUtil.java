@@ -74,7 +74,7 @@ public class IconUtil {
       .getDefaultConfiguration()
       .createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT);
     final Graphics2D g = image.createGraphics();
-    icon.paintIcon(null, g, 0, 0);
+    icon.paintIcon(new JPanel(), g, 0, 0);
     g.dispose();
 
     final BufferedImage img = new BufferedImage(w, h, Transparency.TRANSLUCENT);
