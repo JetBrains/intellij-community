@@ -139,6 +139,9 @@ public class EnterHandler extends BaseEnterHandler {
       !isFirstColumn && !(caretOffset >= text.length() || text.charAt(caretOffset) == ' ' || text.charAt(caretOffset) == '\t');
     editor.getCaretModel().moveToOffset(caretOffset);
     myOriginalHandler.execute(editor, dataContext);
+    if (!editor.isInsertMode()) {
+      return;
+    }
 
     if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
       caretOffset += 1;
