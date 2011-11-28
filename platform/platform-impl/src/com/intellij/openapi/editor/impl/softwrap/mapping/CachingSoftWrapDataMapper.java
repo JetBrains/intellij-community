@@ -447,30 +447,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     }
     applyStateChange(exactOffsetsDiff);
     
-    // TODO den remove before v.11 release
-    if (myCache.size() > 1) {
-      CacheEntry beforeLast = myCache.get(myCache.size() - 2);
-      CacheEntry last = myCache.get(myCache.size() - 1);
-      if (beforeLast.visualLine == last.visualLine
-          || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1)
-          || last.startOffset > myEditor.getDocument().getTextLength())
-      {
-        CharSequence editorState = "";
-        if (myEditor instanceof EditorImpl) {
-          editorState = ((EditorImpl)myEditor).dumpState();
-        }
-        LOG.error(
-          "Detected invalid soft wraps cache update",
-          String.format(
-            "Event: %s, normal: %b.%n%nTail cache entries: %s%n%nAffected by change cache entries: %s%n%nBefore change state: %s%n%n"
-            + "After change state: %s%n%nEditor state: %s",
-            event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries, 
-            myBeforeChangeState, myAfterChangeState, editorState
-          )
-        );
-      }
-    }
-    
     myAffectedByUpdateCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.clear();
 
