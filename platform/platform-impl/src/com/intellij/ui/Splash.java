@@ -41,7 +41,6 @@ import java.util.List;
  */
 public class Splash extends JDialog implements StartupProgress {
   private final Icon myImage;
-  private final JLabel myLabel;
   private int myProgressHeight = 2;
   private Color myProgressColor = null;
   private int myProgressY;
@@ -54,10 +53,10 @@ public class Splash extends JDialog implements StartupProgress {
 
     Icon originalImage = IconLoader.getIcon(imageName);
     myImage = new SplashImage(originalImage, textColor);
-    myLabel = new JLabel(myImage);
+    JLabel label = new JLabel(myImage);
     Container contentPane = getContentPane();
     contentPane.setLayout(new BorderLayout());
-    contentPane.add(myLabel, BorderLayout.CENTER);
+    contentPane.add(label, BorderLayout.CENTER);
     Dimension size = getPreferredSize();
     setSize(size);
     pack();

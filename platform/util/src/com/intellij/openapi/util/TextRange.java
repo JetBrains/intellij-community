@@ -31,10 +31,12 @@ public class TextRange implements Segment, Serializable {
     myEndOffset = endOffset;
   }
 
+  @Override
   public final int getStartOffset() {
     return myStartOffset;
   }
 
+  @Override
   public final int getEndOffset() {
     return myEndOffset;
   }
