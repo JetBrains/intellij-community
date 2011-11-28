@@ -36,9 +36,11 @@ import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
 
+import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.List;
 
 /**
  * HgUtil is a collection of static utility methods for Mercurial.
@@ -372,4 +374,11 @@ public abstract class HgUtil {
     return sorted;
   }
 
+  public static void executeOnPooledThreadIfNeeded(Runnable runnable) {
+    if (EventQueue.isDispatchThread()) {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    } else {
+      runnable.run();
+    }
+  }
 }
