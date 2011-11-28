@@ -67,7 +67,7 @@ public class GitFetcher {
       if (url == null) {
         continue;
       }
-      if (GitHttpAdapter.isHttpUrl(url)) {
+      if (GitHttpAdapter.isHttpUrlWithoutUserCredentials(url)) {
         GitFetchResult res = GitHttpAdapter.fetch(repository, remote, url);
         myErrors.addAll(res.getErrors());
         if (!res.isSuccess()) {

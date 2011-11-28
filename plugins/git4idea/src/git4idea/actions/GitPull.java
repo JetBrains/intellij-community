@@ -83,7 +83,7 @@ public class GitPull extends GitRepositoryAction {
           return;
         }
 
-        if (GitHttpAdapter.isHttpUrl(url)) {
+        if (GitHttpAdapter.isHttpUrlWithoutUserCredentials(url)) {
           boolean fetchSuccessful = new GitFetcher(project, indicator).fetchRootsAndNotify(gitRoots, "Push failed", false);
           if (!fetchSuccessful) {
             return; 

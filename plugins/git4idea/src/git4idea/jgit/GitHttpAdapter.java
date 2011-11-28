@@ -57,7 +57,7 @@ public final class GitHttpAdapter {
 
   private static final Pattern HTTP_URL_WITH_USERNAME_AND_PASSWORD = Pattern.compile("http(s?)://([^\\s^@:]+):([^\\s^@:]+)@.*");
 
-  public static boolean isHttpUrl(@NotNull String url) {
+  public static boolean isHttpUrlWithoutUserCredentials(@NotNull String url) {
     // if username & password are specified in the url, give it to the native Git
     return url.startsWith("http") && !HTTP_URL_WITH_USERNAME_AND_PASSWORD.matcher(url).matches();
   }
