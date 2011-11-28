@@ -76,7 +76,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       data.setPresentableText(directoryFile.getName());
       if (module != null) {
         if (!(parentValue instanceof Module )) {
-          if (Comparing.equal(module.getName(), directoryFile.getName()) || shouldShowModuleName()) {
+          if (!shouldShowModuleName()) {
+            data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+          else if (Comparing.equal(module.getName(), directoryFile.getName())) {
             data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           }
           else {
