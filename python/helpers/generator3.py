@@ -4,7 +4,7 @@ This thing tries to restore public interface of objects that don't have a python
 source: C extensions and built-in objects. It does not reimplement the
 'inspect' module, but complements it.
 
-Since built-ins don't have many features that full-blown objects have, 
+Since built-ins don't have many features that full-blown objects have,
 we do not support some fancier things like metaclasses.
 
 We use certain kind of doc comments ("f(int) -> list") as a hint for functions'
@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.98" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.99" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -358,7 +358,7 @@ paramSlot << (param | nestedParamSeq)
 
 optionalPart = Forward()
 
-paramSeq = simpleParamSeq + Optional(optionalPart) # this is our approximate target 
+paramSeq = simpleParamSeq + Optional(optionalPart) # this is our approximate target
 
 optionalPart << (
 Group(
@@ -623,7 +623,7 @@ def packageOf(name, unqualified_ok=False):
         return res
     else:
         return ''
-    
+
 class emptylistdict(dict):
     "defaultdict not available before 2.5; simplest reimplementation using [] as default"
     def __getitem__(self, item):
@@ -708,7 +708,7 @@ class ModuleRedeclarator(object):
     def flush(self):
         for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf, self.footer_buf):
             buf.flush(self.outfile)
-            
+
     def outDocstring(self, out_func, docstring, indent):
         if isinstance(docstring, str):
             lines = docstring.strip().split("\n")
@@ -1831,7 +1831,7 @@ class ModuleRedeclarator(object):
             pass
 
         action("redoing innards of module %r %r", p_name, str(self.module))
-        
+
         module_type = type(sys)
         # group what we have into buckets
         vars_simple = {}
@@ -1980,7 +1980,7 @@ class ModuleRedeclarator(object):
                 self.redoClass(out, item, item_name, 0, p_modname=p_name, seen=seen_classes)
                 self._defined[item_name] = True
                 out(0, "") # empty line after each item
-                
+
             if self.doing_builtins and p_name == BUILTIN_MOD_NAME and version[0] < 3:
                 # classobj still supported
                 txt = (
@@ -2255,7 +2255,7 @@ def processOne(name, mod_file_name, doing_builtins):
     """
     if hasRegularPythonExt(name):
         report("Ignored a regular Python file %r", name)
-        return False
+        return True
     if not quiet:
         say(name)
         sys.stdout.flush()
@@ -2285,8 +2285,6 @@ def processOne(name, mod_file_name, doing_builtins):
         except ImportError:
             exctype, value = sys.exc_info()[:2]
             report("Name %r failed to import: %r", name, str(value))
-            if debug_mode:
-                sys.exit(1)
             return False
 
         if my_finder:
@@ -2433,6 +2431,7 @@ if __name__ == "__main__":
             if '-p' in opts:
                 atexit.register(print_profile)
 
-        processOne(name, mod_file_name, False)
+        if not processOne(name, mod_file_name, False):
+            sys.exit(1)
 
     say("Generation completed in %d ms" , timer.elapsed())
