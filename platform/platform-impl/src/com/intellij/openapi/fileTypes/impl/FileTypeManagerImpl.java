@@ -555,7 +555,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @Override
   public void fireBeforeFileTypesChanged() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     FileTypeEvent event = new FileTypeEvent(this);
     myMessageBus.syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
@@ -567,7 +566,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @Override
   public void fireFileTypesChanged() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this));
   }
 
@@ -1031,7 +1029,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
       if (!fileTypes.contains(existing)) {
