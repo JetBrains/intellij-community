@@ -28,6 +28,10 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("r''", doTestTyping("r", 1, '\''));
   }
 
+  public void testQuotesInString() {   // PY-5041
+    assertEquals("'st''ring'", doTestTyping("'st'ring'", 3, '\''));
+  }
+
   public void testNonClosingQuoteAtIdent() {   // PY-380
     assertEquals("'abc", doTestTyping("abc", 0, '\''));
   }
