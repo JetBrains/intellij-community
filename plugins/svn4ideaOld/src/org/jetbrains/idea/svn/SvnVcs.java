@@ -152,6 +152,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static RareLogger.LogFilter[] ourLogFilters;
   private final SvnLoadedBrachesStorage myLoadedBranchesStorage;
 
+  public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
+
   static {
     SVNJNAUtil.setJNAEnabled(true);
     SvnHttpAuthMethodsDefaultChecker.check();
@@ -174,6 +176,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       LOG.warn("JNA is not found by svnkit library");
     }
     initLogFilters();
+
+    // Alexander Kitaev says it is default value (empty string)
+    if (System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) == null) {
+      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "");
+    }
   }
 
   private static Boolean booleanProperty(final String systemParameterName) {
