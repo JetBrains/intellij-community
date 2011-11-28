@@ -174,7 +174,8 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final ASTNode myNewNode;
     private final int myPos;
 
-    public InsertEntry(ASTNode oldParent, ASTNode newNode, int pos) {
+    public InsertEntry(@NotNull ASTNode oldParent, @NotNull ASTNode newNode, int pos) {
+      assert oldParent instanceof CompositeElement : oldParent;
       myOldParent = oldParent;
       myNewNode = newNode;
       myPos = pos;
