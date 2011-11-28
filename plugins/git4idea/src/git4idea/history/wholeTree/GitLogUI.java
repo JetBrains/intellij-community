@@ -1459,7 +1459,7 @@ public class GitLogUI implements Disposable {
 
   private class MyTextFieldAction extends SearchFieldAction {
     private MyTextFieldAction() {
-      super("Find:");
+      super("Filter:");
     }
 
     @Override
@@ -2402,7 +2402,7 @@ public class GitLogUI implements Disposable {
 
   public class MyGotoCommitAction extends DumbAwareAction {
     public MyGotoCommitAction() {
-      super("Goto Commit", "Goto commit by hash, reference or description fragment (in loaded part)", IconLoader.getIcon("/icons/goto.png"));
+      super("Find Commit", "Find commit by hash, reference or description fragment (in loaded part)", IconLoader.getIcon("/actions/menu-find.png"));
     }
 
     @Override

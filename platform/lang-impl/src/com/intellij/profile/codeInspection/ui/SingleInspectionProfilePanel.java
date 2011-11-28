@@ -60,6 +60,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -109,9 +110,14 @@ public class SingleInspectionProfilePanel extends JPanel {
   private String myInitialProfile;
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
   private boolean myIsInRestore = false;
+  @NonNls private static final String VERTICAL_DIVIDER_PROPORTION = "VERTICAL_DIVIDER_PROPORTION";
+  @NonNls private static final String HORIZONTAL_DIVIDER_PROPORTION = "HORIZONTAL_DIVIDER_PROPORTION";
+  private final StorageAccessors myProperties = StorageAccessors.createGlobal("SingleInspectionProfilePanel");
 
   private boolean myShareProfile;
   private final InspectionProjectProfileManager myProjectProfileManager;
+  private Splitter myRightSplitter;
+  private Splitter myMainSplitter;
 
   public SingleInspectionProfilePanel(final String inspectionProfileName, final ModifiableModel profile) {
     this(null, inspectionProfileName, profile);
@@ -529,8 +535,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     TreeUtil.collapseAll(myTree, 1);
     final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, scrollPane.getPreferredSize().height);
-    scrollPane.setPreferredSize(preferredSize);
-    scrollPane.setMinimumSize(preferredSize);
+    //scrollPane.setPreferredSize(preferredSize);
+    //scrollPane.setMinimumSize(preferredSize);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
 
@@ -560,6 +566,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     myTreeExpander = new DefaultTreeExpander(myTree);
     myProfileFilter = new MyFilterComponent();
+    myProfileFilter.setPreferredSize(new Dimension(100, -1));
 
     return scrollPane;
   }
@@ -778,19 +785,19 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         final JPanel withSeverity = new JPanel(new GridBagLayout());
         withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")),
-                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                GridBagConstraints.NONE, new Insets(0, 5, 5, 10), 0, 0));
-        withSeverity.add(chooser, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.WEST,
-                                                         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+                         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
+                                                GridBagConstraints.NONE, new Insets(0, IdeBorderFactory.TITLED_BORDER_INDENT, 10, 10), 0, 0));
+        withSeverity.add(chooser, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST,
+                                                         GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
 
         final JComponent comp = descriptor.getState().getAdditionalConfigPanel();
         withSeverity.add(comp != null ? comp : new JPanel(),
-                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+                         new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+                                                GridBagConstraints.BOTH, new Insets(0, IdeBorderFactory.TITLED_BORDER_INDENT, 0, 0), 0, 0));
 
-        myOptionsPanel.add(withSeverity, BorderLayout.NORTH);
+        myOptionsPanel.add(withSeverity, BorderLayout.CENTER);
       }
-      myOptionsPanel.validate();
+      myOptionsPanel.revalidate();
       GuiUtils.enableChildren(myOptionsPanel, node.isChecked());
     }
     else {
@@ -801,8 +808,6 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void initOptionsAndDescriptionPanel() {
     myOptionsPanel.removeAll();
-    myOptionsPanel.add(SeparatorFactory.createSeparator("Options", null));
-    myOptionsPanel.add(new JPanel());
     try {
       myBrowser.read(new StringReader(EMPTY_HTML), null);
     }
@@ -861,6 +866,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myInspectionProfilePanel == null) {
       return;
     }
+    myProperties.setFloat(VERTICAL_DIVIDER_PROPORTION, myMainSplitter.getProportion());
+    myProperties.setFloat(HORIZONTAL_DIVIDER_PROPORTION, myRightSplitter.getProportion());
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
     if (mySelectedProfile != null) {
@@ -885,13 +892,14 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                                    true, new Insets(13, 0, 0, 0)));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
 
-    Splitter rightPanel = new Splitter(true);
-    rightPanel.setFirstComponent(descriptionPanel);
+    myRightSplitter = new Splitter(true);
+    myRightSplitter.setFirstComponent(descriptionPanel);
+    myRightSplitter.setProportion(myProperties.getFloat(HORIZONTAL_DIVIDER_PROPORTION, 0.5f));
 
     myOptionsPanel = new JPanel(new BorderLayout());
     initOptionsAndDescriptionPanel();
-    rightPanel.setSecondComponent(myOptionsPanel);
-    rightPanel.setHonorComponentsMinimumSize(true);
+    myRightSplitter.setSecondComponent(myOptionsPanel);
+    myRightSplitter.setHonorComponentsMinimumSize(true);
 
     final JPanel treePanel = new JPanel(new BorderLayout());
     final JScrollPane tree = initTreeScrollPane();
@@ -903,15 +911,14 @@ public class SingleInspectionProfilePanel extends JPanel {
     northPanel.add(myProfileFilter, BorderLayout.EAST);
     treePanel.add(northPanel, BorderLayout.NORTH);
 
-    Splitter splitter = new Splitter(false);
-    splitter.setShowDividerControls(false);
-    splitter.setFirstComponent(treePanel);
-    splitter.setSecondComponent(rightPanel);
-    splitter.setProportion((float)tree.getPreferredSize().width/getPreferredSize().width);
-    splitter.setHonorComponentsMinimumSize(true);
+    myMainSplitter = new Splitter(false);
+    myMainSplitter.setFirstComponent(treePanel);
+    myMainSplitter.setSecondComponent(myRightSplitter);
+    myMainSplitter.setHonorComponentsMinimumSize(false);
+    myMainSplitter.setProportion(myProperties.getFloat(VERTICAL_DIVIDER_PROPORTION, 0.5f));
 
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(splitter, BorderLayout.CENTER);
+    panel.add(myMainSplitter, BorderLayout.CENTER);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 0, 2));
     return panel;
   }

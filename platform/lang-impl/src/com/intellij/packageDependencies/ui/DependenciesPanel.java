@@ -511,7 +511,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"), IconLoader.getIcon("/fileTypes/java.png"));
+      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"), IconLoader.getIcon("/fileTypes/unknown.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {

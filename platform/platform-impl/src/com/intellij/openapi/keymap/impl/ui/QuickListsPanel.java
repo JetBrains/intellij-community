@@ -26,10 +26,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.ui.*;
@@ -53,7 +55,7 @@ import java.util.List;
  * User: anna
  * Date: 13-Apr-2006
  */
-public class QuickListsPanel extends JPanel implements SearchableConfigurable {
+public class QuickListsPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
   private final DefaultListModel myQuickListsModel = new DefaultListModel();
   private JBList myQuickListsList = new JBList(myQuickListsModel);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
@@ -69,8 +71,10 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable {
   public QuickListsPanel(KeymapPanel panel) {
     super(new BorderLayout());
     myKeymapPanel = panel;
-    add(createQuickListsPanel(), BorderLayout.WEST);
-    add(myRightPanel, BorderLayout.CENTER);
+    Splitter splitter = new Splitter();
+    splitter.setFirstComponent(createQuickListsPanel());
+    splitter.setSecondComponent(myRightPanel);
+    add(splitter, BorderLayout.CENTER);
   }
 
   public void initUi() {

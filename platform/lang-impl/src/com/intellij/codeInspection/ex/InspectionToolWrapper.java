@@ -52,6 +52,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   public T getTool() {
     if (myTool == null) {
       myTool = (T)myEP.instantiateTool();
+      LOG.assertTrue(myTool.getShortName().equals(myEP.shortName), "myTool: " + myTool.getShortName() + "; ep.shortName " + myEP.shortName);
     }
     return myTool;
   }

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.UIUtil;
 
@@ -55,6 +56,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
         actionPerformed(null);
       }
     };
+    myField.setSearchIcon(IconLoader.getIcon("/actions/filter_small.png"));
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
     myComponent.setLayout(layout);

@@ -125,7 +125,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection
       }
     });
     final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.anchor = GridBagConstraints.WEST;
+    constraints.anchor = GridBagConstraints.NORTHWEST;
     constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.weightx = 1.0;
     panel.add(reportLocalVariablesCheckBox, constraints);
@@ -133,6 +133,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection
     panel.add(reportParametersCheckBox, constraints);
     constraints.insets.left = 20;
     constraints.gridy = 2;
+    constraints.weighty = 1.0;
     panel.add(abstractOnlyCheckBox, constraints);
     return panel;
   }

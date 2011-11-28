@@ -243,12 +243,12 @@ public class LocalDebugger implements Debugger {
     final String uri = frame.getURI();
 
     final StyleFrame previous = frame.getPrevious();
-    if (previous != null && previous.getLineNumber() == frame.getLineNumber() && uri != null && uri.equals(previous.getURI())) {
-      if (frame.getInstruction().equals(previous.getInstruction())) {
-        System.err.println(
-          "WARN: Same instruction <" + frame.getInstruction() + "> on line " + frame.getLineNumber() + " encountered more than once");
-      }
-    }
+    //if (previous != null && previous.getLineNumber() == frame.getLineNumber() && uri != null && uri.equals(previous.getURI())) {
+    //  if (frame.getInstruction().equals(previous.getInstruction())) {
+    //    System.err.println(
+    //      "WARN: Same instruction <" + frame.getInstruction() + "> on line " + frame.getLineNumber() + " encountered more than once");
+    //  }
+    //}
 
     if (isStopped()) {
       throw new DebuggerStoppedException();

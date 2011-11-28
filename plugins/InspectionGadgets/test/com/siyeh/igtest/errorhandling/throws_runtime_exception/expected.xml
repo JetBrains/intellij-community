@@ -4,13 +4,13 @@
     <file>ThrowsRuntimeException.java</file>
     <line>6</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'RuntimeException' declared in 'throws' clause</problem_class>
-    <description>Runtime exception &lt;code&gt;RuntimeException&lt;/code&gt; declared in 'throws' clause</description>
+    <description>Unchecked exception &lt;code&gt;RuntimeException&lt;/code&gt; declared in 'throws' clause #loc</description>
   </problem>
 
   <problem>
     <file>ThrowsRuntimeException.java</file>
     <line>7</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'RuntimeException' declared in 'throws' clause</problem_class>
-    <description>Runtime exception &lt;code&gt;UnsupportedOperationException&lt;/code&gt; declared in 'throws' clause</description>
+    <description>Unchecked exception &lt;code&gt;UnsupportedOperationException&lt;/code&gt; declared in 'throws' clause #loc</description>
   </problem>
 </problems>

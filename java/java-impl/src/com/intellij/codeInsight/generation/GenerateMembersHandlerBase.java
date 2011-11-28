@@ -117,7 +117,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     if (newMembers.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        HintManager.getInstance().showErrorHint(editor, "Nothing found to insert");
+        HintManager.getInstance().showErrorHint(editor, getNothingFoundMessage());
       }
       return;
     }
@@ -136,6 +136,10 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     else if (!newMembers.isEmpty()){
       GenerateMembersUtil.positionCaret(editor, newMembers.get(0).getPsiMember(), false);
     }
+  }
+
+  protected String getNothingFoundMessage() {
+    return "Nothing found to insert";
   }
 
   private static void runTemplates(final Project myProject, final Editor editor, final List<TemplateGenerationInfo> templates, final int index) {

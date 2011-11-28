@@ -89,6 +89,8 @@
     <extensionPoint name="debugger.positionManagerFactory"
                     interface="com.intellij.debugger.PositionManagerFactory"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="debugger.jvmSmartStepIntoHandler"
+                    interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler"/>
 
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
@@ -915,6 +917,7 @@
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaStringContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
+    <statistics.usagesCollector  implementation="com.intellij.openapi.roots.impl.LanguageLevelUsagesCollector"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl"/>
 
@@ -1160,6 +1163,7 @@
     <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpointFactory"/>
     <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.FieldBreakpointFactory"/>
     <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory"/>
+    <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler"/>
 
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
 

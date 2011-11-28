@@ -16,14 +16,12 @@
 package com.intellij;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.MultiMap;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.Reader;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -39,9 +37,9 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>
  *     Define target class name filters (at regexp format) explicitly using
- *    {@link #TestClassesFilter(List) dedicated constructor};
+ *    {@link TestClassesFilter(List) dedicated constructor};
  *   </li>
- *   <li>Read class name filters (at regexp format) from the given stream - see {@link #createOn(java.io.InputStreamReader, String)};</li>
+ *   <li>Read class name filters (at regexp format) from the given stream - see {@link #createOn(String, java.io.Reader...)};</li>
  * </ul>
  */
 public class GroupBasedTestClassFilter extends TestClassesFilter {
@@ -60,18 +58,18 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
   private final String myTestGroupName;
 
-  private GroupBasedTestClassFilter(Map<String, List<String>> filters, String testGroupName) {
+  private GroupBasedTestClassFilter(MultiMap<String, String> filters, String testGroupName) {
     myTestGroupName = testGroupName;
 
     for (String groupName : filters.keySet()) {
-      List<String> filterList = filters.get(groupName);
+      Collection<String> filterList = filters.get(groupName);
       addPatterns(groupName, filterList);
     }
     
     myTestGroupPatterns = collectPatternsFor(myTestGroupName);
   }
 
-  private void addPatterns(String groupName, List<String> filterList) {
+  private void addPatterns(String groupName, Collection<String> filterList) {
     ArrayList<Pattern> patterns = compilePatterns(filterList);
     myPatterns.put(groupName, patterns);
     myAllPatterns.addAll(patterns);
@@ -116,35 +114,39 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    * closed on caller side.
    *
    *
-   * @param inputStreamReader   reader that points to the target test groups config
+   *
    * @param testGroupName
+   * @param inputs   reader that points to the target test groups config
    * @return                    newly created {@link GroupBasedTestClassFilter} object with the data contained at the given reader
    * @see #matches(String)
    */
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static TestClassesFilter createOn(InputStreamReader inputStreamReader, String testGroupName) {
+  public static TestClassesFilter createOn(String testGroupName, Reader... inputs) {
     try {
-      Map<String, List<String>> groupNameToPatternsMap = new HashMap<String, List<String>>();
-      String currentGroupName = "";
-      LineNumberReader lineNumberReader = new LineNumberReader(inputStreamReader);
-      String line;
-      while ((line = lineNumberReader.readLine()) != null) {
-        if (line.startsWith("#")) continue;
-        if (line.startsWith("[") && line.endsWith("]")) {
-          currentGroupName = line.substring(1, line.length() - 1);
-        }
-        else {
-          if (!groupNameToPatternsMap.containsKey(currentGroupName)) {
-            groupNameToPatternsMap.put(currentGroupName, new ArrayList<String>());
-          }
-          groupNameToPatternsMap.get(currentGroupName).add(line);
-        }
+      MultiMap<String, String> groupNameToPatternsMap = new MultiMap<String, String>();
+      for (Reader input : inputs) {
+        readStream(input, groupNameToPatternsMap);
       }
 
       return new GroupBasedTestClassFilter(groupNameToPatternsMap, testGroupName);
     }
     catch (IOException e) {
       return ALL_CLASSES;
+    }
+  }
+
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
+  private static void readStream(Reader reader, MultiMap<String, String> groupNameToPatternsMap) throws IOException {
+    String currentGroupName = "";
+    LineNumberReader lineNumberReader = new LineNumberReader(reader);
+    String line;
+    while ((line = lineNumberReader.readLine()) != null) {
+      if (line.startsWith("#")) continue;
+      if (line.startsWith("[") && line.endsWith("]")) {
+        currentGroupName = line.substring(1, line.length() - 1);
+      }
+      else {
+        groupNameToPatternsMap.putValue(currentGroupName, line);
+      }
     }
   }
 

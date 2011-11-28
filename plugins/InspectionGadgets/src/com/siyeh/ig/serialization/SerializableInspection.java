@@ -56,21 +56,20 @@ public abstract class SerializableInspection extends BaseInspection {
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
-    constraints.insets.left = 4;
-    constraints.insets.right = 4;
 
     constraints.weightx = 1.0;
     constraints.weighty = 1.0;
     constraints.fill = GridBagConstraints.BOTH;
     panel.add(chooserList, constraints);
 
-    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.fill = GridBagConstraints.BOTH;
     final JComponent[] additionalOptions = createAdditionalOptions();
     for (JComponent additionalOption : additionalOptions) {
       constraints.gridy++;
       panel.add(additionalOption, constraints);
     }
 
+    constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.gridy++;
     constraints.weighty = 0.0;
     panel.add(checkBox, constraints);

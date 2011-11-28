@@ -206,20 +206,20 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     */
 
     myLeftSide.add(mySearchWrapper, BorderLayout.NORTH);
-
     myLeftSide.add(myTree, BorderLayout.CENTER);
 
     setLayout(new BorderLayout());
 
     myMainSplitter = new Splitter(false);
     myMainSplitter.setFirstComponent(myLeftSide);
+    myMainSplitter.setHonorComponentsMinimumSize(false);
 
     myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), this, 150);
     myMainSplitter.setSecondComponent(myLoadingDecorator.getComponent());
 
 
-    myMainSplitter.setProportion(readPropertion(0.3f, MAIN_SPLITTER_PROPORTION));
-    myContentWrapper.mySplitter.setProportion(readPropertion(0.2f, DETAILS_SPLITTER_PROPORTION));
+    myMainSplitter.setProportion(readProportion(0.3f, MAIN_SPLITTER_PROPORTION));
+    myContentWrapper.mySplitter.setProportion(readProportion(0.2f, DETAILS_SPLITTER_PROPORTION));
 
     add(myMainSplitter, BorderLayout.CENTER);
 
@@ -292,7 +292,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return myTree.select(configurable);
   }
 
-  private float readPropertion(final float defaultValue, final String propertyName) {
+  private float readProportion(final float defaultValue, final String propertyName) {
     float proportion = defaultValue;
     try {
       final String p = myProperties.getValue(propertyName);

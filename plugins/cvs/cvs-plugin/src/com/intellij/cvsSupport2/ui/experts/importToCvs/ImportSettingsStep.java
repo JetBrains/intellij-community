@@ -19,6 +19,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ImportConfiguration;
 import com.intellij.cvsSupport2.ui.experts.CvsWizard;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -26,6 +27,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Collection;
 
 /**
  * author: lesya
@@ -51,10 +53,12 @@ public class ImportSettingsStep extends WizardStep {
   private JLabel myVendorLabel;
   private JLabel myReleaseTagLabel;
   private JLabel myLogMessageLabel;
+  private JButton myKeywordExpansionButton;
 
-  public ImportSettingsStep(CvsWizard wizard,
+  public ImportSettingsStep(final Project project,
+                            CvsWizard wizard,
                             SelectImportLocationStep selectImportLocationStep,
-                            ImportConfiguration importConfiguration) {
+                            final ImportConfiguration importConfiguration) {
     super(CvsBundle.message("dialog.title.import.settings"), wizard);
 
     myCheckoutAfterImport.addActionListener(new ActionListener() {
@@ -63,7 +67,6 @@ public class ImportSettingsStep extends WizardStep {
         updateCheckoutSettingsVisibility();
       }
     });
-
     mySelectImportLocationStep = selectImportLocationStep;
     myImportConfiguration = importConfiguration;
 
@@ -81,6 +84,15 @@ public class ImportSettingsStep extends WizardStep {
     myLogMessage.setWrapStyleWord(true);
     myLogMessage.setLineWrap(true);
 
+    myKeywordExpansionButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final CustomizeKeywordSubstitutionDialog dialog =
+          new CustomizeKeywordSubstitutionDialog(project, CvsBundle.message("dialog.title.customize.keyword.substitutions"),
+                                                 importConfiguration);
+        dialog.show();
+      }
+    });
 
     init();
   }
@@ -100,7 +112,7 @@ public class ImportSettingsStep extends WizardStep {
   }
 
   private boolean isValidInput() {
-    JTextField[] fields = new JTextField[]{myReleaseTag, myVendor};
+    final JTextField[] fields = new JTextField[]{myReleaseTag, myVendor};
     boolean result = CvsFieldValidator.checkField(myVendor, fields, true, myVendorErrorMessage, null);
     result &= CvsFieldValidator.checkField(myReleaseTag, fields, true, myReleaseTagErrorMessage, null);
     return result;
@@ -173,10 +185,13 @@ public class ImportSettingsStep extends WizardStep {
     return myModuleName.getText().trim();
   }
 
+  public Collection<FileExtension> getFileExtensions() {
+    return myImportConfiguration.getExtensions();
+  }
+
   private class MyDocumentListener implements DocumentListener {
 
-    public MyDocumentListener() {
-    }
+    public MyDocumentListener() {}
 
     @Override
     public void changedUpdate(DocumentEvent e) {

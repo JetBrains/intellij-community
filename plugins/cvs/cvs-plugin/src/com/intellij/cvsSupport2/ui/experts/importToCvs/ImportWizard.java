@@ -24,6 +24,7 @@ import com.intellij.cvsSupport2.ui.experts.SelectCvsElementStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.CvsBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeSelectionModel;
 import java.io.File;
@@ -35,52 +36,53 @@ public class ImportWizard extends CvsWizard {
   private final SelectCVSConfigurationStep mySelectCVSConfigurationStep;
   private final SelectCvsElementStep mySelectCvsElementStep;
   private final SelectImportLocationStep mySelectImportLocationStep;
-  private final CustomizeKeywordSubstitutionStep myKeywordSubstitutionStep;
   private final ImportSettingsStep mySettingsStep;
 
   public ImportWizard(Project project, VirtualFile selectedFile) {
     super(CvsBundle.message("dialog.title.import.into.cvs"), project);
-    ImportConfiguration importConfig = ImportConfiguration.getInstance();
+    final ImportConfiguration importConfig = ImportConfiguration.getInstance();
     mySelectCVSConfigurationStep = new SelectCVSConfigurationStep(project, this);
-    mySelectCvsElementStep = new SelectCvsElementStep(CvsBundle.message("dialog.title.select.directory.to.import.into"),this,
+    mySelectCvsElementStep = new SelectCvsElementStep(CvsBundle.message("dialog.title.select.directory.to.import.into"),
+                                                      this,
                                                       project,
-                                                      mySelectCVSConfigurationStep, true, TreeSelectionModel.SINGLE_TREE_SELECTION, false,
+                                                      mySelectCVSConfigurationStep,
+                                                      true,
+                                                      TreeSelectionModel.SINGLE_TREE_SELECTION,
+                                                      false,
                                                       false);
 
     mySelectImportLocationStep = new SelectImportLocationStep(
                                             CvsBundle.message("dialog.title.select.import.directory"),
-                                             this,
+                                            this,
                                             project,
                                             selectedFile);
-
-    myKeywordSubstitutionStep = new CustomizeKeywordSubstitutionStep(CvsBundle.message("dialog.title.customize.keyword.substitutions"),
-                this, importConfig);
-
-    mySettingsStep = new ImportSettingsStep(this, mySelectImportLocationStep, importConfig);
+    mySettingsStep = new ImportSettingsStep(project, this, mySelectImportLocationStep, importConfig);
 
     addStep(mySelectCVSConfigurationStep);
     addStep(mySelectCvsElementStep);
     addStep(mySelectImportLocationStep);
-    addStep(myKeywordSubstitutionStep);
     addStep(mySettingsStep);
 
     init();
   }
 
+  @Nullable
   public ImportDetails createImportDetails() {
-    CvsElement module = mySelectCvsElementStep.getSelectedCvsElement();
-    String moduleName = mySettingsStep.getModuleName();
-    String importModuleName = module.getElementPath().equals(".") ? moduleName : module.getElementPath() + "/" + moduleName;
+    final CvsElement module = mySelectCvsElementStep.getSelectedCvsElement();
+    final String moduleName = mySettingsStep.getModuleName();
+    final String importModuleName = module.getElementPath().equals(".") ? moduleName : module.getElementPath() + "/" + moduleName;
 
     final File selectedFile = mySelectImportLocationStep.getSelectedFile();
-    if (selectedFile == null) return null;
+    if (selectedFile == null) {
+      return null;
+    }
     return new ImportDetails(selectedFile,
                              mySettingsStep.getVendor(),
                              mySettingsStep.getReleaseTag(),
                              mySettingsStep.getLogMessage(),
                              importModuleName,
                              mySelectCVSConfigurationStep.getSelectedConfiguration(),
-                             myKeywordSubstitutionStep.getFileExtensions(),
+                             mySettingsStep.getFileExtensions(),
                              mySelectImportLocationStep.getIgnoreFileFilter());
   }
 

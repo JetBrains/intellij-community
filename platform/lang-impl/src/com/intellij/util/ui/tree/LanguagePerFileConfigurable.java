@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class LanguagePerFileConfigurable<T> implements SearchableConfigurable {
+public abstract class LanguagePerFileConfigurable<T> implements SearchableConfigurable, Configurable.NoScroll {
   protected final Project myProject;
   private final Class<T> myValueClass;
   private final PerFileMappings<T> myMappings;

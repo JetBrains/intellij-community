@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -254,7 +253,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(scrollPane, BorderLayout.CENTER);
-    mySplitter.setShowDividerControls(true);
     mySplitter.setFirstComponent(wrapper);
     content.add(mySplitter, BorderLayout.CENTER);
     content.add(myProgressLabel, BorderLayout.SOUTH);

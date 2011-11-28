@@ -24,10 +24,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -56,7 +58,7 @@ import java.util.List;
  * Time: 12:44:56 PM
  */
 
-public class AllFileTemplatesConfigurable implements SearchableConfigurable {
+public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable");
 
   private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
@@ -297,26 +299,16 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
         onEditorChanged();
       }
     });
-    myMainPanel = new JPanel(new GridBagLayout()) {
-      public void doLayout() {
-        doMainPanelLayout();
-      }
-    };
-    // Layout manager is ignored
-    myMainPanel.add(myToolBar,
-                    new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                           GridBagConstraints.HORIZONTAL, new Insets(2, 2, 2, 2), 0, 0));
-    myMainPanel.add(myTabbedPane.getComponent(),
-                    new GridBagConstraints(0, 1, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                           new Insets(2, 2, 2, 2), 0, 0));
+
+    myMainPanel = new JPanel(new BorderLayout());
+    Splitter splitter = new Splitter();
+    JPanel leftPanel = new JPanel(new BorderLayout());
+    leftPanel.add(myToolBar, BorderLayout.NORTH);
+    leftPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    splitter.setFirstComponent(leftPanel);
     myEditorComponent = myEditor.createComponent();
-    myMainPanel.add(myEditorComponent,
-                    new GridBagConstraints(1, 0, 1, 2, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                           new Insets(2, 2, 2, 2), 0, 0));
-
-    myMainPanel.setMinimumSize(new Dimension(400, 300));
-    myMainPanel.setPreferredSize(new Dimension(700, 500));
-
+    splitter.setSecondComponent(myEditorComponent);
+    myMainPanel.add(splitter, BorderLayout.CENTER);
     return myMainPanel;
   }
 
@@ -417,35 +409,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       }
     }
     return false;
-  }
-
-  private void doMainPanelLayout() {
-    Dimension toolbarPreferredSize = myToolBar.getPreferredSize();
-    Dimension mainPanelSize = myMainPanel.getSize();
-    Dimension scrollPanePreferedSize = myTabbedPane.getComponent().getPreferredSize();
-    if (mainPanelSize.width < 1 || mainPanelSize.height < 1) {
-      return;
-    }
-    int leftWidth = scrollPanePreferedSize.width;
-    leftWidth = Math.min(leftWidth, mainPanelSize.width / 5);
-    leftWidth = Math.max(leftWidth, 300); //to prevent tabs from scrolling
-    //todo[myakovlev] Calculate tabs preferred size
-    leftWidth = Math.max(leftWidth, toolbarPreferredSize.width);
-    int x = 2;
-    int y = 2;
-    int width = toolbarPreferredSize.width;
-    int height = toolbarPreferredSize.height;
-    myToolBar.setBounds(x, y, width, height);
-    y += height + 2;
-    width = leftWidth + 2;
-    height = Math.max(1, mainPanelSize.height - 2 - y);
-    myTabbedPane.getComponent().setBounds(x, y, width, height);
-    x += width + 4;
-    y = 2;
-    width = Math.max(1, mainPanelSize.width - 2 - x);
-    height = Math.max(1, mainPanelSize.height - 2 - y);
-    myEditorComponent.setBounds(x, y, width, height);
-    myEditorComponent.revalidate();
   }
 
   private void initLists() {

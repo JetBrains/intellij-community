@@ -17,7 +17,6 @@ package com.intellij;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -33,7 +32,7 @@ public abstract class TestClassesFilter {
 
   public abstract boolean matches(String className);
 
-  protected static ArrayList<Pattern> compilePatterns(List<String> filterList) {
+  protected static ArrayList<Pattern> compilePatterns(Collection<String> filterList) {
     ArrayList<Pattern> patterns = new ArrayList<Pattern>();
     for (String aFilter : filterList) {
       String filter = aFilter.trim();

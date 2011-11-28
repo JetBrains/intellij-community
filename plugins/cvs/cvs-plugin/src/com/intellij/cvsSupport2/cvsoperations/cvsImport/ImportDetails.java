@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,15 @@ public class ImportDetails {
   private final Collection<FileExtension> myWrappers;
   private final IIgnoreFileFilter myIgnoreFileFilter;
 
-  public ImportDetails(@NotNull File sourceLocation, String vendor, String releaseTag, String logMessage,
-                       String moduleName, CvsEnvironment env,
+  public ImportDetails(@NotNull File baseImportDirectory,
+                       String vendor,
+                       String releaseTag,
+                       String logMessage,
+                       String moduleName,
+                       CvsEnvironment env,
                        Collection<FileExtension> wrappers,
                        IIgnoreFileFilter ignoreFileFilter) {
-    myBaseImportDirectory = sourceLocation;
+    myBaseImportDirectory = baseImportDirectory;
     myVendor = vendor;
     myReleaseTag = releaseTag;
     myLogMessage = logMessage;
@@ -71,8 +75,8 @@ public class ImportDetails {
   }
 
   private String getModulePath() {
-    String relativePath = FileUtil.getRelativePath(myBaseImportDirectory.getAbsoluteFile().getParentFile(),
-            myBaseImportDirectory.getAbsoluteFile());
+    final String relativePath = FileUtil.getRelativePath(myBaseImportDirectory.getAbsoluteFile().getParentFile(),
+                                                         myBaseImportDirectory.getAbsoluteFile());
     return replaceBaseImportDirectoryNameToModuleNameIn(relativePath);
   }
 
@@ -84,7 +88,7 @@ public class ImportDetails {
     return myModuleName + relativePath.substring(myBaseImportDirectory.getName().length());
   }
 
-  public File getWorkingDirectory() {
+  public File getBaseImportDirectory() {
     return myBaseImportDirectory;
   }
 
@@ -95,6 +99,4 @@ public class ImportDetails {
   public IIgnoreFileFilter getIgnoreFileFilter() {
     return myIgnoreFileFilter;
   }
-
-
 }
