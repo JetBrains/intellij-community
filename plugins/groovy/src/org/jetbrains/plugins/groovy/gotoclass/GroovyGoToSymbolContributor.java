@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
@@ -34,6 +35,7 @@ import java.util.Set;
  * @author ilyas
  */
 public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
+  @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     Set<String> symbols = new HashSet<String>();
     symbols.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, project));
@@ -42,6 +44,7 @@ public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
     return ArrayUtil.toStringArray(symbols);
   }
 
+  @NotNull
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
 

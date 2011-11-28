@@ -22,14 +22,17 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public class DefaultClassNavigationContributor implements GotoClassContributor {
+  @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     return PsiShortNamesCache.getInstance(project).getAllClassNames();
   }
 
+  @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
     return filterUnshowable(PsiShortNamesCache.getInstance(project).getClassesByName(name, scope), pattern);

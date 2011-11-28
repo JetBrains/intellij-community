@@ -27,11 +27,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public class ProjectBaseDirNavigationContributor implements ChooseByNameContributor, DumbAware {
 
+  @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     final VirtualFile baseDir = project.getBaseDir();
     if (baseDir == null) return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -45,6 +47,7 @@ public class ProjectBaseDirNavigationContributor implements ChooseByNameContribu
     return ArrayUtil.toStringArray(list);
   }
 
+  @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final VirtualFile baseDir = project.getBaseDir();

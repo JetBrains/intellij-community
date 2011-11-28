@@ -28,12 +28,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
 
+  @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     HashSet<String> set = new HashSet<String>();
@@ -43,6 +45,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return ArrayUtil.toStringArray(set);
   }
 
+  @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);

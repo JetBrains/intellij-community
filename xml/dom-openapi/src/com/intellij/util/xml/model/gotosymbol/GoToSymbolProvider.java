@@ -58,6 +58,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     }
   }
 
+  @NotNull
   public String[] getNames(final Project project, boolean includeNonProjectItems) {
     Set<String> result = new HashSet<String>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -70,6 +71,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     return ArrayUtil.toStringArray(result);
   }
 
+  @NotNull
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, boolean includeNonProjectItems) {
     List<NavigationItem> result = new ArrayList<NavigationItem>();
     Module[] modules = ModuleManager.getInstance(project).getModules();

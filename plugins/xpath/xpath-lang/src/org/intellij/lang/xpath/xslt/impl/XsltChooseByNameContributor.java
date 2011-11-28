@@ -19,15 +19,18 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 class XsltChooseByNameContributor implements ChooseByNameContributor {
+    @NotNull
     public String[] getNames(Project project, boolean includeNonProjectItems) {
         final Collection<String> symbols = XsltSymbolIndex.getSymbolNames(project, includeNonProjectItems);
       return ArrayUtil.toStringArray(symbols);
     }
 
+    @NotNull
     public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
         return XsltSymbolIndex.getSymbolsByName(name, project, includeNonProjectItems);
     }
