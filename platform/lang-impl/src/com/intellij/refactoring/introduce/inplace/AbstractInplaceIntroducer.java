@@ -238,6 +238,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             myDocumentAdapter = new DocumentAdapter() {
               @Override
               public void documentChanged(DocumentEvent e) {
+                if (myPreview == null) return;
                 final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
                 if (templateState != null) {
                   final TextResult value = templateState.getVariableValue(VariableInplaceRenamer.PRIMARY_VARIABLE_NAME);
