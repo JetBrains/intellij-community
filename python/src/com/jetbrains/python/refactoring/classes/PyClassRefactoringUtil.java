@@ -86,7 +86,7 @@ public class PyClassRefactoringUtil {
     }
     builder.append(")");
     if (!hasChanges) return;
-    
+
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(superClass.getName() + "temp", PythonFileType.INSTANCE, builder.toString());
     final PsiElement expression = file.getFirstChild().getFirstChild();
     PsiElement colon = superClass.getFirstChild();
