@@ -87,11 +87,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
 
   @Override
   public void mouseMoved(MouseEvent e) {
-    final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
-    final boolean insideMoreRec = myMoreRecMouse.contains(event.getPoint());
-    if (!myPopupIsShowing && insideMoreRec) {
+    final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, getParent());
+    final boolean insideRec = getBounds().contains(event.getPoint());
+    if (!myPopupIsShowing && insideRec) {
       showPopup(null);
-    } else if (myPopupIsShowing && !insideMoreRec) {
+    } else if (myPopupIsShowing && !insideRec) {
       final Component over = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
       if (over != null && myPopup.isShowing()) {
         final Rectangle rec = new Rectangle(myPopup.getLocationOnScreen(), myPopup.getSize());
@@ -191,7 +191,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
       }
     });
     myPopup.addPopupMenuListener(listener.get());
-    myPopup.show(this, myMoreRec.x, getY() + getHeight() - getInsets().bottom);
+    myPopup.show(this, 0, getY() + getHeight());
 
     SwingUtilities.invokeLater(new Runnable() {
       @Override
