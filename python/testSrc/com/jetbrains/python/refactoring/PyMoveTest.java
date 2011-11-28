@@ -1,9 +1,10 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
@@ -69,7 +70,44 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("B", "b.py");
   }
 
-  private void doMoveSymbolTest(final String symbolName, final String toFileName) {
+  // PY-4379
+  public void testModule() {
+    doMoveFileTest("p1/p2/m1.py", "p1");
+  }
+
+  private void doMoveFileTest(String fileName, String toDirName)  {
+    Project project = myFixture.getProject();
+    PsiManager manager = PsiManager.getInstance(project);
+
+    String root = "/refactoring/move/" + getTestName(true);
+    String rootBefore = root + "/before/src";
+    String rootAfter = root + "/after/src";
+
+    VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    VirtualFile virtualFile = dir1.findFileByRelativePath(fileName);
+    assertNotNull(virtualFile);
+    PsiElement file = manager.findFile(virtualFile);
+    if (file == null) {
+      file = manager.findDirectory(virtualFile);
+    }
+    assertNotNull(file);
+    VirtualFile toVirtualDir = dir1.findFileByRelativePath(toDirName);
+    assertNotNull(toVirtualDir);
+    PsiDirectory toDir = manager.findDirectory(toVirtualDir);
+    new MoveFilesOrDirectoriesProcessor(project, new PsiElement[] {file}, toDir, false, false, null, null).run();
+
+    VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
+    try {
+      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1, null);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void doMoveSymbolTest(String symbolName, String toFileName) {
     String root = "/refactoring/move/" + getTestName(true);
     String rootBefore = root + "/before/src";
     String rootAfter = root + "/after/src";
