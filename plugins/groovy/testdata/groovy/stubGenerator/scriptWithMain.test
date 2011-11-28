@@ -8,7 +8,7 @@ public static void main(String[] args) {
     r.run()
 }
 -----
-public class scriptWithMainMethod extends groovy.lang.Script {
+public class scriptWithMain extends groovy.lang.Script {
 public java.lang.Object run() {
 return null;
 }
