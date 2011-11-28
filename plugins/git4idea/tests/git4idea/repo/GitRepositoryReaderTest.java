@@ -102,7 +102,11 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
         if (file.isDirectory()) { // don't process dirs
           return true;
         }
-        String name = FileUtil.getRelativePath(refsHeads, file);
+        String relativePath = FileUtil.getRelativePath(refsHeads, file);
+        if (relativePath == null) {
+          return true;
+        }
+        String name = FileUtil.toSystemIndependentName(relativePath);
         GitTestBranch branch = null;
         try {
           branch = new GitTestBranch(name, FileUtil.loadFile(file));
