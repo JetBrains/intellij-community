@@ -187,6 +187,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection()); }
   public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedDefInspection()); }
   public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedDefInspection()); }
+  public void testDefinitionUsedInSwitchCase() throws Exception { doTest(new UnusedDefInspection()); }
   public void testDuplicateInnerClass() throws Throwable{doTest();}
 
   public void testThisInStaticContext() throws Throwable {doTest();}

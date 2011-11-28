@@ -586,6 +586,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitCaseSection(GrCaseSection caseSection) {
+    GrExpression value = caseSection.getCaseLabel().getValue();
+    if (value != null) {
+      value.accept(this);
+    }
+
     for (GrStatement statement : caseSection.getStatements()) {
       statement.accept(this);
     }
