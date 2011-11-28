@@ -412,6 +412,8 @@ public class SearchTextField extends JPanel {
   }
   
   public void setSearchIcon(final Icon icon) {
-    myToggleHistoryLabel.setIcon(icon);
+    if (! hasNativeLeopardSearchControl()) {
+      myToggleHistoryLabel.setIcon(icon);
+    }
   }
 }
