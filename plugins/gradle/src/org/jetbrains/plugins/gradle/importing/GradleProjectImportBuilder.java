@@ -95,9 +95,9 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
-    if (project != null) {
-      project.getComponent(GradleProjectState.class).GRADLE_PROJECT_FILE_PATH = myProjectFile.getAbsolutePath();
-    }
+    //if (project != null) {
+    //  project.getComponent(GradleProjectState.class).GRADLE_PROJECT_FILE_PATH = myProjectFile.getAbsolutePath();
+    //}
     GradleModulesImporter importer = new GradleModulesImporter();
     Map<GradleModule, Module> mappings =
       importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath(), myProgressManager);
