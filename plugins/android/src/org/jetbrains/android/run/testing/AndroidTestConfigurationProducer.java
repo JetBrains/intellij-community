@@ -29,6 +29,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.run.AndroidRunConfigurationType;
+import org.jetbrains.android.run.TargetSelectionMode;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -118,9 +121,9 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
 
   @Nullable
   private RunnerAndConfigurationSettings checkFacetAndCreateConfiguration(PsiElement element,
-                                                                              ConfigurationContext context,
-                                                                              int testingType,
-                                                                              String configurationName) {
+                                                                          ConfigurationContext context,
+                                                                          int testingType,
+                                                                          String configurationName) {
     Module module = context.getModule();
     if (module == null || AndroidFacet.getInstance(module) == null) {
       return null;
@@ -131,6 +134,14 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
     configuration.TESTING_TYPE = testingType;
     configuration.setName(JavaExecutionUtil.getPresentableClassName(configurationName, configuration.getConfigurationModule()));
     setupConfigurationModule(context, configuration);
+
+    final TargetSelectionMode targetSelectionMode = AndroidUtils
+      .getDefaultTargetSelectionMode(module, AndroidTestRunConfigurationType.getInstance(), AndroidRunConfigurationType.getInstance());
+    
+    if (targetSelectionMode != null) {
+      configuration.setTargetSelectionMode(targetSelectionMode);
+    }
+
     return settings;
   }
 

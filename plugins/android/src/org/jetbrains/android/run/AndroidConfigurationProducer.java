@@ -27,6 +27,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +75,15 @@ public class AndroidConfigurationProducer extends JavaRuntimeConfigurationProduc
     configuration.MODE = AndroidRunConfiguration.LAUNCH_SPECIFIC_ACTIVITY;
     configuration.setName(JavaExecutionUtil.getPresentableClassName(configuration.ACTIVITY_CLASS, configuration.getConfigurationModule()));
     setupConfigurationModule(context, configuration);
+
+    final TargetSelectionMode targetSelectionMode = AndroidUtils
+      .getDefaultTargetSelectionMode(context.getModule(), AndroidRunConfigurationType.getInstance(),
+                                     AndroidTestRunConfigurationType.getInstance());
+
+    if (targetSelectionMode != null) {
+      configuration.setTargetSelectionMode(targetSelectionMode);
+    }
+    
     return settings;
   }
 
