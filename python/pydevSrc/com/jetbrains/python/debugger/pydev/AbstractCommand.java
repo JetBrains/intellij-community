@@ -62,10 +62,13 @@ public abstract class AbstractCommand {
     }
 
     ProtocolFrame frame = new ProtocolFrame(myCommandCode, sequence, getPayload());
-    if (!myDebugger.sendFrame(frame)) {
+    boolean frameSent = myDebugger.sendFrame(frame);
+
+    if (!isResponseExpected()) return;
+
+    if (!frameSent) {
       throw new PyDebuggerException("Couldn't send frame " + myCommandCode);
     }
-    if (!isResponseExpected()) return;
 
     frame = myDebugger.waitForResponse(sequence);
     if (frame == null) {

@@ -120,6 +120,7 @@ class PyDBCommandThread(PyDBDaemonThread):
 
         run_traced = True
 
+        import pydevd_vm_type
         if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
             #don't run untraced threads if we're in jython 2.2.1 or lower
             #jython bug: if we start a thread and another thread changes the tracing facility
@@ -127,6 +128,7 @@ class PyDBCommandThread(PyDBDaemonThread):
             #Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
             run_traced = False
 
+        import pydevd_tracing
         if run_traced:
             pydevd_tracing.SetTrace(None) # no debugging on this thread
 
@@ -148,6 +150,9 @@ except ImportError:
     import _thread as thread #Py3K changed it.
 _original_start_new_thread = thread.start_new_thread
 
+if getattr(thread, '_original_start_new_thread', None) is None:
+    thread._original_start_new_thread = thread.start_new_thread
+
 #=======================================================================================================================
 # NewThreadStartup
 #=======================================================================================================================
@@ -163,6 +168,7 @@ class NewThreadStartup:
         pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
         self.original_func(*self.args, **self.kwargs)
 
+thread.NewThreadStartup = NewThreadStartup
 
 #=======================================================================================================================
 # pydev_start_new_thread
@@ -172,7 +178,9 @@ def pydev_start_new_thread(function, args, kwargs={}):
     We need to replace the original thread.start_new_thread with this function so that threads started through
     it and not through the threading module are properly traced.
     '''
-    return _original_start_new_thread(NewThreadStartup(function, args, kwargs), ())
+    import thread
+
+    return thread._original_start_new_thread(thread.NewThreadStartup(function, args, kwargs), ())
 
 #=======================================================================================================================
 # PyDB
@@ -1268,8 +1276,8 @@ if __name__ == '__main__':
         if dispatcher.port is not None:
             port = dispatcher.port
             sys.stderr.write("pydev debugger: process %d is connecting\n"% os.getpid())
-            import pydevd_utils
-            pydevd_utils.patch_new_process_functions()
+            import pydev_monkey
+            pydev_monkey.patch_new_process_functions()
         else:
             sys.stderr.write("pydev debugger: couldn't get port for new debug process\n")
     else:

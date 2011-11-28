@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.rename;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -10,6 +11,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,15 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyFile;
+  }
+
+  @Override
+  public PsiElement substituteElementToRename(PsiElement element, @Nullable Editor editor) {
+    PyFile file = (PyFile) element;
+    if (file.getName().equals(PyNames.INIT_DOT_PY)) {
+      return file.getParent();
+    }
+    return element;
   }
 
   @Override
