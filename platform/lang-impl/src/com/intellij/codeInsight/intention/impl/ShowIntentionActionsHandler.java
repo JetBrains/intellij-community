@@ -24,10 +24,11 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupEx;
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,10 +52,14 @@ import org.jetbrains.annotations.Nullable;
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler");
 
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    if (editor instanceof EditorWindow) {
+      editor = ((EditorWindow)editor).getDelegate();
+      file = InjectedLanguageUtil.getTopLevelFile(file);
+    }
 
-    final LookupEx lookup = LookupManagerImpl.getActiveLookup(editor);
+    final LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup != null) {
       lookup.showElementActions();
       return;
