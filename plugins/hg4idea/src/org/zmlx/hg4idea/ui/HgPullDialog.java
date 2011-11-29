@@ -58,6 +58,7 @@ public class HgPullDialog extends DialogWrapper {
     };
     sourceTxt.getDocument().addDocumentListener(documentListener);
     setTitle("Pull");
+    setOKButtonText("Pull");
     init();
   }
 
@@ -104,6 +105,11 @@ public class HgPullDialog extends DialogWrapper {
 
   private void onChangePullSource() {
     setOKActionEnabled(StringUtils.isNotBlank(sourceTxt.getText()));
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return HgPullDialog.class.getName();
   }
 
 }
