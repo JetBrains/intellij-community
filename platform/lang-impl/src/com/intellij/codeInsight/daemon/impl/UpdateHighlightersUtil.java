@@ -358,7 +358,7 @@ public class UpdateHighlightersUtil {
         if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
           return true;
         }
-        if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
+        if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset() && psiFile != null) {
           createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove, ranges2markersCache, severityRegistrar);
           changed[0] = true;
         }

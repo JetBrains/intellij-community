@@ -225,7 +225,11 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @Override
   public String toString() {
-    return getValue()==null?"<null>":getValue().toString();
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            public String compute() {
+              return getValue()==null?"<null>":getValue().toString();
+            }
+          });
   }
 
 }

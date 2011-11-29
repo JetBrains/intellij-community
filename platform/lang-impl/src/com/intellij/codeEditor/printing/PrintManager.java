@@ -130,6 +130,7 @@ class PrintManager {
     }
 
 
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     Runnable runnable = new Runnable() {
       public void run() {
         try {

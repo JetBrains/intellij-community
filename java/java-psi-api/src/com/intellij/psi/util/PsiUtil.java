@@ -32,6 +32,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -832,6 +833,10 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean hasDefaultConstructor(PsiClass clazz, boolean allowProtected, boolean checkModifiers) {
+    return hasDefaultCtrInHierarchy(clazz, allowProtected, checkModifiers, null);
+  }
+
+  private static boolean hasDefaultCtrInHierarchy(PsiClass clazz, boolean allowProtected, boolean checkModifiers, Set<PsiClass> visited) {
     final PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length > 0) {
       for (PsiMethod cls: constructors) {
@@ -841,9 +846,15 @@ public final class PsiUtil extends PsiUtilCore {
           return true;
         }
       }
-    } else {
+    }
+    else {
       final PsiClass superClass = clazz.getSuperClass();
-      return superClass == null || hasDefaultConstructor(superClass, true, true);
+      if (superClass == null) {
+        return true;
+      }
+      if (visited == null) visited = new THashSet<PsiClass>();
+      if (!visited.add(clazz)) return false;
+      return hasDefaultCtrInHierarchy(superClass, true, true, visited);
     }
     return false;
   }
