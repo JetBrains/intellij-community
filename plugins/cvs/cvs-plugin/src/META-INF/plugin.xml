@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <name>CVS Integration</name>
   <id>CVS</id>
-  <version>0.1</version>
+  <version>11</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
   <category>VCS Integration</category>
@@ -57,6 +57,7 @@
       <separator/>
       <action id="GlobalSettings" class="com.intellij.cvsSupport2.actions.GlobalSettingsAction"/>
       <action id="ConfigureCvsRoots" class="com.intellij.cvsSupport2.actions.ConfigureCvsRootsAction"/>
+      <action id="MigrateCvsRoot" class="com.intellij.cvsSupport2.actions.MigrateCvsRootAction"/>
       <separator/>
     </group>
 
