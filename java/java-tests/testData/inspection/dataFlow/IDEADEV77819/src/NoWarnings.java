@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.*;
+
 public class Test {
   public @Nullable String foo;
   
