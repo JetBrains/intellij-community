@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.FileContentUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
@@ -96,9 +97,9 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<version>1</version>");
 
     final VirtualFile p2 = createModulePom("project2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project2</artifactId>" +
-                                     "<version>1</version>");
+                                           "<groupId>test</groupId>" +
+                                           "<artifactId>project2</artifactId>" +
+                                           "<version>1</version>");
     importProjects(p1, p2);
 
     assertEquals(2, myProjectsTree.getRootProjects().size());
@@ -127,9 +128,9 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<version>1</version>");
 
     final VirtualFile p2 = createModulePom("project2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project2</artifactId>" +
-                                     "<version>1</version>");
+                                           "<groupId>test</groupId>" +
+                                           "<artifactId>project2</artifactId>" +
+                                           "<version>1</version>");
     importProjects(p1, p2);
 
     final VirtualFile oldDir = p2.getParent();
@@ -165,9 +166,9 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "</modules>");
 
     final VirtualFile m = createModulePom("m1",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                          "<groupId>test</groupId>" +
+                                          "<artifactId>m</artifactId>" +
+                                          "<version>1</version>");
     importProject();
 
     final VirtualFile oldDir = m.getParent();
@@ -726,9 +727,9 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "</modules>");
 
     final VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                          "<groupId>test</groupId>" +
+                                          "<artifactId>m</artifactId>" +
+                                          "<version>1</version>");
     importProject();
     myProjectsManager.performScheduledImportInTests(); // ensure no pending requests
     assertModules("project", "m");
@@ -822,16 +823,16 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                           "</dependencies>");
 
     final VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
-                                           "<artifactId>m2</artifactId>" +
-                                           "<version>1</version>" +
+                                                 "<artifactId>m2</artifactId>" +
+                                                 "<version>1</version>" +
 
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>junit</groupId>" +
-                                           "    <artifactId>junit</artifactId>" +
-                                           "    <version>4.0</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>");
+                                                 "<dependencies>" +
+                                                 "  <dependency>" +
+                                                 "    <groupId>junit</groupId>" +
+                                                 "    <artifactId>junit</artifactId>" +
+                                                 "    <version>4.0</version>" +
+                                                 "  </dependency>" +
+                                                 "</dependencies>");
 
     importProject();
 
@@ -1076,5 +1077,32 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
     assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+  }
+
+  public void testDoNotRemoveMavenProjectsOnReparse() throws Exception {
+    // this pom file doesn't belong to any of the modules, this is won't be processed
+    // by MavenProjectProjectsManager and won't occur in its projects list.
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    final StringBuilder log = new StringBuilder();
+    myProjectsManager.performScheduledImportInTests();
+    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
+      @Override
+      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+        for (Pair<MavenProject, MavenProjectChanges> each : updated) {
+          log.append("updated: " + each.first.getDisplayName() + " ");
+        }
+        for (MavenProject each : deleted) {
+          log.append("deleted: " + each.getDisplayName() + " ");
+        }
+      }
+    });
+
+    FileContentUtil.reparseFiles(myProject, myProjectsManager.getProjectsFiles(), true);
+    myProjectsManager.waitForReadingCompletion();
+
+    assertTrue(log.toString(), log.length() == 0);
   }
 }
