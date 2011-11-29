@@ -305,7 +305,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           g2.setPaint(new GradientPaint(0,0, Gray._180, 0, h, Gray._150));
           //g2.setColor(UIUtil.getBorderColor());
         } else {
-          g2.setColor(UIUtil.isUnderAquaLookAndFeel() ? new Color(0, 0, 0, 30) : new Color(8, 36, 107));
+          g2.setColor(UIUtil.isUnderAquaLookAndFeel() ? Gray._130 : new Color(8, 36, 107));
         }
         g2.drawRect(2,0, w-3, h-1);
         final Icon icon = getIcon();

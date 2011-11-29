@@ -77,7 +77,7 @@ public class EnterAction extends EditorAction {
     }
 
     int colNumber = editor.getCaretModel().getLogicalPosition().column;
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     if(indentLineNum >= 0) {
       int lineStartOffset = document.getLineStartOffset(indentLineNum);
       for(int i = 0; i < lineLength; i++) {

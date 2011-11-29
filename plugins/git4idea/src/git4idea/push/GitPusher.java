@@ -326,7 +326,7 @@ public final class GitPusher {
         return pushNatively(repository, pushSpec);
       }
       else {
-        return GitHttpAdapter.isHttpUrl(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl) : pushNatively(repository, pushSpec);
+        return GitHttpAdapter.isHttpUrlWithoutUserCredentials(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl) : pushNatively(repository, pushSpec);
       }
     }
     else {
@@ -334,7 +334,7 @@ public final class GitPusher {
       assert remote != null : "Remote can't be null for pushSpec " + pushSpec;
       String httpUrl = null;
       for (String pushUrl : remote.getPushUrls()) {
-        if (GitHttpAdapter.isHttpUrl(pushUrl)) {
+        if (GitHttpAdapter.isHttpUrlWithoutUserCredentials(pushUrl)) {
           httpUrl = pushUrl;
           break;            // TODO support http and ssh urls in one origin
         }

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -38,6 +39,10 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
                                        final String templateText,
                                        final Properties props) throws IncorrectOperationException {
     fileName = checkAppendExtension(fileName, template);
+
+    if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
+      throw new IncorrectOperationException("This filename is ignored (Settings | File Types | Ignore files and folders)");
+    }
 
     directory.checkCreateFile(fileName);
     PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, templateText);

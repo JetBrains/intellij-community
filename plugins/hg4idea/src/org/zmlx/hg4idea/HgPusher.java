@@ -17,8 +17,10 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -60,21 +62,28 @@ public class HgPusher {
   public void showDialogAndPush() {
     HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
       public void run() {
-        List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
+        final List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
+        if (repositories.isEmpty()) {
+          VcsBalloonProblemNotifier.showOverChangesView(myProject, "No Mercurial repositories in the project", MessageType.ERROR);
+        }
         VirtualFile firstRepo = repositories.get(0);
-        String defaultPushPath = getDefaultPushPath(myProject, firstRepo);
-        List<HgTagBranch> branches = getBranches(myProject, firstRepo);
+        final String defaultPushPath = getDefaultPushPath(myProject, firstRepo);
+        final List<HgTagBranch> branches = getBranches(myProject, firstRepo);
 
-        final HgPushDialog dialog = new HgPushDialog(myProject, repositories, defaultPushPath, branches);
+        final AtomicReference<HgPushCommand> pushCommand = new AtomicReference<HgPushCommand>();
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
+            final HgPushDialog dialog = new HgPushDialog(myProject, repositories, defaultPushPath, branches);
             dialog.show();
+            if (dialog.isOK()) {
+              pushCommand.set(preparePushCommand(myProject, dialog));
+            }
           }
         });
 
-        if (dialog.isOK()) {
-          push(myProject, dialog);
+        if (pushCommand.get() != null) {
+          push(myProject, pushCommand.get());
         }
       }
     });    
@@ -96,11 +105,7 @@ public class HgPusher {
     return branchesRef.get();
   }
 
-  private static void push(final Project project, HgPushDialog dialog) {
-    final HgPushCommand command = new HgPushCommand(project, dialog.getRepository(), dialog.getTarget());
-    command.setRevision(dialog.getRevision());
-    command.setForce(dialog.isForce());
-    command.setBranch(dialog.getBranch());
+  private static void push(final Project project, HgPushCommand command) {
     command.execute(new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
@@ -117,6 +122,14 @@ public class HgPusher {
         new HgCommandResultNotifier(project).process(result, title, description);
       }
     });
+  }
+
+  private static HgPushCommand preparePushCommand(Project project, HgPushDialog dialog) {
+    final HgPushCommand command = new HgPushCommand(project, dialog.getRepository(), dialog.getTarget());
+    command.setRevision(dialog.getRevision());
+    command.setForce(dialog.isForce());
+    command.setBranch(dialog.getBranch());
+    return command;
   }
 
   private static int getNumberOfPushedCommits(HgCommandResult result) {

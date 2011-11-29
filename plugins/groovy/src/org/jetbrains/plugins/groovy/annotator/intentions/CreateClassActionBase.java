@@ -73,11 +73,12 @@ public abstract class CreateClassActionBase implements IntentionAction {
     return parent instanceof GrImplementsClause || parent instanceof GrExtendsClause && parent.getParent() instanceof GrInterfaceDefinition;
   }
 
-  public static PsiClass createClassByType(final PsiDirectory directory,
-                                           final String name,
-                                           final PsiManager manager,
-                                           @Nullable final PsiElement contextElement, 
-                                           final String templateName) {
+  @Nullable
+  public static PsiClass createClassByType(@NotNull  final PsiDirectory directory,
+                                           @NotNull  final String name,
+                                           @NotNull  final PsiManager manager,
+                                           @Nullable final PsiElement contextElement,
+                                           @NotNull  final String templateName) {
     AccessToken accessToken = WriteAction.start();
 
     try {

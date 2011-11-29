@@ -55,7 +55,7 @@ public class SelectCvsConfigurationDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return (JComponent)myPanel.getJList();
+    return myPanel.getPreferredFocusedComponent();
   }
 
   @Override

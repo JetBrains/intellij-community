@@ -22,7 +22,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -191,8 +190,7 @@ public class ExecutionHelper {
     }
 
     final ArrayList<RunContentDescriptor> result = Lists.newArrayList();
-    final RunContentDescriptor[] runContentDescriptors = ((RunContentManagerImpl)executionManager.getContentManager()).getAllDescriptors();
-    for (RunContentDescriptor runContentDescriptor : runContentDescriptors) {
+    for (RunContentDescriptor runContentDescriptor : executionManager.getContentManager().getAllDescriptors()) {
       if (descriptorMatcher.fun(runContentDescriptor)) {
         result.add(runContentDescriptor);
       }
@@ -204,8 +202,7 @@ public class ExecutionHelper {
                                                                         @NotNull NotNullFunction<String, Boolean> titleMatcher) {
     List<RunContentDescriptor> result = Lists.newArrayList();
     final ExecutionManager executionManager = ExecutionManager.getInstance(project);
-    final RunContentDescriptor[] runContentDescriptors = ((RunContentManagerImpl)executionManager.getContentManager()).getAllDescriptors();
-    for (RunContentDescriptor runContentDescriptor : runContentDescriptors) {
+    for (RunContentDescriptor runContentDescriptor : executionManager.getContentManager().getAllDescriptors()) {
       if (titleMatcher.fun(runContentDescriptor.getDisplayName())) {
         result.add(runContentDescriptor);
       }

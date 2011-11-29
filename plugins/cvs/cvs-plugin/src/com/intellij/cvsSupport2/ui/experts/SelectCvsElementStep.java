@@ -29,9 +29,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collections;
 import java.util.Observable;
 import java.util.Observer;
@@ -120,6 +120,7 @@ public class SelectCvsElementStep extends WizardStep {
     }
   }
 
+  @Nullable
   public CvsElement getSelectedCvsElement() {
     final CvsElement[] selection = myCvsTree.getCurrentSelection();
     if (selection.length == 0) return null;
@@ -158,7 +159,7 @@ public class SelectCvsElementStep extends WizardStep {
   }
 
   @Override
-  public Component getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myCvsTree.getTree();
   }
 }
