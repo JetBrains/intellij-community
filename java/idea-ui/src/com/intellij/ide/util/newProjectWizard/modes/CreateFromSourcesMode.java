@@ -52,7 +52,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
   @NotNull
   public String getDescription(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.existent.sources.description",
-                                 ApplicationNamesInfo.getInstance().getProductName(), context.getPresentationName());
+                                 ApplicationNamesInfo.getInstance().getFullProductName(), context.getPresentationName());
   }
 
   @Nullable
