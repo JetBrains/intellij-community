@@ -34,10 +34,12 @@ public class StartMarkAction extends BasicUndoableAction {
   private static StartMarkAction ourCurrentMark;
   private String myCommandName;
   private boolean myGlobal;
+  private SmartPsiElementPointer<PsiNamedElement> myElementInfo;
 
-  private StartMarkAction(Editor editor, String commandName) {
+  private StartMarkAction(Editor editor, PsiNamedElement element, String commandName) {
     super(DocumentReferenceManager.getInstance().create(editor.getDocument()));
     myCommandName = commandName;
+    myElementInfo = element != null ? SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element) : null;
   }
 
   public void undo() {
@@ -68,15 +70,20 @@ public class StartMarkAction extends BasicUndoableAction {
 
   public static StartMarkAction start(Editor editor, Project project, PsiNamedElement namedElement, String commandName) throws AlreadyStartedException {
     if (ourCurrentMark != null) {
-      throw new AlreadyStartedException(project, ourCurrentMark.myCommandName, namedElement, ourCurrentMark.getAffectedDocuments());
+      throw new AlreadyStartedException(project, ourCurrentMark.myCommandName,
+                                        ourCurrentMark.myElementInfo != null ? ourCurrentMark.myElementInfo.getElement() : null,
+                                        ourCurrentMark.getAffectedDocuments());
     }
-    final StartMarkAction markAction = new StartMarkAction(editor, commandName);
+    final StartMarkAction markAction = new StartMarkAction(editor, namedElement, commandName);
     UndoManager.getInstance(project).undoableActionPerformed(markAction);
     ourCurrentMark = markAction;
     return markAction;
   }
 
   static void markFinished() {
+    if (ourCurrentMark != null) {
+      ourCurrentMark.myElementInfo = null;
+    }
     ourCurrentMark = null;
   }
 
