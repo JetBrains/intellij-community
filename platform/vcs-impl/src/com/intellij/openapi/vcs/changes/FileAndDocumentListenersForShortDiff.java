@@ -24,6 +24,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Consumer;
+
+import javax.swing.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -53,6 +56,7 @@ public abstract class FileAndDocumentListenersForShortDiff {
   }
 
   protected abstract void updateDetails();
+  protected abstract boolean updateSynchronously();
 
   private class MyFileListener extends VirtualFileAdapter {
     @Override
@@ -94,7 +98,19 @@ public abstract class FileAndDocumentListenersForShortDiff {
     public void documentChanged(DocumentEvent event) {
       final VirtualFile vf = myFileDocumentManager.getFile(event.getDocument());
       if (vf != null) {
-        impl(vf);
+        final FilePath filePath = myDiffDetails.getCurrentFilePath();
+        if (filePath != null && filePath.getVirtualFile() != null && filePath.getVirtualFile().equals(vf)) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (! updateSynchronously()) {
+                impl(vf);
+              }
+            }
+          });
+        } else {
+          impl(vf);
+        }
       }
     }
   }

@@ -68,6 +68,16 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
     };
   }
 
+  @Override
+  public boolean refreshDataSynch() {
+    Change selected = myDetailsLoader.getCurrentlySelected();
+    if (selected == null) return false;
+    if (myCurrentPanel != null) {
+      return myCurrentPanel.refreshDataSynch();
+    }
+    return false;
+  }
+
   public void setParent(JComponent parent) {
     myParent = parent;
   }
