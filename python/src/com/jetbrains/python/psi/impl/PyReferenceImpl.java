@@ -358,8 +358,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         // TODO: Cython-dependent code without CythonLanguageDialect.isInsideCythonFile() check
         if (element instanceof PyParameter || element instanceof PyTargetExpression || element instanceof CythonVariable) {
           // Check if the reference is in the same or inner scope of the element scope, not shadowed by an intermediate declaration
-          PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class, PyLambdaExpression.class, PyComprehensionElement.class);
-          PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, PyLambdaExpression.class, PyComprehensionElement.class);
+          PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class, PyComprehensionElement.class);
+          PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, PyComprehensionElement.class);
           if (ourContainer != null) {
             if (ourContainer == theirContainer) {
               return true;

@@ -81,6 +81,10 @@ public class PyRenameTest extends PyTestCase {
   public void testRenameKeywordArgument() {  // PY-3890
     doTest("baz");
   }
+  
+  public void testRenameTarget() {  // PY-5146
+    doTest("bar");
+  }
 
   public void testClassNameConflict() {  // PY-2390
     doRenameConflictTest("Foo", "A class named 'Foo' is already defined in classNameConflict.py");
