@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,7 +273,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     myCombo = new ComboBox();
-    myCombo.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 
     final JPanel combo = new JPanel(new BorderLayout());
     combo.setBorder(new EmptyBorder(4, 4, 4, 4));
@@ -284,7 +283,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     
     combo.add(myCombo, BorderLayout.CENTER);
-
 
     myTopPanel = new JPanel(new GridBagLayout());
     myTopPanel.add(combo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
