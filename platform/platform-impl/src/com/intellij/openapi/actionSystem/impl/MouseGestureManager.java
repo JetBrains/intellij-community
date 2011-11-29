@@ -42,7 +42,7 @@ public class MouseGestureManager implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
   private ActionManagerImpl myActionManager;
 
-  private Map<IdeFrame, GestureListener> myListeners = new HashMap<IdeFrame, GestureListener>();
+  private Map<IdeFrame, Object> myListeners = new HashMap<IdeFrame, Object>();
   private boolean HAS_TRACKPAD = false;
   
 
@@ -150,11 +150,11 @@ public class MouseGestureManager implements ApplicationComponent {
 
     if (SystemInfo.isMacOSSnowLeopard) {
       try {
-        GestureListener listener = myListeners.get(frame);
+        Object listener = myListeners.get(frame);
         JComponent cmp = frame.getComponent();
         myListeners.remove(frame);
         if (listener != null && cmp != null && cmp.isShowing()) {
-          GestureUtilities.removeGestureListenerFrom(cmp, listener);
+          GestureUtilities.removeGestureListenerFrom(cmp, (GestureListener)listener);
         }
       }
       catch (Throwable e) {
