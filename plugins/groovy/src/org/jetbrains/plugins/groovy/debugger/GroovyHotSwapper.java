@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -67,10 +68,11 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     if (!executor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID)) {
       return;
     }
-    if ("false".equals(System.getProperty("enable.groovy.hotswap", "true"))) {
+
+    if (!Registry.is("enable.groovy.hotswap")) {
       return;
     }
-
+    
     if (!(configuration instanceof RunConfiguration)) {
       return;
     }
