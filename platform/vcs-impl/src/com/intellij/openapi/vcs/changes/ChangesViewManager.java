@@ -37,10 +37,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
@@ -110,6 +108,15 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
   }
 
+  private boolean shouldUpdateDetailsNow() {
+    if (myContent != null && myDetailsOn) {
+      if (! myContentManager.isToolwindowVisible() || ! myContentManager.isContentSelected(myContent)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public ChangesViewManager(Project project, ChangesViewContentManager contentManager, final VcsChangeDetailsManager vcsChangeDetailsManager) {
     myProject = project;
     myContentManager = contentManager;
@@ -128,18 +135,24 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       protected void updateDetails() {
         myDetailsUpdater.queue(myUpdateDetails);
       }
+
+      @Override
+      protected boolean updateSynchronously() {
+        if (shouldUpdateDetailsNow()) {
+          return myDiffDetails.refreshDataSynch();
+        }
+        return false;
+      }
     };
     myDiffDetails.setParent(myView);
     myDetailsUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
     myUpdateDetails = new Runnable() {
       @Override
       public void run() {
-        if (myContent != null && myDetailsOn) {
-          if (! myContentManager.isToolwindowVisible() || ! myContentManager.isContentSelected(myContent)) {
+        if (! shouldUpdateDetailsNow()) {
           // refresh later
             myDetailsUpdater.queue(this);
             return;
-          }
         }
         changeDetails();
       }

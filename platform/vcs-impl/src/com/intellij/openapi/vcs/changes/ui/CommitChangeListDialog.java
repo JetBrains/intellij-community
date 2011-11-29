@@ -287,6 +287,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       protected void updateDetails() {
         zipperUpdater.queue(refreshShortDiffDetails);
       }
+      @Override
+      protected boolean updateSynchronously() {
+        return false;
+      }
     };
     myListenersForShortDiff.on();
 

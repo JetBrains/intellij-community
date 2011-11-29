@@ -44,7 +44,7 @@ import javax.swing.*;
  */
 public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.AbstractRefreshablePanel");
-  private final Ticket myTicket;
+  protected final Ticket myTicket;
   private final DetailsPanel myDetailsPanel;
   private final GenericDetailsLoader<Ticket, T> myDetailsLoader;
   private final BackgroundTaskQueue myQueue;
@@ -68,6 +68,11 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
         acceptData(t);
       }
     });
+  }
+
+  @Override
+  public boolean refreshDataSynch() {
+    return false;
   }
 
   @CalledInAwt
