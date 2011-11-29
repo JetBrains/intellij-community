@@ -15,6 +15,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -297,12 +298,14 @@ class DocumentationBuilder {
     Project project = element.getProject();
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
     List<String> result = new ArrayList<String>();
+    String[] lines = removeCommonIndentation(docstring);
+    String preparedDocstring = StringUtil.join(lines, "\n");
     if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
-      final EpydocString epydocString = new EpydocString(docstring);
       Module module = ModuleUtil.findModuleForPsiElement(element);
       String formatted = null;
+      final EpydocString epydocString = new EpydocString(preparedDocstring);
       if (module != null) {
-        formatted = EpydocRunner.formatDocstring(module, docstring);
+        formatted = EpydocRunner.formatDocstring(module, preparedDocstring);
       }
       if (formatted == null) {
         formatted = epydocString.getDescription();
@@ -316,17 +319,15 @@ class DocumentationBuilder {
       Module module = ModuleUtil.findModuleForPsiElement(element);
       String formatted = null;
       if (module != null) {
-        String[] lines = removeCommonIndentation(docstring);
-        formatted = ReSTRunner.formatDocstring(module, StringUtil.join(lines, "\n"));
+        formatted = ReSTRunner.formatDocstring(module, preparedDocstring);
       }
       if (formatted == null) {
-        formatted = new SphinxDocString(docstring).getDescription();
+        formatted = new SphinxDocString(preparedDocstring).getDescription();
       }
       result.add(formatted);
       unformattedOutput.add(result);
       return;
     }
-    String[] lines = removeCommonIndentation(docstring);
     boolean is_first;
 
     // reconstruct back, dropping first empty fragment as needed
@@ -410,7 +411,12 @@ class DocumentationBuilder {
         if (lines[i].length() > 0) lines[i] = lines[i].substring(cut_width);
       }
     }
-    return lines;
+    List<String> result = new ArrayList<String>();
+    for (String line : lines) {
+      if (line.startsWith(PyConsoleUtil.ORDINARY_PROMPT)) break;
+      result.add(line);
+    }
+    return result.toArray(new String[result.size()]);
   }
 
   private static String formatStructuredDocString(StructuredDocString docString) {
