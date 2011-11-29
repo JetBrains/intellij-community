@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,8 +39,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -118,7 +120,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         }
       });
     } else {
-      show(myPanel, p.x, p.y, myPanel, new HintHint(myPanel, p));
+      int offset = NavBarUIManager.getUI().getPopupOffset(item);
+      show(myPanel, p.x - offset, p.y, myPanel, new HintHint(myPanel, p));
       final JBList list = getList();
       if (0 <= myIndex && myIndex < list.getItemsCount()) {
        ListScrollingUtil.selectItem(list, myIndex);

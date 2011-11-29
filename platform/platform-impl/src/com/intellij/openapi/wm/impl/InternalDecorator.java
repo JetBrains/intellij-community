@@ -813,6 +813,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       final String name = e.getPropertyName();
       if (ToolWindowEx.PROP_TITLE.equals(name)) {
         updateTitle();
+        if (myHeader != null) {
+          myHeader.repaint();
+        }
       }
     }
   }

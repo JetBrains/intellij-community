@@ -586,17 +586,18 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (highlighter == null || !highlighter.isValid()) return false;
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
-    if (startOffset > offset || offset > endOffset) {
-      if (!includeFixRange) return false;
-      RangeMarker fixMarker = info.fixMarker;
-      if (fixMarker != null) {  // null means its range is the same as highlighter
-        if (!fixMarker.isValid()) return false;
-        startOffset = fixMarker.getStartOffset();
-        endOffset = fixMarker.getEndOffset();
-        if (startOffset > offset || offset > endOffset) return false;
-      }
+    if (startOffset <= offset && offset <= endOffset) {
+      return true;
     }
-    return true;
+    if (!includeFixRange) return false;
+    RangeMarker fixMarker = info.fixMarker;
+    if (fixMarker != null) {  // null means its range is the same as highlighter
+      if (!fixMarker.isValid()) return false;
+      startOffset = fixMarker.getStartOffset();
+      endOffset = fixMarker.getEndOffset();
+      return startOffset <= offset && offset <= endOffset;
+    }
+    return false;
   }
 
   @Nullable

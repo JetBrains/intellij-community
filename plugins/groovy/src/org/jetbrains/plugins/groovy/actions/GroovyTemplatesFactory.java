@@ -24,10 +24,12 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Properties;
 
 public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory {
@@ -35,9 +37,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
   public static final String[] TEMPLATES = {"GroovyClass.groovy", "GroovyScript.groovy", "GroovyControllerTests.groovy",};
 
   public void registerCustromTemplates(String... templates) {
-    for (String template : templates) {
-      myCustomTemplates.add(template);
-    }
+    Collections.addAll(myCustomTemplates, templates);
   }
 
   private static class GroovyTemplatesFactoryHolder {
@@ -73,10 +73,10 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
   }
 
 
-  public static PsiFile createFromTemplate(final PsiDirectory directory,
-                                           final String name,
-                                           String fileName,
-                                           String templateName,
+  public static PsiFile createFromTemplate(@NotNull final PsiDirectory directory,
+                                           @NotNull final String name,
+                                           @NotNull String fileName,
+                                           @NotNull String templateName,
                                            @NonNls String... parameters) throws IncorrectOperationException {
     final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
 

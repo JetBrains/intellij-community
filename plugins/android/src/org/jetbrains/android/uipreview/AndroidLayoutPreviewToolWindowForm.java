@@ -1250,7 +1250,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private class MyRefreshAction extends AnAction {
     MyRefreshAction() {
-      super(AndroidBundle.message("android.layout.preview.zoom.actual.action.text"), null, REFRESH_ICON);
+      super(AndroidBundle.message("android.layout.preview.refresh.action.text"), null, REFRESH_ICON);
     }
 
     @Override

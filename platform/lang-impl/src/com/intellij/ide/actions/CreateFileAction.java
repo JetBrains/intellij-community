@@ -19,9 +19,11 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
@@ -95,7 +97,27 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     return null;
   }
 
-  protected class MyValidator extends MyInputValidator {
+  protected class MyValidator extends MyInputValidator implements InputValidatorEx {
+    private String myErrorText;
+
+    public MyValidator(Project project, PsiDirectory directory){
+      super(project, directory);
+    }
+
+    @Override
+    public boolean checkInput(String inputString) {
+      if (FileTypeManager.getInstance().isFileIgnored(getFileName(inputString))) {
+        myErrorText = "This filename is ignored (Settings | File Types | Ignore files and folders)";
+        return false;
+      }
+      myErrorText = null;
+      return true;
+    }
+
+    @Override
+    public String getErrorText(String inputString) {
+      return myErrorText;
+    }
 
     public boolean canClose(String inputString) {
       if (inputString.length() == 0) {
@@ -104,10 +126,6 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
       FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(getFileName(inputString));
       return type != null && super.canClose(getFileName(inputString));
-    }
-
-    public MyValidator(Project project, PsiDirectory directory){
-      super(project, directory);
     }
   }
 }

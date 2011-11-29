@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @see com.intellij.openapi.ui.popup.JBPopupFactory
  */
-public interface Balloon extends Disposable {
+public interface Balloon extends Disposable, PositionTracker.Client<Balloon>, LightweightWindow {
 
   String KEY = "Balloon.property";
 

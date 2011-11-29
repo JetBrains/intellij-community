@@ -230,20 +230,27 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Nullable
   public RunContentDescriptor getSelectedContent() {
-    final String activeWindow = myToolwindowIdZbuffer.isEmpty() ? null : myToolwindowIdZbuffer.getFirst();
-
-    if (activeWindow != null) {
+    for (String activeWindow : myToolwindowIdZbuffer) {
       final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(activeWindow);
-      if (contentManager != null) {
-        final Content selectedContent = contentManager.getSelectedContent();
-        if (selectedContent != null) {
-          final RunContentDescriptor runContentDescriptorByContent = getRunContentDescriptorByContent(selectedContent);
-          if (runContentDescriptorByContent != null) {
-            return runContentDescriptorByContent;
-          }
+      if (contentManager == null) {
+        continue;
+      }
+
+      final Content selectedContent = contentManager.getSelectedContent();
+      if (selectedContent == null) {
+        if (contentManager.getContentCount() == 0) {
+          // continue to the next window if the content manager is empty
+          continue;
+        }
+        else {
+          // stop iteration over windows because there is some content in the window and the window is the last used one
+          break;
         }
       }
+      // here we have selected content
+      return getRunContentDescriptorByContent(selectedContent);
     }
+
     return null;
   }
 
@@ -469,13 +476,16 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     myListeners.put(listener, disposable);
   }
 
-  public RunContentDescriptor[] getAllDescriptors() {
-    final List<RunContentDescriptor> descriptors = new ArrayList<RunContentDescriptor>();
+  @NotNull
+  public List<RunContentDescriptor> getAllDescriptors() {
+    if (myToolwindowIdToContentManagerMap.isEmpty()) {
+      return Collections.emptyList();
+    }
     final String[] ids = myToolwindowIdToContentManagerMap.keySet().toArray(new String[myToolwindowIdToContentManagerMap.size()]);
+    final List<RunContentDescriptor> descriptors = new ArrayList<RunContentDescriptor>();
     for (String id : ids) {
       final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(id);
-      final Content[] contents = contentManager.getContents();
-      for (final Content content : contents) {
+      for (final Content content : contentManager.getContents()) {
         final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
         if (descriptor != null) {
           descriptors.add(descriptor);
@@ -483,7 +493,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
     }
 
-    return descriptors.toArray(new RunContentDescriptor[descriptors.size()]);
+    return descriptors;
   }
 
   public void removeRunContentListener(final RunContentListener listener) {

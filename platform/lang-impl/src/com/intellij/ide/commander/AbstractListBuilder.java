@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.awt.*;
@@ -223,21 +224,24 @@ public abstract class AbstractListBuilder {
     List<AbstractTreeNode> nodes = getAllAcceptableNodes(childElements, file);
     if (nodes.size() == 1) return nodes.get(0);
     if (nodes.isEmpty()) return null;
-    if (!file.isDirectory()) {
-      return performDeepSearch(nodes.toArray(), element);
+    if (file.isDirectory()) {
+      return nodes.get(0);
     }
     else {
-      return nodes.get(0);
+      return performDeepSearch(nodes.toArray(), element, new THashSet<AbstractTreeNode>());
     }
   }
 
-  private AbstractTreeNode performDeepSearch(Object[] nodes, Object element) {
+  private AbstractTreeNode performDeepSearch(Object[] nodes, Object element, Set<AbstractTreeNode> visited) {
     for (Object node1 : nodes) {
       AbstractTreeNode node = (AbstractTreeNode)node1;
       if (nodeIsAcceptableForElement(node, element)) return node;
-      AbstractTreeNode nodeResult = performDeepSearch(getChildren(node), element);
-      if (nodeResult != null) {
-        return nodeResult;
+      Object[] children = getChildren(node);
+      if (visited.add(node)) {
+        AbstractTreeNode nodeResult = performDeepSearch(children, element, visited);
+        if (nodeResult != null) {
+          return nodeResult;
+        }
       }
     }
     return null;

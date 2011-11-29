@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -143,6 +144,10 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing,
                                                       switchedFiles, switchedRoots, ignoredFiles, lockedFolders, logicallyLockedFiles);
 
+    TreeSelectionListener[] listeners = getTreeSelectionListeners();
+    for (TreeSelectionListener listener : listeners) {
+      removeTreeSelectionListener(listener);
+    }
     storeState();
     DefaultTreeModel oldModel = getModel();
     setModel(model);
@@ -151,6 +156,10 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     expandPath(new TreePath(root.getPath()));
     restoreState();
     expandDefaultChangeList(oldModel, root);
+
+    for (TreeSelectionListener listener : listeners) {
+      addTreeSelectionListener(listener);
+    }
   }
 
   private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
@@ -390,7 +399,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     Set<Change> changes = new LinkedHashSet<Change>();
 
     final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return new Change[0];
+    if (paths == null) {
+      return new Change[0];
+    }
 
     for (TreePath path : paths) {
       ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();

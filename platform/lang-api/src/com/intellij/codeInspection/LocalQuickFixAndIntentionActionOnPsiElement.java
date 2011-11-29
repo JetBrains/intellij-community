@@ -85,6 +85,7 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
            endElement != null &&
            startElement.isValid() &&
            (endElement == startElement || endElement.isValid()) &&
+           file != null &&
            isAvailable(project, file, startElement, endElement);
   }
 

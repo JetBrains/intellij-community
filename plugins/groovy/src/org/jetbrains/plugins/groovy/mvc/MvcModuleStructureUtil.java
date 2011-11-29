@@ -76,8 +76,13 @@ public class MvcModuleStructureUtil {
                                                                              final MvcProjectStructure structure) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(structure.myModule);
 
-    Set<VirtualFile> sourceRoots = CollectionFactory.newTroveSet(moduleRootManager.getSourceRoots());
-
+    Map<VirtualFile, Boolean> sourceRoots = new HashMap<VirtualFile, Boolean>();
+    for (ContentEntry entry : moduleRootManager.getContentEntries()) {
+      for (SourceFolder folder : entry.getSourceFolders()) {
+        sourceRoots.put(folder.getFile(), folder.isTestSource());
+      }
+    }
+    
     root.refresh(false, true);
 
     final List<Consumer<ContentEntry>> actions = CollectionFactory.arrayList();
@@ -127,8 +132,8 @@ public class MvcModuleStructureUtil {
     };
   }
 
-  public static void removeSrcFolderFromRoots(final VirtualFile file, List<Consumer<ContentEntry>> actions, Collection<VirtualFile> sourceRoots) {
-    if (sourceRoots.contains(file)) {
+  public static void removeSrcFolderFromRoots(final VirtualFile file, List<Consumer<ContentEntry>> actions, Map<VirtualFile, Boolean> sourceRoots) {
+    if (sourceRoots.containsKey(file)) {
       actions.add(new Consumer<ContentEntry>() {
         public void consume(ContentEntry contentEntry) {
           SourceFolder[] folders = contentEntry.getSourceFolders();
@@ -187,13 +192,29 @@ public class MvcModuleStructureUtil {
   }
 
   public static void addSourceFolder(@NotNull VirtualFile root, @NotNull String relativePath, final boolean isTest, List<Consumer<ContentEntry>> actions,
-                                                final Collection<VirtualFile> sourceRoots) {
+                                     Map<VirtualFile, Boolean> sourceRoots) {
     final VirtualFile src = root.findFileByRelativePath(relativePath);
     if (src == null) {
       return;
     }
 
-    if (sourceRoots.contains(src)) {
+    Boolean existingFolderIsTest = sourceRoots.get(src);
+
+    if (existingFolderIsTest != null) {
+      if (isTest && !existingFolderIsTest) { // see http://youtrack.jetbrains.net/issue/IDEA-70642
+        actions.add(new Consumer<ContentEntry>() {
+          @Override
+          public void consume(ContentEntry entry) {
+            for (SourceFolder folder : entry.getSourceFolders()) {
+              if (folder.getFile() == src) {
+                entry.removeSourceFolder(folder);
+                entry.addSourceFolder(src, isTest, "");
+                break;
+              }
+            }
+          }
+        });
+      }
       return;
     }
 

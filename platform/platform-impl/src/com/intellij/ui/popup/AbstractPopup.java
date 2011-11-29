@@ -1087,7 +1087,7 @@ public class AbstractPopup implements JBPopup {
 
     Disposer.dispose(this, false);
 
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myPopup != null) {
       cancel(myDisposeEvent);
