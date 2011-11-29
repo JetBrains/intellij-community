@@ -191,7 +191,7 @@ public class ThreadDumpPanel extends JPanel {
         final int s1 = getThreadStateCode(o1).ordinal();
         final int s2 = getThreadStateCode(o2).ordinal();
         if (s1 == s2) {
-          return o1.getName().compareTo(o2.getName());
+          return o1.getName().compareToIgnoreCase(o2.getName());
         } else {
           return s1 < s2 ? - 1 :  1;
         }
