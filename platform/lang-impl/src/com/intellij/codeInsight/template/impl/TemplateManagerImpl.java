@@ -74,7 +74,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         if (editor.getProject() != null && editor.getProject() != myProject) return;
         TemplateState tState = getTemplateState(editor);
         if (tState != null) {
-          disposeState(tState);
+          tState.gotoEnd();
         }
         editor.putUserData(TEMPLATE_STATE_KEY, null);
       }
