@@ -150,7 +150,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
-    return StartMarkAction.start(myEditor, myProject, getVariable(), getCommandName());
+    return StartMarkAction.start(myEditor, myProject, getCommandName());
   }
 
   /**

@@ -19,12 +19,9 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import org.jetbrains.annotations.Nullable;
 
 /**
 * User: anna
@@ -34,12 +31,12 @@ public class StartMarkAction extends BasicUndoableAction {
   private static StartMarkAction ourCurrentMark;
   private String myCommandName;
   private boolean myGlobal;
-  private SmartPsiElementPointer<PsiNamedElement> myElementInfo;
+  private Document myDocument;
 
-  private StartMarkAction(Editor editor, PsiNamedElement element, String commandName) {
+  private StartMarkAction(Editor editor, String commandName) {
     super(DocumentReferenceManager.getInstance().create(editor.getDocument()));
     myCommandName = commandName;
-    myElementInfo = element != null ? SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element) : null;
+    myDocument = editor.getDocument();
   }
 
   public void undo() {
@@ -65,16 +62,12 @@ public class StartMarkAction extends BasicUndoableAction {
   }
 
   public static StartMarkAction start(Editor editor, Project project, String commandName) throws AlreadyStartedException {
-    return start(editor, project, null, commandName);
-  }
-
-  public static StartMarkAction start(Editor editor, Project project, PsiNamedElement namedElement, String commandName) throws AlreadyStartedException {
     if (ourCurrentMark != null) {
-      throw new AlreadyStartedException(project, ourCurrentMark.myCommandName,
-                                        ourCurrentMark.myElementInfo != null ? ourCurrentMark.myElementInfo.getElement() : null,
+      throw new AlreadyStartedException(ourCurrentMark.myCommandName,
+                                        ourCurrentMark.myDocument,
                                         ourCurrentMark.getAffectedDocuments());
     }
-    final StartMarkAction markAction = new StartMarkAction(editor, namedElement, commandName);
+    final StartMarkAction markAction = new StartMarkAction(editor, commandName);
     UndoManager.getInstance(project).undoableActionPerformed(markAction);
     ourCurrentMark = markAction;
     return markAction;
@@ -82,35 +75,29 @@ public class StartMarkAction extends BasicUndoableAction {
 
   static void markFinished() {
     if (ourCurrentMark != null) {
-      ourCurrentMark.myElementInfo = null;
+      ourCurrentMark.myDocument = null;
     }
     ourCurrentMark = null;
   }
 
   public static class AlreadyStartedException extends Exception {
     private final DocumentReference[] myAffectedDocuments;
-    private SmartPsiElementPointer<PsiNamedElement> myElementInfo;
+    private Document myDocument;
 
-    public AlreadyStartedException(Project project,
-                                   String commandName,
-                                   PsiNamedElement namedElement,
-                                   DocumentReference[] document) {
-      super("Unable to start inplace refactoring. " + commandName + " already started");
-      myAffectedDocuments = document;
-      if (namedElement != null) {
-        myElementInfo = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(namedElement);
-      } else {
-        myElementInfo = null;
-      }
+    public AlreadyStartedException(String commandName,
+                                   Document document,
+                                   DocumentReference[] documentRefs) {
+      super("Unable to start inplace refactoring. "+ commandName + " is not finished yet.");
+      myAffectedDocuments = documentRefs;
+      myDocument = document;
     }
 
     public DocumentReference[] getAffectedDocuments() {
       return myAffectedDocuments;
     }
 
-    @Nullable
-    public PsiNamedElement getElement() {
-      return myElementInfo != null ? myElementInfo.getElement() : null;
+    public Document getDocument() {
+      return myDocument;
     }
   }
 }
