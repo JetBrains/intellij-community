@@ -23,6 +23,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -218,11 +219,13 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (!floating || !item.isLastElement()) {
       if (toolbarVisible || floating) {
         if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
-          drawArrow(g2, new Color(0, 0, 0, 70), new SameColor(205), off, h, !selected && !floating, false);
+          Color hl = UIUtil.isUnderAlloyLookAndFeel() ? new Color(255, 255, 255, 200) : new SameColor(205);
+          drawArrow(g2, new Color(0, 0, 0, 70), hl, off, h, !selected && !floating, false);
         }
       } else {
         if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
-          drawArrow(g2, new Color(0, 0, 0, 150), new Color(255, 255, 255, 200), off, h, !selected && !floating, true);
+          Color hl = new Color(255, 255, 255, 200);
+          drawArrow(g2, new Color(0, 0, 0, 150), hl, off, h, !selected && !floating, true);
         }
       }
     }
@@ -304,5 +307,10 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public void clearItems() {
     myCache.clear();
+  }
+
+  @Override
+  public int getPopupOffset(@NotNull NavBarItem item) {
+    return item.isFirstElement() ? 0 : 5; 
   }
 }

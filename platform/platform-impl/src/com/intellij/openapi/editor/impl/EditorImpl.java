@@ -3228,14 +3228,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return logicalToVisualPosition(logicalPos, true);
   }
   
-  // TODO den remove before v.11 is released.
-  private final ThreadLocal<Integer> stackDepth = new ThreadLocal<Integer>();
-
-  // TODO den remove before v.11 is released.
   @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
-    stackDepth.set(0);
     return doLogicalToVisualPosition(logicalPos, softWrapAware);
   }
   
@@ -3252,28 +3247,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (offset < getDocument().getTextLength()) {
         offset = outermostCollapsed.getStartOffset();
         LogicalPosition foldStart = offsetToLogicalPosition(offset);
-        // TODO den remove before v.11 is released.
-        Integer depth = stackDepth.get();
-        if (depth >= 0) {
-          stackDepth.set(depth + 1);
-          if (depth > 15) {
-            LOG.error(String.format(
-              "Detected potential StackOverflowError at logical->visual position mapping. Given logical position: '%s'. State: %s",
-              logicalPos, dumpState()
-            ));
-            stackDepth.set(-1);
-          }
-        }
-        // TODO den unwrap before v.11 is released.
-        try {
-          return doLogicalToVisualPosition(foldStart, true);
-        }
-        finally {
-          depth = stackDepth.get();
-          if (depth > 0) {
-            stackDepth.set(depth - 1);
-          }
-        }
+        return doLogicalToVisualPosition(foldStart, true);
       }
       else {
         offset = outermostCollapsed.getEndOffset() + 3;  // WTF?

@@ -356,7 +356,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     CharSequence chars = document.getCharsSequence();
     int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");
     int line = document.getLineNumber(startOffset);
-    if (spaceEnd > endOffset || indentLevel <= 0 || line >= document.getLineCount() - 1) {
+    if (spaceEnd > endOffset || indentLevel <= 0 || line >= document.getLineCount() - 1 || chars.charAt(spaceEnd) == '\n') {
       return;
     }
 
@@ -389,6 +389,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     //         old content [pasted line 1
     //                pasted line 2]
     //      Indent adjustment string is just the first line indent then.
+    //
+    //   --- pasted block starts with empty line(s)
+    //      Example:
+    //         old content [
+    //            pasted line 1
+    //            pasted line 2]
+    //      We parse existing indents of the pasted block then, adjust its first non-blank line via formatter and adjust indent
+    //      of subsequent pasted lines in order to preserve old indentation.
     //
     //   --- pasted block is located at the new line and starts with white space symbols.
     //       Example:
@@ -457,7 +465,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     final int i = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
     
     // Handle situation when pasted block doesn't start new line.
-    if (i > 0 && chars.charAt(i) != '\n') {
+    if (chars.charAt(startOffset) != '\n' && i > 0 && chars.charAt(i) != '\n') {
       int firstNonWsOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
       if (firstNonWsOffset > firstLineStart) {
         CharSequence toInsert = chars.subSequence(firstLineStart, firstNonWsOffset);
@@ -475,11 +483,18 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     
-    final int j = CharArrayUtil.shiftForward(chars, startOffset, " \t");
-    codeStyleManager.adjustLineIndent(file, startOffset);
+    final int j = CharArrayUtil.shiftForward(chars, startOffset, " \t\n");
+    if (j >= endOffset) {
+      // Pasted text contains white space/line feed symbols only, do nothing.
+      return;
+    }
+
+    final int anchorLine = document.getLineNumber(j);
+    final int anchorLineStart = document.getLineStartOffset(anchorLine);
+    codeStyleManager.adjustLineIndent(file, j);
     
     // Handle situation when pasted block starts with non-white space symbols.
-    if (j == startOffset) {
+    if (anchorLine == firstLine && j == startOffset) {
       int indentOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
       if (indentOffset > firstLineStart) {
         CharSequence toInsert = chars.subSequence(firstLineStart, indentOffset);
@@ -492,25 +507,44 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     
     // Handle situation when pasted block starts from white space symbols. Assume that the pasted text started at the line start,
     // i.e. correct indentation level is stored at the blocks structure.
-    final int firstNonWsOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
+    final int firstNonWsOffset = CharArrayUtil.shiftForward(chars, anchorLineStart, " \t");
     final int diff = firstNonWsOffset - j;
     if (diff == 0) {
       return;
     }
     if (diff > 0) {
-      CharSequence toInsert = chars.subSequence(firstLineStart, startOffset + diff);
-      for (int line = firstLine + 1; line <= lastLine; line++) {
+      CharSequence toInsert = chars.subSequence(anchorLineStart, anchorLineStart + diff);
+      for (int line = anchorLine + 1; line <= lastLine; line++) {
         document.insertString(document.getLineStartOffset(line), toInsert);
       }
       return;
     }
-
-    if (-diff == startOffset - firstLineStart) {
+    
+    // We've pasted text to the non-first column and exact white space between the line start and caret position on the moment of paste
+    // has been removed by formatter during 'adjust line indent'
+    // Example:
+    //       copied text:
+    //                 '   line1
+    //                       line2'
+    //       after paste:
+    //          line start -> '   I   line1
+    //                              line2' (I - caret position during 'paste')
+    //       formatter removed white space between the line start and caret position, so, current document state is:
+    //                        '   line1
+    //                              line2'
+    if (anchorLine == firstLine && -diff == startOffset - firstLineStart) {
       return;
     }
-    if (-diff > startOffset - firstLineStart) {
-      int desiredSymbolsToRemove = -diff - (startOffset - firstLineStart);
-      for (int line = firstLine + 1; line <= lastLine; line++) {
+    if (anchorLine != firstLine || -diff > startOffset - firstLineStart) {
+      final int desiredSymbolsToRemove;
+      if (anchorLine == firstLine) {
+        desiredSymbolsToRemove = -diff - (startOffset - firstLineStart);
+      }
+      else {
+        desiredSymbolsToRemove = -diff;
+      }  
+        
+      for (int line = anchorLine + 1; line <= lastLine; line++) {
         int currentLineStart = document.getLineStartOffset(line);
         int currentLineIndentOffset = CharArrayUtil.shiftForward(chars, currentLineStart, " \t");
         int symbolsToRemove = Math.min(currentLineIndentOffset - currentLineStart, desiredSymbolsToRemove);
@@ -520,8 +554,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
     }
     else {
-      CharSequence toInsert = chars.subSequence(firstLineStart, firstLineStart + startOffset - firstLineStart + diff);
-      for (int line = firstLine + 1; line <= lastLine; line++) {
+      CharSequence toInsert = chars.subSequence(anchorLineStart, j + diff);
+      for (int line = anchorLine + 1; line <= lastLine; line++) {
         document.insertString(document.getLineStartOffset(line), toInsert);
       }
     }

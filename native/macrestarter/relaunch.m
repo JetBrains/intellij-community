@@ -11,7 +11,7 @@ int main(int argc, const char *argv[]) {
         usleep(interval * 1000);
 
         slept += interval;
-        if (slept > 10 * 1000 /* wait for maximum 10 seconds */) return EXIT_FAILURE;
+        // if (slept > 10 * 1000 /* wait for maximum 10 seconds */) return EXIT_FAILURE;
     }
 
     char const *pathToRelaunch = argv[1];

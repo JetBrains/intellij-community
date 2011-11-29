@@ -22,6 +22,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 
@@ -43,6 +44,10 @@ public class LvcsHelper {
     }
     final TestConsoleProperties consoleProperties = model.getProperties();
     String name = label + " " + consoleProperties.getConfiguration().getName();
-    LocalHistory.getInstance().putSystemLabel(consoleProperties.getProject(), name, color);
+
+    Project project = consoleProperties.getProject();
+    if (project.isDisposed()) return;
+
+    LocalHistory.getInstance().putSystemLabel(project, name, color);
   }
 }

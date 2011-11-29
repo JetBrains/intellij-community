@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,7 +109,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private void show(final NavBarItem item, boolean checkRepaint) {
-    final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
+    final RelativePoint point = new RelativePoint(item, new Point(-NavBarUIManager.getUI().getPopupOffset(item), item.getHeight()));
     final Point p = point.getPoint(myPanel);
     if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
       ApplicationManager.getApplication().invokeLater(new Runnable() {
