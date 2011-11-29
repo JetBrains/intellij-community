@@ -1,9 +1,10 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
@@ -22,55 +23,92 @@ import java.util.Collection;
 /**
  * @author vlan
  */
-public class PyMoveClassOrFunctionTest extends PyTestCase {
+public class PyMoveTest extends PyTestCase {
   public void testFunction() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   public void testClass() {
-    doTest("C", "b.py");
+    doMoveSymbolTest("C", "b.py");
   }
 
   // PY-3929
   // PY-4095
   public void testImportAs() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-3929
   public void testQualifiedImport() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-4074
   public void testNewModule() {
     SystemProperties.setTestUserName("user1");
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-4098
   public void testPackageImport() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-4130
   // PY-4131
   public void testDocstringTypes() {
-    doTest("C", "b.py");
+    doMoveSymbolTest("C", "b.py");
   }
 
   // PY-4182
   public void testInnerImports() {
-    doTest("f", "b.py");
+    doMoveSymbolTest("f", "b.py");
   }
 
   // PY-4545
   public void testBaseClass() {
-    doTest("B", "b.py");
+    doMoveSymbolTest("B", "b.py");
   }
 
-  private void doTest(final String symbolName, final String toFileName) {
-    String root = "/refactoring/moveClassOrFunction/" + getTestName(true);
+  // PY-4379
+  public void testModule() {
+    doMoveFileTest("p1/p2/m1.py", "p1");
+  }
+
+  private void doMoveFileTest(String fileName, String toDirName)  {
+    Project project = myFixture.getProject();
+    PsiManager manager = PsiManager.getInstance(project);
+
+    String root = "/refactoring/move/" + getTestName(true);
+    String rootBefore = root + "/before/src";
+    String rootAfter = root + "/after/src";
+
+    VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    VirtualFile virtualFile = dir1.findFileByRelativePath(fileName);
+    assertNotNull(virtualFile);
+    PsiElement file = manager.findFile(virtualFile);
+    if (file == null) {
+      file = manager.findDirectory(virtualFile);
+    }
+    assertNotNull(file);
+    VirtualFile toVirtualDir = dir1.findFileByRelativePath(toDirName);
+    assertNotNull(toVirtualDir);
+    PsiDirectory toDir = manager.findDirectory(toVirtualDir);
+    new MoveFilesOrDirectoriesProcessor(project, new PsiElement[] {file}, toDir, false, false, null, null).run();
+
+    VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
+    try {
+      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1, null);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void doMoveSymbolTest(String symbolName, String toFileName) {
+    String root = "/refactoring/move/" + getTestName(true);
     String rootBefore = root + "/before/src";
     String rootAfter = root + "/after/src";
     VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");

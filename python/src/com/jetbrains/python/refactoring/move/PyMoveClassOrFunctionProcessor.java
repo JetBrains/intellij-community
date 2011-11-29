@@ -1,6 +1,5 @@
 package com.jetbrains.python.refactoring.move;
 
-import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
@@ -16,22 +15,19 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.documentation.DocStringTypeReference;
-import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -71,26 +67,11 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    final List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
     for (PsiNamedElement element : myElements) {
-      final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, false);
-      assert handler != null;
-      final List<PsiElement> elementsToProcess = new ArrayList<PsiElement>();
-      elementsToProcess.addAll(Arrays.asList(handler.getPrimaryElements()));
-      elementsToProcess.addAll(Arrays.asList(handler.getSecondaryElements()));
-      for (PsiElement e : elementsToProcess) {
-        handler.processElementUsages(e, new Processor<UsageInfo>() {
-          @Override
-          public boolean process(UsageInfo usageInfo) {
-            if (!usageInfo.isNonCodeUsage) {
-              allUsages.add(usageInfo);
-            }
-            return true;
-          }
-        }, FindUsagesHandler.createFindUsagesOptions(myProject, null));
-      }
+      usages.addAll(PyRefactoringUtil.findUsages(element));
     }
-    return allUsages.toArray(new UsageInfo[allUsages.size()]);
+    return usages.toArray(new UsageInfo[usages.size()]);
   }
 
   @Override
@@ -122,13 +103,12 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                 final PsiElement oldExpr = usage.getElement();
                 // TODO: Respect the qualified import style
                 if (oldExpr instanceof PyQualifiedExpression) {
-                  final PyQualifiedExpression qexpr = (PyQualifiedExpression)oldExpr;
+                  PyQualifiedExpression qexpr = (PyQualifiedExpression)oldExpr;
                   if (oldElement instanceof PyClass && PyNames.INIT.equals(qexpr.getName())) {
                     continue;
                   }
                   if (qexpr.getQualifier() != null) {
-                    final PsiElement newExpr = qexpr.getParent().addBefore(new PyReferenceExpressionImpl(qexpr.getNameElement()), qexpr);
-                    qexpr.delete();
+                    final PsiElement newExpr = qexpr.replace(new PyReferenceExpressionImpl(qexpr.getNameElement()));
                     PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
                   }
                 }
@@ -141,9 +121,9 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
                   }
                 }
                 else {
-                  PyImportStatementBase importStatement = getUsageImportStatement(usage);
-                  if (importStatement != null) {
-                    PyClassRefactoringUtil.updateImportOfElement(importStatement, newElement);
+                  final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(usage.getElement(), PyImportStatementBase.class);
+                  if (importStmt != null) {
+                    PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
                   }
                   if (usage.getFile() == oldFile && (oldExpr == null || !PsiTreeUtil.isAncestor(oldElement, oldExpr, false))) {
                     PyClassRefactoringUtil.insertImport(oldElement, newElement);
@@ -166,15 +146,6 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
     if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
       throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0", qName));
     }
-  }
-
-  @Nullable
-  private static PyImportStatementBase getUsageImportStatement(UsageInfo usage) {
-    final PsiReference ref = usage.getReference();
-    if (ref != null) {
-      return PsiTreeUtil.getParentOfType(ref.getElement(), PyImportStatementBase.class);
-    }
-    return null;
   }
 
   @Override

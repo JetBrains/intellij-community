@@ -77,7 +77,7 @@ public class ResolveImportUtil {
     }
     PsiDirectory result;
     if (base != null) {
-      base = base.getOriginalFile(); // just to make sure 
+      base = base.getOriginalFile(); // just to make sure
       result = base.getContainingDirectory();
       int count = 1;
       while (result != null && result.findFile(PyNames.INIT_DOT_PY) != null) {
@@ -515,7 +515,7 @@ public class ResolveImportUtil {
    * Looks for a name among element's module's roots; if there's no module, then among project's roots.
    *
    * @param context PSI element that defines the module and/or the project.
-   * @param refName module name to be found among roots.
+   * @param qualifiedName module name to be found among roots.
    * @return a PsiFile, a child of a root.
    */
   @Nullable
@@ -537,12 +537,10 @@ public class ResolveImportUtil {
     if (vfile == null) { // we're probably within a copy, e.g. for completion; get the real thing
       pfile = pfile.getOriginalFile();
     }
-    if (pfile != null) {
-      PsiDirectory pdir = pfile.getContainingDirectory();
-      if (pdir != null) {
-        PsiElement child_elt = resolveChild(pdir, refName, pfile, null, true, true);
-        if (child_elt != null) return child_elt;
-      }
+    PsiDirectory pdir = pfile.getContainingDirectory();
+    if (pdir != null) {
+      PsiElement child_elt = resolveChild(pdir, refName, pfile, null, true, true);
+      if (child_elt != null) return child_elt;
     }
     return null;
   }
@@ -602,11 +600,11 @@ public class ResolveImportUtil {
     }
 
     @Nullable
-    protected PsiElement resolveInRoot(VirtualFile root,
-                                       PyQualifiedName qualifiedName,
-                                       PsiManager psiManager,
-                                       @Nullable PsiFile foothold_file,
-                                       boolean checkForPackage) {
+    protected static PsiElement resolveInRoot(VirtualFile root,
+                                              PyQualifiedName qualifiedName,
+                                              PsiManager psiManager,
+                                              @Nullable PsiFile foothold_file,
+                                              boolean checkForPackage) {
       PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
       if (module == null) return null;
       for (String component : qualifiedName.getComponents()) {
@@ -656,7 +654,6 @@ public class ResolveImportUtil {
   /**
    * Tries to find referencedName under the parent element. Used to resolve any names that look imported.
    * Parent might happen to be a PyFile(__init__.py), then it is treated <i>both</i> as a file and as ist base dir.
-   * For details of this ugly magic, see {@link com.jetbrains.python.psi.impl.PyReferenceExpressionImpl#resolve()}.
    *
    * @param parent          element under which to look for referenced name; if null, null is returned.
    * @param referencedName  which name to look for.
@@ -869,7 +866,7 @@ public class ResolveImportUtil {
     final PythonPathCache cache = getPathCache(foothold);
     final PyQualifiedName name = cache != null ? cache.getName(vfile) : null;
     if (name != null) {
-      return name;     
+      return name;
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     visitRoots(foothold, visitor);
@@ -1082,10 +1079,6 @@ public class ResolveImportUtil {
 
     public boolean isFound() {
       return myFound;
-    }
-
-    public void setFound(boolean found) {
-      myFound = found;
     }
   }
 }
