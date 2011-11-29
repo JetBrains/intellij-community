@@ -185,7 +185,7 @@ public abstract class SelectLocationStep extends WizardStep {
     return CvsVfsUtil.getFileFor(myFileSystemTree.getSelectedFile());
   }
 
-  public Component getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myFileSystemTree.getTree();
   }
 

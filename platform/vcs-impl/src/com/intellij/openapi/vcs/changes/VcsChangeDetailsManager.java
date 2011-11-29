@@ -282,6 +282,19 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
+    public boolean refreshDataSynch() {
+      try {
+        myTicket.increment();
+        ValueWithVcsException<PreparedFragmentedContent> exception = loadImpl();
+        dataToPresentation(exception);
+      }
+      catch (VcsException e) {
+        return false;
+      }
+      return true;
+    }
+
+    @Override
     public void away() {
       myDiffPanel.away();
     }

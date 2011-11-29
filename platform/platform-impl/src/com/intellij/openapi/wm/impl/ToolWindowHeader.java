@@ -123,27 +123,27 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
     eastPanel.add(Box.createHorizontalStrut(3));
 
-    myHideButton = new ActionButton(new HideSideAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        sideHidden();
-      }
-    }, new HideAction() {
+    myHideButton = new ActionButton(new HideAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         hideToolWindow();
+      }
+    }, new HideSideAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        sideHidden();
       }
     },
                                     ourHideLeftSideIcon, null, null
     ) {
       @Override
       protected Icon getActiveIcon() {
-        return getHideIcon(myToolWindow);
+        return getHideToolWindowIcon(myToolWindow);
       }
 
       @Override
       protected Icon getAlternativeIcon() {
-        return getHideToolWindowIcon(myToolWindow);
+        return getHideIcon(myToolWindow);
       }
     };
 
@@ -455,6 +455,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     if (shortcutForAction.length() > 0) {
       text += "  " + shortcutForAction;
     }
+
+    if (action instanceof HideAction) {
+      text += String.format(" (Click with %s to Hide Side)", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
+    } 
+     
     return text;
   }
 

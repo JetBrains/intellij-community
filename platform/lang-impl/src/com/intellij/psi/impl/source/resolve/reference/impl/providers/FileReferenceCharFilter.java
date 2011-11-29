@@ -18,10 +18,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 
 /**
  * @author peter
@@ -29,26 +26,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 public class FileReferenceCharFilter extends CharFilter{
   @Override
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {
-    final PsiFile file = lookup.getPsiFile();
-    if (file == null) {
-      return null;
-    }
-
     final LookupElement item = lookup.getCurrentItem();
-    if (item != null && item.getObject() instanceof PsiFileSystemItem) {
-      if ('.' == c) return Result.ADD_TO_PREFIX;
-
-      final PsiReference reference = file.findReferenceAt(lookup.getEditor().getCaretModel().getOffset());
-      if (reference instanceof FileReference) return Result.HIDE_LOOKUP;
-
-      if (reference instanceof PsiMultiReference) {
-        for (PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
-          if (psiReference instanceof FileReference) return Result.HIDE_LOOKUP;
-        }
-      }
-
+    if ('.' == c && item != null && item.getObject() instanceof PsiFileSystemItem) {
+      return Result.ADD_TO_PREFIX;
     }
-
 
     return null;
   }

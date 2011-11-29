@@ -10,6 +10,7 @@ import javax.swing.*;
  *         Time: 6:47 PM
  */
 public interface RefreshablePanel<T> extends Disposable {
+  boolean refreshDataSynch();
   void dataChanged();
   void refresh();
   JPanel getPanel();

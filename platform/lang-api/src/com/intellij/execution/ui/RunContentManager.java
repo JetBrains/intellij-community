@@ -23,15 +23,20 @@ import com.intellij.openapi.wm.ToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface RunContentManager {
 
   DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTOR");
 
   @Nullable
   RunContentDescriptor getSelectedContent();
+
   @Nullable
   RunContentDescriptor getSelectedContent(Executor runnerInfo);
 
+  @NotNull
+  List<RunContentDescriptor> getAllDescriptors();
   /**
    * to reduce number of open contents RunContentManager reuses
    * some of them during showRunContent (for ex. if a process was stopped) 
