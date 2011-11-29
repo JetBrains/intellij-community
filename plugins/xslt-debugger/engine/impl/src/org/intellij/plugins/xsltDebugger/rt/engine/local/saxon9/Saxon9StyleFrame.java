@@ -124,10 +124,18 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       final ValueRepresentation[] values = frame.getStackFrameValues();
       //System.out.println("values = " + Arrays.toString(values));
 
+      outer:
       for (int i = 0, valuesLength = values.length; i < valuesLength; i++) {
         final ValueRepresentation value = values[i];
         if (value != null) {
-          variables.add(new VariableImpl(map.getVariableMap().get(i).getDisplayName(), new Value() {
+          final String name = map.getVariableMap().get(i).getDisplayName();
+          for (Debugger.Variable variable : variables) {
+            if (name.equals(variable.getName())) {
+              continue outer;
+            }
+          }
+
+          variables.add(new VariableImpl(name, new Value() {
             public Object getValue() {
               try {
                 return value.getStringValue();
