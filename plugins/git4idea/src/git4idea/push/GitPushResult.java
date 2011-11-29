@@ -273,12 +273,16 @@ class GitPushResult {
       }
     };
 
-    return new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener) {
-      @Override
-      public boolean isImportant() {
-        return !onlySuccess;          // don't highlight event log if push was totally successful
-      }
-    };
+    if (onlySuccess) {
+      // display tool window balloon
+      return new Notification(GitVcs.NOTIFICATION_GROUP_ID.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener) {
+        @Override public boolean isImportant() {
+          return false;          // don't highlight event log if push was totally successful
+        }
+      };
+    }
+
+    return new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, sb.toString(), notificationType, viewUpdateFilesListener);
   }
 
   @NotNull
