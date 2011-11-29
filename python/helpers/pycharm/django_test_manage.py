@@ -13,6 +13,8 @@ settings_file = os.getenv('PYCHARM_DJANGO_SETTINGS_MODULE') or os.getenv('DJANGO
 if not settings_file:
     settings_file = 'settings'
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE')
+
 from django.core import management
 from django.core.management.commands.test import Command
 from django.conf import settings
