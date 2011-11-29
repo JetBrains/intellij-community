@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
@@ -643,12 +644,17 @@ public class AndroidCompileUtil {
 
   public static void collectAllResources(@NotNull final AndroidFacet facet, final Set<ResourceEntry> resourceSet) {
     final LocalResourceManager manager = facet.getLocalResourceManager();
+    final Project project = facet.getModule().getProject();
+    final DumbService dumbService = DumbService.getInstance(project);
+
     for (final String resType : ResourceType.getNames()) {
       for (final ResourceElement element : manager.getValueResources(resType)) {
+        dumbService.waitForSmartMode();
+
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            if (!element.isValid() || facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
+            if (!element.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
               return;
             }
             final String name = element.getName().getValue();
@@ -662,10 +668,12 @@ public class AndroidCompileUtil {
     }
 
     for (final Resources resources : manager.getResourceElements()) {
+      dumbService.waitForSmartMode();
+
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
-          if (!resources.isValid() || facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
+          if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
             return;
           }
 
@@ -688,10 +696,12 @@ public class AndroidCompileUtil {
       });
     }
 
+    dumbService.waitForSmartMode();
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
-        if (facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
+        if (facet.getModule().isDisposed() || project.isDisposed()) {
           return;
         }
         
