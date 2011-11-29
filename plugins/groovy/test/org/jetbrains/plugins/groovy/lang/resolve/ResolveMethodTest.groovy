@@ -815,4 +815,13 @@ def test() {
 """)
     assertNotNull(ref.resolve())
   }
+
+  public void testPublicVsPrivateConstructor() {
+    def resolved = (configureByText('throw new Assertion<caret>Error("foo")').element.parent as GrNewExpression).resolveMethod()
+    assertNotNull resolved
+
+    PsiParameter[] parameters = resolved.parameterList.parameters
+    assertTrue parameters.length == 1
+    assertEquals "java.lang.Object", parameters[0].type.canonicalText
+  }
 }
