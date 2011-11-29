@@ -279,6 +279,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
 
     private PluginTableCellRenderer(PluginNode pluginDescriptor) {
       myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      myLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
       myPluginDescriptor = pluginDescriptor;
     }
 
@@ -305,7 +306,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         }
         myLabel.setText(!StringUtil.isEmpty(category) ? category : "n/a");
       }
-      myLabel.setVerticalAlignment(SwingUtilities.CENTER);
       if (myPluginDescriptor.getStatus() == PluginNode.STATUS_INSTALLED) {
         PluginId pluginId = myPluginDescriptor.getPluginId();
         final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);
