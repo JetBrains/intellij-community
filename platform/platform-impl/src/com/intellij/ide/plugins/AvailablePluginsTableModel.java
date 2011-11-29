@@ -111,6 +111,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   public void updatePluginsList(List<IdeaPluginDescriptor> list) {
     view.clear();
     myAvailableCategories.clear();
+    filtered.clear();
 
     //  For each downloadable plugin we need to know whether its counterpart
     //  is already installed, and if yes compare the difference in versions:
