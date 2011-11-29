@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.apple.eawt.event.*;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -59,43 +58,7 @@ public class MouseGestureManager implements ApplicationComponent {
           remove(frame);
         }
 
-        GestureAdapter listener = new GestureAdapter() {
-          double magnification = 0;
-          @Override
-          public void gestureBegan(GesturePhaseEvent event) {
-            activateTrackpad();
-            magnification = 0;
-          }
-
-          @Override
-          public void gestureEnded(GesturePhaseEvent event) {
-            activateTrackpad();
-            if (magnification != 0) {
-              processMagnification(frame, magnification);
-              magnification = 0;
-            }
-          }
-
-          @Override
-          public void swipedLeft(SwipeEvent event) {
-            activateTrackpad();
-            processLeftSwipe(frame);
-          }
-
-          @Override
-          public void swipedRight(SwipeEvent event) {
-            activateTrackpad();
-            processRightSwipe(frame);
-          }
-
-          @Override
-          public void magnify(MagnificationEvent event) {
-            activateTrackpad();
-            magnification += event.getMagnification();
-          }
-        };
-
-        GestureUtilities.addGestureListenerTo(frame.getComponent(), listener);
+        Object listener = new MacGestureAdapter(this, frame);
 
         myListeners.put(frame, listener);
       }
@@ -105,7 +68,7 @@ public class MouseGestureManager implements ApplicationComponent {
     }
   }
 
-  private void activateTrackpad() {
+  protected void activateTrackpad() {
     HAS_TRACKPAD = true;
   }
   
@@ -113,7 +76,7 @@ public class MouseGestureManager implements ApplicationComponent {
     return HAS_TRACKPAD;
   }
 
-  private static void processMagnification(IdeFrame frame, double magnification) {
+  protected static void processMagnification(IdeFrame frame, double magnification) {
     Point mouse = MouseInfo.getPointerInfo().getLocation();
     SwingUtilities.convertPointFromScreen(mouse, frame.getComponent());
     Component componentAt = SwingUtilities.getDeepestComponentAt(frame.getComponent(), mouse.x, mouse.y);
@@ -127,14 +90,14 @@ public class MouseGestureManager implements ApplicationComponent {
     }
   }
 
-  private void processLeftSwipe(IdeFrame frame) {
+  protected void processLeftSwipe(IdeFrame frame) {
     AnAction forward = myActionManager.getAction("Forward");
     if (forward == null) return;
 
     myActionManager.tryToExecute(forward, createMouseEventWrapper(frame), null, null, false);
   }
 
-  private void processRightSwipe(IdeFrame frame) {
+  protected void processRightSwipe(IdeFrame frame) {
     AnAction back = myActionManager.getAction("Back");
     if (back == null) return;
 
@@ -154,7 +117,7 @@ public class MouseGestureManager implements ApplicationComponent {
         JComponent cmp = frame.getComponent();
         myListeners.remove(frame);
         if (listener != null && cmp != null && cmp.isShowing()) {
-          GestureUtilities.removeGestureListenerFrom(cmp, (GestureListener)listener);
+          ((MacGestureAdapter)listener).remove(cmp);
         }
       }
       catch (Throwable e) {
