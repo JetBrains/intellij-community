@@ -67,11 +67,18 @@ public class AndroidConfigurationProducer extends JavaRuntimeConfigurationProduc
     return null;
   }
 
+  @Nullable
   private RunnerAndConfigurationSettings createRunActivityConfiguration(PsiClass psiClass, ConfigurationContext context) {
     Project project = psiClass.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
+
     final AndroidRunConfiguration configuration = (AndroidRunConfiguration)settings.getConfiguration();
-    configuration.ACTIVITY_CLASS = psiClass.getQualifiedName();
+    final String classQName = psiClass.getQualifiedName();
+    if (classQName == null) {
+      return null;
+    }
+
+    configuration.ACTIVITY_CLASS = classQName;
     configuration.MODE = AndroidRunConfiguration.LAUNCH_SPECIFIC_ACTIVITY;
     configuration.setName(JavaExecutionUtil.getPresentableClassName(configuration.ACTIVITY_CLASS, configuration.getConfigurationModule()));
     setupConfigurationModule(context, configuration);
