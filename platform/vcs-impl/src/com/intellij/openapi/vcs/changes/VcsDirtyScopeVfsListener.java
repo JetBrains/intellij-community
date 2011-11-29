@@ -80,7 +80,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
         if (!file.isInLocalFileSystem()) { continue; }
         dirtyFilesAndDirs.add(file, true);
       } else if (event instanceof VFileMoveEvent || event instanceof VFilePropertyChangeEvent) {
-        dirtyFilesAndDirs.addToFiles(file, false);  // todo ?
+        dirtyFilesAndDirs.add(file, false);
       }
     }
     // and notify VCSDirtyScopeManager
@@ -97,7 +97,8 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
         continue;
       }
 
-      if (event instanceof VFileContentChangeEvent || event instanceof VFileCopyEvent || event instanceof VFileCreateEvent) {
+      if (event instanceof VFileContentChangeEvent || event instanceof VFileCopyEvent || event instanceof VFileCreateEvent ||
+          event instanceof VFileMoveEvent) {
         dirtyFilesAndDirs.add(file, false);
       } else if (event instanceof VFilePropertyChangeEvent) {
         final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent) event;
