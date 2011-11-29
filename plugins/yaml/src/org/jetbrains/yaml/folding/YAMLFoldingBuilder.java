@@ -5,6 +5,7 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -28,19 +29,20 @@ public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-  private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<FoldingDescriptor> descriptors) {
+  private static void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<FoldingDescriptor> descriptors) {
     final IElementType type = node.getElementType();
-    if (!StringUtil.isEmptyOrSpaces(node.getText())) {
+    final TextRange nodeTextRange = node.getTextRange();
+    if (!StringUtil.isEmptyOrSpaces(node.getText()) && nodeTextRange.getLength() >= 2) {
       if (type == YAMLElementTypes.KEY_VALUE_PAIR) {
         final ASTNode[] children = node.getChildren(COMPOUND_VALUE);
         // We should ignore empty compound values
         if (children.length > 0 && !StringUtil.isEmpty(children[0].getText().trim())){
-          descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+          descriptors.add(new FoldingDescriptor(node, nodeTextRange));
         }
       }
       if (type == YAMLElementTypes.DOCUMENT &&
           node.getTreeParent().getChildren(TokenSet.create(YAMLElementTypes.DOCUMENT)).length > 1){
-        descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+        descriptors.add(new FoldingDescriptor(node, nodeTextRange));
       }
     }
     for (ASTNode child : node.getChildren(null)) {
