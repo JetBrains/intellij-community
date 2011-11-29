@@ -1,18 +1,18 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -236,7 +236,7 @@ public class PyRefactoringUtil {
         return PsiElement.EMPTY_ARRAY;
       }
     }
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 
   private PyRefactoringUtil() {
@@ -249,5 +249,27 @@ public class PyRefactoringUtil {
     final String secondName = pyFunction1.getName();
 
     return Comparing.strEqual(firstName, secondName) && firstParams.length == secondParams.length;
+  }
+
+  @NotNull
+  public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element) {
+    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, false);
+    assert handler != null;
+    final List<PsiElement> elementsToProcess = new ArrayList<PsiElement>();
+    elementsToProcess.addAll(Arrays.asList(handler.getPrimaryElements()));
+    elementsToProcess.addAll(Arrays.asList(handler.getSecondaryElements()));
+    for (PsiElement e : elementsToProcess) {
+      handler.processElementUsages(e, new Processor<UsageInfo>() {
+        @Override
+        public boolean process(UsageInfo usageInfo) {
+          if (!usageInfo.isNonCodeUsage) {
+            usages.add(usageInfo);
+          }
+          return true;
+        }
+      }, FindUsagesHandler.createFindUsagesOptions(element.getProject(), null));
+    }
+    return usages;
   }
 }

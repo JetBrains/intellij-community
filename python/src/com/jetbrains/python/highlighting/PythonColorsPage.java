@@ -87,10 +87,10 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
   public String getDemoText() {
     return
       "@<decorator>decorator</decorator>(param=1)\n" +
-      "def f(x):\n" +
+      "def f(<param>x</param>):\n" +
       "    <docComment>\"\"\" Syntax Highlighting Demo\n" +
       "        <docCommentTag>@param</docCommentTag> x Parameter\"\"\"</docComment>\n" +
-      "    s = (\"Test\", 2+3, {'a': 'b'}, x)   # Comment\n" +
+      "    s = (\"Test\", 2+3, {'a': 'b'}, <param>x</param>)   # Comment\n" +
       "    print s[0].lower()\n"+
       "\n"+
       "class <classDef>Foo</classDef>:\n"+

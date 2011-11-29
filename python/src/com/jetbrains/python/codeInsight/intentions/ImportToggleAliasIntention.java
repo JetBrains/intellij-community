@@ -76,10 +76,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
       if (myImportElement != null) {
         PyReferenceExpression refex = myImportElement.getImportReference();
         if (refex != null) {
-          String name = refex.getReferencedName();
-          if (name != null && !"".equals(name)) {
-            add_name = PyBundle.message("INTN.add.alias.for.import.$0", name);
-          }
+          add_name = PyBundle.message("INTN.add.alias.for.import.$0", refex.getText());
         }
       }
       return myAlias == null? add_name : PyBundle.message("INTN.remove.alias.for.import.$0", myAlias);
@@ -168,6 +165,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
 
         // alter the import element
         PyElementGenerator generator = PyElementGenerator.getInstance(project);
+        final LanguageLevel languageLevel = LanguageLevel.forElement(state.myImportElement);
         if (state.myAlias != null) {
           // remove alias
           ASTNode node = sure(state.myImportElement.getNode());
@@ -179,7 +177,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
         else {
           // add alias
           ASTNode my_ielt_node = sure(state.myImportElement.getNode());
-          PyImportElement fountain = generator.createFromText(LanguageLevel.getDefault(), PyImportElement.class, "import foo as "+target_name, new int[]{0,2});
+          PyImportElement fountain = generator.createFromText(languageLevel, PyImportElement.class, "import foo as "+target_name, new int[]{0,2});
           ASTNode graft_node = sure(fountain.getNode()); // at import elt
           graft_node = sure(graft_node.getFirstChildNode()); // at ref
           graft_node = sure(graft_node.getTreeNext()); // space
@@ -195,7 +193,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
         for (PsiReference ref : references) {
           ASTNode ref_name_node = sure(sure(ref.getElement()).getNode());
           ASTNode parent = sure(ref_name_node.getTreeParent());
-          ASTNode new_name_node = generator.createExpressionFromText(target_name).getNode();
+          ASTNode new_name_node = generator.createExpressionFromText(languageLevel, target_name).getNode();
           assert new_name_node != null;
           parent.replaceChild(ref_name_node, new_name_node);
         }

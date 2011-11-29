@@ -13,6 +13,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.python.run.PyModuleRenderer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -55,6 +56,13 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
 
   @Override
   public JComponent createComponent() {
+    if (myProject.isDefault()) {
+      T configurable = createDefaultProjectConfigurable();
+      if (configurable != null) {
+        myModuleConfigurables.put(null, configurable);
+        return configurable.createComponent();
+      }
+    }
     final List<Module> modules = ModuleAttachProcessor.getSortedModules(myProject);
     if (modules.size() == 1) {
       Module module = modules.get(0);
@@ -79,7 +87,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     moduleList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        final Module value = (Module) moduleList.getSelectedValue();
+        final Module value = (Module)moduleList.getSelectedValue();
         layout.show(cardPanel, value.getName());
       }
     });
@@ -88,6 +96,11 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
       layout.show(cardPanel, modules.get(0).getName());
     }
     return splitter;
+  }
+
+  @Nullable
+  protected T createDefaultProjectConfigurable() {
+    return null;
   }
 
   protected abstract T createModuleConfigurable(Module module);

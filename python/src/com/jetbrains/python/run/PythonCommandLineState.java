@@ -201,6 +201,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected static void addCommonEnvironmentVariables(Map<String, String> envs) {
     PythonEnvUtil.setPythonUnbuffered(envs);
+    envs.put("PYCHARM_HOSTED", "1");
   }
 
   protected void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
