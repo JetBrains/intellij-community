@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -27,7 +26,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.*;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -39,7 +37,10 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicEleme
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -53,10 +54,7 @@ import java.util.*;
 })
 
 public class DynamicManagerImpl extends DynamicManager {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl");
-
   private final Project myProject;
-  private final List<DynamicChangeListener> myListeners = new ArrayList<DynamicChangeListener>();
   private DRootElement myRootElement = new DRootElement();
 
   public DynamicManagerImpl(final Project project) {
@@ -111,7 +109,7 @@ public class DynamicManagerImpl extends DynamicManager {
     doRemove(wrapper, node, parent);
   }
 
-  private void doRemove(DynamicToolWindowWrapper wrapper, DefaultMutableTreeNode node, DefaultMutableTreeNode parent) {
+  private static void doRemove(DynamicToolWindowWrapper wrapper, DefaultMutableTreeNode node, DefaultMutableTreeNode parent) {
     DefaultMutableTreeNode toSelect = (parent.getChildAfter(node) != null || parent.getChildCount() == 1 ?
         node.getNextNode() :
         node.getPreviousNode());
@@ -166,7 +164,7 @@ public class DynamicManagerImpl extends DynamicManager {
     }, true);
   }
 
-  private int getIndexToInsert(DefaultMutableTreeNode parent, DNamedElement namedElement) {
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, DNamedElement namedElement) {
     if (parent.getChildCount() == 0) return 0;
 
     int res = 0;
@@ -220,19 +218,6 @@ public class DynamicManagerImpl extends DynamicManager {
     return new ArrayList<DPropertyElement>();
   }
 
-  @NotNull
-  public String[] getPropertiesNamesOfClass(String conatainingClassName) {
-    final DClassElement classElement = findClassElement(getRootElement(), conatainingClassName);
-
-    Set<String> result = new HashSet<String>();
-    if (classElement != null) {
-      for (DPropertyElement propertyElement : classElement.getProperties()) {
-        result.add(propertyElement.getName());
-      }
-    }
-    return ArrayUtil.toStringArray(result);
-  }
-
   @Nullable
   public String getPropertyType(String className, String propertyName) {
     final DPropertyElement dynamicProperty = findConcreteDynamicProperty(getRootElement(), className, propertyName);
@@ -252,24 +237,6 @@ public class DynamicManagerImpl extends DynamicManager {
   public DRootElement getRootElement() {
     return myRootElement;
   }
-
-  /*
-  * Adds dynamicPropertyChange listener
-  */
-  public void addDynamicChangeListener(DynamicChangeListener listener) {
-    myListeners.add(listener);
-  }
-
-  /*
-  * Removes dynamicPropertyChange listener
-  */
-  public void removeDynamicChangeListener(DynamicChangeListener listener) {
-    myListeners.remove(listener);
-  }
-
-  /*
-  * Changes dynamic property
-  */
 
   public String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
@@ -403,10 +370,6 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   public void fireChange() {
-    for (DynamicChangeListener listener : myListeners) {
-      listener.dynamicPropertyChange();
-    }
-
     fireChangeCodeAnalyze();
   }
 
@@ -427,7 +390,7 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   @Nullable
-  public DPropertyElement findConcreteDynamicProperty(DRootElement rootElement, final String conatainingClassName, final String propertyName) {
+  private static DPropertyElement findConcreteDynamicProperty(DRootElement rootElement, final String conatainingClassName, final String propertyName) {
     final DClassElement classElement = rootElement.getClassElement(conatainingClassName);
 
     if (classElement == null) return null;
@@ -436,7 +399,7 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   @Nullable
-  private DClassElement findClassElement(DRootElement rootElement, final String conatainingClassName) {
+  private static DClassElement findClassElement(DRootElement rootElement, final String conatainingClassName) {
     return rootElement.getClassElement(conatainingClassName);
   }
 
