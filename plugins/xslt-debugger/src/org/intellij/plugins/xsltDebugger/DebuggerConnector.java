@@ -93,6 +93,8 @@ class DebuggerConnector implements Runnable {
   private Debugger connect() {
     Throwable lastException = null;
     for (int i = 0; i < 10; i++) {
+      if (myProcess.isProcessTerminated()) return null;
+
       try {
         final Debugger realClient = EDTGuard.create(new RemoteDebuggerClient(myPort), myProcess);
         myProcess.notifyTextAvailable("Connected to XSLT debugger on port " + myPort + "\n", ProcessOutputTypes.SYSTEM);
