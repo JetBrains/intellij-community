@@ -39,6 +39,8 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -100,6 +102,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private final ShortDiffDetails myDiffDetails;
   private final TreeSelectionListener myTsl;
   private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
+  private Content myContent;
+  private TreePath[] mySelectedPaths;
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
@@ -129,18 +133,60 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myUpdateDetails = new Runnable() {
       @Override
       public void run() {
+        if (myContent != null && myDetailsOn) {
+          if (! myContentManager.isToolwindowVisible() || ! myContentManager.isContentSelected(myContent)) {
+          // refresh later
+            myDetailsUpdater.queue(this);
+            return;
+          }
+        }
         changeDetails();
       }
     };
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
+        if (mySelectedPaths == null && e.getPaths() == null) {
+          return;
+        }
+        if (checkSelectionNotChanged(e)) return;
+        mySelectedPaths = e.getPaths();
         if (LOG.isDebugEnabled()) {
           StringWriter sw = new StringWriter();
           new Throwable().printStackTrace(new PrintWriter(sw));
           LOG.debug("selection changed. selected:  " + toStringPaths(myView.getSelectionPaths()) + " from: " + sw.toString());
         }
-        changeDetails();
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            changeDetails();
+          }
+        });
+      }
+
+      private boolean checkSelectionNotChanged(TreeSelectionEvent e) {
+        if (mySelectedPaths != null && e.getPaths() != null) {
+          if (mySelectedPaths.length == e.getPaths().length) {
+            boolean equal = true;
+            int idx = 0;
+            TreePath[] paths = e.getPaths();
+            for (; idx < mySelectedPaths.length; idx ++) {
+              Object last1 = mySelectedPaths[idx].getLastPathComponent();
+              Object last2 = paths[idx].getLastPathComponent();
+              if (last1 instanceof ChangesBrowserNode && last2.getClass().equals(last1.getClass())) {
+                equal = Comparing.equal(((ChangesBrowserNode)last1).getUserObject(), ((ChangesBrowserNode) last2).getUserObject());
+                if (! equal) break;
+              } else {
+                equal = false;
+                break;
+              }
+            }
+            if (equal) {
+              return true;
+            }
+          }
+        }
+        return false;
       }
 
       private String toStringPaths(TreePath[] paths) {
@@ -167,9 +213,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       }
     });
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), "Local", false);
-    content.setCloseable(false);
-    myContentManager.addContent(content);
+    myContent = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), "Local", false);
+    myContent.setCloseable(false);
+    myContentManager.addContent(myContent);
 
     scheduleRefresh();
     myConnection = myProject.getMessageBus().connect(myProject);
