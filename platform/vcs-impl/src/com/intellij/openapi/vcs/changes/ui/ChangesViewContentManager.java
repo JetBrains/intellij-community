@@ -24,6 +24,7 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -163,6 +164,10 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     final AbstractVcs[] abstractVcses = myVcsManager.getAllActiveVcss();
     myToolWindow.setAvailable(abstractVcses.length > 0, null);
   }
+  
+  public boolean isToolwindowVisible() {
+    return myToolWindow.isVisible();
+  }
 
   public void projectClosed() {
     myVcsChangeAlarm.cancelAllRequests();
@@ -200,6 +205,10 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
       return (T) content.getComponent();
     }
     return null;
+  }
+  
+  public boolean isContentSelected(final Content content) {
+    return Comparing.equal(content, myContentManager.getSelectedContent());
   }
 
   public void selectContent(final String tabName) {
