@@ -97,7 +97,7 @@ public class XsltStackFrame extends XStackFrame {
         super.computeChildren(node);
       }
     } catch (VMPausedException e) {
-      node.setErrorMessage("Target VM is not responding");
+      node.setErrorMessage(VMPausedException.MESSAGE);
     }
   }
 
@@ -200,6 +200,8 @@ public class XsltStackFrame extends XStackFrame {
       try {
         final Value eval = myFrame.eval(expression);
         callback.evaluated(new MyValue(new ExpressionResult(eval)));
+      } catch (VMPausedException e) {
+        callback.errorOccurred(VMPausedException.MESSAGE);
       } catch (Debugger.EvaluationException e) {
         callback.errorOccurred(e.getMessage() != null ? e.getMessage() : e.toString());
       }

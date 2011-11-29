@@ -145,7 +145,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
     try {
       return myDebuggerSession.getClient().ping();
     } catch (VMPausedException e) {
-      getSession().reportMessage("Target VM is not responding", MessageType.WARNING);
+      getSession().reportMessage(VMPausedException.MESSAGE, MessageType.WARNING);
       return false;
     }
   }
