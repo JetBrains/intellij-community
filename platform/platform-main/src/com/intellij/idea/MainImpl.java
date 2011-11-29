@@ -15,7 +15,6 @@
  */
 package com.intellij.idea;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,9 +44,10 @@ public class MainImpl {
       AppUIUtil.updateFrameClass();
       AppUIUtil.updateFrameIcon(JOptionPane.getRootFrame());
 
+      UIUtil.initDefaultLAF();
+
       final boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
       if (isNewConfigFolder) {
-        UIUtil.initDefaultLAF(ApplicationNamesInfo.getInstance().getLowercaseProductName());
         ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
       }
     }

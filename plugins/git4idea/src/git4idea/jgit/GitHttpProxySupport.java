@@ -31,7 +31,7 @@ final class GitHttpProxySupport {
   private GitHttpProxySupport() {
   }
 
-  public static void init(String url) throws IOException {
+  public static void init() throws IOException {
     HttpConfigurable.getInstance().setAuthenticator();
   }
 

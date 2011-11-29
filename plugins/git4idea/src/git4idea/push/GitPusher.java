@@ -340,7 +340,7 @@ public final class GitPusher {
         }
       }
       if (httpUrl != null) {
-        return GitHttpAdapter.push(repository, remote.getName(), httpUrl);
+        return GitHttpAdapter.push(repository, remote, httpUrl);
       }
       else {
         return pushNatively(repository, pushSpec);

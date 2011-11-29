@@ -206,7 +206,7 @@ public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
 
     public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
       throws IOException, AdbCommandRejectedException, TimeoutException {
-      state.getProcessHandler().notifyTextAvailable("Running tests", ProcessOutputTypes.STDOUT);
+      state.getProcessHandler().notifyTextAvailable("Running tests\n", ProcessOutputTypes.STDOUT);
       RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(state.getPackageName(), myInstrumentationTestRunner, device);
       switch (TESTING_TYPE) {
         case TEST_ALL_IN_PACKAGE:

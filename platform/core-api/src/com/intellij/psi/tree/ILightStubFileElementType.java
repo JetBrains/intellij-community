@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.tree;
 import com.intellij.lang.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +33,11 @@ public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileE
     super(debugName, language);
   }
 
+  @Override
+  public LightStubBuilder getBuilder() {
+    return new LightStubBuilder();
+  }
+
   public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(final ASTNode chameleon) {
     final PsiElement psi = chameleon.getPsi();
     assert psi != null : "Bad chameleon: " + chameleon;
@@ -39,7 +45,9 @@ public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileE
     final Project project = psi.getProject();
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
     final PsiBuilder builder = factory.createBuilder(project, chameleon);
-    final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
+    assert parserDefinition != null : this;
+    final PsiParser parser = parserDefinition.createParser(project);
     parser.parse(this, builder);
     return builder.getLightTree();
   }

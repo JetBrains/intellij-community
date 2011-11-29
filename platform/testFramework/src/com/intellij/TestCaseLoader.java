@@ -37,6 +37,7 @@ import junit.framework.TestSuite;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -60,23 +61,38 @@ public class TestCaseLoader {
   private final String[] slowTestNames;
 
   public TestCaseLoader(String classFilterName) {
-    InputStream excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResourceAsStream(classFilterName);
-    String preconfiguredGroup = System.getProperty(TARGET_TEST_GROUP);
-    if (preconfiguredGroup == null || "".equals(preconfiguredGroup.trim())) {
-      myTestGroupName = "";
-    } else {
-      myTestGroupName = preconfiguredGroup.trim();
+    Enumeration<URL> excludedFiles = null;
+    try {
+      excludedFiles = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResources(classFilterName);
     }
-    if (excludedStream != null) {
+    catch (IOException e) {
+      e.printStackTrace(); 
+    }
+    String testGroup = System.getProperty(TARGET_TEST_GROUP);
+    myTestGroupName = testGroup == null ? "" : testGroup.trim();
+    List<InputStreamReader> inputs = new ArrayList<InputStreamReader>();
+    while (excludedFiles.hasMoreElements()) {
+      URL url = excludedFiles.nextElement();
       try {
-        myTestClassesFilter = GroupBasedTestClassFilter.createOn(new InputStreamReader(excludedStream), myTestGroupName);
+        InputStream stream = url.openStream();
+        inputs.add(new InputStreamReader(stream));
+      }
+      catch (IOException e) {
+        e.printStackTrace();  
+      }
+    }
+    if (!inputs.isEmpty()) {
+      try {
+        myTestClassesFilter = GroupBasedTestClassFilter.createOn(myTestGroupName, inputs.toArray(new InputStreamReader[inputs.size()]));
       }
       finally {
-        try {
-          excludedStream.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
+        for (InputStreamReader input : inputs) {
+          try {
+             input.close();
+          }
+          catch (IOException e) {
+            e.printStackTrace();
+          }
         }
       }
     }

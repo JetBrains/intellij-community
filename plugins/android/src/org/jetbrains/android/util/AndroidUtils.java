@@ -23,9 +23,12 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
@@ -78,8 +81,10 @@ import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.run.AndroidRunConfiguration;
+import org.jetbrains.android.run.AndroidRunConfigurationBase;
 import org.jetbrains.android.run.AndroidRunConfigurationType;
 import org.jetbrains.android.run.TargetSelectionMode;
+import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
@@ -90,9 +95,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 
@@ -986,5 +989,45 @@ public class AndroidUtils {
     else {
       result.add(root);
     }
+  }
+
+  @Nullable
+  public static TargetSelectionMode getDefaultTargetSelectionMode(@NotNull Module module,
+                                                                  @NotNull ConfigurationType type,
+                                                                  @NonNls ConfigurationType alternativeType) {
+    final RunManager runManager = RunManager.getInstance(module.getProject());
+    RunConfiguration[] configurations = runManager.getConfigurations(type);
+
+    TargetSelectionMode alternative = null;
+
+    if (configurations.length > 0) {
+      for (RunConfiguration configuration : configurations) {
+        if (configuration instanceof AndroidRunConfigurationBase) {
+          final AndroidRunConfigurationBase runConfig = (AndroidRunConfigurationBase)configuration;
+          final TargetSelectionMode targetMode = runConfig.getTargetSelectionMode();
+
+          if (runConfig.getConfigurationModule() == module) {
+            return targetMode;
+          }
+          else {
+            alternative = targetMode;
+          }
+        }
+      }
+    }
+
+    if (alternative != null) {
+      return alternative;
+    }
+    configurations = runManager.getConfigurations(alternativeType);
+
+    if (configurations.length > 0) {
+      for (RunConfiguration configuration : configurations) {
+        if (configuration instanceof AndroidRunConfigurationBase) {
+          return ((AndroidRunConfigurationBase)configuration).getTargetSelectionMode();
+        }
+      }
+    }
+    return null;
   }
 }

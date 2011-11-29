@@ -1446,9 +1446,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         @Override
         public Dimension preferredLayoutSize(@Nullable Container parent) {
           int maxCellWidth = myLookupTextWidth + myCellRenderer.getIconIndent();
-          int width = Math.max(myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width + maxCellWidth,
-                               myAdComponent.getAdComponent().getPreferredSize().width);
-          return new Dimension(Math.min(width, UISettings.getInstance().MAX_LOOKUP_WIDTH),
+          int scrollBarWidth = myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width;
+          int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().MAX_LOOKUP_WIDTH);
+          int adWidth = myAdComponent.getAdComponent().getPreferredSize().width;
+          return new Dimension(Math.max(listWidth, adWidth),
                                Math.min(mainPanel.getPreferredSize().height, myMaximumHeight));
         }
 
@@ -1473,9 +1474,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           myList.setFixedCellWidth(myScrollPane.getViewport().getWidth());
           layoutStatusIcons();
           layoutHint();
-
-          revalidate();
-          repaint();
         }
       });
     }

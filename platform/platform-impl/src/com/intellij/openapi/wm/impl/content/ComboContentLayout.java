@@ -21,11 +21,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 class ComboContentLayout extends ContentLayout {
 
   BaseLabel myIdLabel;
   ContentComboLabel myComboLabel;
+  private BufferedImage myImage;
 
   ComboContentLayout(ToolWindowContentUi ui) {
     super(ui);
@@ -43,6 +45,7 @@ class ComboContentLayout extends ContentLayout {
   public void reset() {
     myIdLabel = null;
     myComboLabel = null;
+    myImage = null;
   }
 
   @Override
@@ -71,25 +74,28 @@ class ComboContentLayout extends ContentLayout {
   public void paintComponent(Graphics g) {
     if (!isToDrawCombo()) return;
 
-    final Graphics2D g2d = (Graphics2D)g;
-
-    final GraphicsConfig c = new GraphicsConfig(g);
-    c.setAntialiasing(true);
-
     Rectangle r = myComboLabel.getBounds();
-
-    //g2d.setPaint(new GradientPaint(r.x, r.y, new SameColor(200), r.x, r.y + r.height, new SameColor(190)));
-    g2d.setPaint(new GradientPaint(r.x, r.y, new Color(0, 0, 0, 10), r.x, r.y + r.height, new Color(0, 0, 0, 30)));
-    g2d.fillRect(r.x, r.y, r.width, r.height);
-
-    g2d.setColor(new Color(0, 0, 0, 60));
-    g2d.drawLine(r.x, r.y, r.x, r.y + r.height);
-    g2d.drawLine(r.x + r.width - 1, r.y, r.x + r.width - 1, r.y + r.height);
     
-    g2d.setColor(new Color(255, 255, 255, 80));
-    g2d.drawRect(r.x + 1, r.y, r.width - 3, r.height - 1);
-
-    c.restore();
+    if (myImage == null || myImage.getHeight() != r.height || myImage.getWidth() != r.width) {
+      myImage = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
+      final Graphics2D g2d = myImage.createGraphics();
+      final GraphicsConfig c = new GraphicsConfig(g);
+      c.setAntialiasing(true);
+  
+      g2d.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
+      g2d.fillRect(0, 0, r.width, r.height);
+  
+      g2d.setColor(new Color(0, 0, 0, 60));
+      g2d.drawLine(0, 0, 0, r.height);
+      g2d.drawLine(r.width - 1, 0, r.width - 1, r.height);
+      
+      g2d.setColor(new Color(255, 255, 255, 80));
+      g2d.drawRect(1, 0, r.width - 3, r.height - 1);
+      
+      g2d.dispose();
+    }
+    
+    g.drawImage(myImage, r.x, r.y, null);
   }
 
   @Override
@@ -130,6 +136,11 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void contentRemoved(ContentManagerEvent event) {
+  }
+
+  @Override
+  public boolean shouldDrawDecorations() {
+    return isToDrawCombo();
   }
 
   @Override

@@ -33,10 +33,9 @@ package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 
 public class TestClassesFilterTest extends TestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.TestClassesFilterTest");
@@ -57,7 +56,7 @@ public class TestClassesFilterTest extends TestCase {
 
 
     TestClassesFilter classesFilter = GroupBasedTestClassFilter
-      .createOn(new InputStreamReader(new ByteArrayInputStream(filterText.getBytes())), "Group1");
+      .createOn("Group1", new InputStreamReader(new ByteArrayInputStream(filterText.getBytes())));
     assertTrue(classesFilter.matches("com.intellij.package1.Test"));
     assertTrue(classesFilter.matches("com.intellij.package1.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package2.Test"));
@@ -77,7 +76,7 @@ public class TestClassesFilterTest extends TestCase {
     assertFalse(classesFilter.matches("com.intellij.package7"));
 
     classesFilter = GroupBasedTestClassFilter
-      .createOn(new InputStreamReader(new ByteArrayInputStream(filterText.getBytes())), "Group2");
+      .createOn("Group2", new InputStreamReader(new ByteArrayInputStream(filterText.getBytes())));
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package2.Test"));
@@ -101,8 +100,23 @@ public class TestClassesFilterTest extends TestCase {
 
   }
 
-  private static void checkForNullGroup(String filterText, String group0Name) {
-    TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(new InputStreamReader(new ByteArrayInputStream(filterText.getBytes())), group0Name);
+  public void testTwoFiles() throws Exception {
+    TestClassesFilter filter = GroupBasedTestClassFilter.createOn("GROUP2",
+                                                                  new StringReader("[GROUP1]\n" +
+                                                                                   "foo.*\n" +
+                                                                                   "bar.*\n" +
+                                                                                   "[GROUP2]\n" +
+                                                                                   "foo.bar.*"),
+                                                                  new StringReader("[GROUP2]\n" +
+                                                                                   "bar.foo.*"));
+    assertFalse(filter.matches("test.Test"));
+    assertTrue(filter.matches("foo.bar.Test"));
+    assertTrue(filter.matches("bar.foo.Test"));
+  }
+
+  private static void checkForNullGroup(String filterText, @Nullable String group0Name) {
+    TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(group0Name,
+                                                                         new StringReader(filterText));
 
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));

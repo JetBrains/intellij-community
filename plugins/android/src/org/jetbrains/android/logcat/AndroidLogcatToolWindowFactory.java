@@ -54,7 +54,6 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
   public static final String TOOL_WINDOW_ID = AndroidBundle.message("android.logcat.title");
 
   public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
-    toolWindow.setSplitMode(true, null);
     toolWindow.setIcon(AndroidUtils.ANDROID_ICON);
     toolWindow.setAvailable(true, null);
     toolWindow.setToHideOnEmptyContent(true);

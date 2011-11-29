@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -31,8 +32,6 @@ public class InvertIfIntention extends Intention {
     GrIfStatement parentIf = (GrIfStatement)parent;
     GroovyPsiElementFactory groovyPsiElementFactory = GroovyPsiElementFactory.getInstance(project);
 
-    GrStatement thenBranch = parentIf.getThenBranch();
-    GrStatement elseBranch = parentIf.getElseBranch();
 
     GrExpression condition = parentIf.getCondition();
     if (condition == null) {
@@ -47,30 +46,43 @@ public class InvertIfIntention extends Intention {
       }
     }
 
-    if (negatedCondition==null) {
+    if (negatedCondition == null) {
       // Now check whether this is a simple expression
       condition = stripParenthesis(condition);
       String negatedExpressionText;
       if (condition instanceof GrCallExpression || condition instanceof GrReferenceExpression) {
         negatedExpressionText = "!" + condition.getText();
-      } else {
+      }
+      else {
         negatedExpressionText = "!(" + condition.getText() + ")";
       }
       negatedCondition = groovyPsiElementFactory.createExpressionFromText(negatedExpressionText, parentIf);
     }
 
-    GrIfStatement newIf = (GrIfStatement)groovyPsiElementFactory.createStatementFromText(
-      "if (" + negatedCondition.getText() + ") " +
-      (elseBranch != null ? elseBranch.getText() : "{}") + " else " +
-      (thenBranch != null ? thenBranch.getText() : "{}"), parentIf.getContext()
-    );
+
+    GrStatement thenBranch = parentIf.getThenBranch();
+    GrStatement elseBranch = parentIf.getElseBranch();
+    String newIfText = "if (" + negatedCondition.getText() + ") " + (elseBranch != null ? elseBranch.getText() : "{}");
+
+    boolean isThenEmpty = thenBranch == null || (thenBranch instanceof GrBlockStatement) && ((GrBlockStatement)thenBranch).getBlock().getStatements().length == 0;
+    if (!isThenEmpty) {
+      newIfText += " else " + thenBranch.getText();
+    }
+
+
+    GrIfStatement newIf = (GrIfStatement)groovyPsiElementFactory.createStatementFromText(newIfText, parentIf.getContext());
 
     parentIf.replace(newIf);
   }
 
+  @NotNull
   private static GrExpression stripParenthesis(GrExpression operand) {
     while (operand instanceof GrParenthesizedExpression) {
-      operand = ((GrParenthesizedExpression) operand).getOperand();
+      GrExpression innerExpression = ((GrParenthesizedExpression)operand).getOperand();
+      if (innerExpression == null) {
+        break;
+      }
+      operand = innerExpression;
     }
     return operand;
   }

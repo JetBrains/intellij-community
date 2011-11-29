@@ -15,19 +15,13 @@
  */
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleIcons;
@@ -37,8 +31,6 @@ import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author nik
@@ -116,33 +108,6 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
         return version;
       }
     }
-    return null;
-  }
-
-  @Nullable
-  public static VirtualFile getSdkHome(@Nullable Module module, @NotNull Project project) {
-    if (module != null) {
-      final VirtualFile cpHome = getSdkHomeFromClasspath(module);
-      if (cpHome != null) {
-        return cpHome;
-      }
-    }
-
-    // TODO den implement
-    return null;
-    //return GradleSettings.getInstance(project).GRADLE_HOME;
-  }
-
-  @Nullable
-  public static VirtualFile getSdkHomeFromClasspath(Module module) {
-    // TODO den implement
-    //final VirtualFile gradleJar = myfindGradleJar(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
-    //if (gradleJar != null) {
-    //  final VirtualFile parent = gradleJar.getParent();
-    //  if (parent != null && "lib".equals(parent.getName())) {
-    //    return parent.getParent();
-    //  }
-    //}
     return null;
   }
 

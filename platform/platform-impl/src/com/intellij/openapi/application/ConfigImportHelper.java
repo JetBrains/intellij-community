@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,12 @@ import java.util.PropertyResourceBundle;
  * @author max
  */
 public class ConfigImportHelper {
+  /**
+   * Holds name of the system property that is supposed to hold <code>'true'</code> value when IDE settings have been
+   * imported on the current startup
+   */
+  @NonNls public static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
+  
   @NonNls private static final String BUILD_NUMBER_FILE = "build.txt";
   @NonNls private static final String PLUGINS_PATH = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
@@ -71,6 +77,7 @@ public class ConfigImportHelper {
 
         doImport(newConfigPath, oldConfigDir);
         settings.importFinished(newConfigPath);
+        System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
       }
 
       break;

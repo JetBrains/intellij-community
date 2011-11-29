@@ -116,9 +116,7 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   }
 
   public final FocusCommand saveAllocation() {
-    if (Registry.is("ide.debugMode")) {
-      myAllocation = new Exception();
-    }
+    myAllocation = new Exception();
     return this;
   }
 

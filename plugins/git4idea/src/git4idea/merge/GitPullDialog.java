@@ -213,6 +213,9 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters("--strategy", strategy);
     }
     h.addParameters("-v");
+    if (pull) {
+      h.addProgressParameter();
+    }
 
     final List<String> markedBranches = myBranchChooser.getMarkedElements();
     if (pull) {
@@ -223,7 +226,6 @@ public class GitPullDialog extends DialogWrapper {
         h.addParameters(getRemote() + "/" + branch);
       }
     }
-    h.addProgressParameter();
     return h;
   }
 
