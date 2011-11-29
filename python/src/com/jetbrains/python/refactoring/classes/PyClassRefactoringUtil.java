@@ -129,7 +129,7 @@ public class PyClassRefactoringUtil {
   public static void insertPassIfNeeded(PyClass clazz) {
     final PyStatementList statements = clazz.getStatementList();
     if (statements.getStatements().length == 0) {
-      statements.add(PyElementGenerator.getInstance(clazz.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, "pass"));
+      statements.add(PyElementGenerator.getInstance(clazz.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS));
     }
   }
 

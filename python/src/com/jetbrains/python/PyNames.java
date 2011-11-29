@@ -95,6 +95,8 @@ public class PyNames {
   
   public static final String KEYS = "keys";
 
+  public static final String PASS = "pass";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */

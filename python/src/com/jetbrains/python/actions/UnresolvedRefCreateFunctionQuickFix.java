@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -93,7 +94,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
         }
       }
     );
-    builder.replaceElement(function.getStatementList(), "pass");
+    builder.replaceElement(function.getStatementList(), PyNames.PASS);
     builder.run();
   }
 }

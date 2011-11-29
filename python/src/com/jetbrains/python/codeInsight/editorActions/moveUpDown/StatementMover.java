@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -387,7 +388,7 @@ public class StatementMover extends LineMover {
     super.beforeMove(editor, info, down);
     if (myStatementListToAddPass != null) {
       final PyPassStatement passStatement =
-        PyElementGenerator.getInstance(editor.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, "pass");
+        PyElementGenerator.getInstance(editor.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS);
       myStatementListToAddPass.add(passStatement);
       CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToAddPass);
       if (down) {

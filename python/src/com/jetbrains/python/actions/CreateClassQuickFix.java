@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -56,7 +57,7 @@ public class CreateClassQuickFix implements LocalQuickFix {
     pyClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(pyClass);
     TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(pyClass);
     builder.replaceElement(pyClass.getSuperClassExpressions() [0], "object");
-    builder.replaceElement(pyClass.getStatementList(), "pass");
+    builder.replaceElement(pyClass.getStatementList(), PyNames.PASS);
     builder.run();
   }
 

@@ -138,7 +138,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       }
     );
 
-    builder.replaceElement(method.getStatementList(), "pass");
+    builder.replaceElement(method.getStatementList(), PyNames.PASS);
 
     builder.run();
   }

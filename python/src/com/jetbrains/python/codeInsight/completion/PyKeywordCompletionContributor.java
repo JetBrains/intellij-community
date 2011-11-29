@@ -14,6 +14,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.UnindentingInsertHandler;
@@ -386,7 +387,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeywords(result, TailType.SPACE, "assert", "del", "exec", "from", "import", "raise");
-          putKeywords(result, TailType.NONE, "pass");
+          putKeywords(result, TailType.NONE, PyNames.PASS);
         }
       }
     );

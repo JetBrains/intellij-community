@@ -176,7 +176,7 @@ public class PyOverrideImplementUtil {
     int startIndex = 0;
 
     if (PyNames.FAKE_OLD_BASE.equals(baseFunction.getContainingClass().getName())) {
-      statementBody.append("pass");
+      statementBody.append(PyNames.PASS);
     }
     else {
       if (baseFunction.getReturnType(TypeEvalContext.slow(), null) != PyNoneType.INSTANCE) {
