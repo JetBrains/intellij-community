@@ -2,8 +2,8 @@
   <artifact type="jar" name="ProcessorCore:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/ProcessorCore_jar</output-path>
     <root id="archive" name="ProcessorCore.jar">
-      <element id="module-output" name="ProcessorCore" />
       <element id="dir-copy" path="$PROJECT_DIR$/processor-core/src/main/resources" />
+      <element id="module-output" name="processor-core" />
     </root>
   </artifact>
 </component>

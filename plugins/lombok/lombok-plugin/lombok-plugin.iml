@@ -16,8 +16,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="ProcessorAPI" />
-    <orderEntry type="module" module-name="ProcessorCore" scope="RUNTIME" />
+    <orderEntry type="module" module-name="processor-api" />
+    <orderEntry type="module" module-name="processor-core" scope="RUNTIME" />
   </component>
 </module>
 

@@ -139,8 +139,9 @@
     <plugin.timestamp>${maven.build.timestamp}</plugin.timestamp>
     <plugin.vendor>${project.organization.name}</plugin.vendor>
     <plugin.vendor.url>${project.organization.url}</plugin.vendor.url>
-    <plugin.vendor.email>michail@plushnikov.de</plugin.vendor.email>
+    <plugin.vendor.email>lombok-plugin@plushnikov.de</plugin.vendor.email>
     <lombok.version>0.10.4</lombok.version>
+	<lombok-maven-plugin.version>0.10.2.0</lombok-maven-plugin.version>
   </properties>
 
   <prerequisites>
@@ -291,7 +292,7 @@
         <plugin>
           <groupId>org.projectlombok</groupId>
           <artifactId>lombok-maven-plugin</artifactId>
-          <version>0.10.2.0</version>
+          <version>${lombok-maven-plugin.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
