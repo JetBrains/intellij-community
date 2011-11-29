@@ -163,8 +163,8 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   public void runToPosition(@NotNull XSourcePosition position) {
     final PsiFile psiFile = PsiManager.getInstance(getSession().getProject()).findFile(position.getFile());
     assert psiFile != null;
-    if (myDebuggerSession.canRunTo(psiFile, position.getOffset())) {
-      myDebuggerSession.runTo(psiFile, position.getOffset());
+    if (myDebuggerSession.canRunTo(position)) {
+      myDebuggerSession.runTo(psiFile, position);
     } else {
       StatusBar.Info.set("Not a valid position in file '" + psiFile.getName() + "'", psiFile.getProject());
       final Debugger c = myDebuggerSession.getClient();
