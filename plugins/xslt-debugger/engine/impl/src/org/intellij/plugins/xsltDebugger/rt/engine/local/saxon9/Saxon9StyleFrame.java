@@ -184,7 +184,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     public SequenceValue(Item value, SequenceIterator it, ItemType type) throws XPathException {
       String s = "(" + value.getStringValue() + ", " + it.current().getStringValue();
       while (it.next() != null) {
-        s += it.current().getStringValue();
+        s += ", " + it.current().getStringValue();
       }
       s += ")";
       myValue = s;
