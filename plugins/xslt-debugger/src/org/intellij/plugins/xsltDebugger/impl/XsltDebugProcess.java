@@ -23,8 +23,8 @@ import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
-import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManagerImpl;
+import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +132,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
 
   @Override
   public void startStepOut() {
+    myDebuggerSession.stepOver();
   }
 
   @Override
