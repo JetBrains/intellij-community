@@ -13,6 +13,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.plugins.xsltDebugger.impl.XsltDebuggerEditorsProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,12 +24,12 @@ import javax.swing.*;
 * User: sweinreuter
 * Date: 03.03.11
 */
-public final class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+public abstract class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
 
-  private final XsltDebuggerEditorsProvider myMyEditorsProvider = new XsltDebuggerEditorsProvider();
+  private final XsltDebuggerEditorsProvider myMyEditorsProvider = new XsltDebuggerEditorsProvider(getLanguageLevel());
 
-  public XsltBreakpointType() {
-    super("xslt", "XSLT Breakpoints");
+  protected XsltBreakpointType(final String id) {
+    super(id, "XSLT Breakpoints");
   }
 
   @Override
@@ -44,8 +45,10 @@ public final class XsltBreakpointType extends XLineBreakpointType<XBreakpointPro
     if (fileType != StdFileTypes.XML || !XsltSupport.isXsltFile(psiFile)) {
       return false;
     }
-    return true;
+    return getLanguageLevel() == XsltSupport.getXsltLanguageLevel(psiFile);
   }
+
+  protected abstract XsltChecker.LanguageLevel getLanguageLevel();
 
   @Override
   public XDebuggerEditorsProvider getEditorsProvider() {
@@ -67,5 +70,27 @@ public final class XsltBreakpointType extends XLineBreakpointType<XBreakpointPro
   @Override
   public XBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
     return null;
+  }
+
+  public static final class V1 extends XsltBreakpointType {
+    public V1() {
+      super("xslt");
+    }
+
+    @Override
+    protected XsltChecker.LanguageLevel getLanguageLevel() {
+      return XsltChecker.LanguageLevel.V1;
+    }
+  }
+
+  public static final class V2 extends XsltBreakpointType {
+    public V2() {
+      super("xslt2");
+    }
+
+    @Override
+    protected XsltChecker.LanguageLevel getLanguageLevel() {
+      return XsltChecker.LanguageLevel.V2;
+    }
   }
 }

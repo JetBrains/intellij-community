@@ -12,16 +12,24 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.intellij.lang.xpath.XPathFileType;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.plugins.xsltDebugger.BreakpointContext;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XsltDebuggerEditorsProvider extends XDebuggerEditorsProvider {
+
+  private final XPathFileType myFileType;
+
+  public XsltDebuggerEditorsProvider(XsltChecker.LanguageLevel level) {
+    myFileType = level == XsltChecker.LanguageLevel.V2 ? XPathFileType.XPATH2 : XPathFileType.XPATH;
+  }
+
   @NotNull
   @Override
   public FileType getFileType() {
-    return XPathFileType.XPATH;
+    return myFileType;
   }
 
   @NotNull
@@ -31,7 +39,7 @@ public class XsltDebuggerEditorsProvider extends XDebuggerEditorsProvider {
                                  @Nullable XSourcePosition sourcePosition,
                                  @NotNull EvaluationMode mode) {
     final PsiFile psiFile = PsiFileFactory.getInstance(project)
-      .createFileFromText("XPathExpr.xpath", XPathFileType.XPATH, text, LocalTimeCounter.currentTime(), true);
+      .createFileFromText("XPathExpr." + myFileType.getDefaultExtension(), myFileType, text, LocalTimeCounter.currentTime(), true);
 
     if (sourcePosition instanceof XsltSourcePosition && ((XsltSourcePosition)sourcePosition).getLocation() instanceof Debugger.StyleFrame) {
       final Debugger.Locatable location = ((XsltSourcePosition)sourcePosition).getLocation();

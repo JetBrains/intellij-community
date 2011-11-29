@@ -14,6 +14,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import org.intellij.lang.xpath.xslt.run.XsltCommandLineState;
 import org.intellij.lang.xpath.xslt.run.XsltRunConfiguration;
 import org.intellij.plugins.xsltDebugger.impl.XsltDebugProcess;
 import org.jetbrains.annotations.NonNls;
@@ -63,8 +64,9 @@ public class XsltDebuggerRunner extends DefaultProgramRunner {
         public XDebugProcess start(@NotNull final XDebugSession session) throws ExecutionException {
           ACTIVE.set(Boolean.TRUE);
           try {
+            final XsltCommandLineState c = (XsltCommandLineState)runProfileState;
             final ExecutionResult result = runProfileState.execute(executor, XsltDebuggerRunner.this);
-            return new XsltDebugProcess(session, result);
+            return new XsltDebugProcess(session, result, c.getExtensionData().getUserData(XsltDebuggerExtension.VERSION));
           } finally {
             ACTIVE.remove();
           }

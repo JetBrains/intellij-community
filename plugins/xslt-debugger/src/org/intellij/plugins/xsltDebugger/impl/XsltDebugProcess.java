@@ -17,7 +17,9 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
+import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
@@ -38,16 +40,17 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   private BreakpointManager myBreakpointManager = new BreakpointManagerImpl();
 
   private final XBreakpointHandler<?>[] myXBreakpointHandlers = new XBreakpointHandler<?>[]{
-    new XsltBreakpointHandler(this)
+    new XsltBreakpointHandler(this, XsltBreakpointType.V1.class),
+    new XsltBreakpointHandler(this, XsltBreakpointType.V2.class)
   };
   private XsltDebuggerSession myDebuggerSession;
 
-  public XsltDebugProcess(XDebugSession session, ExecutionResult executionResult) {
+  public XsltDebugProcess(XDebugSession session, ExecutionResult executionResult, XsltChecker.LanguageLevel data) {
     super(session);
     myProcessHandler = executionResult.getProcessHandler();
     myProcessHandler.putUserData(KEY, this);
     myExecutionConsole = executionResult.getExecutionConsole();
-    myEditorsProvider = new XsltDebuggerEditorsProvider();
+    myEditorsProvider = new XsltDebuggerEditorsProvider(data);
     Disposer.register(myExecutionConsole, this);
   }
 

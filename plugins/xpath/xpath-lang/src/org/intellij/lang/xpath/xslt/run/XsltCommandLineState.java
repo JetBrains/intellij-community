@@ -54,7 +54,7 @@ import java.util.List;
 
 import static org.intellij.lang.xpath.xslt.run.XsltRunConfiguration.isEmpty;
 
-class XsltCommandLineState extends CommandLineState {
+public class XsltCommandLineState extends CommandLineState {
     private static final Logger LOG = Logger.getInstance(XsltCommandLineState.class.getName());
     public static final Key<XsltCommandLineState> STATE = Key.create("STATE");
 
@@ -145,7 +145,8 @@ class XsltCommandLineState extends CommandLineState {
             assert descriptor != null;
             pluginPath = descriptor.getPath();
         } else {
-            pluginPath = new File(System.getProperty("xslt.plugin.path"));
+          // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-rt
+          pluginPath = new File(System.getProperty("xslt.plugin.path"));
         }
 
         LOG.debug("Plugin Path = " + pluginPath.getAbsolutePath());
@@ -187,7 +188,11 @@ class XsltCommandLineState extends CommandLineState {
         return myPort;
     }
 
-    private class MyProcessAdapter extends ProcessAdapter {
+  public UserDataHolder getExtensionData() {
+    return myExtensionData;
+  }
+
+  private class MyProcessAdapter extends ProcessAdapter {
 
         public void processTerminated(final ProcessEvent event) {
 
