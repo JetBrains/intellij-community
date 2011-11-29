@@ -59,7 +59,7 @@ import java.awt.image.BufferedImage;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class BalloonImpl implements Disposable, Balloon, LightweightWindow, PositionTracker.Client<Balloon>, IdeTooltip.Ui {
+public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
