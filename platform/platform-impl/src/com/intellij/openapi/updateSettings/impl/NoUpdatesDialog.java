@@ -64,9 +64,11 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     private JPanel myPluginsPanel;
     private JEditorPane myEditorPane;
     private JLabel myNothingFoundToUpdateLabel;
+    private JLabel myPluginsToUpdateLabel;
 
     public NoUpdatesPanel() {
       initPluginsPanel(myPanel, myPluginsPanel, myEditorPane);
+      myPluginsToUpdateLabel.setVisible(myUploadedPlugins != null);
       myNothingFoundToUpdateLabel.setVisible(myUploadedPlugins == null);
       myNothingFoundToUpdateLabel.setText("You already have the latest version of " +
                                           ApplicationInfo.getInstance().getVersionName()+ " installed.");
