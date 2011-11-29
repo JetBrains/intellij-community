@@ -15,10 +15,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReplaceFunctionWithSetLiteralQuickFix implements LocalQuickFix {
   PyElement[] myElements;
-  String myString;
-  public ReplaceFunctionWithSetLiteralQuickFix(PyElement[] elements, String string) {
+  public ReplaceFunctionWithSetLiteralQuickFix(PyElement[] elements) {
     myElements = elements;
-    myString = string;
   }
 
   @Override
@@ -38,22 +36,11 @@ public class ReplaceFunctionWithSetLiteralQuickFix implements LocalQuickFix {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PsiElement functionCall = descriptor.getPsiElement();
     StringBuilder str = new StringBuilder("{");
-    if (!myString.isEmpty()) {
-      int i = 0;
-      for (char ch : myString.toCharArray()) {
-        str.append("'").append(ch).append("'");
-        if (i != myString.length()-1)
-          str.append(", ");
-        ++i;
-      }
-    }
-    else {
-      for (int i = 0; i != myElements.length; ++i) {
-        PyElement e = myElements[i];
-        str.append(e.getText());
-        if (i != myElements.length-1)
-          str.append(", ");
-      }
+    for (int i = 0; i != myElements.length; ++i) {
+      PyElement e = myElements[i];
+      str.append(e.getText());
+      if (i != myElements.length-1)
+        str.append(", ");
     }
     str.append("}");
     functionCall.replace(elementGenerator.createFromText(LanguageLevel.forElement(functionCall), PyExpressionStatement.class,

@@ -312,11 +312,6 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest("SetFunctionToLiteral.py", PySetFunctionToLiteralInspection.class,
                      PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
   }
-    public void testSetFunctionToLiteralFromString() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doInspectionTest("SetFunctionToLiteralFromString.py", PySetFunctionToLiteralInspection.class,
-                     PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
-  }
 
   public void testDocstringParams() {                      //PY-3394
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());

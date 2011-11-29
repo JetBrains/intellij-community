@@ -50,10 +50,9 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
           PyExpression[] arguments = node.getArguments();
           if (arguments.length == 1) {
             PyExpression argument= arguments[0];
-            String string = "";
             PyElement[] elements = {};
             if (argument instanceof PyStringLiteralExpression) {
-              string = ((PyStringLiteralExpression)argument).getStringValue();
+              return;
             }
             if ((argument instanceof PySequenceExpression || (argument instanceof PyParenthesizedExpression &&
                           ((PyParenthesizedExpression)argument).getContainedExpression() instanceof PyTupleExpression))) {
@@ -66,9 +65,9 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
                   elements = ((PyTupleExpression)(tuple)).getElements();
               }
             }
-            if (elements.length != 0 || !string.isEmpty())
-                registerProblem(node, "Function call can be replaced with set literal",
-                                                 new ReplaceFunctionWithSetLiteralQuickFix(elements, string));
+            if (elements.length != 0)
+                registerProblem(node, PyBundle.message("INSP.NAME.set.function.to.literal"),
+                                                 new ReplaceFunctionWithSetLiteralQuickFix(elements));
           }
         }
       }
