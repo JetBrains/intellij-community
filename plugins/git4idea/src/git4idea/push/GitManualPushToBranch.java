@@ -140,7 +140,7 @@ class GitManualPushToBranch extends JPanel {
   }
 
   @NotNull
-  private static Collection<GitRemote> getRemotesWithCommonNames(@NotNull Collection<GitRepository> repositories) {
+  public static Collection<GitRemote> getRemotesWithCommonNames(@NotNull Collection<GitRepository> repositories) {
     if (repositories.isEmpty()) {
       return Collections.emptyList();
     }

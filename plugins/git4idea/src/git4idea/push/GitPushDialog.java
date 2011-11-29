@@ -61,6 +61,8 @@ public class GitPushDialog extends DialogWrapper {
   private final Object COMMITS_LOADING_LOCK = new Object();
   private final GitManualPushToBranch myRefspecPanel;
   private final AtomicReference<String> myDestBranchInfoOnRefresh = new AtomicReference<String>();
+  
+  private final boolean myPushPossible;
 
   public GitPushDialog(@NotNull Project project) {
     super(project);
@@ -84,10 +86,20 @@ public class GitPushDialog extends DialogWrapper {
 
     myListPanel = new GitPushLog(myProject, myRepositories, new RepositoryCheckboxListener());
     myRefspecPanel = new GitManualPushToBranch(myRepositories, new RefreshButtonListener());
-    
+
+    if (GitManualPushToBranch.getRemotesWithCommonNames(myRepositories).isEmpty()) {
+      myRefspecPanel.setVisible(false);
+      setErrorText("Can't push, because no remotes are defined");
+      setOKActionEnabled(false);
+      myPushPossible = false;
+    } else {
+      myPushPossible = true;
+    }
+
     init();
     setOKButtonText("Push");
     setTitle("Git Push");
+
   }
 
   @Override
@@ -105,7 +117,12 @@ public class GitPushDialog extends DialogWrapper {
 
   private JComponent createCommitListPanel() {
     myLoadingPanel.add(myListPanel, BorderLayout.CENTER);
-    loadCommitsInBackground();
+    if (myPushPossible) {
+      loadCommitsInBackground();
+    } else {
+      myLoadingPanel.startLoading();
+      myLoadingPanel.stopLoading();
+    }
 
     JPanel commitListPanel = new JPanel(new BorderLayout());
     commitListPanel.add(myLoadingPanel, BorderLayout.CENTER);
