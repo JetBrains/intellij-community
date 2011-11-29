@@ -131,3 +131,6 @@ class PyDevFrontEnd:
                 #    print(rep)
                 return False #execute complete (no more)
 
+    def is_automagic(self):
+        return self.ipython.automagic
+

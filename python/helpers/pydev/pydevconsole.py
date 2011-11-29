@@ -253,7 +253,10 @@ def start_server(host, port, interpreter):
     server.register_function(handshake)
 
     if IPYTHON:
-        interpreter.interpreter.ipython.hooks.editor = ipython_editor(interpreter)
+        try:
+            interpreter.interpreter.ipython.hooks.editor = ipython_editor(interpreter)
+        except :
+            pass
 
     server.serve_forever()
 

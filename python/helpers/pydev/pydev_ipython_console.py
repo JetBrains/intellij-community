@@ -119,7 +119,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         server = self.get_server()
 
         if server is not None:
-            server.NotifyAboutMagic(magic_commands, self.interpreter.ipython.automagic)
+            server.NotifyAboutMagic(magic_commands, self.interpreter.is_automagic())
 
 
 

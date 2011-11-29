@@ -85,3 +85,13 @@ class PyDevFrontEnd(PrefilterFrontEnd):
                 return True #needs more
 
             return False #execute complete (no more)
+
+    def update(self, globals, locals):
+        locals['_oh'] = self.shell.user_ns['_oh']
+        locals['_ip'] = self.shell.user_ns['_ip']
+        self.shell.user_global_ns = globals
+        self.shell.user_ns = locals
+
+    def is_automagic(self):
+        return True if self.ipython0.rc.automagic else False
+
