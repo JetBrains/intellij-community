@@ -150,7 +150,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               if (context.getProject().isDisposed()) return;
-              context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+              context.addMessage(CompilerMessageCategory.ERROR, "I/O error: " + e.getMessage(), null, -1, -1);
             }
           });
         }
