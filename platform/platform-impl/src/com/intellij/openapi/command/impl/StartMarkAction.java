@@ -22,6 +22,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.TestOnly;
 
 /**
 * User: anna
@@ -59,6 +60,16 @@ public class StartMarkAction extends BasicUndoableAction {
 
   public void setCommandName(String commandName) {
     myCommandName = commandName;
+  }
+
+  @TestOnly
+  public static void checkCleared() {
+    try {
+      assert ourCurrentMark == null;
+    }
+    finally {
+      ourCurrentMark = null;
+    }
   }
 
   public static StartMarkAction start(Editor editor, Project project, String commandName) throws AlreadyStartedException {
