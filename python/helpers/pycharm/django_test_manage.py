@@ -9,11 +9,12 @@ manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
 if not manage_file:
   manage_file = 'manage'
 
-settings_file = os.getenv('PYCHARM_DJANGO_SETTINGS_MODULE') or os.getenv('DJANGO_SETTINGS_MODULE')
+settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
     settings_file = 'settings'
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE')
+proj_name = sys.argv[-1]
+os.environ.setdefault('DJANGO_SETTINGS_MODULE',proj_name+".settings")
 
 from django.core import management
 from django.core.management.commands.test import Command
@@ -96,7 +97,7 @@ if __name__ == "__main__":
     subcommand = 'help' # Display help if no arguments were given.
 
   if subcommand == 'test':
-    utility = PycharmTestManagementUtility()
+    utility = PycharmTestManagementUtility(sys.argv[:-1])
   else:
     utility = ManagementUtility()
   utility.execute()
