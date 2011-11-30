@@ -18,6 +18,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SoftHashMap;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -56,6 +57,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return CachedValuesManager.getManager(getProject()).createCachedValue(new NewStyleCachedValueProvider(), false);
     }
   };
+  
+  private final SoftHashMap<String, Property> myPropertyCache = new SoftHashMap<String, Property>();
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context) {
@@ -604,7 +607,16 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Nullable
   @Override
   public Property findProperty(@NotNull final String name) {
-    return scanProperties(name, null, true);
+    synchronized (myPropertyCache) {
+      if (myPropertyCache.containsKey(name)) {
+        return myPropertyCache.get(name);
+      }
+    }
+    final Property result = scanProperties(name, null, true);
+    synchronized (myPropertyCache) {
+      myPropertyCache.put(name, result);
+    }
+    return result;
   }
 
   @Nullable
@@ -1024,6 +1036,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     ControlFlowCache.clear(this);
     if (myInstanceAttributes != null) {
       myInstanceAttributes = null;
+    }
+    synchronized (myPropertyCache) {
+      myPropertyCache.clear();
     }
   }
 
