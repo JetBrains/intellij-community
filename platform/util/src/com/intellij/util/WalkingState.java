@@ -89,7 +89,9 @@ public class WalkingState<T> {
       }
       element = myWalker.getParent(element);
     }
-    elementFinished(element);
+    if (element != null) {
+      elementFinished(element);
+    }
     return null;
   }
 
