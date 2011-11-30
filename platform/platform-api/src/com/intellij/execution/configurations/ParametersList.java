@@ -23,14 +23,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ParametersList implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ParametersList");
+  
+  private static final Pattern PROPERTY_PATTERN = Pattern.compile("-D(\\S+?)=(.+)");
+
   private List<String> myParameters = new ArrayList<String>();
   private Map<String, String> myMacroMap = null;
   private List<ParamsGroup> myGroups = new ArrayList<ParamsGroup>();
@@ -57,6 +63,19 @@ public class ParametersList implements Cloneable{
     return null;
   }
 
+  @NotNull
+  public Map<String, String> getProperties() {
+    Map<String, String> result = new THashMap<String, String>();
+    for (String parameter : myParameters) {
+      Matcher matcher = PROPERTY_PATTERN.matcher(parameter);
+      if (matcher.matches()) {
+        result.put(matcher.group(1), matcher.group(2));
+      }
+    }
+    return result;
+  }
+
+  @NotNull
   public String getParametersString() {
     final StringBuilder buffer = new StringBuilder();
     final String separator = " ";
@@ -143,6 +162,10 @@ public class ParametersList implements Cloneable{
   }
 
   public void defineProperty(@NonNls final String propertyName, @NonNls final String propertyValue) {
+    addProperty(propertyName, propertyValue);
+  }
+
+  public void addProperty(@NonNls final String propertyName, @NonNls final String propertyValue) {
     //noinspection HardCodedStringLiteral
     myParameters.add("-D" + propertyName + "=" + propertyValue);
   }

@@ -19,18 +19,12 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -47,6 +41,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jdom.Element;
@@ -67,6 +62,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
@@ -181,15 +177,39 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
 
         params.setMainClass(MAIN_CLASS);
 
-        // todo pass sensible parameters, MAVEN_OPTS?
+        Map<String, String> defs = new THashMap<String, String>();
+        
+        String mavenOpts = System.getenv("MAVEN_OPTS");
+        if (mavenOpts != null) {
+          ParametersList mavenOptsList = new ParametersList();
+          mavenOptsList.addParametersString(mavenOpts);
+          defs.putAll(mavenOptsList.getProperties());
+        }
+
+        // pass ssl-related options
+        for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
+          Object key = each.getKey();
+          Object value = each.getValue();
+          if (key instanceof String && value instanceof String && ((String)key).startsWith("javax.net.ssl")) {
+            defs.put((String)key, (String)value);
+          }
+        }
+
         if (SystemInfo.isMac) {
           String arch = System.getProperty("sun.arch.data.model");
           if (arch != null) {
             params.getVMParametersList().addParametersString("-d" + arch);
           }
         }
-        params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
+
+        defs.put("java.awt.headless", "true");
+        for (Map.Entry<String, String> each : defs.entrySet()) {
+          params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
+        }
+        params.getVMParametersList().addParametersString("-Xmx512m");
+
         //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
+
         return params;
       }
 
@@ -203,17 +223,14 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         SimpleJavaParameters params = createJavaParameters();
         Sdk sdk = params.getJdk();
 
-        final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), params,
-                                                                           JdkUtil.useDynamicClasspath(PlatformDataKeys
-                                                                                                         .PROJECT.getData(
-                                                                               DataManager.getInstance().getDataContext())));
+        final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(
+          ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), params, false);
         final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
           @Override
           public Charset getCharset() {
             return commandLine.getCharset();
           }
         };
-        ProcessTerminatedListener.attach(processHandler);
         return processHandler;
       }
     };

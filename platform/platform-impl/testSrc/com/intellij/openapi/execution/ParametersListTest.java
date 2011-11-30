@@ -167,4 +167,12 @@ public class ParametersListTest extends UsefulTestCase {
     assertEquals("group2_param1 group2_param2 group3_param1", params.getParametersString().trim());
     assertEquals("group1_param1 group2_param1 group3_param1", params_clone.getParametersString().trim());
   }
+
+  public void testProperties() throws Exception {
+    ParametersList params = new ParametersList();
+    params.addProperty("foo.foo", "\"bar bar\" bar");
+
+    assertEquals(1, params.getProperties().size());
+    assertEquals("\"bar bar\" bar", params.getProperties().get("foo.foo"));
+  }
 }
