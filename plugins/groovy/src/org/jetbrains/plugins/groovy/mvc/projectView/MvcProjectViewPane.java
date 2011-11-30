@@ -299,15 +299,25 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   }
 
   public void selectElement(PsiElement element) {
-    if (!(element instanceof PsiFileSystemItem)) return;
+    PsiFileSystemItem psiFile;
 
-    VirtualFile virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
+    if (!(element instanceof PsiFileSystemItem)) {
+      psiFile = element.getContainingFile();
+    }
+    else {
+      psiFile = (PsiFileSystemItem)element;
+    }
+
+    if (psiFile == null) return;
+
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return;
 
     selectFile(virtualFile, false);
 
     boolean requestFocus = true;
 
-    if (element instanceof PsiFile) {
+    if (psiFile instanceof PsiFile) {
       Editor editor = EditorHelper.openInEditor(element);
       if (editor != null) {
         ToolWindowManager.getInstance(myProject).activateEditorComponent();
