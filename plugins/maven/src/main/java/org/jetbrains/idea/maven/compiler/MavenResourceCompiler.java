@@ -309,6 +309,11 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       }
       else {
         String relPath = VfsUtil.getRelativePath(eachSourceFile, sourceRoot, '/');
+        if (relPath == null) {
+          MavenLog.LOG.error("Cannot calculate relate path for file: " + eachSourceFile + " in root: " + sourceRoot);
+          continue;
+        }
+
         if (fileIndex.isIgnored(eachSourceFile)) continue;
         if (!MavenUtil.isIncluded(relPath, includes, excludes)) continue;
 
