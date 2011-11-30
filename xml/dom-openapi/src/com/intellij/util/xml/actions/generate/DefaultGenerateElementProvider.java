@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
@@ -73,8 +74,8 @@ public abstract class DefaultGenerateElementProvider<T extends DomElement> exten
           PsiFile file = parentTag.getContainingFile();
           PsiElement psiElement = file.findElementAt(offset);
 
-          if (psiElement instanceof PsiWhiteSpace) {
-            Document document = editor.getDocument();
+          if (psiElement instanceof PsiWhiteSpace && PsiTreeUtil.isAncestor(parentTag, psiElement, false)) {
+              Document document = editor.getDocument();
             XmlTag childTag = parentTag.createChildTag(childDescription.getXmlElementName(), null, null, true);
             String text = childTag.getText();
             document.insertString(offset, text);
@@ -90,22 +91,26 @@ public abstract class DefaultGenerateElementProvider<T extends DomElement> exten
           }
         }
 
-        int index  = getCollectionIndex(parent, childDescription, editor);
+        int index = getCollectionIndex(parent, childDescription, editor);
 
-        return index < 0 ? (T)childDescription.addValue(parent, myChildElementClass) : (T)childDescription.addValue(parent, myChildElementClass, index) ;
+        return index < 0
+               ? (T)childDescription.addValue(parent, myChildElementClass)
+               : (T)childDescription.addValue(parent, myChildElementClass, index);
       }
     }
     return null;
   }
 
-  private static int getCollectionIndex(final DomElement parent, final DomCollectionChildDescription childDescription, final Editor editor) {
+  private static int getCollectionIndex(final DomElement parent,
+                                        final DomCollectionChildDescription childDescription,
+                                        final Editor editor) {
     int offset = editor.getCaretModel().getOffset();
 
     for (int i = 0; i < childDescription.getValues(parent).size(); i++) {
       DomElement element = childDescription.getValues(parent).get(i);
       XmlElement xmlElement = element.getXmlElement();
       if (xmlElement != null && xmlElement.getTextRange().getStartOffset() >= offset) {
-          return i;
+        return i;
       }
     }
 
