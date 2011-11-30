@@ -48,6 +48,7 @@ public class MavenEnvironmentForm {
   private final PathOverrider userSettingsFileOverrider;
   private final PathOverrider localRepositoryOverrider;
 
+  private boolean isUpdating = false;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public MavenEnvironmentForm() {
@@ -57,13 +58,18 @@ public class MavenEnvironmentForm {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
+            if (isUpdating) return;
+            if (!panel.isShowing()) return;
+
             myUpdateAlarm.cancelAllRequests();
             myUpdateAlarm.addRequest(new Runnable() {
                 @Override
                 public void run() {
+                  isUpdating = true;
                   mavenHomeOverrider.updateDefault();
                   userSettingsFileOverrider.updateDefault();
                   localRepositoryOverrider.updateDefault();
+                  isUpdating = false;
                 }
               }, 100);
           }
