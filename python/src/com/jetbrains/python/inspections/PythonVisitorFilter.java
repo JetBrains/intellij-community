@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,8 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * check if we should visit element
  */
 public interface PythonVisitorFilter {
-  public static final LanguageExtension<PythonVisitorFilter> INSTANCE =
-    new LanguageExtension<PythonVisitorFilter>("Pythonid.visitorFilter");
+  LanguageExtension<PythonVisitorFilter> INSTANCE = new LanguageExtension<PythonVisitorFilter>("Pythonid.visitorFilter");
 
-  boolean isSupported(@NotNull Class visitorClass, @NotNull PsiElement element);
+  boolean isSupported(@NotNull Class visitorClass, @NotNull PsiElement element, PsiFile containingFile);
 }

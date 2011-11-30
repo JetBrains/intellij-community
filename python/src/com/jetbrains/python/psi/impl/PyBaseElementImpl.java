@@ -12,7 +12,6 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.inspections.PythonVisitorFilter;
@@ -73,7 +72,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   }
 
   public static boolean isAcceptedFor(@NotNull final PsiElement element, @NotNull Class clazz) {
-    PsiFile file = PsiTreeUtil.getNonStrictParentOfType(element, PsiFile.class);
+    PsiFile file = element.getContainingFile();
     if (file != null) {
       Language lang = file.getLanguage();
       FileViewProvider vProvider = file.getViewProvider();
@@ -81,7 +80,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
         lang = vProvider.getBaseLanguage();
       }
       PythonVisitorFilter filter = PythonVisitorFilter.INSTANCE.forLanguage(lang);
-      return filter != null ? filter.isSupported(clazz, element) : true;
+      return filter != null ? filter.isSupported(clazz, element, f) : true;
     }
     return true;
   }

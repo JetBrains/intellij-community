@@ -1,6 +1,8 @@
 package com.jetbrains.python.console;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.validation.DocStringAnnotator;
 import org.jetbrains.annotations.NotNull;
@@ -12,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConsoleVisitorFilter implements PythonVisitorFilter {
   @Override
-  public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiElement element) {
+  public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiElement element, PsiFile containingFile) {
     //if we're in console
-    if (PydevConsoleRunner.isInPydevConsole(element)) {
+    if (element instanceof PydevConsoleElement || containingFile.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY) != null) {
       //inspections
       if (visitorClass == PyUnusedLocalInspectionVisitor.class || visitorClass == PyUnboundLocalVariableInspection.Visitor.class ||
           visitorClass == PyStatementEffectInspection.class || visitorClass == PySingleQuotedDocstringInspection.class ||
