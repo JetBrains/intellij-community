@@ -487,7 +487,6 @@ def layout_core(String home, String target) {
       include(name: "asm.jar")
       include(name: "asm-commons.jar")
       include(name: "cli-10.jar")
-      include(name: "gson-2.0.jar")
     }
   }
 }
