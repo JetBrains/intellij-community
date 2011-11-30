@@ -43,6 +43,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -83,8 +84,21 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       }
 
       @Override
-      public boolean getScrollableTracksViewportWidth() {
-        return false;
+      public String getToolTipText(MouseEvent event) {
+        final TreePath path = myTree.getPathForLocation(event.getX(), event.getY());
+        if (path == null) {
+          return "";
+        }
+        Object node = path.getLastPathComponent();
+        if (node == null || (!(node instanceof DefaultMutableTreeNode))) {
+          return "";
+        }
+        Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+        if (userObject instanceof GitCommit) {
+          GitCommit commit = (GitCommit)userObject;
+          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthor() + "\n\n" + commit.getDescription();
+        }
+        return "";
       }
     };
     myTree.setRootVisible(false);
@@ -107,7 +121,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
     });
-    
+    ToolTipManager.sharedInstance().registerComponent(myTree);
 
     myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
@@ -152,7 +166,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       createNodes(commits);
       myTreeModel.nodeStructureChanged(myRootNode);
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
-      myTreeCellRenderer.recalculateWidth(commits.getAllCommits());
       TreeUtil.expandAll(myTree);
       selectFirstCommit();
     }
@@ -271,45 +284,17 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     }
   }
 
+  @NotNull
+  private static String getDateString(@NotNull GitCommit commit) {
+    return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime()) + " ";
+  }
+
+  @NotNull
+  private static String getHashString(@NotNull GitCommit commit) {
+    return commit.getShortHash().toString();
+  }
+
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
-    
-    private int myDateMaxWidth;
-    private int myHashMaxWidth;
-    private static final int INSET = UIUtil.DEFAULT_HGAP;
-    
-    void recalculateWidth(@NotNull Collection<GitCommit> commits) {
-      for (GitCommit commit : commits) {
-        int dateLen = calcWidth(getDateString(commit));
-        if (dateLen > myDateMaxWidth) {
-          myDateMaxWidth = dateLen;
-        }
-        int hashLen = calcWidth(getHashString(commit));
-        if (hashLen > myHashMaxWidth) {
-          myHashMaxWidth = hashLen;
-        }
-      }
-    }
-
-    @NotNull
-    private static String getHashString(@NotNull GitCommit commit) {
-      return commit.getShortHash().toString();
-    }
-
-    int calcWidth(String s) {
-      SimpleTextAttributes attributes = new SimpleTextAttributes(getCommitTextAttributesStyle(), getTextRenderer().getForeground());
-      Font initialFont = getTextRenderer().getFont();
-      Font font = initialFont.deriveFont(attributes.getFontStyle(), attributes.isSmaller() ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : initialFont.getSize());
-      FontMetrics metrics = getTextRenderer().getFontMetrics(font);
-      return metrics.stringWidth(s);
-    }
-    
-    private static int getCommitTextAttributesStyle() {
-      return SimpleTextAttributes.STYLE_SMALLER;
-    }
-    
-    private static String getDateString(GitCommit commit) {
-      return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime()) + " ";
-    }
 
     @Override
     public void customizeRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
@@ -325,17 +310,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       ColoredTreeCellRenderer renderer = getTextRenderer();
       if (userObject instanceof GitCommit) {
         GitCommit commit = (GitCommit)userObject;
-        SimpleTextAttributes grey = new SimpleTextAttributes(getCommitTextAttributesStyle(), UIUtil.getInactiveTextColor());
-
-        String hash = getHashString(commit);
-        renderer.append(hash, grey);
-        renderer.appendAlign(myHashMaxWidth + INSET);
-
-        String date = getDateString(commit);
-        renderer.append(date, grey);
-        renderer.appendAlign(myDateMaxWidth + myHashMaxWidth + INSET * 2);
-
-        renderer.append(commit.getSubject(), new SimpleTextAttributes(getCommitTextAttributesStyle(), getTextRenderer().getForeground()));
+        renderer.append(commit.getSubject(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, getTextRenderer().getForeground()));
+        renderer.setToolTipText(getHashString(commit) + " " + getDateString(commit));
       }
       else if (userObject instanceof GitRepository) {
         String repositoryPath = calcRootPath((GitRepository)userObject);
