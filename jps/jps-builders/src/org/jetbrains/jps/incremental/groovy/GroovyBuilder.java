@@ -193,7 +193,7 @@ public class GroovyBuilder extends Builder {
       if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {
         String src = context.getBuildDataManager().getOutputToSourceStorage().getState(out);
         if (!toCompilePaths.contains(src) && isGroovyFile(src)) {
-          String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.').replace('$', '.');
+          String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.');
           class2Src.put(className, src);
         }
       }
