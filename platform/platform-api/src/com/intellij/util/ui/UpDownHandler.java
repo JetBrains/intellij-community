@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -88,8 +89,10 @@ public class UpDownHandler {
       index += direction;
 
       if (index == size) {
+        if (!UISettings.getInstance().CYCLE_SCROLLING) return;
         index = 0;
       } else if (index == -1) {
+        if (!UISettings.getInstance().CYCLE_SCROLLING) return;
         index = size - 1;
       }
 
