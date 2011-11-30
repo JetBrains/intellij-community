@@ -274,7 +274,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
-  public void testFoo() throws Exception {
+  public void testIndicesAreValidAfterReopening() throws Exception {
     myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     shutdownIndices();
     initIndices();
