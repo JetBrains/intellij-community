@@ -26,7 +26,6 @@ import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -39,8 +38,6 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
   public boolean canMove(PsiElement[] elements, PsiElement targetContainer) {
     final PsiElement[] srcElements = adjustForMove(null, elements, targetContainer);
     assert srcElements != null;
-
-    if (JavaMoveClassesOrPackagesHandler.nonFileSystemOrAllJava(srcElements)) return false;
 
     return super.canMove(srcElements, targetContainer);
   }

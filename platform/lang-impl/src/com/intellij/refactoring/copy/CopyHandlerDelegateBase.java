@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  */
 package com.intellij.refactoring.copy;
 
-import com.intellij.psi.*;
-import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
+import com.intellij.psi.PsiElement;
 
 /**
- * @author yole
+ * User: anna
+ * Date: 11/30/11
  */
-public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHandler {
+public abstract class CopyHandlerDelegateBase implements CopyHandlerDelegate {
+  public abstract boolean canCopy(PsiElement[] elements, boolean fromUpdate);
+
   @Override
   public boolean canCopy(PsiElement[] elements) {
-    if (JavaMoveClassesOrPackagesHandler.nonFileSystemOrAllJava(elements)) return false;
-    return super.canCopy(elements);
+    return canCopy(elements, false);
   }
-
 }

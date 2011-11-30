@@ -41,7 +41,7 @@ public class CopyHandler {
     if (elements.length > 0) {
       final CopyHandlerDelegate[] copyHandlers = Extensions.getExtensions(CopyHandlerDelegate.EP_NAME);
       for(CopyHandlerDelegate delegate: copyHandlers) {
-        if (delegate.canCopy(elements)) return true;
+        if (delegate instanceof CopyHandlerDelegateBase ? ((CopyHandlerDelegateBase)delegate).canCopy(elements, true) : delegate.canCopy(elements)) return true;
       }
     }
     return false;
