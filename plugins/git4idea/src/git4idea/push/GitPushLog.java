@@ -19,8 +19,6 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -276,18 +274,41 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
     
     private int myDateMaxWidth;
+    private int myHashMaxWidth;
+    private static final int INSET = UIUtil.DEFAULT_HGAP;
     
     void recalculateWidth(@NotNull Collection<GitCommit> commits) {
       for (GitCommit commit : commits) {
-        int len = getDateString(commit).length();
-        if (len > myDateMaxWidth) {
-          myDateMaxWidth = len;
+        int dateLen = calcWidth(getDateString(commit));
+        if (dateLen > myDateMaxWidth) {
+          myDateMaxWidth = dateLen;
+        }
+        int hashLen = calcWidth(getHashString(commit));
+        if (hashLen > myHashMaxWidth) {
+          myHashMaxWidth = hashLen;
         }
       }
     }
 
+    @NotNull
+    private static String getHashString(@NotNull GitCommit commit) {
+      return commit.getShortHash().toString();
+    }
+
+    int calcWidth(String s) {
+      SimpleTextAttributes attributes = new SimpleTextAttributes(getCommitTextAttributesStyle(), getTextRenderer().getForeground());
+      Font initialFont = getTextRenderer().getFont();
+      Font font = initialFont.deriveFont(attributes.getFontStyle(), attributes.isSmaller() ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : initialFont.getSize());
+      FontMetrics metrics = getTextRenderer().getFontMetrics(font);
+      return metrics.stringWidth(s);
+    }
+    
+    private static int getCommitTextAttributesStyle() {
+      return SimpleTextAttributes.STYLE_SMALLER;
+    }
+    
     private static String getDateString(GitCommit commit) {
-      return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
+      return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime()) + " ";
     }
 
     @Override
@@ -302,16 +323,19 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       }
 
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN); // using probable monospace font to emulate table
-      renderer.setFont(font);
-
-      SimpleTextAttributes smallGrey = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor());
       if (userObject instanceof GitCommit) {
         GitCommit commit = (GitCommit)userObject;
-        SimpleTextAttributes small = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground());
-        renderer.append(commit.getShortHash().toString(), smallGrey);
-        renderer.append(String.format(" %" + myDateMaxWidth + "s  ", getDateString(commit)), smallGrey);
-        renderer.append(commit.getSubject(), small);
+        SimpleTextAttributes grey = new SimpleTextAttributes(getCommitTextAttributesStyle(), UIUtil.getInactiveTextColor());
+
+        String hash = getHashString(commit);
+        renderer.append(hash, grey);
+        renderer.appendAlign(myHashMaxWidth + INSET);
+
+        String date = getDateString(commit);
+        renderer.append(date, grey);
+        renderer.appendAlign(myDateMaxWidth + myHashMaxWidth + INSET * 2);
+
+        renderer.append(commit.getSubject(), new SimpleTextAttributes(getCommitTextAttributesStyle(), getTextRenderer().getForeground()));
       }
       else if (userObject instanceof GitRepository) {
         String repositoryPath = calcRootPath((GitRepository)userObject);
@@ -345,7 +369,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
             break;
         }
         renderer.append(text, attrs);
-        renderer.append(additionalText, smallGrey);
+        renderer.append(additionalText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor()));
       }
       else if (userObject instanceof FakeCommit) {
         int spaces = 6 + 15 + 3 + 30;
