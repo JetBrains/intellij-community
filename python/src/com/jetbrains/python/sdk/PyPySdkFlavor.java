@@ -21,6 +21,6 @@ public class PyPySdkFlavor extends PythonSdkFlavor {
 
   @Override
   public String getVersionString(String sdkHome) {
-    return getVersionFromOutput(sdkHome, "--version", "\\[(PyPy .+)\\]", true);
+    return getVersionFromOutput(sdkHome, "--version", "\\[(PyPy [^ ]+).*\\]");
   }
 }

@@ -147,4 +147,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testStaticMethod() {
     doTest("staticmethod.before.py", "baz", "staticmethod.after.py");
   }
+
+  // PY-5123
+  public void testMethodInIf() {
+    doTest("methodInIf.before.py", "baz", "methodInIf.after.py");
+  }
 }

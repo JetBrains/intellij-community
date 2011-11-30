@@ -49,7 +49,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public String getVersionString(String sdkHome) {
-    return "IronPython " + getVersionFromOutput(sdkHome, "-V", "\\w+ ([0-9\\.]+).*", true);
+    return "IronPython " + getVersionFromOutput(sdkHome, "-V", "\\w+ ([0-9\\.]+).*");
   }
 
   @Override

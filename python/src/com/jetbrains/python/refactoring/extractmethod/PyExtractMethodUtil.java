@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.extractmethod;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +46,6 @@ import java.util.Map;
  * @author oleg
  */
 public class PyExtractMethodUtil {
-
   public static final String NAME = "extract.method.name";
 
   private PyExtractMethodUtil() {
@@ -108,16 +108,17 @@ public class PyExtractMethodUtil {
               builder.append("(").append(createCallArgsString(variableData)).append(")");
               PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyCallExpression.class, builder.toString());
 
-              //# replace statements with call
+              // Replace statements with call
               callElement = replaceElements(elementsRange, callElement);
 
-              // # Set editor
+              // Set editor
               setSelectionAndCaret(editor, callElement);
             }
           });
         }
       }, "Extract method", null);
-    } else {
+    }
+    else {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -210,8 +211,10 @@ public class PyExtractMethodUtil {
 
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               // Generate method
               PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression, flags);
@@ -234,7 +237,9 @@ public class PyExtractMethodUtil {
               PsiElement callElement = fragment.isReturnInstructionInside() ? returnStatement : returnStatement.getExpression();
 
               // replace statements with call
-              callElement = PyPsiUtils.replaceExpression(expression, callElement);
+              if (callElement != null) {
+                callElement = PyPsiUtils.replaceExpression(expression, callElement);
+              }
 
               // Set editor
               setSelectionAndCaret(editor, callElement);
@@ -372,15 +377,18 @@ public class PyExtractMethodUtil {
     addFakeParameters(builder, variableData);
     final PyFunction method = builder.buildFunction(project, LanguageLevel.getDefault());
     final PyStatementList statementList = method.getStatementList();
-
+    assert statementList != null;
     for (PsiElement element : elementsRange) {
-      if (element instanceof PsiWhiteSpace){
+      if (element instanceof PsiWhiteSpace) {
         continue;
       }
       statementList.add(element);
     }
     // remove last instruction
-    statementList.getFirstChild().delete();
+    final PsiElement child = statementList.getFirstChild();
+    if (child != null) {
+      child.delete();
+    }
     return method;
   }
 
@@ -406,15 +414,15 @@ public class PyExtractMethodUtil {
                                                                              final PsiElement element,
                                                                              final boolean isClassMethod,
                                                                              final boolean isStaticMethod) {
-      final ExtractMethodValidator validator = new PyExtractMethodValidator(element, project);
-    if (ApplicationManager.getApplication().isUnitTestMode()){
+    final ExtractMethodValidator validator = new PyExtractMethodValidator(element, project);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       String name = System.getProperty(NAME);
       if (name == null){
         name = "foo";
       }
       final String error = validator.check(name);
       if (error != null){
-        if (ApplicationManager.getApplication().isUnitTestMode()){
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
         final StringBuilder builder = new StringBuilder();
@@ -517,7 +525,9 @@ public class PyExtractMethodUtil {
     }
 
     public boolean isValidName(final String name) {
-      return LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier(name, myProject);
+      final NamesValidator validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
+      assert validator != null;
+      return validator.isIdentifier(name, myProject);
     }
   }
 }
