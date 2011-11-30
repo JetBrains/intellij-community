@@ -10,3 +10,6 @@ print p.__add__
 print p._asdict()
 print Point._fields
 print p._replace
+
+if isinstance(p, Point):
+    p.x
