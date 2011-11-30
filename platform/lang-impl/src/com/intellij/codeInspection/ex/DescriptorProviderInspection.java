@@ -57,7 +57,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   private Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements;
 
   private HashMap<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
 
   public void addProblemElement(RefEntity refElement, CommonProblemDescriptor... descriptions){
     addProblemElement(refElement, true, descriptions);

@@ -17,12 +17,19 @@
 package org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.expr.instruct.InstructionDetails;
 import net.sf.saxon.lib.TraceListener;
 import net.sf.saxon.om.Item;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.style.StyleElement;
 import net.sf.saxon.trace.InstructionInfo;
+import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
+import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.LocalDebugger;
+
+import javax.xml.transform.Source;
+import javax.xml.transform.SourceLocator;
+import java.util.List;
 
 public class Saxon9TraceListener implements TraceListener {
   private static final boolean TRACE = "true".equals(System.getProperty("xslt.debugger.trace", "false"));
@@ -63,6 +70,8 @@ public class Saxon9TraceListener implements TraceListener {
     }
     if (instructionInfo instanceof StyleElement) {
       myDebugger.enter(new Saxon9StyleFrame(myDebugger.getCurrentFrame(), (StyleElement)instructionInfo, xPathContext));
+    } else if (instructionInfo instanceof InstructionDetails) {
+      myDebugger.enter(new VirtualFrame(myDebugger.getCurrentFrame(), (InstructionDetails)instructionInfo));
     }
   }
 
@@ -70,7 +79,7 @@ public class Saxon9TraceListener implements TraceListener {
     if (TRACE) {
       trace("</>");
     }
-    if (instructionInfo instanceof StyleElement) {
+    if (instructionInfo instanceof StyleElement || instructionInfo instanceof InstructionDetails) {
       myDebugger.leave();
     }
   }
@@ -87,6 +96,60 @@ public class Saxon9TraceListener implements TraceListener {
   public void endCurrentItem(Item item) {
     if (item instanceof NodeInfo) {
       myDebugger.popSource();
+    }
+  }
+
+  private static class VirtualFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, Source> implements Debugger.StyleFrame {
+
+    public VirtualFrame(Debugger.StyleFrame previous, InstructionDetails instr) {
+      super(previous, new MySource(instr));
+    }
+
+    @Override
+    public String getInstruction() {
+      return getPrevious().getInstruction();
+    }
+
+    @Override
+    public Value eval(String expr) throws Debugger.EvaluationException {
+      return getPrevious().eval(expr);
+    }
+
+    @Override
+    public List<Debugger.Variable> getVariables() {
+      return getPrevious().getVariables();
+    }
+
+    private static class MySource implements Source, SourceLocator {
+      private final InstructionDetails myInstruction;
+
+      public MySource(InstructionDetails instr) {
+        myInstruction = instr;
+      }
+
+      @Override
+      public void setSystemId(String systemId) {
+      }
+
+      @Override
+      public String getPublicId() {
+        return null;
+      }
+
+      @Override
+      public String getSystemId() {
+        return myInstruction.getSystemId();
+      }
+
+      @Override
+      public int getLineNumber() {
+        return myInstruction.getLineNumber();
+      }
+
+      @Override
+      public int getColumnNumber() {
+        return myInstruction.getColumnNumber();
+      }
     }
   }
 }

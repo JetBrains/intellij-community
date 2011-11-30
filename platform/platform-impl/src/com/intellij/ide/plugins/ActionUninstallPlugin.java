@@ -62,7 +62,8 @@ public class ActionUninstallPlugin extends AnAction implements DumbAware {
           }
         }
         if (descriptor instanceof PluginNode) {
-          enabled &= PluginManagerColumnInfo.getRealNodeState((PluginNode)descriptor) == PluginNode.STATUS_DOWNLOADED;
+          enabled = false;
+          break;
         }
       }
     }

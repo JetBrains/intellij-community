@@ -19,8 +19,6 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -45,6 +43,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -85,8 +84,21 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       }
 
       @Override
-      public boolean getScrollableTracksViewportWidth() {
-        return false;
+      public String getToolTipText(MouseEvent event) {
+        final TreePath path = myTree.getPathForLocation(event.getX(), event.getY());
+        if (path == null) {
+          return "";
+        }
+        Object node = path.getLastPathComponent();
+        if (node == null || (!(node instanceof DefaultMutableTreeNode))) {
+          return "";
+        }
+        Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+        if (userObject instanceof GitCommit) {
+          GitCommit commit = (GitCommit)userObject;
+          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthor() + "\n\n" + commit.getDescription();
+        }
+        return "";
       }
     };
     myTree.setRootVisible(false);
@@ -109,7 +121,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
     });
-    
+    ToolTipManager.sharedInstance().registerComponent(myTree);
 
     myChangesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
@@ -154,7 +166,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       createNodes(commits);
       myTreeModel.nodeStructureChanged(myRootNode);
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
-      myTreeCellRenderer.recalculateWidth(commits.getAllCommits());
       TreeUtil.expandAll(myTree);
       selectFirstCommit();
     }
@@ -273,22 +284,17 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
-    
-    private int myDateMaxWidth;
-    
-    void recalculateWidth(@NotNull Collection<GitCommit> commits) {
-      for (GitCommit commit : commits) {
-        int len = getDateString(commit).length();
-        if (len > myDateMaxWidth) {
-          myDateMaxWidth = len;
-        }
-      }
-    }
+  @NotNull
+  private static String getDateString(@NotNull GitCommit commit) {
+    return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime()) + " ";
+  }
 
-    private static String getDateString(GitCommit commit) {
-      return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
-    }
+  @NotNull
+  private static String getHashString(@NotNull GitCommit commit) {
+    return commit.getShortHash().toString();
+  }
+
+  private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
 
     @Override
     public void customizeRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
@@ -302,16 +308,10 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       }
 
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN); // using probable monospace font to emulate table
-      renderer.setFont(font);
-
-      SimpleTextAttributes smallGrey = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor());
       if (userObject instanceof GitCommit) {
         GitCommit commit = (GitCommit)userObject;
-        SimpleTextAttributes small = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, renderer.getForeground());
-        renderer.append(commit.getShortHash().toString(), smallGrey);
-        renderer.append(String.format(" %" + myDateMaxWidth + "s  ", getDateString(commit)), smallGrey);
-        renderer.append(commit.getSubject(), small);
+        renderer.append(commit.getSubject(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, getTextRenderer().getForeground()));
+        renderer.setToolTipText(getHashString(commit) + " " + getDateString(commit));
       }
       else if (userObject instanceof GitRepository) {
         String repositoryPath = calcRootPath((GitRepository)userObject);
@@ -345,7 +345,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
             break;
         }
         renderer.append(text, attrs);
-        renderer.append(additionalText, smallGrey);
+        renderer.append(additionalText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor()));
       }
       else if (userObject instanceof FakeCommit) {
         int spaces = 6 + 15 + 3 + 30;

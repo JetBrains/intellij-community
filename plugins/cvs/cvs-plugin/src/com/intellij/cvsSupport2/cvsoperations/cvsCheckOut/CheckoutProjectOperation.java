@@ -48,10 +48,8 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
   private final boolean myPruneEmptyDirectories;
   private final KeywordSubstitution myKeywordSubstitution;
 
-  public static CheckoutProjectOperation createTestInstance(CvsEnvironment env, String moduleName, File targetLocation
-                                                            ) {
-    return CheckoutProjectOperation.create(env, new String[]{moduleName}, targetLocation, false,
-                                        false);
+  public static CheckoutProjectOperation createTestInstance(CvsEnvironment env, String moduleName, File targetLocation) {
+    return create(env, new String[]{moduleName}, targetLocation, false, false);
   }
 
   public CheckoutProjectOperation(String[] moduleNames,
@@ -74,22 +72,20 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
   }
 
   public static CheckoutProjectOperation create(CvsEnvironment env,
-                                  String[] moduleName,
-                                  File targetLocation,
-                                  boolean useAlternativecheckoutDir,
-                                  boolean makeNewFilesReadOnly) {
+                                                String[] moduleName,
+                                                File targetLocation,
+                                                boolean useAlternativeCheckoutDir,
+                                                boolean makeNewFilesReadOnly) {
+    final CvsApplicationLevelConfiguration config = CvsApplicationLevelConfiguration.getInstance();
+    final KeywordSubstitutionWrapper substitution = KeywordSubstitutionWrapper.getValue(config.CHECKOUT_KEYWORD_SUBSTITUTION);
 
-    CvsApplicationLevelConfiguration config = CvsApplicationLevelConfiguration.getInstance();
-    KeywordSubstitutionWrapper substitution = KeywordSubstitutionWrapper.getValue(config.CHECKOUT_KEYWORD_SUBSTITUTION);
-
-    File root;
-    String directory;
-
-    if (useAlternativecheckoutDir && targetLocation.getParentFile() == null) {
+    final File root;
+    final String directory;
+    if (useAlternativeCheckoutDir && targetLocation.getParentFile() == null) {
       root = targetLocation;
       directory = getModuleRootName(moduleName);
     }
-    else if (useAlternativecheckoutDir) {
+    else if (useAlternativeCheckoutDir) {
       root = targetLocation.getParentFile();
       directory = targetLocation.getName();
     }
@@ -107,7 +103,6 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
                                         substitution == null ? null : substitution.getSubstitution());
   }
 
-
   private static String getModuleRootName(String[] moduleNames) {
     File current = new File(moduleNames[0]);
     while (current.getParentFile() != null) current = current.getParentFile();
@@ -119,7 +114,7 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    CheckoutCommand command = new CheckoutCommand(new ThrowableRunnable<IOCommandException>() {
+    final CheckoutCommand command = new CheckoutCommand(new ThrowableRunnable<IOCommandException>() {
       public void run() throws IOCommandException {
         ((CheckoutAdminWriter) myAdminWriter).finish();
       }
@@ -154,5 +149,10 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
     options.setCheckedOutFilesReadOnly(myMakeNewFilesReadOnly);
+  }
+
+  @Override
+  public boolean runInReadThread() {
+    return false;
   }
 }
