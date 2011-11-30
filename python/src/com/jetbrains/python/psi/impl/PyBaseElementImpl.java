@@ -80,7 +80,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
         lang = vProvider.getBaseLanguage();
       }
       PythonVisitorFilter filter = PythonVisitorFilter.INSTANCE.forLanguage(lang);
-      return filter != null ? filter.isSupported(clazz, element, f) : true;
+      return filter != null ? filter.isSupported(clazz, element, file) : true;
     }
     return true;
   }
