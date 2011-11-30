@@ -29,6 +29,7 @@ import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -441,8 +442,8 @@ public class MavenProjectsManagerWatcher {
         else {
           if (!isRelevant(each.getPath())) continue;
           if (each instanceof VFilePropertyChangeEvent) {
-            if (((VFilePropertyChangeEvent)each).getPropertyName().equals(VirtualFile.PROP_NAME)) {
-              deleteRecursively(((VFilePropertyChangeEvent)each).getFile());
+            if (isRenamed(each)) {
+              deleteRecursively(each.getFile());
             }
           }
           else if (each instanceof VFileMoveEvent) {
@@ -491,8 +492,8 @@ public class MavenProjectsManagerWatcher {
           updateFile(((VFileContentChangeEvent)each).getFile());
         }
         else if (each instanceof VFilePropertyChangeEvent) {
-          if (((VFilePropertyChangeEvent)each).getPropertyName().equals(VirtualFile.PROP_NAME)) {
-            updateFile(((VFilePropertyChangeEvent)each).getFile());
+          if (isRenamed(each)) {
+            updateFile(each.getFile());
           }
         }
         else if (each instanceof VFileMoveEvent) {
@@ -500,6 +501,11 @@ public class MavenProjectsManagerWatcher {
         }
       }
       apply();
+    }
+
+    private static boolean isRenamed(VFileEvent each) {
+      return ((VFilePropertyChangeEvent)each).getPropertyName().equals(VirtualFile.PROP_NAME)
+             && !Comparing.equal(((VFilePropertyChangeEvent)each).getOldValue(), ((VFilePropertyChangeEvent)each).getNewValue());
     }
   }
 }
