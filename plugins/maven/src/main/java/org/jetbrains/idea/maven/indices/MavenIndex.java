@@ -162,7 +162,7 @@ public class MavenIndex {
         catch (Exception e2) {
           throw new MavenIndexException("Cannot open index " + myDir.getPath(), e2);
         }
-        isBroken = true;
+        markAsBroken();
       }
     }
     finally {
@@ -581,10 +581,15 @@ public class MavenIndex {
         }
       }
     }
-
-    isBroken = true;
-    myListener.indexIsBroken(this);
+    markAsBroken();
     return defaultValue;
+  }
+
+  private void markAsBroken() {
+    if (!isBroken) {
+      myListener.indexIsBroken(this);
+    }
+    isBroken = true;
   }
 
   private interface IndexTask<T> {

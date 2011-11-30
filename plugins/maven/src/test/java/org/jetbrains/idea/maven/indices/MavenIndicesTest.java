@@ -274,6 +274,14 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
+  public void testFoo() throws Exception {
+    myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    shutdownIndices();
+    initIndices();
+
+    assertFalse(isBroken);
+  }
+
   public void testSavingFailureMessage() throws Exception {
     MavenIndex i = myIndices.add("id", "xxx", MavenIndex.Kind.REMOTE);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
