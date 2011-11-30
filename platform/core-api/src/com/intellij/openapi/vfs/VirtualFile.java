@@ -612,7 +612,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * The same as {@link #refresh(boolean, boolean)} but also runs <code>postRunnable</code>
    * after the operation is completed.
    */
-  public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
+  public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
   public String getPresentableName() {
     return getName();
