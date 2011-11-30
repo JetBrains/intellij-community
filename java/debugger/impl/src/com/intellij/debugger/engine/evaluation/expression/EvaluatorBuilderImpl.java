@@ -394,7 +394,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
 
-      return new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType.getCanonicalText());
+      return new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType == null ? null : expressionExpectedType.getCanonicalText());
     }
 
     private static boolean isBinaryNumericPromotionApplicable(PsiType lType, PsiType rType, IElementType opType) {
