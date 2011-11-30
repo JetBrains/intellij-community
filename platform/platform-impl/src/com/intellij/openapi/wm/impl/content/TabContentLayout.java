@@ -22,6 +22,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.tabs.impl.singleRow.MoreIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -291,7 +292,7 @@ class TabContentLayout extends ContentLayout {
 
     boolean prevSelected = false;
     for (int i = 0; i < myTabs.size(); i++) {
-      boolean last = i == myTabs.size() - 1;
+      boolean last = (i == myTabs.size() - 1) || ((i + 1 < myTabs.size() && myTabs.get(i + 1).getBounds().width == 0));
       ContentTabLabel each = myTabs.get(i);
       Rectangle r = each.getBounds();
 
@@ -307,13 +308,17 @@ class TabContentLayout extends ContentLayout {
         myCached.put(key.toString(), image);
       }
       
-      g.drawImage(image, r.x, r.y, null);
+      if (image != null) {
+        g.drawImage(image, r.x, r.y, null);
+      }
       
       prevSelected = each.isSelected();
     }
   }
   
+  @Nullable
   private static BufferedImage drawToBuffer(Rectangle r, boolean selected, boolean last, boolean prevSelected, boolean active) {
+    if (r.width == 0 || r.height == 0) return null;
     BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = image.createGraphics();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
