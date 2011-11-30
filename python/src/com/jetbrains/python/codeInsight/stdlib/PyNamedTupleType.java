@@ -29,7 +29,7 @@ public class PyNamedTupleType extends PyClassType implements PyCallableType {
   private final boolean myDefinition;
   private final PsiElement myDeclaration;
   private final List<String> myFields;
-  
+
   private static final ImmutableSet<String> ourClassMembers = ImmutableSet.of("_fields", "_make");
   private static final ImmutableSet<String> ourInstanceMembers = ImmutableSet.of("_asdict", "_replace");
 
@@ -83,7 +83,7 @@ public class PyNamedTupleType extends PyClassType implements PyCallableType {
 
   @Override
   public String getName() {
-    return "namedtuple '" + myName + "'";
+    return myName;
   }
 
   @Override
@@ -97,6 +97,16 @@ public class PyNamedTupleType extends PyClassType implements PyCallableType {
       return new PyNamedTupleType(myDeclaration, myName, myFields, false);
     }
     return null;
+  }
+
+  @Override
+  public PyClassType toInstance() {
+    return myIsDefinition ? new PyNamedTupleType(myDeclaration, myName, myFields, false) : this;
+  }
+
+  @Override
+  public String toString() {
+    return "PyNamedTupleType: " + myName;
   }
 
   @Nullable
