@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBinaryExpressionNavigator;
@@ -74,6 +75,9 @@ public class PyCodeFragmentUtil {
         for (Instruction next : instruction.allSucc()) {
           // Ignore conditional instruction
           if (next instanceof ConditionalInstruction){
+            continue;
+          }
+          if (next instanceof ReadWriteInstruction && ((ReadWriteInstruction)next).getAccess().isAssertTypeAccess()) {
             continue;
           }
           final PsiElement nextElement = next.getElement();
