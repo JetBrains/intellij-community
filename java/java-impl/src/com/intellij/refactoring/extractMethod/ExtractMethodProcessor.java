@@ -1179,7 +1179,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean applyChosenClassAndExtract(List<PsiVariable> inputVariables, @Nullable Pass<ExtractMethodProcessor> extractPass)
     throws PrepareFailedException {
     myStatic = shouldBeStatic();
-    if (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC)) {
+    if (!PsiUtil.isLocalOrAnonymousClass(myTargetClass) && (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC))) {
       ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass);
       for (int i = 0; i < myElements.length && !needsThis.usesMembers(); i++) {
         PsiElement element = myElements[i];

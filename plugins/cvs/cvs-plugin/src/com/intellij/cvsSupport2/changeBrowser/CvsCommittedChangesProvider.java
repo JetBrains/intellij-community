@@ -19,10 +19,10 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
-import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.cvsSupport2.connections.CvsRootOnFileSystem;
+import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +42,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -50,7 +49,6 @@ import org.netbeans.lib.cvsclient.command.log.Revision;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -62,8 +60,6 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   private final Project myProject;
   private final MyZipper myZipper;
-
-  @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
 
   public CvsCommittedChangesProvider(Project project) {
     myProject = project;
@@ -137,8 +133,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   @Nullable
   @Override
   public Pair<CvsChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
-    final File ioFile = new File(file.getPath());
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(ioFile);
+    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
     final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
     final CvsRepositoryLocation cvsLocation = getLocationFor(filePath);
     if (cvsLocation == null) return null;
@@ -158,7 +153,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
         result[0] = builder.addRevision(revision);
       }
     }, cvsLocation.getModuleName(), number.asString());
-    final CvsResult executionResult = runRLogOperation(operation);
+    final CvsResult executionResult = operation.run(myProject);
 
     if (executionResult.isCanceled()) {
       throw new ProcessCanceledException();
@@ -191,7 +186,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
           }
         }
       });
-    final CvsResult cvsResult = runRLogOperation(operation2);
+    final CvsResult cvsResult = operation2.run(myProject);
     if (cvsResult.hasErrors()) {
       throw cvsResult.composeError();
     }
@@ -243,7 +238,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
             }
           }
         });
-      final CvsResult executionResult = runRLogOperation(operation);
+      final CvsResult executionResult = operation.run(myProject);
 
       if (executionResult.isCanceled()) {
         throw new ProcessCanceledException();
@@ -259,10 +254,16 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   private List<CvsChangeList> loadCommittedChanges(final ChangeBrowserSettings settings,
                                                    final String module,
-                                                   final CvsEnvironment connectionSettings,
+                                                   CvsEnvironment connectionSettings,
                                                    final VirtualFile rootFile) throws VcsException {
     if (connectionSettings.isOffline()) {
       return Collections.emptyList();
+    }
+    try {
+      // refresh cvs connection settings from file system
+      connectionSettings = CvsRootOnFileSystem.createMeOn(CvsVfsUtil.getFileFor(rootFile));
+    }
+    catch (CannotFindCvsRootException ignore) {
     }
     final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, rootFile);
     Date dateTo = settings.getDateBeforeFilter();
@@ -280,7 +281,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
           log.add(logInformationWrapper);
         }
       });
-    final CvsResult executionResult = runRLogOperation(operation);
+    final CvsResult executionResult = operation.run(myProject);
 
     if (executionResult.isCanceled()) {
       throw new ProcessCanceledException();
@@ -294,28 +295,6 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       settings.filterChanges(versions);
       return versions;
     }
-  }
-
-  private CvsResult runRLogOperation(final LoadHistoryOperation operation) {
-    final CvsResult executionResult = runRLogOperationImpl(operation);
-
-    for (VcsException error : executionResult.getErrors()) {
-      for (String message : error.getMessages()) {
-        if (message.contains(INVALID_OPTION_S)) {
-          operation.disableSuppressEmptyHeadersForCurrentCvsRoot();
-          // try only once
-          return runRLogOperationImpl(operation);
-        }
-      }
-    }
-    return executionResult;
-  }
-
-  private CvsResult runRLogOperationImpl(final LoadHistoryOperation operation) {
-    final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(new CommandCvsHandler(CvsBundle.message("browse.changes.load.history.progress.title"), operation),
-                               CvsOperationExecutorCallback.EMPTY);
-    return executor.getResult();
   }
 
   public int getFormatVersion() {
