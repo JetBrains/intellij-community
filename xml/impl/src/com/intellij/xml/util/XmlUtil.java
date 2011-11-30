@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -34,12 +33,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.StringPattern;
@@ -74,7 +74,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -1009,48 +1008,6 @@ public class XmlUtil {
 
     return null;
   }
-
-  public static final String HTML5_SCHEMA_LOCATION;
-  public static final String XHTML5_SCHEMA_LOCATION;
-  
-  private static <T> String getClassesListString(T[] a) {
-    final StringBuilder builder = new StringBuilder();
-    for (int i = 0, n = a.length; i < n; i++) {
-      T element = a[i];
-      builder.append(element != null ? element.getClass().getName() : "NULL");
-      if (i < n - 1) {
-        builder.append(", ");
-      }
-    }
-    return builder.toString();
-  }
-  
-  static {
-    final Html5SchemaProvider[] providers = Html5SchemaProvider.EP_NAME.getExtensions();
-    final URL htmlSchemaLocationURL;
-    final URL xhtmlSchemaLocationURL;
-    
-    LOG.assertTrue(providers.length > 0, "RelaxNG based schema for HTML5 is not supported. Old XSD schema will be used");
-    
-    if (providers.length > 1) {
-      LOG.error("More than one HTML5 schema providers found: " + getClassesListString(providers));
-    }
-    
-    if (providers.length > 0) {
-      htmlSchemaLocationURL = providers[0].getHtmlSchemaLocation();
-      xhtmlSchemaLocationURL = providers[0].getXhtmlSchemaLocation();
-    }
-    else {
-      htmlSchemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
-      xhtmlSchemaLocationURL = htmlSchemaLocationURL;
-    }
-
-    HTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(FileUtil.unquote(htmlSchemaLocationURL.toExternalForm())));
-    LOG.info("HTML5_SCHEMA_LOCATION = " + HTML5_SCHEMA_LOCATION);
-    
-    XHTML5_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(FileUtil.unquote(xhtmlSchemaLocationURL.toExternalForm())));
-    LOG.info("XHTML5_SCHEMA_LOCATION = " + XHTML5_SCHEMA_LOCATION);
-  }
   
   @Nullable
   public static String getDtdUri(XmlDocument document) {
@@ -1074,8 +1031,8 @@ public class XmlUtil {
         }
         else if (HtmlUtil.isHtml5Doctype(doctype)) {
           docType = doctype.getLanguage() instanceof HTMLLanguage
-                    ? HTML5_SCHEMA_LOCATION
-                    : XHTML5_SCHEMA_LOCATION;
+                    ? Html5SchemaProvider.HTML5_SCHEMA_LOCATION
+                    : Html5SchemaProvider.XHTML5_SCHEMA_LOCATION;
         }
       }
       return docType;

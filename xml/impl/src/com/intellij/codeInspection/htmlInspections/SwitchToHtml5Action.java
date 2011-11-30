@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.Html5SchemaProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -71,6 +71,6 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
   }
 
   private static void applyFix(Project project) {
-    ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(XmlUtil.HTML5_SCHEMA_LOCATION, project);
+    ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(Html5SchemaProvider.HTML5_SCHEMA_LOCATION, project);
   }
 }

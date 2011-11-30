@@ -52,10 +52,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
@@ -860,8 +857,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private String getNsLocation(String ns) {
     if (XmlUtil.XHTML_URI.equals(ns)) {
       String defaultHtmlDoctype = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
-      if (XmlUtil.HTML5_SCHEMA_LOCATION.equals(defaultHtmlDoctype)) {
-        defaultHtmlDoctype = XmlUtil.XHTML5_SCHEMA_LOCATION;
+      if (Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(defaultHtmlDoctype)) {
+        defaultHtmlDoctype = Html5SchemaProvider.XHTML5_SCHEMA_LOCATION;
       }
       return defaultHtmlDoctype;
     }
