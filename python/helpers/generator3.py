@@ -2434,7 +2434,7 @@ if __name__ == "__main__":
             names.remove('__main__') # we don't want ourselves processed
         ok = True
         for name in names:
-            ok = ok and processOne(name, None, True)
+            ok = processOne(name, None, True) and ok
         if not ok:
             sys.exit(1)
 
