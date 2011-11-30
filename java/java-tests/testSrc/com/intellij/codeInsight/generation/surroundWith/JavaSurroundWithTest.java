@@ -113,18 +113,23 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   private void doTestWithTemplateFinish(@NotNull String fileName, final Surrounder surrounder, @Nullable String textToType)
-    throws Exception
-  {
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-    configureByFile(BASE_PATH + fileName + ".java");
-    SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
-    if (textToType != null) {
-      type(textToType);
+    throws Exception {
+    final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
+    try {
+      templateManager.setTemplateTesting(true);
+      configureByFile(BASE_PATH + fileName + ".java");
+      SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
+      if (textToType != null) {
+        type(textToType);
+      }
+      TemplateState templateState = TemplateManagerImpl.getTemplateState(getEditor());
+      assertNotNull(templateState);
+      templateState.nextTab();
+      checkResultByFile(BASE_PATH + fileName + "_after.java");
     }
-    TemplateState templateState = TemplateManagerImpl.getTemplateState(getEditor());
-    assertNotNull(templateState);
-    templateState.nextTab();
-    checkResultByFile(BASE_PATH + fileName + "_after.java");
+    finally {
+      templateManager.setTemplateTesting(false);
+    }
   }
 
 }
