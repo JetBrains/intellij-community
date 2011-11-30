@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -213,6 +214,8 @@ public class JdkChooserPanel extends JPanel {
     }
     if (jdkToSelect != null) {
       jdkChooserPanel.selectJdk(jdkToSelect);
+    } else {
+      ListScrollingUtil.ensureSelectionExists(jdkChooserPanel.myList);
     }
     jdkChooserPanel.myList.addMouseListener(new MouseAdapter() {
       @Override
