@@ -303,7 +303,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Finds file by path relative to this file.
    *
-   * @param relPath the relative path to search by
+   * @param relPath the relative path with / used as separators
    * @return the file if found any, <code>null</code> otherwise
    */
   @Nullable
