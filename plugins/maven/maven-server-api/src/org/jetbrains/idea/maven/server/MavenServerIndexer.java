@@ -26,7 +26,6 @@ import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public interface MavenServerIndexer extends Remote {
@@ -47,7 +46,7 @@ public interface MavenServerIndexer extends Remote {
                                                                                                         MavenServerIndexerException,
                                                                                                         MavenServerProcessCanceledException;
 
-  List<MavenId> getAllArtifacts(int indexId) throws RemoteException, MavenServerIndexerException;
+  void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws RemoteException, MavenServerIndexerException;
 
   MavenId addArtifact(int indexId, File artifactFile) throws RemoteException, MavenServerIndexerException;
 

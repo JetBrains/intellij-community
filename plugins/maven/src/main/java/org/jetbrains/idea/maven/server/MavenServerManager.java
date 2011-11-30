@@ -52,6 +52,7 @@ import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -342,6 +343,17 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
     }
   }
 
+  public static MavenServerIndicesProcessor wrapAndExport(final MavenIndicesProcessor processor) {
+    try {
+      RemoteMavenServerIndicesProcessor result = new RemoteMavenServerIndicesProcessor(processor);
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (RemoteException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
     public void info(Throwable e) {
       MavenLog.LOG.info(e);
@@ -408,6 +420,19 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
 
     public void printMessage(int level, String message, Throwable throwable) {
       myConsole.printMessage(level, message, throwable);
+    }
+  }
+
+  private static class RemoteMavenServerIndicesProcessor extends MavenRemoteObject implements MavenServerIndicesProcessor {
+    private final MavenIndicesProcessor myProcessor;
+
+    private RemoteMavenServerIndicesProcessor(MavenIndicesProcessor processor) {
+      myProcessor = processor;
+    }
+
+    @Override
+    public void processArtifacts(Collection<MavenId> artifacts) {
+      myProcessor.processArtifacts(artifacts);
     }
   }
 }

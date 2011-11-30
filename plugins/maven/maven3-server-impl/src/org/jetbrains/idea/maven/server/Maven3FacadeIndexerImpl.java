@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.model.MavenId;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public class Maven3FacadeIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
@@ -55,7 +54,7 @@ public class Maven3FacadeIndexerImpl extends MavenRemoteObject implements MavenS
   }
 
   @Override
-  public List<MavenId> getAllArtifacts(int indexId) throws RemoteException, MavenServerIndexerException {
+  public void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws RemoteException, MavenServerIndexerException {
     throw new UnsupportedOperationException();
   }
 

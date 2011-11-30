@@ -59,6 +59,18 @@ public class MavenProgressIndicator {
     myIndicator.setFraction(fraction);
   }
 
+  public synchronized void setIndeterminate(boolean indeterminate) {
+    myIndicator.setIndeterminate(indeterminate);
+  }
+
+  public synchronized void pushState() {
+    myIndicator.pushState();
+  }
+
+  public synchronized void popState() {
+    myIndicator.popState();
+  }
+
   public synchronized void cancel() {
     myIndicator.cancel();
   }
