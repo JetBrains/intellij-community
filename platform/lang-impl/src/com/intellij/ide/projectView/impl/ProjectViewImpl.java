@@ -274,7 +274,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     myCombo = new ComboBox();
 
-    final JPanel combo = new JPanel(new BorderLayout());
+    final JPanel combo = new JPanel(new BorderLayout(4, 0));
     combo.setBorder(new EmptyBorder(4, 4, 4, 4));
 
     if(myLabel != null) {
