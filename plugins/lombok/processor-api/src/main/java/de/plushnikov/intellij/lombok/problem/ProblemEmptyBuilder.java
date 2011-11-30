@@ -8,6 +8,15 @@ import com.intellij.codeInspection.ProblemHighlightType;
  */
 public class ProblemEmptyBuilder implements ProblemBuilder {
 
+  private static ProblemEmptyBuilder instance = new ProblemEmptyBuilder();
+
+  public static ProblemEmptyBuilder getInstance() {
+    return instance;
+  }
+
+  private ProblemEmptyBuilder() {
+  }
+
   public void addWarning(String message) {
   }
 

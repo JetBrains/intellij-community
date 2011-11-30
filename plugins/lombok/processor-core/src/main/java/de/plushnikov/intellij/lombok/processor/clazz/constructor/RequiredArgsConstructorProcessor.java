@@ -15,6 +15,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.lombok.LombokConstants;
+import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,20 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
 
   public RequiredArgsConstructorProcessor() {
     super(CLASS_NAME, PsiMethod.class);
+  }
+
+  @Override
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    boolean result;
+
+    result = super.validate(psiAnnotation, psiClass, builder);
+
+    final Collection<PsiField> allReqFields = getRequiredFields(psiClass);
+    final String staticConstructorName = getStaticConstructorName(psiAnnotation);
+    if (!validateIsConstructorDefined(psiClass, staticConstructorName, allReqFields, builder)) {
+      result = false;
+    }
+    return result;
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
@@ -46,7 +61,7 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
   }
 
   @NotNull
-  protected Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
+  public Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> result = new ArrayList<PsiField>();
     for (PsiField psiField : getAllNotInitializedAndNotStaticFields(psiClass)) {
       boolean addField = false;

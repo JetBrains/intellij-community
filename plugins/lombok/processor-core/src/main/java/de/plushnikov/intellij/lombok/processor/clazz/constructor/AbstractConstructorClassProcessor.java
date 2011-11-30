@@ -48,7 +48,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
     if (!validateVisibility(psiAnnotation)) {
       result = false;
     }
-    //TODO add validation for construction name already exist
     return result;
   }
 
@@ -66,15 +65,27 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
     return result;
   }
 
-  //TODO add check if constructor already exists
-  private boolean checkHasConstructor(PsiClass psiClass, Collection<PsiField> params) {
-    PsiMethod[] classConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-    List<PsiType> paramTypes = new ArrayList<PsiType>(params.size());
+  public boolean validateIsConstructorDefined(@NotNull PsiClass psiClass, @Nullable String staticConstructorName, @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
+    final boolean isStaticConstructor = isStaticConstructor(staticConstructorName);
+
+    final PsiMethod[] definedMethods = isStaticConstructor ?
+        PsiClassUtil.collectClassStaticMethodsIntern(psiClass) :
+        PsiClassUtil.collectClassConstructorIntern(psiClass);
+
+    final List<PsiType> paramTypes = new ArrayList<PsiType>(params.size());
     for (PsiField param : params) {
       paramTypes.add(param.getType());
     }
-    for (PsiMethod classConstructor : classConstructors) {
-      if (PsiElementUtil.methodMatches(classConstructor, null, null, psiClass.getName(), paramTypes)) {
+
+    final String methodName = isStaticConstructor ? staticConstructorName : psiClass.getName();
+
+    for (PsiMethod classConstructor : definedMethods) {
+      if (PsiElementUtil.methodMatches(classConstructor, null, null, methodName, paramTypes)) {
+        if (params.isEmpty()) {
+          builder.addError("Constructor without parameters is already defined");
+        } else {
+          builder.addError(String.format("Constructor with %d parameters is already defined", params.size()));
+        }
         return false;
       }
     }
@@ -105,16 +116,24 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
 
   @NotNull
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params) {
-    final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticName", String.class);
+    final String staticName = getStaticConstructorName(psiAnnotation);
 
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, params, staticName);
+  }
+
+  protected String getStaticConstructorName(@NotNull PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticName", String.class);
+  }
+
+  protected boolean isStaticConstructor(@Nullable String staticName) {
+    return !StringUtil.isEmptyOrSpaces(staticName);
   }
 
   @NotNull
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params, @Nullable String staticName) {
     final String suppressConstructorProperties = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "suppressConstructorProperties", String.class);
 
-    final boolean staticConstrRequired = !StringUtil.isEmptyOrSpaces(staticName);
+    final boolean staticConstrRequired = isStaticConstructor(staticName);
 
     final String constrVisibility = staticConstrRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodVisibility;
 

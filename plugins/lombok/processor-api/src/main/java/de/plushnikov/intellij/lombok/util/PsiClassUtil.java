@@ -1,14 +1,16 @@
 package de.plushnikov.intellij.lombok.util;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassImpl;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author Plushnikov Michail
@@ -37,6 +39,19 @@ public class PsiClassUtil {
       }
     }
     return classConstructors.toArray(new PsiMethod[classConstructors.size()]);
+  }
+
+  @NotNull
+  public static PsiMethod[] collectClassStaticMethodsIntern(@NotNull PsiClass psiClass) {
+    final PsiMethod[] psiMethods = collectClassMethodsIntern(psiClass);
+
+    Collection<PsiMethod> staticMethods = new ArrayList<PsiMethod>(5);
+    for (PsiMethod psiMethod : psiMethods) {
+      if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        staticMethods.add(psiMethod);
+      }
+    }
+    return staticMethods.toArray(new PsiMethod[staticMethods.size()]);
   }
 
   /**

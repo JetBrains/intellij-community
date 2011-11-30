@@ -1,5 +1,12 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
@@ -17,12 +24,6 @@ import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Base lombok processor class for class annotations
@@ -51,7 +52,7 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder);
 
   public final <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    if (validate(psiAnnotation, psiClass, new ProblemEmptyBuilder())) {
+    if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
       processIntern(psiClass, psiAnnotation, target);
     }
   }
