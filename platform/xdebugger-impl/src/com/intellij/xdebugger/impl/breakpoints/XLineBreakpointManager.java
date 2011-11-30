@@ -235,6 +235,7 @@ public class XLineBreakpointManager {
       final Editor editor = e.getEditor();
       final MouseEvent mouseEvent = e.getMouseEvent();
       if (mouseEvent.isPopupTrigger()
+          || mouseEvent.isMetaDown() || mouseEvent.isControlDown()
           || mouseEvent.getButton() != MouseEvent.BUTTON1
           || MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(editor)
           || e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA

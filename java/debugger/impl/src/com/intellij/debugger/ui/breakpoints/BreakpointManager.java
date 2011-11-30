@@ -289,6 +289,10 @@ public class BreakpointManager implements JDOMExternalizable {
               if (event.getButton() != 1) {
                 return;
               }
+              if (e.getMouseEvent().isControlDown() || e.getMouseEvent().isMetaDown()) {
+                return;
+              }
+
               if (XDebuggerUtil.getInstance().canPutBreakpointAt(myProject, FileDocumentManager.getInstance().getFile(document), line)) {
                 return;
               }
