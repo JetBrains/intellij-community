@@ -103,7 +103,7 @@ public class PythonSdkType extends SdkType {
   @NotNull
   @NonNls
   public static String getBuiltinsFileName(Sdk sdk) {
-    final String version = sdk.getVersionString(); 
+    final String version = sdk.getVersionString();
     if (version != null && version.startsWith("Python 3")) {
       return PyBuiltinCache.BUILTIN_FILE_3K;
     }
@@ -191,6 +191,28 @@ public class PythonSdkType extends SdkType {
     };
     result.setTitle(PyBundle.message("sdk.select.path"));
     return result;
+  }
+
+  public static boolean isVirtualEnv(Sdk sdk) {
+    final String path = sdk.getHomePath();
+    return path != null && getVirtualEnvRoot(path) != null;
+  }
+
+  @Nullable
+  public Sdk getVirtualEnvBaseSdk(Sdk sdk) {
+    if (isVirtualEnv(sdk)) {
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk.getHomePath());
+      final String version = getVersionString(sdk);
+      if (flavor != null && version != null) {
+        for (Sdk baseSdk : getAllSdks()) {
+          final PythonSdkFlavor baseFlavor = PythonSdkFlavor.getFlavor(baseSdk.getHomePath());
+          if (!isVirtualEnv(baseSdk) && flavor.equals(baseFlavor) && version.equals(getVersionString(baseSdk))) {
+            return baseSdk;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -425,24 +447,11 @@ public class PythonSdkType extends SdkType {
     final Task.Modal setupTask = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
       // TODO: make this a backgroundable task. see #setupSdkPaths(final Sdk sdk) and its modificator handling
       public void run(@NotNull final ProgressIndicator indicator) {
-        try {
-          sdkModificator.removeAllRoots();
-          updateSdkRootsFromSysPath(sdkModificator, indicator);
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            new PySkeletonRefresher(sdk, getSkeletonsPath(sdk.getHomePath()), indicator).regenerateSkeletons(null);
-            PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
-          }
-          //sdkModificator.commitChanges() must happen outside, in dispatch thread.
-        }
-        catch (InvalidSdkException e) {
-          success.set(false);
-          LOG.warn(e);
-          Notifications.Bus.notify(
-            new Notification(
-              SKELETONS_TOPIC, "Refresh failed", "Skeleton re-generation failed. Please see PyCharm log for traceback. Send it to developers.",
-              NotificationType.WARNING
-            )
-          );
+        sdkModificator.removeAllRoots();
+        updateSdkRootsFromSysPath(sdkModificator, indicator);
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          refreshSkeletonsOfSDK(sdk, getSkeletonsPath(sdk.getHomePath()), null);
+          PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
         }
       }
     };
@@ -648,13 +657,15 @@ public class PythonSdkType extends SdkType {
   }
 
   static void refreshSkeletonsOfSDK(Sdk sdk) {
+    refreshSkeletonsOfSDK(sdk, findSkeletonsPath(sdk), new Ref<Boolean>(false));
+  }
+
+  static void refreshSkeletonsOfSDK(Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag) {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
     final List<String> failed_sdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     List<String> sdk_errors;
-    Ref<Boolean> migration_flag = new Ref<Boolean>(false);
     final String homePath = sdk.getHomePath();
-    final String skeletonsPath = findSkeletonsPath(sdk);
     if (skeletonsPath == null) {
       LOG.info("Could not find skeletons path for SDK path " + homePath);
     }
@@ -662,7 +673,7 @@ public class PythonSdkType extends SdkType {
       LOG.info("Refreshing skeletons for " + homePath);
       try {
         SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-        sdk_errors = new PySkeletonRefresher(sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migration_flag);
+        sdk_errors = new PySkeletonRefresher(sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migrationFlag);
         if (sdk_errors.size() > 0) {
           String sdk_name = sdk.getName();
           List<String> known_errors = errors.get(sdk_name);
