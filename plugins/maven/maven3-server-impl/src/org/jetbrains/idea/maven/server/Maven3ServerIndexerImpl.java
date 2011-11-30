@@ -27,10 +27,10 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Set;
 
-public class Maven3FacadeIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
+public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
   @Override
   public int createIndex(@NotNull String indexId,
-                         @Nullable String repositoryId,
+                         @NotNull String repositoryId,
                          @Nullable File file,
                          @Nullable String url,
                          @NotNull File indexDir) throws RemoteException, MavenServerIndexerException {

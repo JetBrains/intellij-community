@@ -156,7 +156,7 @@ public class MavenIndex {
         doOpen();
       }
       catch (Exception e1) {
-        MavenLog.LOG.info(e1);
+        MavenLog.LOG.warn(e1);
         try {
           doOpen();
         }
@@ -223,7 +223,7 @@ public class MavenIndex {
       }
     }
     catch (IOException e) {
-      MavenLog.LOG.info(e);
+      MavenLog.LOG.warn(e);
     }
   }
 
@@ -291,15 +291,13 @@ public class MavenIndex {
 
   private void handleUpdateException(Exception e) {
     myFailureMessage = e.getMessage();
-    MavenLog.LOG.info("Failed to update Maven indices for: [" + myRepositoryId + "] " + myRepositoryPathOrUrl, e);
+    MavenLog.LOG.warn("Failed to update Maven indices for: [" + myRepositoryId + "] " + myRepositoryPathOrUrl, e);
   }
 
   private int createContext(File contextDir, String suffix) throws MavenServerIndexerException {
     String indexId = myDir.getName() + "-" + suffix;
-    // Nexus cannot update index if the id does not equal to the stored one.
-    String repoId = contextDir.exists() ? null : myDir.getName();
     return myIndexer.createIndex(indexId,
-                                 repoId,
+                                 myRepositoryId,
                                  getRepositoryFile(),
                                  getRepositoryUrl(),
                                  contextDir);
@@ -661,7 +659,7 @@ public class MavenIndex {
         if (indexId != 0 && releaseIndexContext) myIndexer.releaseIndex(indexId);
       }
       catch (MavenServerIndexerException e) {
-        MavenLog.LOG.info(e);
+        MavenLog.LOG.warn(e);
         if (exceptions[0] == null) exceptions[0] = new MavenIndexException(e);
       }
 
@@ -680,7 +678,7 @@ public class MavenIndex {
         if (enumerator != null) enumerator.close();
       }
       catch (IOException e) {
-        MavenLog.LOG.info(e);
+        MavenLog.LOG.warn(e);
         if (exceptions[0] == null) exceptions[0] = new MavenIndexException(e);
       }
     }

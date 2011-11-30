@@ -33,7 +33,7 @@ public interface MavenServerIndexer extends Remote {
   String SEARCH_TERM_CLASS_NAMES = "c";
 
   int createIndex(@NotNull String indexId,
-                  @Nullable String repositoryId,
+                  @NotNull String repositoryId,
                   @Nullable File file,
                   @Nullable String url,
                   @NotNull File indexDir) throws RemoteException, MavenServerIndexerException;
