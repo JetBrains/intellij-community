@@ -165,6 +165,7 @@ public class FileBasedIndex implements ApplicationComponent {
         synchronized (myTransactionMap) {
           myTransactionMap.remove(doc);
         }
+        incTransactionCount(doc);
       }
     });
 
@@ -1234,7 +1235,8 @@ public class FileBasedIndex implements ApplicationComponent {
       content = new AuthenticContent(document);
     }
 
-    final long currentDocStamp = content.getModificationStamp();
+    final long currentDocStamp = content.getModificationStamp() +
+                                 getTransactionCount(document); // we add transaction count in order to deal with committed status
     if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp)) {
       final Ref<StorageException> exRef = new Ref<StorageException>(null);
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
@@ -1278,6 +1280,18 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
     return true;
+  }
+
+  private static final Key<Integer> TRANSACTION_COUNT = new Key<Integer>("Transaction count");
+  
+  private long getTransactionCount(@NotNull Document document) {
+    Integer data = document.getUserData(TRANSACTION_COUNT);
+    return data != null ? data : 0;
+  }
+
+  private void incTransactionCount(@NotNull Document document) {
+    Integer data = document.getUserData(TRANSACTION_COUNT);
+    document.putUserData(TRANSACTION_COUNT, (data != null ? data : 0) + 1);
   }
 
   public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
