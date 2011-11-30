@@ -2432,8 +2432,11 @@ if __name__ == "__main__":
             names.append(BUILTIN_MOD_NAME)
         if '__main__' in names:
             names.remove('__main__') # we don't want ourselves processed
+        ok = True
         for name in names:
-            processOne(name, None, True)
+            ok = ok and processOne(name, None, True)
+        if not ok:
+            sys.exit(1)
 
     else:
         if len(args) > 2:

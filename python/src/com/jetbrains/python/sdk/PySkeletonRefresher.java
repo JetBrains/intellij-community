@@ -61,6 +61,16 @@ public class PySkeletonRefresher {
   private Map<String,Pair<Integer,Long>> myBlacklist;
   private SkeletonVersionChecker myVersionChecker;
 
+  private static class ListBinariesResult {
+    public final int generatorVersion;
+    public final Map<String, File> modules;
+
+    ListBinariesResult(int generatorVersion, Map<String, File> modules) {
+      this.generatorVersion = generatorVersion;
+      this.modules = modules;
+    }
+  }
+
   /**
    * Creates a new object that refreshes skeletons of given SDK.
    * @param sdk a Python SDK
@@ -72,7 +82,7 @@ public class PySkeletonRefresher {
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
   }
-  
+
   private void indicate(String msg) {
     if (myIndicator != null) {
       myIndicator.checkCanceled();
@@ -93,23 +103,24 @@ public class PySkeletonRefresher {
     }
   }
 
-  private String getExtraSyspath() {
-    if (myExtraSyspath == null) {
-      VirtualFile[] class_dirs = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-      StringBuilder arg_builder = new StringBuilder("\"");
-      int i = 0;
-      while (i < class_dirs.length) {
-        if (i > 0) arg_builder.append(File.pathSeparator);
-        if (class_dirs[i].isInLocalFileSystem()) {
-          final String pathname = class_dirs[i].getPath();
-          if (!mySkeletonsPath.equals(pathname)) arg_builder.append(pathname);
-        }
-        i += 1;
+  private static String getExtraSysPath(Sdk sdk, String skeletonsPath) {
+    final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    final StringBuilder builder = new StringBuilder("\"");
+    int i = 0;
+    while (i < classDirs.length) {
+      if (i > 0) {
+        builder.append(File.pathSeparator);
       }
-      arg_builder.append("\"");
-      myExtraSyspath = arg_builder.toString();
+      if (classDirs[i].isInLocalFileSystem()) {
+        final String pathname = classDirs[i].getPath();
+        if (!skeletonsPath.equals(pathname)) {
+          builder.append(pathname);
+        }
+      }
+      i += 1;
     }
-    return myExtraSyspath;
+    builder.append("\"");
+    return builder.toString();
   }
 
   /**
@@ -117,7 +128,7 @@ public class PySkeletonRefresher {
    * @return path name of skeleton dir for the SDK, guaranteed to be already created.
    */
   @NotNull
-  public String getSkeletonPath() {
+  public String getSkeletonsPath() {
     if (mySkeletonsPath == null) {
       mySkeletonsPath = PythonSdkType.getSkeletonsPath(mySdk.getHomePath());
       final File skeletonsDir = new File(mySkeletonsPath);
@@ -132,14 +143,22 @@ public class PySkeletonRefresher {
     return regenerateSkeletons(cached_checker, null);
   }
 
-  List<String> regenerateSkeletons(
-    @Nullable SkeletonVersionChecker cached_checker,
-    @Nullable Ref<Boolean> migration_flag
-  ) {
-    List<String> error_list = new SmartList<String>();
-    String home_path = mySdk.getHomePath();
-    final File skel_dir = new File(mySkeletonsPath);
-    if (!skel_dir.exists()) skel_dir.mkdirs();
+  @Nullable
+  private static Integer getSkeletonVersion(File file) {
+    final Matcher headerMatcher = getParseHeader(file);
+    if (headerMatcher != null && headerMatcher.matches()) {
+      return fromVersionString(headerMatcher.group(2));
+    }
+    return null;
+  }
+
+  List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cached_checker,
+                                   @Nullable Ref<Boolean> migration_flag) {
+    final List<String> error_list = new SmartList<String>();
+    final String home_path = mySdk.getHomePath();
+    final String skeletonsPath = getSkeletonsPath();
+    final File skeletonsDir = new File(skeletonsPath);
+    if (!skeletonsDir.exists()) skeletonsDir.mkdirs();
     final String readable_path = PythonSdkType.shortenDirName(home_path);
 
     myBlacklist = loadBlacklist();
@@ -147,11 +166,8 @@ public class PySkeletonRefresher {
     indicate(PyBundle.message("sdk.gen.querying.$0", readable_path));
     // get generator version and binary libs list in one go
 
-    final List<String> binaries_output = listBinaries();
-    if (binaries_output.size() < 1) {
-      throw new InvalidSdkException("Empty output from " + GENERATOR3 + " for " + home_path);
-    }
-    myGeneratorVersion = fromVersionString(binaries_output.get(0).trim());
+    final ListBinariesResult binaries = listBinaries(mySdk, getExtraSysPath(mySdk, getSkeletonsPath()));
+    myGeneratorVersion = binaries.generatorVersion;
     myPregeneratedSkeletons = findPregeneratedSkeletons();
 
     indicate(PyBundle.message("sdk.gen.reading.versions.file"));
@@ -159,12 +175,11 @@ public class PySkeletonRefresher {
     else myVersionChecker = new SkeletonVersionChecker(myGeneratorVersion);
 
     // check builtins
-    String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
-    File builtins_file = new File(skel_dir, builtinsFileName);
+    final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
+    final File builtinsFile = new File(skeletonsPath, builtinsFileName);
 
-    Matcher header_matcher = getParseHeader(builtins_file);
-    final boolean oldOrNonExisting = header_matcher == null || // no file
-                                        !header_matcher.matches(); // no version line
+    final boolean oldOrNonExisting = getSkeletonVersion(builtinsFile) == null;
+
     if (migration_flag != null && !migration_flag.get() && oldOrNonExisting) {
       migration_flag.set(true);
       Notifications.Bus.notify(
@@ -177,28 +192,60 @@ public class PySkeletonRefresher {
     }
 
     if (myPregeneratedSkeletons != null && oldOrNonExisting) {
-      LOG.info("Unpacking pregenerated skeletons...");
+      indicate("Unpacking pregenerated skeletons...");
       try {
-        ZipUtil.extract(new File(JarFileSystem.getInstance().getVirtualFileForJar(myPregeneratedSkeletons).getPath()),
-                        new File(mySkeletonsPath), null);
+        final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(myPregeneratedSkeletons);
+        if (jar != null) {
+          ZipUtil.extract(new File(jar.getPath()),
+                          new File(getSkeletonsPath()), null);
+        }
       }
       catch (IOException e) {
         LOG.info("Error unpacking pregenerated skeletons", e);
       }
     }
-    
-    if (myPregeneratedSkeletons == null && (oldOrNonExisting || fromVersionString(header_matcher.group(2)) < myVersionChecker.getBuiltinVersion())) {
+
+    if (oldOrNonExisting) {
+      final Sdk base = PythonSdkType.getInstance().getVirtualEnvBaseSdk(mySdk);
+      if (base != null) {
+        indicate("Copying base SDK skeletons for virtualenv...");
+        final String baseSkeletonsPath = PythonSdkType.getSkeletonsPath(base.getHomePath());
+        final ListBinariesResult baseBinaries = listBinaries(base, getExtraSysPath(base, baseSkeletonsPath));
+        for (Map.Entry<String, File> entry : binaries.modules.entrySet()) {
+          final String module = entry.getKey();
+          final File binary = entry.getValue();
+          final File baseBinary = baseBinaries.modules.get(module);
+          final File fromFile = getSkeleton(module, baseSkeletonsPath);
+          if (baseBinaries.modules.containsKey(module) &&
+              fromFile.exists() &&
+              binary.length() == baseBinary.length()) { // Weak binary modules equality check
+            final File toFile = fromFile.isDirectory() ?
+                                getPackageSkeleton(module, skeletonsPath) :
+                                getModuleSkeleton(module, skeletonsPath);
+            try {
+              FileUtil.copy(fromFile, toFile);
+            }
+            catch (IOException e) {
+              LOG.info("Error copying base virtualenv SDK skeleton for " + module, e);
+            }
+          }
+        }
+      }
+    }
+
+    final Integer builtinVersion = getSkeletonVersion(builtinsFile);
+    if (myPregeneratedSkeletons == null && (builtinVersion == null || builtinVersion < myVersionChecker.getBuiltinVersion())) {
       indicate(PyBundle.message("sdk.gen.updating.builtins.$0", readable_path));
       generateBuiltinSkeletons();
     }
 
     if (!oldOrNonExisting) {
       indicate(PyBundle.message("sdk.gen.cleaning.$0", readable_path));
-      cleanUpSkeletons(skel_dir);
+      cleanUpSkeletons(skeletonsDir);
     }
 
     indicate(PyBundle.message("sdk.gen.updating.$0", readable_path));
-    List<UpdateResult> skel_errors = updateOrCreateSkeletons(binaries_output);
+    List<UpdateResult> skel_errors = updateOrCreateSkeletons(binaries.modules);
 
     if (skel_errors.size() > 0) {
       indicateMinor(BLACKLIST_FILE_NAME);
@@ -206,9 +253,9 @@ public class PySkeletonRefresher {
         if (error.isFresh()) error_list.add(error.getName());
         myBlacklist.put(error.getPath(), new Pair<Integer, Long>(myGeneratorVersion, error.getTimestamp()));
       }
-      storeBlacklist(skel_dir, myBlacklist);
+      storeBlacklist(skeletonsDir, myBlacklist);
     }
-    else removeBlacklist(skel_dir);
+    else removeBlacklist(skeletonsDir);
 
     indicate(PyBundle.message("sdk.gen.reloading"));
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(mySkeletonsPath);
@@ -217,29 +264,53 @@ public class PySkeletonRefresher {
     return error_list;
   }
 
-  private List<String> listBinaries() {
-    String homePath = mySdk.getHomePath();
-    final String parent_dir = new File(homePath).getParent();
-    long start_time = System.currentTimeMillis();
-    final ProcessOutput run_result = SdkUtil.getProcessOutput(
-      parent_dir,
-      new String[]{homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", getExtraSyspath()},
-      PythonSdkType.getVirtualEnvAdditionalEnv(homePath),
-      MINUTE * 4 // see PY-3898
-    );
-    LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - start_time) + " ms");
-    if (run_result.getExitCode() != 0) {
-      StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(homePath);
-      if (run_result.isTimeout()) sb.append(": timed out.");
+  @NotNull
+  private static ListBinariesResult listBinaries(Sdk sdk, String extraSysPath) {
+    final String homePath = sdk.getHomePath();
+    final String parentDir = new File(homePath).getParent();
+    final long startTime = System.currentTimeMillis();
+    final String[] cmd = new String[] {homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", extraSysPath};
+    final ProcessOutput process = SdkUtil.getProcessOutput(parentDir,
+                                                           cmd,
+                                                           PythonSdkType.getVirtualEnvAdditionalEnv(homePath),
+                                                           MINUTE * 4); // see PY-3898
+    LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");
+    if (process.getExitCode() != 0) {
+      final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(homePath);
+      if (process.isTimeout()) {
+        sb.append(": timed out.");
+      }
       else {
-        sb.append(", exit code ").append(run_result.getExitCode()).append(", stderr: \n-----\n");
-        for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
+        sb.append(", exit code ")
+          .append(process.getExitCode())
+          .append(", stderr: \n-----\n");
+        for (String line : process.getStderrLines()) {
+          sb.append(line).append("\n");
+        }
         sb.append("-----");
       }
       throw new InvalidSdkException(sb.toString());
     }
-    // stdout contains version in the first line and then the list of binaries
-    return run_result.getStdoutLines();
+    final List<String> lines = process.getStdoutLines();
+    if (lines.size() < 1) {
+      throw new InvalidSdkException("Empty output from " + GENERATOR3 + " for " + homePath);
+    }
+    final Iterator<String> iter = lines.iterator();
+    final int generatorVersion = fromVersionString(iter.next().trim());
+    final Map<String, File> binaries = new HashMap<String, File>();
+    while (iter.hasNext()) {
+      final String line = iter.next();
+      int cutpos = line.indexOf(' ');
+      if (cutpos >= 0) {
+        String moduleName = line.substring(0, cutpos);
+        String path = line.substring(cutpos + 1);
+        binaries.put(moduleName, new File(path));
+      }
+      else {
+        LOG.error("Bad binaries line: '" + line + "', SDK " + homePath); // but don't die yet
+      }
+    }
+    return new ListBinariesResult(generatorVersion, binaries);
   }
 
   static final Pattern ourVersionLinePat = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
@@ -442,51 +513,56 @@ public class PySkeletonRefresher {
    * (Re-)generates skeletons for all binary python modules. Up-to-date skeletons are not regenerated.
    * Does one module at a time: slower, but avoids certain conflicts.
    *
-   * @param binaries  output of generator3 -L, list of prospective binary modules
+   * @param modules output of generator3 -L
    * @return blacklist data; whatever was not generated successfully is put here.
    */
-  private List<UpdateResult> updateOrCreateSkeletons(List<String> binaries) {
-    final List<UpdateResult> error_list = new SmartList<UpdateResult>();
-    final Iterator<String> bin_iter = binaries.iterator();
-    bin_iter.next(); // skip version number. if it weren't here, we'd already die up in regenerateSkeletons()
-    final int count = Math.max(0, binaries.size() - 1);
-    int i = 0;
-    while (bin_iter.hasNext()) {
+  private List<UpdateResult> updateOrCreateSkeletons(Map<String, File> modules) {
+    final List<String> names = new ArrayList<String>(modules.keySet());
+    Collections.sort(names);
+    final List<UpdateResult> results = new ArrayList<UpdateResult>();
+    final int count = names.size();
+    for (int i = 0; i < count; i++) {
       checkCanceled();
       if (myIndicator != null) {
         myIndicator.setFraction((double)i / count);
       }
-      final String line = bin_iter.next(); // line = "mod_name path"
-      int cutpos = line.indexOf(' ');
-      if (cutpos < 0) LOG.error("Bad binaries line: '" + line + "', SDK " + mySdk.getHomePath()); // but don't die yet
-      else {
-        String moduleName = line.substring(0, cutpos);
-        String module_lib_name = line.substring(cutpos+1);
-        if (updateOrCreateSkeleton(moduleName, module_lib_name, error_list)) continue;
+      final String name = names.get(i);
+      final File module = modules.get(name);
+      if (module != null) {
+        updateOrCreateSkeleton(name, module.getPath(), results);
       }
-      i++;
     }
-    return error_list;
+    return results;
+  }
+
+  private static File getSkeleton(String moduleName, String skeletonsPath) {
+    final File module = getModuleSkeleton(moduleName, skeletonsPath);
+    return module.exists() ? module : getPackageSkeleton(moduleName, skeletonsPath);
+  }
+
+  private static File getModuleSkeleton(String module, String skeletonsPath) {
+    final String modulePath = module.replace('.', '/');
+    return new File(skeletonsPath, modulePath + ".py");
+  }
+
+  private static File getPackageSkeleton(String pkg, String skeletonsPath) {
+    final String packagePath = pkg.replace('.', '/');
+    return new File(new File(skeletonsPath, packagePath), PyNames.INIT_DOT_PY);
   }
 
   private boolean updateOrCreateSkeleton(String moduleName, String moduleLibName, List<UpdateResult> error_list) {
-    final String modulePath = moduleName.replace('.', '/');
-    String skeletonPath = getSkeletonPath(); // will create dirs as needed
-    File skeleton_file = new File(skeletonPath, modulePath + ".py");
-    if (!skeleton_file.exists()) {
-      skeleton_file = new File(new File(skeletonPath, modulePath), PyNames.INIT_DOT_PY);
-    }
-    File lib_file = new File(moduleLibName);
-    Matcher matcher = getParseHeader(skeleton_file);
+    final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
+    final File binary = new File(moduleLibName);
+    Matcher matcher = getParseHeader(skeleton);
     boolean must_rebuild = true; // guilty unless proven fresh enough
     if (matcher != null && matcher.matches()) {
       int file_version = SkeletonVersionChecker.fromVersionString(matcher.group(2));
       int required_version = myVersionChecker.getRequiredVersion(moduleName);
       must_rebuild = file_version < required_version;
     }
-    final long lib_file_timestamp = lib_file.lastModified();
+    final long lib_file_timestamp = binary.lastModified();
     if (!must_rebuild) { // ...but what if the lib was updated?
-      must_rebuild = (lib_file.exists() && skeleton_file.exists() && lib_file_timestamp > skeleton_file.lastModified());
+      must_rebuild = (binary.exists() && skeleton.exists() && lib_file_timestamp > skeleton.lastModified());
       // really we can omit both exists() calls but I keep these to make the logic clear
     }
     if (myBlacklist != null) {
@@ -516,7 +592,7 @@ public class PySkeletonRefresher {
   private boolean copyPregeneratedSkeleton(String moduleName) {
     File targetDir;
     final String modulePath = moduleName.replace('.', '/');
-    File skeletonsDir = new File(getSkeletonPath());
+    File skeletonsDir = new File(getSkeletonsPath());
     VirtualFile pregenerated = myPregeneratedSkeletons.findFileByRelativePath(modulePath + ".py");
     if (pregenerated == null) {
       pregenerated = myPregeneratedSkeletons.findFileByRelativePath(modulePath + "/" + PyNames.INIT_DOT_PY);
@@ -560,7 +636,11 @@ public class PySkeletonRefresher {
       return null;
     }
     LOG.info("Pregenerated skeletons root is " + root);
-    String version = mySdk.getVersionString().toLowerCase().replace(" ", "-");
+    final String versionString = mySdk.getVersionString();
+    if (versionString == null) {
+      return null;
+    }
+    String version = versionString.toLowerCase().replace(" ", "-");
     File f;
     if (SystemInfo.isMac) {
       String osVersion = SystemInfo.OS_VERSION;
@@ -569,7 +649,7 @@ public class PySkeletonRefresher {
         int secondDot = osVersion.indexOf('.', dot+1);
         if (secondDot >= 0) {
           osVersion = osVersion.substring(0, secondDot);
-        }          
+        }
       }
       f = new File(root, "skeletons-mac-" + myGeneratorVersion + "-" + osVersion + "-" + version + ".zip");
     }
@@ -611,17 +691,18 @@ public class PySkeletonRefresher {
    * @param assemblyRefs refs that generator wants to know in .net environment, if applicable
    * @return true if generation completed successfully
    */
-  public boolean generateSkeleton(
-    @NotNull String modname, @Nullable String modfilename, @Nullable List<String> assemblyRefs
-  ) {
+  public boolean generateSkeleton(@NotNull String modname, @Nullable String modfilename, @Nullable List<String> assemblyRefs) {
     boolean ret = true;
     String binaryPath = mySdk.getHomePath();
+    if (myExtraSyspath == null) {
+      myExtraSyspath = getExtraSysPath(mySdk, mySkeletonsPath);
+    }
     final String parent_dir = new File(binaryPath).getParent();
     List<String> commandLine = new ArrayList<String>();
     commandLine.add(binaryPath);
     commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
     commandLine.add("-d");
-    commandLine.add(getSkeletonPath());
+    commandLine.add(getSkeletonsPath());
     if (assemblyRefs != null && !assemblyRefs.isEmpty()) {
       commandLine.add("-c");
       commandLine.add(StringUtil.join(assemblyRefs, ";"));
@@ -630,7 +711,7 @@ public class PySkeletonRefresher {
       commandLine.add("-x");
     }
     commandLine.add("-s");
-    commandLine.add(getExtraSyspath());
+    commandLine.add(myExtraSyspath);
     commandLine.add(modname);
     if (modfilename != null) commandLine.add(modfilename);
 

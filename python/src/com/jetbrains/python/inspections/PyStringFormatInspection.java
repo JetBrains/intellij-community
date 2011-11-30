@@ -44,12 +44,12 @@ public class PyStringFormatInspection extends PyInspection {
   public static class Visitor extends PyInspectionVisitor {
     private static class Inspection {
       private static final ImmutableMap<Character, String> FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
-        .put('d', "int or long")
-        .put('i', "int or long")
-        .put('o', "int or long")
-        .put('u', "int or long")
-        .put('x', "int or long")
-        .put('X', "int or long")
+        .put('d', "int or long or float")
+        .put('i', "int or long or float")
+        .put('o', "int or long or float")
+        .put('u', "int or long or float")
+        .put('x', "int or long or float")
+        .put('X', "int or long or float")
         .put('e', "float")
         .put('E', "float")
         .put('f', "float")

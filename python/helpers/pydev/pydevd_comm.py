@@ -310,7 +310,7 @@ class WriterThread(PyDBDaemonThread):
     def addCommand(self, cmd):
         """ cmd is NetCommand """
         self.cmdQueue.put(cmd)
-        
+
     def OnRun(self):
         """ just loop and write responses """
             

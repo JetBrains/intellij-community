@@ -93,12 +93,12 @@ public class PythonCompletionTest extends PyTestCase {
   public void testKwParamsInCodeUsage() { //PY-1002
     doTest();
   }
-  
-  public void testKwParamsInCodeGetUsage() { //PY-1002 
+
+  public void testKwParamsInCodeGetUsage() { //PY-1002
     doTest();
   }
 
-  public void testSuperInitKwParamsNotOnlySelfAndKwArgs() { //PY-1050 
+  public void testSuperInitKwParamsNotOnlySelfAndKwArgs() { //PY-1050
     doTest();
   }
 
@@ -107,7 +107,7 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testIsInstance() {
-    doTest();    
+    doTest();
   }
 
   public void testIsInstanceAssert() {
@@ -247,7 +247,7 @@ public class PythonCompletionTest extends PyTestCase {
   public void testNonlocal() {  // PY-2289
     doTest3K();
   }
-  
+
   public void testYield() {
     doTest();
   }
@@ -265,15 +265,15 @@ public class PythonCompletionTest extends PyTestCase {
   public void testSuperMethod() {  // PY-170
     doTest();
   }
-  
+
   public void testElse() {
     doTest();
   }
-  
+
   public void testElseNotIndented() {
     doTest();
   }
-  
+
   public void testElseInTryNotIndented() {
     doTest();
   }
@@ -281,7 +281,7 @@ public class PythonCompletionTest extends PyTestCase {
   public void testElif() {
     doTest();
   }
-  
+
   public void testElifNotIndented() {
     doTest();
   }
@@ -297,11 +297,11 @@ public class PythonCompletionTest extends PyTestCase {
   public void testFinallyInExcept() {
     doTest();
   }
-  
+
   public void testContinue() {
     doTest();
   }
-  
+
   public void testNoContinueInFinally() {
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
@@ -332,7 +332,7 @@ public class PythonCompletionTest extends PyTestCase {
   public void testNoIdentifiersInImport() {
     doTest();
   }
-  
+
   public void testSuperClassAttributes() {
     doTest();
   }
@@ -452,7 +452,7 @@ public class PythonCompletionTest extends PyTestCase {
   public void testMro() {  // PY-3989
     doTest();
   }
-  
+
   public void testNamedTuple() {  //
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
@@ -461,21 +461,26 @@ public class PythonCompletionTest extends PyTestCase {
     assertTrue(strings.contains("lat"));
     assertTrue(strings.contains("long"));
   }
-  
+
   public void testPrivateMemberType() {  // PY-4589
     doTest();
   }
-  
+
   public void testCompleteBeforeSyntaxError() { // PY-3792
     doTest();
   }
-  
+
   // PY-4279
   public void testFieldReassignment() {
     doTest();
   }
 
   public void testSuperInit() {  // PY-5066
+    doTest();
+  }
+
+  // PY-5144
+  public void testImportKeyword() {
     doTest();
   }
 }
