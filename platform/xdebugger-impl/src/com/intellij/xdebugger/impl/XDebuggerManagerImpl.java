@@ -25,6 +25,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
@@ -49,6 +50,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +70,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final Map<RunContentDescriptor, XDebugSessionData> mySessionData;
+  private final Map<RunContentDescriptor, XDebugSessionTab> mySessionTabs;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private XDebugSessionImpl myActiveSession;
@@ -75,7 +78,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
-    mySessionData = new HashMap<RunContentDescriptor, XDebugSessionData>();
+    mySessionData = new THashMap<RunContentDescriptor, XDebugSessionData>();
+    mySessionTabs = new THashMap<RunContentDescriptor, XDebugSessionTab>();
     mySessions = new LinkedHashMap<ProcessHandler, XDebugSessionImpl>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
     messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
@@ -117,10 +121,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
       @Override
       public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
         if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+          mySessions.remove(descriptor.getProcessHandler());
           mySessionData.remove(descriptor);
-          XDebugSessionImpl session = mySessions.remove(descriptor.getProcessHandler());
-          if (session != null) {
-            Disposer.dispose(session.getSessionTab());
+          XDebugSessionTab tab = mySessionTabs.remove(descriptor);
+          if (tab != null) {
+            Disposer.dispose(tab);
           }
         }
       }
@@ -201,11 +206,25 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     return session;
   }
 
-  public void removeSession(@NotNull XDebugSessionImpl session) {
+  public void removeSession(@NotNull final XDebugSessionImpl session) {
     XDebugSessionTab sessionTab = session.getSessionTab();
     mySessions.remove(session.getDebugProcess().getProcessHandler());
     if (sessionTab != null) {
-      mySessionData.put(sessionTab.getRunContentDescriptor(), session.getSessionData());
+      final RunContentDescriptor descriptor = sessionTab.getRunContentDescriptor();
+      mySessionData.put(descriptor, session.getSessionData());
+      mySessionTabs.put(descriptor, sessionTab);
+
+      // in test-mode RunContentWithExecutorListener.contentRemoved events are not sent (see RunContentManagerImpl.showRunContent)
+      // so we make sure the mySessions and mySessionData are cleared correctly when session is disposed
+
+      Disposer.register(sessionTab, new Disposable() {
+        @Override
+        public void dispose() {
+          mySessionData.remove(descriptor);
+          mySessionTabs.remove(descriptor);
+          mySessions.remove(session.getDebugProcess().getProcessHandler());
+        }
+      });
     }
     if (myActiveSession == session) {
       myActiveSession = null;
