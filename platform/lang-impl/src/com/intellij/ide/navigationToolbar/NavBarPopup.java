@@ -39,8 +39,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -109,7 +110,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private void show(final NavBarItem item, boolean checkRepaint) {
-    final RelativePoint point = new RelativePoint(item, new Point(-NavBarUIManager.getUI().getPopupOffset(item), item.getHeight()));
+    final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
     final Point p = point.getPoint(myPanel);
     if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -119,7 +120,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         }
       });
     } else {
-      show(myPanel, p.x, p.y, myPanel, new HintHint(myPanel, p));
+      int offset = NavBarUIManager.getUI().getPopupOffset(item);
+      show(myPanel, p.x - offset, p.y, myPanel, new HintHint(myPanel, p));
       final JBList list = getList();
       if (0 <= myIndex && myIndex < list.getItemsCount()) {
        ListScrollingUtil.selectItem(list, myIndex);

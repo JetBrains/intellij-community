@@ -22,10 +22,7 @@ import net.sf.saxon.expr.StackFrame;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.expr.instruct.GlobalVariable;
 import net.sf.saxon.expr.instruct.SlotManager;
-import net.sf.saxon.om.Item;
-import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.om.StructuredQName;
-import net.sf.saxon.om.ValueRepresentation;
+import net.sf.saxon.om.*;
 import net.sf.saxon.style.StyleElement;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.type.ItemType;
@@ -65,21 +62,21 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       final TypeHierarchy typeHierarchy = myXPathContext.getConfiguration().getTypeHierarchy();
       expression = expression.typeCheck(ExpressionVisitor.make(myElement.getStaticContext(), expression.getExecutable()), Type.ITEM_TYPE);
       final ItemType itemType = expression.getItemType(typeHierarchy);
-      final Item evaluate = expression.evaluateItem(myXPathContext);
-      return new Value() {
-        @Override
-        public Object getValue() {
-          return evaluate != null ? evaluate.getStringValue() : null;
-        }
+      final SequenceIterator it = expression.iterate(myXPathContext);
 
-        @Override
-        public Type getType() {
-          return new ObjectType(itemType.toString());
-        }
-      };
+      Item value = null;
+      if (it.next() != null) {
+        value = it.current();
+      }
+      if (it.next() == null) {
+        return new SingleValue(value, itemType);        
+      }
+      return new SequenceValue(value, it, itemType);
     } catch (IllegalArgumentException e) {
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
     } catch (XPathException e) {
+      throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
+    } catch (AssertionError e) {
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
     } catch (Exception e) {
       e.printStackTrace();
@@ -127,10 +124,18 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       final ValueRepresentation[] values = frame.getStackFrameValues();
       //System.out.println("values = " + Arrays.toString(values));
 
+      outer:
       for (int i = 0, valuesLength = values.length; i < valuesLength; i++) {
         final ValueRepresentation value = values[i];
         if (value != null) {
-          variables.add(new VariableImpl(map.getVariableMap().get(i).getDisplayName(), new Value() {
+          final String name = map.getVariableMap().get(i).getDisplayName();
+          for (Debugger.Variable variable : variables) {
+            if (name.equals(variable.getName())) {
+              continue outer;
+            }
+          }
+
+          variables.add(new VariableImpl(name, new Value() {
             public Object getValue() {
               try {
                 return value.getStringValue();
@@ -158,5 +163,50 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     }
 
     return variables;
+  }
+
+  private static class SingleValue implements Value {
+    private final Item myValue;
+    private final ItemType myItemType;
+
+    public SingleValue(Item value, ItemType itemType) {
+      myValue = value;
+      myItemType = itemType;
+    }
+
+    @Override
+    public Object getValue() {
+      return myValue != null ? myValue.getStringValue() : null;
+    }
+
+    @Override
+    public Type getType() {
+      return new ObjectType(myItemType.toString());
+    }
+  }
+
+  private static class SequenceValue implements Value {
+    private final String myValue;
+    private final ItemType myItemType;
+
+    public SequenceValue(Item value, SequenceIterator it, ItemType type) throws XPathException {
+      String s = "(" + value.getStringValue() + ", " + it.current().getStringValue();
+      while (it.next() != null) {
+        s += ", " + it.current().getStringValue();
+      }
+      s += ")";
+      myValue = s;
+      myItemType = type;
+    }
+
+    @Override
+    public Object getValue() {
+      return myValue;
+    }
+
+    @Override
+    public Type getType() {
+      return new ObjectType(myItemType.toString() + "+");
+    }
   }
 }

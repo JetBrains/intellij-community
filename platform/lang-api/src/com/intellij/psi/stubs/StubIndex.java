@@ -37,9 +37,10 @@ public abstract class StubIndex {
     return StubIndexHolder.ourInstance;
   }
 
-  public abstract <Key, Psi extends PsiElement> Collection<Psi> get(
-      @NotNull StubIndexKey<Key, Psi> indexKey, @NotNull Key key, final Project project, final GlobalSearchScope scope
-  );
+  public abstract <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                    @NotNull Key key,
+                                                                    final Project project,
+                                                                    final GlobalSearchScope scope);
 
   public abstract <Key> Collection<Key> getAllKeys(StubIndexKey<Key, ?> indexKey, @NotNull Project project);
 }

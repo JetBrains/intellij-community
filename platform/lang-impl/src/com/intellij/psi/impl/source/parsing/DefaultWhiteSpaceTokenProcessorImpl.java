@@ -40,7 +40,7 @@ public abstract class DefaultWhiteSpaceTokenProcessorImpl implements TokenProces
       IElementType type = lexer.getTokenType();
 
       if (!isInSet(type)) {
-        LOG.error("Missed token should be white space or comment:" + tokenElement);
+        LOG.error("Missed token should be white space or comment:" + tokenElement + "; type:" + type);
         throw new RuntimeException();
       }
       if (last != null) {

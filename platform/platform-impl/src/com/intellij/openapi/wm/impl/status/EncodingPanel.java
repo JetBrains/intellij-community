@@ -219,7 +219,9 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
           myComponent.setForeground(UIUtil.getInactiveTextColor());
         }
 
-        myStatusBar.updateWidget(ID());
+        if (myStatusBar != null) {
+          myStatusBar.updateWidget(ID());
+        }
       }
     });
     

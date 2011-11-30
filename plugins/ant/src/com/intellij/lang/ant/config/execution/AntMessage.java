@@ -22,7 +22,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-final class AntMessage {
+public final class AntMessage {
   private final AntBuildMessageView.MessageType myType;
   private final int myPriority;
   private final String myText;

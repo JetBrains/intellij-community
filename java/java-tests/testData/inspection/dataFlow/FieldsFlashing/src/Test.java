@@ -8,13 +8,13 @@ public class TestNullableIntervening   // See http://www.jetbrains.net/jira/brow
         this.obj = obj;
     }
 
-    void foo() {}
+    @Nullable Object foo() { return null; }
     void notnull(@NotNull Object arg) {}
 
     void test1() {
         if (obj != null) {
             // Method intervening, might change obj; should have warning (OK)
-            foo();
+            obj = foo();
             notnull(obj);
         }
     }

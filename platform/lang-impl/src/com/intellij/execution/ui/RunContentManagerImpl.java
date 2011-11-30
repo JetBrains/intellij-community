@@ -230,20 +230,27 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Nullable
   public RunContentDescriptor getSelectedContent() {
-    final String activeWindow = myToolwindowIdZbuffer.isEmpty() ? null : myToolwindowIdZbuffer.getFirst();
-
-    if (activeWindow != null) {
+    for (String activeWindow : myToolwindowIdZbuffer) {
       final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(activeWindow);
-      if (contentManager != null) {
-        final Content selectedContent = contentManager.getSelectedContent();
-        if (selectedContent != null) {
-          final RunContentDescriptor runContentDescriptorByContent = getRunContentDescriptorByContent(selectedContent);
-          if (runContentDescriptorByContent != null) {
-            return runContentDescriptorByContent;
-          }
+      if (contentManager == null) {
+        continue;
+      }
+
+      final Content selectedContent = contentManager.getSelectedContent();
+      if (selectedContent == null) {
+        if (contentManager.getContentCount() == 0) {
+          // continue to the next window if the content manager is empty
+          continue;
+        }
+        else {
+          // stop iteration over windows because there is some content in the window and the window is the last used one
+          break;
         }
       }
+      // here we have selected content
+      return getRunContentDescriptorByContent(selectedContent);
     }
+
     return null;
   }
 

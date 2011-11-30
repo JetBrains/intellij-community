@@ -40,6 +40,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SmartList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -177,14 +178,16 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   @Override
-  public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, @NotNull final Key key, final Project project,
+  public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey,
+                                                           @NotNull final Key key,
+                                                           @NotNull final Project project,
                                                            final GlobalSearchScope scope) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     final PsiManager psiManager = PsiManager.getInstance(project);
 
-    final List<Psi> result = new ArrayList<Psi>();
+    final List<Psi> result = new SmartList<Psi>();
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
 
     try {
@@ -198,72 +201,75 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           @Override
           public void perform(final int id, final TIntArrayList value) {
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-            if (file != null && (scope == null || scope.contains(file))) {
-              StubTree stubTree = null;
+            if (file == null || scope != null && !scope.contains(file)) {
+              return;
+            }
+            StubTree stubTree = null;
 
-              final PsiFile _psifile = psiManager.findFile(file);
-              PsiFileWithStubSupport psiFile = null;
+            final PsiFile _psifile = psiManager.findFile(file);
+            PsiFileWithStubSupport psiFile = null;
 
-              if (_psifile != null && !(_psifile instanceof PsiPlainTextFile)) {
-                if (_psifile instanceof PsiFileWithStubSupport) {
-                  psiFile = (PsiFileWithStubSupport)_psifile;
-                  stubTree = psiFile.getStubTree();
-                  if (stubTree == null && psiFile instanceof PsiFileImpl) {
-                    stubTree = ((PsiFileImpl)psiFile).calcStubTree();
+            if (_psifile != null && !(_psifile instanceof PsiPlainTextFile)) {
+              if (_psifile instanceof PsiFileWithStubSupport) {
+                psiFile = (PsiFileWithStubSupport)_psifile;
+                stubTree = psiFile.getStubTree();
+                if (stubTree == null && psiFile instanceof PsiFileImpl) {
+                  stubTree = ((PsiFileImpl)psiFile).calcStubTree();
+                }
+              }
+            }
+
+            if (stubTree == null && psiFile == null) {
+              return;
+            }
+            if (stubTree == null) {
+              stubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
+              if (stubTree == null) {
+                return;
+              }
+              final List<StubElement<?>> plained = stubTree.getPlainList();
+              for (int i = 0; i < value.size(); i++) {
+                final StubElement<?> stub = plained.get(value.get(i));
+                final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
+
+                if (tree != null) {
+                  if (tree.getElementType() == stubType(stub)) {
+                    result.add((Psi)tree.getPsi());
+                  }
+                  else {
+                    String persistedStubTree = ((PsiFileStubImpl)stubTree.getRoot()).printTree();
+
+                    String stubTreeJustBuilt =
+                      ((PsiFileStubImpl)((IStubFileElementType)((PsiFileImpl)psiFile).getContentElementType()).getBuilder()
+                        .buildStubTree(psiFile)).printTree();
+
+                    StringBuilder builder = new StringBuilder();
+                    builder.append("Oops\n");
+
+
+                    builder.append("Recorded stub:-----------------------------------\n");
+                    builder.append(persistedStubTree);
+                    builder.append("\nAST built stub: ------------------------------------\n");
+                    builder.append(stubTreeJustBuilt);
+                    builder.append("\n");
+                    LOG.info(builder.toString());
+
+                    // requestReindex() may want to acquire write lock (for indices not requiring content loading)
+                    // thus, because here we are under read lock, need to use invoke later
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                      @Override
+                      public void run() {
+                        FileBasedIndex.getInstance().requestReindex(file);
+                      }
+                    }, ModalityState.NON_MODAL);
                   }
                 }
               }
-
-              if (stubTree != null || psiFile != null) {
-                if (stubTree == null) {
-                  stubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
-                  if (stubTree != null) {
-                    final List<StubElement<?>> plained = stubTree.getPlainList();
-                    for (int i = 0; i < value.size(); i++) {
-                      final StubElement<?> stub = plained.get(value.get(i));
-                      final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
-
-                      if (tree != null) {
-                        if (tree.getElementType() == stubType(stub)) {
-                          result.add((Psi)tree.getPsi());
-                        }
-                        else {
-                          String persistedStubTree = ((PsiFileStubImpl)stubTree.getRoot()).printTree();
-
-                          String stubTreeJustBuilt =
-                              ((PsiFileStubImpl)((IStubFileElementType)((PsiFileImpl)psiFile).getContentElementType()).getBuilder()
-                                  .buildStubTree(psiFile)).printTree();
-
-                          StringBuilder builder = new StringBuilder();
-                          builder.append("Oops\n");
-
-
-                          builder.append("Recorded stub:-----------------------------------\n");
-                          builder.append(persistedStubTree);
-                          builder.append("\nAST built stub: ------------------------------------\n");
-                          builder.append(stubTreeJustBuilt);
-                          builder.append("\n");
-                          LOG.info(builder.toString());
-
-                          // requestReindex() may want to acquire write lock (for indices not requiring content loading)
-                          // thus, because here we are under read lock, need to use invoke later
-                          ApplicationManager.getApplication().invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                              FileBasedIndex.getInstance().requestReindex(file);
-                            }
-                          }, ModalityState.NON_MODAL);
-                        }
-                      }
-                    }
-                  }
-                }
-                else {
-                  final List<StubElement<?>> plained = stubTree.getPlainList();
-                  for (int i = 0; i < value.size(); i++) {
-                    result.add((Psi)plained.get(value.get(i)).getPsi());
-                  }
-                }
+            }
+            else {
+              final List<StubElement<?>> plained = stubTree.getPlainList();
+              for (int i = 0; i < value.size(); i++) {
+                result.add((Psi)plained.get(value.get(i)).getPsi());
               }
             }
           }

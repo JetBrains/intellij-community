@@ -17,12 +17,14 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
+import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
-import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManagerImpl;
+import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,16 +40,17 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   private BreakpointManager myBreakpointManager = new BreakpointManagerImpl();
 
   private final XBreakpointHandler<?>[] myXBreakpointHandlers = new XBreakpointHandler<?>[]{
-    new XsltBreakpointHandler(this)
+    new XsltBreakpointHandler(this, XsltBreakpointType.V1.class),
+    new XsltBreakpointHandler(this, XsltBreakpointType.V2.class)
   };
   private XsltDebuggerSession myDebuggerSession;
 
-  public XsltDebugProcess(XDebugSession session, ExecutionResult executionResult) {
+  public XsltDebugProcess(XDebugSession session, ExecutionResult executionResult, XsltChecker.LanguageLevel data) {
     super(session);
     myProcessHandler = executionResult.getProcessHandler();
     myProcessHandler.putUserData(KEY, this);
     myExecutionConsole = executionResult.getExecutionConsole();
-    myEditorsProvider = new XsltDebuggerEditorsProvider();
+    myEditorsProvider = new XsltDebuggerEditorsProvider(data);
     Disposer.register(myExecutionConsole, this);
   }
 
@@ -129,6 +132,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
 
   @Override
   public void startStepOut() {
+    myDebuggerSession.stepOver();
   }
 
   @Override
@@ -145,7 +149,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
     try {
       return myDebuggerSession.getClient().ping();
     } catch (VMPausedException e) {
-      getSession().reportMessage("Target VM is not responding", MessageType.WARNING);
+      getSession().reportMessage(VMPausedException.MESSAGE, MessageType.WARNING);
       return false;
     }
   }
@@ -163,8 +167,8 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   public void runToPosition(@NotNull XSourcePosition position) {
     final PsiFile psiFile = PsiManager.getInstance(getSession().getProject()).findFile(position.getFile());
     assert psiFile != null;
-    if (myDebuggerSession.canRunTo(psiFile, position.getOffset())) {
-      myDebuggerSession.runTo(psiFile, position.getOffset());
+    if (myDebuggerSession.canRunTo(position)) {
+      myDebuggerSession.runTo(psiFile, position);
     } else {
       StatusBar.Info.set("Not a valid position in file '" + psiFile.getName() + "'", psiFile.getProject());
       final Debugger c = myDebuggerSession.getClient();

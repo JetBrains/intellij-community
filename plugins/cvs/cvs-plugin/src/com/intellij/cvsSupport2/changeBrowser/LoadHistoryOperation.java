@@ -15,11 +15,18 @@
  */
 package com.intellij.cvsSupport2.changeBrowser;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
+import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
+import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
+import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
+import com.intellij.openapi.cvsIntegration.CvsResult;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +43,7 @@ import java.util.Locale;
 
 public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
+  @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
   @NonNls private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US));
   private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<String>();
 
@@ -46,7 +54,8 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
   private final String[] myRevisions;
   private final boolean myNoTags;
 
-  public LoadHistoryOperation(CvsEnvironment environment, String module,
+  public LoadHistoryOperation(CvsEnvironment environment,
+                              String module,
                               @Nullable Date dateFrom,
                               @Nullable Date dateTo,
                               @NotNull final Consumer<LogInformationWrapper> consumer) {
@@ -93,7 +102,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     return command;
   }
 
-  public void disableSuppressEmptyHeadersForCurrentCvsRoot() {
+  private void disableSuppressEmptyHeadersForCurrentCvsRoot() {
     ourDoNotSupportingSOptionServers.add(myEnvironment.getCvsRootAsString());
   }
 
@@ -121,5 +130,27 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
   protected boolean runInExclusiveLock() {
     return false;
+  }
+
+  public CvsResult run(Project project) {
+    final CvsResult executionResult = internalRun(project);
+
+    for (VcsException error : executionResult.getErrors()) {
+      for (String message : error.getMessages()) {
+        if (message.contains(INVALID_OPTION_S)) {
+          disableSuppressEmptyHeadersForCurrentCvsRoot();
+          // try only once
+          return internalRun(project);
+        }
+      }
+    }
+    return executionResult;
+  }
+
+  private CvsResult internalRun(Project project) {
+    final CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.message("browse.changes.load.history.progress.title"), this),
+                               CvsOperationExecutorCallback.EMPTY);
+    return executor.getResult();
   }
 }

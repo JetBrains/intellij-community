@@ -44,7 +44,7 @@ public class XsltExecutionStack extends XExecutionStack {
         }
       }
     } catch (VMPausedException e) {
-      container.errorOccurred("VM is paused");
+      container.errorOccurred(VMPausedException.MESSAGE);
     }
   }
 }

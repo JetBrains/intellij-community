@@ -9,6 +9,10 @@
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
   <depends>com.intellij.properties</depends>
 
+  <extensionPoints>
+    <extensionPoint name="AntMessageCustomizer" interface="com.intellij.lang.ant.config.execution.AntMessageCustomizer"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
     <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>

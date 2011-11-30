@@ -102,7 +102,14 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
 
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    File dir = getListsDir();
+    if (!dir.exists()) return new File[] {PathManager.getOptionsFile(this)};
+    return new File[]{dir, PathManager.getOptionsFile(this)};
+  }
+
+  private static File getListsDir() {
+    @NonNls String directoryPath = PathManager.getConfigPath() + File.separator + "quicklists";
+    return new File(directoryPath);
   }
 
   @NotNull

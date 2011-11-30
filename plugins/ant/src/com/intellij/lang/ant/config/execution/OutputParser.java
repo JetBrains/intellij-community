@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
@@ -146,7 +145,7 @@ public class OutputParser{
 
     if (IdeaAntLogger2.MESSAGE == tagName) {
       if (myIsEcho) {
-        myMessageView.outputMessage(tagValue, AntMain2.MSG_VERBOSE);
+        myMessageView.outputMessage(tagValue, AntBuildMessageView.PRIORITY_VERBOSE);
       }
       else {
         myMessageView.outputMessage(tagValue, priority);

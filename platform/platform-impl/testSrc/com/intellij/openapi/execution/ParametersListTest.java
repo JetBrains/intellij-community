@@ -188,7 +188,7 @@ public class ParametersListTest extends UsefulTestCase {
     checkTokenizer("-Dprop.1=\"some text\" -Dprop.2=\\\"value\\\"",
                    "-Dprop.1=some text", "-Dprop.2=\"value\"");
   }
-
+  
   public void testJoiningParams() throws Exception {
     final String[] parameters = {"simpleParam", "param with spaces", "withQuote=\"", "param=\"complex quoted\""};
     final ParametersList parametersList = new ParametersList();
@@ -199,6 +199,14 @@ public class ParametersListTest extends UsefulTestCase {
                  joined);
 
     checkTokenizer(joined, parameters);
+  }
+
+  public void testProperties() throws Exception {
+    ParametersList params = new ParametersList();
+    params.addProperty("foo.foo", "\"bar bar\" bar");
+
+    assertEquals(1, params.getProperties().size());
+    assertEquals("\"bar bar\" bar", params.getProperties().get("foo.foo"));
   }
 
   private static void checkTokenizer(final String paramString, final String... expected) {

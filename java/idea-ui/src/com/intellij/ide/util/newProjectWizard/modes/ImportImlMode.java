@@ -52,7 +52,7 @@ public class ImportImlMode extends WizardMode {
 
   @NotNull
   public String getDescription(final WizardContext context) {
-    return IdeBundle.message("prompt.select.module.file.to.import", ApplicationNamesInfo.getInstance().getProductName());
+    return IdeBundle.message("prompt.select.module.file.to.import", ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
 

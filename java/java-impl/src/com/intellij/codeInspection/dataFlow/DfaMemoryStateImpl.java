@@ -674,7 +674,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void flushFields(DataFlowRunner runner) {
     DfaVariableValue[] fields = runner.getFields();
     for (DfaVariableValue field : fields) {
+      boolean resetNullability = isNotNull(field);
       flushVariable(field);
+      if (resetNullability) {
+        getVariableState(field).setNullable(false);
+      }
     }
   }
 

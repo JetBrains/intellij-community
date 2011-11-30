@@ -63,16 +63,6 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
 
   public abstract void replaceClassName(final DClassElement oldClassElement, String newClassName);
 
-  /*
-  * Adds dynamicPropertyChange listener
-  */
-  public abstract void addDynamicChangeListener(DynamicChangeListener listener);
-
-  /*
-   * Removes dynamicPropertyChange listener
-   */
-  public abstract void removeDynamicChangeListener(DynamicChangeListener listener);
-
   public abstract void addProperty(DynamicElementSettings settings);
 
   public abstract void addMethod(DynamicElementSettings settings);
@@ -84,9 +74,6 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
 
   @NotNull
   public abstract Collection<DPropertyElement> findDynamicPropertiesOfClass(final String conatainingClassName);
-
-  @NotNull
-  public abstract String[] getPropertiesNamesOfClass(final String conatainingClassName);
 
   @Nullable
   public abstract String getPropertyType(String className, String propertyName);
