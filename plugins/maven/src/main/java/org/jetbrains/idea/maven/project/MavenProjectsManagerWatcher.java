@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -101,6 +103,14 @@ public class MavenProjectsManagerWatcher {
 
     myChangedDocumentsQueue.makeUserAware(myProject);
     myChangedDocumentsQueue.activate();
+
+    myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
+      public void moduleRemoved(Project project, Module module) {
+        MavenProject mavenProject = myManager.findProject(module);
+        if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), true);
+      }
+    });
 
     DocumentAdapter myDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {

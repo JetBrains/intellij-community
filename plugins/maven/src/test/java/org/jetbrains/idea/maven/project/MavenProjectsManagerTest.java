@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -1047,5 +1049,32 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.waitForResolvingCompletion();
 
     assertTrue(myProjectsManager.hasScheduledImportsInTests());
+  }
+
+  public void testIgnoringProjectsForDeletedModules() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+    importProject();
+
+    Module module = getModule("m");
+    assertNotNull(module);
+    assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+
+    ModuleManager.getInstance(myProject).disposeModule(module);
+    myProjectsManager.performScheduledImportInTests();
+
+    assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
+    assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
   }
 }
