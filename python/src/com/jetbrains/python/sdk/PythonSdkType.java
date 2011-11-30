@@ -193,6 +193,28 @@ public class PythonSdkType extends SdkType {
     return result;
   }
 
+  public static boolean isVirtualEnv(Sdk sdk) {
+    final String path = sdk.getHomePath();
+    return path != null && getVirtualEnvRoot(path) != null;
+  }
+
+  @Nullable
+  public Sdk getVirtualEnvBaseSdk(Sdk sdk) {
+    if (isVirtualEnv(sdk)) {
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk.getHomePath());
+      final String version = getVersionString(sdk);
+      if (flavor != null && version != null) {
+        for (Sdk baseSdk : getAllSdks()) {
+          final PythonSdkFlavor baseFlavor = PythonSdkFlavor.getFlavor(baseSdk.getHomePath());
+          if (!isVirtualEnv(baseSdk) && flavor.equals(baseFlavor) && version.equals(getVersionString(baseSdk))) {
+            return baseSdk;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   /**
    * @param binaryPath must point to a Python interpreter
    * @return if the surroundings look like a virtualenv installation, its root is returned (normally the grandparent of binaryPath).
