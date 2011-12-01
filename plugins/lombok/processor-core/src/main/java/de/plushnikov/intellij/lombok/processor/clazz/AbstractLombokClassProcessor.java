@@ -1,12 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
@@ -24,6 +17,13 @@ import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base lombok processor class for class annotations
@@ -32,8 +32,8 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
  */
 public abstract class AbstractLombokClassProcessor extends AbstractLombokProcessor implements LombokClassProcessor {
 
-  protected AbstractLombokClassProcessor(@NotNull String supportedAnnotation, @NotNull Class supportedClass) {
-    super(supportedAnnotation, supportedClass);
+  protected AbstractLombokClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   @Override

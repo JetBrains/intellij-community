@@ -41,10 +41,8 @@ import java.util.List;
  */
 public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
 
-  public static final String CLASS_NAME = Delegate.class.getName();
-
   public DelegateFieldProcessor() {
-    super(CLASS_NAME, PsiMethod.class);
+    super(Delegate.class, PsiMethod.class);
   }
 
   @Override

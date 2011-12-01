@@ -29,10 +29,8 @@ import java.util.Collection;
  */
 public class SynchronizedProcessor extends AbstractLombokProcessor {
 
-  public static final String CLASS_NAME = Synchronized.class.getName();
-
   public SynchronizedProcessor() {
-    super(CLASS_NAME, PsiElement.class);
+    super(Synchronized.class, PsiElement.class);
   }
 
   @Override

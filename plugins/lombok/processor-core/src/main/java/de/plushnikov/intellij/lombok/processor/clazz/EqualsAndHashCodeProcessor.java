@@ -36,13 +36,12 @@ import java.util.List;
  */
 public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
 
-  private static final String CLASS_NAME = EqualsAndHashCode.class.getName();
   public static final String EQUALS_METHOD_NAME = "equals";
   public static final String HASH_CODE_METHOD_NAME = "hashCode";
   public static final String CAN_EQUAL_METHOD_NAME = "canEqual";
 
   public EqualsAndHashCodeProcessor() {
-    super(CLASS_NAME, PsiMethod.class);
+    super(EqualsAndHashCode.class, PsiMethod.class);
   }
 
   @Override

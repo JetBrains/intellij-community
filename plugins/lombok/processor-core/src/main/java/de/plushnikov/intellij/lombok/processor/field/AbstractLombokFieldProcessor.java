@@ -1,12 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -16,6 +9,13 @@ import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base lombok processor class for field annotations
@@ -24,8 +24,8 @@ import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
  */
 public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcessor implements LombokFieldProcessor {
 
-  protected AbstractLombokFieldProcessor(@NotNull String supportedAnnotation, @NotNull Class supportedClass) {
-    super(supportedAnnotation, supportedClass);
+  protected AbstractLombokFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   @Override

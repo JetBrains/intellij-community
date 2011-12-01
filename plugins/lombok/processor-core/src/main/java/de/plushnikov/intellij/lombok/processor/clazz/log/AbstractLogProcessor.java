@@ -17,6 +17,7 @@ import de.plushnikov.intellij.lombok.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 /**
@@ -30,8 +31,8 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
   private final String loggerType;
   private final String loggerInitializer;
 
-  protected AbstractLogProcessor(@NotNull String supportedAnnotation, @NotNull String loggerType, @NotNull String loggerInitializer) {
-    super(supportedAnnotation, PsiField.class);
+  protected AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull String loggerType, @NotNull String loggerInitializer) {
+    super(supportedAnnotationClass, PsiField.class);
     this.loggerType = loggerType;
     this.loggerInitializer = loggerInitializer;
   }

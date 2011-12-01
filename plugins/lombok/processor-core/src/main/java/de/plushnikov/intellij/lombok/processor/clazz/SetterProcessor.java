@@ -31,11 +31,10 @@ import java.util.List;
  */
 public class SetterProcessor extends AbstractLombokClassProcessor {
 
-  private static final String CLASS_NAME = Setter.class.getName();
   private final SetterFieldProcessor fieldProcessor = new SetterFieldProcessor();
 
   public SetterProcessor() {
-    super(CLASS_NAME, PsiMethod.class);
+    super(Setter.class, PsiMethod.class);
   }
 
   @Override

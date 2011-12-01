@@ -29,11 +29,10 @@ import java.util.List;
  */
 public class ToStringProcessor extends AbstractLombokClassProcessor {
 
-  private static final String CLASS_NAME = ToString.class.getName();
   public static final String METHOD_NAME = "toString";
 
   public ToStringProcessor() {
-    super(CLASS_NAME, PsiMethod.class);
+    super(ToString.class, PsiMethod.class);
   }
 
   @Override

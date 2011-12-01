@@ -25,10 +25,8 @@ import java.util.Collection;
  */
 public class CleanupProcessor extends AbstractLombokProcessor {
 
-  public static final String CLASS_NAME = Cleanup.class.getName();
-
   public CleanupProcessor() {
-    super(CLASS_NAME, PsiElement.class);
+    super(Cleanup.class, PsiElement.class);
   }
 
   @Override

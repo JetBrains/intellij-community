@@ -1,14 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz.constructor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -27,6 +18,15 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base lombok processor class for constructor processing
@@ -35,8 +35,8 @@ import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
  */
 public abstract class AbstractConstructorClassProcessor extends AbstractLombokClassProcessor {
 
-  protected AbstractConstructorClassProcessor(@NotNull String supportedAnnotation, @NotNull Class supportedClass) {
-    super(supportedAnnotation, supportedClass);
+  protected AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   @Override

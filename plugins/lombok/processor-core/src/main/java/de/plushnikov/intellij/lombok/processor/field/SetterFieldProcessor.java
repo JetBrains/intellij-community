@@ -31,10 +31,8 @@ import java.util.List;
  */
 public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
 
-  public static final String CLASS_NAME = Setter.class.getName();
-
   public SetterFieldProcessor() {
-    super(CLASS_NAME, PsiMethod.class);
+    super(Setter.class, PsiMethod.class);
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {

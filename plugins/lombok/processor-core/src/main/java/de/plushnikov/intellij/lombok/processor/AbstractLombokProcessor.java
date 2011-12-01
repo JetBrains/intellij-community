@@ -5,6 +5,8 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
+
 /**
  * Base lombok processor class
  *
@@ -18,16 +20,16 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
   /**
    * Kind of output elements this processor supports
    */
-  private final Class supportedClass;
+  private final Class<?> supportedClass;
 
   /**
    * Constructor for all Lombok-Processors
    *
-   * @param supportedAnnotation anntotation qualified name this processor supports
-   * @param supportedClass      kind of output elements this processor supports
+   * @param supportedAnnotationClass anntotation this processor supports
+   * @param supportedClass           kind of output elements this processor supports
    */
-  protected AbstractLombokProcessor(@NotNull String supportedAnnotation, @NotNull Class supportedClass) {
-    this.supportedAnnotation = supportedAnnotation;
+  protected AbstractLombokProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+    this.supportedAnnotation = supportedAnnotationClass.getName();
     this.supportedClass = supportedClass;
   }
 

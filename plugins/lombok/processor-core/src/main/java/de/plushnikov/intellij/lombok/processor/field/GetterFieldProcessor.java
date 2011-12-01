@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.core.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,10 +33,12 @@ import java.util.List;
  */
 public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
 
-  public static final String CLASS_NAME = Getter.class.getName();
-
   public GetterFieldProcessor() {
-    super(CLASS_NAME, PsiMethod.class);
+    super(Getter.class, PsiMethod.class);
+  }
+
+  protected GetterFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
@@ -52,8 +55,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     final String methodVisibity = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     result = null != methodVisibity;
 
-    final Boolean lazyObj = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy", Boolean.class);
-    final boolean lazy = null != lazyObj && lazyObj;
+    final boolean lazy = isLazyGetter(psiAnnotation);
     if (null == methodVisibity && lazy) {
       builder.addWarning("'lazy' does not work with AccessLevel.NONE.");
     }
@@ -74,6 +76,11 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     }
 
     return result;
+  }
+
+  protected boolean isLazyGetter(@NotNull PsiAnnotation psiAnnotation) {
+    final Boolean lazyObj = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy", Boolean.class);
+    return null != lazyObj && lazyObj;
   }
 
   protected boolean validateExistingMethods(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {

@@ -1,10 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import java.util.Collection;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -23,16 +18,18 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Plushnikov Michail
  */
 public class DataProcessor extends AbstractLombokClassProcessor {
 
-  private static final String CLASS_NAME = Data.class.getName();
-
   public DataProcessor() {
-    super(CLASS_NAME, PsiMethod.class);
+    super(Data.class, PsiMethod.class);
   }
 
   @Override
