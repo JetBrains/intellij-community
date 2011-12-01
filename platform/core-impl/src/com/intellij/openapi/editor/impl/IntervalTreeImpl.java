@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.IncorrectOperationException;
@@ -503,6 +504,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   @NotNull
   DisposableIterator<T> overlappingIterator(final int startOffset, final int endOffset) {
+    ProperTextRange.assertProperRange(startOffset, endOffset, "");
     final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), new TextRangeInterval(startOffset, endOffset), modCount, 0);
     if (firstOverlap == null) {
       return DisposableIterator.EMPTY;
@@ -1192,9 +1194,14 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
         return true;
       }
     });
-
-    super.clear();
-    keySize = 0;
+    l.writeLock().lock();
+    try {
+      super.clear();
+      keySize = 0;
+    }
+    finally {
+      l.writeLock().unlock();
+    }
   }
 
   private void collectGced(IntervalNode<T> root, List<IntervalNode<T>> gced) {
