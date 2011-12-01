@@ -148,7 +148,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     Project project = defaultTargetDirectory.getProject();
     Object targetDirectory = null;
     String className = null;
-    if (classes.size() == 1 && classes.values().iterator().next().length == 1) {
+    if (copyOneClass(classes)) {
       final String commonPath = ArrayUtil.find(elements, classes.values().iterator().next()) == -1 ? normalizeRelativeMap(relativePathsMap) : null;
       CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false){
         @Override
@@ -184,6 +184,14 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       copyClassesImpl(className, project, classes, relativePathsMap, targetDirectory, defaultTargetDirectory, RefactoringBundle.message(
         "copy.handler.copy.class"), false);
     }
+  }
+
+  private static boolean copyOneClass(Map<PsiFile, PsiClass[]> classes) {
+    if (classes.size() == 1){
+      final PsiClass[] psiClasses = classes.values().iterator().next();
+      return psiClasses != null && psiClasses.length == 1;
+    }
+    return false;
   }
 
   public void doClone(PsiElement element) {
