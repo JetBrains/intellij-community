@@ -308,7 +308,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public boolean isToDrawMacCorner() {
-    if (!SystemInfo.isMac) {
+    if (!SystemInfo.isMac || myComponent.getComponentCount() <= 0) {
       return false;
     }
 
