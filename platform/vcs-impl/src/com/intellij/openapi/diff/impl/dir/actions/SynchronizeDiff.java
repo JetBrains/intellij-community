@@ -46,14 +46,12 @@ public class SynchronizeDiff extends DirDiffAction {
         (getModel().getSourceDir() instanceof BackgroundOperatingDiffElement ||
          getModel().getTargetDir() instanceof BackgroundOperatingDiffElement)) {
       List<DirDiffElement> elements = mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements();
-      synchronized (elements){
       for (DirDiffElement dirDiffElement : elements) {
         if ((dirDiffElement.getSource() == null || dirDiffElement.getSource().isOperationsEnabled()) &&
             (dirDiffElement.getTarget() == null || dirDiffElement.getTarget().isOperationsEnabled())) {
           e.getPresentation().setEnabled(true);
           return;
         }
-      }
       }
       e.getPresentation().setEnabled(false);
     }
