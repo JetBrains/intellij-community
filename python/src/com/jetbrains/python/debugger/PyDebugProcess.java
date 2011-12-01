@@ -479,10 +479,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
           breakpoint = myRegisteredBreakpoints.get(position);
           if (breakpoint == null) {
-            System.out.println("Stopped:" + position.getFile());
+            System.out.println("Stopped:" + position.getFile() + ", " + position.getLine());
             System.out.println("Registered:");
             for (PySourcePosition s: myRegisteredBreakpoints.keySet()) {
-              System.out.println(s.getFile());
+              System.out.println(s.getFile() + ", " + s.getLine());
             }
 
             myDebugger.removeTempBreakpoint(position.getFile(), position.getLine());
