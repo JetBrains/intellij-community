@@ -75,6 +75,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("p1/p2/m1.py", "p1");
   }
 
+  // PY-5168
+  public void testModuleToNonPackage() {
+    doMoveFileTest("p1/p2/m1.py", "nonp3");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName)  {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);

@@ -71,6 +71,9 @@ public class PyExtractMethodUtil {
     // collect statements
     final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
     if (elementsRange.isEmpty()) {
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          "Cannot perform refactoring from empty code fragment",
+                                          RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
       return;
     }
 

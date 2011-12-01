@@ -48,7 +48,7 @@ public class CreatePackageAction extends DumbAwareAction {
     }
   }
 
-  private static void createInitPyInHierarchy(PsiDirectory created, PsiDirectory ancestor) {
+  public static void createInitPyInHierarchy(PsiDirectory created, PsiDirectory ancestor) {
     do {
       createInitPy(created);
       created = created.getParent();
@@ -58,6 +58,9 @@ public class CreatePackageAction extends DumbAwareAction {
   private static void createInitPy(PsiDirectory directory) {
     final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
     final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+    if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
+      return;
+    }
     if (template != null) {
       try {
         FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(), directory);
