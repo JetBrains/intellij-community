@@ -1,11 +1,13 @@
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.actions.CreatePackageAction;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -33,6 +35,16 @@ public class PyMoveFileHandler extends MoveFileHandler {
 
   @Override
   public void prepareMovedFile(PsiFile file, PsiDirectory moveDestination, Map<PsiElement, PsiElement> oldToNewMap) {
+    if (file != null) {
+      final List<VirtualFile> roots = PyUtil.getSourceRoots(file);
+      PsiDirectory root = moveDestination;
+      while (root != null && !roots.contains(root.getVirtualFile())) {
+        root = root.getParentDirectory();
+      }
+      if (moveDestination != root && root != null) {
+        CreatePackageAction.createInitPyInHierarchy(moveDestination, root);
+      }
+    }
     // TODO: Update relative imports
   }
 
