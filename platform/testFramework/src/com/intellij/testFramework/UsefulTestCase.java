@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -190,6 +191,7 @@ public abstract class UsefulTestCase extends TestCase {
     myOldCodeStyleSettings = null;
 
     VariableInplaceRenamer.checkCleared();
+    StartMarkAction.checkCleared();
   }
 
   protected void storeSettings() {

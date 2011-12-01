@@ -32,7 +32,7 @@ import java.util.Properties;
 
 public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory {
   @NonNls
-  public static final String[] TEMPLATES = {"GroovyClass.groovy", "GroovyScript.groovy", "GroovyControllerTests.groovy",};
+  public static final String[] TEMPLATES = {"GroovyClass.groovy", "GroovyScript.groovy"};
 
   public void registerCustromTemplates(String... templates) {
     for (String template : templates) {

@@ -293,6 +293,10 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
   }
 
+  private static class NullResult {
+    public static final NullResult INSTANCE = new NullResult();
+  }
+
   public class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
@@ -300,6 +304,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     // that have DataContext as a field.
     private final WeakReference<Component> myRef;
     private WeakValueHashMap<Key, Object> mySavedData;
+    private WeakValueHashMap<String, Object> myCachedData = new WeakValueHashMap<String, Object>();
 
     public MyDataContext(final Component component) {
       myEventCount = -1;
@@ -313,16 +318,22 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     public Object getData(String dataId) {
       int currentEventCount = IdeEventQueue.getInstance().getEventCount();
       if (myEventCount != -1 && myEventCount != currentEventCount) {
-        /*
-        throw new IllegalStateException(
-          "cannot share data context between Swing events; initial event count = " +
-            myEventCount + "; current event count = " + currentEventCount
-        );
-        */
         LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
                   currentEventCount);
+        return doGetData(dataId);
       }
 
+      Object answer = myCachedData.get(dataId);
+      if (answer == null) {
+        answer = doGetData(dataId);
+        myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
+      }
+
+      return answer != NullResult.INSTANCE ? answer : null;
+    }
+
+    @Nullable
+    private Object doGetData(String dataId) {
       Component _component = myRef.get();
       if (PlatformDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
         if (_component != null) {

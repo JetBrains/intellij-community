@@ -48,6 +48,6 @@ public class AstAwareResourceLoader implements GroovyResourceLoader {
   }
 
   File getSourceFile(String className) {
-    return myClass2File.get(className.replace('$', '.'));
+    return myClass2File.get(className);
   }
 }

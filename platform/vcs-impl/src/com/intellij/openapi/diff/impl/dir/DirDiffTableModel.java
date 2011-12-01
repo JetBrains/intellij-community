@@ -317,21 +317,29 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             elements.add(DirDiffElement.createDirElement(tree, tree.getSource(), tree.getTarget(), tree.getPath()));
             separatorAdded = true;
           }
-          switch (child.getType()) {
-            case SOURCE:
-              elements.add(DirDiffElement.createSourceOnly(child, child.getSource()));
-              break;
-            case TARGET:
-              elements.add(DirDiffElement.createTargetOnly(child, child.getTarget()));
-              break;
-            case CHANGED:
-              elements.add(DirDiffElement.createChange(child, child.getSource(), child.getTarget()));
-              break;
-            case EQUAL:
-              elements.add(DirDiffElement.createEqual(child, child.getSource(), child.getTarget()));
-              break;
-            case ERROR:
-              elements.add(DirDiffElement.createError(child, child.getSource(), child.getTarget()));
+          final DType type = child.getType();
+          if (type != null) {
+            switch (type) {
+              case SOURCE:
+                elements.add(DirDiffElement.createSourceOnly(child, child.getSource()));
+                break;
+              case TARGET:
+                elements.add(DirDiffElement.createTargetOnly(child, child.getTarget()));
+                break;
+              case CHANGED:
+                elements.add(DirDiffElement.createChange(child, child.getSource(), child.getTarget()));
+                break;
+              case EQUAL:
+                elements.add(DirDiffElement.createEqual(child, child.getSource(), child.getTarget()));
+                break;
+              case ERROR:
+                elements.add(DirDiffElement.createError(child, child.getSource(), child.getTarget()));
+              case SEPARATOR:
+                break;
+            }
+          } else {
+            LOG.error(String.format("Element's type is null [Name: %s, Container: %s, Source: %s, Target: %s] ",
+                                   child.getName(), child.isContainer(), child.getSource(), child.getTarget()));
           }
         }
       } else {

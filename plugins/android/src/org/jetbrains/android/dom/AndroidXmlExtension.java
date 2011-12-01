@@ -17,6 +17,7 @@ package org.jetbrains.android.dom;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.TagNameReference;
@@ -37,6 +38,10 @@ public class AndroidXmlExtension extends DefaultXmlExtension {
   @Override
   public boolean isAvailable(final PsiFile file) {
     if (file instanceof XmlFile) {
+      if (!DirectoryIndex.getInstance(file.getProject()).isInitialized()) {
+        return false;
+      }
+
       if (AndroidFacet.getInstance(file) == null) {
         return false;
       }

@@ -58,7 +58,8 @@ public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
     final String testName = getTestName(false);
     myFixture.copyFileToProject(testName + ".groovy", "/foo/" + testName + ".groovy");
 
-    assertFalse(
+    //would be copied as file
+    assertTrue(
       CopyClassesHandler.canCopyClass(myFixture.getJavaFacade().findClass("foo." + testName, GlobalSearchScope.allScope(getProject()))));
   }
 
