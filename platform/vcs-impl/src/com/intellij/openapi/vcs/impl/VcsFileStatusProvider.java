@@ -118,14 +118,6 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || !isDocumentModified(file)) {
       final AbstractVcs vcs = myVcsManager.getVcsFor(file);
       if (vcs == null) return;
-      if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified(file)) {
-        if (!((ReadonlyStatusHandlerImpl) ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG) {
-          RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-          if (rollbackEnvironment != null) {
-            rollbackEnvironment.rollbackIfUnchanged(file);
-          }
-        }
-      }
       myFileStatusManager.fileStatusChanged(file);
       ChangeProvider cp = vcs.getChangeProvider();
       if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
