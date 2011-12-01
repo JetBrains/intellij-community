@@ -2555,5 +2555,22 @@ public class UIUtil {
 
     return ans;
   }
+
+  public static void adjustWindowToMinimumSize(final Window window) {
+    if (window == null) return;
+    final Dimension minSize = window.getMinimumSize();
+    final Dimension size = window.getSize();
+    final Dimension newSize = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
+
+    if (!newSize.equals(size)) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (window.isShowing()) {
+            window.setSize(newSize);
+          }
+        }
+      });
+    }
+  }
 }
 

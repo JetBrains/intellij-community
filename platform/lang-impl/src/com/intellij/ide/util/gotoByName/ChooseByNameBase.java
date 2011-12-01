@@ -58,13 +58,8 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageInfoToUsageConverter;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageViewManager;
-import com.intellij.usages.UsageViewPresentation;
-import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -1466,24 +1461,12 @@ public abstract class ChooseByNameBase {
       presentation.setTabText(pattern);
       presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(pattern.toLowerCase()));
       final PsiElement[] elements = getElements();
-      final List<UsageInfo> usageInfos = new ArrayList<UsageInfo>();
-      final List<PsiElement> targets = new ArrayList<PsiElement>();
-      for (PsiElement element : elements) {
-        if (element.getTextRange() != null) {
-          usageInfos.add(new UsageInfo(element));
-        } else {
-          targets.add(element);
-        }
-      }
-      final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
-        new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
-      final UsageViewImpl usageView =
-        (UsageViewImpl)UsageViewManager.getInstance(myProject).showUsages(targets.isEmpty() ? UsageTarget.EMPTY_ARRAY : PsiElement2UsageTargetAdapter.convert(targets.toArray(new PsiElement[targets.size()])),
-                                                                          UsageInfoToUsageConverter.convert(descriptor, usageInfos.toArray(new UsageInfo[usageInfos.size()])), presentation);
+      final Set<PsiElement> els = new LinkedHashSet<PsiElement>();
+      Collections.addAll(els, elements);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final String text = myTextField.getText();
         final boolean checkboxState = myCheckBox.isSelected();
-        final HashSet<Object> elementsArray = new HashSet<Object>();
+        final LinkedHashSet<Object> elementsArray = new LinkedHashSet<Object>();
         hideHint();
         ProgressManager.getInstance().run(new Task.Modal(myProject, pattern, true){
           private ChooseByNameBase.CalcElementsThread myCalcElementsThread;
@@ -1513,12 +1496,10 @@ public abstract class ChooseByNameBase {
           public void onSuccess() {
             for (Object o : elementsArray) {
               if (o instanceof PsiElement) {
-                if (ArrayUtil.find(elements, (PsiElement)o) > -1) {
-                  continue;
-                }
-                usageView.appendUsage(UsageInfoToUsageConverter.convert(descriptor, new UsageInfo((PsiElement)o)));
+                els.add((PsiElement)o);
               }
             }
+            showUsageView(els, presentation);
           }
 
           @Override
@@ -1526,12 +1507,29 @@ public abstract class ChooseByNameBase {
             if (myCalcElementsThread != null) {
               myCalcElementsThread.cancel();
             }
-            usageView.close();
           }
         });
       } else {
         hideHint();
+        showUsageView(els, presentation);
       }
+    }
+
+    private void showUsageView(Set<PsiElement> elements,
+                               UsageViewPresentation presentation) {
+      final List<PsiElement> targets = new ArrayList<PsiElement>();
+      final List<Usage> usages = new ArrayList<Usage>();
+      for (PsiElement element : elements) {
+        if (element.getTextRange() != null) {
+          usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element)));
+        } else {
+          targets.add(element);
+        }
+      }
+      UsageViewManager
+        .getInstance(myProject).showUsages(targets.isEmpty() ? UsageTarget.EMPTY_ARRAY
+                                                             : PsiElement2UsageTargetAdapter.convert(targets.toArray(new PsiElement[targets.size()])),
+                                           usages.toArray(new Usage[usages.size()]), presentation);
     }
 
     @Override

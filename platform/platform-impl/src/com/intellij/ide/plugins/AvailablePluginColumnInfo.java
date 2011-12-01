@@ -95,8 +95,8 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
           myCategoryLabel.setText(category);
           myCategoryLabel.setForeground(grayedFg);
         }
-
-        if (isDownloaded(pluginNode)) {
+        final IdeaPluginDescriptor installed = PluginManager.getPlugin(pluginNode.getPluginId());
+        if (isDownloaded(pluginNode) || (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))) {
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_ADDED);
           myStatusLabel.setText("[Downloaded]");
           myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));

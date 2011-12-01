@@ -177,6 +177,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testIndentNamedArguments() throws Throwable { doTest(); }
   public void testIndentAssigned() throws Throwable { doTest(); }
   public void testCommentBeforeMultilineString() throws Throwable { doTest(); }
+  public void testMethodSemicolons() throws Throwable { doTest(); }
 
   public void testNoFlyingGeese() throws Throwable {
     myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).SPACE_IN_NAMED_ARGUMENT = false;

@@ -28,6 +28,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurableGroup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,11 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     if (myEditorTabs.length > 1) {
       final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(myDisposable);
       for (FacetEditorTab editorTab : myEditorTabs) {
-        tabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), editorTab.createComponent(), null);
+        JComponent c = editorTab.createComponent();
+        if (c != null) {
+          UIUtil.addInsets(c, UIUtil.PANEL_SMALL_INSETS);
+        }
+        tabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), c, null);
       }
       tabbedPane.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {

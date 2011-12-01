@@ -425,7 +425,10 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   private void removeBase(RefClass superClass) {
-    getBaseClasses().remove(superClass);
+    final Set<RefClass> baseClasses = getBaseClasses();
+    if (baseClasses.contains(superClass)) {
+      baseClasses.remove(superClass);
+    }
   }
 
   protected void methodRemoved(RefMethod method) {

@@ -189,6 +189,12 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup.focused
   }
 
+  public void testForVariableNoFocus2() {
+    myFixture.configureByText 'a.groovy', 'for (<caret>args) {}'
+    type 'a'
+    assert !lookup.focused
+  }
+
   public void testNonImportedClass() {
     myFixture.addClass("package foo; public class Abcdefg {}")
     myFixture.configureByText 'a.groovy', '<caret>'
