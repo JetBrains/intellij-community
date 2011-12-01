@@ -156,7 +156,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
               try {
                 PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
                 reference = (PsiReferenceExpression)reference.replace(copy);
-                ((PsiReferenceExpression)qualifierExpression).bindToElement(((PsiMember)referent).getContainingClass());
+                ((PsiReferenceExpression)reference.getQualifier()).bindToElement(((PsiMember)referent).getContainingClass());
               }
               catch (IncorrectOperationException e) {
                 LOG.error (e);
