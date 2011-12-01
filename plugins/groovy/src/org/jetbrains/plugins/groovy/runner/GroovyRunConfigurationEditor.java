@@ -27,8 +27,8 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.FieldPanel;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,8 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> implements PanelWithAnchor {
@@ -86,7 +87,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myVMParameters.setText(configuration.getVMParameters());
 
     myParameters.setDialogCaption("Script Parameters");
-    myParameters.setText(configuration.getProgramParameters());
+    myParameters.setText(configuration.getScriptParameters());
 
     scriptPathField.setText(configuration.getScriptPath());
     workDirField.setText(configuration.getWorkDir());
@@ -109,7 +110,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     configuration.setModule((Module) myModulesBox.getSelectedItem());
     configuration.setVMParameters(myVMParameters.getText());
     configuration.setDebugEnabled(myDebugCB.isSelected());
-    configuration.setProgramParameters(myParameters.getText());
+    configuration.setScriptParameters(myParameters.getText());
     configuration.setScriptPath(scriptPathField.getText());
     configuration.setWorkDir(workDirField.getText());
     configuration.setEnvs(myEnvVariables.getEnvs());
