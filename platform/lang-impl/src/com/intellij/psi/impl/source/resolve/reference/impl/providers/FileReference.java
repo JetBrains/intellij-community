@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
@@ -61,6 +62,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
                                       QuickFixProvider<FileReference>, LocalQuickFixProvider,
                                       EmptyResolveMessageProvider, BindablePsiReference {
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
+  
   public static final FileReference[] EMPTY = new FileReference[0];
   private static final TObjectHashingStrategy<ResolveResult> RESOLVE_RESULT_HASHING_STRATEGY = new TObjectHashingStrategy<ResolveResult>() {
     @Override
@@ -123,7 +126,11 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   protected Collection<PsiFileSystemItem> getContexts() {
     final FileReference contextRef = getContextReference();
     if (contextRef == null) {
-      return myFileReferenceSet.getDefaultContexts();
+      Collection<PsiFileSystemItem> defaultContexts = myFileReferenceSet.getDefaultContexts();
+      for (PsiFileSystemItem context : defaultContexts) {
+        LOG.assertTrue(context != null, myFileReferenceSet.getClass() + " provided a null context");
+      }
+      return defaultContexts;
     }
     ResolveResult[] resolveResults = contextRef.multiResolve(false);
     ArrayList<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();

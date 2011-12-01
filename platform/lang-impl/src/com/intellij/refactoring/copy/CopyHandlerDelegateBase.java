@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
+package com.intellij.refactoring.copy;
 
-import java.util.EventListener;
+import com.intellij.psi.PsiElement;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 11.01.2008
+ * User: anna
+ * Date: 11/30/11
  */
-public interface DynamicChangeListener extends EventListener {
-  /*
-   * Change property
-   */
-   public void dynamicPropertyChange(); 
+public abstract class CopyHandlerDelegateBase implements CopyHandlerDelegate {
+  public abstract boolean canCopy(PsiElement[] elements, boolean fromUpdate);
+
+  @Override
+  public boolean canCopy(PsiElement[] elements) {
+    return canCopy(elements, false);
+  }
 }

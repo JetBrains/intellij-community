@@ -2,7 +2,7 @@
 Version=1.0
 Type=Application
 Name=$NAME$
-Exec=$SCRIPT$ %f
+Exec="$SCRIPT$" %f
 Icon=$ICON$
 Comment=Develop with pleasure!
 Categories=Development;IDE;

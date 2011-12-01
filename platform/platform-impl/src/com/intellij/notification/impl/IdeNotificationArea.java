@@ -67,13 +67,14 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
     new Runnable() {
       @Override
       public void run() {
-        LogModel logModel = EventLog.getLogModel(getProject());
-        ToolWindow eventLog = EventLog.getEventLog(getProject());
+        final Project project = getProject();
+        LogModel logModel = EventLog.getLogModel(project);
+        ToolWindow eventLog = EventLog.getEventLog(project);
         if (eventLog != null && eventLog.isVisible()) {
           logModel.logShown();
         }
-        updateStatus();
-        myLogAlarm.addRequest(this, 50);
+        updateStatus(logModel);
+        myLogAlarm.addRequest(this, 100);
       }
     }.run();
 
@@ -111,8 +112,8 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
     return WIDGET_ID;
   }
 
-  private void updateStatus() {
-    myCurrentIcon = getPendingNotificationsIcon(EMPTY_ICON, NotificationModel.getMaximumType(EventLog.getLogModel(getProject()).getNotifications()));
+  private void updateStatus(final LogModel model) {
+    myCurrentIcon = getPendingNotificationsIcon(EMPTY_ICON, NotificationModel.getMaximumType(model.getNotifications()));
     myStatusBar.updateWidget(ID());
   }
 

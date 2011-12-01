@@ -23,6 +23,7 @@
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -182,36 +183,46 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     @Nullable
     public PsiElement resolve() {
-      PsiClass cls = PsiUtil.getTopLevelClass(getElement());
+      @NonNls String val = getValue();
+      final String methodName = StringUtil.getShortName(val);
+      PsiClass cls = getDependsClass(val);
       if (cls != null) {
-        PsiMethod[] methods = cls.getMethods();
-        @NonNls String val = getValue();
-        int hackIndex = val.indexOf("IntellijIdeaRulezzz ");
-        if (hackIndex > -1) {
-          val = val.substring(0, hackIndex) + val.substring(hackIndex + 1, val.length());
-        }
+        PsiMethod[] methods = cls.findMethodsByName(methodName, true);
         for (PsiMethod method : methods) {
           if (TestNGUtil.hasTest(method)) {
-            if (method.getName().equals(val)) {
-              return method;
-            }
+            return method;
           }
         }
       }
       return null;
     }
 
+    @Nullable
+    private PsiClass getDependsClass(String val) {
+      final String className = StringUtil.getPackageName(val);
+      final PsiLiteralExpression element = getElement();
+      return StringUtil.isEmpty(className) ? PsiUtil.getTopLevelClass(element)
+                                           : JavaPsiFacade.getInstance(element.getProject()).findClass(className, element.getResolveScope());
+    }
+
     @NotNull
     public Object[] getVariants() {
       List<Object> list = new ArrayList<Object>();
-      PsiClass cls = PsiUtil.getTopLevelClass(getElement());
+      @NonNls String val = getValue();
+      int hackIndex = val.indexOf(CompletionUtil.DUMMY_IDENTIFIER);
+      if (hackIndex > -1) {
+        val = val.substring(0, hackIndex);
+      }
+      final String className = StringUtil.getPackageName(val);
+      PsiClass cls = getDependsClass(val);
       if (cls != null) {
         PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
         PsiMethod[] methods = cls.getMethods();
         for (PsiMethod method : methods) {
           if (current != null && method.getName().equals(current.getName())) continue;
           if (TestNGUtil.hasTest(method) || TestNGUtil.hasConfig(method)) {
-            list.add(LookupValueFactory.createLookupValue(method.getName(), null));
+            list.add(LookupValueFactory.createLookupValue(StringUtil.isEmpty(className) ? method.getName()
+                                                                                        :StringUtil.getQualifiedName(cls.getQualifiedName(), method.getName()), null));
           }
         }
       }

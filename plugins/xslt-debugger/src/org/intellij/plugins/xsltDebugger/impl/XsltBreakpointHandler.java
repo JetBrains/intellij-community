@@ -164,7 +164,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
 
     int offset = -1;
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document != null) {
+    if (document != null && document.getLineCount() > position.getLine() && position.getLine() >= 0) {
       offset = document.getLineStartOffset(position.getLine());
     }
     if (offset < 0) {

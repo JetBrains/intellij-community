@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
@@ -59,7 +60,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    invoke(project, elements, true);
+    invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null);
   }
 
   public static void invoke(final Project project, PsiElement[] elements, boolean checkSuperMethods) {
@@ -67,6 +68,10 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
   }
 
   public static void invoke(final Project project, PsiElement[] elements, boolean checkSuperMethods, @Nullable final Runnable successRunnable) {
+    invoke(project, elements, null, checkSuperMethods, successRunnable);
+  }
+
+  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkSuperMethods, @Nullable final Runnable successRunnable) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
@@ -82,7 +87,9 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
         for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
           if (delegate.handlesElement(element)) {
             found = true;
-            Collection<? extends PsiElement> addElements = delegate.getElementsToSearch(element, elementsSet);
+            Collection<? extends PsiElement> addElements = delegate instanceof SafeDeleteProcessorDelegateBase
+                                                           ? ((SafeDeleteProcessorDelegateBase)delegate).getElementsToSearch(element, module, elementsSet)
+                                                           : delegate.getElementsToSearch(element, elementsSet);
             if (addElements == null) return;
             fullElementsSet.addAll(addElements);
             break;

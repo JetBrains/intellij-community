@@ -49,7 +49,7 @@ public class JarMemoryLoader {
     ZipInputStream zipStream = new ZipInputStream(inputStream);
     try {
       ZipEntry sizeEntry = zipStream.getNextEntry();
-      if (!sizeEntry.getName().equals(SIZE_ENTRY)) return null;
+      if (sizeEntry == null || !sizeEntry.getName().equals(SIZE_ENTRY)) return null;
       byte[] bytes = FileUtil.loadBytes(zipStream, 2);
       int size = ZipShort.getValue(bytes);
 

@@ -89,8 +89,9 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   public void mouseMoved(MouseEvent e) {
     final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, getParent());
     final boolean insideRec = getBounds().contains(event.getPoint());
-    if (!myPopupIsShowing && insideRec) {
-      showPopup(null);
+    boolean buttonsNotPressed = (e.getModifiersEx() & (MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON3_DOWN_MASK)) == 0;
+    if (!myPopupIsShowing && insideRec && buttonsNotPressed) {
+      showPopup(null, false);
     } else if (myPopupIsShowing && !insideRec) {
       final Component over = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
       if (over != null && myPopup.isShowing()) {
@@ -159,11 +160,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
     if (myPopupIsShowing) {
       closePopup();
     } else {
-      showPopup(null);
+      showPopup(null, false);
     }
   }
 
-  public void showPopup(final Action actionToSelect) {
+  public void showPopup(final Action actionToSelect, final boolean ensureSelection) {
     if (myPopupIsShowing) return;
     
     myPopupIsShowing = true;
@@ -199,8 +200,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
         if (myPopup == null || !myPopup.isShowing() || !myPopupIsShowing) return;
         
         Action selection = actionToSelect;
-        if (selection == null && myOptions.length > 0) {
-          selection = myOptions[0];          
+        if (selection == null && myOptions.length > 0 && ensureSelection) {
+          selection = getAction();
         }
 
         if (selection == null) return;

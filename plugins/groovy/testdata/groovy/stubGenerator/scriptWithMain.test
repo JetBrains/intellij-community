@@ -1,0 +1,21 @@
+public static void main(String[] args) {
+    def r = new Runnable() {
+        void run() {
+            println("asdasd")
+        }
+    }
+
+    r.run()
+}
+-----
+public class scriptWithMain extends groovy.lang.Script {
+public java.lang.Object run() {
+return null;
+}
+
+public static void main(java.lang.String[] args) {
+return ;
+}
+
+}
+---

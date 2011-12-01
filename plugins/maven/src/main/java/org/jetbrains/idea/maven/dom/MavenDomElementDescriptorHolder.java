@@ -99,7 +99,7 @@ public class MavenDomElementDescriptorHolder {
         public Result<XmlNSDescriptorImpl> compute() {
           return Result.create(doCreateDescriptor(kind), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
-      });
+      }, false);
       myDescriptorsMap.put(kind, result);
     }
     return result.getValue();

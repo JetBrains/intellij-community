@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.stubs;
 
+import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,30 +58,40 @@ public class StubTree {
   public Map<StubIndexKey, Map<Object, TIntArrayList>> indexStubTree() {
     final Map<StubIndexKey, Map<Object, TIntArrayList>> result = new HashMap<StubIndexKey, Map<Object, TIntArrayList>>();
 
+    SerializationManager serializationManager = SerializationManager.getInstance();
+    StubIndexSink sink = new StubIndexSink(result);
+
     for (int i = 0, plainListSize = myPlainList.size(); i < plainListSize; i++) {
       final StubElement<?> stub = myPlainList.get(i);
-      final StubSerializer serializer = SerializationManager.getInstance().getSerializer(stub);
-      final int stubIdx = i;
-      //noinspection unchecked
-      serializer.indexStub(stub, new IndexSink() {
-        @Override
-        public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
-          Map<Object, TIntArrayList> map = result.get(indexKey);
-          if (map == null) {
-            map = new HashMap<Object, TIntArrayList>();
-            result.put(indexKey, map);
-          }
-
-          TIntArrayList list = map.get(value);
-          if (list == null) {
-            list = new TIntArrayList();
-            map.put(value, list);
-          }
-          list.add(stubIdx);
-        }
-      });
+      sink.myStubIdx = i;
+      serializationManager.getSerializer(stub).indexStub(stub, sink);
     }
 
     return result;
+  }
+
+  private static class StubIndexSink implements IndexSink {
+    private final Map<StubIndexKey, Map<Object, TIntArrayList>> myResult;
+    private int myStubIdx;
+
+    public StubIndexSink(Map<StubIndexKey, Map<Object, TIntArrayList>> result) {
+      myResult = result;
+    }
+
+    @Override
+    public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
+      Map<Object, TIntArrayList> map = myResult.get(indexKey);
+      if (map == null) {
+        map = new THashMap<Object, TIntArrayList>();
+        myResult.put(indexKey, map);
+      }
+
+      TIntArrayList list = map.get(value);
+      if (list == null) {
+        list = new TIntArrayList();
+        map.put(value, list);
+      }
+      list.add(myStubIdx);
+    }
   }
 }

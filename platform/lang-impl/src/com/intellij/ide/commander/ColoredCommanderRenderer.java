@@ -93,7 +93,10 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     final String text = value.toString();
 
     if (myCommanderPanel.isEnableSearchHighlighting()) {
-      SpeedSearchUtil.appendFragmentsForSpeedSearch(myCommanderPanel.getList(), text, attributes, selected, this);
+      JList list1 = myCommanderPanel.getList();
+      if (list1 != null) {
+        SpeedSearchUtil.appendFragmentsForSpeedSearch(list1, text, attributes, selected, this);
+      }
     }
     else {
       append(text != null ? text : "", attributes);

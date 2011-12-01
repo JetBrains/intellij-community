@@ -51,7 +51,7 @@ public class GitBranch extends GitReference {
     super(name);
     myRemote = remote;
     myActive = active;
-    myHash = hash;
+    myHash = new String(hash);
   }
   
   @Deprecated

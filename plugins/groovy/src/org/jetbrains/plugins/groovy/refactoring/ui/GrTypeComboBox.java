@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.util.*;
@@ -37,45 +36,40 @@ public class GrTypeComboBox extends JComboBox {
 
   private static final Logger LOG = Logger.getInstance(GrTypeComboBox.class);
 
-  public static GrTypeComboBox createTypeComboboxFromBounds(@Nullable PsiType max,
-                                                            @Nullable PsiType min,
-                                                            PsiManager manager,
-                                                            GlobalSearchScope scope) {
-    return new GrTypeComboBox(max, min, min == null && GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY, min == null,
-                              manager, scope);
-  }
-
   public static GrTypeComboBox createTypeComboBoxWithDefType(@Nullable PsiType type) {
-    return new GrTypeComboBox(type, null, GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY, true, null, null);
+    return new GrTypeComboBox(type, null, true, null, null, false);
   }
 
   public static GrTypeComboBox createTypeComboBoxFromExpression(GrExpression expression) {
+    return createTypeComboBoxFromExpression(expression, false);
+  }
+
+  public static GrTypeComboBox createTypeComboBoxFromExpression(GrExpression expression, boolean selectDef) {
     PsiType type = expression.getType();
 
     if (GroovyRefactoringUtil.isDiamondNewOperator(expression)) {
       LOG.assertTrue(expression instanceof GrNewExpression);
-      PsiType expected = PsiImplUtil.inferExpectedTypeForDiamond((GrNewExpression)expression);
-      return createTypeComboboxFromBounds(type, expected, expression.getManager(), expression.getResolveScope());
+      PsiType expected = PsiImplUtil.inferExpectedTypeForDiamond(expression);
+      return new GrTypeComboBox(type, expected, expected == null, expression.getManager(), expression.getResolveScope(), selectDef);
     }
     else {
-      return createTypeComboBoxWithDefType(type);
+      return new GrTypeComboBox(type, null, true, null, null, selectDef);
     }
   }
 
   /**
    * @param type
    * @param min
-   * @param selectDef
    * @param createDef
    * @param manager   - must not be null if min is not null
    * @param scope     - must not be null if min is not null
    */
   private GrTypeComboBox(@Nullable PsiType type,
                          @Nullable PsiType min,
-                         boolean selectDef,
                          boolean createDef,
                          @Nullable PsiManager manager,
-                         @Nullable GlobalSearchScope scope) {
+                         @Nullable GlobalSearchScope scope,
+                         boolean selectDef) {
     LOG.assertTrue(min == null || manager != null);
     LOG.assertTrue(min == null || scope != null);
 
@@ -95,7 +89,7 @@ public class GrTypeComboBox extends JComboBox {
       addItem(new PsiTypeItem(types.get(typeName)));
     }
 
-    if (createDef && !selectDef && getItemCount() > 1) {
+    if (!selectDef && createDef && getItemCount() > 1) {
       setSelectedIndex(1);
     }
   }

@@ -42,6 +42,7 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
@@ -194,14 +195,19 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         //noinspection ConstantConditions
         touch(JavaPsiFacade.getInstance(getProject()).findClass(className).getContainingFile().getVirtualFile());
       } else {
-        final CompilerModuleExtension extension = ModuleRootManager.getInstance(myModule).getModuleExtension(CompilerModuleExtension.class);
         //noinspection ConstantConditions
-        extension.getCompilerOutputPath().findChild(className + ".class").delete(this);
+        findClassFile(className).delete(this);
       }
     }
     finally {
       token.finish();
     }
+  }
+
+  @Nullable protected VirtualFile findClassFile(String className) {
+    final CompilerModuleExtension extension = ModuleRootManager.getInstance(myModule).getModuleExtension(CompilerModuleExtension.class);
+    //noinspection ConstantConditions
+    return extension.getCompilerOutputPath().findChild(className + ".class");
   }
 
   protected static void touch(VirtualFile file) throws IOException {
