@@ -1531,6 +1531,9 @@ public abstract class DialogWrapper {
 
   private Dimension mySizeBeforeError = null;
   protected final void setErrorText(@Nullable final String text) {
+    if (myErrorText.isTextSet(text)) {
+      return;
+    }
     if (mySizeBeforeError == null && !StringUtil.isEmpty(text)) {
       mySizeBeforeError = getSize();
     }
