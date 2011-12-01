@@ -74,7 +74,7 @@ public class MvcConsole implements Disposable {
   @NonNls public static final String TOOL_WINDOW_ID = "Console";
 
   private final MyKillProcessAction myKillAction = new MyKillProcessAction();
-  private volatile boolean myExecuting = false;
+  private boolean myExecuting = false;
   private final Content myContent;
   private static final Icon KILL_PROCESS_ICON = IconLoader.getIcon("/debugger/killProcess.png");
 
@@ -151,8 +151,6 @@ public class MvcConsole implements Disposable {
     final boolean closeOnDone;
     final boolean showConsole;
     final String[] input;
-    private ProgressIndicator myIndicator;
-    private Runnable myAfter;
     private final List<ProcessListener> myListeners = new SmartList<ProcessListener>();
 
     private OSProcessHandler myHandler;
@@ -181,26 +179,19 @@ public class MvcConsole implements Disposable {
       return this;
     }
 
-    public ConsoleProcessDescriptor waitWith(ProgressIndicator progressIndicator, @Nullable Runnable after) {
+    public ConsoleProcessDescriptor waitWith(ProgressIndicator progressIndicator) {
       if (myHandler != null) {
-        doWait(progressIndicator, after);
-      }
-      else {
-        myIndicator = progressIndicator;
-        myAfter = after;
+        doWait(progressIndicator);
       }
       return this;
     }
 
-    private void doWait(ProgressIndicator progressIndicator, @Nullable Runnable after) {
+    private void doWait(ProgressIndicator progressIndicator) {
       while (!myHandler.waitFor(500)) {
         if (progressIndicator.isCanceled()) {
           myHandler.destroyProcess();
           break;
         }
-      }
-      if (after != null) {
-        after.run();
       }
     }
 
@@ -208,9 +199,6 @@ public class MvcConsole implements Disposable {
       myHandler = handler;
       for (final ProcessListener listener : myListeners) {
         handler.addProcessListener(listener);
-      }
-      if (myIndicator != null) {
-        doWait(myIndicator, myAfter);
       }
     }
   }
@@ -242,7 +230,7 @@ public class MvcConsole implements Disposable {
     return process;
   }
 
-  private boolean isExecuting() {
+  public boolean isExecuting() {
     return myExecuting;
   }
 
@@ -257,115 +245,108 @@ public class MvcConsole implements Disposable {
 
     myExecuting = true;
 
+    // Module creation was cancelled
+    if (module.isDisposed()) return;
+
     final ModalityState modalityState = ModalityState.current();
     final boolean modalContext = modalityState != ModalityState.NON_MODAL;
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        // Module creation was cancelled
-        if (module.isDisposed()) return;
+    if (!modalContext && pic.showConsole) {
+      show(null, toFocus);
+    }
 
-        FileDocumentManager.getInstance().saveAllDocuments();
-        myConsole.print(StringUtil.join(pb.command(), " "), ConsoleViewContentType.SYSTEM_OUTPUT);
-        final OSProcessHandler handler;
-        OutputStreamWriter writer;
-        try {
-          if (pb.command() == null || pb.command().size() == 0) return;
+    FileDocumentManager.getInstance().saveAllDocuments();
+    myConsole.print(StringUtil.join(pb.command(), " "), ConsoleViewContentType.SYSTEM_OUTPUT);
+    final OSProcessHandler handler;
+    try {
+      if (pb.command() == null || pb.command().size() == 0) return;
 
-          Process process = pb.start();
-          handler = new OSProcessHandler(process, "");
+      Process process = pb.start();
+      handler = new OSProcessHandler(process, "");
 
-          writer = new OutputStreamWriter(process.getOutputStream());
-          for (String s : input) {
-            writer.write(s);
-          }
-          writer.flush();
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
+      for (String s : input) {
+        writer.write(s);
+      }
+      writer.flush();
 
-          final Ref<Boolean> gotError = new Ref<Boolean>(false);
-          handler.addProcessListener(new ProcessAdapter() {
-            public void onTextAvailable(ProcessEvent event, Key key) {
-              if (key == ProcessOutputTypes.STDERR) gotError.set(true);
-              LOG.debug("got text: " + event.getText());
-            }
-
-            public void processTerminated(ProcessEvent event) {
-              final int exitCode = event.getExitCode();
-              if (exitCode == 0 && !gotError.get().booleanValue()) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    if (myProject.isDisposed() || !closeOnDone) return;
-                    myToolWindow.hide(null);
-                  }
-                }, modalityState);
-              }
-            }
-          });
-        }
-        catch (final IOException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(e.getMessage(), "Cannot start process");
-
-              try {
-                if (onDone != null && !module.isDisposed()) onDone.run();
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
-            }
-          }, modalityState);
-          return;
+      final Ref<Boolean> gotError = new Ref<Boolean>(false);
+      handler.addProcessListener(new ProcessAdapter() {
+        public void onTextAvailable(ProcessEvent event, Key key) {
+          if (key == ProcessOutputTypes.STDERR) gotError.set(true);
+          LOG.debug("got text: " + event.getText());
         }
 
-        pic.setHandler(handler);
-        myKillAction.setHandler(handler);
-
-        final MvcFramework framework = MvcFramework.getInstance(module);
-        myToolWindow.setIcon(framework == null ? GroovyIcons.GROOVY_ICON_16x16 : framework.getIcon());
-
-        myContent.setDisplayName((framework == null ? "" : framework.getDisplayName() + ":") + "Executing...");
-        myConsole.scrollToEnd();
-        myConsole.attachToProcess(handler);
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          public void run() {
-            handler.startNotify();
-            handler.waitFor();
-
+        public void processTerminated(ProcessEvent event) {
+          final int exitCode = event.getExitCode();
+          if (exitCode == 0 && !gotError.get().booleanValue()) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                module.putUserData(UPDATING_BY_CONSOLE_PROCESS, true);
-                LocalFileSystem.getInstance().refresh(false);
-                module.putUserData(UPDATING_BY_CONSOLE_PROCESS, null);
-
-                try {
-                  if (onDone != null && !module.isDisposed()) onDone.run();
-                }
-                catch (Exception e) {
-                  LOG.error(e);
-                }
-                myConsole.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
-                myKillAction.setHandler(null);
-                myContent.setDisplayName("");
-
-                myExecuting = false;
-
-                final MyProcessInConsole pic = myProcessQueue.poll();
-                if (pic != null) {
-                  executeProcessImpl(pic, false);
-                }
+                if (myProject.isDisposed() || !closeOnDone) return;
+                myToolWindow.hide(null);
               }
             }, modalityState);
           }
-        });
-      }
-    };
+        }
+      });
+    }
+    catch (final IOException e) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          Messages.showErrorDialog(e.getMessage(), "Cannot start process");
 
-    if (modalContext || !pic.showConsole) {
-      runnable.run();
+          try {
+            if (onDone != null && !module.isDisposed()) onDone.run();
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      }, modalityState);
+      return;
     }
-    else {
-      show(runnable, toFocus);
-    }
+
+    pic.setHandler(handler);
+    myKillAction.setHandler(handler);
+
+    final MvcFramework framework = MvcFramework.getInstance(module);
+    myToolWindow.setIcon(framework == null ? GroovyIcons.GROOVY_ICON_16x16 : framework.getIcon());
+
+    myContent.setDisplayName((framework == null ? "" : framework.getDisplayName() + ":") + "Executing...");
+    myConsole.scrollToEnd();
+    myConsole.attachToProcess(handler);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        handler.startNotify();
+        handler.waitFor();
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            module.putUserData(UPDATING_BY_CONSOLE_PROCESS, true);
+            LocalFileSystem.getInstance().refresh(false);
+            module.putUserData(UPDATING_BY_CONSOLE_PROCESS, null);
+
+            try {
+              if (onDone != null && !module.isDisposed()) onDone.run();
+            }
+            catch (Exception e) {
+              LOG.error(e);
+            }
+            myConsole.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
+            myKillAction.setHandler(null);
+            myContent.setDisplayName("");
+
+            myExecuting = false;
+
+            final MyProcessInConsole pic = myProcessQueue.poll();
+            if (pic != null) {
+              executeProcessImpl(pic, false);
+            }
+          }
+        }, modalityState);
+      }
+    });
   }
 
   public void dispose() {

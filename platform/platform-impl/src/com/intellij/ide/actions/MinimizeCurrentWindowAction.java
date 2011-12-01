@@ -17,10 +17,14 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.mac.MacMainFrameDecorator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,6 +49,19 @@ public class MinimizeCurrentWindowAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
     final Presentation p = e.getPresentation();
     p.setVisible(SystemInfo.isMac);
-    p.setEnabled(SystemInfo.isMac);
+
+    if (SystemInfo.isMac) {
+      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      if (project != null) {
+        JFrame frame = WindowManager.getInstance().getFrame(project);
+        if (frame != null) {
+          JRootPane pane = frame.getRootPane();
+          p.setEnabled(pane != null && pane.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) == null);
+        }
+      }
+    }
+    else {
+      p.setEnabled(false);
+    }
   }
 }

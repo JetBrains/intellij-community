@@ -443,6 +443,7 @@ public class EnterHandler extends BaseEnterHandler {
         LOG.error(e);
       }
 
+      myOffset = Math.min(myOffset, myDocument.getTextLength());
       caretModel.moveToOffset(myOffset);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       myEditor.getSelectionModel().removeSelection();

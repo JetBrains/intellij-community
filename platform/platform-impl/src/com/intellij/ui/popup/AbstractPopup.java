@@ -312,9 +312,11 @@ public class AbstractPopup implements JBPopup {
       return false;
     }
 
-    Component component = myComponent.getComponent(0);
-    if (component instanceof JComponent && Boolean.TRUE.equals(((JComponent)component).getClientProperty(SUPPRESS_MAC_CORNER))) {
-      return false;
+    if (myComponent.getComponentCount() > 0) {
+      Component component = myComponent.getComponent(0);
+      if (component instanceof JComponent && Boolean.TRUE.equals(((JComponent)component).getClientProperty(SUPPRESS_MAC_CORNER))) {
+        return false;
+      }
     }
 
     return true;
