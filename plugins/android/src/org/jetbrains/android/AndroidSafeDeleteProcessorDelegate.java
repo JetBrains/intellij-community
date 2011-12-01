@@ -1,6 +1,7 @@
 package org.jetbrains.android;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -11,7 +12,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo;
-import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate;
+import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegateBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.dom.AndroidAttributeValue;
@@ -28,11 +29,11 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidSafeDeleteProcessorDelegate implements SafeDeleteProcessorDelegate {
+public class AndroidSafeDeleteProcessorDelegate extends SafeDeleteProcessorDelegateBase {
 
   private final JavaSafeDeleteProcessor myBaseHandler = new JavaSafeDeleteProcessor();
 
-  private SafeDeleteProcessorDelegate getBaseHandler() {
+  private JavaSafeDeleteProcessor getBaseHandler() {
     return myBaseHandler;
   }
 
@@ -87,8 +88,10 @@ public class AndroidSafeDeleteProcessorDelegate implements SafeDeleteProcessorDe
   }
 
   @Override
-  public Collection<? extends PsiElement> getElementsToSearch(PsiElement element, Collection<PsiElement> allElementsToDelete) {
-    return getBaseHandler().getElementsToSearch(element, allElementsToDelete);
+  public Collection<? extends PsiElement> getElementsToSearch(PsiElement element,
+                                                              @Nullable Module module,
+                                                              Collection<PsiElement> allElementsToDelete) {
+    return getBaseHandler().getElementsToSearch(element, module, allElementsToDelete);
   }
 
   @Override
