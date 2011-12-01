@@ -1,7 +1,7 @@
 class A:
     def foo(self):
-        a <caret>= 0
         if a: pass
-        else: pass
+        else:
+            a = 0
         if a: pass
         else: pass

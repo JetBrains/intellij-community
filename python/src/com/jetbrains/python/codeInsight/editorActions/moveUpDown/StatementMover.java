@@ -3,415 +3,367 @@ package com.jetbrains.python.codeInsight.editorActions.moveUpDown;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 /**
- * @author Alexey.Ivanov
+ * User : catherine
  */
 public class StatementMover extends LineMover {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.editorActions.moveUpDown.StatementMover");
-
-  private static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
-    PsiElement element1 = file.findElementAt(startOffset);
-    PsiElement element2 = file.findElementAt(endOffset - 1);
-    if (element1 instanceof PsiWhiteSpace) {
-      startOffset = element1.getTextRange().getEndOffset();
-      element1 = file.findElementAt(startOffset);
-    }
-    if (element2 instanceof PsiWhiteSpace) {
-      endOffset = element2.getTextRange().getStartOffset();
-      element2 = file.findElementAt(endOffset - 1);
-    }
-    if (element1 == null || element2 == null) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-
-    PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
-    if (parent == null) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-
-    while (true) {
-      if (parent instanceof PyStatement) {
-        parent = parent.getParent();
-        break;
-      }
-      if (parent instanceof PyStatementList) {
-        break;
-      }
-      if (parent == null || parent instanceof PsiFile) {
-        return PsiElement.EMPTY_ARRAY;
-      }
-      parent = parent.getParent();
-    }
-
-    if (!parent.equals(element1)) {
-      while (!parent.equals(element1.getParent())) {
-        element1 = element1.getParent();
-      }
-    }
-
-    if (!parent.equals(element2)) {
-      while (!parent.equals(element2.getParent())) {
-        element2 = element2.getParent();
-      }
-    }
-
-    PsiElement[] children = parent.getChildren();
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
-    boolean flag = false;
-    for (PsiElement child : children) {
-      if (child.equals(element1)) {
-        flag = true;
-      }
-      if (flag && !(child instanceof PsiWhiteSpace)) {
-        array.add(child);
-      }
-      if (child.equals(element2)) {
-        break;
-      }
-    }
-
-    for (PsiElement element : array) {
-      if (!(element instanceof PyStatement || element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
-        return PsiElement.EMPTY_ARRAY;
-      }
-    }
-    return PsiUtilBase.toPsiElementArray(array);
-  }
-
-  private static boolean isNotValidStatementRange(Pair<PsiElement, PsiElement> range) {
-    return range == null ||
-           range.first == null ||
-           range.second == null ||
-           range.first.getParent() != range.second.getParent();
-  }
-
-  @Nullable
-  private static LineRange expandLineRange(@NotNull final LineRange range,
-                                           @NotNull final Editor editor,
-                                           @NotNull final PsiFile file) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    Pair<PsiElement, PsiElement> psiRange;
-    if (selectionModel.hasSelection()) {
-      final int startOffset = selectionModel.getSelectionStart();
-      final int endOffset = selectionModel.getSelectionEnd();
-      final PsiElement[] psiElements = findStatementsInRange(file, startOffset, endOffset);
-      if (psiElements.length == 0) {
-        return null;
-      }
-      psiRange = new Pair<PsiElement, PsiElement>(psiElements[0], psiElements[psiElements.length - 1]);
-    }
-    else {
-      final int offset = editor.getCaretModel().getOffset();
-      PsiElement element = file.findElementAt(offset);
-      if (element == null) {
-        return null;
-      }
-      psiRange = new Pair<PsiElement, PsiElement>(element, element);
-    }
-
-    psiRange = new Pair<PsiElement, PsiElement>(PsiTreeUtil.getNonStrictParentOfType(psiRange.getFirst(), PyStatement.class),
-                                                PsiTreeUtil.getNonStrictParentOfType(psiRange.getSecond(), PyStatement.class));
-    if (psiRange.getFirst() == null || psiRange.getSecond() == null) {
-      return null;
-    }
-
-    final PsiElement parent = PsiTreeUtil.findCommonParent(psiRange.getFirst(), psiRange.getSecond());
-    final Pair<PsiElement, PsiElement> elementRange = getElementRange(parent, psiRange.getFirst(), psiRange.getSecond());
-    if (isNotValidStatementRange(elementRange)) {
-      return null;
-    }
-
-    final PsiElement first = elementRange.getFirst();
-    final PsiElement second = elementRange.getSecond();
-    if (first == second && first instanceof PyPassStatement) {
-      return null;
-    }
-
-    int startOffset = first.getTextRange().getStartOffset();
-    int endOffset = second.getTextRange().getEndOffset();
-    final Document document = editor.getDocument();
-    if (endOffset > document.getTextLength()) {
-      LOG.assertTrue(!PsiDocumentManager.getInstance(file.getProject()).isUncommited(document));
-      LOG.assertTrue(PsiDocumentManagerImpl.checkConsistency(file, document));
-    }
-
-    int endLine;
-    if (endOffset == document.getTextLength()) {
-      endLine = document.getLineCount();
-    }
-    else {
-      endLine = editor.offsetToLogicalPosition(endOffset).line + 1;
-      endLine = Math.min(endLine, document.getLineCount());
-    }
-    endLine = Math.max(endLine, range.endLine);
-    final int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(startOffset).line);
-    return new LineRange(startLine, endLine);
-  }
-
   private @Nullable PyStatementList myStatementListToAddPass;
-  private @Nullable PyStatementList myStatementListToRemovePass;
-  private @NotNull PsiElement[] myElementsToChangeIndent;
-  private int myIndentLevel;
+  private @Nullable PyStatementList myStatementListToAddPassAfter;  
+  private @Nullable PyStatement myStatementToIncreaseIndent;
+  private @Nullable PyStatement myStatementToDecreaseIndent;
+  private @Nullable PyStatement myStatementToAddLinebreak;
+  private @Nullable PyStatement myStatementToMove;
+  private @Nullable PyStatementPart myStatementPartToRemovePass;
+
 
   @Override
-  public boolean checkAvailable(@NotNull Editor editor,
-                                @NotNull PsiFile file,
-                                @NotNull MoveInfo info,
-                                boolean down) {
+  public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
+    if (!(file instanceof PyFile)) return false;
+    if (!super.checkAvailable(editor, file, info, down))
+      return false;
+
+    // Do not move in case of selection
+    if (editor.getSelectionModel().hasSelection()){
+      return false;
+    }
+
+    //reset
     myStatementListToAddPass = null;
-    myStatementListToRemovePass = null;
-    myElementsToChangeIndent = PsiElement.EMPTY_ARRAY;
-    myIndentLevel = 0;
+    myStatementListToAddPassAfter = null;
+    myStatementToDecreaseIndent = null;
+    myStatementToIncreaseIndent = null;
+    myStatementToAddLinebreak = null;
+    myStatementPartToRemovePass = null;
 
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-    if (!super.checkAvailable(editor, file, info, down)) {
-      return false;
-    }
-    info.indentSource = true;
-    final LineRange range = expandLineRange(info.toMove, editor, file);
-    if (range == null) {
-      return false;
-    }
+    //find statement
+    myStatementToMove = findStatement(editor, file, info);
 
-    info.toMove = range;
-    final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
-    final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0));
-    final PsiElement[] statements = findStatementsInRange(file, startOffset, endOffset);
-    final int length = statements.length;
-    if (length == 0) {
-      return false;
+    // check if we want to move statement
+    if (myStatementToMove == null) return false;
+    //do not move pass statement
+    if (myStatementToMove instanceof PyPassStatement) {
+      info.toMove2 = info.toMove;
+      return true;
     }
-
-    range.firstElement = statements[0];
-    range.lastElement = statements[length - 1];
-    final Document document = editor.getDocument();
-    PyStatement statement;
-    assert info.toMove2.startLine + 1 == info.toMove2.endLine;
-    if (down) {
-      statement = PsiTreeUtil.getNextSiblingOfType(range.lastElement, PyStatement.class);
-    }
-    else {
-      statement = PsiTreeUtil.getPrevSiblingOfType(range.firstElement, PyStatement.class);
-    }
-
-    if (statement == null) {
-      final PyStatementPart parentStatementPart =
-        PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(range.firstElement, range.lastElement), PyStatementPart.class, false);
-      if (parentStatementPart == null) {
-        info.toMove2 = null;
-      }
-      else {  //we are in statement part
-
-        final PyStatementList statementList = parentStatementPart.getStatementList();
-        assert statementList != null;
-        if (down) {
-          PyStatementPart nextStatementPart = PsiTreeUtil.getNextSiblingOfType(statementList.getParent(), PyStatementPart.class);
-          if (nextStatementPart != null) {
-            info.toMove2 = new LineRange(range.endLine, range.endLine + 1);
-            myStatementListToRemovePass = nextStatementPart.getStatementList();
-          }
-          else {
-            PsiElement parent = statementList;
-            PyStatement nextStatement;
-            while (true) {
-              parent = PsiTreeUtil.getParentOfType(parent, PyStatement.class);
-              if (parent == null) {
-                return false;
-              }
-              nextStatement = PsiTreeUtil.getNextSiblingOfType(parent, PyStatement.class);
-              if (nextStatement instanceof PyFunction || nextStatement instanceof PyClass) {
-                return false;
-              }
-              if (nextStatement != null) {
-                break;
-              }
-            }
-            final int startLine = editor.offsetToLogicalPosition(parent.getTextRange().getEndOffset()).line;
-            final int endLine = editor.offsetToLogicalPosition(nextStatement.getTextRange().getEndOffset()).line;
-            info.toMove2 = new LineRange(startLine + 1, endLine + 1);
-            nextStatementPart = PsiTreeUtil.getChildOfType(nextStatement, PyStatementPart.class);
-            if (nextStatementPart != null) {
-              calculateIndent(editor, statementList, nextStatementPart.getStatementList(), down);
-            }
-            else {
-              calculateIndent(editor, statementList, nextStatement, down);
-            }
-            myElementsToChangeIndent = statements;
-          }
-        }
-        else {
-          final PyStatementPart prevStatementPart = PsiTreeUtil.getPrevSiblingOfType(statementList.getParent(), PyStatementPart.class);
-          if (prevStatementPart != null) {
-            myStatementListToRemovePass = prevStatementPart.getStatementList();
-          }
-          else {
-            myIndentLevel = -1;
-            myElementsToChangeIndent = statements;
-            info.toMove2 = new LineRange(range.startLine - 1, range.startLine);
-          }
-        }
-        if (Arrays.equals(statementList.getStatements(), statements)) {
-          myStatementListToAddPass = statementList;
-        }
-      }
+    // do not move last statement down and first up
+    if (isFirstOrLastStatement(down)) {
+      info.toMove2 = info.toMove;
       return true;
     }
 
-    info.toMove2 = new LineRange(statement, statement, document);
-    final PyStatementPart[] statementParts = PsiTreeUtil.getChildrenOfType(statement, PyStatementPart.class);
+    expandLineRangeToStatement(info, editor, down, file);
 
-    // next/previous statement has a statement parts
-    // move inside statement part
-    if (statementParts != null) {
-      int startLineNumber;
-      int endLineNumber;
-      PyStatementPart statementPart;
-      if (down) {
-        statementPart = statementParts[0];
-        startLineNumber = document.getLineNumber(statementPart.getTextRange().getStartOffset());
-        endLineNumber = document.getLineNumber(statementPart.getTextRange().getEndOffset());
-      }
-      else {
-        statementPart = statementParts[statementParts.length - 1];
-        startLineNumber = document.getLineNumber(statementPart.getTextRange().getEndOffset());
-        endLineNumber = document.getLineNumber(statementPart.getTextRange().getStartOffset());
-      }
+    //is move from one part of compound statement to another
+    boolean theSameLevel = isTheSameIndentLevel(info, editor, file, down);
 
-      if (startLineNumber != endLineNumber) {
-        info.toMove2 = new LineRange(startLineNumber, startLineNumber + 1);
-        myStatementListToRemovePass = statementPart.getStatementList();
-        calculateIndent(editor, range.firstElement, myStatementListToRemovePass, down);
-        myElementsToChangeIndent = statements;
+    //check we move statement into compound or out of compound
+    if (isMoveOut(info, editor, file, down)) {
+      myStatementToDecreaseIndent = myStatementToMove;
+      if (down)
+        info.toMove2 = new LineRange(myStatementToMove);
+    }
+    if (isMoveToCompound(info, editor, file, down)) {
+      myStatementToIncreaseIndent = myStatementToMove;
+      if (!down)
+        info.toMove2 = new LineRange(myStatementToMove);
+    }
+
+    //find statement to add pass if we removed last statement from PyStatementPart
+    PyStatementPart statementPart = PsiTreeUtil.getParentOfType(myStatementToMove, PyStatementPart.class, false);
+    if (statementPart != null) {
+      PyStatementList statementList = statementPart.getStatementList();
+      if (statementList != null && statementList.getStatements().length == 1) {
+        if (theSameLevel) {
+          myStatementListToAddPassAfter = statementList;
+        }
+        else
+          myStatementListToAddPass = statementList;
       }
     }
     return true;
   }
 
-
-  private void calculateIndent(final Editor editor, final PsiElement firstElement, final PsiElement secondElement, final boolean down) {
-    final PsiFile file = firstElement.getContainingFile();
-    final int firstIndent = getIndent(editor, file, editor.offsetToLogicalPosition(firstElement.getTextRange().getStartOffset()).line);
-    int line;
-    if (down) {
-      line = editor.offsetToLogicalPosition(secondElement.getTextRange().getStartOffset()).line;
-    }
-    else {
-      line = editor.offsetToLogicalPosition(secondElement.getTextRange().getEndOffset()).line;
-    }
-    final int secondIndent = getIndent(editor, file, line);
-    myIndentLevel = (secondIndent - firstIndent) >> 2;
-  }
-
-  private static int getIndent(final Editor editor, final PsiFile file, final int lineNumber) {
-    int indent = 0;
-    final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, 0));
-    PsiElement element = file.findElementAt(offset);
-    if (element instanceof PsiWhiteSpace) {
-      final String text = element.getText();
-      String[] lines = text.split("\n");
-      if (lines.length == 0) {
-        return 0;
-      }
-      indent = lines[lines.length - 1].length();
-    }
-    return indent;
-  }
-
-  private void decreaseIndent(final Editor editor) {
-    final Document document = editor.getDocument();
-    for (PsiElement statement : myElementsToChangeIndent) {
-      final int startOffset = statement.getTextRange().getStartOffset() - 1;
-      PsiElement element = statement.getContainingFile().findElementAt(startOffset);
-      assert element instanceof PsiWhiteSpace;
-      final String text = element.getText();
-      String[] lines = text.split("\n");
-      if (lines.length == 0) {
-        continue;
-      }
-      final int indent = lines[lines.length - 1].length();
-      final int startLine = editor.offsetToLogicalPosition(startOffset).line;
-      final int endLine = editor.offsetToLogicalPosition(statement.getTextRange().getEndOffset()).line;
-      for (int line = startLine; line <= endLine; ++line) {
-        final int indentLevel = myIndentLevel * -4;
-        if (indent >= 4 && indentLevel <= indent) {
-          final int lineStartOffset = document.getLineStartOffset(line);
-          document.deleteString(lineStartOffset, lineStartOffset + indentLevel);
+  private boolean isFirstOrLastStatement(boolean down) {
+    PyFunction function = PsiTreeUtil.getParentOfType(myStatementToMove, PyFunction.class, true);
+    if (function != null) {
+      PyStatementList statementList = function.getStatementList();
+      if (statementList != null && statementList.getStatements().length > 0) {
+        if ((statementList.getStatements()[0] == myStatementToMove && !down)
+            || (statementList.getStatements()[statementList.getStatements().length-1] == myStatementToMove &&  down)) {
+          return true;
         }
       }
     }
+    PyClass cl = PsiTreeUtil.getParentOfType(myStatementToMove, PyClass.class, true);
+    if (cl != null) {
+      PyStatementList statementList = cl.getStatementList();
+      if (statementList.getStatements().length > 0) {
+        if ((statementList.getStatements()[0] == myStatementToMove && !down)
+            || (statementList.getStatements()[statementList.getStatements().length-1] == myStatementToMove &&  down)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
-  private void increaseIndent(final Editor editor) {
-    final Document document = editor.getDocument();
-    String indent = makeIndent();
-    for (PsiElement statement : myElementsToChangeIndent) {
-      final int startLine = editor.offsetToLogicalPosition(statement.getTextRange().getStartOffset()).line;
-      final int endLine = editor.offsetToLogicalPosition(statement.getTextRange().getEndOffset()).line;
-      for (int line = startLine; line <= endLine; ++line) {
-        final int offset = document.getLineStartOffset(line);
-        document.insertString(offset, indent);
+  @Nullable
+  private PyStatement findStatement(Editor editor, PsiFile file, MoveInfo info) {
+    Document doc = editor.getDocument();
+    int offset1 = getLineStartSafeOffset(doc, info.toMove.startLine);
+    PsiElement element1 = file.findElementAt(offset1);
+    if (element1 != null) {
+      if (element1 instanceof PsiWhiteSpace) {
+        element1 = PyPsiUtils.getSignificantToTheRight(element1, true);
+      }
+      return PsiTreeUtil.getParentOfType(element1, PyStatement.class, false);
+    }
+    return null;
+  }
+
+  private void expandLineRangeToStatement(MoveInfo info, Editor editor, boolean down, PsiFile file) {
+    Document doc = editor.getDocument();
+
+    TextRange textRange = myStatementToMove.getTextRange();
+    LineRange range = new LineRange(doc.getLineNumber(textRange.getStartOffset()),
+                                doc.getLineNumber(textRange.getEndOffset())+1);
+    int nearLine = down ? range.endLine : range.startLine - 1;
+    if (nearLine < 0) nearLine = 0;
+    info.toMove = range;
+    info.toMove2 = new LineRange(nearLine, nearLine + 1);
+
+    // if try to move to the function or to the class
+    int offset2 = getLineStartSafeOffset(doc, info.toMove2.startLine);
+    PsiElement element2 = file.findElementAt(offset2);
+    if (element2 != null) {
+      if (element2 instanceof PsiWhiteSpace) {
+        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, true);
+        if (tmp != null &&
+                  editor.offsetToLogicalPosition(tmp.getTextRange().getStartOffset()).line
+                          == info.toMove2.startLine) {
+          element2 = tmp;
+        }
+      }
+      PyElement parent2 = PsiTreeUtil.getParentOfType(element2, PyFunction.class, false);
+      PyElement parent1 = PsiTreeUtil.getParentOfType(myStatementToMove, PyFunction.class, false);
+      if (parent2 != null && parent2 != parent1) {
+        TextRange textRange2 = parent2.getTextRange();
+        info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()),
+                                              doc.getLineNumber(textRange2.getEndOffset())+1);
+      }
+      parent2 = PsiTreeUtil.getParentOfType(element2, PyClass.class, false);
+      parent1 = PsiTreeUtil.getParentOfType(myStatementToMove, PyClass.class, false);
+      if (parent2 != null && parent2 != parent1) {
+        TextRange textRange2 = parent2.getTextRange();
+        info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()),
+                                              doc.getLineNumber(textRange2.getEndOffset())+1);
       }
     }
   }
 
-  private String makeIndent() {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < myIndentLevel; ++i) {
-      result.append("    ");
+  /**
+   * main indent logic
+   * @return first is the element which we move
+   *         second is the element we move to
+   */
+  private Pair<PyStatementPart, PyStatementPart> getStatementParts(MoveInfo info, Editor editor, PsiFile file, boolean down) {
+    PsiElement element1 = myStatementToMove;
+    PyStatementPart statementPart1 = PsiTreeUtil.getParentOfType(element1, PyStatementPart.class, false);
+
+    int offset2 = getLineStartSafeOffset(editor.getDocument(), info.toMove2.startLine);
+    PsiElement element2 = file.findElementAt(offset2-1);
+    if (element2 instanceof PsiWhiteSpace) {
+      if (down) {
+        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, true);
+        if (tmp != null &&
+            editor.offsetToLogicalPosition(tmp.getTextRange().getStartOffset()).line == info.toMove2.startLine)
+          element2 = tmp;
+
+      } else {
+        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, true);
+        if (tmp != null) {
+          int start = editor.offsetToLogicalPosition(tmp.getParent().getTextRange().getStartOffset()).line;
+          int end = editor.offsetToLogicalPosition(tmp.getParent().getTextRange().getEndOffset()).line;
+          if (start == end && start == info.toMove2.startLine)
+            element2 = tmp;
+          else
+            element2 = PyPsiUtils.getSignificantToTheLeft(element2, true);
+        }
+        else {
+          element2 = PyPsiUtils.getSignificantToTheLeft(element2, true);
+        }
+      }
     }
-    return result.toString();
+    PyStatementPart statementPart2 = PsiTreeUtil.getParentOfType(element2, PyStatementPart.class);
+    if (statementPart2 != null) {
+      PyStatementList stList = statementPart2.getStatementList();
+      if (stList != null && stList.getStatements().length > 0) {
+        if (down && stList.getStatements()[stList.getStatements().length-1] == element2) {
+          PyStatementPart parent = PsiTreeUtil.getParentOfType(statementPart2, PyStatementPart.class);
+          if (parent != null) {
+            stList = parent.getStatementList();
+            if (stList != null && stList.getStatements().length > 0) {
+              if (stList.getStatements()[stList.getStatements().length-1] == statementPart2) {
+                statementPart2 = parent;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return new Pair<PyStatementPart, PyStatementPart>(statementPart1, statementPart2);
+  }
+
+  private boolean isMoveToCompound(MoveInfo info, Editor editor, PsiFile file, boolean down) {
+    Pair<PyStatementPart, PyStatementPart> statementParts = getStatementParts(info, editor, file, down);
+    PyStatementPart statementPart1 = statementParts.first;
+    PyStatementPart statementPart2 = statementParts.second;
+
+    if (statementPart2 != null) {
+      prepareToStatement(statementPart2, editor.getDocument());
+      if (statementPart1 == null) return true;
+      if (statementPart1.getParent() != statementPart2.getParent()) {
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(statementPart1, statementPart2);
+        if (PsiTreeUtil.isAncestor(statementPart2, statementPart1, false)) return false;
+        if ((commonParent instanceof PyIfStatement) || (commonParent instanceof PyLoopStatement) ||
+            (commonParent instanceof PyConditionalStatementPart))
+          return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isMoveOut(MoveInfo info, Editor editor, PsiFile file, boolean down) {
+    Pair<PyStatementPart, PyStatementPart> insertDeleteParts = getStatementParts(info, editor, file, down);
+    PyStatementPart statementPart1 = insertDeleteParts.first;
+    PyStatementPart statementPart2 = insertDeleteParts.second;
+    if (statementPart1 != null) {
+      if (statementPart2 == null) return true;
+      if (statementPart1.getParent() != statementPart2.getParent()) {
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(statementPart1, statementPart2);
+        if (!(commonParent instanceof PyIfStatement) && !(commonParent instanceof PyLoopStatement) && !(commonParent instanceof PyConditionalStatementPart))
+          return true;
+        if (PsiTreeUtil.isAncestor(statementPart2, statementPart1, false)) return true;
+      }
+    }
+    return false;
+  }
+
+  private void prepareToStatement(PyStatementPart part, Document document) {
+    int partLine = document.getLineNumber(part.getTextRange().getStartOffset());
+    PyStatementList stList = part.getStatementList();
+    if (stList == null) return;
+    if (stList.getStatements().length < 1) return;
+    int statementLine = document.getLineNumber(stList.getStatements()[0].getTextRange().getStartOffset());
+    if (partLine == statementLine) {
+      myStatementToAddLinebreak = stList.getStatements()[0];
+    }
+  }
+
+  private boolean isTheSameIndentLevel(MoveInfo info, Editor editor, PsiFile file, boolean down) {
+    Pair<PyStatementPart, PyStatementPart> statementParts = getStatementParts(info, editor, file, down);
+    myStatementPartToRemovePass = statementParts.second;
+    PyStatementPart statementPart1 = statementParts.first;
+    PyStatementPart statementPart2 = statementParts.second;
+
+    if (statementPart2 != null && statementPart1 != null && statementPart1.getParent() == statementPart2.getParent()) return true;
+    return false;
+  }
+
+  private void decreaseIndent(Editor editor) {
+    CodeStyleSettings.IndentOptions indentOptions = CodeStyleSettingsManager.getInstance(editor.getProject()).
+                                                                getCurrentSettings().getIndentOptions(PythonFileType.INSTANCE);
+    assert indentOptions != null;
+    final Document document = editor.getDocument();
+    TextRange textRange = myStatementToDecreaseIndent.getTextRange();
+    document.deleteString(textRange.getStartOffset()-indentOptions.INDENT_SIZE, textRange.getStartOffset());
+    myStatementToDecreaseIndent = null;
+  }
+
+  private void increaseIndent(final Editor editor) {
+    CodeStyleSettings.IndentOptions indentOptions = CodeStyleSettingsManager.getInstance(editor.getProject()).
+                                                                  getCurrentSettings().getIndentOptions(PythonFileType.INSTANCE);
+    assert indentOptions != null;
+    final Document document = editor.getDocument();
+    final int startLine = editor.offsetToLogicalPosition(myStatementToIncreaseIndent.getTextRange().getStartOffset()).line;
+    final int endLine = editor.offsetToLogicalPosition(myStatementToIncreaseIndent.getTextRange().getEndOffset()).line;
+    for (int line = startLine; line <= endLine; ++line) {
+      final int offset = document.getLineStartOffset(line);
+      document.insertString(offset, StringUtil.repeat(" ", indentOptions.INDENT_SIZE));
+    }
+    myStatementToIncreaseIndent = null;
   }
 
   @Override
   public void beforeMove(@NotNull Editor editor, @NotNull MoveInfo info, boolean down) {
-    super.beforeMove(editor, info, down);
+    if (myStatementToAddLinebreak != null) {
+      //PY-950
+      TextRange textRange = myStatementToAddLinebreak.getTextRange();
+      int line = editor.getDocument().getLineNumber(textRange.getStartOffset());
+      CodeStyleSettings.IndentOptions indentOptions = CodeStyleSettingsManager.getInstance(editor.getProject()).
+                                                                getCurrentSettings().getIndentOptions(PythonFileType.INSTANCE);
+      
+      PsiElement whiteSpace = myStatementToAddLinebreak.getContainingFile().findElementAt(editor.getDocument().getLineStartOffset(line));
+      String indent = StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
+      if (whiteSpace instanceof PsiWhiteSpace) indent += whiteSpace.getText();
+      if (down) indent += StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
+      editor.getDocument().insertString(textRange.getStartOffset(), indent);
+    }
+    // add pass statement if needed
     if (myStatementListToAddPass != null) {
       final PyPassStatement passStatement =
         PyElementGenerator.getInstance(editor.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS);
-      myStatementListToAddPass.add(passStatement);
-      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToAddPass);
-      if (down) {
-        info.toMove2 = new LineRange(info.toMove2.startLine, info.toMove2.endLine + 1);
+      if (!down) {
+        myStatementListToAddPass.add(passStatement);
       }
+      else
+        myStatementListToAddPass.addBefore(passStatement, myStatementListToAddPass.getStatements()[0]);
+      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToAddPass);
     }
-    if (myIndentLevel < 0) {
-      decreaseIndent(editor);
-    }
-    else {
+    if (myStatementToIncreaseIndent != null) {
       increaseIndent(editor);
+    }
+    if (myStatementToDecreaseIndent != null) {
+      decreaseIndent(editor);
     }
   }
 
   @Override
-  public void afterMove(@NotNull Editor editor,
-                        @NotNull PsiFile file,
-                        @NotNull MoveInfo info,
-                        boolean down) {
-    super.afterMove(editor, file, info, down);
-    if (myStatementListToRemovePass != null) {
-      PyPsiUtils.removeRedundantPass(myStatementListToRemovePass);
-      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToRemovePass);
+  public void afterMove(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
+    // add pass statement if needed
+    if (myStatementListToAddPassAfter != null && myStatementListToAddPassAfter.isValid()) {
+      final PyPassStatement passStatement =
+        PyElementGenerator.getInstance(editor.getProject()).createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS);
+      myStatementListToAddPassAfter.add(passStatement);
+      CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToAddPassAfter);
+    }
+
+    // remove obsolete pass statement
+    if (myStatementPartToRemovePass != null) {
+      PyStatementList statementList = myStatementPartToRemovePass.getStatementList();
+      if (statementList != null) {
+        PyPsiUtils.removeRedundantPass(statementList);
+      }
     }
   }
+
 }
