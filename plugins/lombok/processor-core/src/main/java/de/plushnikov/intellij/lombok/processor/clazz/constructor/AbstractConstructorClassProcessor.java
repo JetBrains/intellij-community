@@ -66,30 +66,48 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
   }
 
   public boolean validateIsConstructorDefined(@NotNull PsiClass psiClass, @Nullable String staticConstructorName, @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
-    final boolean isStaticConstructor = isStaticConstructor(staticConstructorName);
-
-    final PsiMethod[] definedMethods = isStaticConstructor ?
-        PsiClassUtil.collectClassStaticMethodsIntern(psiClass) :
-        PsiClassUtil.collectClassConstructorIntern(psiClass);
+    boolean result = true;
 
     final List<PsiType> paramTypes = new ArrayList<PsiType>(params.size());
     for (PsiField param : params) {
       paramTypes.add(param.getType());
     }
 
-    final String methodName = isStaticConstructor ? staticConstructorName : psiClass.getName();
+    final PsiMethod[] definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+    final String constructorName = psiClass.getName();
 
-    for (PsiMethod classConstructor : definedMethods) {
-      if (PsiElementUtil.methodMatches(classConstructor, null, null, methodName, paramTypes)) {
-        if (params.isEmpty()) {
-          builder.addError("Constructor without parameters is already defined");
+    if (containsMethod(definedConstructors, constructorName, paramTypes)) {
+      if (paramTypes.isEmpty()) {
+        builder.addError("Constructor without parameters is already defined");
+      } else {
+        builder.addError(String.format("Constructor with %d parameters is already defined", paramTypes.size()));
+      }
+      result = false;
+    }
+
+    if (isStaticConstructor(staticConstructorName)) {
+      final PsiMethod[] definedMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
+
+      if (containsMethod(definedMethods, staticConstructorName, paramTypes)) {
+        if (paramTypes.isEmpty()) {
+          builder.addError(String.format("Method '%s' matched staticConstructorName is already defined", staticConstructorName));
         } else {
-          builder.addError(String.format("Constructor with %d parameters is already defined", params.size()));
+          builder.addError(String.format("Method '%s' with %d parameters matched staticConstructorName is already defined", staticConstructorName, paramTypes.size()));
         }
-        return false;
+        result = false;
       }
     }
-    return true;
+
+    return result;
+  }
+
+  private boolean containsMethod(final PsiMethod[] definedMethods, final String methodName, final List<PsiType> paramTypes) {
+    for (PsiMethod method : definedMethods) {
+      if (PsiElementUtil.methodMatches(method, null, null, methodName, paramTypes)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
