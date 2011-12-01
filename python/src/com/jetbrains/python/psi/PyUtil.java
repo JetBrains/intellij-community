@@ -10,6 +10,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
@@ -498,7 +499,7 @@ public class PyUtil {
       return false;
     }
     return PsiTreeUtil.isAncestor(statement.getLeftHandSideExpression(), element, false);
-  } 
+  }
 
   public static boolean isDocString(PyExpression expression) {
     final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);
@@ -783,22 +784,32 @@ public class PyUtil {
     return selfName;
   }
 
-  @Nullable
-  public static VirtualFile findInRoots(Module module, String path) {
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    VirtualFile result = findInRoots(moduleRootManager.getContentRoots(), path);
-    if (result == null) {
-      result = findInRoots(moduleRootManager.getSourceRoots(), path);
+  @NotNull
+  public static List<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
+    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
+    if (module != null) {
+      return getSourceRoots(module);
     }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public static List<VirtualFile> getSourceRoots(@NotNull Module module) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+    result.addAll(Arrays.asList(manager.getSourceRoots()));
+    result.addAll(Arrays.asList(manager.getContentRoots()));
     return result;
   }
 
   @Nullable
-  public static VirtualFile findInRoots(VirtualFile[] roots, String path) {
-    for (VirtualFile root : roots) {
-      VirtualFile settingsFile = root.findFileByRelativePath(path);
-      if (settingsFile != null) {
-        return settingsFile;
+  public static VirtualFile findInRoots(Module module, String path) {
+    if (module != null) {
+      for (VirtualFile root : getSourceRoots(module)) {
+        VirtualFile file = root.findFileByRelativePath(path);
+        if (file != null) {
+          return file;
+        }
       }
     }
     return null;
