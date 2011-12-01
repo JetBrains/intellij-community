@@ -14,7 +14,6 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -22,9 +21,9 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -46,14 +45,16 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
   public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
 
+    if (position.getParent() instanceof GrReferenceElement &&
+        psiElement().afterLeaf(psiElement().withText("(").withParent(GrForStatement.class)).accepts(position)) {
+      return ThreeState.NO;
+    }
+
     if (position.getParent() instanceof GrReferenceExpression) {
       final GrReferenceExpression ref = (GrReferenceExpression)position.getParent();
       final GrExpression qualifier = ref.getQualifierExpression();
       if (qualifier == null) {
         if (isPossibleClosureParameter(ref)) return ThreeState.NO;
-        if (psiElement().afterLeaf(psiElement().withText("(").withParent(GrForStatement.class)).accepts(position)) {
-          return ThreeState.NO;
-        }
 
         GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(ref);
         if (runtimeQualifier != null && runtimeQualifier.getType() == null) {
