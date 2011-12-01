@@ -85,7 +85,11 @@ public class CamelHumpMatcher extends PrefixMatcher {
         return true;
       }
       if (itemCaseInsensitive && CodeInsightSettings.ALL != CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
-        if (obtainMatcher(false, false).matches(name)) {
+        Matcher matcher;
+        synchronized (ourPatternCache) {
+          matcher = obtainMatcher(false, false);
+        }
+        if (matcher.matches(name)) {
           return true;
         }
       }
