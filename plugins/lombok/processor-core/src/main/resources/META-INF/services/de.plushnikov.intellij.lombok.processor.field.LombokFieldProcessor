@@ -1,3 +1,4 @@
 de.plushnikov.intellij.lombok.processor.field.SetterFieldProcessor
 de.plushnikov.intellij.lombok.processor.field.GetterFieldProcessor
+de.plushnikov.intellij.lombok.processor.field.LazyGetterFieldProcessor
 de.plushnikov.intellij.lombok.processor.field.DelegateFieldProcessor
