@@ -449,6 +449,38 @@ class Usage {
     assertEmpty make()
   }
 
+  public void testDuplicateClassDuringCompilation() throws Exception {
+    def base = myFixture.addFileToProject('p/Base.groovy', 'package p; class Base { }').virtualFile
+    myFixture.addFileToProject('p/Indirect.groovy', '''package p
+class Indirect {
+  private static class Inner { Base b }
+
+  private Indirect.Inner foo(Indirect.Inner g1, Inner g2, Base b) {}
+ }''').virtualFile
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo { p.Indirect foo() {} }').virtualFile
+    assertEmpty make()
+
+    touch(foo)
+    touch(base)
+    assertEmpty make()
+  }
+
+  public void testDontRecompileUnneeded() {
+    myFixture.addFileToProject('Base.groovy', 'class Base { }').virtualFile
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo extends Base { }').virtualFile
+    myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo { }').virtualFile
+    def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Bar { }').virtualFile
+    assertEmpty make()
+    long oldBaseStamp = findClassFile("Base").modificationStamp
+    long oldMainStamp = findClassFile("Main").modificationStamp
+
+    touch(main)
+    touch(foo)
+    assertEmpty make()
+    assert oldMainStamp != findClassFile("Main").modificationStamp
+    assert oldBaseStamp == findClassFile("Base").modificationStamp
+  }
+
   public static class IdeaMode extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }
