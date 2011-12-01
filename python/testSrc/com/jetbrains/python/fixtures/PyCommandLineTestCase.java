@@ -26,7 +26,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
 
   protected static int verifyPyDevDParameters(List<String> params) {
     params = Lists.newArrayList(params);
-    int debugParam = params.remove("--DEBUG_RECORD_SOCKET_READS") ? 1 : 0;
+    int debugParam = params.remove("--DEBUG") ? 1 : 0;
     assertEquals(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"), params.get(0));
     assertEquals("--client", params.get(1));
     assertEquals("--port", params.get(3));
