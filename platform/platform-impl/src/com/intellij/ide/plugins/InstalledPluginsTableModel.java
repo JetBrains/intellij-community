@@ -89,6 +89,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     final IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
     if (existing != null) {
       updateExistingPluginInfo(descriptor, existing);
+      updatedPlugins.add(existing.getPluginId());
     } else {
       myInstalled.add(descriptor);
       view.add(descriptor);
@@ -292,8 +293,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
 
   public static boolean hasNewerVersion(PluginId descr) {
-    return NewVersions2Plugins.containsKey(descr) ||
-           PluginManagerUISettings.getInstance().myOutdatedPlugins.contains(descr.getIdString());
+    return !wasUpdated(descr) &&
+           (NewVersions2Plugins.containsKey(descr) ||
+            PluginManagerUISettings.getInstance().myOutdatedPlugins.contains(descr.getIdString()));
   }
 
   public static boolean wasUpdated(PluginId descr) {
@@ -511,7 +513,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       final Component orig = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (myPluginDescriptor != null) {
         myNameLabel.setText(myPluginDescriptor.getName());
-        final String idString = myPluginDescriptor.getPluginId().getIdString();
+        final PluginId pluginId = myPluginDescriptor.getPluginId();
+        final String idString = pluginId.getIdString();
         if (myPluginDescriptor.isBundled()) {
           myBundledLabel.setText("Bundled");
         } else {
@@ -529,7 +532,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         if (myPluginDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPluginDescriptor).isDeleted()) {
           myNameLabel.setIcon(IconLoader.getIcon("/actions/clean.png"));
         }
-        else if (hasNewerVersion(myPluginDescriptor.getPluginId())) {
+        else if (hasNewerVersion(pluginId)) {
           myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
           myPanel.setToolTipText("Newer version of the plugin is available");
         }
@@ -546,15 +549,19 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         myBundledLabel.setBackground(bg);
 
         myNameLabel.setForeground(fg);
-        if (PluginManager.getPlugin(myPluginDescriptor.getPluginId()) == null) {
+        final boolean wasUpdated = wasUpdated(pluginId);
+        if (wasUpdated || PluginManager.getPlugin(pluginId) == null) {
           if (!isSelected) {
             myNameLabel.setForeground(FileStatus.COLOR_ADDED);
           }
-          myPanel.setToolTipText("Plugin would be activated after restart.");
+          if (wasUpdated) {
+            myPanel.setToolTipText("Plugin was updated to the newest version. Changes will be available after restart");
+          } else {
+            myPanel.setToolTipText("Plugin would be activated after restart.");
+          }
         }
         myBundledLabel.setForeground(grayedFg);
 
-        final PluginId pluginId = myPluginDescriptor.getPluginId();
         final Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
         if (required != null && required.size() > 0) {
           myNameLabel.setForeground(Color.RED);
