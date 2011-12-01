@@ -63,6 +63,7 @@ import traceback
 import pydevd_vm_type
 import pydevd_tracing
 import pydevd_io
+import pydev_log
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 import time
 import os
@@ -623,12 +624,12 @@ class PyDB:
                                 except:
                                     pass
 
-                            if DEBUG_TRACE_BREAKPOINTS > 0:
+                            if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                                 sys.stderr.write('Removed breakpoint:%s\n' % (file,))
                                 sys.stderr.flush()
                         except KeyError:
                             #ok, it's not there...
-                            if DEBUG_TRACE_BREAKPOINTS > 0:
+                            if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                                 #Sometimes, when adding a breakpoint, it adds a remove command before (don't really know why)
                                 sys.stderr.write("breakpoint not found: %s - %s\n" % (file, line))
                                 sys.stderr.flush()
@@ -660,10 +661,13 @@ class PyDB:
 
                     if is_notify_on_terminate:
                         update_exception_hook(self)
+                    if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
+                        pydev_log.error("Exceptions to hook on terminate: %s\n" % (self.always_exception_set,))
+
                     if is_notify_always:
                         self.always_exception_set.add(exception)
-                        if DEBUG_TRACE_BREAKPOINTS > 0:
-                          sys.stderr.write("Exceptions to hook : %s\n" % (self.always_exception_set,))
+                        if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
+                            pydev_log.error("Exceptions to hook always: %s\n" % (self.always_exception_set,))
                         self.setTracingForUntracedContexts()
 
                 elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
@@ -1023,43 +1027,48 @@ class PyDB:
 def processCommandLine(argv):
     """ parses the arguments.
         removes our arguments from the command line """
-    retVal = {}
-    retVal['client'] = ''
-    retVal['server'] = False
-    retVal['port'] = 0
-    retVal['file'] = ''
-    retVal['multiproc'] = False
+    setup = {}
+    setup['client'] = ''
+    setup['server'] = False
+    setup['port'] = 0
+    setup['file'] = ''
+    setup['multiproc'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
         if (argv[i] == '--port'):
             del argv[i]
-            retVal['port'] = int(argv[i])
+            setup['port'] = int(argv[i])
             del argv[i]
         elif (argv[i] == '--vm_type'):
             del argv[i]
-            retVal['vm_type'] = argv[i]
+            setup['vm_type'] = argv[i]
             del argv[i]
         elif (argv[i] == '--client'):
             del argv[i]
-            retVal['client'] = argv[i]
+            setup['client'] = argv[i]
             del argv[i]
         elif (argv[i] == '--server'):
             del argv[i]
-            retVal['server'] = True
+            setup['server'] = True
         elif (argv[i] == '--file'):
             del argv[i]
-            retVal['file'] = argv[i]
+            setup['file'] = argv[i]
             i = len(argv) # pop out, file is our last argument
         elif (argv[i] == '--DEBUG_RECORD_SOCKET_READS'):
             del argv[i]
-            retVal['DEBUG_RECORD_SOCKET_READS'] = True
+            setup['DEBUG_RECORD_SOCKET_READS'] = True
+        elif (argv[i] == '--DEBUG'):
+            del argv[i]
+            setup['DEBUG_RECORD_SOCKET_READS'] = True
+            setup['DEBUG_TRACE_BREAKPOINTS'] = 1
+            setup['DEBUG_TRACE_LEVEL'] = 3
         elif (argv[i] == '--multiproc'):
             del argv[i]
-            retVal['multiproc'] = True
+            setup['multiproc'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
-    return retVal
+    return setup
 
 def usage(doExit=0):
     sys.stdout.write('Usage:\n')
@@ -1262,26 +1271,36 @@ if __name__ == '__main__':
         sys.modules['psyco'] = pydevd_psyco_stub
 
 
-    PydevdLog(2, "Executing file ", setup['file'])
-    PydevdLog(2, "arguments:", str(sys.argv))
+    pydev_log.debug("Executing file %s" % setup['file'])
+    pydev_log.debug("arguments: %s"% str(sys.argv))
+
+
 
     pydevd_vm_type.SetupType(setup.get('vm_type', None))
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', False)
+    DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = setup.get('', -1)
+    DebugInfoHolder.DEBUG_TRACE_LEVEL = setup.get('DEBUG_TRACE_LEVEL', -1)
 
     port = setup['port']
     if setup['multiproc']:
+        pydev_log.debug("Started in multiproc mode")
         dispatcher = Dispatcher()
         dispatcher.connect(setup)
         if dispatcher.port is not None:
             port = dispatcher.port
-            sys.stderr.write("pydev debugger: process %d is connecting\n"% os.getpid())
+            pydev_log.debug("Received port %d" %port)
+            pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
+
             import pydev_monkey
-            pydev_monkey.patch_new_process_functions()
+            try:
+                pydev_monkey.patch_new_process_functions()
+            except:
+                logger.error("Error patching process functions")
         else:
-            sys.stderr.write("pydev debugger: couldn't get port for new debug process\n")
+            pydev_log.error("pydev debugger: couldn't get port for new debug process\n")
     else:
-        sys.stderr.write("pydev debugger: starting\n")
+        pydev_log.info("pydev debugger: starting\n")
 
     debugger = PyDB()
     debugger.connect(setup['client'], port)

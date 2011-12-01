@@ -1,5 +1,6 @@
 from pydevd_constants import *
 import sys
+import pydev_log
 
 _original_excepthook = None
 _handle_exceptions = None
@@ -44,8 +45,8 @@ class LineBreakpoint:
         return breakDict
 
     def trace(self, file, line, func_name):
-        if DEBUG_TRACE_BREAKPOINTS > 0:
-            sys.stderr.write('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name))
+        if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
+            pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name))
             sys.stderr.flush()
 
     def add(self, breakpoints, file, line, func_name):

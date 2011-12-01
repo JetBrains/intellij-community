@@ -8,6 +8,7 @@ from pydevd_breakpoints import * #@UnusedWildImport
 import traceback #@Reimport
 import os.path
 import sys
+import pydev_log
 
 basename = os.path.basename
 
@@ -166,8 +167,8 @@ class PyDBFrame:
                             return self.trace_dispatch
 
                     except:
-                        sys.stderr.write('Error while evaluating condition \'%s\': %s\n' % (breakpoint.condition, sys.exc_info()[1]))
-                        sys.stderr.flush()
+                        pydev_log.info('Error while evaluating condition \'%s\': %s\n' % (breakpoint.condition, sys.exc_info()[1]))
+
                         return self.trace_dispatch
 
                 if breakpoint.expression is not None:
@@ -332,8 +333,7 @@ class PyDBFrame:
                           if not val:
                               flag = False
                       except:
-                          sys.stderr.write('Error while evaluating condition \'%s\': %s\n' % (django_breakpoint.condition, sys.exc_info()[1]))
-                          sys.stderr.flush()
+                          pydev_log.info('Error while evaluating condition \'%s\': %s\n' % (django_breakpoint.condition, sys.exc_info()[1]))
 
                   if django_breakpoint.expression is not None:
                           try:
