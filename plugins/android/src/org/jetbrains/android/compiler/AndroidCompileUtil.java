@@ -227,15 +227,14 @@ public class AndroidCompileUtil {
     }
 
     final Project project = module.getProject();
-    Module genModule = module;
 
-    final AndroidFacet facet = AndroidFacet.getInstance(genModule);
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
 
     if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
       removeGenModule(module);
     }
 
-    if (project.isDisposed() || genModule.isDisposed()) {
+    if (project.isDisposed() || module.isDisposed()) {
       return;
     }
 
@@ -247,7 +246,7 @@ public class AndroidCompileUtil {
       root = LocalFileSystem.getInstance().findFileByIoFile(rootFile);
     }
     if (root != null) {
-      final ModuleRootManager manager = ModuleRootManager.getInstance(genModule);
+      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
       unexcludeRootIfNeccessary(root, manager);
       for (VirtualFile existingRoot : manager.getSourceRoots()) {
         if (existingRoot == root) return;
@@ -283,9 +282,8 @@ public class AndroidCompileUtil {
     if (genModule == null) {
       return;
     }
-    moduleManager.disposeModule(genModule);
-    
     final VirtualFile moduleFile = genModule.getModuleFile();
+    moduleManager.disposeModule(genModule);
     
     if (moduleFile != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -305,26 +303,6 @@ public class AndroidCompileUtil {
         }
       });
     }
-  }
-  
-  private static void removeSourceRoot(@NotNull Module module, @NotNull final VirtualFile root) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final ContentEntry contentEntry = findContentEntryForRoot(model, root);
-
-    if (contentEntry != null) {
-      for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-        if (sourceFolder.getFile() == root) {
-          contentEntry.removeSourceFolder(sourceFolder);
-        }
-      }
-    }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
-    });
   }
 
   public static void addSourceRoot(final ModuleRootManager manager, @NotNull final VirtualFile root) {
@@ -645,11 +623,10 @@ public class AndroidCompileUtil {
   public static void collectAllResources(@NotNull final AndroidFacet facet, final Set<ResourceEntry> resourceSet) {
     final LocalResourceManager manager = facet.getLocalResourceManager();
     final Project project = facet.getModule().getProject();
-    final DumbService dumbService = DumbService.getInstance(project);
 
     for (final String resType : ResourceType.getNames()) {
       for (final ResourceElement element : manager.getValueResources(resType)) {
-        dumbService.waitForSmartMode();
+        waitForSmartMode(project);
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
@@ -668,7 +645,7 @@ public class AndroidCompileUtil {
     }
 
     for (final Resources resources : manager.getResourceElements()) {
-      dumbService.waitForSmartMode();
+      waitForSmartMode(project);
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
@@ -696,7 +673,7 @@ public class AndroidCompileUtil {
       });
     }
 
-    dumbService.waitForSmartMode();
+    waitForSmartMode(project);
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
@@ -704,7 +681,7 @@ public class AndroidCompileUtil {
         if (facet.getModule().isDisposed() || project.isDisposed()) {
           return;
         }
-        
+
         for (String id : manager.getIds()) {
           resourceSet.add(new ResourceEntry(ResourceType.ID.getName(), id));
         }
@@ -719,6 +696,12 @@ public class AndroidCompileUtil {
       for (VirtualFile file : resourceFiles) {
         resourceSet.add(new ResourceEntry(subdir.getName(), file.getName()));
       }
+    }
+  }
+
+  private static void waitForSmartMode(Project project) {
+    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+      DumbService.getInstance(project).waitForSmartMode();
     }
   }
 
