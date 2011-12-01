@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyExtractMethodHandler implements RefactoringActionHandler {
-
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     // select editor text fragment
@@ -35,12 +35,11 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     invokeOnEditor(project, editor, file);
   }
 
-
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
-    // ignore this
   }
 
-  private void invokeOnEditor(final Project project, final Editor editor, final PsiFile file) {
+  private static void invokeOnEditor(final Project project, final Editor editor, final PsiFile file) {
     CommonRefactoringUtil.checkReadOnlyStatus(project, file);
     PsiElement element1 = null;
     PsiElement element2 = null;
@@ -112,7 +111,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  private PsiElement[] getStatementsRange(final PsiElement element1, final PsiElement element2) {
+  private static PsiElement[] getStatementsRange(final PsiElement element1, final PsiElement element2) {
     final PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
     if (parent == null) {
       return null;
@@ -136,5 +135,4 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     }
     return null;
   }
-
 }

@@ -43,7 +43,8 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
   @Nullable
   public PyReferenceExpression getImportReference() {
-    return findChildByClass(PyReferenceExpression.class);
+    final ASTNode node = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
+    return node == null ? null : (PyReferenceExpression) node.getPsi();
   }
 
   public PyQualifiedName getImportedQName() {

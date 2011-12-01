@@ -8,6 +8,7 @@ from types import * #@UnusedWildImport
 from code import compile_command
 from code import InteractiveInterpreter
 import pydevconsole
+import pydev_log
 
 try:
     from StringIO import StringIO
@@ -244,8 +245,8 @@ def frameVarsToXML(frame):
             xml += varToXML(v, str(k))
         except Exception:
             traceback.print_exc()
-            sys.stderr.write("Unexpected error, recovered safely.\n")
-            sys.stderr.flush()
+            pydev_log.error("Unexpected error, recovered safely.\n")
+
     return xml
 
 def iterFrames(initialFrame):

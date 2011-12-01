@@ -165,7 +165,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      debugParams.addParameter("--DEBUG_RECORD_SOCKET_READS");
+      debugParams.addParameter("--DEBUG");
     }
 
     final String[] debuggerArgs = new String[]{

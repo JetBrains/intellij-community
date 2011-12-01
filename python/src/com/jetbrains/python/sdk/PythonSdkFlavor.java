@@ -80,11 +80,11 @@ public abstract class PythonSdkFlavor {
 
   @Nullable
   public String getVersionString(String sdkHome) {
-    return getVersionFromOutput(sdkHome, "-V", "(Python \\S+).*", false);
+    return getVersionFromOutput(sdkHome, "-V", "(Python \\S+).*");
   }
 
   @Nullable
-  protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp, boolean stdout) {
+  protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp) {
     Pattern pattern = Pattern.compile(version_regexp);
     String run_dir = new File(sdkHome).getParent();
     final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
@@ -97,8 +97,11 @@ public abstract class PythonSdkFlavor {
       );
       return null;
     }
-    final List<String> lines = stdout ? process_output.getStdoutLines() : process_output.getStderrLines();
-    return SdkUtil.getFirstMatch(lines, pattern);
+    final String result = SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
+    if (result != null) {
+      return result;
+    }
+    return SdkUtil.getFirstMatch(process_output.getStdoutLines(), pattern);
   }
 
   public Collection<String> getExtraDebugOptions() {

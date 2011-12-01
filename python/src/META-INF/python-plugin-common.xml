@@ -586,7 +586,7 @@
     <localInspection language="GQL" shortName="Query_bound_parameters" bundle="com.jetbrains.appengine.ui.Messages" key="query-bound-param-inspection-name"
                      groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.appengine.inspection.QueryBoundParametersInspection"/>
-    <localInspection language="GQL" shortName="Restricted_Python_calls" bundle="com.jetbrains.appengine.ui.Messages" key="sandbox-inspection-name"
+    <localInspection language="Python" shortName="Restricted_Python_calls" bundle="com.jetbrains.appengine.ui.Messages" key="sandbox-inspection-name"
                      groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.appengine.inspection.SandboxInspection"/>
 

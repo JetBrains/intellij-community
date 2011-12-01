@@ -166,7 +166,7 @@ def PydevdLog(level, *args):
         1 warnings/significant events
         2 informational trace
     """
-    if level <= DEBUG_TRACE_LEVEL:
+    if level <= DebugInfoHolder.DEBUG_TRACE_LEVEL:
         #yes, we can have errors printing if the console of the program has been finished (and we're still trying to print something)
         try:
             sys.stderr.write('%s\n' % (args,))
@@ -325,7 +325,7 @@ class WriterThread(PyDBDaemonThread):
                     #but the thread was still not liberated
                     return
                 out = cmd.getOutgoing()
-                if DEBUG_TRACE_LEVEL >= 1:
+                if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
                     out_message = 'sending cmd: '
                     out_message += ID_TO_MEANING.get(out[:3], 'UNKNOWN')
                     out_message += ' '
@@ -343,7 +343,7 @@ class WriterThread(PyDBDaemonThread):
                 time.sleep(self.timeout)                
         except Exception:
             GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
-            if DEBUG_TRACE_LEVEL >= 0:
+            if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
     
     
@@ -434,7 +434,7 @@ class NetCommandFactory:
 
     def makeErrorMessage(self, seq, text):
         cmd = NetCommand(CMD_ERROR, seq, text)
-        if DEBUG_TRACE_LEVEL > 2:
+        if DebugInfoHolder.DEBUG_TRACE_LEVEL > 2:
             sys.stderr.write("Error: %s" % (text,))
         return cmd
 

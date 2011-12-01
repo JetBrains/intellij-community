@@ -1,6 +1,8 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PySourcePosition {
 
@@ -8,8 +10,20 @@ public abstract class PySourcePosition {
   private final int line;
 
   protected PySourcePosition(final String file, final int line) {
-    this.file = FileUtil.toSystemIndependentName(file);
+    this.file = normalize(file);
     this.line = line;
+  }
+
+  @Nullable
+  private static String normalize(@Nullable String file) {
+    if (file == null) {
+      return file;
+    }
+    String res =  FileUtil.toSystemIndependentName(file);
+    if (SystemInfo.isWindows) {
+      res = res.toLowerCase();
+    }
+    return res;
   }
 
   public String getFile() {

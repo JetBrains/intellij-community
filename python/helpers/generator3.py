@@ -27,6 +27,8 @@ but seemingly no one uses them in C extensions yet anyway.
 VERSION = "1.99" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
+VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
+
 import sys
 import os
 import string
@@ -1789,8 +1791,7 @@ class ModuleRedeclarator(object):
         else:
             mod_name = " does not know its name"
         out(0, "# module ", p_name, mod_name) # line 2
-        version_control_header_format = '# from %s by generator %s'
-        out(0, version_control_header_format % (
+        out(0, VERSION_CONTROL_HEADER_FORMAT % (
             self.mod_filename or getattr(self.module, "__file__", "(built-in)"), VERSION)
         ) # line 3
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
@@ -2115,7 +2116,7 @@ def buildOutputName(subdir, name):
         fname = target_name + ".py"
     return fname
 
-def redoModule(name, out_name, mod_file_name, doing_builtins, imported_module_names):
+def redoModule(name, outfile, mod_file_name, doing_builtins, imported_module_names):
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
@@ -2134,15 +2135,11 @@ def redoModule(name, out_name, mod_file_name, doing_builtins, imported_module_na
                 report("Failed to find CLR module " + name)
                 break
     if mod:
-        action("opening %r", out_name)
-        outfile = fopen(out_name, "w")
         action("restoring")
         r = ModuleRedeclarator(mod, outfile, mod_file_name, doing_builtins=doing_builtins)
         r.redo(name, imported_module_names)
         action("flushing")
         r.flush()
-        action("closing %r", out_name)
-        outfile.close()
     else:
         report("Failed to find imported module in sys.modules")
 
@@ -2283,57 +2280,72 @@ def processOne(name, mod_file_name, doing_builtins):
         sys.stdout.flush()
     action("doing nothing")
     #noinspection PyBroadException
+    outfile = None
     try:
-        fname = buildOutputName(subdir, name)
-
-        old_modules = list(sys.modules.keys())
-        imported_module_names = []
-        class MyFinder:
-            def find_module(self, fullname, path=None):
-                if fullname != name:
-                    imported_module_names.append(fullname)
-                return None
-
-        my_finder = None
-        if hasattr(sys, 'meta_path'):
-            my_finder = MyFinder()
-            sys.meta_path.append(my_finder)
-        else:
-            imported_module_names = None
-
-        action("importing %r", name)
         try:
+            fname = buildOutputName(subdir, name)
+            action("opening %r", fname)
+            outfile = fopen(fname, "w")
+            old_modules = list(sys.modules.keys())
+            imported_module_names = []
+            class MyFinder:
+                def find_module(self, fullname, path=None):
+                    if fullname != name:
+                        imported_module_names.append(fullname)
+                    return None
+
+            my_finder = None
+            if hasattr(sys, 'meta_path'):
+                my_finder = MyFinder()
+                sys.meta_path.append(my_finder)
+            else:
+                imported_module_names = None
+
+            action("importing")
             __import__(name) # sys.modules will fill up with what we want
-        except ImportError:
+
+            if my_finder:
+                sys.meta_path.remove(my_finder)
+            if imported_module_names is None:
+                imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
+
+            redoModule(name, outfile, mod_file_name, doing_builtins, imported_module_names)
+            # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+            # restore all of them
+            if imported_module_names:
+                for m in sys.modules.keys():
+                    action("looking at possible submodule %r", m)
+                    # if module has __file__ defined, it has Python source code and doesn't need a skeleton
+                    if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
+                        if not quiet:
+                            say(m)
+                            sys.stdout.flush()
+                        fname = buildOutputName(subdir, m)
+                        action("opening %r", fname)
+                        subfile = fopen(fname, "w")
+                        try:
+                            redoModule(m, subfile, mod_file_name, doing_builtins, imported_module_names)
+                        finally:
+                            action("closing %r", fname)
+                            subfile.close()
+        except:
             exctype, value = sys.exc_info()[:2]
-            report("Name %r failed to import: %r", name, str(value))
+            msg = "Failed to process %r while %s: %s" % (name, _current_action, str(value))
+            report(msg)
+            if outfile is not None and not outfile.closed:
+                outfile.write("# encoding: %s\n" % OUT_ENCODING)
+                outfile.write("# module %s\n" % name)
+                outfile.write(VERSION_CONTROL_HEADER_FORMAT % (mod_file_name, VERSION))
+                outfile.write("\n\n")
+                outfile.write("# Skeleton generation error:\n#\n#     " + msg + "\n")
+            if debug_mode:
+                if sys.platform == 'cli':
+                    traceback.print_exc(file=sys.stderr)
+                raise
             return False
-
-        if my_finder:
-            sys.meta_path.remove(my_finder)
-        if imported_module_names is None:
-            imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
-
-        redoModule(name, fname, mod_file_name, doing_builtins, imported_module_names)
-        # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
-        # restore all of them
-        if imported_module_names:
-            for m in sys.modules.keys():
-                action("looking at possible submodule %r", m)
-                # if module has __file__ defined, it has Python source code and doesn't need a skeleton
-                if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
-                    if not quiet:
-                        say(m)
-                        sys.stdout.flush()
-                    fname = buildOutputName(subdir, m)
-                    redoModule(m, fname, mod_file_name, doing_builtins, imported_module_names)
-    except:
-        report("Failed to process %r while %s", name, _current_action)
-        if debug_mode:
-            if sys.platform == 'cli':
-              traceback.print_exc(file=sys.stderr)
-            raise
-        return False
+    finally:
+        if outfile is not None and not outfile.closed:
+            outfile.close()
     return True
 
 if __name__ == "__main__":
@@ -2434,7 +2446,7 @@ if __name__ == "__main__":
             names.remove('__main__') # we don't want ourselves processed
         ok = True
         for name in names:
-            ok = ok and processOne(name, None, True)
+            ok = processOne(name, None, True) and ok
         if not ok:
             sys.exit(1)
 

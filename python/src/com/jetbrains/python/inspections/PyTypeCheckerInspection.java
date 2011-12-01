@@ -4,13 +4,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -53,21 +50,34 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
           final PyType argType = entry.getKey().getType(myTypeEvalContext);
           final PyType paramType = p.getType(myTypeEvalContext);
-          checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext);
+          checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, true);
         }
       }
     }
 
     @Override
     public void visitPyBinaryExpression(PyBinaryExpression node) {
-      // TODO: Support operators besides PyBinaryExpression
-      final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
+      final PsiPolyVariantReference ref = node.getReference(resolveWithoutImplicits());
       if (ref != null) {
-        final PsiElement resolved = ref.resolve();
-        if (resolved instanceof PyFunction) {
-          final PyFunction fun = (PyFunction)resolved;
-          final PyExpression arg = PyNames.isRightOperatorName(fun.getName()) ? node.getLeftExpression() : node.getRightExpression();
-          checkSingleArgumentFunction(fun, arg);
+        final ResolveResult[] results = ref.multiResolve(false);
+        String error = null;
+        PyExpression arg = null;
+        for (ResolveResult result : results) {
+          final PsiElement resolved = result.getElement();
+          if (resolved instanceof PyFunction) {
+            final PyFunction fun = (PyFunction)resolved;
+            arg = PyNames.isRightOperatorName(fun.getName()) ? node.getLeftExpression() : node.getRightExpression();
+            error = checkSingleArgumentFunction(fun, arg, false);
+            if (error == null) {
+              return;
+            }
+          }
+          else {
+            return;
+          }
+        }
+        if (error != null) {
+          registerProblem(arg, error);
         }
       }
     }
@@ -75,16 +85,17 @@ public class PyTypeCheckerInspection extends PyInspection {
     @Override
     public void visitPySubscriptionExpression(PySubscriptionExpression node) {
       // TODO: Support slice PySliceExpressions
-      final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
+      final PsiReference ref = node.getReference(resolveWithoutImplicits());
       if (ref != null) {
         final PsiElement resolved = ref.resolve();
         if (resolved instanceof PyFunction) {
-          checkSingleArgumentFunction((PyFunction)resolved, node.getIndexExpression());
+          checkSingleArgumentFunction((PyFunction)resolved, node.getIndexExpression(), true);
         }
       }
     }
 
-    private void checkSingleArgumentFunction(@NotNull PyFunction fun, @Nullable PyExpression argument) {
+    @Nullable
+    private String checkSingleArgumentFunction(@NotNull PyFunction fun, @Nullable PyExpression argument, boolean registerProblem) {
       if (argument != null) {
         final PyParameter[] parameters = fun.getParameterList().getParameters();
         if (parameters.length == 2) {
@@ -92,22 +103,29 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (p != null) {
             final PyType argType = argument.getType(myTypeEvalContext);
             final PyType paramType = p.getType(myTypeEvalContext);
-            checkTypes(paramType, argType, argument, myTypeEvalContext);
+            return checkTypes(paramType, argType, argument, myTypeEvalContext, registerProblem);
           }
         }
       }
+      return null;
     }
 
-    private void checkTypes(PyType superType, PyType subType, PsiElement node, TypeEvalContext context) {
+    @Nullable
+    private String checkTypes(PyType superType, PyType subType, PsiElement node, TypeEvalContext context, boolean registerPoblem) {
       if (subType != null && superType != null) {
         if (!PyTypeChecker.match(superType, subType, context)) {
-          registerProblem(node, String.format("Expected type '%s', got '%s' instead",
-                                              PythonDocumentationProvider.getTypeName(superType, context),
-                                              PythonDocumentationProvider.getTypeName(subType, myTypeEvalContext)));
+          final String msg = String.format("Expected type '%s', got '%s' instead",
+                                           PythonDocumentationProvider.getTypeName(superType, context),
+                                           PythonDocumentationProvider.getTypeName(subType, myTypeEvalContext));
+          if (registerPoblem) {
+            registerProblem(node, msg);
+          }
+          return msg;
         }
       }
+      return null;
     }
-  };
+  }
 
   @Override
   public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {

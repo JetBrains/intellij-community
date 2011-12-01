@@ -39,20 +39,18 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
         typeEvalContext.trace("Trying to resolve left operator");
         typeEvalContext.traceIndent();
         try {
-          res = resolveMember(expr.getLeftExpression(), name);
+          res.addAll(resolveMember(expr.getLeftExpression(), name));
         }
         finally {
           typeEvalContext.traceUnindent();
         }
-        if (res.isEmpty()) {
-          typeEvalContext.trace("Trying to resolve right operator");
-          typeEvalContext.traceIndent();
-          try {
-            res = resolveMember(expr.getRightExpression(), leftToRightOperatorName(name));
-          }
-          finally {
-             typeEvalContext.traceUnindent();
-          }
+        typeEvalContext.trace("Trying to resolve right operator");
+        typeEvalContext.traceIndent();
+        try {
+          res.addAll(resolveMember(expr.getRightExpression(), leftToRightOperatorName(name)));
+        }
+        finally {
+           typeEvalContext.traceUnindent();
         }
       }
     }
