@@ -181,7 +181,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       for (VirtualFile file : enumerateGroovyFiles(module)) {
         if (!paths2Compile.contains(file.getPath())) {
           for (String name : TranslatingCompilerFilesMonitor.getCompiledClassNames(file, myProject)) {
-            class2Src.put(name.replace('$', '.'), file.getPath());
+            class2Src.put(name, file.getPath());
           }
         }
       }

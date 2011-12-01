@@ -46,6 +46,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,9 @@ public class InspectionApplication {
   public String myProjectPath = null;
   public String myOutPath = null;
   public String mySourceDirectory = null;
+  public String myStubProfile = null;
   public String myProfileName = null;
+  public String myProfilePath = null;
   public boolean myRunWithEditorSettings = false;
   public boolean myRunGlobalToolsOnly = false;
   private Project myProject;
@@ -80,8 +83,13 @@ public class InspectionApplication {
   @NonNls public static final String XML_EXTENSION = ".xml";
 
   public void startup() {
-    if (myProjectPath == null || myProfileName == null) {
-      logError(myProjectPath + myProfileName);
+    if (myProjectPath == null) {
+      logError("Project to inspect is not defined");
+      printHelp();
+    }
+    
+    if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
+      logError("Profile to inspect with is not defined");
       printHelp();
     }
 
@@ -148,36 +156,9 @@ public class InspectionApplication {
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
-      //fetch profile by name from project file (project profiles can be disabled)
-      Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(myProfileName, false);
-      if (inspectionProfile != null) {
-        logMessageLn(1, "Loaded shared project profile \'" + myProfileName + "\'");
-      }
+      Profile inspectionProfile = loadInspectionProfile();
+      if (inspectionProfile == null) return;
 
-      //check if ide profile is used for project
-      if (inspectionProfile == null) {
-        final Collection<Profile> profiles = InspectionProjectProfileManager.getInstance(myProject).getProfiles();
-        for (Profile profile : profiles) {
-          if (Comparing.strEqual(profile.getName(), myProfileName)) {
-            inspectionProfile = profile;
-            logMessageLn(1, "Loaded local profile \'" + myProfileName + "\'");
-            break;
-          }
-        }
-      }
-
-      //otherwise look for profile file or use default
-      if (inspectionProfile == null) {
-        inspectionProfile = InspectionProfileManager.getInstance().loadProfile(myProfileName);
-        if (inspectionProfile != null) {
-          logMessageLn(1, "Loaded profile \'" + inspectionProfile.getName() + "\' from file \'" + myProfileName + "\'");
-        }
-      }
-
-      if (inspectionProfile == null) {
-        inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
-        logMessageLn(1, "Using default project profile");
-      }
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
       final GlobalInspectionContextImpl inspectionContext = im.createNewGlobalContext(true);
@@ -314,6 +295,76 @@ public class InspectionApplication {
         FileUtil.delete(tmpDir);
       }
     }
+  }
+
+  @Nullable
+  private Profile loadInspectionProfile() throws IOException, JDOMException {
+    Profile inspectionProfile = null;
+
+    //fetch profile by name from project file (project profiles can be disabled)
+    if (myProfileName != null) {
+      inspectionProfile = loadProfileByName(myProfileName);
+      if (inspectionProfile == null) {
+        logError("Profile with configured name (" + myProfileName + ") was not found (neither in project nor in config directory)");
+        if (myErrorCodeRequired) System.exit(1);
+        return null;
+      }
+      return inspectionProfile;
+    }
+
+    if (myProfilePath != null) {
+      inspectionProfile = loadProfileByPath(myProfilePath);
+      if (inspectionProfile == null) {
+        logError("Failed to load profile from \'" + myProfilePath + "\'");
+        if (myErrorCodeRequired) System.exit(1);
+        return null;
+      }
+      return inspectionProfile;
+    }
+
+    if (myStubProfile != null) {
+      if (!myRunWithEditorSettings) {
+        inspectionProfile = loadProfileByName(myStubProfile);
+        if (inspectionProfile != null) return inspectionProfile;
+
+        inspectionProfile = loadProfileByPath(myStubProfile);
+        if (inspectionProfile != null) return inspectionProfile;
+      }
+
+      inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+      logError("Using default project profile");
+    }
+    return inspectionProfile;
+  }
+
+  @Nullable
+  private Profile loadProfileByPath(final String profilePath) throws IOException, JDOMException {
+    Profile inspectionProfile = InspectionProfileManager.getInstance().loadProfile(profilePath);
+    if (inspectionProfile != null) {
+      logMessageLn(1, "Loaded profile \'" + inspectionProfile.getName() + "\' from file \'" + profilePath + "\'");
+    }
+    return inspectionProfile;
+  }
+
+  @Nullable
+  private Profile loadProfileByName(final String profileName) {
+    Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(profileName, false);
+    if (inspectionProfile != null) {
+      logMessageLn(1, "Loaded shared project profile \'" + profileName + "\'");
+    }
+    else {
+      //check if ide profile is used for project
+      final Collection<Profile> profiles = InspectionProjectProfileManager.getInstance(myProject).getProfiles();
+      for (Profile profile : profiles) {
+        if (Comparing.strEqual(profile.getName(), profileName)) {
+          inspectionProfile = profile;
+          logMessageLn(1, "Loaded local profile \'" + profileName + "\'");
+          break;
+        }
+      }
+    }
+    
+    return inspectionProfile;
   }
 
 

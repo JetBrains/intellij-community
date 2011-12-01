@@ -129,7 +129,11 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     private final FileType myFileType;
 
     public TypeColumn(Project project, FileType fileType) {
-      super(RefactoringBundle.message("column.name.type"));
+      this(project, fileType, RefactoringBundle.message("column.name.type"));
+    }
+
+    public TypeColumn(Project project, FileType fileType, String title) {
+      super(title);
       myProject = project;
       myFileType = fileType;
     }
@@ -157,7 +161,11 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     private final Project myProject;
 
     public NameColumn(Project project) {
-      super(RefactoringBundle.message("column.name.name"));
+      this(project, RefactoringBundle.message("column.name.name"));
+    }
+
+    public NameColumn(Project project, String title) {
+      super(title);
       myProject = project;
     }
 

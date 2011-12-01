@@ -86,7 +86,7 @@ public class ProcessOutput {
    */
   public boolean checkSuccess(Logger logger) {
     if (getExitCode() != 0) {
-      logger.error(getStderr() + (isTimeout()? "\nTimed out" : "\nExit code " + getExitCode()));
+      logger.info(getStderr() + (isTimeout()? "\nTimed out" : "\nExit code " + getExitCode()));
       return false;
     }
     return true;

@@ -225,6 +225,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = createReturnTypeTextField(document);
+      ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myReturnTypeField);
       typeLabel.setLabelFor(myReturnTypeField);
 
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {

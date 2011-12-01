@@ -21,6 +21,7 @@ import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Comparing;
@@ -54,6 +55,7 @@ import java.util.*;
  * @author Alexey Efimov
  */
 public class AndroidAptCompiler implements SourceGeneratingCompiler {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidAptCompiler");
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
   @Override
@@ -144,10 +146,11 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           }
         }
         catch (final IOException e) {
+          LOG.info(e);
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               if (context.getProject().isDisposed()) return;
-              context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+              context.addMessage(CompilerMessageCategory.ERROR, "I/O error: " + e.getMessage(), null, -1, -1);
             }
           });
         }

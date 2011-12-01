@@ -181,7 +181,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     else {
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
-      fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
+      // first focusGained is not triggered
+      myCurrentEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
       myHistoryViewer.setHorizontalScrollbarVisible(true);
     }
   }

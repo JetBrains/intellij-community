@@ -473,6 +473,8 @@ public class MacMessagesImpl extends MacMessages {
 
               cancelCode = 2;
 
+              if (result == null) result = 2;
+              
               switch (result) {
                 case 1:
                   code = 0;
@@ -491,6 +493,8 @@ public class MacMessagesImpl extends MacMessages {
               // CANCEL = 1
 
               cancelCode = 1;
+
+              if (result == null) result = -1;
 
               switch (result) {
                 case 1:

@@ -98,7 +98,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     final VirtualFile[] files = myFile.getChildren();
     final ArrayList<VirtualFileDiffElement> elements = new ArrayList<VirtualFileDiffElement>();
     for (VirtualFile file : files) {
-      if (!FileTypeManager.getInstance().isFileIgnored(file)) {
+      if (!FileTypeManager.getInstance().isFileIgnored(file) && file.isValid()) {
         elements.add(new VirtualFileDiffElement(file));
       }
     }

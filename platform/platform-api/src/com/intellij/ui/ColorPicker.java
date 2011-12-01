@@ -484,6 +484,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       myColorWheel.addListener(listener);
 
       myBrightnessComponent = new SlideComponent(true);
+      myBrightnessComponent.setToolTipText("Brightness");
       myBrightnessComponent.addListener(new Consumer<Integer>() {
         @Override
         public void consume(Integer value) {
@@ -496,6 +497,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
       if (enableOpacity) {
         myOpacityComponent = new SlideComponent(false);
+        myOpacityComponent.setToolTipText("Opacity");
         myOpacityComponent.addListener(new Consumer<Integer>() {
           @Override
           public void consume(Integer integer) {

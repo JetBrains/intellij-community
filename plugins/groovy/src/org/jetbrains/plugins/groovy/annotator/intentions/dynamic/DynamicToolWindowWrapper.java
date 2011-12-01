@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -96,7 +96,7 @@ public class DynamicToolWindowWrapper {
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
   private static final int TYPE_COLUMN = 1;
 
-  private static final String[] myColumnNames = {"Dynamic element", "Type"};
+  private static final String[] myColumnNames = {"Dynamic Element", "Type"};
 
   private MyTreeTable myTreeTable;
 
@@ -129,7 +129,7 @@ public class DynamicToolWindowWrapper {
     myBigPanel = new JPanel(new BorderLayout());
     myBigPanel.setBackground(UIUtil.getFieldForegroundColor());
 
-    final DynamicFilterComponent filter = new DynamicFilterComponent(GroovyBundle.message("dynamic.toolwindow.property.fiter"), 10);
+    final DynamicFilterComponent filter = new DynamicFilterComponent(GroovyBundle.message("dynamic.toolwindow.property.filter"), 10);
     filter.setBackground(UIUtil.getLabelBackground());
 
     myBigPanel.add(new JLabel(GroovyBundle.message("dynamic.toolwindow.search.elements")), BorderLayout.NORTH);
@@ -211,6 +211,10 @@ public class DynamicToolWindowWrapper {
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
 
     myTreeTable = new MyTreeTable(myTreeTableModel);
+
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE));
+    PopupHandler.installUnknownPopupHandler(myTreeTable, group, ActionManager.getInstance());
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
@@ -341,12 +345,6 @@ public class DynamicToolWindowWrapper {
     });
 
     myTreeTable.setDefaultEditor(String.class, typeCellEditor);
-
-    myTreeTable.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent event) {
-        deleteRow();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_FOCUSED);
 
     myTreeTable.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent event) {
@@ -743,6 +741,18 @@ public class DynamicToolWindowWrapper {
 
         if (element == null) return null;
         return element.getContainingFile();
+      } else if (LangDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+        return new DeleteProvider() {
+          @Override
+          public void deleteElement(DataContext dataContext) {
+            deleteRow();
+          }
+
+          @Override
+          public boolean canDeleteElement(DataContext dataContext) {
+            return myTreeTable.getTree().getSelectionPaths() != null;
+          }
+        };
       }
 
       return null;

@@ -23,6 +23,12 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
     ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
   }
 
+  @Override
+  public void tearDown() throws Exception {
+    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
+    super.tearDown();
+  }
+
   public void test1() {
     doTest();
   }

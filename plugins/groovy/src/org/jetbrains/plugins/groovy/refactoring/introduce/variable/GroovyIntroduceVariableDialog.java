@@ -193,7 +193,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     if (!myValidator.isOK(this)) {
       return;
     }
-    GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY = getSelectedType() != null;
     if (myCbIsFinal.isEnabled()) {
       GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbIsFinal.isSelected();
     }
@@ -206,7 +205,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
   private void createUIComponents() {
-    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression);
+    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression, true);
   }
 
   class DataChangedListener implements EventListener {

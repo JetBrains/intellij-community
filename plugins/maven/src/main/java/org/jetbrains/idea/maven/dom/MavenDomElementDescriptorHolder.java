@@ -24,6 +24,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
@@ -38,6 +42,7 @@ import java.util.Map;
 
 public class MavenDomElementDescriptorHolder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder");
+
   private enum FileKind {
     PROJECT_FILE {
       public String getSchemaUrl() {
@@ -59,7 +64,8 @@ public class MavenDomElementDescriptorHolder {
   }
 
   private final Project myProject;
-  private final Map<FileKind, XmlNSDescriptorImpl> myDescriptorsMap = new THashMap<FileKind, XmlNSDescriptorImpl>();
+  private final Map<FileKind, CachedValue<XmlNSDescriptorImpl>> myDescriptorsMap =
+    new THashMap<FileKind, CachedValue<XmlNSDescriptorImpl>>();
 
   public MavenDomElementDescriptorHolder(Project project) {
     myProject = project;
@@ -80,14 +86,27 @@ public class MavenDomElementDescriptorHolder {
       if (desc == null) return null;
     }
     LOG.assertTrue(tag.isValid());
+    LOG.assertTrue(desc.isValid());
     return desc.getElementDescriptor(tag.getName(), desc.getDefaultNamespace());
   }
 
   @Nullable
-  private XmlNSDescriptorImpl tryGetOrCreateDescriptor(FileKind kind) {
-    XmlNSDescriptorImpl result = myDescriptorsMap.get(kind);
-    if (result != null && result.isValid()) return result;
+  private XmlNSDescriptorImpl tryGetOrCreateDescriptor(final FileKind kind) {
+    CachedValue<XmlNSDescriptorImpl> result = myDescriptorsMap.get(kind);
+    if (result == null) {
+      result = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<XmlNSDescriptorImpl>() {
+        @Override
+        public Result<XmlNSDescriptorImpl> compute() {
+          return Result.create(doCreateDescriptor(kind), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        }
+      }, false);
+      myDescriptorsMap.put(kind, result);
+    }
+    return result.getValue();
+  }
 
+  @Nullable
+  private XmlNSDescriptorImpl doCreateDescriptor(FileKind kind) {
     String schemaUrl = kind.getSchemaUrl();
     String location = ExternalResourceManager.getInstance().getResourceLocation(schemaUrl);
     if (schemaUrl.equals(location)) return null;
@@ -105,15 +124,13 @@ public class MavenDomElementDescriptorHolder {
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(schema);
     if (!(psiFile instanceof XmlFile)) return null;
 
-    result = new XmlNSDescriptorImpl();
-
+    XmlNSDescriptorImpl result = new XmlNSDescriptorImpl();
     result.init(psiFile);
-    myDescriptorsMap.put(kind, result);
-
     return result;
   }
 
-  private FileKind getFileKind(PsiFile file) {
+  @Nullable
+  private static FileKind getFileKind(PsiFile file) {
     if (MavenDomUtil.isProjectFile(file)) return FileKind.PROJECT_FILE;
     if (MavenDomUtil.isProfilesFile(file)) return FileKind.PROFILES_FILE;
     if (MavenDomUtil.isSettingsFile(file)) return FileKind.SETTINGS_FILE;

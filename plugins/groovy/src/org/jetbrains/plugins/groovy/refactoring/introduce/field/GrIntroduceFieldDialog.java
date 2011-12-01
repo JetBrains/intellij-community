@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
-import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -390,7 +389,6 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
         showYesNoDialog(myContext.project, message, REFACTORING_NAME, getWarningIcon()) != 0) {
       return;
     }
-    GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY = getSelectedType() != null;
     super.doOKAction();
   }
 }

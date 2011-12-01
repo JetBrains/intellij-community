@@ -21,8 +21,8 @@ import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
-import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManagerImpl;
+import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,6 +129,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
 
   @Override
   public void startStepOut() {
+    myDebuggerSession.stepOver();
   }
 
   @Override
@@ -163,8 +164,8 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   public void runToPosition(@NotNull XSourcePosition position) {
     final PsiFile psiFile = PsiManager.getInstance(getSession().getProject()).findFile(position.getFile());
     assert psiFile != null;
-    if (myDebuggerSession.canRunTo(psiFile, position.getOffset())) {
-      myDebuggerSession.runTo(psiFile, position.getOffset());
+    if (myDebuggerSession.canRunTo(position)) {
+      myDebuggerSession.runTo(psiFile, position);
     } else {
       StatusBar.Info.set("Not a valid position in file '" + psiFile.getName() + "'", psiFile.getProject());
       final Debugger c = myDebuggerSession.getClient();

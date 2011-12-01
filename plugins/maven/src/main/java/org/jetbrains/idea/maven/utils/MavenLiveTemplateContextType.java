@@ -16,7 +16,10 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
@@ -26,6 +29,13 @@ public class MavenLiveTemplateContextType extends TemplateContextType {
   }
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    return MavenDomUtil.isMavenFile(file);
+    if (!MavenDomUtil.isMavenFile(file)) return false;
+
+    PsiElement element = file.findElementAt(offset);
+    if (element == null) return false;
+
+    if (PsiTreeUtil.getParentOfType(element, XmlText.class) == null) return false;
+
+    return true;
   }
 }

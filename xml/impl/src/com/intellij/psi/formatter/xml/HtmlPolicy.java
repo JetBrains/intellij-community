@@ -47,19 +47,35 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     final PsiElement firstChild = findFirstNonEmptyChild(parentTag);
 
     if (firstChild == null) {
+      if (XmlTagBlock.ourPrintDebugMessages && "head".equals(parentTag.getName())) {
+        System.out.println("First child of tag " + parentTag.getName() + " is null");
+      }
       return false;
     }
 
     if (firstChild.getNode().getElementType() != XmlElementType.XML_START_TAG_START) {
+      if (XmlTagBlock.ourPrintDebugMessages && "head".equals(parentTag.getName())) {
+        System.out.println("Element type of first child (" + firstChild + ")" + " of tag " + parentTag.getName() +
+                           " is " + firstChild.getNode().getElementType());
+      }
       return false;
     }
 
     if (mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES > 0 && getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES)
     {
+      if (XmlTagBlock.ourPrintDebugMessages && "head".equals(parentTag.getName())) {
+        System.out.println(parentTag.getName() + " contains " + getLines(parentTag) + " lines, but bound is " +
+                           mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES);
+      }
       return false;
     }
     else {
-      return !checkName(parentTag, mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
+      final boolean result = !checkName(parentTag, mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
+
+      if (XmlTagBlock.ourPrintDebugMessages && !result && "head".equals(parentTag.getName())) {
+        System.out.println(parentTag.getName() + "| " + mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
+      }
+      return result;
     }
   }
 

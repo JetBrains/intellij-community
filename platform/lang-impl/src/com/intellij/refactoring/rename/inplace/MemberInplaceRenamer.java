@@ -242,24 +242,6 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     CommandProcessor.getInstance().executeCommand(myProject, runnable, commandName, null);
   }
 
-  protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
-    final StartMarkAction[] markAction = new StartMarkAction[1];
-    final StartMarkAction.AlreadyStartedException[] ex = new StartMarkAction.AlreadyStartedException[1];
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          markAction[0] = StartMarkAction.start(myEditor, myProject, getVariable(), RENAME_TITLE);
-        }
-        catch (StartMarkAction.AlreadyStartedException e) {
-          ex[0] = e;
-        }
-      }
-    }, RENAME_TITLE, null);
-    if (ex[0] != null) throw ex[0];
-    return markAction[0];
-  }
-
   @Nullable
   public PsiElement getSubstituted() {
     if (mySubstituted != null && mySubstituted.isValid()) return mySubstituted;

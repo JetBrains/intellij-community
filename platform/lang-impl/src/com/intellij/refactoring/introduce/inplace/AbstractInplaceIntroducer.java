@@ -150,7 +150,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
-    return StartMarkAction.start(myEditor, myProject, getVariable(), getCommandName());
+    return StartMarkAction.start(myEditor, myProject, getCommandName());
   }
 
   /**
@@ -233,6 +233,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           nameSuggestions.addAll(Arrays.asList(names));
           initOccurrencesMarkers();
           setElementToRename(variable);
+          updateTitle(getVariable());
           started = AbstractInplaceIntroducer.super.performInplaceRename(false, nameSuggestions);
           if (started) {
             myDocumentAdapter = new DocumentAdapter() {
@@ -281,7 +282,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void revalidate() {
     myWholePanel.revalidate();
     if (myTarget != null) {
-      ((BalloonImpl)myBalloon).revalidate(new PositionTracker.Static<Balloon>(myTarget));
+      myBalloon.revalidate(new PositionTracker.Static<Balloon>(myTarget));
     }
   }
 
