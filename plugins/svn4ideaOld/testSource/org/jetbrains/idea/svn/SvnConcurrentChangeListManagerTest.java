@@ -1,6 +1,5 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
@@ -11,7 +10,6 @@ import com.intellij.openapi.vcs.changes.pending.DuringChangeListManagerUpdateTes
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
-import java.util.Calendar;
 import java.util.Collection;
 
 public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
@@ -263,9 +261,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     checkFilesAreInList(new VirtualFile[] {file}, targetName, changeListManager);
   }
 
-  @Test
-  @Bombed(day = 7, month = Calendar.DECEMBER)
-  public void testComplex() throws Exception {
+  public void _testComplex() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final VirtualFile fileB = createFileInCommand("b.txt", "old content");
