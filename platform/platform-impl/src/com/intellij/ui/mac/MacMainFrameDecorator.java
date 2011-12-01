@@ -31,8 +31,11 @@ import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
@@ -44,6 +47,9 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
   
   public static final Key<Boolean> SHOULD_OPEN_IN_FULLSCREEN = Key.create("mac.should.open.in.fullscreen");
+  
+  public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
+  
   private static boolean SHOWN = false;
 
   private static Callback SET_VISIBLE_CALLBACK = new Callback() {
@@ -98,6 +104,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   
   private Callback myDidExit;
   private Callback myDidEnter;
+  private Callback myWindowWillMiniaturize;
   private boolean myInFullScreen;
   private IdeFrameImpl myFrame;
 
@@ -122,10 +129,36 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     try {
       if (SystemInfo.isMacOSLion) {
         // fullscreen support
+        frame.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowDeiconified(WindowEvent e) {
+            Window window1 = e.getWindow();
+            
+            if (window1 instanceof JFrame) {
+              ID w = MacUtil.findWindowForTitle(((JFrame)window1).getTitle());
+              if (w != null && w.intValue() > 0) {
+                invoke(w, "setCollectionBehavior:", 1 << 7);
+              }
+            }
+          }
+        });
         
         final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "IdeaNSWindowDelegate" + v);
         Foundation.registerObjcClassPair(delegateClass);
 
+        
+        // something happens with event processing if main frame will be minimized and then restored back under java version "1.6.0_29" and maybe later
+        // so we will drop this behavior and restore it back on deminiaturization (see above)
+        myWindowWillMiniaturize = new Callback() {
+          public void callback(ID caller, ID notification) {
+            ID w = MacUtil.findWindowForTitle(frame.getTitle());
+            if (w != null && w.intValue() > 0) {
+              invoke(w, "setCollectionBehavior:", 0);
+            }
+          }
+        };
+        Foundation.addMethod(delegateClass, Foundation.createSelector("windowWillMiniaturize:"), myWindowWillMiniaturize, "v*");
+        
         myDidExit = new Callback() {
           public void callback(ID caller, ID notification) {
             SwingUtilities.invokeLater(new Runnable() {
@@ -133,6 +166,9 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
               public void run() {
                 myInFullScreen = false;
                 frame.storeFullScreenStateIfNeeded(false);
+
+                JRootPane rootPane = frame.getRootPane();
+                if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
               }
             });
           }
@@ -163,6 +199,9 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
                   }
                 });
 
+                JRootPane rootPane = frame.getRootPane();
+                if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
+
                 timer.setRepeats(false);
                 timer.start();
               }
@@ -185,6 +224,10 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
         invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
                Foundation.createSelector("windowDidExitFullScreen:"), 
                Foundation.nsString("NSWindowDidExitFullScreenNotification"), window);
+
+        invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
+               Foundation.createSelector("windowWillMiniaturize:"), 
+               Foundation.nsString("NSWindowWillMiniaturizeNotification"), window);
       } else {
         // toggle toolbar
         String className = "IdeaToolbar" + v;
