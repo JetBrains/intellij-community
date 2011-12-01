@@ -141,6 +141,7 @@
     <plugin.vendor.url>${project.organization.url}</plugin.vendor.url>
     <plugin.vendor.email>lombok-plugin@plushnikov.de</plugin.vendor.email>
     <lombok.version>0.10.4</lombok.version>
+    <lombok-pg.version>0.10.4</lombok-pg.version>
 	<lombok-maven-plugin.version>0.10.2.0</lombok-maven-plugin.version>
   </properties>
 

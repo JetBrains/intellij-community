@@ -58,11 +58,27 @@
                   <overWrite>true</overWrite>
                   <outputDirectory>${project.build.directory}/generated-sources/lombok</outputDirectory>
                 </artifactItem>
+	            <artifactItem>
+                  <groupId>com.github.peichhorn</groupId>
+                  <artifactId>lombok-pg</artifactId>
+                  <version>${lombok-pg.version}</version>
+                  <type>jar</type>
+                  <classifier>sources</classifier>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/generated-sources/lombok-pg</outputDirectory>
+                </artifactItem>
               </artifactItems>
               <includes>lombok/extern/**,lombok/core/TransformationsUtil.java,
                 lombok/AccessLevel.java,lombok/*ArgsConstructor.java,lombok/Cleanup.java,lombok/Data.java,lombok/Delegate.java,
                 lombok/Getter.java,lombok/Setter.java,lombok/Equals*.java,lombok/NonNull.java,lombok/Synchronized.java,
-                lombok/ToString.java,lombok/SneakyThrows.java,lombok/val.java
+                lombok/ToString.java,lombok/SneakyThrows.java,lombok/val.java,
+
+	            lombok/AutoGenMethodStub.java,lombok/Builder.java,lombok/EnumId.java,lombok/FluentSetter.java,lombok/ListenerSupport.java,lombok/Singleton.java,
+
+	            lombok/DoPrivileged.java,lombok/WriteLock.java,lombok/ReadLock.java,lombok/Await.java,lombok/Signal.java,lombok/Position.java,
+	            lombok/AwaitBeforeAndSignalAfter.java.java,lombok/BoundPropertySupport.java,lombok/BoundSetter.java,lombok/LazyGetter.java,
+	            lombok/Sanitize.java,lombok/Validate.java,lombok/VisibleForTesting.java,lombok/ExtensionMethod.java,lombok/Action.java,
+	            lombok/Actions.java,lombok/TypeArguments.java,lombok/Rethrow.java,lombok/Rethrows.java
               </includes>
             </configuration>
           </execution>
@@ -80,6 +96,7 @@
             <configuration>
               <sources>
                 <source>${project.build.directory}/generated-sources/lombok</source>
+	            <source>${project.build.directory}/generated-sources/lombok-pg</source>
               </sources>
             </configuration>
           </execution>
