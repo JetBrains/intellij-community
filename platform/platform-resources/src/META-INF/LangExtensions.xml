@@ -610,9 +610,6 @@
   <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
                   serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
 
-  <projectService serviceInterface="com.intellij.ide.bookmarks.BookmarkManager"
-                  serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
-
   <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 
   <toolWindow id="Project" anchor="left" icon="/general/toolWindowProject.png"

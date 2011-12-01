@@ -27,14 +27,13 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +48,7 @@ public class CreateFromScratchMode extends WizardMode {
 
   @NotNull
   public String getDescription(final WizardContext context) {
-    return ProjectBundle.message("project.new.wizard.from.scratch.description", ApplicationNamesInfo.getInstance().getProductName(), context.getPresentationName());
+    return ProjectBundle.message("project.new.wizard.from.scratch.description", ApplicationNamesInfo.getInstance().getFullProductName(), context.getPresentationName());
   }
 
   @Nullable

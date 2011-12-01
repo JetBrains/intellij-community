@@ -23,14 +23,15 @@ import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
+import org.intellij.plugins.xsltDebugger.rt.engine.DebuggerStoppedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {
   private XsltDebugProcess myXsltDebugProcess;
 
-  public XsltBreakpointHandler(XsltDebugProcess xsltDebugProcess) {
-    super(XsltBreakpointType.class);
+  public XsltBreakpointHandler(XsltDebugProcess xsltDebugProcess, final Class<? extends XsltBreakpointType> typeClass) {
+    super(typeClass);
     myXsltDebugProcess = xsltDebugProcess;
   }
 
@@ -61,6 +62,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
       } else {
         manager.setBreakpoint(fileURL, lineNumber);
       }
+    } catch (DebuggerStoppedException ignore) {
     } catch (VMPausedException e) {
       final XDebugSession session = myXsltDebugProcess.getSession();
       session.reportMessage("Target VM is not responding. Breakpoint can not be set", MessageType.ERROR);
@@ -96,6 +98,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
       } else {
         manager.removeBreakpoint(fileURL, lineNumber);
       }
+    } catch (DebuggerStoppedException ignore) {
     } catch (VMPausedException e) {
       myXsltDebugProcess.getSession().reportMessage("Target VM is not responding. Breakpoint can not be removed", MessageType.ERROR);
     }
@@ -164,7 +167,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
 
     int offset = -1;
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document != null && document.getLineCount() > position.getLine()) {
+    if (document != null && document.getLineCount() > position.getLine() && position.getLine() >= 0) {
       offset = document.getLineStartOffset(position.getLine());
     }
     if (offset < 0) {

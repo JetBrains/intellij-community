@@ -61,6 +61,7 @@ import java.util.jar.Manifest;
 public class XsltDebuggerExtension extends XsltRunnerExtension {
   private static final Logger LOG = Logger.getInstance(XsltDebuggerExtension.class.getName());
 
+  public static final Key<XsltChecker.LanguageLevel> VERSION = Key.create("VERSION");
   private static final Key<Integer> PORT = Key.create("PORT");
   private static final Key<Manifest> MANIFEST = Key.create("MANIFEST");
 
@@ -133,6 +134,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       assert descriptor != null;
       pluginPath = descriptor.getPath();
     } else {
+      // -Dxslt-debugger.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-debugger-engine
       pluginPath = new File(System.getProperty("xslt-debugger.plugin.path"));
     }
 
@@ -192,12 +194,20 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
         parameters.getVMParametersList().defineProperty("xslt.transformer.type", "xalan");
       }
     }
+
+    final VirtualFile xsltFile = configuration.findXsltFile();
+    final PsiManager psiManager = PsiManager.getInstance(configuration.getProject());
+    final XsltChecker.LanguageLevel level;
+    if (xsltFile != null) {
+      level = XsltSupport.getXsltLanguageLevel(psiManager.findFile(xsltFile));
+    } else {
+      level = XsltChecker.LanguageLevel.V1;
+    }
+    extensionData.putUserData(VERSION, level);
+
     if (!parameters.getVMParametersList().hasProperty("xslt.transformer.type")) {
       // add saxon for backward-compatibility
-      final VirtualFile xsltFile = configuration.findXsltFile();
-      final PsiManager psiManager = PsiManager.getInstance(configuration.getProject());
-      if (xsltFile != null && XsltSupport.getXsltLanguageLevel(psiManager.findFile(xsltFile)) == XsltChecker.LanguageLevel.V2)
-      {
+      if (level == XsltChecker.LanguageLevel.V2) {
         parameters.getVMParametersList().defineProperty("xslt.transformer.type", "saxon9");
         addSaxon(parameters, pluginPath, SAXON_9_JAR);
       } else {

@@ -48,7 +48,7 @@ public class ImportMode extends WizardMode {
 
   @NotNull
   public String getDescription(final WizardContext context) {
-    final String productName = ApplicationNamesInfo.getInstance().getProductName();
+    final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
     return ProjectBundle.message("project.new.wizard.import.description", productName, context.getPresentationName(), StringUtil.join(
       Arrays.asList(Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER)),
       new Function<ProjectImportProvider, String>() {

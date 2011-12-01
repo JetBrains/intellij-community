@@ -8,7 +8,7 @@ import java.net.URL;
 /**
  * @author Eugene.Kudelevsky
  */
-public class RngHtml5SchemaProvider implements Html5SchemaProvider {
+public class RngHtml5SchemaProvider extends Html5SchemaProvider {
   @NotNull
   @Override
   public URL getHtmlSchemaLocation() {

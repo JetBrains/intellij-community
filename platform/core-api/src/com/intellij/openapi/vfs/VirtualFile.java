@@ -303,7 +303,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Finds file by path relative to this file.
    *
-   * @param relPath the relative path to search by
+   * @param relPath the relative path with / used as separators
    * @return the file if found any, <code>null</code> otherwise
    */
   @Nullable
@@ -612,7 +612,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * The same as {@link #refresh(boolean, boolean)} but also runs <code>postRunnable</code>
    * after the operation is completed.
    */
-  public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
+  public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
   public String getPresentableName() {
     return getName();

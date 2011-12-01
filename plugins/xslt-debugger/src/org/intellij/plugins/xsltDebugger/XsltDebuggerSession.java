@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.xdebugger.XSourcePosition;
@@ -153,14 +152,14 @@ public class XsltDebuggerSession implements Disposable {
     myClient.stepInto();
   }
 
-  public boolean canRunTo(final PsiFile file, final int offset) {
-    return XsltBreakpointHandler.getActualLineNumber(myProject, new MyXSourcePosition(file, offset)) != -1;
+  public boolean canRunTo(final XSourcePosition position) {
+    return XsltBreakpointHandler.getActualLineNumber(myProject, position) != -1;
   }
 
-  public void runTo(final PsiFile file, final int offset) {
+  public void runTo(final PsiFile file, final XSourcePosition position) {
     assert myTempBreakpoint == null;
 
-    final int lineNumber = XsltBreakpointHandler.getActualLineNumber(myProject, new MyXSourcePosition(file, offset));
+    final int lineNumber = XsltBreakpointHandler.getActualLineNumber(myProject, position);
     final String uri = XsltBreakpointHandler.getFileURL(file.getVirtualFile());
     myTempBreakpoint = myClient.getBreakpointManager().setBreakpoint(uri, lineNumber);
 
@@ -223,37 +222,5 @@ public class XsltDebuggerSession implements Disposable {
     void debuggerResumed();
 
     void debuggerStopped();
-  }
-
-  private static class MyXSourcePosition implements XSourcePosition {
-    private final PsiFile myFile;
-    private final int myOffset;
-
-    public MyXSourcePosition(PsiFile file, int offset) {
-      myFile = file;
-      myOffset = offset;
-    }
-
-    @Override
-    public int getLine() {
-      return -1;
-    }
-
-    @Override
-    public int getOffset() {
-      return myOffset;
-    }
-
-    @NotNull
-    @Override
-    public VirtualFile getFile() {
-      return myFile.getVirtualFile();
-    }
-
-    @NotNull
-    @Override
-    public Navigatable createNavigatable(@NotNull Project project) {
-      throw new UnsupportedOperationException();
-    }
   }
 }

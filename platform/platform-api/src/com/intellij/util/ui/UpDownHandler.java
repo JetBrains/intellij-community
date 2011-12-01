@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -25,61 +26,81 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class UpDownHandler {
+  private static final CustomShortcutSet UP_KEY = CustomShortcutSet.fromString("UP");
+  private static final CustomShortcutSet DOWN_KEY = CustomShortcutSet.fromString("DOWN");
+
   private UpDownHandler() {
   }
 
   public static void register(JComponent input, final JComponent affectedComponent) {
+    register(input, affectedComponent, true);
+  }
+  
+  public static void register(JComponent input, final JComponent affectedComponent, boolean registerOnBothComponents) {
     final SelectionMover mover = new SelectionMover(affectedComponent);
-    new AnAction("Up") {
+    final AnAction up = new AnAction("Up") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         mover.move(-1);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), input);
-    new AnAction("Down") {
+    };
+    up.registerCustomShortcutSet(UP_KEY, input);
+    
+    final AnAction down = new AnAction("Down") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         mover.move(1);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), input);
+    };
+    down.registerCustomShortcutSet(DOWN_KEY, input);
+    if (registerOnBothComponents) {
+      up.registerCustomShortcutSet(UP_KEY, affectedComponent);
+      down.registerCustomShortcutSet(DOWN_KEY, affectedComponent);
+    }
   }
 
   private static class SelectionMover {
     private JComboBox myCombo;
     private JList myList;
-    
+
     private SelectionMover(JComponent comp) {
-        if (comp instanceof JComboBox) {
-          myCombo = (JComboBox)comp;
-        } else if (comp instanceof JList) {
-          myList = (JList)comp;
-        }      
+      if (comp instanceof JComboBox) {
+        myCombo = (JComboBox)comp;
+      }
+      else if (comp instanceof JList) {
+        myList = (JList)comp;
+      }
     }
 
     void move(int direction) {
-    int index = -1;
-    int size = 0;
-    if (myCombo != null) {
-      index = myCombo.getSelectedIndex();
-      size = myCombo.getModel().getSize();
-    } else if (myList != null) {
-      index = myList.getSelectedIndex();
-      size = myList.getModel().getSize();
-    }
-    if (index == -1 || size == 0) return;
-    index += direction;
+      int index = -1;
+      int size = 0;
 
-    if (index == size) {
-      index = 0;
-    } else if (index == -1) {
-      index = size - 1;
-    }
-    if (myCombo != null) {
-      myCombo.setSelectedIndex(index);
-    } else if (myList != null) {
-      myList.setSelectedIndex(index);
+      if (myCombo != null) {
+        index = myCombo.getSelectedIndex();
+        size = myCombo.getModel().getSize();
+      } else if (myList != null) {
+        index = myList.getSelectedIndex();
+        size = myList.getModel().getSize();
+      }
+
+      if (index == -1 || size == 0) return;
+
+      index += direction;
+
+      if (index == size) {
+        if (!UISettings.getInstance().CYCLE_SCROLLING) return;
+        index = 0;
+      } else if (index == -1) {
+        if (!UISettings.getInstance().CYCLE_SCROLLING) return;
+        index = size - 1;
+      }
+
+      if (myCombo != null) {
+        myCombo.setSelectedIndex(index);
+      } else if (myList != null) {
+        myList.setSelectedIndex(index);
+      }
     }
   }
-}
-                         
 }

@@ -550,7 +550,7 @@ public abstract class DialogWrapper {
             @Override
             public void actionPerformed(AnActionEvent e) {
               final JBOptionButton buttonToActivate = eachInfo.getButton();
-              buttonToActivate.showPopup(eachInfo.getAction());
+              buttonToActivate.showPopup(eachInfo.getAction(), true);
             }
           }.registerCustomShortcutSet(sc, getPeer().getRootPane());
         }
@@ -1059,7 +1059,7 @@ public abstract class DialogWrapper {
     }
 
     if (myCurrentOptionsButtonIndex >= 0 && myCurrentOptionsButtonIndex < myOptionsButtons.size()) {
-      myOptionsButtons.get(myCurrentOptionsButtonIndex).showPopup(null);
+      myOptionsButtons.get(myCurrentOptionsButtonIndex).showPopup(null, true);
     }
 
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,19 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.Nullable;
 
 public class SynchronizeCurrentFileAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
@@ -41,38 +48,53 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   }
 
   private static String getMessage(VirtualFile[] files) {
-    if (files.length == 1) {
-      return IdeBundle.message("action.synchronize.file", files[0].getName());
-    }
-    return IdeBundle.message("action.synchronize.selected.files");
+    return files.length == 1 ? IdeBundle.message("action.synchronize.file", files[0].getName())
+                             : IdeBundle.message("action.synchronize.selected.files");
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     final VirtualFile[] files = getFiles(e);
+    if (project == null || files == null || files.length == 0) return;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (VirtualFile f : files) {
-          f.refresh(false, true);
+    final AccessToken token = WriteAction.start(getClass());
+    try {
+      for (VirtualFile file : files) {
+        final VirtualFileSystem fs = file.getFileSystem();
+        if (fs instanceof LocalFileSystem && file instanceof NewVirtualFile) {
+          ((NewVirtualFile)file).markDirtyRecursively();
         }
       }
-    });
-
-    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    for (VirtualFile f : files) {
-      if (f.isDirectory()) {
-        dirtyScopeManager.dirDirtyRecursively(f);
-      }
-      else {
-        dirtyScopeManager.fileDirty(f);
-      }
+    }
+    finally {
+      token.finish();
     }
 
-    String message = IdeBundle.message("action.sync.completed.successfully", getMessage(files));
-    WindowManager.getInstance().getStatusBar(project).setInfo(message);
+    final Runnable postRefreshAction = new Runnable() {
+      @Override
+      public void run() {
+        final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+        for (VirtualFile f : files) {
+          if (f.isDirectory()) {
+            dirtyScopeManager.dirDirtyRecursively(f);
+          }
+          else {
+            dirtyScopeManager.fileDirty(f);
+          }
+        }
+
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        if (statusBar != null) {
+          final String message = IdeBundle.message("action.sync.completed.successfully", getMessage(files));
+          statusBar.setInfo(message);
+        }
+      }
+    };
+
+    RefreshQueue.getInstance().refresh(true, true, postRefreshAction, files);
   }
 
+  @Nullable
   private static VirtualFile[] getFiles(AnActionEvent e) {
     return e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
   }

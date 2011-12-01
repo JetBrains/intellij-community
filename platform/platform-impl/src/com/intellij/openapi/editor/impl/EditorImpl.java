@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -6096,7 +6097,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     protected void processMouseWheelEvent(MouseWheelEvent e) {
-      if (mySettings.isWheelFontChangeEnabled()) {
+      if (mySettings.isWheelFontChangeEnabled() && !MouseGestureManager.getInstance().hasTrackpad()) {
         if (EditorUtil.isChangeFontSize(e)) {
           setFontSize(myScheme.getEditorFontSize() - e.getWheelRotation());
           return;

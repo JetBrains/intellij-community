@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,7 +73,7 @@ public class HtmlLanguageLevelForm {
       return XmlUtil.XHTML_URI;
     }
     else if (myHtml5RadioButton.isSelected()) {
-      return XmlUtil.HTML5_SCHEMA_LOCATION;
+      return Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
     }
     return myDoctypeTextField.getText();
   }
@@ -82,7 +83,7 @@ public class HtmlLanguageLevelForm {
       myHtml4RadioButton.setSelected(true);
       myDoctypeTextField.setEnabled(false);
     }
-    else if (doctype.equals(XmlUtil.HTML5_SCHEMA_LOCATION)) {
+    else if (doctype.equals(Html5SchemaProvider.HTML5_SCHEMA_LOCATION)) {
       myHtml5RadioButton.setSelected(true);
       myDoctypeTextField.setEnabled(false);
     }

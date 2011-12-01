@@ -396,12 +396,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       }
 
       boolean mustBeFinal = false;
-      if (myLocalVar != null) {
-        for(PsiExpression occurrence: occurences) {
-          if (PsiTreeUtil.getParentOfType(occurrence, PsiClass.class, PsiMethod.class) != method) {
-            mustBeFinal = true;
-            break;
-          }
+      for (PsiExpression occurrence : occurences) {
+        if (PsiTreeUtil.getParentOfType(occurrence, PsiClass.class, PsiMethod.class) != method) {
+          mustBeFinal = true;
+          break;
         }
       }
 
