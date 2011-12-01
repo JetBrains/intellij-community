@@ -27,6 +27,8 @@ but seemingly no one uses them in C extensions yet anyway.
 VERSION = "1.99" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
+VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
+
 import sys
 import os
 import string
@@ -1789,8 +1791,7 @@ class ModuleRedeclarator(object):
         else:
             mod_name = " does not know its name"
         out(0, "# module ", p_name, mod_name) # line 2
-        version_control_header_format = '# from %s by generator %s'
-        out(0, version_control_header_format % (
+        out(0, VERSION_CONTROL_HEADER_FORMAT % (
             self.mod_filename or getattr(self.module, "__file__", "(built-in)"), VERSION)
         ) # line 3
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
@@ -2332,6 +2333,10 @@ def processOne(name, mod_file_name, doing_builtins):
             msg = "Failed to process %r while %s: %s" % (name, _current_action, str(value))
             report(msg)
             if outfile is not None and not outfile.closed:
+                outfile.write("# encoding: %s\n" % OUT_ENCODING)
+                outfile.write("# module %s\n" % name)
+                outfile.write(VERSION_CONTROL_HEADER_FORMAT % (mod_file_name, VERSION))
+                outfile.write("\n\n")
                 outfile.write("# Skeleton generation error:\n#\n#     " + msg + "\n")
             if debug_mode:
                 if sys.platform == 'cli':
