@@ -101,6 +101,7 @@ public class CaretModelWindow implements CaretModel {
     CaretListener wrapper = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
+        if (!myEditorWindow.getDocument().isValid()) return; // injected document can be destroyed by now
         CaretEvent event = new CaretEvent(myEditorWindow, myEditorWindow.hostToInjected(e.getOldPosition()),
                                           myEditorWindow.hostToInjected(e.getNewPosition()));
         listener.caretPositionChanged(event);
