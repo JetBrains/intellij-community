@@ -107,4 +107,11 @@ public abstract class VcsDirtyScope {
   public Collection<VirtualFile> getAffectedContentRootsWithCheck() {
     return getAffectedContentRoots();
   }
+  
+  public boolean wasEveryThingDirty() {
+    return false;
+  }
+
+  public void setWasEverythingDirty(boolean wasEverythingDirty) {
+  }
 }

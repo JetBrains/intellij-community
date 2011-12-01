@@ -127,8 +127,10 @@ public final class AndroidApt {
 
   private static void makeFieldsNotFinal(@NotNull File[] libRJavaFiles) throws IOException {
     for (File file : libRJavaFiles) {
-      final String fileContent = readFile(file);
-      FileUtil.writeToFile(file, fileContent.replace("public static final int ", "public static int "));
+      if (file.isFile()) {
+        final String fileContent = readFile(file);
+        FileUtil.writeToFile(file, fileContent.replace("public static final int ", "public static int "));
+      }
     }
   }
 

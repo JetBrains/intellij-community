@@ -148,17 +148,20 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     for (TreeSelectionListener listener : listeners) {
       removeTreeSelectionListener(listener);
     }
-    storeState();
-    DefaultTreeModel oldModel = getModel();
-    setModel(model);
-    setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
-    ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-    expandPath(new TreePath(root.getPath()));
-    restoreState();
-    expandDefaultChangeList(oldModel, root);
 
-    for (TreeSelectionListener listener : listeners) {
-      addTreeSelectionListener(listener);
+    try {
+      storeState();
+      DefaultTreeModel oldModel = getModel();
+      setModel(model);
+      setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
+      ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+      expandPath(new TreePath(root.getPath()));
+      restoreState();
+      expandDefaultChangeList(oldModel, root);
+    } finally {
+      for (TreeSelectionListener listener : listeners) {
+        addTreeSelectionListener(listener);
+      }
     }
   }
 

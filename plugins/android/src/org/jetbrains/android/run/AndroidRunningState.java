@@ -179,6 +179,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           return null;
         }
         myTargetChooser = new EmulatorTargetChooser(selectedAvd);
+        myAvdName = selectedAvd;
       }
       else {
         final IDevice[] selectedDevices = chooser.getSelectedDevices();
