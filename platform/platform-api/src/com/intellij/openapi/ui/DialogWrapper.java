@@ -1530,10 +1530,13 @@ public abstract class DialogWrapper {
   }
 
   private Dimension mySizeBeforeError = null;
+  private String myLastErrorText = null;
+  
   protected final void setErrorText(@Nullable final String text) {
-    if (myErrorText.isTextSet(text)) {
+    if (Comparing.equal(myLastErrorText, text)) {
       return;
     }
+    myLastErrorText = text;
     if (mySizeBeforeError == null && !StringUtil.isEmpty(text)) {
       mySizeBeforeError = getSize();
     }
@@ -1541,6 +1544,7 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.cancelAllRequests();
     myErrorTextAlarm.addRequest(new Runnable() {
       public void run() {
+        final String text = myLastErrorText;
         myErrorText.setError(text);
         if (text != null && text.length() > myMaxErrorTextLength) {
           // during the first update, resize only for growing. during a subsequent update,
