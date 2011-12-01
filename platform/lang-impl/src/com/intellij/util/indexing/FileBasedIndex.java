@@ -1222,9 +1222,15 @@ public class FileBasedIndex implements ApplicationComponent {
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
       return true;
     }
-    if (filter != null && (!filter.accept(vFile) && vFile != restrictedFile)) {
+    
+    if (restrictedFile != null) {
+      if(vFile != restrictedFile) {
+        return false;
+      }
+    } else if (filter != null && !filter.accept(vFile)) {
       return false;
     }
+
     final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
 
     final DocumentContent content;
@@ -1236,7 +1242,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     final long currentDocStamp = content.getModificationStamp() +
-                                 getTransactionCount(document); // we add transaction count in order to deal with committed status
+                                 getTransactionCount(document); // we add transaction count in order to deal with committed status, TODO: fix with FileViewProvider.beforeSync change!
     if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp)) {
       final Ref<StorageException> exRef = new Ref<StorageException>(null);
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
