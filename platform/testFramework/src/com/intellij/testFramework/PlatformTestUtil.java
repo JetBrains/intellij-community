@@ -46,10 +46,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -120,13 +117,27 @@ public class PlatformTestUtil {
 
   public static String print(JTree tree, boolean withSelection, Condition<String> nodePrintCondition) {
     StringBuilder buffer = new StringBuilder();
-    Object root = tree.getModel().getRoot();
-    printImpl(tree, root, buffer, 0, withSelection, nodePrintCondition);
+    
+    final Collection<String> strings = printAsList(tree, withSelection, nodePrintCondition);
+    for (String string : strings) {
+      buffer.append(string).append("\n");  
+    }
     return buffer.toString();
   }
 
-  
-  private static void printImpl(JTree tree, Object root, StringBuilder buffer, int level, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
+  public static Collection<String> printAsList(JTree tree, boolean withSelection, Condition<String> nodePrintCondition) {
+    Collection<String> strings = new ArrayList<String>();
+    Object root = tree.getModel().getRoot();
+    printImpl(tree, root, strings, 0, withSelection, nodePrintCondition);
+    return strings;
+  }
+
+  private static void printImpl(JTree tree,
+                                Object root,
+                                Collection<String> strings,
+                                int level,
+                                boolean withSelection,
+                                @Nullable Condition<String> nodePrintCondition) {
     DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
 
 
@@ -143,34 +154,42 @@ public class PlatformTestUtil {
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
     boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
-    StringUtil.repeatSymbol(buffer, ' ', level);
-    if (expanded && !defaultMutableTreeNode.isLeaf()) {
-      buffer.append("-");
-    }
 
-    if (!expanded && !defaultMutableTreeNode.isLeaf()) {
-      buffer.append("+");
-    }
-
-    final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
-
-    if (withSelection && selected) {
-      buffer.append("[");
-    }
-
-
-    buffer.append(nodeText);
-
-    if (withSelection && selected) {
-      buffer.append("]");
-    }
-
-    buffer.append("\n");
-    int childCount = tree.getModel().getChildCount(root);
-    if (expanded) {
-      for (int i = 0; i < childCount; i++) {
-        printImpl(tree, tree.getModel().getChild(root, i), buffer, level + 1, withSelection, nodePrintCondition);
+    final StringBuilder buff = StringBuilderSpinAllocator.alloc();
+    try {
+      StringUtil.repeatSymbol(buff, ' ', level);
+      if (expanded && !defaultMutableTreeNode.isLeaf()) {
+        buff.append("-");
       }
+
+      if (!expanded && !defaultMutableTreeNode.isLeaf()) {
+        buff.append("+");
+      }
+
+      final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
+
+      if (withSelection && selected) {
+        buff.append("[");
+      }
+
+
+      buff.append(nodeText);
+
+      if (withSelection && selected) {
+        buff.append("]");
+      }
+
+      //buff.append("\n");
+      strings.add(buff.toString());
+
+      int childCount = tree.getModel().getChildCount(root);
+      if (expanded) {
+        for (int i = 0; i < childCount; i++) {
+          printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
+        }
+      }
+    } finally {
+      StringBuilderSpinAllocator.dispose(buff);
     }
   }
 
@@ -178,9 +197,19 @@ public class PlatformTestUtil {
     assertTreeEqual(tree, expected, false);
   }
 
+  public static void assertTreeEqualIgnoringNodesOrder(JTree tree, @NonNls String expected) {
+    assertTreeEqualIgnoringNodesOrder(tree, expected, false);
+  }
+
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
     Assert.assertEquals(expected, treeStringPresentation);
+  }
+
+  public static void assertTreeEqualIgnoringNodesOrder(JTree tree, String expected, boolean checkSelected) {
+    final Collection<String> actualNodesPresentation = printAsList(tree, checkSelected, null);
+    final List<String> expectedNodes = StringUtil.split(expected, "\n");
+    UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
   }
 
   @TestOnly
