@@ -1,9 +1,23 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -12,9 +26,9 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author dsl
@@ -299,24 +313,34 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     doTest(null, null, "void", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
-  private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
+  private void doTest(@Nullable String newReturnType,
+                      ParameterInfoImpl[] parameterInfos,
+                      final boolean generateDelegate) throws Exception {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
 
-  private void doTest(String newVisibility,
-                      String newName,
-                      String newReturnType,
+  private void doTest(@Nullable String newVisibility,
+                      @Nullable String newName,
+                      @Nullable String newReturnType,
                       ParameterInfoImpl[] parameterInfo,
                       ThrownExceptionInfo[] exceptionInfo,
                       final boolean generateDelegate) throws Exception {
     doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo), generateDelegate);
   }
 
-  private void doTest(String newVisibility, String newName, @NonNls String newReturnType, GenParams gen, final boolean generateDelegate) throws Exception {
+  private void doTest(@Nullable String newVisibility,
+                      @Nullable String newName,
+                      @Nullable @NonNls String newReturnType,
+                      GenParams gen, final boolean generateDelegate) throws Exception {
     doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
   }
 
-  private void doTest(String newVisibility, String newName, String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
+  private void doTest(@Nullable String newVisibility,
+                      @Nullable String newName,
+                      @Nullable String newReturnType,
+                      GenParams genParams,
+                      GenExceptions genExceptions,
+                      final boolean generateDelegate) throws Exception {
     String basePath = "/refactoring/changeSignature/" + getTestName(false);
     @NonNls final String filePath = basePath + ".java";
     configureByFile(filePath);
@@ -414,5 +438,4 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
-
 }
