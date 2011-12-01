@@ -18,11 +18,15 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,14 +36,17 @@ import java.util.Collection;
  */
 public class BeforeCheckinHandlerUtil {
 
-  public static PsiFile[] getPsiFiles(final Project myProject, final Collection<VirtualFile> selectedFiles) {
+  private BeforeCheckinHandlerUtil() {
+  }
+
+  public static PsiFile[] getPsiFiles(final Project project, final Collection<VirtualFile> selectedFiles) {
     ArrayList<PsiFile> result = new ArrayList<PsiFile>();
-    PsiManager psiManager = PsiManager.getInstance(myProject);
+    PsiManager psiManager = PsiManager.getInstance(project);
 
     VirtualFile projectFileDir = null;
-    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
+    final StorageScheme storageScheme = ((ProjectEx) project).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
-      VirtualFile baseDir = myProject.getBaseDir();
+      VirtualFile baseDir = project.getBaseDir();
       if (baseDir != null) {
         projectFileDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       }
@@ -47,7 +54,7 @@ public class BeforeCheckinHandlerUtil {
 
     for (VirtualFile file : selectedFiles) {
       if (file.isValid()) {
-        if (projectFileDir != null && VfsUtil.isAncestor(projectFileDir, file, false)) {
+        if (isUnderProjectFileDir(projectFileDir, file) || !isFileUnderSourceRoot(project, file)) {
           continue;
         }
         PsiFile psiFile = psiManager.findFile(file);
@@ -55,5 +62,14 @@ public class BeforeCheckinHandlerUtil {
       }
     }
     return PsiUtilCore.toPsiFileArray(result);
+  }
+
+  private static boolean isUnderProjectFileDir(@Nullable VirtualFile projectFileDir, @NotNull VirtualFile file) {
+    return projectFileDir != null && VfsUtilCore.isAncestor(projectFileDir, file, false);
+  }
+
+  private static boolean isFileUnderSourceRoot(@NotNull Project project, @NotNull VirtualFile file) {
+    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    return index.isInSource(file) && !index.isInLibrarySource(file);
   }
 }
