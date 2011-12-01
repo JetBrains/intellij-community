@@ -301,12 +301,15 @@ public class SvnCheckinEnvironment17 implements CheckinEnvironment {
     return SvnBundle.message("checkin.operation.name");
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
+  public List<VcsException> commit(List<Change> changes,
+                                   String preparedComment,
+                                   @NotNull NullableFunction<Object, Object> parametersHolder,
+                                   Set<String> feedback) {
     return commitInt(collectPaths(changes), preparedComment, true, false);
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), sdfdsf);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
