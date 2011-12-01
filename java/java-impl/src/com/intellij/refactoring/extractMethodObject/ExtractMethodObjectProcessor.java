@@ -71,7 +71,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   private final PsiElementFactory myElementFactory;
 
-  private final MyExtractMethodProcessor myExtractProcessor;
+  protected final MyExtractMethodProcessor myExtractProcessor;
   private boolean myCreateInnerClass = true;
   private String myInnerClassName;
 
@@ -82,6 +82,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private boolean myMadeStatic = false;
   private final Set<MethodToMoveUsageInfo> myUsages = new HashSet<MethodToMoveUsageInfo>();
   private PsiClass myInnerClass;
+  private ChangeSignatureProcessor myChangeSignatureProcessor;
+  private Runnable myCopyMethodToInner;
 
   public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, final String innerClassName) {
     super(project);
@@ -138,8 +140,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected void refreshElements(final PsiElement[] elements) {}
-
   protected void performRefactoring(final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {
@@ -172,8 +172,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         if (myMultipleExitPoints) {
           addOutputVariableFieldsWithGetters();
         }
-        copyMethodWithoutParameters();
-        copyMethodTypeParameters();
+        myCopyMethodToInner = new Runnable() {
+          public void run() {
+            copyMethodWithoutParameters();
+            copyMethodTypeParameters();
+          }
+        };
       } else {
         for (UsageInfo usage : usages) {
           final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(usage.getElement(), PsiMethodCallExpression.class);
@@ -204,7 +208,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         memberInfos.add(new MemberInfo((PsiMethod)usage.getElement()));
       }
 
-      final MemberSelectionPanel panel = new MemberSelectionPanel("Methods to move to the extracted class", memberInfos, null);
+      final MemberSelectionPanel panel = new MemberSelectionPanel("&Methods to move to the extracted class", memberInfos, null);
       DialogWrapper dlg = new DialogWrapper(myProject, false) {
         {
           init();
@@ -256,9 +260,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       PsiParameter param = params[i];
       infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
     }
-    ChangeSignatureProcessor cp = new ChangeSignatureProcessor(myProject, getMethod(), false, null, getMethod().getName(),
-                                                               new PsiImmediateClassType(myInnerClass, PsiSubstitutor.EMPTY), infos);
-    cp.run();
     final PsiCodeBlock body = getMethod().getBody();
     LOG.assertTrue(body != null);
     final List<PsiLocalVariable> vars = new ArrayList<PsiLocalVariable>();
@@ -362,6 +363,18 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       } else {
         statement.delete();
       }
+    }
+
+    myChangeSignatureProcessor = new ChangeSignatureProcessor(myProject, getMethod(), false, null, getMethod().getName(),
+                                                                   new PsiImmediateClassType(myInnerClass, PsiSubstitutor.EMPTY), infos);
+  }
+
+  public void runChangeSignature() {
+    if (myChangeSignatureProcessor != null) {
+      myChangeSignatureProcessor.run();
+    }
+    if (myCopyMethodToInner != null) {
+      ApplicationManager.getApplication().runWriteAction(myCopyMethodToInner);
     }
   }
 

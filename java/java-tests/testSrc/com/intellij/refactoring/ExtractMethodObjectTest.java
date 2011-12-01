@@ -42,6 +42,7 @@ public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
         extractProcessor.testRun();
         processor.setCreateInnerClass(createInnerClass);
         processor.run();
+        processor.runChangeSignature();
         if (createInnerClass) {
           processor.moveUsedMethodsToInner();
         }
