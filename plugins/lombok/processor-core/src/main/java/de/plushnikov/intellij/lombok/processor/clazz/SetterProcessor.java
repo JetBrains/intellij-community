@@ -16,9 +16,9 @@ import de.plushnikov.intellij.lombok.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Setter;
-import lombok.core.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,18 +34,26 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
   private final SetterFieldProcessor fieldProcessor = new SetterFieldProcessor();
 
   public SetterProcessor() {
-    super(Setter.class, PsiMethod.class);
+    this(Setter.class, PsiMethod.class);
+  }
+
+  protected SetterProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
+  }
+
+  protected SetterFieldProcessor getFieldProcessor() {
+    return fieldProcessor;
   }
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return validateAnnotationOnRigthType(psiClass, builder) && validateVisibility(psiAnnotation);
+    return validateAnnotationOnRigthType(psiAnnotation, psiClass, builder) && validateVisibility(psiAnnotation);
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRigthType(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError("'@Setter' is only supported on a class or field type");
+      builder.addError(String.format("'@%s' is only supported on a class or field type", psiAnnotation.getQualifiedName()));
       result = false;
     }
     return result;
@@ -80,7 +88,7 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
         //Skip fields that start with $
         createSetter &= !psiField.getName().startsWith(LombokConstants.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists
-        final Collection<String> methodNames = TransformationsUtil.toAllSetterNames(psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
+        final Collection<String> methodNames = getFieldProcessor().getAllSetterNames(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
         createSetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);
       }
       if (createSetter) {
@@ -93,7 +101,7 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
   private boolean hasFieldProcessorAnnotation(PsiModifierList modifierList) {
     boolean hasSetterAnnotation = false;
     for (PsiAnnotation fieldAnnotation : modifierList.getAnnotations()) {
-      hasSetterAnnotation |= fieldProcessor.acceptAnnotation(fieldAnnotation, PsiMethod.class);
+      hasSetterAnnotation |= getFieldProcessor().acceptAnnotation(fieldAnnotation, PsiMethod.class);
     }
     return hasSetterAnnotation;
   }

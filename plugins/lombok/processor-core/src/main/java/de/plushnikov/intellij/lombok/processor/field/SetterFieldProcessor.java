@@ -20,6 +20,7 @@ import lombok.Setter;
 import lombok.core.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,7 +33,11 @@ import java.util.List;
 public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
 
   public SetterFieldProcessor() {
-    super(Setter.class, PsiMethod.class);
+    this(Setter.class, PsiMethod.class);
+  }
+
+  protected SetterFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
@@ -45,7 +50,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result;
-    result = validateFinalModifier(psiField, builder);
+    result = validateFinalModifier(psiAnnotation, psiField, builder);
     if (result) {
       result = validateVisibility(psiAnnotation);
       if (result) {
@@ -55,10 +60,10 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     return result;
   }
 
-  protected boolean validateFinalModifier(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  protected boolean validateFinalModifier(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
-      builder.addError("'@Setter' on final field is not allowed",
+      builder.addError(String.format("'@%s' on final field is not allowed", psiAnnotation.getQualifiedName()),
           PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       result = false;
     }
@@ -76,11 +81,11 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     if (null != psiClass) {
       final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
       final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
-      final Collection<String> methodNames = TransformationsUtil.toAllSetterNames(psiField.getName(), isBoolean);
+      final Collection<String> methodNames = getAllSetterNames(psiField, isBoolean);
 
       for (String methodName : methodNames) {
         if (PsiMethodUtil.hasMethodByName(classMethods, methodName)) {
-          final String setterMethodName = TransformationsUtil.toSetterName(psiField.getName(), isBoolean);
+          final String setterMethodName = getSetterName(psiField, isBoolean);
 
           builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
           result = false;
@@ -90,11 +95,19 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     return result;
   }
 
+  public List<String> getAllSetterNames(@NotNull PsiField psiField, boolean isBoolean) {
+    return TransformationsUtil.toAllSetterNames(psiField.getName(), isBoolean);
+  }
+
+  protected String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
+    return TransformationsUtil.toSetterName(psiField.getName(), isBoolean);
+  }
+
   @NotNull
   public PsiMethod createSetterMethod(@NotNull PsiField psiField, @Modifier @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
-    final String methodName = TransformationsUtil.toSetterName(fieldName, PsiType.BOOLEAN.equals(psiFieldType));
+    final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
 
 //      final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField);
 //      final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
@@ -108,7 +121,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     //return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiField);
     //PsiMethod method = PropertyUtil.generateSetterPrototype(psiField);
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(getReturnType(psiField))
         .setContainingClass(psiClass)
         .addParameter(fieldName, psiFieldType)
         .setNavigationElement(psiField);
@@ -120,6 +133,10 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     }
     return method;
 
+  }
+
+  protected PsiType getReturnType(@NotNull PsiField psiField) {
+    return PsiType.VOID;
   }
 
 }
