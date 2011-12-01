@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,6 +69,7 @@ public class CommitHelper {
   private final List<Document> myCommittingDocuments = new ArrayList<Document>();
   private final VcsConfiguration myConfiguration;
   private final VcsDirtyScopeManager myDirtyScopeManager;
+  private final HashSet<String> myFeedback;
 
   public CommitHelper(final Project project,
                       final ChangeList changeList,
@@ -88,6 +90,7 @@ public class CommitHelper {
     myAdditionalData = additionalDataHolder;
     myConfiguration = VcsConfiguration.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+    myFeedback = new HashSet<String>();
   }
 
   public boolean doCommit() {
@@ -108,7 +111,11 @@ public class CommitHelper {
 
     if (myForceSyncCommit) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
-      return doesntContainErrors(processor.getVcsExceptions());
+      boolean success = doesntContainErrors(processor.getVcsExceptions());
+      if (success) {
+        reportSuccess(processor);
+      }
+      return success;
     }
     else {
       Task.Backgroundable task =
@@ -126,23 +133,32 @@ public class CommitHelper {
 
           @Override
           public NotificationInfo notifyFinished() {
-            final List<Change> changesFailedToCommit = processor.getChangesFailedToCommit();
-
-            int failed = changesFailedToCommit.size();
-            int committed = myIncludedChanges.size() - failed;
-
-            String text = committed + " " + StringUtil.pluralize("change", committed) + " committed";
-            if (failed > 0) {
-              text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
-            }
-            String content = StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + escape(myCommitMessage);
-            VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION).notify(myProject);
+            String text = reportSuccess(processor);
             return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
           }
         };
       ProgressManager.getInstance().run(task);
       return false;
     }
+  }
+
+  private String reportSuccess(GeneralCommitProcessor processor) {
+    final List<Change> changesFailedToCommit = processor.getChangesFailedToCommit();
+
+    int failed = changesFailedToCommit.size();
+    int committed = myIncludedChanges.size() - failed;
+
+    String text = committed + " " + StringUtil.pluralize("change", committed) + " committed";
+    if (failed > 0) {
+      text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
+    }
+    StringBuilder content = new StringBuilder(StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + escape(myCommitMessage));
+    for (String s : myFeedback) {
+      content.append("\n");
+      content.append(s);
+    }
+    VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content.toString(), NotificationType.INFORMATION).notify(myProject);
+    return text;
   }
 
   /*
@@ -229,7 +245,7 @@ public class CommitHelper {
           Collection<FilePath> paths = ChangesUtil.getPaths(items);
           myPathsToRefresh.addAll(paths);
 
-          final List<VcsException> exceptions = environment.commit(items, myCommitMessage, myAdditionalData);
+          final List<VcsException> exceptions = environment.commit(items, myCommitMessage, myAdditionalData, myFeedback);
           if (exceptions != null && exceptions.size() > 0) {
             myVcsExceptions.addAll(exceptions);
             myChangesFailedToCommit.addAll(items);
@@ -333,7 +349,7 @@ public class CommitHelper {
         if (environment.keepChangeListAfterCommit(myChangeList)) {
           myKeepChangeListAfterCommit = true;
         }
-        final List<VcsException> exceptions = environment.commit(items, myCommitMessage, myAdditionalData);
+        final List<VcsException> exceptions = environment.commit(items, myCommitMessage, myAdditionalData, myFeedback);
         if (exceptions != null && exceptions.size() > 0) {
           myVcsExceptions.addAll(exceptions);
           myChangesFailedToCommit.addAll(items);

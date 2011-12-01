@@ -84,7 +84,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
 
-  private List<VcsException> commitInt(List<File> paths, final String comment, final boolean force, final boolean recursive) {
+  private List<VcsException> commitInt(List<File> paths,
+                                       final String comment,
+                                       final boolean force,
+                                       final boolean recursive,
+                                       final Set<String> feedback) {
     final List<VcsException> exception = new ArrayList<VcsException>();
     final Collection<File> committables = getCommitables(paths);
 
@@ -138,18 +142,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     if (progress != null) {
-      doCommit(committables, progress, committer, comment, force, recursive, exception);
+      doCommit(committables, progress, committer, comment, force, recursive, exception, feedback);
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ProgressIndicator p = ProgressManager.getInstance().getProgressIndicator();
-          doCommit(committables, p, committer, comment, force, recursive, exception);
+          doCommit(committables, p, committer, comment, force, recursive, exception, feedback);
         }
       }, SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject());
     }
     else {
-      doCommit(committables, progress, committer, comment, force, recursive, exception);
+      doCommit(committables, progress, committer, comment, force, recursive, exception, feedback);
     }
 
     for(VirtualFile f : deletedFiles) {
@@ -164,7 +168,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                         String comment,
                         boolean force,
                         boolean recursive,
-                        List<VcsException> exception) {
+                        List<VcsException> exception, Set<String> feedback) {
     if (committables.isEmpty()) {
       return;
     }
@@ -210,17 +214,21 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
     if (committedRevisions.length() > 0) {
       final Project project = mySvnVcs.getProject();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          new VcsBalloonProblemNotifier(project, SvnBundle.message("status.text.comitted.revision", committedRevisions),
-                                                MessageType.INFO).run();
-        }
-      }, new Condition<Object>() {
-        @Override
-        public boolean value(Object o) {
-          return (! project.isOpen()) || project.isDisposed();
-        }
-      });
+      final String message = SvnBundle.message("status.text.comitted.revision", committedRevisions);
+      if (feedback == null) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+                                                          public void run() {
+                                                            new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run();
+                                                          }
+                                                        }, new Condition<Object>() {
+          @Override
+          public boolean value(Object o) {
+            return (! project.isOpen()) || project.isDisposed();
+          }
+        });
+      } else {
+        feedback.add("Subversion: " + message);
+      }
     }
   }
 
@@ -301,12 +309,15 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return SvnBundle.message("checkin.operation.name");
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
-    return commitInt(collectPaths(changes), preparedComment, true, false);
+  public List<VcsException> commit(List<Change> changes,
+                                   String preparedComment,
+                                   @NotNull NullableFunction<Object, Object> parametersHolder,
+                                   Set<String> feedback) {
+    return commitInt(collectPaths(changes), preparedComment, true, false, feedback);
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
