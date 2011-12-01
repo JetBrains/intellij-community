@@ -22,6 +22,8 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -75,7 +77,12 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    throw new UnsupportedOperationException();
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final File[] files = myIoFile.listFiles();
+    for (File file : files) {
+      result.add(new CoreLocalVirtualFile(myFileSystem, file));
+    }
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   @NotNull

@@ -133,7 +133,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String message,
-                                   @NotNull NullableFunction<Object, Object> parametersHolder) {
+                                   @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     if (GitFileSeparatorConverter.convertSeparatorsIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
@@ -211,7 +211,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
   
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
   }
 
   /**

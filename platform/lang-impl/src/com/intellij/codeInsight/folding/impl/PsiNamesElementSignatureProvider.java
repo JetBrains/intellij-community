@@ -48,7 +48,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
     if (!TYPE_MARKER.equals(type)) {
       if (processingInfoStorage != null) {
         processingInfoStorage.append(String.format(
-          "Stopping '%s' provider because given signature doesn't have expected type - can work with '%s' but got '%s'",
+          "Stopping '%s' provider because given signature doesn't have expected type - can work with '%s' but got '%s'%n",
           getClass().getName(), TYPE_MARKER, type
         ));
       }
@@ -115,7 +115,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
     for (PsiElement current = element; current != null && !(current instanceof PsiFile); current = current.getParent()) {
       length = buffer == null ? 0 : buffer.length();
       StringBuilder b = getSignature(current, buffer);
-      if (b == null && buffer != null && current.getParent() instanceof PsiFile) {
+      if (b == null && buffer != null && current.getParent() instanceof PsiFile && canResolveTopLevelChild(current)) {
         buffer.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(TOP_LEVEL_CHILD_MARKER).append(ELEMENTS_SEPARATOR);
         break;
       } 
@@ -134,6 +134,28 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
     return buffer.toString();
   }
 
+  /**
+   * Allows to answer if it's possible to use {@link #TOP_LEVEL_CHILD_MARKER} for the given element.
+   * 
+   * @param element  element to check
+   * @return         <code>true</code> if {@link #TOP_LEVEL_CHILD_MARKER} can be used for the given element; <code>false</code> otherwise
+   */
+  private static boolean canResolveTopLevelChild(@NotNull PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (parent == null) {
+      return false;
+    }
+    for (PsiElement child : parent.getChildren()) {
+      if (child instanceof PsiWhiteSpace) {
+        continue;
+      }
+      if (child != element) {
+        return false;
+      } 
+    }
+    return true;
+  }
+  
   /**
    * Tries to produce signature for the exact given PSI element.
    * 

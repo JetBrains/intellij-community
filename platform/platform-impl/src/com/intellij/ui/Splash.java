@@ -44,6 +44,11 @@ public class Splash extends JDialog implements StartupProgress {
   private int myProgressHeight = 2;
   private Color myProgressColor = null;
   private int myProgressY;
+  
+  //progress
+  //private String myMessage;
+  private float myProgress;
+  private boolean mySpashIsVisible;
 
   public Splash(String imageName, final Color textColor) {
     setUndecorated(true);
@@ -53,7 +58,14 @@ public class Splash extends JDialog implements StartupProgress {
 
     Icon originalImage = IconLoader.getIcon(imageName);
     myImage = new SplashImage(originalImage, textColor);
-    JLabel label = new JLabel(myImage);
+    JLabel label = new JLabel(myImage) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        mySpashIsVisible = true;
+        paintProgress(g);
+      }
+    };
     Container contentPane = getContentPane();
     contentPane.setLayout(new BorderLayout());
     contentPane.add(label, BorderLayout.CENTER);
@@ -76,17 +88,29 @@ public class Splash extends JDialog implements StartupProgress {
   public void show() {
     super.show();
     toFront();
+    //Sometimes this causes deadlock in EDT
+    // http://bugs.sun.com/view_bug.do?bug_id=6724890
+    //
     //myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
   }
 
   @Override
   public void showProgress(String message, float progress) {
     if (getProgressColor() == null) return;
+    //myMessage = message;
+    myProgress = progress;
+    paintProgress(getGraphics());
+  }
 
-    final Graphics g = getGraphics();
+  private void paintProgress(Graphics g) {
+    if (getProgressColor() == null) return;
     final int y = getProgressY();
     final Color col = getProgressColor();
-    final int progressWidth = (int)((myImage.getIconWidth() - 2) * progress);
+    final int progressWidth = (int)((myImage.getIconWidth() - 2) * myProgress);
+    if (! mySpashIsVisible) {
+      myImage.paintIcon(this, g, 0, 0);
+      mySpashIsVisible = true;
+    }
     g.setColor(col);
     g.fillRect(1, y, progressWidth, getProgressHeight());
   }

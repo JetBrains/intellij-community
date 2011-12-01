@@ -66,6 +66,11 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myVersionHigher_15 = versionHigher("1.5");
     myVersionHigher_14 = myVersionHigher_15 || versionHigher("1.4");
 
+    // avoid lazy-init for some properties: the following will pre-calculate values
+    canRedefineClasses();
+    canWatchFieldModification();
+    canPopFrames();
+
     List<ThreadGroupReference> groups = virtualMachine.topLevelThreadGroups();
     for (ThreadGroupReference threadGroupReference : groups) {
       threadGroupCreated(threadGroupReference);
@@ -648,7 +653,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
 
   private abstract static class Capability {
-    Boolean myValue = null;
+    private Boolean myValue = null;
 
     public final boolean isAvailable() {
       if (myValue == null) {
