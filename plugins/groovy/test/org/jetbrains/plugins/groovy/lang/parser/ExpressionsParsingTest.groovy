@@ -301,4 +301,81 @@ Groovy script
         PsiElement(string)(\'\'abc \\ \\ncde\'\')
   PsiWhiteSpace(\' \')'''
   }
+  
+  void testDiamondInPathRefElement() {
+    checkParsing 'Map<String, String> map = new java.util.concurrent.ConcurrentHashMap<>()', '''
+Groovy script
+  Variable definitions
+    Modifiers
+      <empty list>
+    Type element
+      Reference element
+        PsiElement(identifier)('Map')
+        Type arguments
+          PsiElement(<)('<')
+          Type element
+            Reference element
+              PsiElement(identifier)('String')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Type element
+            Reference element
+              PsiElement(identifier)('String')
+          PsiElement(>)('>')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('map')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      NEW expression
+        PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Reference element
+          Reference element
+            Reference element
+              Reference element
+                PsiElement(identifier)('java')
+              PsiElement(.)('.')
+              PsiElement(identifier)('util')
+            PsiElement(.)('.')
+            PsiElement(identifier)('concurrent')
+          PsiElement(.)('.')
+          PsiElement(identifier)('ConcurrentHashMap')
+          Type arguments
+            PsiElement(<)('<')
+            PsiElement(>)('>')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+'''
+  }
+
+  void testNewMethodName() {
+    checkParsing 'def a = qualifer.new X()', '''
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Call expression
+        Reference expression
+          Reference expression
+            PsiElement(identifier)('qualifer')
+          PsiElement(.)('.')
+          PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Method call
+            Reference expression
+              PsiElement(identifier)('X')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')'''
+  }
 }
