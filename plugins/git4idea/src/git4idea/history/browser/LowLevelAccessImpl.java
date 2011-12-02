@@ -44,7 +44,6 @@ import git4idea.history.wholeTree.CommitHashPlusParents;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.repo.GitRepositoryReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,8 +125,9 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       if (! child.exists()) {
         throw new VcsException("No git repository in " + myRoot.getPath());
       }
-      final GitRepositoryReader reader = new GitRepositoryReader(child);
-      branches = reader.readBranches();
+      GitRepository repository = GitRepository.getLightInstance(myRoot, myProject, myProject);
+      repository.getBranches();
+      branches = repository.getBranches();
     }
     refs.setCollection(branches);
     final GitBranch current = branches.getCurrentBranch();
