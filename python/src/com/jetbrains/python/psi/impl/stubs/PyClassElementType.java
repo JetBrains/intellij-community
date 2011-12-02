@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PySuperClassIndex;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,11 +34,11 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return new PyClassImpl(node);
   }
 
-  public PyClass createPsi(final PyClassStub stub) {
+  public PyClass createPsi(@NotNull final PyClassStub stub) {
     return new PyClassImpl(stub);
   }
 
-  public PyClassStub createStub(final PyClass psi, final StubElement parentStub) {
+  public PyClassStub createStub(@NotNull final PyClass psi, final StubElement parentStub) {
     final PyExpression[] exprs = psi.getSuperClassExpressions();
     List<PyQualifiedName> superClasses = new ArrayList<PyQualifiedName>();
     for (final PyExpression expression : exprs) {

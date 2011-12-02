@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.stubs.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -39,11 +40,11 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     return new PyTargetExpressionImpl(node);
   }
 
-  public PyTargetExpression createPsi(final PyTargetExpressionStub stub) {
+  public PyTargetExpression createPsi(@NotNull final PyTargetExpressionStub stub) {
     return new PyTargetExpressionImpl(stub);
   }
 
-  public PyTargetExpressionStub createStub(final PyTargetExpression psi, final StubElement parentStub) {
+  public PyTargetExpressionStub createStub(@NotNull final PyTargetExpression psi, final StubElement parentStub) {
     final String name = psi.getName();
     final PyExpression assignedValue = psi.findAssignedValue();
     for (CustomTargetExpressionStubType customStubType : getCustomStubTypes()) {

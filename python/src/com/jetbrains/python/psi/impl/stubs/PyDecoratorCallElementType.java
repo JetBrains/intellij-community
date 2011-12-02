@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyDecoratorImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -30,11 +31,11 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     return new PyDecoratorImpl(node);
   }
 
-  public PyDecorator createPsi(PyDecoratorStub stub) {
+  public PyDecorator createPsi(@NotNull PyDecoratorStub stub) {
     return new PyDecoratorImpl(stub);
   }
 
-  public PyDecoratorStub createStub(PyDecorator psi, StubElement parentStub) {
+  public PyDecoratorStub createStub(@NotNull PyDecorator psi, StubElement parentStub) {
     return new PyDecoratorStubImpl(psi.getQualifiedName(), parentStub);
   }
 

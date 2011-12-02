@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -29,11 +30,11 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     return new PyFunctionImpl(node);
   }
 
-  public PyFunction createPsi(final PyFunctionStub stub) {
+  public PyFunction createPsi(@NotNull final PyFunctionStub stub) {
     return new PyFunctionImpl(stub);
   }
 
-  public PyFunctionStub createStub(final PyFunction psi, final StubElement parentStub) {
+  public PyFunctionStub createStub(@NotNull final PyFunction psi, final StubElement parentStub) {
     PyFunctionImpl function = (PyFunctionImpl)psi;
     String message = function.extractDeprecationMessage();
     return new PyFunctionStubImpl(psi.getName(), function.extractDocStringReturnType(),

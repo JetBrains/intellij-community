@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyImportStatementImpl;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -32,12 +33,12 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
   }
 
   @Override
-  public PyImportStatement createPsi(PyImportStatementStub stub) {
+  public PyImportStatement createPsi(@NotNull PyImportStatementStub stub) {
     return new PyImportStatementImpl(stub);
   }
 
   @Override
-  public PyImportStatementStub createStub(PyImportStatement psi, StubElement parentStub) {
+  public PyImportStatementStub createStub(@NotNull PyImportStatement psi, StubElement parentStub) {
     return new PyImportStatementStubImpl(parentStub, getStubElementType());
   }
 
