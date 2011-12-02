@@ -339,8 +339,13 @@ public class StatementMover extends LineMover {
                                                                 getCurrentSettings().getIndentOptions(PythonFileType.INSTANCE);
     assert indentOptions != null;
     final Document document = editor.getDocument();
-    TextRange textRange = myStatementToDecreaseIndent.getTextRange();
-    document.deleteString(textRange.getStartOffset()-indentOptions.INDENT_SIZE, textRange.getStartOffset());
+    final int startLine = editor.offsetToLogicalPosition(myStatementToDecreaseIndent.getTextRange().getStartOffset()).line;
+    final int endLine = editor.offsetToLogicalPosition(myStatementToDecreaseIndent.getTextRange().getEndOffset()).line;
+    for (int line = startLine; line <= endLine; ++line) {
+      final int offset = document.getLineStartOffset(line);
+      document.deleteString(offset, offset + indentOptions.INDENT_SIZE);
+    }
+
     myStatementToDecreaseIndent = null;
   }
 
