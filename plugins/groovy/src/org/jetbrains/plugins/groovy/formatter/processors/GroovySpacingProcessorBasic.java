@@ -102,6 +102,9 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     }
 
     if (METHOD_DEFS.contains(leftType)) {
+      if (rightType == mSEMI) {
+        return NO_SPACING;
+      }
       return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
     }
 

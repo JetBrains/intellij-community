@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -62,7 +63,15 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     super(elementToRename, editor);
     myOldName = elementToRename.getName();
     mySubstituted = substituted;
-    mySubstitutedRange = mySubstituted != null && mySubstituted != myElementToRename && mySubstituted.getTextRange() != null ? myEditor.getDocument().createRangeMarker(mySubstituted.getTextRange()) : null;
+    if (mySubstituted != null && mySubstituted != myElementToRename && mySubstituted.getTextRange() != null) {
+      final PsiFile containingFile = mySubstituted.getContainingFile();
+      if (!notSameFile(containingFile.getVirtualFile(), containingFile)) {
+        mySubstitutedRange = myEditor.getDocument().createRangeMarker(mySubstituted.getTextRange());
+      }
+    }
+    else {
+      mySubstitutedRange = null;
+    }
 
     showDialogAdvertisement("RenameElement");
   }
@@ -213,10 +222,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+            final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+            final TemplateState state = TemplateManagerImpl.getTemplateState(editor);
             assert state != null;
             final int segmentsCount = state.getSegmentsCount();
-            final Document document = myEditor.getDocument();
+            final Document document = editor.getDocument();
             for (int i = 0; i < segmentsCount; i++) {
               final TextRange segmentRange = state.getSegmentRange(i);
               document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
@@ -230,7 +240,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   protected void restoreStateBeforeDialogWouldBeShown() {
     PsiNamedElement variable = getVariable();
-    final TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+    final TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
     assert state != null;
     final String commandName = RefactoringBundle
             .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), variable.getName());
@@ -240,6 +250,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, commandName, null);
+  }
+
+  @Override
+  protected String getNewName(String newName, ResolveSnapshotProvider.ResolveSnapshot snapshot) {
+    return newName;
   }
 
   @Nullable

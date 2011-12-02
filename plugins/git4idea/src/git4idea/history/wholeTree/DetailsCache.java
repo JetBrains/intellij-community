@@ -26,16 +26,16 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
+import git4idea.GitBranch;
+import git4idea.history.browser.CachedRefs;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.LowLevelAccessImpl;
+import git4idea.history.browser.SymbolicRefsI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -114,7 +114,18 @@ public class DetailsCache {
       myStash.clear();
       // will be cleared by itself; commits are not changed while they have same hash
       // uncommented because of reference caching
-      myCache.clear();
+      //myCache.clear();
+      final Set<Pair<VirtualFile, AbstractHash>> forDeletion = new HashSet<Pair<VirtualFile, AbstractHash>>();
+      for (Map.Entry<Pair<VirtualFile, AbstractHash>, GitCommit> entry : myCache.entrySet()) {
+        final GitCommit value = entry.getValue();
+        if (! value.getLocalBranches().isEmpty() || ! value.getRemoteBranches().isEmpty() ||
+            ! value.getTags().isEmpty()) {
+          forDeletion.add(new Pair<VirtualFile, AbstractHash>(entry.getKey().getFirst(), entry.getKey().getSecond()));
+        }
+      }
+      for (Pair<VirtualFile, AbstractHash> pair : forDeletion) {
+        myCache.remove(pair);
+      }
     }
   }
 
@@ -167,5 +178,33 @@ public class DetailsCache {
 
   public void setModalityState(ModalityState state) {
     myState = state;
+  }
+
+  public void reportRefs(VirtualFile root, CachedRefs refs) {
+    synchronized (myLock) {
+      final Set<Pair<VirtualFile, AbstractHash>> forDeletion = new HashSet<Pair<VirtualFile, AbstractHash>>();
+      final Set<String> hashes = new HashSet<String>();
+      AbstractHash headHash = refs.getHeadHash();
+      Collection<GitBranch> local = refs.getLocal();
+      for (GitBranch branch : local) {
+        hashes.add(branch.getHash());
+      }
+      Collection<GitBranch> remote = refs.getRemote();
+      for (GitBranch branch : remote) {
+        hashes.add(branch.getHash());
+      }
+
+      for (Map.Entry<Pair<VirtualFile, AbstractHash>, GitCommit> entry : myCache.entrySet()) {
+        final GitCommit value = entry.getValue();
+        if (! root.equals(entry.getKey().getFirst())) continue;
+        AbstractHash hash = value.getShortHash();
+        if (hash.equals(headHash) || hashes.contains(value.getHash().getValue())) {
+          forDeletion.add(new Pair<VirtualFile, AbstractHash>(entry.getKey().getFirst(), entry.getKey().getSecond()));
+        }
+      }
+      for (Pair<VirtualFile, AbstractHash> pair : forDeletion) {
+        myCache.remove(pair);
+      }
+    }
   }
 }

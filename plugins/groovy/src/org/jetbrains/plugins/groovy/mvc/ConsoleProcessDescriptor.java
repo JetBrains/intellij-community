@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -27,5 +26,5 @@ import org.jetbrains.annotations.Nullable;
 public interface ConsoleProcessDescriptor {
   ConsoleProcessDescriptor addProcessListener(@NotNull ProcessListener listener);
 
-  ConsoleProcessDescriptor waitWith(ProgressIndicator progressIndicator, @Nullable Runnable after);
+  ConsoleProcessDescriptor waitWith(ProgressIndicator progressIndicator);
 }

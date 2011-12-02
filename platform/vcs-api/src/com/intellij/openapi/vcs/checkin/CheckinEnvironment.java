@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Interface for performing VCS checkin / commit / submit operations.
@@ -54,7 +55,10 @@ public interface CheckinEnvironment extends VcsProviderMarker {
   List<VcsException> commit(List<Change> changes, String preparedComment);
 
   @Nullable
-  List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder);
+  List<VcsException> commit(List<Change> changes,
+                            String preparedComment,
+                            @NotNull NullableFunction<Object, Object> parametersHolder,
+                            Set<String> feedback);
 
   @Nullable
   List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);

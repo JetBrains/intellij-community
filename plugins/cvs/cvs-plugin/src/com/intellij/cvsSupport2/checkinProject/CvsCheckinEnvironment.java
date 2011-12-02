@@ -42,10 +42,7 @@ import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * author: lesya
@@ -83,7 +80,10 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return CvsBundle.message("operation.name.checkin.project");
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
+  public List<VcsException> commit(List<Change> changes,
+                                   String preparedComment,
+                                   @NotNull NullableFunction<Object, Object> parametersHolder,
+                                   Set<String> feedback) {
     final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
     FilePath[] files = filesList.toArray(new FilePath[filesList.size()]);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
@@ -118,7 +118,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

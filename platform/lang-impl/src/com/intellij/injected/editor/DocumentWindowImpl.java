@@ -18,10 +18,7 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
@@ -69,7 +66,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @Nullable("null means we were unable to calculate")
   LogicalPosition hostToInjectedInVirtualSpace(@NotNull LogicalPosition hPos) {
     // beware the virtual space
-    int hLineStartOffset = getDelegate().getLineStartOffset(hPos.line);
+    int hLineStartOffset = hPos.line >= myDelegate.getLineCount() ? myDelegate.getTextLength() : myDelegate.getLineStartOffset(hPos.line);
     int iLineStartOffset = hostToInjected(hLineStartOffset);
     int iLine = getLineNumber(iLineStartOffset);
 

@@ -59,7 +59,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
           final File svnRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
           svnRoot.mkdir();
 
-          File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
+          File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4ideaOld"));
           if (!pluginRoot.isDirectory()) {
             // try standalone mode
             Class aClass = SvnTestCase.class;

@@ -129,7 +129,8 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   @NotNull
   public LogicalPosition hostToInjected(@NotNull LogicalPosition hPos) {
     assert isValid();
-    int hLineEndOffset = myDelegate.getDocument().getLineEndOffset(hPos.line);
+    DocumentEx hostDocument = myDelegate.getDocument();
+    int hLineEndOffset = hPos.line >= hostDocument.getLineCount() ? hostDocument.getTextLength() : hostDocument.getLineEndOffset(hPos.line);
     LogicalPosition hLineEndPos = myDelegate.offsetToLogicalPosition(hLineEndOffset);
     if (hLineEndPos.column < hPos.column) {
       // in virtual space

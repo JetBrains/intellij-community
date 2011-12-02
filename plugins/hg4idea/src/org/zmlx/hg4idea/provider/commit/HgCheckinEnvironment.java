@@ -65,7 +65,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   @SuppressWarnings({"ThrowableInstanceNeverThrown"})
-  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
+  public List<VcsException> commit(List<Change> changes,
+                                   String preparedComment,
+                                   @NotNull NullableFunction<Object, Object> parametersHolder,
+                                   Set<String> feedback) {
     List<VcsException> exceptions = new LinkedList<VcsException>();
     for (Map.Entry<VirtualFile, Set<HgFile>> entry : getFilesByRepository(changes).entrySet()) {
 
@@ -170,7 +173,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

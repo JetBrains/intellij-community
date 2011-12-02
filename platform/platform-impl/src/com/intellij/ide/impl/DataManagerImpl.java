@@ -43,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -296,6 +298,14 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   private static class NullResult {
     public static final NullResult INSTANCE = new NullResult();
   }
+  
+  private static Set<String> ourSafeKeys = new HashSet<String>(Arrays.asList(
+    PlatformDataKeys.PROJECT.getName(),
+    PlatformDataKeys.EDITOR.getName(),
+    PlatformDataKeys.IS_MODAL_CONTEXT.getName(),
+    PlatformDataKeys.CONTEXT_COMPONENT.getName(),
+    PlatformDataKeys.MODALITY_STATE.getName()
+  ));
 
   public class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
@@ -312,6 +322,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
 
     public void setEventCount(int eventCount) {
+      myCachedData.clear();
       myEventCount = eventCount;
     }
 
@@ -323,13 +334,17 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
         return doGetData(dataId);
       }
 
-      Object answer = myCachedData.get(dataId);
-      if (answer == null) {
-        answer = doGetData(dataId);
-        myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
+      if (ourSafeKeys.contains(dataId)) {
+        Object answer = myCachedData.get(dataId);
+        if (answer == null) {
+          answer = doGetData(dataId);
+          myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
+        }
+        return answer != NullResult.INSTANCE ? answer : null;
       }
-
-      return answer != NullResult.INSTANCE ? answer : null;
+      else {
+        return doGetData(dataId);
+      }
     }
 
     @Nullable

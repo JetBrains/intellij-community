@@ -39,6 +39,7 @@ import com.intellij.openapi.diff.impl.util.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -104,6 +105,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final boolean myIsHorisontal;
   private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
   private DiffIsApproximate myDiffIsApproximate;
+  private final VisibleAreaListener myVisibleAreaListener;
 
   public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horisontal) {
     myProject = project;
@@ -139,6 +141,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
       setComparisonPolicy(defaultComparisonPolicy);
     }
+    myVisibleAreaListener = new VisibleAreaListener() {
+      @Override
+      public void visibleAreaChanged(VisibleAreaEvent e) {
+        Editor editor1 = getEditor1();
+        if (editor1 != null) {
+          editor1.getComponent().repaint();
+        }
+        Editor editor2 = getEditor2();
+        if (editor2 != null) {
+          editor2.getComponent().repaint();
+        }
+      }
+    };
   }
 
   protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {
@@ -391,6 +406,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     final ScrollingModel scrollingModel = editor.getScrollingModel();
     if (visibleAreaListener != null) {
       scrollingModel.addVisibleAreaListener(visibleAreaListener);
+      scrollingModel.addVisibleAreaListener(myVisibleAreaListener);
     }
     myFontSizeSynchronizer.synchronize(editor);
     source.addDisposable(new Disposable() {
@@ -402,6 +418,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       public void dispose() {
         if (visibleAreaListener != null) {
           scrollingModel.removeVisibleAreaListener(visibleAreaListener);
+          scrollingModel.removeVisibleAreaListener(myVisibleAreaListener);
         }
         editor.getContentComponent().removeMouseListener(mouseListener);
       }

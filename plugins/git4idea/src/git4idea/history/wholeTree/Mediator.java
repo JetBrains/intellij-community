@@ -16,7 +16,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Ticket;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.CachedRefs;
+import git4idea.history.browser.SymbolicRefsI;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -37,7 +38,7 @@ public interface Mediator {
                         final List<CommitI> result,
                         @Nullable final List<List<AbstractHash>> parents, VirtualFile root, boolean checkForSequential);
 
-  void reportSymbolicRefs(final Ticket ticket, VirtualFile root, final SymbolicRefs symbolicRefs);
+  void reportSymbolicRefs(final Ticket ticket, VirtualFile root, final CachedRefs symbolicRefs);
 
   // does not change ticket...
   void continueLoading();

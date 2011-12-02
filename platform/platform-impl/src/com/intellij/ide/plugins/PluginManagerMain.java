@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
@@ -41,6 +40,7 @@ import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -311,9 +311,9 @@ public abstract class PluginManagerMain implements Disposable {
     requireShutdown = false;
   }
 
-  private static void setTextValue(String val, JEditorPane pane) {
+  private static void setTextValue(@Nullable String val, String filter, JEditorPane pane) {
     if (val != null) {
-      pane.setText(TEXT_PREFIX + val.trim() + TEXT_SUFIX);
+      pane.setText(SearchUtil.markup(TEXT_PREFIX + val + TEXT_SUFIX, filter).trim());
       pane.setCaretPosition(0);
     }
     else {
@@ -325,11 +325,7 @@ public abstract class PluginManagerMain implements Disposable {
     if (plugin instanceof IdeaPluginDescriptor) {
       IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
 
-
       String description = pluginDescriptor.getDescription();
-      if (description != null) {
-        description = SearchUtil.markup(description, filter);
-      }
       String changeNotes = pluginDescriptor.getChangeNotes();
       if (!StringUtil.isEmpty(changeNotes)) {
         description += "<h4>Change Notes</h4>";
@@ -371,11 +367,10 @@ public abstract class PluginManagerMain implements Disposable {
         }
       }
 
-
-      setTextValue(description, descriptionTextArea);
+      setTextValue(description, filter, descriptionTextArea);
     }
     else {
-      setTextValue(null, descriptionTextArea);
+      setTextValue(null, filter, descriptionTextArea);
     }
   }
 
@@ -460,23 +455,20 @@ public abstract class PluginManagerMain implements Disposable {
                                       Set<String> search,
                                       IdeaPluginDescriptor descriptor) {
     if (StringUtil.isEmpty(filter)) return true;
-    if (descriptor.getName().toLowerCase().contains(filter)) {
-      return true;
-    }
-    if (isAccepted(search, descriptor.getName())) {
+    if (isAccepted(search, filter, descriptor.getName())) {
       return true;
     }
     else {
       final String description = descriptor.getDescription();
-      if (description != null && isAccepted(search, description)) {
+      if (description != null && isAccepted(search, filter, description)) {
         return true;
       }
       final String category = descriptor.getCategory();
-      if (category != null && isAccepted(search, category)) {
+      if (category != null && isAccepted(search, filter, category)) {
         return true;
       }
       final String changeNotes = descriptor.getChangeNotes();
-      if (changeNotes != null && isAccepted(search, changeNotes)) {
+      if (changeNotes != null && isAccepted(search, filter, changeNotes)) {
         return true;
       }
     }
@@ -484,7 +476,9 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   private static boolean isAccepted(final Set<String> search,
-                                    final String description) {
+                                    @NotNull final String filter,
+                                    @NotNull final String description) {
+    if (StringUtil.containsIgnoreCase(description, filter)) return true;
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final HashSet<String> descriptionSet = new HashSet<String>(search);
     descriptionSet.removeAll(optionsRegistrar.getProcessedWords(description));

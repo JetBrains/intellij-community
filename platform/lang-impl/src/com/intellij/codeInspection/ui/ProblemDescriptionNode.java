@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -117,26 +118,37 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return renderDescriptionMessage(descriptor, element).replaceAll("<[^>]*>", "");
+    return renderDescriptionMessage(descriptor, element, true).replaceAll("<[^>]*>", "");
   }
 
   @NotNull
   public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element) {
+    return renderDescriptionMessage(descriptor, element, false);
+  }
+
+  @NotNull
+  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element, boolean appendLineNumber) {
     String message = descriptor.getDescriptionTemplate();
 
     // no message. Should not be the case if inspection correctly implemented.
     // noinspection ConstantConditions
     if (message == null) return "";
 
+    if (message.contains("#ref")) {
+      String ref = extractHighlightedText(descriptor, element);
+      message = StringUtil.replace(message, "#ref", ref);
+    } else if (appendLineNumber && descriptor instanceof ProblemDescriptor && message.contains("#loc")) {
+      final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
+      if (lineNumber >= 0) {
+        message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + lineNumber + ")");
+      }
+    }
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
     message = StringUtil.replace(message, "#loc ", "");
     message = StringUtil.replace(message, " #loc", "");
     message = StringUtil.replace(message, "#loc", "");
-    if (message.contains("#ref")) {
-      String ref = extractHighlightedText(descriptor, element);
-      message = StringUtil.replace(message, "#ref", ref);
-    }
+
     final int endIndex = message.indexOf("#end");
     if (endIndex > 0) {
       message = message.substring(0, endIndex);

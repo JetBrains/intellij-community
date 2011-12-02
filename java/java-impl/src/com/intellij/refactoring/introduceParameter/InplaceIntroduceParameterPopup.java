@@ -27,7 +27,10 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -118,6 +121,16 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         return psiParameter;
       }
     });
+  }
+
+  @Override
+  protected PsiElement checkLocalScope() {
+    return myMethod;
+  }
+
+  @Override
+  protected SearchScope getReferencesSearchScope(VirtualFile file) {
+    return new LocalSearchScope(myMethod);
   }
 
   @Override

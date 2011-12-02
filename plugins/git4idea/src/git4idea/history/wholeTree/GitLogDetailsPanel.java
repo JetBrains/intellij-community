@@ -29,8 +29,9 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.UIVcsUtil;
+import git4idea.history.browser.CachedRefs;
 import git4idea.history.browser.GitCommit;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.SymbolicRefsI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,12 +61,12 @@ public class GitLogDetailsPanel {
   private JEditorPane myJEditorPane;
   private VirtualFile myRoot;
   private GitCommit myCommit;
-  private final Convertor<VirtualFile, SymbolicRefs> myRefsProvider;
+  private final Convertor<VirtualFile, CachedRefs> myRefsProvider;
   private final Processor<AbstractHash> myMarkProcessor;
 
   public GitLogDetailsPanel(final Project myProject,
                             final DetailsCache detailsCache,
-                            final Convertor<VirtualFile, SymbolicRefs> refsProvider,
+                            final Convertor<VirtualFile, CachedRefs> refsProvider,
                             Processor<AbstractHash> markProcessor) {
     myRefsProvider = refsProvider;
     myMarkProcessor = markProcessor;
@@ -90,7 +91,7 @@ public class GitLogDetailsPanel {
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && CONFIGURE_BRANCHES.equals(e.getDescription())) {
           if (myRoot == null) return;
-          final SymbolicRefs symbolicRefs = refsProvider.convert(myRoot);
+          final CachedRefs symbolicRefs = refsProvider.convert(myRoot);
           if (symbolicRefs == null) return;
           final TreeSet<String> localBranches = symbolicRefs.getLocalBranches();
           if (localBranches == null || localBranches.isEmpty()) {

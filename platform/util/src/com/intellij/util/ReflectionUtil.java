@@ -295,4 +295,15 @@ public class ReflectionUtil {
       return null;
     }
   }
+
+  public static void resetThreadLocals() {
+    try {
+      Field field = Thread.class.getDeclaredField("threadLocals");
+      field.setAccessible(true);
+      field.set(Thread.currentThread(), null);
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+  }
 }
