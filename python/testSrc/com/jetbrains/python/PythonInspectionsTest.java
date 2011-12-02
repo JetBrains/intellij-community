@@ -273,7 +273,12 @@ public class PythonInspectionsTest extends PyTestCase {
 
 
   public void testPyTupleAssignmentBalanceInspection3() {
-    doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
+    try {
+      setLanguageLevel(LanguageLevel.PYTHON27);
+      doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
+    } finally {
+      setLanguageLevel(null);
+    }
   }
 
   public void testPyListCreationInspection() {         //PY-2823

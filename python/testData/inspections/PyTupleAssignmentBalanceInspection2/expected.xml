@@ -12,6 +12,11 @@
   </problem>
   <problem>
     <file>test.py</file>
+    <line>5</line>
+    <description>Need more values to unpack</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
     <line>8</line>
     <description>Need more values to unpack</description>
   </problem>
