@@ -59,7 +59,8 @@ public class StatementMover extends LineMover {
     // check if we want to move statement
     if (myStatementToMove == null) return false;
     //do not move pass statement
-    if (myStatementToMove instanceof PyPassStatement) {
+    if (myStatementToMove instanceof PyPassStatement || myStatementToMove instanceof PyBreakStatement
+        || myStatementToMove instanceof PyContinueStatement) {
       info.toMove2 = info.toMove;
       return true;
     }

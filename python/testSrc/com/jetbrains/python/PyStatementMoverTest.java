@@ -92,7 +92,11 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
-  public void testFunctionDown() {
+  public void testFunctionDown() { // PY-5195
+    doTest();
+  }
+
+  public void testContinueBreak() { // PY-5193
     doTest();
   }
 }
