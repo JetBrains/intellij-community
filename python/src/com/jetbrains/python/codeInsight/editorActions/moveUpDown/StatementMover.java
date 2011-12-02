@@ -88,6 +88,7 @@ public class StatementMover extends LineMover {
         info.toMove2 = new LineRange(myStatementToMove);
     }
     if (isMoveToCompound(info, editor, file, down)) {
+      if (isMoveToEmptyLine(editor, info)) return true;
       myStatementToIncreaseIndent = myStatementToMove;
       if (!down)
         info.toMove2 = new LineRange(myStatementToMove);
@@ -157,7 +158,9 @@ public class StatementMover extends LineMover {
     info.toMove = range;
     info.toMove2 = new LineRange(nearLine, nearLine + 1);
 
+    if (isMoveToEmptyLine(editor, info)) return;
     // if try to move to the function or to the class
+
     int offset2 = getLineStartSafeOffset(doc, info.toMove2.startLine);
     PsiElement element2 = file.findElementAt(offset2);
     if (element2 != null) {
@@ -184,6 +187,15 @@ public class StatementMover extends LineMover {
                                               doc.getLineNumber(textRange2.getEndOffset())+1);
       }
     }
+  }
+  
+  private boolean isMoveToEmptyLine(Editor editor, MoveInfo info) {
+    Document document = editor.getDocument();
+    if (document.getLineCount() > info.toMove2.endLine) {
+      String lineToMoveTo = document.getText(new TextRange(getLineStartSafeOffset(document, info.toMove2.startLine), getLineStartSafeOffset(document, info.toMove2.endLine)));
+      if (StringUtil.isEmptyOrSpaces(lineToMoveTo)) return true;
+    }
+    return false;
   }
 
   /**
