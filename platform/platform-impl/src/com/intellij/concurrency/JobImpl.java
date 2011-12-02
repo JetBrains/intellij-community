@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -87,6 +88,7 @@ public class JobImpl<T> implements Job<T> {
           if (onDoneCallback != null) {
             onDoneCallback.consume(this);
           }
+          //TODO[cdr]: consider clearing thread locals: ReflectionUtil.resetThreadlocals();
         }
       };
     synchronized (myFutures) {
