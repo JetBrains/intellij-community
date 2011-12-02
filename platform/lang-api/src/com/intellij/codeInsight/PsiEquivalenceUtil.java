@@ -72,8 +72,12 @@ public class PsiEquivalenceUtil {
     }
 
     if (children1.length == 0) {
-      if (!element1.textMatches(element2)) return false;
-      if (leafElementsComparator != null && leafElementsComparator.compare(element1, element2) != 0) return false;
+      if (leafElementsComparator != null) {
+        if (leafElementsComparator.compare(element1, element2) != 0) return false;
+      }
+      else {
+        if (!element1.textMatches(element2)) return false;
+      }
     }
 
     PsiReference ref1 = element1.getReference();
