@@ -41,8 +41,9 @@ public class PyTestGenerator {
               if (methods.size() == 0)
                 fileText.append("pass\n");
 
-              for (String method : methods)
-                fileText.append("def ").append(method).append("(self):\n    self.fail()\n\n");
+              for (String method : methods) {
+                fileText.append("def ").append(method).append("(self):\n    self.fail()\n\n  ");
+              }
 
               PsiFile psiFile = PyUtil.getOrCreateFile(
                 dialog.getTargetDir() + "/" + fileName, project);
