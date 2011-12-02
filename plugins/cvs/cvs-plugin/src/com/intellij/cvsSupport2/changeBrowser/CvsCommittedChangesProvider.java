@@ -19,10 +19,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.connections.CvsRootOnFileSystem;
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -49,6 +47,7 @@ import org.netbeans.lib.cvsclient.command.log.Revision;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -133,24 +132,25 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   @Nullable
   @Override
   public Pair<CvsChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+    final File ioFile = new File(file.getPath());
+    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(ioFile);
     final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
     final CvsRepositoryLocation cvsLocation = getLocationFor(filePath);
     if (cvsLocation == null) return null;
-    final String rootModule = CvsUtil.getModuleName(vcsRoot);
+    final String module = CvsUtil.getModuleName(vcsRoot);
     final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
     if (connectionSettings.isOffline()) {
       return null;
     }
-    final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(rootModule, connectionSettings, myProject, vcsRoot);
+    final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, vcsRoot);
 
-    final CvsChangeList[] result = new CvsChangeList[1];
+    final Ref<CvsChangeList> result = new Ref<CvsChangeList>();
     final LoadHistoryOperation operation = new LoadHistoryOperation(connectionSettings, new Consumer<LogInformationWrapper>() {
       public void consume(LogInformationWrapper wrapper) {
         final List<Revision> revisions = wrapper.getRevisions();
         if (revisions.isEmpty()) return;
         final RevisionWrapper revision = new RevisionWrapper(wrapper.getFile(), revisions.get(0), null);
-        result[0] = builder.addRevision(revision);
+        result.set(builder.addRevision(revision));
       }
     }, cvsLocation.getModuleName(), number.asString());
     final CvsResult executionResult = operation.run(myProject);
@@ -161,23 +161,23 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     else if (executionResult.hasErrors()) {
       throw executionResult.composeError();
     }
-    if (result[0] == null) {
+    if (result.isNull()) {
       return null;
     }
-    final Date commitDate = result[0].getCommitDate();
+    final Date commitDate = result.get().getCommitDate();
     final CvsEnvironment rootConnectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(vcsRoot);
     final long t = commitDate.getTime();
     final Date dateFrom = new Date(t - CvsChangeList.SUITABLE_DIFF);
     final Date dateTo = new Date(t + CvsChangeList.SUITABLE_DIFF);
 
     final LoadHistoryOperation operation2 =
-      new LoadHistoryOperation(rootConnectionSettings, rootModule, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
+      new LoadHistoryOperation(rootConnectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
         @Override
         public void consume(LogInformationWrapper wrapper) {
           final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
           if (wrappers != null) {
             for (RevisionWrapper revisionWrapper : wrappers) {
-              if (result[0].containsFileRevision(revisionWrapper)) {
+              if (result.get().containsFileRevision(revisionWrapper)) {
                 // otherwise a new change list will be created because the old change list already contains this file.
                 continue;
               }
@@ -190,10 +190,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     if (cvsResult.hasErrors()) {
       throw cvsResult.composeError();
     }
-    return new Pair<CvsChangeList, FilePath>(result[0], filePath);
+    return new Pair<CvsChangeList, FilePath>(result.get(), filePath);
   }
 
-  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {
+  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
+    throws VcsException {
     final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
     final String module = cvsLocation.getModuleName();
     final VirtualFile rootFile = cvsLocation.getRootFile();
@@ -259,14 +260,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     if (connectionSettings.isOffline()) {
       return Collections.emptyList();
     }
-    try {
-      // refresh cvs connection settings from file system
-      connectionSettings = CvsRootOnFileSystem.createMeOn(CvsVfsUtil.getFileFor(rootFile));
-    }
-    catch (CannotFindCvsRootException ignore) {
-    }
     final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, rootFile);
-    Date dateTo = settings.getDateBeforeFilter();
+    final Date dateTo = settings.getDateBeforeFilter();
     Date dateFrom = settings.getDateAfterFilter();
     if (dateFrom == null) {
       final Calendar calendar = Calendar.getInstance();
@@ -326,8 +321,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return null;
   }
 
-  public boolean isChangeLocallyAvailable(final FilePath filePath, @Nullable VcsRevisionNumber localRevision, VcsRevisionNumber changeRevision,
-                                          final CvsChangeList changeList) {
+  public boolean isChangeLocallyAvailable(final FilePath filePath, @Nullable VcsRevisionNumber localRevision,
+                                          VcsRevisionNumber changeRevision, final CvsChangeList changeList) {
     if (localRevision instanceof CvsRevisionNumber && changeRevision instanceof CvsRevisionNumber) {
       final CvsRevisionNumber cvsLocalRevision = (CvsRevisionNumber)localRevision;
       final CvsRevisionNumber cvsChangeRevision = (CvsRevisionNumber)changeRevision;
