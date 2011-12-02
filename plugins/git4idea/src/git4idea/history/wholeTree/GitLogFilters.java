@@ -85,6 +85,10 @@ public class GitLogFilters {
     return myCommitterFilters;
   }
 
+  public boolean haveCommitterOrCommentFilters() {
+    return (myCommitterFilters != null && ! myCommitterFilters.isEmpty()) || (myCommentFilter != null);
+  }
+
   @Nullable
   public Map<VirtualFile,ChangesFilter.Filter> getStructureFilters() {
     return myStructureFilters;

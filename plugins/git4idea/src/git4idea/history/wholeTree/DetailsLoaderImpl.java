@@ -44,7 +44,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
   private final Map<VirtualFile, LowLevelAccess> myAccesses;
   private DetailsCache myDetailsCache;
   private final Project myProject;
-  private final Map<VirtualFile, SymbolicRefs> myRefs;
+  private final Map<VirtualFile, CachedRefs> myRefs;
 
   private final Object myLock;
   private ModalityState myState;
@@ -54,7 +54,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
     myProject = project;
     myLoadIdsGatherer = new HashMap<VirtualFile, CommitIdsHolder<AbstractHash>>();
     myAccesses = new HashMap<VirtualFile, LowLevelAccess>();
-    myRefs = new HashMap<VirtualFile, SymbolicRefs>();
+    myRefs = new HashMap<VirtualFile, CachedRefs>();
     myLock = new Object();
   }
 
@@ -87,10 +87,11 @@ public class DetailsLoaderImpl implements DetailsLoader {
   }
 
   @Override
-  public void reportRefs(VirtualFile root, SymbolicRefs refs) {
+  public void reportRefs(VirtualFile root, CachedRefs refs) {
     synchronized (myLock) {
       myRefs.put(root, refs);
     }
+    myDetailsCache.reportRefs(root, refs);
   }
 
   public void setModalityState(ModalityState state) {
@@ -117,7 +118,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       final CommitIdsHolder<AbstractHash> holder;
-      final SymbolicRefs refs;
+      final SymbolicRefsI refs;
       synchronized (myLock) {
         holder = myLoadIdsGatherer.get(myVirtualFile);
         refs = myRefs.get(myAccess.getRoot());
@@ -144,7 +145,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
       }
     }
 
-    private void loadDetails(Collection<AbstractHash> hashes, SymbolicRefs refs) throws VcsException {
+    private void loadDetails(Collection<AbstractHash> hashes, SymbolicRefsI refs) throws VcsException {
       final List<String> converted = new ArrayList<String>();
       for (final AbstractHash hash : hashes) {
         if (myDetailsCache.convert(myVirtualFile, hash) == null) {

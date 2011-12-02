@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.SymbolicRefsI;
 
 import java.util.TreeSet;
 

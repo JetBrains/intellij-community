@@ -46,7 +46,7 @@ public class ByRootLoader extends TaskDescriptor {
   private final LowLevelAccess myLowLevelAccess;
   private final Mediator myMediator;
   private final DetailsCache myDetailsCache;
-  private SymbolicRefs mySymbolicRefs;
+  private CachedRefs mySymbolicRefs;
   private final Ticket myTicket;
   private final UsersIndex myUsersIndex;
   private final Collection<String> myStartingPoints;
@@ -209,7 +209,7 @@ public class ByRootLoader extends TaskDescriptor {
     return commitObj;
   }
 
-  public SymbolicRefs initSymbRefs() {
+  public CachedRefs initSymbRefs() {
     if (mySymbolicRefs == null) {
       try {
         mySymbolicRefs = myLowLevelAccess.getRefs();
@@ -222,7 +222,7 @@ public class ByRootLoader extends TaskDescriptor {
     return mySymbolicRefs;
   }
 
-  public SymbolicRefs getSymbolicRefs() {
+  public SymbolicRefsI getSymbolicRefs() {
     return mySymbolicRefs;
   }
 

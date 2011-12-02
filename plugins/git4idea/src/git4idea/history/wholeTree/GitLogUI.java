@@ -60,6 +60,7 @@ import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
@@ -104,7 +105,7 @@ public class GitLogUI implements Disposable {
   private Splitter mySplitter;
   private GitTableScrollChangeListener myMyChangeListener;
   private List<VirtualFile> myRootsUnderVcs;
-  private final Map<VirtualFile, SymbolicRefs> myRefs;
+  private final Map<VirtualFile, CachedRefs> myRefs;
   private final SymbolicRefs myRecalculatedCommon;
   private UIRefresh myUIRefresh;
   private JBTable myJBTable;
@@ -160,7 +161,7 @@ public class GitLogUI implements Disposable {
     myMediator = mediator;
     myCommentSearchContext = new CommentSearchContext();
     myUsersSearchContext = new ArrayList<String>();
-    myRefs = new HashMap<VirtualFile, SymbolicRefs>();
+    myRefs = new HashMap<VirtualFile, CachedRefs>();
     myRecalculatedCommon = new SymbolicRefs();
     myPreviousFilter = "";
     myDescriptionRenderer = new DescriptionRenderer();
@@ -272,7 +273,7 @@ public class GitLogUI implements Disposable {
       }
 
       @Override
-      public void reportSymbolicRefs(VirtualFile root, SymbolicRefs symbolicRefs) {
+      public void reportSymbolicRefs(VirtualFile root, CachedRefs symbolicRefs) {
         myRefs.put(root, symbolicRefs);
         myTableModel.setHeadIfEmpty(root, symbolicRefs.getHeadHash());
 
@@ -281,7 +282,7 @@ public class GitLogUI implements Disposable {
 
         final CheckSamePattern<String> currentUser = new CheckSamePattern<String>();
         final CheckSamePattern<String> currentBranch = new CheckSamePattern<String>();
-        for (SymbolicRefs refs : myRefs.values()) {
+        for (CachedRefs refs : myRefs.values()) {
           myRecalculatedCommon.addLocals(refs.getLocalBranches());
           myRecalculatedCommon.addRemotes(refs.getRemoteBranches());
           final String currentFromRefs = refs.getCurrent() == null ? null : refs.getCurrent().getFullName();
@@ -725,9 +726,9 @@ public class GitLogUI implements Disposable {
     mainBorderWrapper.add(scrollPane, BorderLayout.CENTER);
     //mainBorderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
     wrapper.add(mainBorderWrapper, BorderLayout.CENTER);
-    myDetailsPanel = new GitLogDetailsPanel(myProject, myDetailsCache, new Convertor<VirtualFile, SymbolicRefs>() {
+    myDetailsPanel = new GitLogDetailsPanel(myProject, myDetailsCache, new Convertor<VirtualFile, CachedRefs>() {
       @Override
-      public SymbolicRefs convert(VirtualFile o) {
+      public CachedRefs convert(VirtualFile o) {
         return myRefs.get(o);
       }
     }, new Processor<AbstractHash>() {
@@ -1159,7 +1160,7 @@ public class GitLogUI implements Disposable {
     private boolean isCurrentUser(final int row, final String text) {
       final CommitI commitAt = myTableModel.getCommitAt(row);
       if (commitAt == null) return false;
-      final SymbolicRefs symbolicRefs = myRefs.get(commitAt.selectRepository(myRootsUnderVcs));
+      final SymbolicRefsI symbolicRefs = myRefs.get(commitAt.selectRepository(myRootsUnderVcs));
       if (symbolicRefs == null) return false;
       return Comparing.equal(symbolicRefs.getUsername(), text);
     }
@@ -1291,7 +1292,7 @@ public class GitLogUI implements Disposable {
       final List<Trinity<String, Boolean, Color>> result = new ArrayList<Trinity<String, Boolean, Color>>();
 
       final List<String> localBranches = commit.getLocalBranches();
-      final SymbolicRefs symbolicRefs = myRefs.get(commitI.selectRepository(myRootsUnderVcs));
+      final SymbolicRefsI symbolicRefs = myRefs.get(commitI.selectRepository(myRootsUnderVcs));
       final String currentName = symbolicRefs.getCurrentName();
       final String trackedRemoteName = symbolicRefs.getTrackedRemoteName();
       
@@ -1649,7 +1650,7 @@ public class GitLogUI implements Disposable {
       final MultiMap<VirtualFile, GitCommit> commitsAndCheck = getSelectedCommitsAndCheck();
       if (commitsAndCheck == null) return false;
       for (VirtualFile root : commitsAndCheck.keySet()) {
-        final SymbolicRefs refs = myRefs.get(root);
+        final SymbolicRefsI refs = myRefs.get(root);
         final String currentBranch = refs == null ? null : (refs.getCurrent() == null ? null : refs.getCurrent().getName());
         if (currentBranch == null) continue;
         final Collection<GitCommit> commits = commitsAndCheck.get(root);
@@ -2113,7 +2114,7 @@ public class GitLogUI implements Disposable {
       @Override
       public void actionPerformed(AnActionEvent e) {
         for (VirtualFile root : myTableModel.getActiveRoots()) {
-          final SymbolicRefs symbolicRefs = myRefs.get(root);
+          final SymbolicRefsI symbolicRefs = myRefs.get(root);
           if (symbolicRefs == null) continue;
           final AbstractHash headHash = symbolicRefs.getHeadHash();
           if (headHash == null) continue;
@@ -2165,7 +2166,7 @@ public class GitLogUI implements Disposable {
           return;
         }
         final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
-        final SymbolicRefs symbolicRefs = myRefs.get(root);
+        final SymbolicRefsI symbolicRefs = myRefs.get(root);
         if (symbolicRefs == null) return;
         final AbstractHash headHash = symbolicRefs.getHeadHash();
         if (headHash == null) return;
