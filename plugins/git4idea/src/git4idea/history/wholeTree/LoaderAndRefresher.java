@@ -13,7 +13,7 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.SymbolicRefsI;
 
 /**
  * @author irengrig
@@ -24,5 +24,5 @@ public interface LoaderAndRefresher<T> {
   void interrupt();
   boolean isInterrupted();
   VirtualFile getRoot();
-  void setSymbolicRefs(SymbolicRefs symbolicRefs);
+  void setSymbolicRefs(SymbolicRefsI symbolicRefs);
 }

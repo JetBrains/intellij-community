@@ -15,7 +15,8 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.CachedRefs;
+import git4idea.history.browser.SymbolicRefsI;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,5 +31,5 @@ public interface UIRefresh {
   void finished();
   void reportStash(VirtualFile root, @Nullable Pair<AbstractHash, AbstractHash> hash);
 
-  void reportSymbolicRefs(VirtualFile root, SymbolicRefs symbolicRefs);
+  void reportSymbolicRefs(VirtualFile root, CachedRefs symbolicRefs);
 }

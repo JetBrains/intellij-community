@@ -23,10 +23,7 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Ticket;
 import com.intellij.util.containers.Convertor;
-import git4idea.history.browser.ChangesFilter;
-import git4idea.history.browser.GitCommit;
-import git4idea.history.browser.LowLevelAccessImpl;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -53,7 +50,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   private final boolean myLoadParents;
   private RepeatingLoadConsumer<CommitHashPlusParents> myRepeatingLoadConsumer;
   private LowLevelAccessImpl myLowLevelAccess;
-  private SymbolicRefs mySymbolicRefs;
+  private SymbolicRefsI mySymbolicRefs;
   private final LoadGrowthController.ID myId;
   private final boolean myHaveStructureFilter;
   // state
@@ -151,7 +148,6 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     }*/
 
     myRepeatingLoadConsumer.reset();
-    // !!!!!
     int count = 340;
     boolean shouldFull = ! myHaveStructureFilter;
     if (LoadAlgorithm.LoadType.TEST.equals(loadType)) {
@@ -228,7 +224,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     }
   }*/
 
-  public void setSymbolicRefs(SymbolicRefs symbolicRefs) {
+  public void setSymbolicRefs(SymbolicRefsI symbolicRefs) {
     mySymbolicRefs = symbolicRefs;
   }
 

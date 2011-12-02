@@ -22,7 +22,7 @@ import java.util.TreeSet;
 /**
  * @author irengrig
  */
-public class SymbolicRefs {
+public class SymbolicRefs implements SymbolicRefsI {
   private GitBranch myCurrent;
   private final TreeSet<String> myLocalBranches;
   private final TreeSet<String> myRemoteBranches;
@@ -59,11 +59,13 @@ public class SymbolicRefs {
     return myRemoteBranches;
   }
 
+  @Override
   @Nullable
   public String getCurrentName() {
     return myCurrent == null ? null : myCurrent.getName();
   }
 
+  @Override
   public GitBranch getCurrent() {
     return myCurrent;
   }
@@ -72,6 +74,7 @@ public class SymbolicRefs {
     myCurrent = current;
   }
 
+  @Override
   public Kind getKind(final String s) {
     if (myLocalBranches.contains(s)) return Kind.LOCAL;
     if (myRemoteBranches.contains(s)) return Kind.REMOTE;
@@ -87,10 +90,12 @@ public class SymbolicRefs {
     myTrackedRemoteName = trackedRemoteName;
   }
 
+  @Override
   public String getTrackedRemoteName() {
     return myTrackedRemoteName;
   }
 
+  @Override
   public String getUsername() {
     return myUsername;
   }
@@ -103,6 +108,7 @@ public class SymbolicRefs {
     myHeadHash = hash;
   }
 
+  @Override
   public AbstractHash getHeadHash() {
     return myHeadHash;
   }

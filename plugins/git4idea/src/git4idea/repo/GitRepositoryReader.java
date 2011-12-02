@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  * Throws a {@link GitRepoStateException} in the case of incorrect Git file format.
  * @author Kirill Likhodedov
  */
-class GitRepositoryReader {
+public class GitRepositoryReader {
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryReader.class);
 
@@ -67,7 +67,7 @@ class GitRepositoryReader {
   private final File          myRefsRemotesDir; // .git/refs/remotes/
   private final File          myPackedRefsFile; // .git/packed-refs
 
-  GitRepositoryReader(@NotNull File gitDir) {
+  public GitRepositoryReader(@NotNull File gitDir) {
     myGitDir = gitDir;
     assertFileExists(myGitDir, ".git directory not found in " + gitDir);
     myHeadFile = new File(myGitDir, "HEAD");
@@ -78,7 +78,7 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  GitRepository.State readState() {
+  public GitRepository.State readState() {
     if (isMergeInProgress()) {
       return GitRepository.State.MERGING;
     }
@@ -97,7 +97,7 @@ class GitRepositoryReader {
    * @return The current revision hash, or <b>{@code null}</b> if current revision is unknown - it is the initial repository state.
    */
   @Nullable
-  String readCurrentRevision() {
+  public String readCurrentRevision() {
     final Head head = readHead();
     if (!head.isBranch) { // .git/HEAD is a commit
       return head.ref;
@@ -124,7 +124,7 @@ class GitRepositoryReader {
    * In other cases of the detached HEAD returns {@code null}.
    */
   @Nullable
-  GitBranch readCurrentBranch() {
+  public GitBranch readCurrentBranch() {
     Head head = readHead();
     if (head.isBranch) {
       String branchName = head.ref;
@@ -249,7 +249,7 @@ class GitRepositoryReader {
   /**
    * @return all branches in this repository. local/remote/active information is stored in branch objects themselves. 
    */
-  GitBranchesCollection readBranches() {
+  public GitBranchesCollection readBranches() {
     Set<GitBranch> localBranches = readUnpackedLocalBranches();
     Set<GitBranch> remoteBranches = readUnpackedRemoteBranches();
     GitBranchesCollection packedBranches = readPackedBranches();

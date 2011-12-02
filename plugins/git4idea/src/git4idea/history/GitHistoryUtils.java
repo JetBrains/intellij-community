@@ -45,6 +45,7 @@ import git4idea.config.GitConfigUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.SymbolicRefsI;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import git4idea.history.wholeTree.GitCommitsSequentialIndex;
@@ -79,6 +80,26 @@ public class GitHistoryUtils {
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath, @Nullable String branch) throws VcsException {
     return getCurrentRevision(project, filePath, branch, false);
+  }
+
+  public static long getHeadTs(final Project project, FilePath filePath) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(project, SHORT_HASH, COMMIT_TIME);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("-n1", parser.getPretty());
+    h.addParameters("HEAD");
+    h.endOptions();
+    String result = h.run();
+    if (result.length() == 0) {
+      return -1;
+    }
+    final GitLogRecord record = parser.parseOneRecord(result);
+    if (record == null) {
+      return -1;
+    }
+    record.setUsedHandler(h);
+    return record.getDate().getTime();
   }
 
   @Nullable
@@ -561,7 +582,7 @@ public class GitHistoryUtils {
 
   public static void historyWithLinks(final Project project,
                                       FilePath path,
-                                      @Nullable final SymbolicRefs refs,
+                                      @Nullable final SymbolicRefsI refs,
                                       @NotNull final AsynchConsumer<GitCommit> gitCommitConsumer,
                                       @Nullable final Getter<Boolean> isCanceled,
                                       @Nullable Collection<VirtualFile> paths, final String... parameters) throws VcsException {
@@ -635,7 +656,7 @@ public class GitHistoryUtils {
   private static void takeLine(final Project project, String line,
                                StringBuilder sb,
                                GitLogParser parser,
-                               SymbolicRefs refs,
+                               SymbolicRefsI refs,
                                VirtualFile root,
                                VcsException[] exc, GitLineHandler h, AsynchConsumer<GitCommit> gitCommitConsumer) {
     final String text = sb.toString();
@@ -656,7 +677,7 @@ public class GitHistoryUtils {
     gitCommitConsumer.consume(gitCommit);
   }
 
-  private static GitCommit createCommit(Project project, SymbolicRefs refs, VirtualFile root, GitLogRecord record) throws VcsException {
+  private static GitCommit createCommit(Project project, SymbolicRefsI refs, VirtualFile root, GitLogRecord record) throws VcsException {
     GitCommit gitCommit;
     final Collection<String> currentRefs = record.getRefs();
     List<String> locals = new ArrayList<String>();
@@ -685,7 +706,7 @@ public class GitHistoryUtils {
     return gitCommit;
   }
 
-  private static String parseRefs(SymbolicRefs refs,
+  private static String parseRefs(SymbolicRefsI refs,
                                 Collection<String> currentRefs,
                                 List<String> locals,
                                 List<String> remotes,
@@ -754,7 +775,7 @@ public class GitHistoryUtils {
 
   @Nullable
   public static List<Pair<String, GitCommit>> loadStashStackAsCommits(@NotNull Project project, @NotNull VirtualFile root,
-                                                                      SymbolicRefs refs, final String... parameters) throws VcsException {
+                                                                      SymbolicRefsI refs, final String... parameters) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SHORT_REF_LOG_SELECTOR, SUBJECT, BODY, RAW_BODY);
@@ -778,7 +799,7 @@ public class GitHistoryUtils {
   }
 
   public static List<GitCommit> commitsDetails(Project project,
-                                                 FilePath path, SymbolicRefs refs,
+                                                 FilePath path, SymbolicRefsI refs,
                                                  final Collection<String> commitsIds) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
