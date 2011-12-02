@@ -1,0 +1,65 @@
+class Foo {
+    Foo(int a) {}
+}
+
+class Bar extends Foo {
+    Bar(int a, int b = 2) {
+        super(a)
+    }
+}
+-----
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public Foo(int a) {
+
+}
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+}
+---
+public class Bar extends Foo implements groovy.lang.GroovyObject {
+public Bar(int a, int b) {
+super((int)0);
+}
+public Bar(int a) {
+super((int)0);
+}
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+}
+---
