@@ -89,9 +89,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   public void mouseMoved(MouseEvent e) {
     final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, getParent());
     final boolean insideRec = getBounds().contains(event.getPoint());
-    boolean buttonsNotPressed = (e.getModifiersEx() & (MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON3_DOWN_MASK)) == 0;
-    if (!myPopupIsShowing && insideRec && buttonsNotPressed) {
-      showPopup(null, false);
+    if (!myPopupIsShowing && insideRec) {
+      showPopup(null);
     } else if (myPopupIsShowing && !insideRec) {
       final Component over = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
       if (over != null && myPopup.isShowing()) {
@@ -160,11 +159,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
     if (myPopupIsShowing) {
       closePopup();
     } else {
-      showPopup(null, false);
+      showPopup(null);
     }
   }
 
-  public void showPopup(final Action actionToSelect, final boolean ensureSelection) {
+  public void showPopup(final Action actionToSelect) {
     if (myPopupIsShowing) return;
     
     myPopupIsShowing = true;
@@ -192,7 +191,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
       }
     });
     myPopup.addPopupMenuListener(listener.get());
-    myPopup.show(this, 0, getY() + getHeight());
+    myPopup.show(this, myMoreRec.x, getY() + getHeight() - getInsets().bottom);
 
     SwingUtilities.invokeLater(new Runnable() {
       @Override
@@ -200,8 +199,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
         if (myPopup == null || !myPopup.isShowing() || !myPopupIsShowing) return;
         
         Action selection = actionToSelect;
-        if (selection == null && myOptions.length > 0 && ensureSelection) {
-          selection = getAction();
+        if (selection == null && myOptions.length > 0) {
+          selection = myOptions[0];          
         }
 
         if (selection == null) return;
