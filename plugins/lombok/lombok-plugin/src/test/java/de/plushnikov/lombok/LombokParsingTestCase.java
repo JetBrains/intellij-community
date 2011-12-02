@@ -1,8 +1,16 @@
 package de.plushnikov.lombok;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -19,12 +27,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
  */
@@ -34,10 +36,9 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC,
       PsiModifier.ABSTRACT, PsiModifier.SYNCHRONIZED, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.NATIVE));
 
-  public static final String PACKAGE_LOMBOK = "package lombok;\n";
+  public static final String PACKAGE_LOMBOK  = "package lombok;\n";
   public static final String ANNOTATION_TYPE = "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE)\n" +
       "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)\n";
-
 
   @Override
   public void setUp() throws Exception {
@@ -131,10 +132,10 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     }
   }
 
-  @Override
-  protected String getBasePath() {
-    return "/data/";
-  }
+//  @Override
+//  protected String getBasePath() {
+//    return "/data/";
+//  }
 
   public void doTest() {
     doTest(getTestName(true).replace('$', '/') + ".java");
@@ -182,7 +183,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
           final PsiModifierList intellijFieldModifierList = intellijField.getModifierList();
 
           compareModifiers(intellijFieldModifierList, theirsFieldModifierList);
-          compareType(intellijField.getType(), theirsField.getType());
+          compareType(intellijField.getType(), theirsField.getType(), theirsField);
           compared = true;
         }
       }
@@ -190,10 +191,20 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     }
   }
 
-  private void compareType(PsiType intellij, PsiType theirs) {
+  private void compareType(PsiType intellij, PsiType theirs, PomNamedTarget whereTarget) {
     if (null != intellij && null != theirs) {
-      assertEquals("Types are not equal", theirs.getCanonicalText(), intellij.getCanonicalText());
+      final String theirsCanonicalText = stripJavaLang(theirs.getCanonicalText());
+      final String intellijCanonicalText = stripJavaLang(intellij.getCanonicalText());
+      assertEquals("Types are not equal for: "+whereTarget.getName(), theirsCanonicalText, intellijCanonicalText);
     }
+  }
+
+  private String stripJavaLang(String theirsCanonicalText) {
+    final String prefix = "java.lang.";
+    if(theirsCanonicalText.startsWith(prefix)) {
+      theirsCanonicalText = theirsCanonicalText.substring(prefix.length());
+    }
+    return theirsCanonicalText;
   }
 
   private void compareModifiers(PsiModifierList intellij, PsiModifierList theirs) {
@@ -225,7 +236,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
           PsiModifierList intellijFieldModifierList = intellijMethod.getModifierList();
 
           compareModifiers(intellijFieldModifierList, theirsFieldModifierList);
-          compareType(intellijMethod.getReturnType(), theirsMethod.getReturnType());
+          compareType(intellijMethod.getReturnType(), theirsMethod.getReturnType(), theirsMethod);
           compareParams(intellijMethod.getParameterList(), theirsMethod.getParameterList());
 
           compared = true;
@@ -244,7 +255,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       PsiParameter intellijParameter = intellijParameters[i];
       PsiParameter theirsParameter = theirsParameters[i];
 
-      compareType(intellijParameter.getType(), theirsParameter.getType());
+      compareType(intellijParameter.getType(), theirsParameter.getType(), theirsParameter);
     }
   }
 
@@ -261,15 +272,20 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     return loadFileContent(fileName, "/lombok/");
   }
 
-
   protected String loadDeLombokFile(String fileName) {
     return loadFileContent(fileName, "/delombok/");
   }
 
   private String loadFileContent(String fileName, String subDir) {
-    String content;
+    final String resourceName = "data/" + subDir + fileName;
+    final InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(resourceName);
+    if (null == resourceAsStream) {
+      throw new RuntimeException(String.format("Resource '%s' not available in classpath", resourceName));
+    }
+
+    final String content;
     try {
-      content = new String(FileUtil.loadFileText(new File(getTestDataPath() + subDir + fileName)));
+      content = FileUtil.loadTextAndClose(new InputStreamReader(resourceAsStream));
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
