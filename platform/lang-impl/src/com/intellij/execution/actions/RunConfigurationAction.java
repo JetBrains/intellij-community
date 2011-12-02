@@ -120,6 +120,14 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
         LOG.assertTrue(frame != null);
         frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, this);
       }
+
+      @Override
+      public void removeNotify() {
+        final IdeFrame frame = findFrame(this);
+        LOG.assertTrue(frame != null);
+        frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, null);
+        super.removeNotify();
+      }
     };
 
     final JPanel panel = new JPanel(new BorderLayout());

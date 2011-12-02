@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.android.AndroidProjectComponent;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -48,11 +49,19 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class AndroidPrecompileTask implements CompileTask {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidPrecompileTask");
+  private final AndroidProjectComponent myOwner;
   
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidPrecompileTask");
+
+  public AndroidPrecompileTask(@NotNull AndroidProjectComponent owner) {
+    myOwner = owner;
+  }
+
   @Override
   public boolean execute(CompileContext context) {
     final Project project = context.getProject();
+    
+    myOwner.setCompilationStarted();
 
     ExcludedEntriesConfiguration configuration =
       ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
@@ -95,6 +104,18 @@ public class AndroidPrecompileTask implements CompileTask {
       LOG.info("Files excluded by Android: " + addedEntries.size());
       CompilerManager.getInstance(project).addCompilationStatusListener(new MyCompilationStatusListener(project, addedEntries), project);
     }
+
+    CompilerManager.getInstance(project).addCompilationStatusListener(new CompilationStatusListener() {
+      @Override
+      public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            myOwner.setCompilationFinished();
+          }
+        });
+      }
+    }, project);
 
     return true;
   }
