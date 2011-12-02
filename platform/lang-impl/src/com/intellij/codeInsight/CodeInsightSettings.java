@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
 
 
 @State(
@@ -45,8 +44,6 @@ import java.util.List;
 public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable, ExportableComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightSettings");
 
-  @NonNls private static final String EXCLUDED_PACKAGE = "EXCLUDED_PACKAGE";
-  @NonNls private static final String ATTRIBUTE_NAME = "NAME";
   @NonNls public static final String EXTERNAL_FILE_NAME = "editor.codeinsight";
 
   public static CodeInsightSettings getInstance() {
@@ -158,11 +155,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     if (Boolean.getBoolean(ConfigImportHelper.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)) {
       REFORMAT_ON_PASTE = INDENT_EACH_LINE;
     }
-    final List list = state.getChildren(EXCLUDED_PACKAGE);
-    EXCLUDED_PACKAGES = new String[list.size()];
-    for(int i=0; i<list.size(); i++) {
-      EXCLUDED_PACKAGES [i] = ((Element) list.get(i)).getAttributeValue(ATTRIBUTE_NAME);
-    }
   }
 
   public Element getState() {
@@ -177,11 +169,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
     catch (XmlSerializationException e) {
       LOG.info(e);
-    }
-    for(String s: EXCLUDED_PACKAGES) {
-      final Element child = new Element(EXCLUDED_PACKAGE);
-      child.setAttribute(ATTRIBUTE_NAME, s);
-      element.addContent(child);
     }
   }
 }
