@@ -26,9 +26,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import org.netbeans.lib.cvsclient.file.FileUtils;
 
 import java.io.File;
@@ -55,7 +56,8 @@ public class MigrateCvsRootAction extends AnAction {
   public void actionPerformed(AnActionEvent event) {
     final VcsContext context = CvsContextWrapper.createInstance(event);
     final VirtualFile selectedFile = context.getSelectedFile();
-    final MigrateRootDialog dialog = new MigrateRootDialog(context.getProject(), selectedFile);
+    final Project project = context.getProject();
+    final MigrateRootDialog dialog = new MigrateRootDialog(project, selectedFile);
     dialog.show();
     if (!dialog.isOK()) return;
     final File directory = dialog.getSelectedDirectory();
@@ -84,14 +86,13 @@ public class MigrateCvsRootAction extends AnAction {
     }
     final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(context.getProject());
       for (File file : rootFiles) {
-        dirty.fileDirty(CvsVfsUtil.findFileByIoFile(file));
+        CvsVfsUtil.findFileByIoFile(file).refresh(true, false);
       }
-      CvsVfsUtil.findFileByIoFile(directory).refresh(false, true);
     } finally {
       token.finish();
     }
+    StatusBar.Info.set("Finished migrating CVS root to " + cvsRoot, project);
   }
 
 
