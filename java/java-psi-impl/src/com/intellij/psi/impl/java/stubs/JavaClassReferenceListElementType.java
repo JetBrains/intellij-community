@@ -48,12 +48,12 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   }
 
   @Override
-  public PsiReferenceList createPsi(final PsiClassReferenceListStub stub) {
+  public PsiReferenceList createPsi(@NotNull final PsiClassReferenceListStub stub) {
     return getPsiFactory(stub).createClassReferenceList(stub);
   }
 
   @Override
-  public PsiReferenceList createPsi(final ASTNode node) {
+  public PsiReferenceList createPsi(@NotNull final ASTNode node) {
     if (node.getElementType() == JavaStubElementTypes.EXTENDS_BOUND_LIST) {
       return new PsiTypeParameterExtendsBoundsListImpl(node);
     }

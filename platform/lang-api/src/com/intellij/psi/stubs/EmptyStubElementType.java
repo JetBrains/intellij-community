@@ -17,7 +17,7 @@ public abstract class EmptyStubElementType<T extends PsiElement> extends IStubEl
   }
 
   @Override
-  public final EmptyStub createStub(T psi, StubElement parentStub) {
+  public final EmptyStub createStub(@NotNull T psi, StubElement parentStub) {
     return createStub(parentStub);
   }
 

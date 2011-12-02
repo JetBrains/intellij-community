@@ -48,12 +48,12 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
   }
 
   @Override
-  public PsiAnnotation createPsi(final PsiAnnotationStub stub) {
+  public PsiAnnotation createPsi(@NotNull final PsiAnnotationStub stub) {
     return getPsiFactory(stub).createAnnotation(stub);
   }
 
   @Override
-  public PsiAnnotation createPsi(final ASTNode node) {
+  public PsiAnnotation createPsi(@NotNull final ASTNode node) {
     return new PsiAnnotationImpl(node);
   }  
 
