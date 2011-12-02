@@ -36,7 +36,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.changes.RefreshablePanel;
+import com.intellij.ui.AbstractTitledSeparatorWithIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,6 +65,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private String myColorSettingsPage;
   private SimpleEditorPreview myPreviewEditor;
   private ColorAndFontOptions myPreviewOptions;
+  private MyColorPreviewPanel myHidingPreviewPanel;
 
   public InitialConfigurationDialog(Component parent, String colorSettingsPage) {
     super(parent, true);
@@ -108,10 +112,10 @@ public class InitialConfigurationDialog extends DialogWrapper {
     myColorSchemeComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
-        updateColorSchemePreview();
+        if (myHidingPreviewPanel != null) myHidingPreviewPanel.updateColorSchemePreview(true);
       }
     });
-    updateColorSchemePreview();
+    setResizable(false);
     init();
 
     final boolean canCreateLauncherScript = CreateLauncherScriptAction.isAvailable();
@@ -142,6 +146,113 @@ public class InitialConfigurationDialog extends DialogWrapper {
     }
   }
 
+  private void createUIComponents() {
+    myColorPreviewPanel = new AbstractTitledSeparatorWithIcon(IconLoader.getIcon("/general/comboArrowRight.png"),
+                                                              IconLoader.getIcon("/general/comboArrowDown.png"),
+                                                              "Click to preview", true, false) {
+
+      private int myAddedWidth;
+
+      @Override
+      protected RefreshablePanel createPanel() {
+        myHidingPreviewPanel = new MyColorPreviewPanel(myWrapper);
+        return myHidingPreviewPanel;
+      }
+
+      @Override
+      protected void onImpl() {
+        myWrapper.setVisible(true);
+        setText("Click to hide preview");
+        initDetails();
+        myLabel.setIcon(myIconOpen);
+        myOn = true;
+        final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
+        revalidate();
+        myAddedWidth = getPreferredSize().width - getSize().width;
+        resizeTo(dialog.getSize().width + myAddedWidth, dialog.getSize().height + myPreviewEditor.getPanel().getPreferredSize().height);
+      }
+
+      @Override
+      protected void offImpl() {
+        myLabel.setIcon(myIcon);
+        setText("Click to preview");
+        final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
+        resizeTo(dialog.getSize().width - myAddedWidth, dialog.getSize().height - myPreviewEditor.getPanel().getPreferredSize().height);
+        myWrapper.removeAll();
+        myWrapper.setVisible(false);
+        myOn = false;
+      }
+    };
+  }
+
+  private void resizeTo(final int newWidth, final int newHeight) {
+    setSize(newWidth, newHeight);
+    getRootPane().revalidate();
+    getRootPane().repaint();
+  }
+
+  private class MyColorPreviewPanel extends JPanel implements RefreshablePanel {
+    private final JPanel myWrapper;
+
+    public MyColorPreviewPanel(JPanel wrapper) {
+      super(new BorderLayout());
+      myWrapper = wrapper;
+      updateColorSchemePreview(false);
+    }
+
+    @Override
+    public boolean refreshDataSynch() {
+      return false;
+    }
+
+    @Override
+    public void dataChanged() {}
+
+    @Override
+    public void refresh() {
+      updateColorSchemePreview(false);
+    }
+
+    @Override
+    public JPanel getPanel() {
+      return (JPanel)myPreviewEditor.getPanel();
+    }
+
+    @Override
+    public void away() {}
+
+    @Override
+    public void dispose() {
+      myPreviewEditor.disposeUIResources();
+      myPreviewOptions.disposeUIResources();
+    }
+
+    public void updateColorSchemePreview(final boolean recalculateDialogSize) {
+      if (!myWrapper.isVisible()) return;
+
+      int wrapperHeight = 0;
+      if (myPreviewEditor != null) {
+        wrapperHeight = myPreviewEditor.getPanel().getPreferredSize().height;
+        myPreviewEditor.disposeUIResources();
+        myWrapper.removeAll();
+      }
+      if (myPreviewOptions == null) {
+        myPreviewOptions = new ColorAndFontOptions();
+      }
+      myPreviewOptions.reset();
+      myPreviewOptions.selectScheme(((EditorColorsScheme)myColorSchemeComboBox.getSelectedItem()).getName());
+      final NewColorAndFontPanel page = myPreviewOptions.findPage(myColorSettingsPage);
+      assert page != null;
+      myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, page.getSettingsPage(), false);
+      myPreviewEditor.updateView();
+      myWrapper.add(myPreviewEditor.getPanel(), BorderLayout.EAST);
+      if (recalculateDialogSize) {
+        final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
+        resizeTo(dialog.getSize().width, dialog.getSize().height - wrapperHeight + myPreviewEditor.getPanel().getPreferredSize().height);
+      }
+    }
+  }
+
   private static boolean matchesPlatform(Keymap keymap) {
     if (keymap.getName().equals(KeymapManager.DEFAULT_IDEA_KEYMAP)) {
       return !SystemInfo.isMac;
@@ -154,25 +265,6 @@ public class InitialConfigurationDialog extends DialogWrapper {
       return SystemInfo.isLinux;
     }
     return true;
-  }
-
-  private void updateColorSchemePreview() {
-    if (myPreviewEditor != null) {
-      myColorPreviewPanel.remove(myPreviewEditor.getPanel());
-      myPreviewEditor.disposeUIResources();
-    }
-    if (myPreviewOptions == null) {
-      myPreviewOptions = new ColorAndFontOptions();
-    }
-    myPreviewOptions.reset();
-    myPreviewOptions.selectScheme(((EditorColorsScheme)myColorSchemeComboBox.getSelectedItem()).getName());
-    final NewColorAndFontPanel page = myPreviewOptions.findPage(myColorSettingsPage);
-    assert page != null;
-    myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, page.getSettingsPage(), false);
-    myPreviewEditor.updateView();
-    myColorPreviewPanel.add(myPreviewEditor.getPanel(), BorderLayout.CENTER);
-    myColorPreviewPanel.revalidate();
-    myColorPreviewPanel.repaint();
   }
 
   protected JComponent createCenterPanel() {
@@ -219,8 +311,6 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    myPreviewEditor.disposeUIResources();
-    myPreviewOptions.disposeUIResources();
     super.doCancelAction();
   }
 }

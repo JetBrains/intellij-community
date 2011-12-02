@@ -19,8 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 
-public abstract class SimpleProjectComponent extends AbstractProjectComponent {
-  protected SimpleProjectComponent(Project project) {
+public abstract class MavenSimpleProjectComponent extends AbstractProjectComponent {
+  protected MavenSimpleProjectComponent(Project project) {
     super(project);
   }
 

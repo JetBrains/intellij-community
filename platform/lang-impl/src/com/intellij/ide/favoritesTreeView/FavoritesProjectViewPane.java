@@ -44,14 +44,14 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   private FavoritesTreeViewPanel myViewPanel;
   private final ProjectView myProjectView;
   private final FavoritesManager myFavoritesManager;
-  private final FavoritesManager.FavoritesListener myFavoritesListener;
+  private final FavoritesListener myFavoritesListener;
   private static final Logger LOG = Logger.getInstance("#" + FavoritesProjectViewPane.class.getName());
 
   protected FavoritesProjectViewPane(final Project project, ProjectView projectView, FavoritesManager favoritesManager) {
     super(project);
     myProjectView = projectView;
     myFavoritesManager = favoritesManager;
-    myFavoritesListener = new FavoritesManager.FavoritesListener() {
+    myFavoritesListener = new FavoritesListener() {
       public void rootsChanged(String listName) {
       }
       public void listAdded(String listName) {

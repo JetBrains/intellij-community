@@ -89,7 +89,6 @@ public class BlockSupportImpl extends BlockSupport {
                                               int lengthShift,
                                               @NotNull CharSequence newFileText,
                                               @NotNull ProgressIndicator indicator) {
-    file.getViewProvider().beforeContentsSynchronized();
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
     final FileElement treeFileElement = fileImpl.getTreeElement();

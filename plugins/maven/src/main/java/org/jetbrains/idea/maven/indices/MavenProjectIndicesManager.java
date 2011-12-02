@@ -32,14 +32,14 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
-import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
+import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class MavenProjectIndicesManager extends SimpleProjectComponent {
+public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   private volatile List<MavenIndex> myProjectIndices = new ArrayList<MavenIndex>();
   private final MergingUpdateQueue myUpdateQueue;
 

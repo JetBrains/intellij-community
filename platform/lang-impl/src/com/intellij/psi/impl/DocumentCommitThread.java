@@ -659,6 +659,8 @@ public class DocumentCommitThread implements Runnable, Disposable {
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, final DiffLog diffLog){
+    file.getViewProvider().beforeContentsSynchronized();
+
     try {
       final Document document = file.getViewProvider().getDocument();
       PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject());
