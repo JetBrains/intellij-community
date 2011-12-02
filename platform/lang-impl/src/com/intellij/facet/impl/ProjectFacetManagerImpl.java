@@ -26,6 +26,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.util.*;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -53,9 +55,24 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetManagerImpl");
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
   private final Project myProject;
+  private final ConcurrentHashMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean,FacetTypeId<?>>> myCachedHasFacets = new ConcurrentHashMap<FacetTypeId<?>, ParameterizedCachedValue<Boolean, FacetTypeId<?>>>();
+  private final ParameterizedCachedValueProvider<Boolean,FacetTypeId<?>> myCachedValueProvider;
 
   public ProjectFacetManagerImpl(Project project) {
     myProject = project;
+    myCachedValueProvider = new ParameterizedCachedValueProvider<Boolean, FacetTypeId<?>>() {
+      @Override
+      public CachedValueProvider.Result<Boolean> compute(FacetTypeId<?> param) {
+        boolean result = false;
+        for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+          if (!FacetManager.getInstance(module).getFacetsByType(param).isEmpty()) {
+            result = true;
+            break;
+          }
+        }
+        return CachedValueProvider.Result.create(result, FacetFinder.getInstance(myProject).getAllFacetsOfTypeModificationTracker(param));
+      }
+    };
   }
 
   public ProjectFacetManagerState getState() {
@@ -74,12 +91,12 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
 
   @Override
   public boolean hasFacets(@NotNull FacetTypeId<?> typeId) {
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      if (!FacetManager.getInstance(module).getFacetsByType(typeId).isEmpty()) {
-        return true;
-      }
+    ParameterizedCachedValue<Boolean, FacetTypeId<?>> value = myCachedHasFacets.get(typeId);
+    if (value == null) {
+      value = CachedValuesManager.getManager(myProject).createParameterizedCachedValue(myCachedValueProvider, false);
+      myCachedHasFacets.put(typeId, value);
     }
-    return false;
+    return value.getValue(typeId);
   }
 
   @Override

@@ -40,6 +40,7 @@ class DiffSplitter extends Splitter implements DiffSplitterI {
     setDividerWidth(30);
     setFirstComponent(component1);
     setSecondComponent(component2);
+    setHonorComponentsMinimumSize(false);
   }
 
   protected Splitter.Divider createDivider() {

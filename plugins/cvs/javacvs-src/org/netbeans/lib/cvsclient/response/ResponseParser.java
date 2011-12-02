@@ -6,7 +6,6 @@ import org.netbeans.lib.cvsclient.IConnectionStreams;
 import org.netbeans.lib.cvsclient.io.StreamUtilities;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -55,7 +54,6 @@ public final class ResponseParser {
       final String fileLengthString = myStreamUtilities.readLine(loggedInputStream);
       try {
         int fileLength = Integer.parseInt(fileLengthString);
-
         responseProcessor.processBinaryMessageResponse(fileLength, readFromStream(connectionStreams, fileLength), responseServices);
       }
       catch (NumberFormatException e) {
@@ -233,15 +231,12 @@ public final class ResponseParser {
   }
 
   private static byte[] readFromStream(final IConnectionStreams connectionStreams, final int fileLength) throws IOException {
-    final byte[] buffer = new byte[128 * 1024];
+    final byte[] buffer = new byte[fileLength];
     int read = 0;
-    final ByteArrayOutputStream bufferStream = new ByteArrayOutputStream();
     while (read < fileLength) {
-      final int readBytes = connectionStreams.getInputStream().read(buffer, 0, fileLength - read);
-      bufferStream.write(buffer, 0, readBytes);
-      read += readBytes;
+      read += connectionStreams.getInputStream().read(buffer, read, fileLength - read);
     }
-    return bufferStream.toByteArray();
+    return buffer;
   }
 
   private static byte[] prepareMessageAccordingToScr39148(byte[] line) {

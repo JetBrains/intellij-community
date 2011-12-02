@@ -23,11 +23,11 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction;
-import com.intellij.ide.favoritesTreeView.actions.DeleteFromFavoritesAction;
+import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -53,10 +53,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.IconUtil;
+import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +87,19 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
+  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
+    @Override
+    protected boolean isAutoScrollMode() {
+      return FavoritesManager.getInstance(myProject).getViewSettings().isAutoScrollToSource();
+    }
+
+    @Override
+    protected void setAutoScrollMode(boolean state) {
+      FavoritesManager.getInstance(myProject).getViewSettings().setAutoScrollToSource(state);
+    }
+  };
+
+
 
   private final IdeView myIdeView = new MyIdeView();
 
@@ -142,7 +152,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         }
       }
     });
-    myTreePopupHandler = CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionPlaces.FAVORITES_VIEW_POPUP);
+    myTreePopupHandler =
+      CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionPlaces.FAVORITES_VIEW_POPUP);
     //add(createActionsToolbar(), BorderLayout.NORTH);
 
     EditSourceOnDoubleClickHandler.install(myTree);
@@ -154,13 +165,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
     };
 
-    final JPanel panel = ToolbarDecorator.createDecorator(myTree)
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           AddNewFavoritesListAction.doAddNewFavoritesList(myProject);
         }
       })
+      .setLineBorder(0, 0, 0, 0)
       .setAddActionName("New Favorites List")
       .disableRemoveAction()
       .disableDownAction()
@@ -175,12 +187,24 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           return CustomShortcutSet.fromString("DELETE");
         }
       })
-      .addExtraAction(AnActionButton.fromAction(new CollapseAllAction(myTree)))
-      .setLineBorder(0, 0, 0, 0)
-      .createPanel();
+      .addExtraAction(AnActionButton.fromAction(new CollapseAllAction(myTree)));
+
+    if (!PlatformUtils.isCidr()) {
+      decorator.addExtraAction(new FavoritesShowMembersAction(myProject, myBuilder));
+    }
+
+    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
+      decorator.addExtraAction(new FavoritesFlattenPackagesAction(myProject, myBuilder));
+    }
+
+    decorator.addExtraAction(new FavoritesAutoScrollToSourceAction(myProject, myAutoScrollToSourceHandler, myBuilder));
+
+    final JPanel panel = decorator.createPanel();
+
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
     add(panel, BorderLayout.CENTER);
     setBorder(IdeBorderFactory.createEmptyBorder(0));
+    myAutoScrollToSourceHandler.install(myTree);
   }
 
   public void selectElement(final Object selector, final VirtualFile file, final boolean requestFocus) {

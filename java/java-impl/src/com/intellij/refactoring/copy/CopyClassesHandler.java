@@ -177,6 +177,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         dialog.show();
         if (dialog.isOK()) {
           targetDirectory = dialog.getTargetDirectory();
+          className = dialog.getNewName();
         }
       }
     }
@@ -337,7 +338,13 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   }
 
   private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath) {
-    final String fileName = name != null ? (name +  "." + file.getViewProvider().getVirtualFile().getExtension()) : file.getName();
+    final String fileName;
+    if (name != null) {
+      fileName = file instanceof PsiClassOwner ? name + "." + file.getViewProvider().getVirtualFile().getExtension() : name;
+    }
+    else {
+      fileName = file.getName();
+    }
     if (relativePath != null && !relativePath.isEmpty()) {
       return buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory().copyFileFrom(fileName, file);
     }
