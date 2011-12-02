@@ -171,7 +171,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     if (type != null) return type;
     try {
       String combinedAnnotations = getCombinedAnnotationsText();
-      String text = combinedAnnotations.length() == 0 ? getText().trim() : combinedAnnotations + " " + getText().trim();
+      String text = combinedAnnotations.isEmpty() ? getText().trim() : combinedAnnotations + " " + getText().trim();
       type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
       myCachedDetachedType = new PatchedSoftReference<PsiType>(type);
     }
@@ -201,7 +201,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     String text;
     if (PsiUtil.isLanguageLevel8OrHigher(file)) {
       String combinedAnnotations = StringUtil.join(getAnnotations(), ANNOTATION_TEXT, " ");
-      text = combinedAnnotations.length() == 0 ? getText().trim() : combinedAnnotations + " " + getText().trim();
+      text = combinedAnnotations.isEmpty() ? getText().trim() : combinedAnnotations + " " + getText().trim();
     }
     else {
       text = getText().trim();

@@ -150,11 +150,11 @@ public class Comparing {
 
   public static int compare(byte[] o1, byte[] o2) {
     if (o1 == o2) return 0;
-    else if (o1 == null) return 1;
-    else if (o2 == null) return -1;
+    if (o1 == null) return 1;
+    if (o2 == null) return -1;
 
     if (o1.length > o2.length) return 1;
-    else if (o1.length < o2.length) return -1;
+    if (o1.length < o2.length) return -1;
 
     for (int i = 0; i < o1.length; i++) {
       if (o1[i] > o2[i]) return 1;
