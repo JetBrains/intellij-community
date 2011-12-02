@@ -2,15 +2,22 @@ package com.jetbrains.python.actions;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User : catherine
@@ -40,8 +47,11 @@ public class DocstringQuickFix implements LocalQuickFix {
     if (myMissing != null) {
       return PyBundle.message("QFIX.docstring.add.$0", myMissingText);
     }
-    else {
+    else if (myUnexpected != null){
       return PyBundle.message("QFIX.docstring.remove.$0", myUnexpected);
+    }
+    else  {
+      return "insert docstring stub";
     }
   }
 
@@ -50,11 +60,28 @@ public class DocstringQuickFix implements LocalQuickFix {
     return PyBundle.message("INSP.GROUP.python");
   }
 
+  @Nullable
+  private static Editor getEditor(Project project, PsiFile file) {
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document != null) {
+      Editor[] editors = EditorFactory.getInstance().getEditors(document);
+      if (editors.length > 0)
+        return editors[0];
+    }
+    return null;
+  }
+
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
     if (docStringOwner == null) return;
     PyStringLiteralExpression element = docStringOwner.getDocStringExpression();
-    if (element == null) return;
+    if (element == null) {
+      if (docStringOwner instanceof PyFunction) {
+        PsiDocumentManager.getInstance(project).getDocument(docStringOwner.getContainingFile());
+        PythonDocumentationProvider.inserDocStub((PyFunction)docStringOwner, project, getEditor(project, docStringOwner.getContainingFile()));
+      }
+      return;
+    }
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(element.getProject());
     if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
