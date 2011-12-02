@@ -80,8 +80,8 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     final JPanel panel = new JPanel(new GridBagLayout());
 
     final JLabel expressionLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.expression"));
-    panel.add(expressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-    panel.add(getExpressionCombo(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
+    panel.add(expressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(getExpressionCombo(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
 
     final JLabel resultLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.result"));
     panel.add(resultLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
