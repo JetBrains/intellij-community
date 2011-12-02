@@ -18,7 +18,6 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction;
-import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -145,7 +144,7 @@ public class FavoritesPanel {
             if (elements != null && elements.length > 0) {
               ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
               for (PsiElement element : elements) {
-                final Collection<AbstractTreeNode> tmp = AddToFavoritesAction.createNodes(myProject, null, element, true, ViewSettings.DEFAULT);
+                final Collection<AbstractTreeNode> tmp = AddToFavoritesAction.createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());
                 nodes.addAll(tmp);
                 mgr.addRoots(listTo, nodes);
               }

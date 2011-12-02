@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
@@ -133,7 +134,8 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               tree.restoreState(node);
-              node.labelChanged();
+              final TreeBuilder model = tree.getMutableModel();
+              refreshLabelsRecursively(model.getRoot(), model, valueDescriptor.getValue());
               if (_sessionRefreshNeeded) {
                 final DebuggerSession session = debuggerContext.getDebuggerSession();
                 if (session != null) {
@@ -141,6 +143,21 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
                 }
               }
             }
+
+            private void refreshLabelsRecursively(Object node, TreeBuilder model, Value value) {
+              if (node instanceof DebuggerTreeNodeImpl) {
+                final DebuggerTreeNodeImpl _node = (DebuggerTreeNodeImpl)node;
+                final NodeDescriptorImpl descriptor = _node.getDescriptor();
+                if (descriptor instanceof ValueDescriptor && value.equals(((ValueDescriptor)descriptor).getValue())) {
+                  _node.labelChanged();
+                }
+              }
+              final int childCount = model.getChildCount(node);
+              for (int idx = 0; idx < childCount; idx++) {
+                refreshLabelsRecursively(model.getChild(node, idx), model, value);
+              }
+            }
+
           });
         }
       }

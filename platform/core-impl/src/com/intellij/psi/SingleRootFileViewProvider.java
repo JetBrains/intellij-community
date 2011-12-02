@@ -434,6 +434,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private void setContent(final Content content) {
+    // temporarily commented
+    //if (myPhysical) {
+    //  final Content oldContent = myContent;
+    //  if (oldContent != null && content.getModificationStamp() != oldContent.getModificationStamp()) {
+    //    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    //  }
+    //}
     myContent = content;
   }
 
