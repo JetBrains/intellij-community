@@ -1,12 +1,5 @@
 package de.plushnikov.lombok;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,6 +20,13 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
  */
@@ -36,7 +36,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC,
       PsiModifier.ABSTRACT, PsiModifier.SYNCHRONIZED, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.NATIVE));
 
-  public static final String PACKAGE_LOMBOK  = "package lombok;\n";
+  public static final String PACKAGE_LOMBOK = "package lombok;\n";
   public static final String ANNOTATION_TYPE = "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE)\n" +
       "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)\n";
 
@@ -195,13 +195,13 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     if (null != intellij && null != theirs) {
       final String theirsCanonicalText = stripJavaLang(theirs.getCanonicalText());
       final String intellijCanonicalText = stripJavaLang(intellij.getCanonicalText());
-      assertEquals("Types are not equal for: "+whereTarget.getName(), theirsCanonicalText, intellijCanonicalText);
+      assertEquals("Types are not equal for: " + whereTarget.getName(), theirsCanonicalText, intellijCanonicalText);
     }
   }
 
   private String stripJavaLang(String theirsCanonicalText) {
     final String prefix = "java.lang.";
-    if(theirsCanonicalText.startsWith(prefix)) {
+    if (theirsCanonicalText.startsWith(prefix)) {
       theirsCanonicalText = theirsCanonicalText.substring(prefix.length());
     }
     return theirsCanonicalText;
@@ -269,11 +269,11 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   protected String loadLombokFile(String fileName) {
-    return loadFileContent(fileName, "/lombok/");
+    return loadFileContent(fileName, "/before/");
   }
 
   protected String loadDeLombokFile(String fileName) {
-    return loadFileContent(fileName, "/delombok/");
+    return loadFileContent(fileName, "/after/");
   }
 
   private String loadFileContent(String fileName, String subDir) {
