@@ -23,6 +23,7 @@ import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import gnu.trove.THashMap;
@@ -50,7 +51,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
 
   @Override
     public void visitLeaf(LeafElement leaf) {
-    String leafText = leaf.getText();
+    String leafText = leaf instanceof ForeignLeafPsiElement ? "" : leaf.getText();
     catLeafs.append(leafText);
     final TextRange leafRange = leaf.getTextRange();
 

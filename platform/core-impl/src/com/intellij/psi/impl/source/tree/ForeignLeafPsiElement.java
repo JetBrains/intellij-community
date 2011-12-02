@@ -39,6 +39,11 @@ public class ForeignLeafPsiElement extends LeafPsiElement {
   }
 
   @Override
+  protected int textMatches(@NotNull CharSequence buffer, int start) {
+    return start;
+  }
+
+  @Override
   public boolean textMatches(@NotNull PsiElement element) {
     return false;
   }
