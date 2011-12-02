@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -93,13 +95,13 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   }
 
   @Override
-  public List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefs refs) throws VcsException {
+  public List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefsI refs) throws VcsException {
     return GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(myRoot), refs, commitIds);
   }
 
   public void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                              final Collection<ChangesFilter.Filter> filtersIn, final AsynchConsumer<GitCommit> consumer,
-                             int maxCnt, SymbolicRefs refs, final boolean topoOrder) throws VcsException {
+                             int maxCnt, SymbolicRefsI refs, final boolean topoOrder) throws VcsException {
     final Collection<ChangesFilter.Filter> filters = new ArrayList<ChangesFilter.Filter>(filtersIn);
     if (beforePoint != null) {
       filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
@@ -112,56 +114,32 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   }
 
   // uses cached version
-  public SymbolicRefs getRefs() throws VcsException {
-    final SymbolicRefs refs = new SymbolicRefs();
+  public CachedRefs getRefs() throws VcsException {
+    final CachedRefs refs = new CachedRefs();
     final GitRepository repositoryForRoot = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myRoot);
+    final GitBranchesCollection branches;
     if (repositoryForRoot != null) {
-      final GitBranchesCollection branches = repositoryForRoot.getBranches();
-      final Collection<GitBranch> localBranches = branches.getLocalBranches();
-      for (GitBranch localBranch : localBranches) {
-        refs.addLocal(localBranch.getName());
+      branches = repositoryForRoot.getBranches();
+    } else {
+      final File child = new File(myRoot.getPath(), ".git");
+      if (! child.exists()) {
+        throw new VcsException("No git repository in " + myRoot.getPath());
       }
-      final Collection<GitBranch> remoteBranches = branches.getRemoteBranches();
-      for (GitBranch remoteBranch : remoteBranches) {
-        String name = remoteBranch.getName();
-        name = name.startsWith("remotes/") ? name.substring("remotes/".length()) : name;
-        refs.addRemote(name);
-
-        final GitBranch current = branches.getCurrentBranch();
-        refs.setCurrent(current);
-        if (current != null) {
-          GitBranch tracked = current.tracked(myProject, myRoot);
-          String fullName = tracked == null ? null : tracked.getFullName();
-          fullName = fullName != null && fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
-          refs.setTrackedRemote(fullName);
-        }
-        refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
-      }
-     } else {
-      // repo is not under root
-      final List<GitBranch> allBranches = new ArrayList<GitBranch>();
-      final GitBranch current = GitBranch.list(myProject, myRoot, true, true, allBranches, null);
-      for (GitBranch branch : allBranches) {
-        if (branch.isRemote()) {
-          String name = branch.getName();
-          name = name.startsWith("remotes/") ? name.substring("remotes/".length()) : name;
-          refs.addRemote(name);
-        } else {
-          refs.addLocal(branch.getName());
-        }
-      }
-      refs.setCurrent(current);
-      if (current != null) {
-        GitBranch tracked = current.tracked(myProject, myRoot);
-        String fullName = tracked == null ? null : tracked.getFullName();
-        fullName = fullName != null && fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
-        refs.setTrackedRemote(fullName);
-      }
-      refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
+      GitRepository repository = GitRepository.getLightInstance(myRoot, myProject, myProject);
+      repository.getBranches();
+      branches = repository.getBranches();
     }
-
+    refs.setCollection(branches);
+    final GitBranch current = branches.getCurrentBranch();
+    if (current != null) {
+      GitBranch tracked = current.tracked(myProject, myRoot);
+      String fullName = tracked == null ? null : tracked.getFullName();
+      fullName = fullName != null && fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
+      refs.setTrackedRemoteName(fullName);
+    }
+    refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
     final VcsRevisionNumber head = GitHistoryUtils.getCurrentRevision(myProject, new FilePathImpl(myRoot), "HEAD", true);
-    refs.setHead(AbstractHash.create(head.asString()));
+    refs.setHeadHash(AbstractHash.create(head.asString()));
     return refs;
   }
 
@@ -169,7 +147,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
                           @NotNull final Collection<ChangesFilter.Filter> filters,
                           @NotNull final AsynchConsumer<GitCommit> consumer,
                           int useMaxCnt,
-                          Getter<Boolean> isCanceled, SymbolicRefs refs, final boolean topoOrder)
+                          Getter<Boolean> isCanceled, SymbolicRefsI refs, final boolean topoOrder)
     throws VcsException {
 
     final List<String> parameters = new ArrayList<String>();
