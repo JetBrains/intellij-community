@@ -117,6 +117,10 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testDocstring() { // PY-5203
+    doTest();
+  }
+
   public void testWith() { // PY-5202
     try {
       setLanguageLevel(LanguageLevel.PYTHON27);
