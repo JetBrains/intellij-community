@@ -62,7 +62,15 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     super(elementToRename, editor);
     myOldName = elementToRename.getName();
     mySubstituted = substituted;
-    mySubstitutedRange = mySubstituted != null && mySubstituted != myElementToRename && mySubstituted.getTextRange() != null ? myEditor.getDocument().createRangeMarker(mySubstituted.getTextRange()) : null;
+    if (mySubstituted != null && mySubstituted != myElementToRename && mySubstituted.getTextRange() != null) {
+      final PsiFile containingFile = mySubstituted.getContainingFile();
+      if (!notSameFile(containingFile.getVirtualFile(), containingFile)) {
+        mySubstitutedRange = myEditor.getDocument().createRangeMarker(mySubstituted.getTextRange());
+      }
+    }
+    else {
+      mySubstitutedRange = null;
+    }
 
     showDialogAdvertisement("RenameElement");
   }

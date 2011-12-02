@@ -82,7 +82,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   public JComponent getComponent() {
     if (myWrapperPanel == null) {
-      myWrapperPanel = new JPanel(new BorderLayout()) {
+      myWrapperPanel = new NavBarWrapperPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
@@ -99,6 +99,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     }
 
     return myWrapperPanel;
+  }
+  
+  public static class NavBarWrapperPanel extends JPanel {
+    public NavBarWrapperPanel(LayoutManager layout) {
+      super(layout);
+    }
   }
 
   private static void alignVertically(Container container) {

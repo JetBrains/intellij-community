@@ -691,6 +691,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     doFlash((DfaVariableValue)variable.createNegated());
   }
 
+  @Override
+  public void flushVariableOutOfScope(DfaVariableValue variable) {
+    doFlash(variable);
+    doFlash((DfaVariableValue)variable.createNegated());
+  }
+
   private void doFlash(DfaVariableValue variable) {
     final int id = variable.getID();
     int size = myEqClasses.size();
