@@ -217,11 +217,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myIcon.paintIcon(this, gg, 0, 0);
 
       final Rectangle bounds = g.getClipBounds();
-      int y = bounds.y;
+      int y = myIcon.getIconHeight()-10;
       while (y < bounds.y + bounds.height) {
         g.drawImage(image,
                     bounds.x, y, bounds.x + bounds.width, y + 5,
-                    0, myIcon.getIconHeight() - 10, bounds.width, myIcon.getIconHeight() - 5, this);
+                    0, myIcon.getIconHeight() - 15, bounds.width, myIcon.getIconHeight() - 10, this);
 
         y += 5;
       }
