@@ -17,7 +17,6 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
@@ -76,7 +75,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
         @SuppressWarnings("unchecked")
         final Class<? extends AbstractTreeNode> nodeClass = (Class<? extends AbstractTreeNode>)Class.forName(className);
 
-        final AbstractTreeNode node = ProjectViewNode.createTreeNode(nodeClass, project, path[path.length - 1], ViewSettings.DEFAULT);
+        final AbstractTreeNode node = ProjectViewNode.createTreeNode(nodeClass, project, path[path.length - 1], FavoritesManager.getInstance(project).getViewSettings());
         result.add(node);
       } catch (Exception ignored) {
       }
