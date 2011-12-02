@@ -48,8 +48,6 @@ import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.PixelGrabber;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -164,17 +162,7 @@ public class WelcomeScreen implements Disposable {
       myCaptionImage = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenCaptionUrl());
       myDeveloperSlogan = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenDeveloperSloganUrl());
 
-      BufferedImage image = new BufferedImage(myCaptionImage.getIconWidth(), myCaptionImage.getIconHeight(), BufferedImage.TYPE_INT_RGB);
-      myCaptionImage.paintIcon(null, image.getGraphics(), 0, 0);
-      final int[] pixels = new int[1];
-      final PixelGrabber pixelGrabber =
-        new PixelGrabber(image, myCaptionImage.getIconWidth() - 1, myCaptionImage.getIconHeight() - 2, 1, 1, pixels, 0, 1);
-      try {
-        pixelGrabber.grabPixels();
-        myCaptionBackground = new Color(pixels[0]);
-      }
-      catch (InterruptedException ignore) {
-      }
+      myCaptionBackground = UIUtil.getColorAt(myCaptionImage, myCaptionImage.getIconWidth() - 1, myCaptionImage.getIconHeight() - 2);
     }
   }
 
