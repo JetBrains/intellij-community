@@ -150,12 +150,12 @@
 
   <actions>
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
-            text="Force Reimport All Maven Projects" description="Force IDEA to reimport all Maven projects"
+            text="Reimport All Maven Projects"
             icon="/actions/sync.png">
     </action>
 
     <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
-            text="Force Reimport" description="Force IDEA to reimport selected Maven projects"
+            text="Reimport" description="Reimport selected Maven projects"
             icon="/actions/sync.png">
     </action>
 

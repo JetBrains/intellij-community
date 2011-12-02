@@ -15,34 +15,33 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.notification.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
-import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 
-// todo: migrate to EditorNotifications
-public class MavenImportNotifier extends SimpleProjectComponent {
-  private static final Key<NotifierPanel> PANEL_KEY = new Key<NotifierPanel>(NotifierPanel.class.getName());
+public class MavenImportNotifier extends MavenSimpleProjectComponent {
+  private static final String MAVEN_IMPORT_NOTIFICATION_GROUP = "Maven Import";
 
-  private final FileEditorManager myFileEditorManager;
-  private final MavenProjectsManager myMavenProjectsManager;
+  private MavenProjectsManager myMavenProjectsManager;
+  private MergingUpdateQueue myUpdatesQueue;
 
-  private final MergingUpdateQueue myUpdatesQueue;
+  private Notification myNotification;
 
-  public MavenImportNotifier(Project p, FileEditorManager fileEditorManager, MavenProjectsManager mavenProjectsManager) {
+  public MavenImportNotifier(Project p, MavenProjectsManager mavenProjectsManager) {
     super(p);
+    
+    if (!isNormalProject()) return;
 
-    myFileEditorManager = fileEditorManager;
+    NotificationsConfiguration.getNotificationsConfiguration().register(MAVEN_IMPORT_NOTIFICATION_GROUP,
+                                                                        NotificationDisplayType.STICKY_BALLOON,
+                                                                        true);
+
     myMavenProjectsManager = mavenProjectsManager;
 
     myUpdatesQueue = new MergingUpdateQueue(getComponentName(), 500, false, MergingUpdateQueue.ANY_COMPONENT, myProject);
@@ -65,15 +64,12 @@ public class MavenImportNotifier extends SimpleProjectComponent {
   }
 
   private void init() {
-    myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
-        @Override
-        public void fileOpened(FileEditorManager source, VirtualFile file) {
-          for (FileEditor each : source.getEditors(file)) {
-            updateNotification(file, each, false);
-          }
-        }
-      }, myProject);
     myUpdatesQueue.activate();
+  }
+
+  @Override
+  public void disposeComponent() {
+    if (myNotification != null) myNotification.expire();
   }
 
   private void scheduleUpdate(final boolean close) {
@@ -85,57 +81,36 @@ public class MavenImportNotifier extends SimpleProjectComponent {
   }
 
   private void doUpdateNotifications(boolean close) {
-    for (VirtualFile f : myFileEditorManager.getOpenFiles()) {
-      for (FileEditor e : myFileEditorManager.getEditors(f)) {
-        updateNotification(f, e, close);
-      }
+    if (close) {
+      if (myNotification == null) return;
+
+      myNotification.expire();
+      myNotification = null;
     }
-  }
+    else {
+      if (myNotification != null && !myNotification.isExpired()) return;
 
-  private void updateNotification(VirtualFile file, FileEditor editor, boolean close) {
-    if (close || myMavenProjectsManager.getImportingSettings().isImportAutomatically() || !myMavenProjectsManager.hasScheduledProjects()) {
-      JComponent panel = editor.getUserData(PANEL_KEY);
-      if (panel == null) return;
+      myNotification = new Notification(MAVEN_IMPORT_NOTIFICATION_GROUP,
+                                        ProjectBundle.message("maven.project.changed"),
+                                        "<a href='reimport'>" + ProjectBundle.message("maven.project.importChanged") + "</a> " +
+                                        "<a href='autoImport'>" + ProjectBundle.message("maven.project.enableAutoImport") + "</a>",
+                                        NotificationType.INFORMATION, new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
 
-      myFileEditorManager.removeTopComponent(editor, panel);
-      editor.putUserData(PANEL_KEY, null);
-
-      return;
-    }
-
-    MavenProject project = myMavenProjectsManager.findContainingProject(file);
-    if (project == null) return;
-
-    NotifierPanel panel = editor.getUserData(PANEL_KEY);
-    if (panel == null) {
-      panel = new NotifierPanel();
-      editor.putUserData(PANEL_KEY, panel);
-      myFileEditorManager.addTopComponent(editor, panel);
-    }
-
-    panel.update();
-  }
-
-  private class NotifierPanel extends EditorNotificationPanel {
-    private NotifierPanel() {
-      myLabel.setIcon(MavenIcons.MAVEN_ICON);
-
-      createActionLabel(ProjectBundle.message("maven.project.import.changed"), new Runnable() {
-        public void run() {
-          myMavenProjectsManager.scheduleImportAndResolve();
+          if (event.getDescription().equals("reimport")) {
+            myMavenProjectsManager.scheduleImportAndResolve();
+          }
+          if (event.getDescription().equals("autoImport")) {
+            myMavenProjectsManager.getImportingSettings().setImportAutomatically(true);
+          }
+          notification.expire();
+          myNotification = null;
         }
       });
-      createActionLabel(ProjectBundle.message("maven.project.import.enable.auto"), new Runnable() {
-        public void run() {
-          myMavenProjectsManager.getImportingSettings().setImportAutomatically(true);
-        }
-      });
-    }
 
-    public void update() {
-      String s = ProjectBundle.message("maven.project.changed");
-      myLabel.setText(s);
-      myLabel.setToolTipText(s);
+      Notifications.Bus.notify(myNotification, myProject);
     }
   }
 }
