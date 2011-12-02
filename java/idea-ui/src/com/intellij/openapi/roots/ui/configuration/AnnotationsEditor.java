@@ -20,15 +20,16 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.ui.PanelWithText;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -81,8 +82,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   }
 
   public JComponent createComponentImpl() {
-    final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+    final JPanel mainPanel = new JPanel(new BorderLayout(5, 10));
     mainPanel.setPreferredSize(new Dimension(-1, 200));
     final DefaultTableModel tableModel = createModel();
     myTable = new Table(tableModel);
@@ -109,14 +109,12 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     });
 
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(myAddPathButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 6, 0, 0), 0, 0));
-    panel.add(myRemoveButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(6, 6, 0, 0), 0, 0));
+    panel.add(myAddPathButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myRemoveButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
 
     mainPanel.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
     mainPanel.add(panel, BorderLayout.EAST);
-    final PanelWithText panelWithText = new PanelWithText(ProjectBundle.message("project.roots.external.annotations.description"));
-    panelWithText.setBorder(null);
-    mainPanel.add(panelWithText, BorderLayout.NORTH);
+    mainPanel.add(new JBLabel(ProjectBundle.message("project.roots.external.annotations.description"), UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER), BorderLayout.NORTH);
 
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
