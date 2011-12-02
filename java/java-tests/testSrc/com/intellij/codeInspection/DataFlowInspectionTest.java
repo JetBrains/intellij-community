@@ -82,6 +82,8 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testIDEADEV74518_2() throws Exception { doTest(); }
   public void testIDEADEV77819() throws Exception { doTest(); }
 
+  public void testRegressionByPti() throws Exception { doTest(); }
+
   public void testNotNullable() throws Exception { doTest15(); }
 
   public void testNotNullableParameter() throws Exception { doTest15(); }
