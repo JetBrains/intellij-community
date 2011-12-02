@@ -310,7 +310,9 @@ public class WelcomeScreen implements Disposable {
 
         @Override
         public void mouseEntered(MouseEvent e) {
-          actionLabel.setIcon(IconLoader.getIcon("/actions/closeNew.png"));
+          if (actionLabel.getSize().width > actionLabel.getPreferredSize().width) {
+            actionLabel.setIcon(IconLoader.getIcon("/actions/closeNew.png"));
+          }
         }
 
         @Override
@@ -412,8 +414,8 @@ public class WelcomeScreen implements Disposable {
     else {
       final Comparator<IdeaPluginDescriptor> pluginsComparator = new Comparator<IdeaPluginDescriptor>() {
         public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
-          final boolean e1 = ((IdeaPluginDescriptorImpl)o1).isEnabled();
-          final boolean e2 = ((IdeaPluginDescriptorImpl)o2).isEnabled();
+          final boolean e1 = o1.isEnabled();
+          final boolean e2 = o2.isEnabled();
           if (e1 && !e2) return -1;
           if (!e1 && e2) return 1;
           return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
@@ -586,7 +588,7 @@ public class WelcomeScreen implements Disposable {
 
     if (r.getWidth() > maxWidth) {
 
-      StringBuffer prefix = new StringBuffer();
+      StringBuilder prefix = new StringBuilder();
       String suffix = string;
       int maxIdxPerLine = (int)(maxWidth / r.getWidth() * string.length());
       int lengthLeft = string.length();
