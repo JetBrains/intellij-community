@@ -53,7 +53,6 @@ public class TaskCompletionContributor extends CompletionContributor {
     }
 
     if (consumer != null) {
-      result.stopHere();
 
       String text = parameters.getOriginalFile().getText();
       int i = text.lastIndexOf(' ', parameters.getOffset() - 1) + 1;
