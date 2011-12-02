@@ -18,6 +18,7 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,32 +64,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     if (processingInfoStorage != null) {
       processingInfoStorage.append(String.format("Parsed target offsets - [%d; %d)%n", start, end));
     }
-    
-    PsiElement element = file.findElementAt(start);
-    if (processingInfoStorage != null) {
-      processingInfoStorage.append(String.format("Found the following element at start offset - '%s'%n", element));
-    }
-    if (element == null) {
-      return null;
-    }
-    
-    TextRange range = element.getTextRange();
-    if (processingInfoStorage != null) {
-      processingInfoStorage.append(String.format("Target element range is %s%n", range));
-    }
-    while (range != null && range.getStartOffset() == start && range.getEndOffset() < end) {
-      element = element.getParent();
-      range = element.getTextRange();
-      if (processingInfoStorage != null) {
-        processingInfoStorage.append(String.format("Expanding element to '%s' and range to '%s'%n", element, range));
-      }
-    }
-    if (range == null || range.getStartOffset() != start || range.getEndOffset() != end) {
-      return null;
-    }
-    
-    // There is a possible case that we have a hierarchy of PSI elements that target the same document range. We need to find
-    // out the right one then.
+
     int index = 0;
     if (tokenizer.hasMoreTokens()) {
       try {
@@ -98,6 +74,48 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
         // Do nothing
       }
     }
+
+    PsiElement result = null;
+    PsiElement element = file.findElementAt(start);
+    if (element != null) {
+      result = findElement(start, end, index, element, processingInfoStorage);
+    }
+
+    if (result == null) {
+      final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(file, start);
+      if (injectedStartElement != null && injectedStartElement != element) {
+        result = findElement(start, end, index, injectedStartElement, processingInfoStorage);
+      } 
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private PsiElement findElement(int start, int end, int index, @NotNull PsiElement element, @Nullable StringBuilder processingInfoStorage) {
+    TextRange range = element.getTextRange();
+    if (processingInfoStorage != null) {
+      processingInfoStorage.append(String.format("Starting processing from element '%s'. It's range is %s%n", element, range));
+    }
+    while (range != null && range.getStartOffset() == start && range.getEndOffset() < end) {
+      element = element.getParent();
+      range = element.getTextRange();
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format("Expanding element to '%s' and range to '%s'%n", element, range));
+      }
+    }
+    if (range == null || range.getStartOffset() != start || range.getEndOffset() != end) {
+      if (processingInfoStorage != null) {
+        processingInfoStorage.append(String.format(
+          "Stopping %s because target element's range differs from the target one. Element: '%s', it's range: %s%n",
+          getClass(), element, range));
+      }
+      return null;
+    }
+
+    // There is a possible case that we have a hierarchy of PSI elements that target the same document range. We need to find
+    // out the right one then.
+    
     int indexFromRoot = 0;
     for (PsiElement e = element.getParent(); e != null && range.equals(e.getTextRange()); e = e.getParent()) {
       indexFromRoot++;
@@ -106,7 +124,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     if (processingInfoStorage != null) {
       processingInfoStorage.append(String.format("Target element index is %d. Current index from root is %d%n", index, indexFromRoot));
     }
-    
+
     if (index > indexFromRoot) {
       int steps = index - indexFromRoot;
       PsiElement result = element;
@@ -118,7 +136,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
       }
       return result;
     }
-    
+
     int steps = indexFromRoot - index;
     PsiElement result = element;
     while (--steps >= 0) {
