@@ -26,13 +26,18 @@ public class ContentsUtil {
     final String contentName = content.getDisplayName();
 
     Content[] contents = manager.getContents();
+    Content oldContentFound = null;
     for(Content oldContent: contents) {
       if (!oldContent.isPinned() && oldContent.getDisplayName().equals(contentName)) {
-        manager.removeContent(oldContent, true);
+        oldContentFound = oldContent;
+        break;
       }
     }
-    
+
     manager.addContent(content);
+    if (oldContentFound != null) {
+      manager.removeContent(oldContentFound, true);
+    }
     if (select) {
       manager.setSelectedContent(content);
     }
