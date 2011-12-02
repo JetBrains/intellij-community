@@ -152,7 +152,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       Point point = new Point(mouseEvent.getPoint());
-      if (!PsiDocumentManager.getInstance(myProject).isUncommited(editor.getDocument())) {
+      if (PsiDocumentManager.getInstance(myProject).isCommitted(editor.getDocument())) {
         // when document is committed, try to check injected stuff - it's fast
         editor = InjectedLanguageUtil
           .getEditorForInjectedLanguageNoCommit(editor, psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
