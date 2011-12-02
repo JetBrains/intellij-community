@@ -226,22 +226,22 @@ public class PyClassRefactoringUtil {
     return true;
   }
 
-  public static void insertImport(PsiElement anchor, PsiNamedElement element) {
-    insertImport(anchor, element, null);
+  public static boolean insertImport(PsiElement anchor, PsiNamedElement element) {
+    return insertImport(anchor, element, null);
   }
 
-  public static void insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName) {
-    insertImport(anchor, element, asName, PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+  public static boolean insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName) {
+    return insertImport(anchor, element, asName, PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
   }
 
-  public static void insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName, boolean preferFromImport) {
-    if (PyBuiltinCache.getInstance(element).hasInBuiltins(element)) return;
+  public static boolean insertImport(PsiElement anchor, PsiNamedElement element, @Nullable String asName, boolean preferFromImport) {
+    if (PyBuiltinCache.getInstance(element).hasInBuiltins(element)) return false;
     final PsiFile newFile = element.getContainingFile();
     final PsiFile file = anchor.getContainingFile();
-    if (newFile == file) return;
+    if (newFile == file) return false;
     final PyQualifiedName qname = ResolveImportUtil.findCanonicalImportPath(element, anchor);
     if (qname == null || !isValidQualifiedName(qname)) {
-      return;
+      return false;
     }
     final PyQualifiedName containingQName;
     final String importedName;
@@ -255,10 +255,10 @@ public class PyClassRefactoringUtil {
     }
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, newFile);
     if (preferFromImport && !containingQName.getComponents().isEmpty()) {
-      AddImportHelper.addImportFrom(file, containingQName.toString(), importedName, asName, priority);
+      return AddImportHelper.addImportFrom(file, containingQName.toString(), importedName, asName, priority);
     }
     else {
-      AddImportHelper.addImportStatement(file, containingQName.append(importedName).toString(), asName, priority);
+      return AddImportHelper.addImportStatement(file, containingQName.append(importedName).toString(), asName, priority);
     }
   }
 
@@ -325,12 +325,13 @@ public class PyClassRefactoringUtil {
         }
       }
       if (importElement != null) {
-        insertImport(importStatement, element, importElement.getAsName());
-        if (importStatement.getImportElements().length == 1) {
-          importStatement.delete();
-        }
-        else {
-          importElement.delete();
+        if (insertImport(importStatement, element, importElement.getAsName())) {
+          if (importStatement.getImportElements().length == 1) {
+            importStatement.delete();
+          }
+          else {
+            importElement.delete();
+          }
         }
       }
     }
