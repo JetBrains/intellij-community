@@ -214,10 +214,9 @@ public class StatementMover extends LineMover {
    * @return first is the element which we move
    *         second is the element we move to
    */
-  private Pair<PyStatementPart, PyStatementPart> getStatementParts(MoveInfo info, Editor editor, PsiFile file, boolean down) {
+  private Pair<PyElement, PyElement> getStatementParts(MoveInfo info, Editor editor, PsiFile file, boolean down) {
     PsiElement element1 = myStatementToMove;
-    PyStatementPart statementPart1 = PsiTreeUtil.getParentOfType(element1, PyStatementPart.class, false);
-
+    PyElement statementPart1 = PsiTreeUtil.getParentOfType(element1, PyStatementPart.class, PyWithStatement.class);
     int offset2 = getLineStartSafeOffset(editor.getDocument(), info.toMove2.startLine);
     PsiElement element2 = file.findElementAt(offset2-1);
     if (element2 instanceof PsiWhiteSpace) {
@@ -242,11 +241,11 @@ public class StatementMover extends LineMover {
         }
       }
     }
-    PyStatementPart statementPart2 = PsiTreeUtil.getParentOfType(element2, PyStatementPart.class);
+    PyElement statementPart2 = PsiTreeUtil.getParentOfType(element2, PyStatementPart.class, PyWithStatement.class);
 
     //in case we move very last line outside if statement
-    if (statementPart2 != null) {
-      PyStatementList stList = statementPart2.getStatementList();
+    if (statementPart2 instanceof PyStatementPart) {
+      PyStatementList stList = ((PyStatementPart)statementPart2).getStatementList();
       if (stList != null && stList.getStatements().length > 0) {
         if (down && stList.getStatements()[stList.getStatements().length-1] == element2) {
           PyStatementPart parent = PsiTreeUtil.getParentOfType(statementPart2, PyStatementPart.class);
@@ -262,22 +261,22 @@ public class StatementMover extends LineMover {
       }
     }
 
-    return new Pair<PyStatementPart, PyStatementPart>(statementPart1, statementPart2);
+    return new Pair<PyElement, PyElement>(statementPart1, statementPart2);
   }
 
   private boolean isMoveToCompound(MoveInfo info, Editor editor, PsiFile file, boolean down) {
-    Pair<PyStatementPart, PyStatementPart> statementParts = getStatementParts(info, editor, file, down);
-    PyStatementPart statementPart1 = statementParts.first;
-    PyStatementPart statementPart2 = statementParts.second;
-
+    Pair<PyElement, PyElement> statementParts = getStatementParts(info, editor, file, down);
+    PyElement statementPart1 = statementParts.first;
+    PyElement statementPart2 = statementParts.second;
     if (statementPart2 != null) {
-      prepareToStatement(statementPart2, editor.getDocument());
+      if (statementPart2 instanceof PyStatementPart)
+        prepareToStatement((PyStatementPart)statementPart2, editor.getDocument());
       if (statementPart1 == null) return true;
       if (statementPart1.getParent() != statementPart2.getParent()) {
         PsiElement commonParent = PsiTreeUtil.findCommonParent(statementPart1, statementPart2);
         if (PsiTreeUtil.isAncestor(statementPart2, statementPart1, false)) return false;
         if ((commonParent instanceof PyIfStatement) || (commonParent instanceof PyLoopStatement) ||
-            (commonParent instanceof PyStatementPart))
+            (commonParent instanceof PyStatementPart) || (commonParent instanceof PyWithStatement))
           return true;
       }
     }
@@ -285,14 +284,15 @@ public class StatementMover extends LineMover {
   }
 
   private boolean isMoveOut(MoveInfo info, Editor editor, PsiFile file, boolean down) {
-    Pair<PyStatementPart, PyStatementPart> insertDeleteParts = getStatementParts(info, editor, file, down);
-    PyStatementPart statementPart1 = insertDeleteParts.first;
-    PyStatementPart statementPart2 = insertDeleteParts.second;
+    Pair<PyElement, PyElement> insertDeleteParts = getStatementParts(info, editor, file, down);
+    PyElement statementPart1 = insertDeleteParts.first;
+    PyElement statementPart2 = insertDeleteParts.second;
     if (statementPart1 != null) {
       if (statementPart2 == null) return true;
       if (statementPart1.getParent() != statementPart2.getParent()) {
         PsiElement commonParent = PsiTreeUtil.findCommonParent(statementPart1, statementPart2);
-        if (!(commonParent instanceof PyIfStatement) && !(commonParent instanceof PyLoopStatement) && !(commonParent instanceof PyStatementPart))
+        if (!(commonParent instanceof PyIfStatement) && !(commonParent instanceof PyLoopStatement) && !(commonParent instanceof PyStatementPart)
+            && !(commonParent instanceof PyWithStatement))
           return true;
         if (PsiTreeUtil.isAncestor(statementPart2, statementPart1, false)) return true;
       }
@@ -312,12 +312,14 @@ public class StatementMover extends LineMover {
   }
 
   private boolean isTheSameIndentLevel(MoveInfo info, Editor editor, PsiFile file, boolean down) {
-    Pair<PyStatementPart, PyStatementPart> statementParts = getStatementParts(info, editor, file, down);
-    myStatementPartToRemovePass = statementParts.second;
-    PyStatementPart statementPart1 = statementParts.first;
-    PyStatementPart statementPart2 = statementParts.second;
+    Pair<PyElement, PyElement> statementParts = getStatementParts(info, editor, file, down);
+    if (statementParts.second instanceof PyStatementPart)
+      myStatementPartToRemovePass = (PyStatementPart)statementParts.second;
+    PyElement statementPart1 = statementParts.first;
+    PyElement statementPart2 = statementParts.second;
 
-    if (statementPart2 != null && statementPart1 != null && statementPart1.getParent() == statementPart2.getParent()) return true;
+    if (statementPart2 != null && statementPart1 != null && statementPart1.getParent() == statementPart2.getParent() ||
+        statementPart2 == statementPart1) return true;
     return false;
   }
 
