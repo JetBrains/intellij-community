@@ -201,11 +201,11 @@ public class PythonSdkType extends SdkType {
   @Nullable
   public Sdk getVirtualEnvBaseSdk(Sdk sdk) {
     if (isVirtualEnv(sdk)) {
-      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk.getHomePath());
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
       final String version = getVersionString(sdk);
       if (flavor != null && version != null) {
         for (Sdk baseSdk : getAllSdks()) {
-          final PythonSdkFlavor baseFlavor = PythonSdkFlavor.getFlavor(baseSdk.getHomePath());
+          final PythonSdkFlavor baseFlavor = PythonSdkFlavor.getFlavor(baseSdk);
           if (!isVirtualEnv(baseSdk) && flavor.equals(baseFlavor) && version.equals(getVersionString(baseSdk))) {
             return baseSdk;
           }
@@ -364,7 +364,7 @@ public class PythonSdkType extends SdkType {
     // Don't fix skeletons here, PythonSdkUpdater will take care of that (see PY-1226 - no progress will be displayed if skeletons
     // generation is invoked from here
 
-    return PythonSdkAdditionalData.load(additional);
+    return PythonSdkAdditionalData.load(currentSdk, additional);
   }
 
   private boolean switchPathToInterpreter(Sdk currentSdk, String... variants) {
@@ -640,13 +640,9 @@ public class PythonSdkType extends SdkType {
 
   public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     if (sdk != null) {
-      String version = sdk.getVersionString();
-      if (version != null) {
-        // HACK rewrite in some nicer way?
-        if (version.startsWith("Python ") || version.startsWith("Jython ")) {
-          String pythonVersion = version.substring("Python ".length());
-          return LanguageLevel.fromPythonVersion(pythonVersion);
-        }
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+      if (flavor != null) {
+        return flavor.getLanguageLevel(sdk);
       }
     }
     return LanguageLevel.getDefault();

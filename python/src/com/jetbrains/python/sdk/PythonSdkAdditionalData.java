@@ -2,6 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +28,11 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   private Set<VirtualFile> myAddedPaths = Sets.newHashSet();
   private Set<VirtualFile> myExcludedPaths = Sets.newHashSet();
+  private final PythonSdkFlavor myFlavor;
+
+  public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
+    myFlavor = flavor;
+  }
 
   public Object clone() throws CloneNotSupportedException {
     try {
@@ -75,9 +81,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
+  @Nullable
+  public PythonSdkFlavor getFlavor() {
+    return myFlavor;
+  }
+
   @NotNull
-  public static PythonSdkAdditionalData load(@Nullable Element element) {
-    final PythonSdkAdditionalData data = new PythonSdkAdditionalData();
+  public static PythonSdkAdditionalData load(Sdk sdk, @Nullable Element element) {
+    final PythonSdkAdditionalData data = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
 
     data.setAddedPaths(loadStringList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER));
     data.setExcludedPaths(loadStringList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER));
