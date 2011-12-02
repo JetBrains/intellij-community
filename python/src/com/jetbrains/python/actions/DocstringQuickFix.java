@@ -51,7 +51,7 @@ public class DocstringQuickFix implements LocalQuickFix {
       return PyBundle.message("QFIX.docstring.remove.$0", myUnexpected);
     }
     else  {
-      return "insert docstring stub";
+      return PyBundle.message("QFIX.docstring.insert.stub");
     }
   }
 
