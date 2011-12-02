@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.editorActions.moveUpDown;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange;
+import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
@@ -33,13 +34,17 @@ public class StatementMover extends LineMover {
   private @Nullable PyStatement myStatementToMove;
   private @Nullable PyStatementPart myStatementPartToRemovePass;
 
+  private void init(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
+    LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
+    int nearLine = down ? range.endLine : range.startLine - 1;
+    info.toMove = range;
+    info.toMove2 = new LineRange(nearLine, nearLine + 1);
+  }
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
     if (!(file instanceof PyFile)) return false;
-    if (!super.checkAvailable(editor, file, info, down))
-      return false;
-
+    init(editor, info, down);
     // Do not move in case of selection
     if (editor.getSelectionModel().hasSelection()){
       return false;
@@ -86,6 +91,12 @@ public class StatementMover extends LineMover {
       myStatementToDecreaseIndent = myStatementToMove;
       if (down)
         info.toMove2 = new LineRange(myStatementToMove);
+    }
+    else {
+      LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
+      final int maxLine = editor.getDocument().getLineCount();
+      if (range.startLine == 0 && !down) return false;
+      if (range.endLine >= maxLine && down) return false;
     }
     if (isMoveToCompound(info, editor, file, down)) {
       if (isMoveToEmptyLine(editor, info)) return true;
@@ -232,6 +243,8 @@ public class StatementMover extends LineMover {
       }
     }
     PyStatementPart statementPart2 = PsiTreeUtil.getParentOfType(element2, PyStatementPart.class);
+
+    //in case we move very last line outside if statement
     if (statementPart2 != null) {
       PyStatementList stList = statementPart2.getStatementList();
       if (stList != null && stList.getStatements().length > 0) {
