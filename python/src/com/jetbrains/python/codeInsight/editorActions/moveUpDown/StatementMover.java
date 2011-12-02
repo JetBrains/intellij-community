@@ -325,6 +325,9 @@ public class StatementMover extends LineMover {
       
       PsiElement whiteSpace = myStatementToAddLinebreak.getContainingFile().findElementAt(editor.getDocument().getLineStartOffset(line));
       String indent = StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
+
+      PyStatementWithElse statementWithElse = PsiTreeUtil.getParentOfType(myStatementToAddLinebreak, PyStatementWithElse.class);
+      if (statementWithElse != null && statementWithElse.getParent() instanceof PyFile) indent = "\n";
       if (whiteSpace instanceof PsiWhiteSpace) indent += whiteSpace.getText();
       if (down) indent += StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
       editor.getDocument().insertString(textRange.getStartOffset(), indent);
