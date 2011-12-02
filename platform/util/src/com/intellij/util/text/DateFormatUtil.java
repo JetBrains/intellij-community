@@ -41,6 +41,7 @@ public class DateFormatUtil {
 
   // fixed formats - should be locale-independent
   private static final SimpleDateFormat BUILD_DATE_FORMAT = new SimpleDateFormat("dd MMM yyyy HH:ss", Locale.US);
+  private static final DateFormat ABOUT_DATE_FORMAT = DateFormat.getDateInstance(DateFormat.LONG, Locale.US);
 
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
@@ -472,5 +473,10 @@ public class DateFormatUtil {
   @NotNull
   public static String formatBuildDate(@NotNull Calendar cal) {
     return BUILD_DATE_FORMAT.format(cal.getTime());
+  }
+
+  @NotNull
+  public static String formatAboutDialogDate(@NotNull Date date) {
+    return ABOUT_DATE_FORMAT.format(date);
   }
 }
