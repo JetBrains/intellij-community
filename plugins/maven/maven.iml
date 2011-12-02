@@ -49,10 +49,10 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
-    <orderEntry type="library" name="gson" level="project" />
   </component>
   <component name="copyright">
     <Base>
