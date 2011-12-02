@@ -47,13 +47,92 @@
     <profile>
       <id>mpl</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>env.COMPUTERNAME</name>
+          <value>MOSKAU</value>
+        </property>
       </activation>
       <properties>
         <idea.version>10.5.2</idea.version>
         <idea.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea.version}</idea.home>
       </properties>
     </profile>
+
+    <profile>
+      <!--
+        Run this profile first to install intellij dependencies into local maven repository
+        Just execute : mvn initialize -Pinit
+      -->
+      <id>init</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-install-plugin</artifactId>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <id>install_openapi</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>install-file</goal>
+                </goals>
+                <configuration>
+                  <file>${idea.home}/lib/openapi.jar</file>
+                  <groupId>com.intellij.idea</groupId>
+                  <artifactId>openapi</artifactId>
+                  <packaging>jar</packaging>
+                  <version>${idea.version}</version>
+                </configuration>
+              </execution>
+              <execution>
+                <id>install_util</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>install-file</goal>
+                </goals>
+                <configuration>
+                  <file>${idea.home}/lib/util.jar</file>
+                  <groupId>com.intellij.idea</groupId>
+                  <artifactId>util</artifactId>
+                  <packaging>jar</packaging>
+                  <version>${idea.version}</version>
+                </configuration>
+              </execution>
+              <execution>
+                <id>install_annotations</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>install-file</goal>
+                </goals>
+                <configuration>
+                  <file>${idea.home}/lib/annotations.jar</file>
+                  <groupId>com.intellij.idea</groupId>
+                  <artifactId>annotations</artifactId>
+                  <packaging>jar</packaging>
+                  <version>${idea.version}</version>
+                </configuration>
+              </execution>
+              <execution>
+                <id>install_idea</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>install-file</goal>
+                </goals>
+                <configuration>
+                  <file>${idea.home}/lib/idea.jar</file>
+                  <groupId>com.intellij.idea</groupId>
+                  <artifactId>idea</artifactId>
+                  <packaging>jar</packaging>
+                  <version>${idea.version}</version>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
     <profile>
       <id>plugin-release</id>
       <activation>
@@ -114,21 +193,6 @@
     <!-- Idea requires JDK 1.6 -->
     <jdk.min.version>1.6</jdk.min.version>
 
-    <!--The build numbers of recent IDEA versions are:-->
-    <!--8.0 - 80.00-->
-    <!--9.0 - 93.13-->
-    <!--9.0.1 - 93.94-->
-    <!--9.0.2 - 95.66-->
-    <!--9.0.3 - 95.429-->
-    <!--9.0.4 - 95.627-->
-    <!--10.0 - 99.18-->
-    <!--10.0.1 - 99.32-->
-    <!--10.0.2 - 103.72-->
-    <!--10.0.3 - 103.255-->
-    <!--10.5 - 107.105-->
-    <!--10.5.1 - 107.322-->
-    <idea.build>99.18</idea.build>
-
     <downloadSources>true</downloadSources>
     <createChecksum>true</createChecksum>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -142,7 +206,19 @@
     <plugin.vendor.email>lombok-plugin@plushnikov.de</plugin.vendor.email>
     <lombok.version>0.10.4</lombok.version>
     <lombok-pg.version>0.10.4</lombok-pg.version>
-	<lombok-maven-plugin.version>0.10.2.0</lombok-maven-plugin.version>
+    <lombok-maven-plugin.version>0.10.2.0</lombok-maven-plugin.version>
+    <lombok-annotations.includes>lombok/extern/**,
+      lombok/AccessLevel.java,lombok/*ArgsConstructor.java,lombok/Cleanup.java,lombok/Data.java,lombok/Delegate.java,
+      lombok/Getter.java,lombok/Setter.java,lombok/Equals*.java,lombok/NonNull.java,lombok/Synchronized.java,
+      lombok/ToString.java,lombok/SneakyThrows.java,lombok/val.java
+    </lombok-annotations.includes>
+    <lombok-pg-annotations.includes>
+      lombok/AutoGenMethodStub.java,lombok/Builder.java,lombok/EnumId.java,lombok/FluentSetter.java,lombok/ListenerSupport.java,lombok/Singleton.java,
+      lombok/DoPrivileged.java,lombok/WriteLock.java,lombok/ReadLock.java,lombok/Await.java,lombok/Signal.java,lombok/Position.java,
+      lombok/AwaitBeforeAndSignalAfter.java.java,lombok/BoundPropertySupport.java,lombok/BoundSetter.java,lombok/LazyGetter.java,
+      lombok/Sanitize.java,lombok/Validate.java,lombok/VisibleForTesting.java,lombok/ExtensionMethod.java,lombok/Action.java,
+      lombok/Actions.java,lombok/TypeArguments.java,lombok/Rethrow.java,lombok/Rethrows.java
+    </lombok-pg-annotations.includes>
   </properties>
 
   <prerequisites>
@@ -236,6 +312,8 @@
   </dependencyManagement>
 
   <build>
+    <defaultGoal>install</defaultGoal>
+
     <pluginManagement>
       <plugins>
         <plugin>
@@ -297,71 +375,6 @@
         </plugin>
       </plugins>
     </pluginManagement>
-
-    <plugins>
-      <plugin>
-        <artifactId>maven-install-plugin</artifactId>
-        <inherited>false</inherited>
-        <executions>
-          <execution>
-            <id>install_openapi</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>install-file</goal>
-            </goals>
-            <configuration>
-              <file>${idea.home}/lib/openapi.jar</file>
-              <groupId>com.intellij.idea</groupId>
-              <artifactId>openapi</artifactId>
-              <packaging>jar</packaging>
-              <version>${idea.version}</version>
-            </configuration>
-          </execution>
-          <execution>
-            <id>install_util</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>install-file</goal>
-            </goals>
-            <configuration>
-              <file>${idea.home}/lib/util.jar</file>
-              <groupId>com.intellij.idea</groupId>
-              <artifactId>util</artifactId>
-              <packaging>jar</packaging>
-              <version>${idea.version}</version>
-            </configuration>
-          </execution>
-          <execution>
-            <id>install_annotations</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>install-file</goal>
-            </goals>
-            <configuration>
-              <file>${idea.home}/lib/annotations.jar</file>
-              <groupId>com.intellij.idea</groupId>
-              <artifactId>annotations</artifactId>
-              <packaging>jar</packaging>
-              <version>${idea.version}</version>
-            </configuration>
-          </execution>
-          <execution>
-            <id>install_idea</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>install-file</goal>
-            </goals>
-            <configuration>
-              <file>${idea.home}/lib/idea.jar</file>
-              <groupId>com.intellij.idea</groupId>
-              <artifactId>idea</artifactId>
-              <packaging>jar</packaging>
-              <version>${idea.version}</version>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
   </build>
 
   <distributionManagement>
