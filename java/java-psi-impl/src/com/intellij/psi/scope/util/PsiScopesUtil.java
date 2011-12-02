@@ -325,7 +325,10 @@ public class PsiScopesUtil {
           }
         }
         else {
-          LOG.assertTrue(false);
+          LOG.error("ref: " + ref + " (" + ref.getClass() + ")," +
+                    " ref.getReferenceNameElement()=" + ref.getReferenceNameElement() +
+                    "; methodCall.getMethodExpression().getReferenceNameElement()=" + methodCall.getMethodExpression().getReferenceNameElement() +
+                    "; qualifier="+qualifier);
         }
       }
     }
@@ -362,14 +365,14 @@ public class PsiScopesUtil {
       JavaResolveResult qualifierResult = ((PsiClassType)type).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
     }
-    else if (type instanceof PsiArrayType) {
+    if (type instanceof PsiArrayType) {
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
       PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       JavaResolveResult qualifierResult =
         factory.getArrayClassType(((PsiArrayType)type).getComponentType(), languageLevel).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
     }
-    else if (type instanceof PsiIntersectionType) {
+    if (type instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)type).getConjuncts()) {
         if (!processQualifierType(conjunct, processor, manager, call)) return false;
       }

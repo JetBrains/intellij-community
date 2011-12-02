@@ -29,14 +29,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.WalkingState;
 import com.intellij.psi.impl.source.tree.SourceUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -187,7 +187,7 @@ public class SliceLeafAnalyzer {
 
       @Override
       protected Collection<PsiElement> create(SliceNode key) {
-        return new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+        return new ConcurrentHashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
       }
     };
   }

@@ -31,13 +31,16 @@ public class ProperTextRange extends TextRange {
   }
 
   public static void assertProperRange(@NotNull Segment range) throws AssertionError {
-    assert range.getStartOffset() <= range.getEndOffset() : "Invalid range specified: " + range;
-    assert range.getStartOffset() >= 0 : "Negative start offset: " + range;
+    assertProperRange(range, "");
   }
 
   public static void assertProperRange(@NotNull Segment range, Object message) throws AssertionError {
-    assert range.getStartOffset() <= range.getEndOffset() : "Invalid range specified: " + range + "; "+message;
-    assert range.getStartOffset() >= 0 : "Negative start offset: " + range +  "; "+message;
+    assertProperRange(range.getStartOffset(), range.getEndOffset(), message);
+  }
+
+  public static void assertProperRange(int startOffset, int endOffset, Object message) {
+    assert startOffset <= endOffset : "Invalid range specified: (" + startOffset + "," + endOffset + "); " + message;
+    assert startOffset >= 0 : "Negative start offset: (" + startOffset + "," + endOffset + "); " + message;
   }
 
   @NotNull

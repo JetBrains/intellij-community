@@ -256,9 +256,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       item.update();
     }
     if (UISettings.getInstance().SHOW_NAVIGATION_BAR) {
-      JComponent parent = (JComponent)getParent().getParent().getParent().getParent().getParent().getParent();
-      parent.revalidate();
-      parent.repaint();
+      NavBarRootPaneExtension.NavBarWrapperPanel wrapperPanel = (NavBarRootPaneExtension.NavBarWrapperPanel) 
+        SwingUtilities.getAncestorOfClass(NavBarRootPaneExtension.NavBarWrapperPanel.class, this);
+
+      if (wrapperPanel != null) {
+        wrapperPanel.revalidate();
+        wrapperPanel.repaint();
+      }
     }
   }
 
