@@ -103,4 +103,8 @@ public class PyStatementMoverTest extends PyTestCase {
   public void testNestedTry() { // PY-5192
     doTest();
   }
+
+  public void testClass() { // PY-5196
+    doTest();
+  }
 }

@@ -203,7 +203,7 @@ public class StatementMover extends LineMover {
         if (tmp != null) {
           int start = editor.offsetToLogicalPosition(tmp.getParent().getTextRange().getStartOffset()).line;
           int end = editor.offsetToLogicalPosition(tmp.getParent().getTextRange().getEndOffset()).line;
-          if (start == end && start == info.toMove2.startLine)
+          if (start == info.toMove2.startLine && (start == end || tmp.getParent() instanceof PyClass || tmp.getParent() instanceof PyFunction))
             element2 = tmp;
           else
             element2 = PyPsiUtils.getSignificantToTheLeft(element2, true);
