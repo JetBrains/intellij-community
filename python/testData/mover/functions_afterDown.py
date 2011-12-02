@@ -1,9 +1,7 @@
 class A:
     def a(self):
-        doSomething()
-
+        doSomething1()
     def c(self):
-        doSomething()
-
+        doSomething3()
     def b(self):
-        doSomething()
+        doSomething2()

@@ -4,8 +4,8 @@ class A:
             if b:
                 if c:
                     if d:
-                        c = 3
                         self.bar()
+                    c = 3
         if c:
             a = 2
 

@@ -1,6 +1,5 @@
 @task
-<caret>def b():
+def b():
     print 'b'
-
 def a():
     print 'a'

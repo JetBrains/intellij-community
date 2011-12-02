@@ -1,9 +1,7 @@
 class A:
     def a(self):
-        doSomething()
-
+        doSomething1()
     def b<caret>(self):
-        doSomething()
-
+        doSomething2()
     def c(self):
-        doSomething()
+        doSomething3()

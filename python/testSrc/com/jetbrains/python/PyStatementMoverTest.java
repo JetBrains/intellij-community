@@ -24,6 +24,18 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testInnerIf() {
+    doTest();
+  }
+
+  public void testMoveDownOut() {
+    doTest();
+  }
+
+  public void testOneStatementInFunction() {
+    doTest();
+  }
+
   public void testOutsideStatement() {
     doTest();
   }
@@ -44,7 +56,15 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
-  public void testSelection() {
+  public void testDoubleIf() {
+    doTest();
+  }
+
+  public void testOneStatementInClass() {
+    doTest();
+  }
+
+  public void testMoveOut() {
     doTest();
   }
 
@@ -61,6 +81,38 @@ public class PyStatementMoverTest extends PyTestCase {
   }
 
   public void testDecorator() {
+    doTest();
+  }
+
+  public void testLastLine() { // PY-5017
+    doTest();
+  }
+
+  public void testNestedBlock() { // PY-1343
+    doTest();
+  }
+
+  public void testFunctionDown() { // PY-5195
+    doTest();
+  }
+
+  public void testContinueBreak() { // PY-5193
+    doTest();
+  }
+
+  public void testNestedTry() { // PY-5192
+    doTest();
+  }
+
+  public void testClass() { // PY-5196
+    doTest();
+  }
+
+  public void testOneLineCompound() { // PY-5198
+    doTest();
+  }
+
+  public void testEmptyLine() { // PY-5197
     doTest();
   }
 }

@@ -3,6 +3,6 @@ def foo():
 
     if a:
         pass
+    a = 3
 
     a = 4
-    a = 3
