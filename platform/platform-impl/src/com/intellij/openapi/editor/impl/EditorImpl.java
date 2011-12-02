@@ -644,7 +644,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void release() {
     assertIsDispatchThread();
     if (isReleased) {
-      LOG.error("Double release. First released at:  =====\n" + myReleasedAt+"\n======");
+      VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
+      String hint = file != null ? file.getPath() : myDocument.getText(TextRange.create(0, Math.min(100, myDocument.getTextLength())));
+      LOG.error("Double release:\n" +
+                hint + "\n" +
+                "First released at:  =====\n" + myReleasedAt + "\n======");
     }
 
     myReleasedAt = StringUtil.getThrowableText(new Throwable());
