@@ -44,6 +44,12 @@ public class StatementMover extends LineMover {
     if (editor.getSelectionModel().hasSelection()){
       return false;
     }
+    Document document = editor.getDocument();
+    String lineToMove = document.getText(new TextRange(getLineStartSafeOffset(document, info.toMove.startLine), getLineStartSafeOffset(document, info.toMove.endLine)));
+    if (StringUtil.isEmptyOrSpaces(lineToMove)) {
+      info.toMove2 = info.toMove;
+      return true;
+    }
 
     //reset
     myStatementListToAddPass = null;
