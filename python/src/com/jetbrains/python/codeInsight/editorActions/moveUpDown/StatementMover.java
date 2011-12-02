@@ -246,7 +246,7 @@ public class StatementMover extends LineMover {
         PsiElement commonParent = PsiTreeUtil.findCommonParent(statementPart1, statementPart2);
         if (PsiTreeUtil.isAncestor(statementPart2, statementPart1, false)) return false;
         if ((commonParent instanceof PyIfStatement) || (commonParent instanceof PyLoopStatement) ||
-            (commonParent instanceof PyConditionalStatementPart))
+            (commonParent instanceof PyStatementPart))
           return true;
       }
     }
@@ -261,7 +261,7 @@ public class StatementMover extends LineMover {
       if (statementPart2 == null) return true;
       if (statementPart1.getParent() != statementPart2.getParent()) {
         PsiElement commonParent = PsiTreeUtil.findCommonParent(statementPart1, statementPart2);
-        if (!(commonParent instanceof PyIfStatement) && !(commonParent instanceof PyLoopStatement) && !(commonParent instanceof PyConditionalStatementPart))
+        if (!(commonParent instanceof PyIfStatement) && !(commonParent instanceof PyLoopStatement) && !(commonParent instanceof PyStatementPart))
           return true;
         if (PsiTreeUtil.isAncestor(statementPart2, statementPart1, false)) return true;
       }
