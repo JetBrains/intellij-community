@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -106,7 +107,7 @@ public class StubGenerator implements ClassItemGenerator {
 
 
   @Override
-  public void writeConstructor(final StringBuilder text, final PsiMethod constructor, boolean isEnum) {
+  public void writeConstructor(final StringBuilder text, PsiMethod constructor, boolean isEnum) {
     LOG.assertTrue(constructor.isConstructor());
 
     if (!isEnum) {
@@ -129,6 +130,9 @@ public class StubGenerator implements ClassItemGenerator {
     /************* body **********/
 
     text.append("{\n");
+    if (constructor instanceof GrReflectedMethod) {
+      constructor = ((GrReflectedMethod)constructor).getBaseMethod();
+    }
     if (constructor instanceof GrMethod) {
       final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation((GrMethod)constructor);
       if (invocation != null) {
