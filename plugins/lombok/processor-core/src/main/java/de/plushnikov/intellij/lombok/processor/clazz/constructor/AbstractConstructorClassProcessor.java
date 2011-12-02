@@ -1,5 +1,15 @@
 package de.plushnikov.intellij.lombok.processor.clazz.constructor;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -18,15 +28,6 @@ import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Base lombok processor class for constructor processing
@@ -182,7 +183,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
 
       builder.append(psiClass.getName());
       appendParamDeclaration(params, builder);
-      builder.append("{ super();}");
+      builder.append("{");
+      builder.append("\nsuper();");
+      appendParamInitialization(params, builder);
+      builder.append("\n}");
 
       for (PsiField psiField : params) {
         UserMapKeys.addWriteUsageFor(psiField);
@@ -229,6 +233,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
       builder.deleteCharAt(builder.length() - 1);
     }
     builder.append(')');
+    return builder;
+  }
+
+  private StringBuilder appendParamInitialization(Collection<PsiField> params, StringBuilder builder) {
+    for (PsiField param : params) {
+      builder.append("\nthis.").append(param.getName()).append(" = ").append(param.getName()).append(';');
+    }
     return builder;
   }
 
