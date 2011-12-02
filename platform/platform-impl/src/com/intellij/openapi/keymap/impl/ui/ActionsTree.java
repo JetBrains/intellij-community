@@ -91,6 +91,8 @@ public class ActionsTree {
       }
     };
     myTree.setRootVisible(false);
+    myTree.setShowsRootHandles(true);
+
     myTree.putClientProperty(UIUtil.MacTreeUI.STRIPED_CLIENT_PROPERTY, Boolean.TRUE);
     myTree.setCellRenderer(new KeymapsRenderer());
 
