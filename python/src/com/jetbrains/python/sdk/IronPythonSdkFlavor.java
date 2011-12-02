@@ -2,6 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
@@ -49,7 +50,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public String getVersionString(String sdkHome) {
-    return "IronPython " + getVersionFromOutput(sdkHome, "-V", "\\w+ ([0-9\\.]+).*");
+    return getName() + " " + getVersionFromOutput(sdkHome, "-V", "\\w+ ([0-9\\.]+).*");
   }
 
   @Override
@@ -60,5 +61,11 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
     addToEnv(cmd, "IRONPYTHONPATH", StringUtil.join(path, File.pathSeparator));
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "IronPython";
   }
 }

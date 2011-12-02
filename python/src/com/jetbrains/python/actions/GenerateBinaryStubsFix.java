@@ -72,7 +72,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   }
 
   private List<String> collectAssemblyReferences(PsiFile file) {
-    if (!(PythonSdkFlavor.getFlavor(mySdk.getHomePath()) instanceof IronPythonSdkFlavor)) {
+    if (!(PythonSdkFlavor.getFlavor(mySdk) instanceof IronPythonSdkFlavor)) {
       return Collections.emptyList();
     }
     final List<String> result = new ArrayList<String>();
@@ -99,7 +99,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     if (sdk == null) {
       return false;
     }
-    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk.getHomePath());
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
     if (flavor instanceof IronPythonSdkFlavor) {
       return getReferenceText(ref).matches("[A-Z][A-Za-z0-9]+(\\.[A-Z][A-Za-z0-9]+)*");
     }
