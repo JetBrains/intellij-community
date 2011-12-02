@@ -149,8 +149,12 @@ public class CompleteReferenceExpression {
   }
 
   @NotNull
-  public static LookupElementBuilder createPropertyLookupElement(@NotNull String name, @NotNull PsiType type) {
-    return LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setTypeText(type.getPresentableText());
+  public static LookupElementBuilder createPropertyLookupElement(@NotNull String name, @Nullable PsiType type) {
+    LookupElementBuilder res = LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY);
+    if (type != null) {
+      res = res.setTypeText(type.getPresentableText());
+    }
+    return res;
   }
 
   @Nullable
