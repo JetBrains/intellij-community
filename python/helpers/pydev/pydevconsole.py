@@ -31,8 +31,7 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
     setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
 
-from pydev_console_utils import BaseStdIn, StdIn, BaseInterpreterInterface
-sys.stdin = BaseStdIn()
+from pydev_console_utils import BaseInterpreterInterface
 
 IS_PYTHON_3K = False
 
