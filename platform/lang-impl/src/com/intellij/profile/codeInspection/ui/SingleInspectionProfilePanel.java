@@ -534,9 +534,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     TreeUtil.collapseAll(myTree, 1);
-    final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, scrollPane.getPreferredSize().height);
-    //scrollPane.setPreferredSize(preferredSize);
-    //scrollPane.setMinimumSize(preferredSize);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
 
@@ -566,7 +563,6 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     myTreeExpander = new DefaultTreeExpander(myTree);
     myProfileFilter = new MyFilterComponent();
-    myProfileFilter.setPreferredSize(new Dimension(100, -1));
 
     return scrollPane;
   }
@@ -905,10 +901,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     final JScrollPane tree = initTreeScrollPane();
     treePanel.add(tree, BorderLayout.CENTER);
 
-    final JPanel northPanel = new JPanel(new BorderLayout());
+    final JPanel northPanel = new JPanel(new GridBagLayout());
     northPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
-    northPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.CENTER);
-    northPanel.add(myProfileFilter, BorderLayout.EAST);
+    northPanel.add(createTreeToolbarPanel().getComponent(), new GridBagConstraints(0, 0, 1, 1, 0.5, 1, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    northPanel.add(myProfileFilter, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     treePanel.add(northPanel, BorderLayout.NORTH);
 
     myMainSplitter = new Splitter(false);
@@ -919,7 +915,6 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myMainSplitter, BorderLayout.CENTER);
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 0, 2));
     return panel;
   }
 

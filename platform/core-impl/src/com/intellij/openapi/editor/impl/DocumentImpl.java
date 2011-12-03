@@ -27,12 +27,14 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -524,6 +526,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   private DocumentEvent doBeforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(this);
+    if (file != null && !file.isValid()) {
+      LOG.error("File of this document has been deleted.");
+    }
+
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
     //System.out.printf("%nbefore change: offset=%d, old text='%s', new text='%s'%n document: id=%d, modification stamp=%d%nDocument:'%s'%n",
     //                  event.getOffset(), event.getOldFragment(), event.getNewFragment(), System.identityHashCode(this),

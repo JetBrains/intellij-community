@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class CompilerConfigurable implements SearchableConfigurable.Parent {
+public class CompilerConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerConfigurable");
 
   private final Project myProject;

@@ -180,12 +180,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
   private JPanel createCommandPane() {
     JPanel pane = new JPanel(new GridBagLayout());
-    //pane.setBorder(
-    //  BorderFactory.createCompoundBorder(
-    //    BorderFactory.createEtchedBorder(),
-    //    BorderFactory.createEmptyBorder(5, 5, 5, 5)
-    //  )
-    //);
+    pane.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.tool.group"), false, true, true));
     GridBagConstraints constr;
 
     // program
@@ -193,8 +188,8 @@ public class ToolEditorDialog extends DialogWrapper {
     constr = new GridBagConstraints();
     constr.gridx = 0;
     constr.gridy = 0;
-    constr.insets = new Insets(5, 0, 0, 10);
-    constr.anchor = GridBagConstraints.WEST;
+    constr.insets = new Insets(0, 0, 0, 10);
+    constr.anchor = GridBagConstraints.BASELINE_LEADING;
     pane.add(new JLabel(ToolsBundle.message("tools.program.label")), constr);
 
     FixedSizeButton browseCommandButton = new FixedSizeButton(myTfCommand);
@@ -224,18 +219,18 @@ public class ToolEditorDialog extends DialogWrapper {
     constr = new GridBagConstraints();
     constr.gridx = 1;
     constr.gridy = 0;
-    constr.insets = new Insets(5, 10, 0, 0);
+    constr.insets = new Insets(0, 0, 0, 10);
     constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.anchor = GridBagConstraints.WEST;
+    constr.anchor = GridBagConstraints.BASELINE_LEADING;
     constr.weightx = 1.0;
     pane.add(_pane0, constr);
 
     constr = new GridBagConstraints();
     constr.gridx = 2;
     constr.gridy = 0;
-    constr.insets = new Insets(5, 10, 0, 0);
+    constr.insets = new Insets(0, 0, 0, 0);
     constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.anchor = GridBagConstraints.WEST;
+    constr.anchor = GridBagConstraints.BASELINE_LEADING;
     myInsertCommandMacroButton = new JButton(ToolsBundle.message("tools.insert.macro.button"));
     pane.add(myInsertCommandMacroButton, constr);
 
@@ -244,25 +239,25 @@ public class ToolEditorDialog extends DialogWrapper {
     constr = new GridBagConstraints();
     constr.gridx = 0;
     constr.gridy = 1;
-    constr.insets = new Insets(5, 0, 0, 0);
-    constr.anchor = GridBagConstraints.WEST;
+    constr.insets = new Insets(5, 0, 0, 10);
+    constr.anchor = GridBagConstraints.BASELINE_LEADING;
     pane.add(new JLabel(ToolsBundle.message("tools.parameters.label")), constr);
 
     constr = new GridBagConstraints();
     constr.gridx = 1;
     constr.gridy = 1;
-    constr.insets = new Insets(5, 10, 0, 0);
+    constr.insets = new Insets(5, 0, 0, 10);
     constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.anchor = GridBagConstraints.WEST;
+    constr.anchor = GridBagConstraints.BASELINE_LEADING;
     constr.weightx = 1.0;
     pane.add(myParametersField, constr);
 
     constr = new GridBagConstraints();
     constr.gridx = 2;
     constr.gridy = 1;
-    constr.insets = new Insets(5, 10, 0, 0);
+    constr.insets = new Insets(5, 0, 0, 0);
     constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.anchor = GridBagConstraints.WEST;
+    constr.anchor = GridBagConstraints.BASELINE_LEADING;
     myInsertParametersMacroButton = new JButton(ToolsBundle.message("tools.insert.macro.button.a"));
     pane.add(myInsertParametersMacroButton, constr);
 
@@ -271,8 +266,8 @@ public class ToolEditorDialog extends DialogWrapper {
     constr = new GridBagConstraints();
     constr.gridx = 0;
     constr.gridy = 2;
-    constr.insets = new Insets(5, 0, 5, 10);
-    constr.anchor = GridBagConstraints.WEST;
+    constr.insets = new Insets(5, 0, 0, 10);
+    constr.anchor = GridBagConstraints.BASELINE_LEADING;
     pane.add(new JLabel(ToolsBundle.message("tools.working.directory.label")), constr);
 
     FixedSizeButton browseDirectoryButton = new FixedSizeButton(myTfCommandWorkingDirectory);
@@ -296,7 +291,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.gridx = 1;
     constr.gridy = 2;
     constr.gridwidth = 1;
-    constr.insets = new Insets(5, 10, 5, 0);
+    constr.insets = new Insets(5, 0, 0, 10);
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
     constr.weightx = 1.0;
@@ -305,7 +300,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr = new GridBagConstraints();
     constr.gridx = 2;
     constr.gridy = 2;
-    constr.insets = new Insets(5, 10, 0, 0);
+    constr.insets = new Insets(5, 0, 0, 0);
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
     myInsertWorkingDirectoryMacroButton = new JButton(ToolsBundle.message("tools.insert.macro.button.c"));
@@ -317,8 +312,6 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.fill = GridBagConstraints.VERTICAL;
     constr.weighty = 1.0;
     pane.add(new JLabel(), constr);
-
-    pane.setPreferredSize(new Dimension(600, 100));
 
     return pane;
   }
@@ -434,7 +427,7 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   private JPanel getShowInPanel() {
-    JPanel panel = new JPanel(new GridLayout(1, 4, 10, 0));
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
     panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.menu.group"), false, true, true));
     panel.add(myShowInMainMenuCheckbox);
     panel.add(myShowInEditorCheckbox);
@@ -444,7 +437,8 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   private JPanel getOptionsPanel() {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.options.group"), false, true, true));
     panel.add(mySynchronizedAfterRunCheckbox);
     panel.add(myUseConsoleCheckbox);
     panel.add(myOutputFiltersButton);

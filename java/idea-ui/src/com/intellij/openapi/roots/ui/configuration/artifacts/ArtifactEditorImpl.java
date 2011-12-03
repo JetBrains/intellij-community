@@ -61,7 +61,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -198,8 +197,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     Splitter splitter = new Splitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myLayoutTreeComponent.getTreePanel(), BorderLayout.CENTER);
-    final Border border = BorderFactory.createEmptyBorder(3, 3, 3, 3);
-    leftPanel.setBorder(border);
+    leftPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 0));
     splitter.setFirstComponent(leftPanel);
 
     final JPanel rightPanel = new JPanel(new BorderLayout());
@@ -224,7 +222,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     rightTopPanel.add(labelPanel, BorderLayout.SOUTH);
     rightPanel.add(rightTopPanel, BorderLayout.NORTH);
     rightPanel.add(ScrollPaneFactory.createScrollPane(mySourceItemsTree), BorderLayout.CENTER);
-    rightPanel.setBorder(border);
+    rightPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 3));
     splitter.setSecondComponent(rightPanel);
 
 

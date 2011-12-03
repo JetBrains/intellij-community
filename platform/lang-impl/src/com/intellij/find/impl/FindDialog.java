@@ -806,7 +806,12 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.gridx++;
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
-    myScopeCombo = new ScopeChooserCombo(myProject, true, true, FindSettings.getInstance().getDefaultScopeName());
+    myScopeCombo = new ScopeChooserCombo(myProject, true, true, FindSettings.getInstance().getDefaultScopeName()) {
+      @Override
+      public Dimension getMinimumSize() {
+        return new Dimension(200, super.getMinimumSize().height);
+      }
+    };
     Disposer.register(myDisposable, myScopeCombo);
     scopePanel.add(myScopeCombo, gbConstraints);
 

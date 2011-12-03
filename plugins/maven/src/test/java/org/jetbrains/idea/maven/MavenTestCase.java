@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -538,12 +537,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected boolean ignore() {
     printIgnoredMessage(null);
     return true;
-  }
-
-  public boolean checkUltimate() {
-    if (!ApplicationInfo.getInstance().getVersionName().contains("Community")) return true;
-    printIgnoredMessage("Ultimate edition is required");
-    return false;
   }
 
   protected boolean hasMavenInstallation() {

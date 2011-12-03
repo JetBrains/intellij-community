@@ -152,7 +152,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     }
 
     final File file = new File(projectFileDirectory);
-    if (!file.canWrite()) {
+    if (file.exists() && !file.canWrite()) {
       throw new ConfigurationException(String.format("Directory '%s' is not writable!\nPlease choose another project location.", projectFileDirectory));
     }
 

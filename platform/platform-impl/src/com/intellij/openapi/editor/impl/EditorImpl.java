@@ -644,7 +644,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void release() {
     assertIsDispatchThread();
     if (isReleased) {
-      LOG.error("Double release. First released at:  =====\n" + myReleasedAt+"\n======");
+      LOG.error("Double release of editor:\n" +
+                EditorFactoryImpl.getCreator(this) + "\n" +
+                "First released at:  =====\n" + myReleasedAt + "\n======");
     }
 
     myReleasedAt = StringUtil.getThrowableText(new Throwable());

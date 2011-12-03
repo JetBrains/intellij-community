@@ -21,7 +21,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
@@ -76,7 +78,13 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
       fireBeforeContentsChange();
 
       myModificationStamp++;
-      setRevision(myFileRevision.getRevisionNumber().asString());
+      final VcsRevisionNumber revisionNumber = myFileRevision.getRevisionNumber();
+      if (revisionNumber instanceof ShortVcsRevisionNumber) {
+        setRevision(((ShortVcsRevisionNumber) revisionNumber).toShortString());
+      }
+      else {
+        setRevision(revisionNumber.asString());
+      }
       myContent = myFileRevision.getContent();
       myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {

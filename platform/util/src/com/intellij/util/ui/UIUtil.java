@@ -55,6 +55,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
+import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -2554,6 +2555,39 @@ public class UIUtil {
     ans.height += insets.bottom;
 
     return ans;
+  }
+
+  public static void adjustWindowToMinimumSize(final Window window) {
+    if (window == null) return;
+    final Dimension minSize = window.getMinimumSize();
+    final Dimension size = window.getSize();
+    final Dimension newSize = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
+
+    if (!newSize.equals(size)) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (window.isShowing()) {
+            window.setSize(newSize);
+          }
+        }
+      });
+    }
+  }
+
+  @Nullable
+  public static Color getColorAt(final Icon icon, final int x, final int y) {
+    BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+    icon.paintIcon(null, image.getGraphics(), 0, 0);
+    final int[] pixels = new int[1];
+    final PixelGrabber pixelGrabber =
+      new PixelGrabber(image, x, y, 1, 1, pixels, 0, 1);
+    try {
+      pixelGrabber.grabPixels();
+      return new Color(pixels[0]);
+    }
+    catch (InterruptedException ignore) {
+    }
+    return null;
   }
 }
 

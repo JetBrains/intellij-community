@@ -937,27 +937,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private class MyComponentListener extends ComponentAdapter {
       @SuppressWarnings({"RefusedBequest"})
       public void componentResized(ComponentEvent e) {
-        final JRootPane pane = getRootPane();
-        if (pane == null) return;
-        final Dimension minSize = pane.getMinimumSize();
-        final Dimension size = pane.getSize();
-        final Dimension winSize = getSize();
-        if (minSize.width > size.width) {
-          winSize.width += minSize.width - size.width;
-        }
-        if (minSize.height > size.height) {
-          winSize.height += minSize.height - size.height;
-        }
-
-        if (!winSize.equals(getSize())) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              if (isShowing()) {
-                setSize(winSize);
-              }
-            }
-          });
-        }
+        UIUtil.adjustWindowToMinimumSize(getWindow());
       }
     }
 

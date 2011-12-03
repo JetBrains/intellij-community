@@ -148,8 +148,11 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myColorPreviewPanel = new AbstractTitledSeparatorWithIcon(IconLoader.getIcon("/general/comboArrowRight.png"),
-                                                              IconLoader.getIcon("/general/comboArrowRightPassive.png"),
+                                                              IconLoader.getIcon("/general/comboArrowDown.png"),
                                                               "Click to preview", true, false) {
+
+      private int myAddedWidth;
+
       @Override
       protected RefreshablePanel createPanel() {
         myHidingPreviewPanel = new MyColorPreviewPanel(myWrapper);
@@ -159,29 +162,35 @@ public class InitialConfigurationDialog extends DialogWrapper {
       @Override
       protected void onImpl() {
         myWrapper.setVisible(true);
+        setText("Click to hide preview");
         initDetails();
         myLabel.setIcon(myIconOpen);
         myOn = true;
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
-        dialog.setSize(dialog.getSize().width, dialog.getSize().height + myWrapper.getPreferredSize().height);
-        dialog.getRootPane().revalidate();
-        dialog.getRootPane().repaint();
+        revalidate();
+        myAddedWidth = getPreferredSize().width - getSize().width;
+        resizeTo(dialog.getSize().width + myAddedWidth, dialog.getSize().height + myPreviewEditor.getPanel().getPreferredSize().height);
       }
 
       @Override
       protected void offImpl() {
         myLabel.setIcon(myIcon);
+        setText("Click to preview");
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
-        dialog.setSize(dialog.getSize().width, dialog.getSize().height - myWrapper.getPreferredSize().height);
-        dialog.getRootPane().revalidate();
-        dialog.getRootPane().repaint();
+        resizeTo(dialog.getSize().width - myAddedWidth, dialog.getSize().height - myPreviewEditor.getPanel().getPreferredSize().height);
         myWrapper.removeAll();
         myWrapper.setVisible(false);
         myOn = false;
       }
     };
   }
-  
+
+  private void resizeTo(final int newWidth, final int newHeight) {
+    setSize(newWidth, newHeight);
+    getRootPane().revalidate();
+    getRootPane().repaint();
+  }
+
   private class MyColorPreviewPanel extends JPanel implements RefreshablePanel {
     private final JPanel myWrapper;
 
@@ -223,7 +232,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
       int wrapperHeight = 0;
       if (myPreviewEditor != null) {
-        wrapperHeight = myWrapper.getPreferredSize().height;
+        wrapperHeight = myPreviewEditor.getPanel().getPreferredSize().height;
         myPreviewEditor.disposeUIResources();
         myWrapper.removeAll();
       }
@@ -236,12 +245,10 @@ public class InitialConfigurationDialog extends DialogWrapper {
       assert page != null;
       myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, page.getSettingsPage(), false);
       myPreviewEditor.updateView();
-      myWrapper.add(myPreviewEditor.getPanel(), BorderLayout.CENTER);
+      myWrapper.add(myPreviewEditor.getPanel(), BorderLayout.EAST);
       if (recalculateDialogSize) {
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
-        dialog.setSize(dialog.getSize().width, dialog.getSize().height - wrapperHeight + myWrapper.getPreferredSize().height);
-        dialog.getRootPane().revalidate();
-        dialog.getRootPane().repaint();
+        resizeTo(dialog.getSize().width, dialog.getSize().height - wrapperHeight + myPreviewEditor.getPanel().getPreferredSize().height);
       }
     }
   }

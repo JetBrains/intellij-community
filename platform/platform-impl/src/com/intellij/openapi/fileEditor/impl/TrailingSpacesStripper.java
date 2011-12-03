@@ -99,7 +99,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
   // clears line modification flags except lines which was not stripped because the caret was in the way
   public void clearLineModificationFlags(@NotNull Document document) {
     if (document instanceof DocumentWindow) {
-      document = ((DocumentWindow) document).getDelegate();
+      document = ((DocumentWindow)document).getDelegate();
     }
     if (!(document instanceof DocumentImpl)) {
       return;
@@ -129,7 +129,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
   public static boolean stripIfNotCurrentLine(Document document, boolean inChangedLinesOnly) {
     if (document instanceof DocumentWindow) {
-      document = ((DocumentWindow) document).getDelegate();
+      document = ((DocumentWindow)document).getDelegate();
     }
     if (!(document instanceof DocumentImpl)) {
       return true;
@@ -146,13 +146,17 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     int caretOffset = activeEditor == null ? -1 : activeEditor.getCaretModel().getOffset();
 
     final Project project = activeEditor == null ? null : activeEditor.getProject();
-    boolean markAsNeedsStrippingLater = ((DocumentImpl) document).stripTrailingSpaces(project, inChangedLinesOnly, isVirtualSpaceEnabled,
-                                                                                      caretLine, caretOffset);
+    boolean markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(project, inChangedLinesOnly, isVirtualSpaceEnabled,
+                                                                                     caretLine, caretOffset);
 
     if (!ShutDownTracker.isShutdownHookRunning() && activeEditor != null) {
       activeEditor.getCaretModel().moveToVisualPosition(visualCaret);
     }
     return !markAsNeedsStrippingLater;
+  }
+
+  public void documentDeleted(@NotNull Document doc) {
+    myDocumentsToStripLater.remove(doc);
   }
 
   @Override

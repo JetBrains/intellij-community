@@ -201,7 +201,43 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xunit\n");
   }
-  
+
+
+  public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() throws Exception {
+    Node com = myRoot.addChild("com");
+    Node folder1 = com.addChild("folder1");
+    Node folder2 = com.addChild("folder2");
+
+    Node file21 = folder2.addChild("file21");
+    folder2.addChild("file22");
+
+    mySmartExpand = true;
+    activate();
+
+    buildNode(file21, true);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  folder1\n" +
+               "  -folder2\n" +
+               "   [file21]\n" +
+               "   file22\n");
+
+    folder2.myChildElements.remove(file21);
+    folder1.addChild(file21);
+
+    getBuilder().queueUpdateFrom(folder2.getElement(), false);
+    getBuilder().queueUpdateFrom(folder1.getElement(), false);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  -folder1\n" +
+               "   [file21]\n" +
+               "  -folder2\n" +
+               "   file22\n");
+
+  }
+
   public void testReadyCallbackWhenReleased() throws Exception {
     buildStructure(myRoot);
 
@@ -2568,6 +2604,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       //todo
     }
 
+    @Override
+    public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() throws Exception {
+      // doesn't make sense since passthrough mode is always serial, it doesn't queue for updates
+    }
 
     @Override
     public void testElementMove1() throws Exception {

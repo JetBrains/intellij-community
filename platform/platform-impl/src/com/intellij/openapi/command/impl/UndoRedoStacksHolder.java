@@ -122,7 +122,7 @@ class UndoRedoStacksHolder {
 
   public void addToStacks(UndoableGroup group) {
     for (LinkedList<UndoableGroup> each : getAffectedStacks(group)) {
-      doAddToStack(each, group, each == myGlobalStack ? UndoManagerImpl.GLOBAL_UNDO_LIMIT : UndoManagerImpl.LOCAL_UNDO_LIMIT);
+      doAddToStack(each, group, each == myGlobalStack ? UndoManagerImpl.getGlobalUndoLimit() : UndoManagerImpl.getDocumentUndoLimit());
     }
   }
 

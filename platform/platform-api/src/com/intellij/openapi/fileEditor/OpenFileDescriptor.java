@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,6 +147,9 @@ public class OpenFileDescriptor implements Navigatable {
       if (editor instanceof TextEditor) {
         Editor e = ((TextEditor)editor).getEditor();
         unfoldCurrentLine(e);
+        if (focusEditor) {
+          IdeFocusManager.getInstance(myProject).requestFocus(e.getContentComponent(), true);
+        }
       }
     }
     return !editors.isEmpty();
@@ -205,7 +209,7 @@ public class OpenFileDescriptor implements Navigatable {
     }
   }
 
-  private static void unfoldCurrentLine(@NotNull final Editor editor) {
+  private void unfoldCurrentLine(@NotNull final Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     final int offset = editor.getCaretModel().getOffset();
     int line = editor.getDocument().getLineNumber(offset);

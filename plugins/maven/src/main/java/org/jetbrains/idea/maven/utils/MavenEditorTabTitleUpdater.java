@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.util.List;
 
-public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
+public class MavenEditorTabTitleUpdater extends MavenSimpleProjectComponent {
   public MavenEditorTabTitleUpdater(Project project) {
     super(project);
   }
