@@ -141,7 +141,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
     }
     else {
-      panel.add(buttonPanel, BorderLayout.EAST);
+      panel.add(buttonPanel, BorderLayout.CENTER);
       GroupLayout layout = new GroupLayout(buttonPanel);
       buttonPanel.setLayout(layout);
       layout.setAutoCreateGaps(true);
@@ -151,11 +151,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       final Collection<Component> buttons = Lists.newArrayListWithExpectedSize(5);
       final boolean helpAvailable = ApplicationInfo.contextHelpAvailable();
 
+      if (helpAvailable && UIUtil.isUnderGTKLookAndFeel()) {
+        add(hGroup, vGroup, buttons, myHelpButton);
+      }
+      add(hGroup, vGroup, null, Box.createHorizontalGlue());
       if (mySteps.size() > 1) {
         add(hGroup, vGroup, buttons, myPreviousButton, myNextButton);
       }
       add(hGroup, vGroup, buttons, myFinishButton, myCancelButton);
-      if (helpAvailable) {
+      if (helpAvailable && !UIUtil.isUnderGTKLookAndFeel()) {
         add(hGroup, vGroup, buttons, myHelpButton);
       }
 
@@ -212,12 +216,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   private static void add(final GroupLayout.Group hGroup,
                           final GroupLayout.Group vGroup,
-                          final Collection<Component> all,
+                          @Nullable final Collection<Component> collection,
                           final Component... components) {
     for (Component component : components) {
       hGroup.addComponent(component);
       vGroup.addComponent(component);
-      all.add(component);
+      if (collection != null) collection.add(component);
     }
   }
 
