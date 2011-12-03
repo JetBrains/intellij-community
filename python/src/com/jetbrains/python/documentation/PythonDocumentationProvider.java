@@ -4,6 +4,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -435,7 +436,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   public static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS); // link item to containing class
 
-  public String generateDocumentationContentStub(PyFunction element, String offset, boolean checkReturn) {
+  public static String generateDocumentationContentStub(PyFunction element, String offset, boolean checkReturn) {
     Project project = element.getProject();
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
     String result = "";
@@ -446,6 +447,27 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     else
       result += offset;
     return result;
+  }
+  
+  public static void inserDocStub(PyFunction function, Project project, Editor editor) {
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    PyStatementList list = function.getStatementList();
+    PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(list, PsiWhiteSpace.class);
+    String ws = "\n";
+    if (whitespace != null) {
+      String[] spaces = whitespace.getText().split("\n");
+      if (spaces.length > 1)
+        ws = ws + whitespace.getText().split("\n")[1];
+    }
+    String docContent = ws + generateDocumentationContentStub(function, ws, true);
+    PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
+    if (list.getStatements().length != 0)
+      list.addBefore(string, list.getStatements()[0]);
+    if (editor != null) {
+      int offset = function.getDocStringExpression().getTextOffset();
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
+    }
   }
 
   public String generateDocumentationContentStub(PyFunction element, boolean checkReturn) {
@@ -459,7 +481,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return generateDocumentationContentStub(element, ws, checkReturn);
   }
 
-  private String generateContent(PyFunction element, String offset, String prefix, boolean checkReturn) {
+  private static String generateContent(PyFunction element, String offset, String prefix, boolean checkReturn) {
     PyParameter[] list = element.getParameterList().getParameters();
     StringBuilder builder = new StringBuilder(offset);
     for(PyParameter p : list) {

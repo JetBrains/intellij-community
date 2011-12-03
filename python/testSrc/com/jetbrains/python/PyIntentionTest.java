@@ -156,6 +156,17 @@ public class PyIntentionTest extends PyTestCase {
     assertNull(action);
   }
 
+  public void testDictLiteralFormToConstructor2() {      //PY-5157
+    myFixture.configureByFile("intentions/beforeDictLiteralFormToConstructor2" + ".py");
+    final IntentionAction action = myFixture.getAvailableIntention(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
+    assertNull(action);
+  }
+  public void testDictLiteralFormToConstructor3() {
+    myFixture.configureByFile("intentions/beforeDictLiteralFormToConstructor3" + ".py");
+    final IntentionAction action = myFixture.getAvailableIntention(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
+    assertNull(action);
+  }
+
   public void testQuotedString() {      //PY-2915
     doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
   }

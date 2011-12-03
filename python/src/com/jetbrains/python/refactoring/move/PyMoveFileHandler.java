@@ -69,24 +69,26 @@ public class PyMoveFileHandler extends MoveFileHandler {
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
       if (element != null) {
-        // TODO: Check if the element still exists/valid
         final PsiNamedElement newElement = element.getCopyableUserData(REFERENCED_ELEMENT);
         element.putCopyableUserData(REFERENCED_ELEMENT, null);
         if (newElement != null) {
           final PsiFile file = element.getContainingFile();
-          final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(usage.getElement(), PyImportStatementBase.class);
+          final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class);
           // TODO: Retarget qualified expressions in docstrings
           if (importStmt != null) {
+            updatedFiles.add(file);
             PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
+            if (importStmt instanceof PyFromImportStatement && PsiTreeUtil.getParentOfType(element, PyImportElement.class) != null) {
+              continue;
+            }
             final PyQualifiedName newElementName = ResolveImportUtil.findCanonicalImportPath(newElement, element);
             replaceWithQualifiedExpression(element, newElementName);
-            updatedFiles.add(file);
           }
           else if (element instanceof PyReferenceExpression) {
+            updatedFiles.add(file);
             final PyQualifiedName newElementName = PyQualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
             replaceWithQualifiedExpression(element, newElementName);
             PyClassRefactoringUtil.insertImport(element, newElement, null);
-            updatedFiles.add(file);
           }
         }
       }

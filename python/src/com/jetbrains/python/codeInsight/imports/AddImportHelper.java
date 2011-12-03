@@ -123,7 +123,7 @@ public class AddImportHelper {
    * @param name   which to import (qualified is OK)
    * @param asName optional name for 'as' clause
    */
-  public static void addImportStatement(PsiFile file, String name, @Nullable String asName, ImportPriority priority) {
+  public static boolean addImportStatement(PsiFile file, String name, @Nullable String asName, ImportPriority priority) {
     String as_clause;
     if (asName == null) {
       as_clause = "";
@@ -136,7 +136,7 @@ public class AddImportHelper {
       final PyQualifiedName qName = element.getImportedQName();
       if (qName != null && name.equals(qName.toString())) {
         if ((asName != null && asName.equals(element.getAsName())) || asName == null) {
-          return;
+          return false;
         }
       }
     }
@@ -149,6 +149,7 @@ public class AddImportHelper {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    return true;
   }
 
   /**
@@ -177,22 +178,23 @@ public class AddImportHelper {
     }
   }
 
-  public static void addImportFrom(PsiFile file, String path, final String name, @Nullable String asName, ImportPriority priority) {
+  public static boolean addImportFrom(PsiFile file, String path, final String name, @Nullable String asName, ImportPriority priority) {
     final List<PyFromImportStatement> existingImports = ((PyFile)file).getFromImports();
     for (PyFromImportStatement existingImport : existingImports) {
       final PyQualifiedName qName = existingImport.getImportSourceQName();
       if (qName != null && qName.toString().equals(path)) {
         for (PyImportElement el : existingImport.getImportElements()) {
           if (name.equals(el.getVisibleName())) {
-            return;
+            return false;
           }
         }
         PyImportElement importElement = PyElementGenerator.getInstance(file.getProject()).createImportElement(name);
         existingImport.add(importElement);
-        return;
+        return false;
       }
     }
     addImportFromStatement(file, path, name, asName, priority);
+    return true;
   }
 
   public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {

@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author Alexey.Ivanov
@@ -114,5 +115,22 @@ public class PyStatementMoverTest extends PyTestCase {
 
   public void testEmptyLine() { // PY-5197
     doTest();
+  }
+
+  public void testDocstring() { // PY-5203
+    doTest();
+  }
+
+  public void testOneLineCompoundOutside() { // PY-5201
+    doTest();
+  }
+
+  public void testWith() { // PY-5202
+    try {
+      setLanguageLevel(LanguageLevel.PYTHON27);
+      doTest();
+    } finally {
+      setLanguageLevel(null);
+    }
   }
 }

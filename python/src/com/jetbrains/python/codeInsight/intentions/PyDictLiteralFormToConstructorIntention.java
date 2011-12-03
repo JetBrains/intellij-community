@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -38,23 +39,18 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
 
     if (dictExpression != null) {
       PyKeyValueExpression[] elements = dictExpression.getElements();
-      boolean canConvert = true;
       if (elements.length != 0) {
         for (PyKeyValueExpression element : elements) {
           PyExpression key = element.getKey();
           if (! (key instanceof PyStringLiteralExpression)) return false;
           String str = ((PyStringLiteralExpression)key).getStringValue();
           if (PyNames.isReserved(str)) return false;
+
           if(str.length() == 0 || Character.isDigit(str.charAt(0))) return false;
-          try {
-            Integer.parseInt(str) ;
-            canConvert = false;
-          } catch (NumberFormatException e) {
-            // pass
-          }
+          if (!StringUtil.isJavaIdentifier(str)) return false;
         }
       }
-      if (canConvert) return true;
+      return true;
     }
     return false;
   }

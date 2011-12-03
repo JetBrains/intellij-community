@@ -3,10 +3,14 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -55,6 +59,18 @@ public abstract class PythonSdkFlavor {
     result.add(IronPythonSdkFlavor.INSTANCE);
     result.add(PyPySdkFlavor.INSTANCE);
     return result;
+  }
+
+  @Nullable
+  public static PythonSdkFlavor getFlavor(Sdk sdk) {
+    final SdkAdditionalData data = sdk.getSdkAdditionalData();
+    if (data instanceof PythonSdkAdditionalData) {
+      PythonSdkFlavor flavor = ((PythonSdkAdditionalData)data).getFlavor();
+      if (flavor != null) {
+        return flavor;
+      }
+    }
+    return getFlavor(sdk.getHomePath());
   }
 
   @Nullable
@@ -143,5 +159,17 @@ public abstract class PythonSdkFlavor {
       final String encoding = defaultCharset.name();
       PythonEnvUtil.setPythonIOEncoding(envs, encoding);
     }
+  }
+
+  @NotNull
+  public abstract String getName();
+
+  public LanguageLevel getLanguageLevel(Sdk sdk) {
+    final String version = sdk.getVersionString();
+    final String prefix = getName() + " ";
+    if (version != null && version.startsWith(prefix)) {
+      return LanguageLevel.fromPythonVersion(version.substring(prefix.length()));
+    }
+    return LanguageLevel.getDefault();
   }
 }

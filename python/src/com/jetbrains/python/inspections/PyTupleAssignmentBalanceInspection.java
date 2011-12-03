@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,9 +46,14 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       if (assignedValue instanceof PyReferenceExpression) {          // PY-4357
         assignedValue = ((PyReferenceExpression)assignedValue).followAssignmentsChain(resolveWithoutImplicits()).getElement();
       }
-      if (lhsExpression instanceof PyTupleExpression && assignedValue instanceof PyTupleExpression) {
-        int valuesLength = ((PyTupleExpression)assignedValue).getElements().length;
+      if (lhsExpression instanceof PyTupleExpression) {
+        int valuesLength = 1;
         PyExpression[] elements = ((PyTupleExpression) lhsExpression).getElements();
+        if (assignedValue instanceof PySequenceExpression)
+          valuesLength = ((PySequenceExpression)assignedValue).getElements().length;
+        else if (assignedValue instanceof PyDictLiteralExpression)
+          valuesLength = ((PyDictLiteralExpression)assignedValue).getElements().length;
+
         boolean containsStarExpression = false;
         VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
         if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {

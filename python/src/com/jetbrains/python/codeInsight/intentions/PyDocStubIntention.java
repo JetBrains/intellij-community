@@ -5,12 +5,12 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,24 +48,9 @@ public class PyDocStubIntention extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
     PyFunction function = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFunction.class);
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PythonDocumentationProvider documentationProvider = new PythonDocumentationProvider();
-    PyStatementList list = function.getStatementList();
-    PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(list, PsiWhiteSpace.class);
-    String ws = "\n";
-    if (whitespace != null) {
-      String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 1)
-        ws = ws + whitespace.getText().split("\n")[1];
-    }
-    String docContent = ws + documentationProvider.generateDocumentationContentStub(function, ws, true);
-    PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
-    if (list.getStatements().length != 0)
-      list.addBefore(string, list.getStatements()[0]);
+    PythonDocumentationProvider.inserDocStub(function, project, editor);
 
-    int offset = function.getDocStringExpression().getTextOffset();
-    editor.getCaretModel().moveToOffset(offset);
-    editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
+
   }
 
 }
