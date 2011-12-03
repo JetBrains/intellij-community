@@ -26,7 +26,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -92,9 +91,9 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
     editor.getCaretModel().moveToOffset(endOffset);
 
     GroovyPsiElement selectedArea =
-      GroovyRefactoringUtil.findElementInRange(((GroovyFileBase)file), startOffset, endOffset, GrReferenceExpression.class);
+      GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class);
     if (selectedArea == null) {
-      PsiElement identifier = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase)file), startOffset, endOffset, PsiElement.class);
+      PsiElement identifier = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
       if (identifier != null) {
         Assert.assertTrue("Selected area doesn't point to var", identifier.getParent() instanceof GrVariable);
         selectedArea = (GroovyPsiElement)identifier.getParent();

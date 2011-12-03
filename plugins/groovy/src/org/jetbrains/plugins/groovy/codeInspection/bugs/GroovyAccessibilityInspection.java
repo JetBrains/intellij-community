@@ -108,7 +108,9 @@ public class GroovyAccessibilityInspection extends BaseInspection {
       String[] modifiers = {PsiModifier.PROTECTED, PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL};
       PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(location, PsiClass.class, false);
       if (accessObjectClass == null) {
-        accessObjectClass = ((GroovyFile)location.getContainingFile()).getScriptClass();
+        final PsiFile file = location.getContainingFile();
+        if (!(file instanceof GroovyFile)) return GroovyFix.EMPTY_ARRAY;
+        accessObjectClass = ((GroovyFile)file).getScriptClass();
       }
       for (int i = ArrayUtil.indexOf(modifiers, minModifier); i < modifiers.length; i++) {
         String modifier = modifiers[i];

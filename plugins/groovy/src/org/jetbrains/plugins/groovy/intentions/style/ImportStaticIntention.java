@@ -43,19 +43,20 @@ public class ImportStaticIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    LOG.assertTrue(element instanceof GrReferenceExpression);
+    if (!(element instanceof GrReferenceExpression)) return;
     final GrReferenceExpression ref = (GrReferenceExpression)element;
     final PsiElement resolved = ref.resolve();
-    LOG.assertTrue(resolved instanceof PsiMember);
+    if (!(resolved instanceof PsiMember)) return;
 
     final PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
-    LOG.assertTrue(containingClass != null);
+    if (containingClass == null) return;
     final String qname = containingClass.getQualifiedName();
     final String name = ((PsiMember)resolved).getName();
 
     final PsiFile containingFile = element.getContainingFile();
-    LOG.assertTrue(containingFile instanceof GroovyFile);
-    ((GroovyFile)containingFile).accept(new GroovyRecursiveElementVisitor() {
+    if (!(containingFile instanceof GroovyFile)) return;
+    final GroovyFile file = (GroovyFile)containingFile;
+    file.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(GrReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -72,7 +73,7 @@ public class ImportStaticIntention extends Intention {
       GroovyPsiElementFactory.getInstance(project).createImportStatementFromText(qname + "." + name, true, false, null);
 
 
-    ((GroovyFile)containingFile).addImport(importStatement);
+    file.addImport(importStatement);
 
     for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
       final PsiElement refElement = reference.getElement();
@@ -82,7 +83,7 @@ public class ImportStaticIntention extends Intention {
     }
 
 
-    ((GroovyFile)containingFile).accept(new GroovyRecursiveElementVisitor() {
+    file.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(GrReferenceExpression expression) {
         super.visitReferenceExpression(expression);

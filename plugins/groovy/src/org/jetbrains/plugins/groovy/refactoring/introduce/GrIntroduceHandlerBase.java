@@ -42,7 +42,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -243,8 +242,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         throw new GrIntroduceRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
       }
 
-      GrExpression selectedExpr = findExpression((GroovyFileBase)file, startOffset, endOffset);
-      final GrVariable variable = findVariable((GroovyFile)file, startOffset, endOffset);
+      GrExpression selectedExpr = findExpression(file, startOffset, endOffset);
+      final GrVariable variable = findVariable(file, startOffset, endOffset);
       if (variable != null) {
         checkVariable(variable);
       }
@@ -281,7 +280,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  public static GrVariable findVariable(GroovyFile file, int startOffset, int endOffset) {
+  public static GrVariable findVariable(PsiFile file, int startOffset, int endOffset) {
     GrVariable var = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrVariable.class);
     if (var == null) {
       final GrVariableDeclaration variableDeclaration =
@@ -299,7 +298,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  public static GrExpression findExpression(GroovyFileBase file, int startOffset, int endOffset) {
+  public static GrExpression findExpression(PsiFile file, int startOffset, int endOffset) {
     GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
     while (selectedExpr instanceof GrParenthesizedExpression) selectedExpr = ((GrParenthesizedExpression)selectedExpr).getOperand();
     if (selectedExpr == null) return null;

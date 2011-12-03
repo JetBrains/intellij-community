@@ -23,7 +23,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -79,7 +78,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
 
     myEditor.getSelectionModel().setSelection(startOffset, endOffset);
 
-    GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) myFixture.getFile()), startOffset, endOffset, GrExpression.class);
+    GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(myFixture.getFile(), startOffset, endOffset, GrExpression.class);
 
     Assert.assertNotNull("Selected expression reference points to null", selectedExpr);
 
