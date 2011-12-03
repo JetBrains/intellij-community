@@ -20,14 +20,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -93,7 +96,20 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
       document.setText(builder.toString());
       PsiDocumentManager.getInstance(myProject).commitDocument(document);
       String fileName = getNewFileName(file);
-      PsiElement newFile = file.setName(fileName);
+      PsiElement newFile;
+      try {
+        newFile = file.setName(fileName);
+      }
+      catch (final IncorrectOperationException e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showMessageDialog(myProject, e.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+          }
+        });
+        return;
+      }
+
 
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       // don't move classes to new files with corresponding class names and reformat
