@@ -95,9 +95,6 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     final BaseInspectionVisitor visitor = buildGroovyVisitor(problemsHolder, isOnTheFly);
     groovyFile.accept(visitor);
     final List<ProblemDescriptor> problems = problemsHolder.getResults();
-    if (problems == null) {
-      return null;
-    }
     return problems.toArray(new ProblemDescriptor[problems.size()]);
 
   }
