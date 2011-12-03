@@ -18,10 +18,10 @@ package org.jetbrains.plugins.groovy.completion;
 
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.completion.StaticallyImportable
 
 /**
  * @author peter
@@ -109,6 +109,10 @@ class Expected {
     myFixture.checkResult '''import static Expected.fooField
 
 Expected exp = fooField'''
+  }
+  
+  void testInnerClassReferenceWithoutQualifier() {
+    doSmartTest()
   }
 
   def getFileText(PsiFile file) {
