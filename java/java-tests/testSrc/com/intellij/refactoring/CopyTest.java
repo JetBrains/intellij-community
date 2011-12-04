@@ -68,4 +68,29 @@ public class CopyTest extends CodeInsightTestCase {
 
     PlatformTestUtil.assertFilesEqual(fileExpected, fileAfter);
   }
+
+  public void testMultipleFiles() throws Exception {
+    String rootBefore = getRoot();
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    final VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
+
+    final VirtualFile first = root.findFileByRelativePath("from/1.txt");
+    assertNotNull(first);
+    final VirtualFile second = root.findFileByRelativePath("from/2.txt");
+    assertNotNull(second);
+
+    final PsiFile firstPsi = myPsiManager.findFile(first);
+    final PsiFile secondPsi = myPsiManager.findFile(second);
+
+    assertTrue(CopyHandler.canCopy(new PsiElement[]{firstPsi, secondPsi}));
+
+    final VirtualFile toDir = root.findChild("to");
+    assertNotNull(toDir);
+    final PsiDirectory targetDirectory = myPsiManager.findDirectory(toDir);
+
+    CopyHandler.doCopy(new PsiElement[]{firstPsi, secondPsi}, targetDirectory);
+
+    assertNotNull(root.findFileByRelativePath("to/1.txt"));
+    assertNotNull(root.findFileByRelativePath("to/2.txt"));
+  }
 }
