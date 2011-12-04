@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.siyeh.ipp.psiutils;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -39,7 +40,7 @@ public class PsiSelectionSearcher {
    * @param editor          editor to get text selection
    * @param project         Project
    * @param filter          PsiElement filter, e.g. PsiMethodCallExpression.class
-   * @param dontStopOnFound if true, visitor will look inside found elements. if false, visitor will stop looking for elements in children of found element
+   * @param searchChildrenOfFound if true, visitor will look for matching elements in the children of a found element, otherwise will not look inside found element.
    * @param <T>             type based on PsiElement type
    * @return elements in selection
    */
@@ -47,28 +48,31 @@ public class PsiSelectionSearcher {
   public static <T extends PsiElement> List<T> searchElementsInSelection(Editor editor,
                                                                          Project project,
                                                                          final Class<T> filter,
-                                                                         final boolean dontStopOnFound) {
-    final TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
-
+                                                                         final boolean searchChildrenOfFound) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (!selectionModel.hasSelection()) {
+      return Collections.emptyList();
+    }
+    final TextRange selection = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file == null || file instanceof PsiCompiledElement) return Collections.emptyList();
-
+    if (file == null || file instanceof PsiCompiledElement) {
+      return Collections.emptyList();
+    }
     final List<T> results = new ArrayList<T>();
 
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        if (!selection.intersects(element.getTextRange())) return;
-
+        if (!selection.intersects(element.getTextRange())) {
+          return;
+        }
         if (filter.isAssignableFrom(element.getClass())) {
           results.add((T)element);
-          if (dontStopOnFound) {
-            super.visitElement(element);
+          if (!searchChildrenOfFound) {
+            return;
           }
         }
-        else {
-          super.visitElement(element);
-        }
+        super.visitElement(element);
       }
     };
 
