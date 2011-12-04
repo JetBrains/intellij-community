@@ -25,10 +25,8 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
@@ -66,14 +64,5 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
     if (hasParams) {
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-  }
-
-  private static GroovyPsiElement obtainPlace(InsertionContext context) {
-    PsiElement place = context.getFile().findElementAt(context.getStartOffset());
-    assert place != null;
-    if (place instanceof GroovyPsiElement) {
-      return (GroovyPsiElement)place;
-    }
-    return (GroovyFileBase)place.getContainingFile();
   }
 }

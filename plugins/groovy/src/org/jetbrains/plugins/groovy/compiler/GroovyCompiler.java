@@ -138,7 +138,8 @@ public class GroovyCompiler extends GroovyCompilerBase {
                                                   "You seem to have global Groovy AST transformations defined in your project,\n" +
                                                   "but they won't be applied to your code because they are not marked as compiler resources.\n" +
                                                   "Do you want to add them to compiler resource list?\n" +
-                                                  "(you can do it yourself later in Settings | Compiler | Resource patterns)", "AST Transformations found",
+                                                  "(you can do it yourself later in Settings | Compiler | Resource patterns)",
+                                                  "AST Transformations Found",
                                                   GroovyIcons.GROOVY_ICON_32x32);
       if (result == 0) {
         CompilerConfiguration.getInstance(myProject).addResourceFilePattern(AST_TRANSFORM_FILE_NAME);

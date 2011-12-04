@@ -55,7 +55,8 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     PsiFile file = context.getFile();
     Editor editor = context.getEditor();
     int endOffset = editor.getCaretModel().getOffset();
-    if (PsiTreeUtil.findElementOfClassAtOffset(file, endOffset - 1, GrImportStatement.class, false) != null) {
+    if (PsiTreeUtil.findElementOfClassAtOffset(file, endOffset - 1, GrImportStatement.class, false) != null ||
+        !(file instanceof GroovyFileBase)) {
       AllClassesGetter.INSERT_FQN.handleInsert(context, item);
       return;
     }

@@ -368,6 +368,10 @@ public abstract class DialogWrapper {
         }
       }
     }
+    else if (UIUtil.isUnderGTKLookAndFeel() && Arrays.asList(actions).contains(getHelpAction())) {
+      leftSideActions = ArrayUtil.append(leftSideActions, getHelpAction());
+      actions = ArrayUtil.remove(actions, getHelpAction());
+    }
 
     JPanel panel = new JPanel(new BorderLayout());
     final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());

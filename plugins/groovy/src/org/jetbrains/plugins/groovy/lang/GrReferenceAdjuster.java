@@ -91,34 +91,36 @@ public class GrReferenceAdjuster {
     final PsiElement resolved = resolveRef(ref, uncomplete);
     if (resolved == null) return false;
 
-    if (!CodeStyleSettingsManager.getSettings(ref.getProject()).INSERT_INNER_CLASS_IMPORTS && resolved instanceof PsiClass && ((PsiClass)resolved).getContainingClass() != null) {
-      return false;
-    }
-
-    final GrQualifiedReference<Qualifier> copy = getCopy(ref);
-
-    copy.setQualifier(null);
-    if (!copy.isReferenceTo(resolved)) {
-      if (resolved instanceof PsiClass) {
-        final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
-        final PsiClass clazz = (PsiClass)resolved;
-        final String qName = clazz.getQualifiedName();
-        if (qName != null) {
-          if (addImports && mayInsertImport(ref)) {
-            final GrImportStatement added = file.addImportForClass(clazz);
-            if (!copy.isReferenceTo(resolved)) {
-              file.removeImport(added);
-              return false;
-            }
-          }
-        }
-      }
-      else {
-        return false;
-      }
-    }
+    if (!checkCopyWithoutQualifier(ref, addImports, resolved)) return false;
     ref.setQualifier(null);
     return true;
+  }
+
+  private static <Qualifier extends PsiElement> boolean checkCopyWithoutQualifier(GrQualifiedReference<Qualifier> ref,
+                                                                                  boolean addImports,
+                                                                                  PsiElement resolved) {
+    final GrQualifiedReference<Qualifier> copy = getCopy(ref);
+    copy.setQualifier(null);
+
+    if (copy.isReferenceTo(resolved)) return true;
+
+    if (resolved instanceof PsiClass) {
+      final PsiClass clazz = (PsiClass)resolved;
+      final String qName = clazz.getQualifiedName();
+      if (qName != null && addImports && checkIsInnerClass(clazz) && mayInsertImport(ref)) {
+        final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
+        final GrImportStatement added = file.addImportForClass(clazz);
+        if (copy.isReferenceTo(resolved)) return true;
+        file.removeImport(added);
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean checkIsInnerClass(PsiClass resolved) {
+    final PsiClass containingClass = resolved.getContainingClass();
+    return containingClass == null || CodeStyleSettingsManager.getSettings(resolved.getProject()).INSERT_INNER_CLASS_IMPORTS;
   }
 
   @Nullable
@@ -176,7 +178,8 @@ public class GrReferenceAdjuster {
   private static <Qualifier extends PsiElement> boolean mayInsertImport(GrQualifiedReference<Qualifier> ref) {
     return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null &&
            !(ref.getContainingFile() instanceof GroovyCodeFragment) &&
-           PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null;
+           PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null &&
+           ref.getContainingFile() instanceof GroovyFileBase;
   }
 
   public static boolean seemsToBeQualifiedClassName(@Nullable GrExpression expr) {

@@ -787,7 +787,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     assert file != null;
 
     PsiDirectory psiDirectory = file.getContainingDirectory();
-    if (psiDirectory != null) {
+    if (psiDirectory != null && file instanceof GroovyFile) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
       if (aPackage != null) {
         String packageName = aPackage.getQualifiedName();

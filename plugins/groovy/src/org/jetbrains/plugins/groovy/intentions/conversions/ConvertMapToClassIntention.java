@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -77,7 +76,8 @@ public class ConvertMapToClassIntention extends Intention {
     final GrListOrMap map = (GrListOrMap)element;
     final GrNamedArgument[] namedArguments = map.getNamedArguments();
     LOG.assertTrue(map.getInitializers().length == 0);
-    final String packageName = ((GroovyFileBase)map.getContainingFile()).getPackageName();
+    final PsiFile file = map.getContainingFile();
+    final String packageName = file instanceof GroovyFileBase ? ((GroovyFileBase)file).getPackageName() : "";
 
     final CreateClassDialog dialog =
       new CreateClassDialog(project, GroovyBundle.message("create.class.family.name"), "", packageName, CreateClassKind.CLASS, true,

@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.*;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.GroovyPlainEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -196,7 +195,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     reformat(atCaret);
     commit(editor);
 
-    atCaret = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) psiFile), rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
+    atCaret = GroovyRefactoringUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
 
 //    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
 

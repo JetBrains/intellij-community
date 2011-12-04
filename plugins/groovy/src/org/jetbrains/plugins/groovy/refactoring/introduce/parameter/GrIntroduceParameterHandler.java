@@ -53,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -145,8 +144,8 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler {
         throw new GrIntroduceRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
       }
 
-      GrExpression selectedExpr = GrIntroduceHandlerBase.findExpression((GroovyFileBase)file, startOffset, endOffset);
-      final GrVariable variable = GrIntroduceHandlerBase.findVariable((GroovyFile)file, startOffset, endOffset);
+      GrExpression selectedExpr = GrIntroduceHandlerBase.findExpression(file, startOffset, endOffset);
+      final GrVariable variable = GrIntroduceHandlerBase.findVariable(file, startOffset, endOffset);
       if (variable == null && selectedExpr == null) {
         throw new GrIntroduceRefactoringError(null);
       }
