@@ -102,6 +102,10 @@ public class GeneratorTest extends LightGroovyTestCase {
     myFixture.addClass("package groovy.lang; public @interface Delegate {}");
     doTest();
   }
+  public void testAutoCloneAnno() throws Throwable {
+    myFixture.addClass("package groovy.transform; public @interface AutoClone {}");
+    doTest();
+  }
 
   public void doTest() {
     final String relTestPath = getTestName(true) + ".test";
