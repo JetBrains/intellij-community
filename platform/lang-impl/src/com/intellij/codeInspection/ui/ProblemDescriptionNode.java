@@ -134,10 +134,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     // noinspection ConstantConditions
     if (message == null) return "";
 
-    if (message.contains("#ref")) {
-      String ref = extractHighlightedText(descriptor, element);
-      message = StringUtil.replace(message, "#ref", ref);
-    } else if (appendLineNumber && descriptor instanceof ProblemDescriptor && message.contains("#loc")) {
+    if (appendLineNumber && descriptor instanceof ProblemDescriptor && !message.contains("#ref") && message.contains("#loc")) {
       final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
       if (lineNumber >= 0) {
         message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + lineNumber + ")");
@@ -148,6 +145,10 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     message = StringUtil.replace(message, "#loc ", "");
     message = StringUtil.replace(message, " #loc", "");
     message = StringUtil.replace(message, "#loc", "");
+    if (message.contains("#ref")) {
+      String ref = extractHighlightedText(descriptor, element);
+      message = StringUtil.replace(message, "#ref", ref);
+    }
 
     final int endIndex = message.indexOf("#end");
     if (endIndex > 0) {
