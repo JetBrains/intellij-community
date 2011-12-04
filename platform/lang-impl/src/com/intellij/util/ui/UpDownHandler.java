@@ -15,10 +15,14 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
 
@@ -36,22 +40,12 @@ public class UpDownHandler {
     register(input, affectedComponent, true);
   }
   
-  public static void register(JComponent input, final JComponent affectedComponent, boolean registerOnBothComponents) {
+  public static void register(final JComponent input, final JComponent affectedComponent, boolean registerOnBothComponents) {
     final SelectionMover mover = new SelectionMover(affectedComponent);
-    final AnAction up = new AnAction("Up") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        mover.move(-1);
-      }
-    };
+    final AnAction up = new UpDownAction(mover, input, true);
     up.registerCustomShortcutSet(UP_KEY, input);
-    
-    final AnAction down = new AnAction("Down") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        mover.move(1);
-      }
-    };
+
+    final AnAction down = new UpDownAction(mover, input, false);
     down.registerCustomShortcutSet(DOWN_KEY, input);
     if (registerOnBothComponents) {
       up.registerCustomShortcutSet(UP_KEY, affectedComponent);
@@ -101,6 +95,38 @@ public class UpDownHandler {
       } else if (myList != null) {
         myList.setSelectedIndex(index);
       }
+    }
+  }
+  
+  static class UpDownAction extends AnAction {
+    private final int myDirection;
+    private final SelectionMover myMover;
+    private final JComponent myInput;
+
+    UpDownAction(SelectionMover mover, JComponent input, boolean isUp) {
+      super(isUp ? "Up" : "Down");
+      myMover = mover;
+      myInput = input;
+      myDirection = isUp ? -1 : 1;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myMover.move(myDirection);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      final LookupEx lookup;
+      if (myInput instanceof EditorTextField) {
+        lookup = LookupManager.getActiveLookup(((EditorTextField)myInput).getEditor());
+      } else if (myInput instanceof EditorComponentImpl) {
+        lookup = LookupManager.getActiveLookup(((EditorComponentImpl)myInput).getEditor());
+      } else {
+        lookup = null;
+      }
+
+      e.getPresentation().setEnabled(lookup == null);
     }
   }
 }
