@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -35,12 +36,12 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
   }
 
   @Override
-  public PyImportElement createPsi(PyImportElementStub stub) {
+  public PyImportElement createPsi(@NotNull PyImportElementStub stub) {
     return new PyImportElementImpl(stub);
   }
 
   @Override
-  public PyImportElementStub createStub(PyImportElement psi, StubElement parentStub) {
+  public PyImportElementStub createStub(@NotNull PyImportElement psi, StubElement parentStub) {
     final PyTargetExpression asName = psi.getAsNameElement();
     return new PyImportElementStubImpl(psi.getImportedQName(), asName != null ? asName.getName() : "", parentStub, getStubElementType());
   }

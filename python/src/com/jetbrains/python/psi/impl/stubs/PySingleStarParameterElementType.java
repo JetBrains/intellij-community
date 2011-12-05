@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PySingleStarParameterImpl;
 import com.jetbrains.python.psi.stubs.PySingleStarParameterStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -26,12 +27,12 @@ public class PySingleStarParameterElementType extends PyStubElementType<PySingle
   }
 
   @Override
-  public PySingleStarParameter createPsi(PySingleStarParameterStub stub) {
+  public PySingleStarParameter createPsi(@NotNull PySingleStarParameterStub stub) {
     return new PySingleStarParameterImpl(stub);
   }
 
   @Override
-  public PySingleStarParameterStub createStub(PySingleStarParameter psi, StubElement parentStub) {
+  public PySingleStarParameterStub createStub(@NotNull PySingleStarParameter psi, StubElement parentStub) {
     return new PySingleStarParameterStubImpl(parentStub);
   }
 

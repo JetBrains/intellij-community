@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -31,11 +32,11 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     super(debugName);
   }
 
-  public PyNamedParameter createPsi(final PyNamedParameterStub stub) {
+  public PyNamedParameter createPsi(@NotNull final PyNamedParameterStub stub) {
     return new PyNamedParameterImpl(stub);
   }
 
-  public PyNamedParameterStub createStub(final PyNamedParameter psi, final StubElement parentStub) {
+  public PyNamedParameterStub createStub(@NotNull final PyNamedParameter psi, final StubElement parentStub) {
     return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(),
                                         parentStub, getStubElementType());
   }

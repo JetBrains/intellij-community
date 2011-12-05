@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -33,12 +34,12 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
   }
 
   @Override
-  public PyFromImportStatement createPsi(PyFromImportStatementStub stub) {
+  public PyFromImportStatement createPsi(@NotNull PyFromImportStatementStub stub) {
     return new PyFromImportStatementImpl(stub);
   }
 
   @Override
-  public PyFromImportStatementStub createStub(PyFromImportStatement psi, StubElement parentStub) {
+  public PyFromImportStatementStub createStub(@NotNull PyFromImportStatement psi, StubElement parentStub) {
     return new PyFromImportStatementStubImpl(psi.getImportSourceQName(), psi.isStarImport(), psi.getRelativeLevel(), parentStub,
                                              getStubElementType());
   }

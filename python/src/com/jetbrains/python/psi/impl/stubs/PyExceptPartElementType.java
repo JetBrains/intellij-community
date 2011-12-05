@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyExceptPartImpl;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -26,12 +27,12 @@ public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub,
   }
 
   @Override
-  public PyExceptPart createPsi(PyExceptPartStub stub) {
+  public PyExceptPart createPsi(@NotNull PyExceptPartStub stub) {
     return new PyExceptPartImpl(stub);
   }
 
   @Override
-  public PyExceptPartStub createStub(PyExceptPart psi, StubElement parentStub) {
+  public PyExceptPartStub createStub(@NotNull PyExceptPart psi, StubElement parentStub) {
     return new PyExceptPartStubImpl(parentStub);
   }
 

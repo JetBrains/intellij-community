@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyDecoratorListImpl;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -27,11 +28,11 @@ public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorLis
     return new PyDecoratorListImpl(node);
   }
 
-  public PyDecoratorList createPsi(final PyDecoratorListStub stub) {
+  public PyDecoratorList createPsi(@NotNull final PyDecoratorListStub stub) {
     return new PyDecoratorListImpl(stub);
   }
 
-  public PyDecoratorListStub createStub(final PyDecoratorList psi, final StubElement parentStub) {
+  public PyDecoratorListStub createStub(@NotNull final PyDecoratorList psi, final StubElement parentStub) {
     return new PyDecoratorListStubImpl(parentStub);
   }
 

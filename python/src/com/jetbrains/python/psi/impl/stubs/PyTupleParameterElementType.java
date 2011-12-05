@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.PyTupleParameterImpl;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -25,11 +26,11 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
     return new PyTupleParameterImpl(node);
   }
 
-  public PyTupleParameter createPsi(PyTupleParameterStub stub) {
+  public PyTupleParameter createPsi(@NotNull PyTupleParameterStub stub) {
     return new PyTupleParameterImpl(stub);
   }
 
-  public PyTupleParameterStub createStub(PyTupleParameter psi, StubElement parentStub) {
+  public PyTupleParameterStub createStub(@NotNull PyTupleParameter psi, StubElement parentStub) {
     return new PyTupleParameterStubImpl(psi.hasDefaultValue(), parentStub);
   }
 
