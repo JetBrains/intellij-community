@@ -36,8 +36,8 @@ import org.jetbrains.annotations.NonNls;
   name = "PluginManagerConfigurable",
   storages = {
   @Storage(
-    file = "$APP_CONFIG$/other.xml")
-    }
+    file = "$APP_CONFIG$/plugin_ui.xml")
+  }
 )
 public class PluginManagerUISettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
