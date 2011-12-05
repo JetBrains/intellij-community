@@ -49,6 +49,7 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsi
         extractProcessor.testRun();
         processor.setCreateInnerClass(createInnerClass);
         processor.run();
+         processor.runChangeSignature();
         DuplicatesImpl.processDuplicates(extractProcessor, getProject(), getEditor());
         processor.getMethod().delete();
       }
