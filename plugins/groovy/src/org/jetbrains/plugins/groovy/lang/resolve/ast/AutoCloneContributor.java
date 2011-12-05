@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -34,7 +35,7 @@ public class AutoCloneContributor extends AstTransformContributor {
   public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
     if (PsiImplUtil.getAnnotation(clazz, GroovyCommonClassNames.GROOVY_TRANSFORM_AUTO_CLONE) == null) return;
 
-    final LightMethodBuilder clone = new LightMethodBuilder(clazz.getManager(), "clone");
+    final LightMethodBuilder clone = new LightMethodBuilder(clazz.getManager(), "clone").addModifier(PsiModifier.PUBLIC);
     clone.setContainingClass(clazz);
     clone.addException(CloneNotSupportedException.class.getName());
     collector.add(clone);

@@ -63,7 +63,11 @@ public class FlipSetterCallIntention extends Intention {
     if (qualifierExpression == null) return;
     final String qualifier1 = qualifierExpression.getText();
     if (qualifier1 == null || qualifier1.length() == 0) return;
-    final PsiMethodCallExpression param = (PsiMethodCallExpression)call.getArgumentList().getExpressions()[0];
+    final PsiExpression[] arguments = call.getArgumentList().getExpressions();
+    if (arguments.length != 1) return;
+    final PsiExpression argument = arguments[0];
+    if (!(argument instanceof PsiMethodCallExpression)) return;
+    final PsiMethodCallExpression param = (PsiMethodCallExpression)argument;
     qualifierExpression = param.getMethodExpression().getQualifierExpression();
     if (qualifierExpression == null) return;
     final String qualifier2 = qualifierExpression.getText();
