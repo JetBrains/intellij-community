@@ -17,11 +17,7 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -55,8 +51,8 @@ import java.util.List;
  * @author cdr
  */
 public class SSBasedInspection extends BaseJavaLocalInspectionTool {
+  static final String SHORT_NAME = "SSBasedInspection";
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
-  private MatcherImpl.CompiledOptions compiledConfigurations;
 
   public void writeSettings(Element node) throws WriteExternalException {
     ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
@@ -80,16 +76,19 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   @NonNls
   public String getShortName() {
-    return "SSBasedInspection";
+    return SHORT_NAME;
   }
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    if (compiledConfigurations == null) return super.buildVisitor(holder, isOnTheFly);
+    final MatcherImpl.CompiledOptions compiledOptions =
+      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(holder.getProject());
+
+    if (compiledOptions == null) return super.buildVisitor(holder, isOnTheFly);
     
     return new PsiElementVisitor() {
-      final List<Pair<MatchContext,Configuration>> contexts = compiledConfigurations.getMatchContexts();
+      final List<Pair<MatchContext,Configuration>> contexts = compiledOptions.getMatchContexts();
       final Matcher matcher = new Matcher(holder.getManager().getProject());
       final PairProcessor<MatchResult, Configuration> processor = new PairProcessor<MatchResult, Configuration>() {
         public boolean process(MatchResult matchResult, Configuration configuration) {
@@ -154,48 +153,19 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
     return new SSBasedInspectionOptions(myConfigurations){
       public void configurationsChanged(final SearchContext searchContext) {
         super.configurationsChanged(searchContext);
-        precompileConfigurations(searchContext.getProject());
+        SSBasedInspectionCompiledPatternsCache.precompileConfigurations(searchContext.getProject(), SSBasedInspection.this);
+        InspectionProfileManager.getInstance().fireProfileChanged(null);
       }
     }.getComponent();
-  }
-
-  private void precompileConfigurations(final Project project) {
-    if (compiledConfigurations == null) {
-      final Runnable precompile = new Runnable() {
-        public void run() {
-          if (!project.isDisposed()) {
-            Matcher matcher = new Matcher(project);
-            compiledConfigurations = matcher.precompileOptions(myConfigurations);
-            InspectionProfileManager.getInstance().fireProfileChanged(null);
-          }
-        }
-      };
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        precompile.run();
-      } else {
-        DumbService.getInstance(project).smartInvokeLater(precompile, ModalityState.NON_MODAL);
-      }
-    }
-  }
-
-  public void projectOpened(final Project project) {
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        precompileConfigurations(project);
-      }
-    });
-  }
-
-  @Override
-  public void projectClosed(Project project) {
-    super.projectClosed(project);
-    compiledConfigurations = null;
   }
 
   @TestOnly
   public void setConfigurations(final List<Configuration> configurations, final Project project) {
     myConfigurations = configurations;
-    Matcher matcher = new Matcher(project);
-    compiledConfigurations = matcher.precompileOptions(myConfigurations);
+    SSBasedInspectionCompiledPatternsCache.setCompiledOptions(project, configurations);
+  }
+
+  public List<Configuration> getConfigurations() {
+    return myConfigurations;
   }
 }

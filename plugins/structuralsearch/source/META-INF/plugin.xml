@@ -21,6 +21,8 @@
     <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name" groupName="General"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection"/>
+    <postStartupActivity
+        implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspectionCompiledPatternsCache"/>
     <!--<fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>-->
   </extensions>
 

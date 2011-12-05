@@ -1,0 +1,94 @@
+package com.intellij.structuralsearch.inspection.highlightTemplate;
+
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Key;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.structuralsearch.Matcher;
+import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * @author Eugene.Kudelevsky
+ */
+public class SSBasedInspectionCompiledPatternsCache implements StartupActivity, DumbAware {
+  private static final Key<MatcherImpl.CompiledOptions> COMPILED_OPTIONS_KEY = Key.create("SSR_INSPECTION_COMPILED_OPTIONS_KEY");
+
+  @Override
+  public void runActivity(final Project project) {
+     precompileConfigurations(project, null);
+  }
+
+  static void precompileConfigurations(final Project project, @Nullable final SSBasedInspection ssBasedInspection) {
+    final Runnable precompile = new Runnable() {
+      public void run() {
+        if (project.isDisposed()) {
+          return;
+        }
+        final MatcherImpl.CompiledOptions currentCompiledOptions = getCompiledOptions(project);
+
+        final SSBasedInspection inspection = ssBasedInspection != null ? ssBasedInspection : getInspection(project);
+        if (inspection == null) {
+          return;
+        }
+
+        List<Configuration> configurations = inspection.getConfigurations();
+        if (configurations == null) {
+          configurations = Collections.emptyList();
+        }
+
+        if ((currentCompiledOptions == null || currentCompiledOptions.getMatchContexts().isEmpty()) &&
+            configurations.isEmpty()) {
+          return;
+        }
+
+        final Matcher matcher = new Matcher(project);
+        final MatcherImpl.CompiledOptions compiledOptions = matcher.precompileOptions(configurations);
+
+        if (compiledOptions != null) {
+          project.putUserData(COMPILED_OPTIONS_KEY, compiledOptions);
+        }
+      }
+    };
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      precompile.run();
+    }
+    else {
+      UIUtil.invokeLaterIfNeeded(precompile);
+    }
+  }
+
+  @Nullable
+  private static SSBasedInspection getInspection(@NotNull Project project) {
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfileEntry entry = profile.getInspectionTool(SSBasedInspection.SHORT_NAME);
+
+    return entry instanceof InspectionToolWrapper
+           ? (SSBasedInspection)((InspectionToolWrapper)entry).getTool()
+           : null;
+  }
+
+  @Nullable
+  static MatcherImpl.CompiledOptions getCompiledOptions(@NotNull Project project) {
+    return project.getUserData(COMPILED_OPTIONS_KEY);
+  }
+
+  @TestOnly
+  static void setCompiledOptions(@NotNull Project project, @NotNull List<Configuration> configurations) {
+    final Matcher matcher = new Matcher(project);
+    project.putUserData(COMPILED_OPTIONS_KEY,
+                        matcher.precompileOptions(configurations));
+  }
+}
