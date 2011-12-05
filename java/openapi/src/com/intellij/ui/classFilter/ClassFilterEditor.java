@@ -63,7 +63,11 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   private final String myPatternsHelpId;
 
   public ClassFilterEditor(Project project) {
-    this (project, null, null);
+    this (project, null);
+  }
+
+  public ClassFilterEditor(Project project, ClassFilter classFilter) {
+    this (project, classFilter, null);
   }
 
   public ClassFilterEditor(Project project, ClassFilter classFilter, @Nullable String patternsHelpId) {
