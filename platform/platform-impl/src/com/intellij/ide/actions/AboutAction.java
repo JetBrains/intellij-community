@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,16 +32,18 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Properties;
 
 public class AboutAction extends AnAction implements DumbAware {
   @NonNls private static final String COMPANY_URL = "http://www.jetbrains.com/";      // TODO move to ApplicationInfo.xml
@@ -178,11 +179,9 @@ public class AboutAction extends AnAction implements DumbAware {
     public InfoSurface(Image image) {
       myImage = image;
 
-
       setOpaque(false);
-      //col = new Color(0xfa, 0xfa, 0xfa, 200);
       col = Color.white;
-      linkCol = ApplicationInfoImpl.getInstanceEx().getLogoTextColor();
+      linkCol = ApplicationInfoEx.getInstanceEx().getLogoTextColor();
       setBackground(col);
       ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       Calendar cal = ideInfo.getBuildDate();
@@ -192,9 +191,10 @@ public class AboutAction extends AnAction implements DumbAware {
       if (ideInfo.getBuild().isSnapshot()) {
         buildDate = new SimpleDateFormat("HH:mm, ").format(cal.getTime());
       }
-      buildDate += DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime());
+      buildDate += DateFormatUtil.formatAboutDialogDate(cal.getTime());
       myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", buildDate)));
       myLines.add(new AboutBoxLine(""));
+
       LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, false));
@@ -204,13 +204,11 @@ public class AboutAction extends AnAction implements DumbAware {
       }
       myLines.add(new AboutBoxLine(""));
 
-      {
-        final Properties properties = System.getProperties();
-        myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown")), true, false));
-        myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"))));
-        myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vendor", properties.getProperty("java.vendor", "unknown"))));
+      final Properties properties = System.getProperties();
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown")), true, false));
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"))));
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vendor", properties.getProperty("java.vendor", "unknown"))));
 
-      }
       myLines.add(new AboutBoxLine(""));
       myLines.add(new AboutBoxLine("JetBrains s.r.o.", true, false));
       myLines.add(new AboutBoxLine(COMPANY_URL, true, true));

@@ -148,7 +148,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     setStatusTextAndIcon(null, "");
   }
 
-  private void setStatusTextAndIcon(final Icon icon, final String text) {
+  private void setStatusTextAndIcon(@Nullable final Icon icon, final String text) {
     myTypeStatusLabel.setIcon(icon);
     myTypeStatusLabel.setText(text);
     pack();
@@ -177,7 +177,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         myClassComboBox.requestFocus();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   @Nullable
@@ -191,7 +191,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     final EditorComboBoxEditor comboEditor = new EditorComboBoxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
 
     final Document document = createDocument("");
-    assert document != null;
+    LOG.assertTrue(document != null);
 
     comboEditor.setItem(document);
 
@@ -213,7 +213,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         myTypeComboBox.requestFocus();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
 
     final EditorTextField editorTextField = (EditorTextField) myTypeComboBox.getEditor().getEditorComponent();
@@ -228,9 +228,6 @@ public abstract class DynamicDialog extends DialogWrapper {
     });
 
     PsiType type = typeConstraints.length == 1 ? typeConstraints[0].getDefaultType() : TypesUtil.getJavaLangObject(myContext);
-    if (type == null) {
-      type = TypesUtil.getJavaLangObject(myContext);
-    }
     myTypeComboBox.getEditor().setItem(createDocument(type.getCanonicalText()));
   }
 

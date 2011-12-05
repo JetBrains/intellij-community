@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
@@ -38,12 +39,12 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
     super("Enumeration constant");
   }
 
-  public GrEnumConstant createPsi(GrFieldStub stub) {
+  public GrEnumConstant createPsi(@NotNull GrFieldStub stub) {
     return new GrEnumConstantImpl(stub);
   }
 
   @Override
-  public GrFieldStub createStub(GrEnumConstant psi, StubElement parentStub) {
+  public GrFieldStub createStub(@NotNull GrEnumConstant psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY, GroovyElementTypes.ENUM_CONSTANT, GrFieldStub.buildFlags(psi), null);
   }

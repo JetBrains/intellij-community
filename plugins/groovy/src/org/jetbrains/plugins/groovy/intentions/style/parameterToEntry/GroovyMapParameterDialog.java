@@ -161,7 +161,7 @@ public class GroovyMapParameterDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         myNameComboBox.requestFocus();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     for (String possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);

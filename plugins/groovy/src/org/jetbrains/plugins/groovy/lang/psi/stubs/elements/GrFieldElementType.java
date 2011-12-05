@@ -20,6 +20,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
@@ -43,11 +44,11 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     super("field");
   }
 
-  public GrField createPsi(GrFieldStub stub) {
+  public GrField createPsi(@NotNull GrFieldStub stub) {
     return new GrFieldImpl(stub);
   }
 
-  public GrFieldStub createStub(GrField psi, StubElement parentStub) {
+  public GrFieldStub createStub(@NotNull GrField psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
 
     Set<String> namedParameters = Collections.emptySet();

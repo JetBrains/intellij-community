@@ -40,14 +40,15 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -66,6 +67,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -247,7 +249,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.setTreeCellRenderer(treeCellRenderer);
 
     myTreeTable.setRootVisible(false);
-    myTreeTable.setSelectionMode(DefaultTreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
+    myTreeTable.setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
 
     final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor();
 
@@ -318,11 +320,11 @@ public class DynamicToolWindowWrapper {
           final String qualifiedName = ((PsiClass)element).getQualifiedName();
 
           return new RefactoringElementListener() {
-            public void elementMoved(PsiElement newElement) {
+            public void elementMoved(@NotNull PsiElement newElement) {
               renameElement(qualifiedName, newElement);
             }
 
-            public void elementRenamed(PsiElement newElement) {
+            public void elementRenamed(@NotNull PsiElement newElement) {
               renameElement(qualifiedName, newElement);
             }
 
@@ -358,7 +360,7 @@ public class DynamicToolWindowWrapper {
         final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
         myTreeTable.editCellAt(selectionRow, TYPE_COLUMN, event);
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_F2, KeyEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_F2, InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
 
     // todo use "myTreeTable.setAutoCreateRowSorter(true);" since 1.6
 
@@ -510,7 +512,7 @@ public class DynamicToolWindowWrapper {
     }
   }
 
-  class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
+  static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
     public ClassColumnInfo(String name) {
       super(name);
     }
@@ -565,7 +567,7 @@ public class DynamicToolWindowWrapper {
           if (!(childObject instanceof DItemElement)) break;
 
           filterText = getFilter();
-          if (filterText == null || "".equals(filterText)) {
+          if (filterText == null || filterText.isEmpty()) {
             ((DItemElement)childObject).setHightlightedText("");
 
             dynamicNodes.add(dynamicNode);
@@ -689,7 +691,8 @@ public class DynamicToolWindowWrapper {
     }
 
     private static String[] mapToUnqualified(final String[] argumentsNames) {
-      return ContainerUtil.map2Array(argumentsNames, String.class, new Function<String, String>() {
+      return ContainerUtil.map2Array(argumentsNames, String.class, new NullableFunction<String, String>() {
+        @Nullable
         public String fun(final String s) {
           if (s == null) return null;
           int index = s.lastIndexOf(".");
@@ -741,7 +744,7 @@ public class DynamicToolWindowWrapper {
 
         if (element == null) return null;
         return element.getContainingFile();
-      } else if (LangDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         return new DeleteProvider() {
           @Override
           public void deleteElement(DataContext dataContext) {

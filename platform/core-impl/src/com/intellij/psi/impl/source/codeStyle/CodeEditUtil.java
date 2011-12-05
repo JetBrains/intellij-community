@@ -441,7 +441,7 @@ public class CodeEditUtil {
    * <ol>
    *   <li>This method is called with <code>'false'</code> argument;</li>
    *   <li>Document is processed at dedicated <code>'try'</code> block;</li>
-   *   <li>This method is called with <code>'false'</code> argument from <code>'finally'</code> section;</li>
+   *   <li>This method is called with <code>'true'</code> argument from <code>'finally'</code> section;</li>
    * </ol>
    </pre>
    */

@@ -42,7 +42,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     super(debugName);
   }
 
-  public GrTypeDefinitionStub createStub(TypeDef psi, StubElement parentStub) {
+  public GrTypeDefinitionStub createStub(@NotNull TypeDef psi, StubElement parentStub) {
     String[] superClassNames = psi.getSuperClassNames();
     final byte flags = GrTypeDefinitionStub.buildFlags(psi);
     return new GrTypeDefinitionStub(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName(), GrStubUtils

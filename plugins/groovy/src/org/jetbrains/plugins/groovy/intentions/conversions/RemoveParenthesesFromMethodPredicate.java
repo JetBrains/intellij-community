@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -50,8 +51,13 @@ class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
       if (rightParen != null) rightParen.delete();
       newStatementText.append(argumentList.getText());
     }
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
-    final GrStatement newStatement = factory.createStatementFromText(newStatementText.toString());
+    final GrStatement newStatement;
+    try {
+      newStatement = GroovyPsiElementFactory.getInstance(element.getProject()).createStatementFromText(newStatementText.toString());
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
     if (newStatement instanceof GrApplicationStatement) {
       final GrCommandArgumentList newArgList = ((GrApplicationStatement)newStatement).getArgumentList();
       if (newArgList == null && argumentList == null ||

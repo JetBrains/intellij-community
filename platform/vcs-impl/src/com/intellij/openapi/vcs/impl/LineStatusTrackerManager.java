@@ -212,14 +212,9 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (tracker == null && (! shouldBeInstalled)) return;
 
       if (tracker != null) {
-        if (! shouldBeInstalled) {
-          releaseTracker(document);
-          return;
-        } else {
-          tracker.resetForBaseRevisionLoad();
-          startAlarm(document, virtualFile);
-        }
-      } else if (shouldBeInstalled) {
+        releaseTracker(document);
+      }
+      if (shouldBeInstalled) {
         installTracker(virtualFile, document);
       }
     }

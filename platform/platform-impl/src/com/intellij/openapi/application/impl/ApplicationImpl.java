@@ -419,7 +419,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           LOG.error(t);
         }
         finally {
-          ReflectionUtil.resetThreadLocals();
+          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
         }
       }
@@ -440,7 +440,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           LOG.error(t);
         }
         finally {
-          ReflectionUtil.resetThreadLocals();
+          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
         }
         return null;

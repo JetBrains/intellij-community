@@ -36,6 +36,7 @@ public class EndHandler extends EditorActionHandler {
       return;
     }
 
+    lookup.markSelectionTouched();
     ListScrollingUtil.moveEnd(lookup.getList());
   }
 }

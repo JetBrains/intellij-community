@@ -103,7 +103,8 @@ public class GrabDependencies implements IntentionAction {
     assert vfile != null;
 
     if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", file.getResolveScope()) == null) {
-      Messages.showErrorDialog("Sorry, but IDEA cannot @Grab the dependencies without Ivy. Please add Ivy to your module dependencies and re-run the action.", "Ivy missing");
+      Messages.showErrorDialog("Sorry, but IDEA cannot @Grab the dependencies without Ivy. Please add Ivy to your module dependencies and re-run the action.",
+                               "Ivy Missing");
       return;
     }
 

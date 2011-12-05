@@ -100,6 +100,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
       if (ref != null &&
           ref.getQualifier() == null &&
+          context.getFile() instanceof GroovyFile &&
           !importAlreadyExists(member, ((GroovyFile)context.getFile()), ref) &&
           !PsiManager.getInstance(context.getProject()).areElementsEquivalent(ref.resolve(), member)) {
         ref.bindToElementViaStaticImport(containingClass);

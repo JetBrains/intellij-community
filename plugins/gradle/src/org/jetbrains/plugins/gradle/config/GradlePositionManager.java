@@ -30,8 +30,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
@@ -69,7 +69,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
-    return GroovyScriptTypeDetector.isSpecificScriptFile((GroovyFile)scriptFile, GradleScriptType.INSTANCE);
+    return scriptFile instanceof GroovyFile && GroovyScriptTypeDetector.isSpecificScriptFile((GroovyFile)scriptFile, GradleScriptType.INSTANCE);
   }
 
   @NotNull

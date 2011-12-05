@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.wizard;
 
+import com.google.common.collect.Lists;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -37,6 +38,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -113,10 +115,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
     JPanel buttonPanel = new JPanel();
-    buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
-    panel.add(buttonPanel, BorderLayout.EAST);
 
     if (SystemInfo.isMac) {
+      panel.add(buttonPanel, BorderLayout.EAST);
+      buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+
       myHelpButton.putClientProperty("JButton.buttonType", "help");
       if (UIUtil.isUnderAquaLookAndFeel()) {
         myHelpButton.setText("");
@@ -127,7 +130,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         leftPanel.add(myHelpButton);
       }
       leftPanel.add(myCancelButton);
-      
       panel.add(leftPanel, BorderLayout.WEST);
 
       buttonPanel.add(myFinishButton);
@@ -139,20 +141,31 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
     }
     else {
+      panel.add(buttonPanel, BorderLayout.CENTER);
+      GroupLayout layout = new GroupLayout(buttonPanel);
+      buttonPanel.setLayout(layout);
+      layout.setAutoCreateGaps(true);
+
+      final GroupLayout.SequentialGroup hGroup = layout.createSequentialGroup();
+      final GroupLayout.ParallelGroup vGroup = layout.createParallelGroup();
+      final Collection<Component> buttons = Lists.newArrayListWithExpectedSize(5);
+      final boolean helpAvailable = ApplicationInfo.contextHelpAvailable();
+
+      if (helpAvailable && UIUtil.isUnderGTKLookAndFeel()) {
+        add(hGroup, vGroup, buttons, myHelpButton);
+      }
+      add(hGroup, vGroup, null, Box.createHorizontalGlue());
       if (mySteps.size() > 1) {
-        buttonPanel.add(myPreviousButton);
-        buttonPanel.add(Box.createHorizontalStrut(5));
-        buttonPanel.add(myNextButton);
-        buttonPanel.add(Box.createHorizontalStrut(5));
+        add(hGroup, vGroup, buttons, myPreviousButton, myNextButton);
+      }
+      add(hGroup, vGroup, buttons, myFinishButton, myCancelButton);
+      if (helpAvailable && !UIUtil.isUnderGTKLookAndFeel()) {
+        add(hGroup, vGroup, buttons, myHelpButton);
       }
 
-      buttonPanel.add(myFinishButton);
-      buttonPanel.add(Box.createHorizontalStrut(5));
-      buttonPanel.add(myCancelButton);
-      buttonPanel.add(Box.createHorizontalStrut(5));
-      if (ApplicationInfo.contextHelpAvailable()) {
-        buttonPanel.add(myHelpButton);
-      }
+      layout.setHorizontalGroup(hGroup);
+      layout.setVerticalGroup(vGroup);
+      layout.linkSize(buttons.toArray(new Component[buttons.size()]));
     }
 
     myPreviousButton.setEnabled(false);
@@ -201,6 +214,17 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return panel;
   }
 
+  private static void add(final GroupLayout.Group hGroup,
+                          final GroupLayout.Group vGroup,
+                          @Nullable final Collection<Component> collection,
+                          final Component... components) {
+    for (Component component : components) {
+      hGroup.addComponent(component);
+      vGroup.addComponent(component);
+      if (collection != null) collection.add(component);
+    }
+  }
+
   private static class TallImageComponent extends OpaquePanel {
     private Icon myIcon;
 
@@ -217,13 +241,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myIcon.paintIcon(this, gg, 0, 0);
 
       final Rectangle bounds = g.getClipBounds();
-      int y = bounds.y;
+      int y = myIcon.getIconHeight()-1;
       while (y < bounds.y + bounds.height) {
         g.drawImage(image,
-                    bounds.x, y, bounds.x + bounds.width, y + 5,
-                    0, myIcon.getIconHeight() - 10, bounds.width, myIcon.getIconHeight() - 5, this);
+                    bounds.x, y, bounds.x + bounds.width, y + 1,
+                    0, myIcon.getIconHeight() - 1, bounds.width, myIcon.getIconHeight(), this);
 
-        y += 5;
+        y++;
       }
 
 

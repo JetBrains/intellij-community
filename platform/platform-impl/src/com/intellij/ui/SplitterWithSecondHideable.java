@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
@@ -35,7 +36,7 @@ import java.awt.event.MouseWheelEvent;
  * Time: 2:33 PM
  */
 public abstract class SplitterWithSecondHideable {
-  private final Splitter mySplitter;
+  private final PseudoSplitter mySplitter;
   private final AbstractTitledSeparatorWithIcon myTitledSeparator;
   private final boolean myVertical;
   private final OnOffListener<Integer> myListener;
@@ -67,14 +68,32 @@ public abstract class SplitterWithSecondHideable {
       }
 
       @Override
-      protected void onImpl() {
-        final int firstSize = vertical ? mySplitter.getFirstComponent().getHeight() : mySplitter.getFirstComponent().getWidth();
+      protected void initOnImpl() {
         final float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
-        mySplitter.setProportion(proportion);
+        mySplitter.setSecondComponent(myDetailsComponent.getPanel());
+        mySuperDivider.setResizeEnabled(true);
+
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            mySplitter.fixFirst(proportion);
+            mySplitter.revalidate();
+            mySplitter.repaint();
+          }
+        });
+      }
+
+      @Override
+      protected void onImpl() {
+        final float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
+        final int firstSize = vertical ? mySplitter.getFirstComponent().getHeight() : mySplitter.getFirstComponent().getWidth();
+        // !! order is important! first fix
+        mySplitter.fixFirst();
+        myListener.on((int) ((1 - proportion) * firstSize / proportion));
+        //mySplitter.setProportion(proportion);
         mySplitter.setSecondComponent(myDetailsComponent.getPanel());
         mySplitter.revalidate();
         mySplitter.repaint();
-        myListener.on((int) ((1 - proportion) * firstSize / proportion));
         mySuperDivider.setResizeEnabled(true);
       }
 
@@ -83,6 +102,7 @@ public abstract class SplitterWithSecondHideable {
         final int previousSize = vertical ? mySplitter.getSecondComponent().getHeight() : mySplitter.getSecondComponent().getWidth();
         mySplitter.setSecondComponent(myFictivePanel);
         myPreviousProportion = mySplitter.getProportion();
+        mySplitter.freeAll();
         mySplitter.setProportion(1.0f);
         mySplitter.revalidate();
         mySplitter.repaint();
@@ -90,7 +110,7 @@ public abstract class SplitterWithSecondHideable {
         mySuperDivider.setResizeEnabled(false);
       }
     };
-    mySplitter = new Splitter(vertical) {
+    mySplitter = new PseudoSplitter(vertical) {
     {
       myTitledSeparator.mySeparator.addMouseListener(new MouseAdapter() {
         @Override
@@ -199,6 +219,10 @@ public abstract class SplitterWithSecondHideable {
 
   public float getUsedProportion() {
     return isOn() ? mySplitter.getProportion() : myPreviousProportion;
+  }
+
+  public void initOn() {
+    myTitledSeparator.initOn();
   }
   
   public void on() {

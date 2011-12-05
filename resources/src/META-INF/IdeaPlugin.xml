@@ -548,7 +548,7 @@
       <category>Control Flow</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>                                ¡
+      <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>
       <category>Control Flow</category>
     </intentionAction>
 

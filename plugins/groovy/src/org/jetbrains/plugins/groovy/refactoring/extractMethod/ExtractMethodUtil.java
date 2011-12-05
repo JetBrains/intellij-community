@@ -74,8 +74,7 @@ public class ExtractMethodUtil {
       }
       startElement = startElement.getParent();
       PsiElement parent = startElement.getParent();
-      if (parent instanceof GroovyFile &&
-          ((GroovyFile) parent).getScriptClass() == owner) {
+      if (parent instanceof GroovyFile && ((GroovyFile) parent).getScriptClass() == owner) {
         return startElement.getNextSibling();
       }
     }
@@ -418,7 +417,7 @@ public class ExtractMethodUtil {
 
   static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset) {
     PsiElement[] elements;
-    GrExpression expr = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset, endOffset, GrExpression.class);
+    GrExpression expr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
 
     if (expr != null) {
       PsiElement parent = expr.getParent();

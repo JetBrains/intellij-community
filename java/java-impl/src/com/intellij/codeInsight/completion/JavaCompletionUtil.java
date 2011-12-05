@@ -730,16 +730,9 @@ public class JavaCompletionUtil {
 
         if (psiClass.isValid() && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
           final boolean staticImport = ref instanceof PsiImportStaticReferenceElement;
-          CodeEditUtil.setAllowSuspendNodesReformatting(true);
-          PsiElement newElement;
-          try {
-            newElement = staticImport
-                                    ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
-                                    : ref.bindToElement(psiClass);
-          }
-          finally {
-            CodeEditUtil.setAllowSuspendNodesReformatting(false);
-          }
+          PsiElement newElement = staticImport
+                                  ? ((PsiImportStaticReferenceElement)ref).bindToTargetClass(psiClass)
+                                  : ref.bindToElement(psiClass);
 
           newElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
           if (newElement != null) {
