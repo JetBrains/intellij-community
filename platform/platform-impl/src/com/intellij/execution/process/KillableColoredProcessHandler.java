@@ -39,14 +39,14 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   @Override
-  public boolean canKillProcess() {
+  public boolean canKillSoftly() {
     // soft-kill works on Unix systems
     return SystemInfo.isUnix;
   }
 
   @Override
   protected void doDestroyProcess() {
-    if (!canKillProcess()) {
+    if (!canKillSoftly()) {
       // if soft kill isn't supported - use default implementation
       super.doDestroyProcess();
       return;

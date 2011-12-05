@@ -650,7 +650,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     catch (IllegalArgumentException ex) {
       // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
       description = message;
-      LOG.warn(XmlErrorMessages.message("plugin.reference.message.problem", reference.getClass().getName(), message));
+      LOG.error(XmlErrorMessages.message("plugin.reference.message.problem", reference.getClass().getName(), message));
     }
     return description;
   }

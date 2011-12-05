@@ -23,7 +23,6 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
-import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -42,8 +41,8 @@ import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -132,12 +131,9 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
     for (Element fileElement : files) {
       String url = fileElement.getAttributeValue(URL_ELEMENT, "");
       String separator = fileElement.getAttributeValue(SEPARATOR_ATTR,"");
-      try {
-        @NonNls String baseCharset = "ISO-8859-1";
-        separator = new String(separator.getBytes(baseCharset), Native2AsciiCharset.makeNative2AsciiEncodingName(baseCharset));
-      }
-      catch (UnsupportedEncodingException e) {
-        //can't be
+      separator = decodeSeparator(separator);
+      if (separator == null) {
+        continue;
       }
       VirtualFile file;
       ResourceBundle resourceBundle = ResourceBundleImpl.createByUrl(url);
@@ -153,6 +149,36 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
     }
   }
 
+  @Nullable
+  private static String decodeSeparator(String separator) {
+    if (separator.length() % 6 != 0) {
+      return null;
+    }
+    StringBuilder result = new StringBuilder();
+    int pos = 0;
+    while (pos < separator.length()) {
+      String encodedCharacter = separator.substring(pos, pos+6);
+      if (!encodedCharacter.startsWith("\\u")) {
+        return null;
+      }
+      int d1 = Character.digit(encodedCharacter.charAt(2), 16);      
+      int d2 = Character.digit(encodedCharacter.charAt(3), 16);      
+      int d3 = Character.digit(encodedCharacter.charAt(4), 16);      
+      int d4 = Character.digit(encodedCharacter.charAt(5), 16);
+      if (d1 == -1 || d2 == -1 || d3 == -1 || d4 == -1) {
+        return null;
+      }
+      int b1 = (d1 << 12) & 0xF000;
+      int b2 = (d2 << 8) & 0x0F00;
+      int b3 = (d3 << 4) & 0x00F0;
+      int b4 = (d4 << 0) & 0x000F;
+      char code = (char) (b1 | b2 | b3 | b4);
+      result.append(code);
+      pos += 6;
+    }
+    return result.toString();
+  }
+
   public Element getState() {
     Element element = new Element("PropertiesSeparatorManager");
     for (VirtualFile file : mySeparators.keySet()) {
@@ -165,7 +191,7 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
         url = file.getUrl();
       }
       String separator = mySeparators.get(file);
-      StringBuffer encoded = new StringBuffer(separator.length());
+      StringBuilder encoded = new StringBuilder(separator.length());
       for (int i=0;i<separator.length();i++) {
         char c = separator.charAt(i);
         encoded.append("\\u");
