@@ -302,7 +302,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public InspectionProfileEntry getInspectionTool(@NotNull String shortName) {
-    return getTools(shortName).getTool();
+    final ToolsImpl toolsList = getTools(shortName);
+    return toolsList != null ? toolsList.getTool() : null;
   }
 
   public InspectionProfileEntry getToolById(String id, @NotNull PsiElement element) {
