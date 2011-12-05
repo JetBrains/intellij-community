@@ -36,7 +36,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     return myCustomStubTypes;
   }
 
-  public PsiElement createElement(final ASTNode node) {
+  public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyTargetExpressionImpl(node);
   }
 

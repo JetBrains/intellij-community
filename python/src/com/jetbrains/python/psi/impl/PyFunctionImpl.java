@@ -140,7 +140,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     final PyType docStringType = getReturnTypeFromDocString();
     if (docStringType != null) {
       return docStringType;
-    }    
+    }
     if (typeEvalContext.allowReturnTypes(getContainingFile())) {
       final PyType yieldType = getYieldStatementType(typeEvalContext);
       if (yieldType != null) {
@@ -400,7 +400,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     final String name = getName();
     if (containingClass != null && name != null) {
       // TODO find property which uses property call, rather than annotation (function name will be different in that case)
-      return containingClass.findProperty(name); 
+      return containingClass.findProperty(name);
     }
     return null;
   }

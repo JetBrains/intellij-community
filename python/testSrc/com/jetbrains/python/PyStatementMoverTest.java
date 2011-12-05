@@ -93,6 +93,10 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testNestedBlockDown() { // PY-5221
+    doTest();
+  }
+
   public void testFunctionDown() { // PY-5195
     doTest();
   }

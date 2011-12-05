@@ -33,13 +33,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   PyStatementList getStatementList();
 
   @Nullable
-  PyArgumentList getSuperClassExpressionList(); 
+  PyArgumentList getSuperClassExpressionList();
 
   @NotNull
   PyExpression[] getSuperClassExpressions();
 
   @NotNull
-  PsiElement[] getSuperClassElements();       
+  PsiElement[] getSuperClassElements();
 
   @NotNull
   PyClass[] getSuperClasses();
@@ -88,7 +88,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited);
 
   List<PyTargetExpression> getInstanceAttributes();
-  
+
   @Nullable
   PyTargetExpression findInstanceAttribute(String name, boolean inherited);
 
@@ -136,9 +136,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   boolean isSubclass(PyClass parent);
 
-  boolean isSubclass(String superClassQName);
+  boolean isSubclass(@NotNull String superClassQName);
 
-
+  @Nullable
   String getQualifiedName();
 
   /**

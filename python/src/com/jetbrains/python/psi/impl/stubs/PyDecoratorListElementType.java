@@ -24,7 +24,7 @@ public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorLis
     super("DECORATOR_LIST");
   }
 
-  public PsiElement createElement(final ASTNode node) {
+  public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyDecoratorListImpl(node);
   }
 
@@ -41,6 +41,6 @@ public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorLis
   }
 
   public PyDecoratorListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    return new PyDecoratorListStubImpl(parentStub); 
+    return new PyDecoratorListStubImpl(parentStub);
   }
 }
