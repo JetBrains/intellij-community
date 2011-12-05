@@ -18,14 +18,32 @@ package com.intellij.packaging.impl.compiler;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.elements.ComplexPackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
+import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -64,5 +82,41 @@ public class ArtifactCompilerUtil {
   public static File getJarFile(VirtualFile jarEntry) {
     String fullPath = jarEntry.getPath();
     return new File(FileUtil.toSystemDependentName(fullPath.substring(fullPath.indexOf(JarFileSystem.JAR_SEPARATOR))));
+  }
+
+
+  @NotNull
+  public static Set<VirtualFile> getArtifactOutputsContainingSourceFiles(final @NotNull Project project) {
+    final List<VirtualFile> allOutputs = new ArrayList<VirtualFile>();
+    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+      ContainerUtil.addIfNotNull(artifact.getOutputFile(), allOutputs);
+    }
+
+    final Set<VirtualFile> affectedOutputPaths = new HashSet<VirtualFile>();
+    final PackagingElementResolvingContext context = ArtifactManager.getInstance(project).getResolvingContext();
+    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+      ArtifactUtil.processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
+        @Override
+        public boolean shouldProcessSubstitution(ComplexPackagingElement<?> element) {
+          return !(element instanceof ArtifactPackagingElement);
+        }
+
+        @Override
+        public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
+          if (element instanceof FileOrDirectoryCopyPackagingElement<?>) {
+            final VirtualFile file = ((FileOrDirectoryCopyPackagingElement)element).findFile();
+            if (file != null) {
+              for (VirtualFile output : allOutputs) {
+                if (VfsUtilCore.isAncestor(output, file, false)) {
+                  affectedOutputPaths.add(output);
+                }
+              }
+            }
+          }
+          return true;
+        }
+      }, context, true);
+    }
+    return affectedOutputPaths;
   }
 }
