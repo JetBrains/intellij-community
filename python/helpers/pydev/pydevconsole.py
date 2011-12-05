@@ -183,9 +183,6 @@ def process_exec_queue(interpreter):
                 continue
 
 
-def ExitPass():
-    pass
-
 try:
     try:
         exitfunc = sys.exitfunc
@@ -195,8 +192,12 @@ try:
     IPYTHON = True
     if exitfunc is not None:
         sys.exitfunc = exitfunc
+
     else:
-        sys.exitfunc = ExitPass
+        try:
+            delattr(sys, 'exitfunc')
+        except :
+            pass
 except:
     IPYTHON = False
     #sys.stderr.write('PyDev console: started.\n')
