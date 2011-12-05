@@ -141,6 +141,7 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
+    Disposer.register(myProject, myBalloon);
     Disposer.register(myBalloon, new Disposable() {
       @Override
       public void dispose() {
