@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -175,6 +176,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private WatchRequest[] normalizeRootsForRefresh() {
     if (myCachedNormalizedRequests != null) return myCachedNormalizedRequests;
     List<WatchRequestImpl> result = new ArrayList<WatchRequestImpl>();
+
+    // No need to call for a read action here since we're only called with it on hands already.
     WRITE_LOCK.lock();
     try {
       NextRoot:
@@ -338,37 +341,43 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @Override
-  public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
+  public WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively) {
     if (rootPath.length() == 0 || !FileWatcher.getInstance().isOperational()) return null;
 
-    WRITE_LOCK.lock();
-    try {
-      final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
-      boolean alreadyWatched = isAlreadyWatched(result);
-      if (!alreadyWatched) {
-        final VirtualFile existingFile = findFileByPathIfCached(rootPath);
-        if (existingFile != null) {
-          final ModalityState modalityState = ModalityState.defaultModalityState();
-          RefreshQueue.getInstance().refresh(true, toWatchRecursively, null, modalityState, existingFile);
-          if (existingFile.isDirectory() && !toWatchRecursively && existingFile instanceof NewVirtualFile) {
-            for (VirtualFile child : ((NewVirtualFile)existingFile).getCachedChildren()) {
-              RefreshQueue.getInstance().refresh(true, false, null, modalityState, child);
+    Application app = ApplicationManager.getApplication();
+    return app.runReadAction(new Computable<WatchRequest>() {
+      @Override
+      public WatchRequest compute() {
+        WRITE_LOCK.lock();
+        try {
+          final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
+          boolean alreadyWatched = isAlreadyWatched(result);
+          if (!alreadyWatched) {
+            final VirtualFile existingFile = findFileByPathIfCached(rootPath);
+            if (existingFile != null) {
+              final ModalityState modalityState = ModalityState.defaultModalityState();
+              RefreshQueue.getInstance().refresh(true, toWatchRecursively, null, modalityState, existingFile);
+              if (existingFile.isDirectory() && !toWatchRecursively && existingFile instanceof NewVirtualFile) {
+                for (VirtualFile child : ((NewVirtualFile)existingFile).getCachedChildren()) {
+                  RefreshQueue.getInstance().refresh(true, false, null, modalityState, child);
+                }
+              }
             }
           }
+          myRootsToWatch.add(result);
+          if (alreadyWatched) {
+            result.myDominated = true;
+            return result;
+          }
+          myCachedNormalizedRequests = null;
+          setUpFileWatcher();
+          return result;
+        }
+        finally {
+          WRITE_LOCK.unlock();
         }
       }
-      myRootsToWatch.add(result);
-      if (alreadyWatched) {
-        result.myDominated = true;
-        return result;
-      }
-      myCachedNormalizedRequests = null;
-      setUpFileWatcher();
-      return result;
-    }
-    finally {
-      WRITE_LOCK.unlock();
-    }
+    });
   }
 
   private boolean isAlreadyWatched(final WatchRequest request) {
@@ -383,33 +392,38 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
     if (!FileWatcher.getInstance().isOperational()) return Collections.emptySet();
 
-    Set<WatchRequest> result = new HashSet<WatchRequest>();
-    Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
+    final Set<WatchRequest> result = new HashSet<WatchRequest>();
+    final Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
 
-    WRITE_LOCK.lock();
-    try {
-      for (String rootPath : rootPaths) {
-        LOG.assertTrue(rootPath != null);
-        if (rootPath.length() > 0) {
-          final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
-          final VirtualFile existingFile = findFileByPathIfCached(rootPath);
-          if (existingFile != null) {
-            if (!isAlreadyWatched(request)) {
-              filesToSynchronize.add(existingFile);
+    Application application = ApplicationManager.getApplication();
+    application.runReadAction(new Runnable() {
+      public void run() {
+        WRITE_LOCK.lock();
+        try {
+          for (String rootPath : rootPaths) {
+            LOG.assertTrue(rootPath != null);
+            if (rootPath.length() > 0) {
+              final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
+              final VirtualFile existingFile = findFileByPathIfCached(rootPath);
+              if (existingFile != null) {
+                if (!isAlreadyWatched(request)) {
+                  filesToSynchronize.add(existingFile);
+                }
+              }
+              result.add(request);
+              myRootsToWatch.add(request); //add in any case, safe to add inplace without copying myRootsToWatch before the loop
             }
           }
-          result.add(request);
-          myRootsToWatch.add(request); //add in any case, safe to add inplace without copying myRootsToWatch before the loop
+          myCachedNormalizedRequests = null;
+          setUpFileWatcher();
+        }
+        finally {
+          WRITE_LOCK.unlock();
         }
       }
-      myCachedNormalizedRequests = null;
-      setUpFileWatcher();
-    }
-    finally {
-      WRITE_LOCK.unlock();
-    }
+    });
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !filesToSynchronize.isEmpty()) {
+    if (!application.isUnitTestMode() && !filesToSynchronize.isEmpty()) {
       for (VirtualFile file : filesToSynchronize) {
         if (file instanceof NewVirtualFile && file.getFileSystem() instanceof LocalFileSystem) {
           ((NewVirtualFile)file).markDirtyRecursively();
@@ -423,30 +437,38 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   @Override
   public void removeWatchedRoot(@NotNull final WatchRequest watchRequest) {
-    WRITE_LOCK.lock();
-    try {
-      if (myRootsToWatch.remove((WatchRequestImpl)watchRequest) && !((WatchRequestImpl)watchRequest).myDominated) {
-        myCachedNormalizedRequests = null;
-        setUpFileWatcher();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        WRITE_LOCK.lock();
+        try {
+          if (myRootsToWatch.remove((WatchRequestImpl)watchRequest) && !((WatchRequestImpl)watchRequest).myDominated) {
+            myCachedNormalizedRequests = null;
+            setUpFileWatcher();
+          }
+        }
+        finally {
+          WRITE_LOCK.unlock();
+        }
       }
-    }
-    finally {
-      WRITE_LOCK.unlock();
-    }
+    });
   }
 
   @Override
   public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
-    WRITE_LOCK.lock();
-    try {
-      if (myRootsToWatch.removeAll(rootsToWatch)) {
-        myCachedNormalizedRequests = null;
-        setUpFileWatcher();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        WRITE_LOCK.lock();
+        try {
+          if (myRootsToWatch.removeAll(rootsToWatch)) {
+            myCachedNormalizedRequests = null;
+            setUpFileWatcher();
+          }
+        }
+        finally {
+          WRITE_LOCK.unlock();
+        }
       }
-    }
-    finally {
-      WRITE_LOCK.unlock();
-    }
+    });
   }
 
   @Override
