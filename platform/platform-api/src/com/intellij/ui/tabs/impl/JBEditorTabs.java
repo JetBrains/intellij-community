@@ -53,7 +53,12 @@ public class JBEditorTabs extends JBTabsImpl {
       super.paintLastGhost(g2d);
     }
   }
-  
+
+  @Override
+  public boolean isTabDraggingEnabled() {
+    return super.isTabDraggingEnabled() && isSingleRow();
+  }
+
   public boolean isGhostsAlwaysVisible() {
     return super.isGhostsAlwaysVisible() && !isEditorTabs();
   }
