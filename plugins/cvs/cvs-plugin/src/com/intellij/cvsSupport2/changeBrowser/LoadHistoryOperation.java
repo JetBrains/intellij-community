@@ -81,14 +81,16 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
   public void fileInfoGenerated(Object info) {
     super.fileInfoGenerated(info);
-    if (info instanceof LogInformation) {
-      final LogInformation logInfo = (LogInformation)info;
-      LogInformationWrapper wrapper = LogInformationWrapper.wrap(myEnvironment.getRepository(), logInfo);
-      if (wrapper != null) {
-        myLog.add(wrapper);
-        wrapperAdded(wrapper);
-      }
+    if (!(info instanceof LogInformation)) {
+      return;
     }
+    final LogInformation logInfo = (LogInformation)info;
+    final LogInformationWrapper wrapper = LogInformationWrapper.wrap(myEnvironment.getRepository(), myModule, logInfo);
+    if (wrapper == null) {
+      return;
+    }
+    myLog.add(wrapper);
+    wrapperAdded(wrapper);
   }
 
   protected void wrapperAdded(final LogInformationWrapper wrapper) {

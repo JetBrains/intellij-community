@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,24 +49,29 @@ public class LogInformationWrapper {
   }
 
   @Nullable
-  public static LogInformationWrapper wrap(final String repository, final LogInformation log) {
-    LogInformationWrapper wrapper = null;
-    if (!log.getRevisionList().isEmpty()) {
-      final String rcsFileName = log.getRcsFileName();
-      if (FileUtil.toSystemIndependentName(rcsFileName).startsWith(FileUtil.toSystemIndependentName(repository))) {
-        String relativePath = rcsFileName.substring(repository.length());
-        if (relativePath.startsWith("/")) {
-          relativePath = relativePath.substring(1);
-        }
-
-        if (relativePath.endsWith(CVS_REPOSITORY_FILE_POSTFIX)) {
-          relativePath = relativePath.substring(0, relativePath.length() - CVS_REPOSITORY_FILE_POSTFIX.length());
-        }
-
-        //noinspection unchecked
-        wrapper = new LogInformationWrapper(relativePath, log.getRevisionList(), log.getAllSymbolicNames());
-      }
+  public static LogInformationWrapper wrap(final String repository, String module, final LogInformation log) {
+    if (log.getRevisionList().isEmpty()) {
+      return null;
     }
-    return wrapper;
+    final String rcsFileName = log.getRcsFileName();
+    if (FileUtil.toSystemIndependentName(rcsFileName).startsWith(FileUtil.toSystemIndependentName(repository))) {
+      return buildWrapper(log, rcsFileName, repository.length());
+    }
+    final int index = rcsFileName.indexOf(module); // hack
+    if (index >= 0) {
+      return  buildWrapper(log, rcsFileName, index);
+    }
+    return null;
+  }
+
+  private static LogInformationWrapper buildWrapper(LogInformation log, String rcsFileName, int length) {
+    String relativePath = rcsFileName.substring(length);
+    if (relativePath.startsWith("/")) {
+      relativePath = relativePath.substring(1);
+    }
+    if (relativePath.endsWith(CVS_REPOSITORY_FILE_POSTFIX)) {
+      relativePath = relativePath.substring(0, relativePath.length() - CVS_REPOSITORY_FILE_POSTFIX.length());
+    }
+    return new LogInformationWrapper(relativePath, log.getRevisionList(), log.getAllSymbolicNames());
   }
 }
