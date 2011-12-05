@@ -43,37 +43,44 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CopyClassesHandler implements CopyHandlerDelegate {
+public class CopyClassesHandler extends CopyHandlerDelegateBase {
   private static final Logger LOG = Logger.getInstance("#" + CopyClassesHandler.class.getName());
 
-  public boolean canCopy(PsiElement[] elements) {
-    return canCopyClass(elements);
+  @Override
+  public boolean canCopy(PsiElement[] elements, boolean fromUpdate) {
+    return canCopyClass(fromUpdate, elements);
   }
-
   public static boolean canCopyClass(PsiElement... elements) {
-    return convertToTopLevelClasses(elements, null, null) != null;
+    return canCopyClass(false, elements);
+  }
+  public static boolean canCopyClass(boolean fromUpdate, PsiElement... elements) {
+    return convertToTopLevelClasses(elements, fromUpdate, null, null) != null;
   }
 
   @Nullable
-  private static Map<PsiFile, PsiClass[]> convertToTopLevelClasses(final PsiElement[] elements, String relativePath, Map<PsiFile, String> relativeMap) {
+  private static Map<PsiFile, PsiClass[]> convertToTopLevelClasses(final PsiElement[] elements,
+                                                                   final boolean fromUpdate,
+                                                                   String relativePath,
+                                                                   Map<PsiFile, String> relativeMap) {
     final Map<PsiFile, PsiClass[]> result = new HashMap<PsiFile, PsiClass[]>();
     for (PsiElement element : elements) {
       final PsiFile containingFile = element.getNavigationElement().getContainingFile();
-      if (!(containingFile instanceof PsiJavaFile &&
+      if (!(containingFile instanceof PsiClassOwner &&
             CollectHighlightsUtil.isOutsideSourceRoot(containingFile))) {
         PsiClass[] topLevelClasses = getTopLevelClasses(element);
         if (topLevelClasses == null) {
           if (element instanceof PsiDirectory) {
-            final String name = ((PsiDirectory)element).getName();
-            final String path = relativePath != null ? (relativePath.length() > 0 ? (relativePath + "/") : "") + name : null;
-            final Map<PsiFile, PsiClass[]> map = convertToTopLevelClasses(element.getChildren(), path, relativeMap);
-            if (map == null) return null;
-            for (Map.Entry<PsiFile, PsiClass[]> entry : map.entrySet()) {
-              fillResultsMap(result, entry.getKey(), entry.getValue());
+            if (!fromUpdate) {
+              final String name = ((PsiDirectory)element).getName();
+              final String path = relativePath != null ? (relativePath.length() > 0 ? (relativePath + "/") : "") + name : null;
+              final Map<PsiFile, PsiClass[]> map = convertToTopLevelClasses(element.getChildren(), fromUpdate, path, relativeMap);
+              if (map == null) return null;
+              for (Map.Entry<PsiFile, PsiClass[]> entry : map.entrySet()) {
+                fillResultsMap(result, entry.getKey(), entry.getValue());
+              }
             }
             continue;
           }
-          return null;
         }
         fillResultsMap(result, containingFile, topLevelClasses);
         if (relativeMap != null) {
@@ -116,7 +123,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
   public void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
     final HashMap<PsiFile, String> relativePathsMap = new HashMap<PsiFile, String>();
-    final Map<PsiFile, PsiClass[]> classes = convertToTopLevelClasses(elements, "", relativePathsMap);
+    final Map<PsiFile, PsiClass[]> classes = convertToTopLevelClasses(elements, false, "", relativePathsMap);
     assert classes != null;
     if (defaultTargetDirectory == null) {
       defaultTargetDirectory = classes.keySet().iterator().next().getContainingDirectory();
@@ -264,11 +271,13 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     PsiElement newElement = null;
     final Map<PsiClass, PsiElement> oldToNewMap = new HashMap<PsiClass, PsiElement>();
     for (final PsiClass[] psiClasses : fileToClasses.values()) {
-      for (PsiClass aClass : psiClasses) {
-        if (aClass instanceof SyntheticElement) {
-          continue;
+      if (psiClasses != null) {
+        for (PsiClass aClass : psiClasses) {
+          if (aClass instanceof SyntheticElement) {
+            continue;
+          }
+          oldToNewMap.put(aClass, null);
         }
-        oldToNewMap.put(aClass, null);
       }
     }
     final PsiFile[] createdFiles = new PsiFile[fileToClasses.size()];
