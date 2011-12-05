@@ -112,7 +112,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myMinMarkHeight;
   }
 
-  private void recalcEditorDimensions() {
+  void recalcEditorDimensions() {
     EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
     int scrollBarHeight = scrollBar.getSize().height;
 
@@ -751,10 +751,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     LOG.assertTrue(success);
   }
 
-  public void markDirtied(@NotNull ProperTextRange pos) {
-    int start = Math.max(0, pos.getStartOffset() - myEditor.getLineHeight());
-    int end = myEditorScrollbarTop + myEditorTargetHeight == 0 ? pos.getEndOffset() + myEditor.getLineHeight()
-                                                               : Math.min(myEditorScrollbarTop + myEditorTargetHeight, pos.getEndOffset() + myEditor.getLineHeight());
+  public void markDirtied(@NotNull ProperTextRange yPositions) {
+    int start = Math.max(0, yPositions.getStartOffset() - myEditor.getLineHeight());
+    int end = myEditorScrollbarTop + myEditorTargetHeight == 0 ? yPositions.getEndOffset() + myEditor.getLineHeight()
+                                                               : Math.min(myEditorScrollbarTop + myEditorTargetHeight, yPositions.getEndOffset() + myEditor.getLineHeight());
     ProperTextRange adj = new ProperTextRange(start, Math.max(end, start));
 
     if (myDirtyYPositions == null) {

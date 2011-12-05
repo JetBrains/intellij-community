@@ -68,32 +68,32 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
    */
   GrStubElementType<GrTypeDefinitionStub, GrClassDefinition> CLASS_DEFINITION =
     new GrTypeDefinitionElementType<GrClassDefinition>("class definition") {
-      public GrClassDefinition createPsi(GrTypeDefinitionStub stub) {
+      public GrClassDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrClassDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrInterfaceDefinition> INTERFACE_DEFINITION =
     new GrTypeDefinitionElementType<GrInterfaceDefinition>("interface definition") {
-      public GrInterfaceDefinition createPsi(GrTypeDefinitionStub stub) {
+      public GrInterfaceDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrInterfaceDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION =
     new GrTypeDefinitionElementType<GrEnumTypeDefinition>("enumeration definition") {
-      public GrEnumTypeDefinition createPsi(GrTypeDefinitionStub stub) {
+      public GrEnumTypeDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrEnumTypeDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION =
     new GrTypeDefinitionElementType<GrAnnotationTypeDefinition>("annotation definition") {
-      public GrAnnotationTypeDefinition createPsi(GrTypeDefinitionStub stub) {
+      public GrAnnotationTypeDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrAnnotationTypeDefinitionImpl(stub);
       }
     };
   GrStubElementType<GrTypeDefinitionStub, GrAnonymousClassDefinition> ANONYMOUS_CLASS_DEFINITION =
     new GrTypeDefinitionElementType<GrAnonymousClassDefinition>("Anonymous class") {
       @Override
-      public GrAnonymousClassDefinition createPsi(GrTypeDefinitionStub stub) {
+      public GrAnonymousClassDefinition createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrAnonymousClassDefinitionImpl(stub);
       }
     };
@@ -101,7 +101,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GrStubElementType<GrTypeDefinitionStub, GrEnumConstantInitializer> ENUM_CONSTANT_INITIALIZER =
     new GrTypeDefinitionElementType<GrEnumConstantInitializer>("Enum constant initializer") {
       @Override
-      public GrEnumConstantInitializer createPsi(GrTypeDefinitionStub stub) {
+      public GrEnumConstantInitializer createPsi(@NotNull GrTypeDefinitionStub stub) {
         return new GrEnumConstantInitializerImpl(stub);
       }
     };
@@ -112,13 +112,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
   GrMethodElementType METHOD_DEFINITION = new GrMethodElementType("method definition") {
 
-    public GrMethod createPsi(GrMethodStub stub) {
+    public GrMethod createPsi(@NotNull GrMethodStub stub) {
       return new GrMethodImpl(stub);
     }
   };
   GrStubElementType<GrMethodStub, GrMethod> ANNOTATION_METHOD = new GrMethodElementType("annotation method") {
     @Override
-    public GrMethod createPsi(GrMethodStub stub) {
+    public GrMethod createPsi(@NotNull GrMethodStub stub) {
       return new GrAnnotationMethodImpl(stub);
     }
 
@@ -133,12 +133,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   };
 
   GrReferenceListElementType<GrImplementsClause> IMPLEMENTS_CLAUSE = new GrReferenceListElementType<GrImplementsClause>("implements clause") {
-    public GrImplementsClause createPsi(GrReferenceListStub stub) {
+    public GrImplementsClause createPsi(@NotNull GrReferenceListStub stub) {
       return new GrImplementsClauseImpl(stub);
     }
   };
   GrReferenceListElementType<GrExtendsClause> EXTENDS_CLAUSE = new GrReferenceListElementType<GrExtendsClause>("super class clause") {
-    public GrExtendsClause createPsi(GrReferenceListStub stub) {
+    public GrExtendsClause createPsi(@NotNull GrReferenceListStub stub) {
       return new GrExtendsClauseImpl(stub);
     }
   };
@@ -263,19 +263,19 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
   EmptyStubElementType<GrTypeParameterList> TYPE_PARAMETER_LIST = new EmptyStubElementType<GrTypeParameterList>("type parameter list", GroovyFileType.GROOVY_LANGUAGE) {
     @Override
-    public GrTypeParameterList createPsi(EmptyStub stub) {
+    public GrTypeParameterList createPsi(@NotNull EmptyStub stub) {
       return new GrTypeParameterListImpl(stub);
     }
   };
 
   GrStubElementType<GrTypeParameterStub, GrTypeParameter> TYPE_PARAMETER = new GrStubElementType<GrTypeParameterStub, GrTypeParameter>("type parameter") {
     @Override
-    public GrTypeParameter createPsi(GrTypeParameterStub stub) {
+    public GrTypeParameter createPsi(@NotNull GrTypeParameterStub stub) {
       return new GrTypeParameterImpl(stub);
     }
 
     @Override
-    public GrTypeParameterStub createStub(GrTypeParameter psi, StubElement parentStub) {
+    public GrTypeParameterStub createStub(@NotNull GrTypeParameter psi, StubElement parentStub) {
       return new GrTypeParameterStub(parentStub, StringRef.fromString(psi.getName()));
     }
 
@@ -295,7 +295,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GrMethodElementType CONSTRUCTOR_DEFINITION = new GrMethodElementType("constructor definition") {
     @Override
-    public GrMethod createPsi(GrMethodStub stub) {
+    public GrMethod createPsi(@NotNull GrMethodStub stub) {
       return new GrConstructorImpl(stub);
     }
   };
@@ -313,12 +313,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrStubElementType<GrAnnotationStub, GrAnnotation>("annotation") {
 
     @Override
-    public GrAnnotation createPsi(GrAnnotationStub stub) {
+    public GrAnnotation createPsi(@NotNull GrAnnotationStub stub) {
       return new GrAnnotationImpl(stub);
     }
 
     @Override
-    public GrAnnotationStub createStub(GrAnnotation psi, StubElement parentStub) {
+    public GrAnnotationStub createStub(@NotNull GrAnnotation psi, StubElement parentStub) {
       return new GrAnnotationStub(parentStub, psi);
     }
 
@@ -335,19 +335,19 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   //parameters
   EmptyStubElementType<GrParameterList> PARAMETERS_LIST = new EmptyStubElementType<GrParameterList>("parameters list", GroovyFileType.GROOVY_LANGUAGE) {
     @Override
-    public GrParameterList createPsi(EmptyStub stub) {
+    public GrParameterList createPsi(@NotNull EmptyStub stub) {
       return new GrParameterListImpl(stub);
     }
   };
 
   GrStubElementType<GrParameterStub, GrParameter> PARAMETER = new GrStubElementType<GrParameterStub, GrParameter>("parameter") {
     @Override
-    public GrParameter createPsi(GrParameterStub stub) {
+    public GrParameter createPsi(@NotNull GrParameterStub stub) {
       return new GrParameterImpl(stub);
     }
 
     @Override
-    public GrParameterStub createStub(GrParameter psi, StubElement parentStub) {
+    public GrParameterStub createStub(@NotNull GrParameter psi, StubElement parentStub) {
       return new GrParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi), GrStubUtils.getTypeText(psi));
     }
 
@@ -369,7 +369,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = new EmptyStubElementType<GrTypeDefinitionBody>("class block", GroovyFileType.GROOVY_LANGUAGE) {
       @Override
-      public GrTypeDefinitionBody createPsi(EmptyStub stub) {
+      public GrTypeDefinitionBody createPsi(@NotNull EmptyStub stub) {
         return new GrTypeDefinitionBodyBase.GrClassBody(stub);
       }
     };
@@ -402,14 +402,14 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
 
     @Override
-    public GrVariableDeclaration createPsi(EmptyStub stub) {
+    public GrVariableDeclaration createPsi(@NotNull EmptyStub stub) {
       throw new UnsupportedOperationException("Not implemented");
     }
   };
   EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION =
     new EmptyStubElementType<GrVariableDeclaration>("variable definitions", GroovyFileType.GROOVY_LANGUAGE) {
       @Override
-      public GrVariableDeclaration createPsi(EmptyStub stub) {
+      public GrVariableDeclaration createPsi(@NotNull EmptyStub stub) {
         return new GrVariableDeclarationBase.GrVariables(stub);
       }
     };

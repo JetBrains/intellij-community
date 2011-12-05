@@ -48,12 +48,12 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
   }
 
   @Override
-  public PsiModifierList createPsi(final PsiModifierListStub stub) {
+  public PsiModifierList createPsi(@NotNull final PsiModifierListStub stub) {
     return getPsiFactory(stub).createModifierList(stub);
   }
 
   @Override
-  public PsiModifierList createPsi(final ASTNode node) {
+  public PsiModifierList createPsi(@NotNull final ASTNode node) {
     return new PsiModifierListImpl(node);
   }
 

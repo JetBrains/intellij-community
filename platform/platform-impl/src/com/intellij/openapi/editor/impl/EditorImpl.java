@@ -809,7 +809,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPanel.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        myMarkupModel.repaint(0, myDocument.getTextLength());
+        myMarkupModel.recalcEditorDimensions();
+        myMarkupModel.repaint(-1, -1);
       }
     });
   }
@@ -1570,7 +1571,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
 
-      myMarkupModel.repaint(0, myDocument.getTextLength());
+      myMarkupModel.recalcEditorDimensions();
+      myMarkupModel.repaint(-1, -1);
     }
   }
 

@@ -32,9 +32,9 @@ public abstract class IStubElementType<StubT extends StubElement, PsiT extends P
     super(debugName, language);
   }
 
-  public abstract PsiT createPsi(StubT stub);
+  public abstract PsiT createPsi(@NotNull StubT stub);
 
-  public abstract StubT createStub(PsiT psi, final StubElement parentStub);
+  public abstract StubT createStub(@NotNull PsiT psi, final StubElement parentStub);
 
   public boolean shouldCreateStub(ASTNode node) {
     return true;

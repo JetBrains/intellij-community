@@ -38,6 +38,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -51,12 +52,12 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
   }
 
   @Override
-  public PsiMethod createPsi(final PsiMethodStub stub) {
+  public PsiMethod createPsi(@NotNull final PsiMethodStub stub) {
     return getPsiFactory(stub).createMethod(stub);
   }
 
   @Override
-  public PsiMethod createPsi(final ASTNode node) {
+  public PsiMethod createPsi(@NotNull final ASTNode node) {
     if (node instanceof AnnotationMethodElement) {
       return new PsiAnnotationMethodImpl(node);
     }

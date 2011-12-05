@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,14 @@ public class PropertyUtils {
     }
     final PsiReferenceExpression reference = (PsiReferenceExpression)value;
     final PsiExpression qualifier = reference.getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
+    if (qualifier instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+      final PsiElement target = referenceExpression.resolve();
+      if (!(target instanceof PsiClass)) {
+        return null;
+      }
+    }
+    else if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
       return null;
     }
     final PsiElement referent = reference.resolve();
@@ -171,7 +178,14 @@ public class PropertyUtils {
     }
     final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
     final PsiExpression qualifier = reference.getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
+    if (qualifier instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+      final PsiElement target = referenceExpression.resolve();
+      if (!(target instanceof PsiClass)) {
+        return null;
+      }
+    }
+    else if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
       return null;
     }
     final PsiElement referent = reference.resolve();
@@ -215,5 +229,68 @@ public class PropertyUtils {
 
   public static boolean isSimpleSetter(PsiMethod method) {
     return getFieldOfSetter(method) != null;
+  }
+
+  @Nullable
+  public static PsiMethod getReversePropertyMethod(PsiMethod propertyMethod) {
+    if (propertyMethod == null) {
+      return null;
+    }
+    final PsiClass aClass = propertyMethod.getContainingClass();
+    if (aClass == null) {
+      return null;
+    }
+    final String methodName = propertyMethod.getName();
+    final String prefix;
+    if (methodName.startsWith("get")) {
+      prefix = "get";
+    }
+    else if (methodName.startsWith("is")) {
+      prefix = "is";
+    }
+    else if (methodName.startsWith("set")) {
+      prefix = "set";
+    }
+    else {
+      throw new IllegalArgumentException("argument is not a setter or getter");
+    }
+    final String name = methodName.substring(prefix.length());
+    final PsiField field;
+    if (prefix.equals("set")) {
+      field = PropertyUtils.getFieldOfSetter(propertyMethod);
+    }
+    else {
+      field = PropertyUtils.getFieldOfGetter(propertyMethod);
+    }
+    if (field == null) {
+      return null;
+    }
+    if (prefix.equals("set")) {
+      final PsiMethod result = findPropertyMethod(aClass, "get", name, field);
+      if (result != null) {
+        return result;
+      }
+      return findPropertyMethod(aClass, "is", name, field);
+    }
+    else {
+      return findPropertyMethod(aClass, "set", name, field);
+    }
+  }
+
+  private static PsiMethod findPropertyMethod(PsiClass aClass, String prefix, String propertyName, PsiField field1) {
+    final PsiMethod[] methods = aClass.findMethodsByName(prefix + propertyName, true);
+    for (PsiMethod method : methods) {
+      final PsiField field2;
+      if (prefix.equals("set")) {
+        field2 = PropertyUtils.getFieldOfSetter(method);
+      }
+      else {
+        field2 = PropertyUtils.getFieldOfGetter(method);
+      }
+      if (field1.equals(field2)) {
+        return method;
+      }
+    }
+    return null;
   }
 }
