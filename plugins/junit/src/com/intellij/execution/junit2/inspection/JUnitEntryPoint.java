@@ -32,7 +32,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Rule;
 
 public class JUnitEntryPoint extends EntryPoint {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
@@ -86,6 +85,6 @@ public class JUnitEntryPoint extends EntryPoint {
 
   @Override
   public String[] getIgnoreAnnotations() {
-    return new String[]{Rule.class.getName()};
+    return new String[]{"org.junit.Rule"};
   }
 }
