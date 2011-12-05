@@ -76,7 +76,7 @@ public class JBEditorTabs extends JBTabsImpl {
     int _height = effectiveBounds.height - insets.top - insets.bottom;
     
     
-    if ((!isSingleRow() && label.getBounds().y > 0 /* for multiline */) || (isSingleRow() && isHorizontalTabs()))  {
+    if ((!isSingleRow() /* for multiline */) || (isSingleRow() && isHorizontalTabs()))  {
       if (isSingleRow() && getPosition() == JBTabsPosition.bottom) {
         _y += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT; 
       } else {
