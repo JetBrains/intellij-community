@@ -57,7 +57,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return CachedValuesManager.getManager(getProject()).createCachedValue(new NewStyleCachedValueProvider(), false);
     }
   };
-  
+
   private final SoftHashMap<String, Property> myPropertyCache = new SoftHashMap<String, Property>();
 
   @Override
@@ -72,15 +72,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
   }
 
-  public PyClassImpl(ASTNode astNode) {
+  public PyClassImpl(@NotNull ASTNode astNode) {
     super(astNode);
   }
 
-  public PyClassImpl(final PyClassStub stub) {
+  public PyClassImpl(@NotNull final PyClassStub stub) {
     this(stub, PyElementTypes.CLASS_DECLARATION);
   }
 
-  public PyClassImpl(final PyClassStub stub, IStubElementType nodeType) {
+  public PyClassImpl(@NotNull final PyClassStub stub, @NotNull IStubElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -189,8 +189,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Override
-  public boolean isSubclass(String superClassQName) {
-    if (getQualifiedName().equals(superClassQName)) {
+  public boolean isSubclass(@NotNull String superClassQName) {
+    if (superClassQName.equals(getQualifiedName())) {
       return true;
     }
     for (PyClassRef superclass : iterateAncestors()) {
@@ -203,6 +203,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return childToPsi(PyElementTypes.DECORATOR_LIST);
   }
 
+  @Nullable
   public String getQualifiedName() {
     String name = getName();
     final PyClassStub stub = getStub();
@@ -780,10 +781,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     return true;
-    // NOTE: sorry, not enough metaprogramming to generalize visitMethods and visitClassAttributes 
+    // NOTE: sorry, not enough metaprogramming to generalize visitMethods and visitClassAttributes
   }
-
-
 
   public List<PyTargetExpression> getClassAttributes() {
     PyClassStub stub = getStub();
@@ -826,7 +825,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final List<PyTargetExpression> instanceAttributes = getInstanceAttributes();
     for (PyTargetExpression instanceAttribute : instanceAttributes) {
       if (name.equals(instanceAttribute.getReferencedName())) {
-        return instanceAttribute;        
+        return instanceAttribute;
       }
     }
     if (inherited) {
@@ -1172,6 +1171,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return false;
     }
 
+    @Nullable
     @Override
     public PyClass next() {
       if (myNext == null) {

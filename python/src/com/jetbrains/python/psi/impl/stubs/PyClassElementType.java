@@ -30,7 +30,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     super(debugName);
   }
 
-  public PsiElement createElement(final ASTNode node) {
+  public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyClassImpl(node);
   }
 

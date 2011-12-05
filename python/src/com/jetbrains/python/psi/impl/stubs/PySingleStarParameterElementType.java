@@ -22,7 +22,7 @@ public class PySingleStarParameterElementType extends PyStubElementType<PySingle
   }
 
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public PsiElement createElement(@NotNull ASTNode node) {
     return new PySingleStarParameterImpl(node);
   }
 

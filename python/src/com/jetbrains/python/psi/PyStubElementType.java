@@ -7,6 +7,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -21,7 +22,7 @@ public abstract class PyStubElementType<StubT extends StubElement, PsiT extends 
     return "Py:" + super.toString();
   }
 
-  public abstract PsiElement createElement(final ASTNode node);
+  public abstract PsiElement createElement(@NotNull final ASTNode node);
 
   public void indexStub(final StubT stub, final IndexSink sink) {
   }
