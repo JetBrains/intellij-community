@@ -147,18 +147,21 @@ interface GitHttpRemoteCommand {
     private GitSimplePushResult myPushResult;
     private String myRemoteName;
     private String myUrl;
+    private final List<RefSpec> myPushSpecs;
 
-    Push(@NotNull Git git, @NotNull GitHttpCredentialsProvider credentialsProvider, @NotNull String remoteName, @NotNull String url) {
+    Push(@NotNull Git git, @NotNull GitHttpCredentialsProvider credentialsProvider, @NotNull String remoteName, @NotNull String url, @NotNull List<RefSpec> pushSpecs) {
       myGit = git;
       myCredentialsProvider = credentialsProvider;
       myRemoteName = remoteName;
       myUrl = url;
+      myPushSpecs = pushSpecs;
     }
 
     @Override
     public void run() throws InvalidRemoteException, URISyntaxException {
       PushCommand pushCommand = myGit.push();
       pushCommand.setRemote(myRemoteName);
+      pushCommand.setRefSpecs(myPushSpecs);
       pushCommand.setCredentialsProvider(myCredentialsProvider);
       
       /*
