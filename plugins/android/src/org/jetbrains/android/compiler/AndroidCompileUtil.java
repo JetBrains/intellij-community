@@ -739,8 +739,12 @@ public class AndroidCompileUtil {
     throws IOException {
     
     if (file.isDirectory()) {
-      for (File child : file.listFiles()) {
-        addFileToJar(jar, child, rootDirectory, packRClasses);
+      final File[] children = file.listFiles();
+
+      if (children != null) {
+        for (File child : children) {
+          addFileToJar(jar, child, rootDirectory, packRClasses);
+        }
       }
     }
     else if (file.isFile()) {

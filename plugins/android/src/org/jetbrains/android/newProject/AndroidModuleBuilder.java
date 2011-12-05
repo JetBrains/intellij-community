@@ -253,15 +253,18 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         AndroidUtils.runExternalTool(project, commandLine, true, null);
 
         if (finalTempContentRoot != null) {
-          for (File child : finalTempContentRoot.listFiles()) {
+          final File[] children = finalTempContentRoot.listFiles();
 
-            if (SdkConstants.FD_SOURCES.equals(child.getName())) {
-              continue;
-            }
-            final File to = new File(contentRoot.getPath(), child.getName());
+          if (children != null) {
+            for (File child : children) {
+              if (SdkConstants.FD_SOURCES.equals(child.getName())) {
+                continue;
+              }
+              final File to = new File(contentRoot.getPath(), child.getName());
 
-            if (!FileUtil.moveDirWithContent(child, to)) {
-              LOG.error("Cannot move content from " + child.getPath() + " to " + to.getPath());
+              if (!FileUtil.moveDirWithContent(child, to)) {
+                LOG.error("Cannot move content from " + child.getPath() + " to " + to.getPath());
+              }
             }
           }
 
