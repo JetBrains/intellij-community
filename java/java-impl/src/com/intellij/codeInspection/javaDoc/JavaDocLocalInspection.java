@@ -811,7 +811,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     private static boolean matches(final PsiParameter param, final PsiDocTag tag) {
-      return tag.getValueElement().getText().trim().startsWith(param.getName());
+      final PsiDocTagValue valueElement = tag.getValueElement();
+      return valueElement != null && valueElement.getText().trim().startsWith(param.getName());
     }
   }
 
