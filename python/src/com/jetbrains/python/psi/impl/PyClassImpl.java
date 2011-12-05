@@ -629,7 +629,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Nullable
   private Property scanProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
     LanguageLevel level = LanguageLevel.getDefault();
-    final PsiFile file = getContainingFile();
+    // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
+    final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
     if (file != null) {
       final VirtualFile vfile = file.getVirtualFile();
       if (vfile != null) {
