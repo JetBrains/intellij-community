@@ -93,6 +93,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     String enteredName = null;
     boolean replaceAll = false;
     if (activeIntroducer != null) {
+      if (!(activeIntroducer instanceof InplaceIntroduceFieldPopup)/* || !activeIntroducer.startsOnTheSameElement(expr, localVariable)*/) {
+        AbstractInplaceIntroducer.unableToStartWarning(project, editor, activeIntroducer);
+        return null;
+      }
       activeIntroducer.stopIntroduce(editor);
       expr = (PsiExpression)activeIntroducer.getExpr();
       localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
@@ -104,7 +108,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
 
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
-    final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(element, parentClass);
+    final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(expr != null ? expr : anchorElement, parentClass);
     boolean declareStatic = staticParentElement != null;
 
     boolean isInSuperOrThis = false;
