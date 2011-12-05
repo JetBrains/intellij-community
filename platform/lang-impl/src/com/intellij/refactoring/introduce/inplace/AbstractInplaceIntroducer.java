@@ -246,13 +246,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           }
         }
         result.set(started);
-        if (!started && variable != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              variable.delete();
-            }
-          });
+        if (!started) {
+          finish();
         }
       }
 
