@@ -71,10 +71,26 @@ public class StatementMover extends LineMover {
     // check if we want to move statement
     if (myStatementToMove == null) return false;
     //do not move pass statement
-    if (myStatementToMove instanceof PyPassStatement || myStatementToMove instanceof PyBreakStatement
-        || myStatementToMove instanceof PyContinueStatement) {
+    if (myStatementToMove instanceof PyPassStatement) {
       info.toMove2 = info.toMove;
       return true;
+    }
+    if ( myStatementToMove instanceof PyBreakStatement
+            || myStatementToMove instanceof PyContinueStatement) {
+      PyLoopStatement parent = PsiTreeUtil.getParentOfType(myStatementToMove, PyLoopStatement.class);
+      if (parent != null) {
+        PyStatementPart part = PsiTreeUtil.getChildOfType(parent, PyStatementPart.class);
+        if (part != null && part.getStatementList() != null) {
+          PyStatementList statementList = part.getStatementList();
+          if (statementList != null && statementList.getStatements().length > 0) {
+            if ((statementList.getStatements()[0] == myStatementToMove && !down)
+                || (statementList.getStatements()[statementList.getStatements().length-1] == myStatementToMove && down)) {
+              info.toMove2 = info.toMove;
+              return true;
+            }
+          }
+        }
+      }
     }
     // do not move last statement down and first up
     if (isFirstOrLastStatement(down)) {
