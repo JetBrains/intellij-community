@@ -803,6 +803,7 @@ public class TemplateState implements Disposable {
   }
 
   public void gotoEnd(boolean brokenOff) {
+    if (myTemplate == null) return;
     calcResults(false);
     doReformat(null);
     finishTemplateEditing(brokenOff);
@@ -814,6 +815,7 @@ public class TemplateState implements Disposable {
 
   private void finishTemplateEditing(boolean brokenOff) {
     if (myTemplate == null) return;
+
 
     LookupManager.getInstance(myProject).hideActiveLookup();
 
