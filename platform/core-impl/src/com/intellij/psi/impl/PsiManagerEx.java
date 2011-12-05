@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author peter
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PsiManagerEx extends PsiManager {
   public abstract boolean isBatchFilesProcessingMode();
 
+  @TestOnly
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
   /**

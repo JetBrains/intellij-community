@@ -113,7 +113,8 @@ public class DummyHolder extends PsiFileImpl {
 
   @Override
   public FileElement getTreeElement() {
-    if (myFileElement != null) return myFileElement;
+    FileElement fileElement = myFileElement;
+    if (fileElement != null) return fileElement;
 
     synchronized (myTreeElementLock) {
       return getTreeElementNoLock();
@@ -122,13 +123,15 @@ public class DummyHolder extends PsiFileImpl {
 
   @Override
   public FileElement getTreeElementNoLock() {
-    if (myFileElement == null) {
-      myFileElement = new FileElement(TokenType.DUMMY_HOLDER, null);
-      myFileElement.setPsi(this);
-      if (myTable != null) myFileElement.setCharTable(myTable);
+    FileElement fileElement = myFileElement;
+    if (fileElement == null) {
+      fileElement = new FileElement(TokenType.DUMMY_HOLDER, null);
+      fileElement.setPsi(this);
+      if (myTable != null) fileElement.setCharTable(myTable);
+      myFileElement = fileElement;
       clearCaches();
     }
-    return myFileElement;
+    return fileElement;
   }
 
   @Override
