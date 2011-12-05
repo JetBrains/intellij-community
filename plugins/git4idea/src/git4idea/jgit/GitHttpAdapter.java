@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.net.ProxySelector;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -122,11 +123,11 @@ public final class GitHttpAdapter {
   }
 
   @NotNull
-  public static GitSimplePushResult push(@NotNull final GitRepository repository, @NotNull final GitRemote remote, @NotNull final String remoteUrl) {
+  public static GitSimplePushResult push(@NotNull final GitRepository repository, @NotNull final GitRemote remote, @NotNull final String remoteUrl, @NotNull String pushSpec) {
     try {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
-      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remote.getName(), remoteUrl);
+      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remote.getName(), remoteUrl, convertRefSpecs(Collections.singletonList(pushSpec)));
       GeneralResult result = callWithAuthRetry(pushCommand);
       GitSimplePushResult pushResult = pushCommand.getResult();
       if (pushResult == null) {
