@@ -238,6 +238,9 @@ public abstract class IntroduceParameterSettingsUI {
   }
 
   public boolean isParamToRemove(PsiParameter param) {
+    if (param.isVarArgs()) {
+      return myParametersToRemove[myParametersToRemove.length - 1] != null;
+    }
     final int parameterIndex = ((PsiMethod)param.getDeclarationScope()).getParameterList().getParameterIndex(param);
     return myParametersToRemove[parameterIndex] != null;
   }
