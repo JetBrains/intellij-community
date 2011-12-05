@@ -593,7 +593,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void fileDeleted(VirtualFileEvent event) {
-    //todo clear document/file correspondence?
+    Document doc = getCachedDocument(event.getFile());
+    if (doc != null) {
+      myTrailingSpacesStripper.documentDeleted(doc);
+    }
   }
 
   public void fileMoved(VirtualFileMoveEvent event) {
