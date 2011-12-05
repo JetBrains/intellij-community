@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
+@Deprecated
 public interface UsageConvertor extends ApplicationComponent{
 
   @NotNull Usage convert(@NotNull Usage usage);
