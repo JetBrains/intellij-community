@@ -331,9 +331,7 @@ public class VariableInplaceRenamer {
                 finish();
 
                 TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-                if (value != null) {
-                  myNewName = value.toString();
-                }
+                myNewName = getNewName(value != null ? value.toString() : null, snapshot);
 
                 if (snapshot != null && performAutomaticRename()) {
                   if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
@@ -460,6 +458,11 @@ public class VariableInplaceRenamer {
   }
 
   protected void restoreStateBeforeDialogWouldBeShown() {
+  }
+
+  @Nullable
+  protected String getNewName(String newName, ResolveSnapshotProvider.ResolveSnapshot snapshot) {
+    return snapshot != null ? newName : null;
   }
 
   @Nullable

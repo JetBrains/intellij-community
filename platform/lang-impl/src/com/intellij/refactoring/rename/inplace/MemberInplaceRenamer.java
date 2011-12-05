@@ -252,6 +252,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     CommandProcessor.getInstance().executeCommand(myProject, runnable, commandName, null);
   }
 
+  @Override
+  protected String getNewName(String newName, ResolveSnapshotProvider.ResolveSnapshot snapshot) {
+    return newName;
+  }
+
   @Nullable
   public PsiElement getSubstituted() {
     if (mySubstituted != null && mySubstituted.isValid()) return mySubstituted;
