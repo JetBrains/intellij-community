@@ -1,0 +1,69 @@
+package com.jetbrains.python.module;
+
+import com.intellij.ide.util.importProject.ModuleDescriptor;
+import com.intellij.ide.util.importProject.ProjectDescriptor;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * @author yole
+ */
+public class PyProjectStructureDetector extends ProjectStructureDetector {
+  @NotNull
+  @Override
+  public DirectoryProcessingResult detectRoots(@NotNull File dir,
+                                               @NotNull File[] children,
+                                               @NotNull File base,
+                                               @NotNull List<DetectedProjectRoot> result) {
+    for (File child : children) {
+      if (FileUtil.getExtension(child.getName()).equals("py")) {
+        result.add(new DetectedProjectRoot(dir) {
+          @NotNull
+          @Override
+          public String getRootTypeName() {
+            return "Python";
+          }
+        });
+        return DirectoryProcessingResult.SKIP_CHILDREN;
+      }
+    }
+    return DirectoryProcessingResult.PROCESS_CHILDREN;
+  }
+
+  @Override
+  public void setupProjectStructure(@NotNull Collection<DetectedProjectRoot> roots,
+                                    @NotNull ProjectDescriptor projectDescriptor,
+                                    @NotNull ProjectFromSourcesBuilder builder) {
+    if (!roots.isEmpty() && !hasRootsFromOtherDetectors(builder)) {
+      List<ModuleDescriptor> modules = projectDescriptor.getModules();
+      if (modules.isEmpty()) {
+        modules = new ArrayList<ModuleDescriptor>();
+        for (DetectedProjectRoot root : roots) {
+          modules.add(new ModuleDescriptor(root.getDirectory(), PythonModuleType.getInstance(), root));
+        }
+        projectDescriptor.setModules(modules);
+      }
+    }
+  }
+
+  private static boolean hasRootsFromOtherDetectors(ProjectFromSourcesBuilder builder) {
+    for (ProjectStructureDetector projectStructureDetector : Extensions.getExtensions(EP_NAME)) {
+      if (!(projectStructureDetector instanceof PyProjectStructureDetector)) {
+        final Collection<DetectedProjectRoot> roots = builder.getProjectRoots(projectStructureDetector);
+        if (!roots.isEmpty()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+}
