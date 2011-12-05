@@ -330,17 +330,18 @@ public class VariableInplaceRenamer {
                 }
                 finish();
 
+                TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
+                if (value != null) {
+                  myNewName = value.toString();
+                }
+
                 if (snapshot != null && performAutomaticRename()) {
-                  TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-                  if (value != null) {
-                    myNewName = value.toString();
-                    if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
-                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                        public void run() {
-                          snapshot.apply(myNewName);
-                        }
-                      });
-                    }
+                  if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                      public void run() {
+                        snapshot.apply(myNewName);
+                      }
+                    });
                   }
                 }
                 restoreStateBeforeTemplateIsFinished();
