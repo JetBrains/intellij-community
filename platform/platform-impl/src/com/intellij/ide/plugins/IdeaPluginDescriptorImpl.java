@@ -540,6 +540,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myExtensions.addAll(descriptor.myExtensions);
     }
 
+    if (myExtensionsPoints == null) {
+      myExtensionsPoints = descriptor.myExtensionsPoints;
+    }
+    else if (descriptor.myExtensionsPoints != null) {
+      myExtensionsPoints.addAll(descriptor.myExtensionsPoints);
+    }
+
     if (myActionsElements == null) {
       myActionsElements = descriptor.myActionsElements;
     }
