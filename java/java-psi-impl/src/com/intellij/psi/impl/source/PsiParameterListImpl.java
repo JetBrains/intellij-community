@@ -31,11 +31,11 @@ import org.jetbrains.annotations.NotNull;
 public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStub> implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterListImpl");
 
-  public PsiParameterListImpl(final PsiParameterListStub stub) {
+  public PsiParameterListImpl(@NotNull PsiParameterListStub stub) {
     super(stub, JavaStubElementTypes.PARAMETER_LIST);
   }
 
-  public PsiParameterListImpl(final ASTNode node) {
+  public PsiParameterListImpl(@NotNull ASTNode node) {
     super(node);
   }
 

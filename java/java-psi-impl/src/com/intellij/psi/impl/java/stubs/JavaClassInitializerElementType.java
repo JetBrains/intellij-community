@@ -45,12 +45,12 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
   }
 
   @Override
-  public PsiClassInitializer createPsi(final PsiClassInitializerStub stub) {
+  public PsiClassInitializer createPsi(@NotNull final PsiClassInitializerStub stub) {
     return getPsiFactory(stub).createClassInitializer(stub);
   }
 
   @Override
-  public PsiClassInitializer createPsi(final ASTNode node) {
+  public PsiClassInitializer createPsi(@NotNull final ASTNode node) {
     return new PsiClassInitializerImpl(node);
   }
 

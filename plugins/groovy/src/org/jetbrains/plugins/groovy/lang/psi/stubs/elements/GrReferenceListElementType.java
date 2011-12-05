@@ -22,6 +22,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
@@ -41,7 +42,7 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
     super(debugName);
   }
 
-  public GrReferenceListStub createStub(T psi, StubElement parentStub) {
+  public GrReferenceListStub createStub(@NotNull T psi, StubElement parentStub) {
     List<String> refNames = new ArrayList<String>();
     for (GrCodeReferenceElement element : psi.getReferenceElements()) {
       final String name = element.getText();

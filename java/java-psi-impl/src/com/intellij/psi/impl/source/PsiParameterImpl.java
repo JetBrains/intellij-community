@@ -44,11 +44,11 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
   private volatile PatchedSoftReference<PsiType> myCachedType = null;
 
-  public PsiParameterImpl(final PsiParameterStub stub) {
+  public PsiParameterImpl(@NotNull PsiParameterStub stub) {
     super(stub, JavaStubElementTypes.PARAMETER);
   }
 
-  public PsiParameterImpl(final ASTNode node) {
+  public PsiParameterImpl(@NotNull ASTNode node) {
     super(node);
   }
 

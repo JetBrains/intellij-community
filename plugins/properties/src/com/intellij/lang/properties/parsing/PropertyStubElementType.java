@@ -26,6 +26,7 @@ import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -34,11 +35,11 @@ public class PropertyStubElementType extends IStubElementType<PropertyStub, Prop
     super("PROPERTY", PropertiesElementTypes.LANG);
   }
 
-  public Property createPsi(final PropertyStub stub) {
+  public Property createPsi(@NotNull final PropertyStub stub) {
     return new PropertyImpl(stub, this);
   }
 
-  public PropertyStub createStub(final Property psi, final StubElement parentStub) {
+  public PropertyStub createStub(@NotNull final Property psi, final StubElement parentStub) {
     return new PropertyStubImpl(parentStub, psi.getKey());
   }
 

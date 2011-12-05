@@ -32,6 +32,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -70,7 +71,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
 
   @Nls
   public String getActionText() {
-    return VcsBundle.message("create.patch.commit.action.text");
+    return VcsBundle.message("create.patch.commit.action.title");
   }
 
   @Override

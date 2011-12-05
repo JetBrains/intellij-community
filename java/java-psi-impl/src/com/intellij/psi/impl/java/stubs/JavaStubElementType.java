@@ -64,10 +64,10 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
   }
 
   @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
-  public abstract PsiT createPsi(ASTNode node);
+  public abstract PsiT createPsi(@NotNull ASTNode node);
 
   @Override
-  public final StubT createStub(final PsiT psi, final StubElement parentStub) {
+  public final StubT createStub(@NotNull final PsiT psi, final StubElement parentStub) {
     final String message = "Should not be called. Element=" + psi + "; file=" + (psi.isValid() ? psi.getContainingFile() : "-");
     throw new UnsupportedOperationException(message);
   }

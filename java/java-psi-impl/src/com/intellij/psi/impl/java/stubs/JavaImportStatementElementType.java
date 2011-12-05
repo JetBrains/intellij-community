@@ -46,12 +46,12 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
   }
 
   @Override
-  public PsiImportStatementBase createPsi(final PsiImportStatementStub stub) {
+  public PsiImportStatementBase createPsi(@NotNull final PsiImportStatementStub stub) {
     return getPsiFactory(stub).createImportStatement(stub);
   }
 
   @Override
-  public PsiImportStatementBase createPsi(final ASTNode node) {
+  public PsiImportStatementBase createPsi(@NotNull final ASTNode node) {
     if (node instanceof ImportStaticStatementElement) {
       return new PsiImportStaticStatementImpl(node);
     }
