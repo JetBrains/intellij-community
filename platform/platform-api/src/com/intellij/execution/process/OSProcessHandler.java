@@ -122,28 +122,6 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   public void startNotify() {
-    final OutputReader stdoutReader = new OutputReader(createProcessOutReader()) {
-      protected void onTextAvailable(@NotNull String text) {
-        notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
-      }
-
-      @Override
-      protected Future<?> executeOnPooledThread(Runnable runnable) {
-        return OSProcessHandler.this.executeOnPooledThread(runnable);
-      }
-    };
-
-    final OutputReader stderrReader = new OutputReader(createProcessErrReader()) {
-      protected void onTextAvailable(@NotNull String text) {
-        notifyTextAvailable(text, ProcessOutputTypes.STDERR);
-      }
-
-      @Override
-      protected Future<?> executeOnPooledThread(Runnable runnable) {
-        return OSProcessHandler.this.executeOnPooledThread(runnable);
-      }
-    };
-
     if (myCommandLine != null) {
       notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
     }
@@ -151,6 +129,28 @@ public class OSProcessHandler extends ProcessHandler {
     addProcessListener(new ProcessAdapter() {
       public void startNotified(final ProcessEvent event) {
         try {
+          final OutputReader stdoutReader = new OutputReader(createProcessOutReader()) {
+            protected void onTextAvailable(@NotNull String text) {
+              notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
+            }
+
+            @Override
+            protected Future<?> executeOnPooledThread(Runnable runnable) {
+              return OSProcessHandler.this.executeOnPooledThread(runnable);
+            }
+          };
+
+          final OutputReader stderrReader = new OutputReader(createProcessErrReader()) {
+            protected void onTextAvailable(@NotNull String text) {
+              notifyTextAvailable(text, ProcessOutputTypes.STDERR);
+            }
+
+            @Override
+            protected Future<?> executeOnPooledThread(Runnable runnable) {
+              return OSProcessHandler.this.executeOnPooledThread(runnable);
+            }
+          };
+
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
             public void consume(Integer exitCode) {
