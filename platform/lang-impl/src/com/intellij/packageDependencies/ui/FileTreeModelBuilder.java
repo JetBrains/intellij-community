@@ -263,6 +263,7 @@ public class FileTreeModelBuilder {
 
   @Nullable
   public DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
+    LOG.assertTrue(parent != null, element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null ? ((PsiFile)element).getVirtualFile().getPath() : element);
     final VirtualFile parentVirtualFile = parent.getVirtualFile();
     Module module = myFileIndex.getModuleForFile(parentVirtualFile);
     if (element instanceof PsiDirectory && myFlattenPackages) {
