@@ -68,7 +68,7 @@ public class PythonParserDefinition implements ParserDefinition {
   }
 
   @NotNull
-  public PsiElement createElement(ASTNode node) {
+  public PsiElement createElement(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type instanceof PyElementType) {
       PyElementType pyElType = (PyElementType)type;
@@ -77,7 +77,6 @@ public class PythonParserDefinition implements ParserDefinition {
     else if (type instanceof PyStubElementType) {
       return ((PyStubElementType)type).createElement(node);
     }
-
     return new ASTWrapperPsiElement(node);
   }
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Constructor;
 
 public class PyElementType extends IElementType {
-  protected Class<? extends PsiElement> _psiElementClass;
+  protected Class<? extends PsiElement> myPsiElementClass;
   private static final Class[] PARAMETER_TYPES = new Class[]{ASTNode.class};
   private Constructor<? extends PsiElement> myConstructor;
 
@@ -21,10 +21,9 @@ public class PyElementType extends IElementType {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
   }
 
-
-  public PyElementType(@NonNls String debugName, Class<? extends PsiElement> psiElementClass) {
+  public PyElementType(@NotNull @NonNls String debugName, @NotNull Class<? extends PsiElement> psiElementClass) {
     this(debugName);
-    _psiElementClass = psiElementClass;
+    myPsiElementClass = psiElementClass;
   }
 
   public PyElementType(@NotNull @NonNls String debugName, @NotNull @NonNls String specialMethodName) {
@@ -32,17 +31,15 @@ public class PyElementType extends IElementType {
     mySpecialMethodName = specialMethodName;
   }
 
-  @Nullable
-  public PsiElement createElement(ASTNode node) {
-    if (_psiElementClass == null) {
-      return null;
+  @NotNull
+  public PsiElement createElement(@NotNull ASTNode node) {
+    if (myPsiElementClass == null) {
+      throw new IllegalStateException("Cannot create an element for " + node.getElementType() + " without element class");
     }
-
     try {
       if (myConstructor == null) {
-        myConstructor = _psiElementClass.getConstructor(PARAMETER_TYPES);
+        myConstructor = myPsiElementClass.getConstructor(PARAMETER_TYPES);
       }
-
       return myConstructor.newInstance(node);
     }
     catch (Exception e) {

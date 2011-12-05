@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.documentation.StructuredDocString;
@@ -173,7 +174,12 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
           }
         }
 
-        final String docString = PyUtil.strValue(func.getDocStringExpression());
+        String docString = PyUtil.strValue(func.getDocStringExpression());
+        if (PyNames.INIT.equals(func.getName()) && docString == null) {
+          PyClass pyClass = func.getContainingClass();
+          if (pyClass != null)
+            docString = PyUtil.strValue(pyClass.getDocStringExpression());
+        }
         StructuredDocString epydocString = StructuredDocString.parse(docString);
         if (epydocString != null) {
           String typeName = epydocString.getParamType(getName());

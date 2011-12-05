@@ -6,10 +6,10 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import org.jetbrains.annotations.Nullable;
 
 
 /**
@@ -22,6 +22,7 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
     return element instanceof PyClass || element instanceof PyFunction ? element : null;
   }
 
+  @Nullable
   @Override
   public String getQualifiedName(PsiElement element) {
     if (element instanceof PyClass) {
@@ -36,6 +37,7 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
     return null;
   }
 
+  @Nullable
   @Override
   public PsiElement qualifiedNameToElement(String fqn, Project project) {
     PyClass aClass = PyClassNameIndex.findClass(fqn, project);
