@@ -1183,7 +1183,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     button.dispose();
     myId2StripeButton.remove(id);
     //
-    myId2FocusWatcher.remove(id);
+    ToolWindowFocusWatcher watcher = (ToolWindowFocusWatcher)myId2FocusWatcher.remove(id);
+    watcher.deinstall();
+
     // Destroy decorator
     final InternalDecorator decorator = getInternalDecorator(id);
     decorator.dispose();
@@ -1946,11 +1948,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private final class ToolWindowFocusWatcher extends FocusWatcher {
     private final String myId;
+    private final ToolWindowImpl myToolWindow;
 
 
     private ToolWindowFocusWatcher(final ToolWindowImpl toolWindow) {
       myId = toolWindow.getId();
       install(toolWindow.getComponent());
+      myToolWindow = toolWindow;
+    }
+
+    public void deinstall() {
+      deinstall(myToolWindow.getComponent());
     }
 
     protected boolean isFocusedComponentChangeValid(final Component comp, final AWTEvent cause) {
