@@ -18,6 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.openapi.application.ApplicationInfo;
 
 import javax.swing.*;
 import java.util.List;
@@ -67,6 +68,8 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     public NoUpdatesPanel() {
       initPluginsPanel(myPanel, myPluginsPanel, myEditorPane);
       myNothingFoundToUpdateLabel.setVisible(myUploadedPlugins == null);
+      myNothingFoundToUpdateLabel.setText("You already have the latest version of " +
+                                          ApplicationInfo.getInstance().getVersionName()+ " installed.");
     }
   }
 }
