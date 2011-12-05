@@ -366,8 +366,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
     // Take into accound that the component itself can have a border
     final Insets insets = getInsets();
-    width += insets.left + insets.right;
-    height += insets.top + insets.bottom;
+    if (insets != null) {
+      width += insets.left + insets.right;
+      height += insets.top + insets.bottom;
+    }
 
     return new Dimension(width, height);
   }

@@ -49,11 +49,15 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent = new MyComponent();
   }
 
-  public JComponent createComponent() {
+  private void initComponent() {
     if (myComponent == null)  {
       myComponent = new MyComponent();
     }
 
+  }
+
+  public JComponent createComponent() {
+    initComponent();
     DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(false));
     myComponent.myFontCombo.setModel(aModel);
     myComponent.myFontSizeCombo.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
@@ -99,6 +103,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   public void apply() {
+    initComponent();
     UISettings settings = UISettings.getInstance();
     String temp = (String)myComponent.myFontSizeCombo.getEditor().getItem();
     int _fontSize = -1;
@@ -183,6 +188,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   public void reset() {
+    initComponent();
     UISettings settings = UISettings.getInstance();
 
     myComponent.myFontCombo.setSelectedItem(settings.FONT_FACE);
@@ -218,6 +224,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   public boolean isModified() {
+    initComponent();
     UISettings settings = UISettings.getInstance();
 
     boolean isModified = false;
