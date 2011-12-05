@@ -289,7 +289,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void stop() {
-    //myDebugger.disconnect();
+    myDebugger.disconnect();
   }
 
   @Override
@@ -528,6 +528,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void processTerminated(ProcessEvent event) {
+    myDebugger.close();
   }
 
   @Override
