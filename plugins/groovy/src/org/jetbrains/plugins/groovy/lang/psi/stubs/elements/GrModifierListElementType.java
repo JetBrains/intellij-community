@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
@@ -34,12 +35,12 @@ public class GrModifierListElementType extends GrStubElementType<GrModifierListS
   }
 
   @Override
-  public GrModifierList createPsi(GrModifierListStub stub) {
+  public GrModifierList createPsi(@NotNull GrModifierListStub stub) {
     return new GrModifierListImpl(stub);
   }
 
   @Override
-  public GrModifierListStub createStub(GrModifierList psi, StubElement parentStub) {
+  public GrModifierListStub createStub(@NotNull GrModifierList psi, StubElement parentStub) {
     return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, GrModifierListStub.buildFlags(psi));
   }
 

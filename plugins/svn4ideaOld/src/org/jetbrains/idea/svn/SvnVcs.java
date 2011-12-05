@@ -177,9 +177,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
     initLogFilters();
 
-    // Alexander Kitaev says it is default value (empty string)
-    if (System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) == null) {
-      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "");
+    // Alexander Kitaev says it is default value (SSLv3) - since 8254
+    if (! SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7") && System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) == null) {
+      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "SSLv3");
     }
   }
 

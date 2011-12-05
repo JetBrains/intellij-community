@@ -560,10 +560,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     public void setSize(int width, int height) {
-      Point location = getLocation();
+      _setSizeForLocation(width, height, null);
+    }
+
+    private void _setSizeForLocation(int width, int height, @Nullable Point initial) {
+      Point location = initial != null ? initial : getLocation();
       Rectangle rect = new Rectangle(location.x, location.y, width, height);
       ScreenUtil.fitToScreen(rect);
-      if (location.x != rect.x || location.y != rect.y) {
+      if (initial != null || location.x != rect.x || location.y != rect.y) {
         setLocation(rect.x, rect.y);
       }
 
@@ -609,7 +613,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         Dimension size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
         if (size != null) {
           myInitialSize = (Dimension)size.clone();
-          setSize(myInitialSize);
+          _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
         }
       }
 
@@ -937,27 +941,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private class MyComponentListener extends ComponentAdapter {
       @SuppressWarnings({"RefusedBequest"})
       public void componentResized(ComponentEvent e) {
-        final JRootPane pane = getRootPane();
-        if (pane == null) return;
-        final Dimension minSize = pane.getMinimumSize();
-        final Dimension size = pane.getSize();
-        final Dimension winSize = getSize();
-        if (minSize.width > size.width) {
-          winSize.width += minSize.width - size.width;
-        }
-        if (minSize.height > size.height) {
-          winSize.height += minSize.height - size.height;
-        }
-
-        if (!winSize.equals(getSize())) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              if (isShowing()) {
-                setSize(winSize);
-              }
-            }
-          });
-        }
+        UIUtil.adjustWindowToMinimumSize(getWindow());
       }
     }
 

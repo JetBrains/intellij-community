@@ -294,7 +294,7 @@ public class MvcConsole implements Disposable {
     catch (final IOException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          Messages.showErrorDialog(e.getMessage(), "Cannot start process");
+          Messages.showErrorDialog(e.getMessage(), "Cannot Start Process");
 
           try {
             if (onDone != null && !module.isDisposed()) onDone.run();
@@ -359,7 +359,7 @@ public class MvcConsole implements Disposable {
       super("Kill process", "Kill process", KILL_PROCESS_ICON);
     }
 
-    public void setHandler(OSProcessHandler handler) {
+    public void setHandler(@Nullable OSProcessHandler handler) {
       myHandler = handler;
     }
 

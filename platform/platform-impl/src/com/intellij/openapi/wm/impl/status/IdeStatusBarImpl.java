@@ -257,6 +257,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   public void dispose() {
     myWidgetMap.clear();
+    myChildren.clear();
+
+    myLeftPanel.removeAll();
+    myRightPanel.removeAll();
+    myCenterPanel.removeAll();
   }
 
   private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final String anchor) {

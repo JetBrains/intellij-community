@@ -42,6 +42,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -104,7 +105,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @NonNls
   public static String notReleasedError(@NotNull Editor editor) {
-    final String creator = editor.getUserData(EDITOR_CREATOR);
+    final String creator = getCreator(editor);
     if (creator == null) {
       return "Editor of " + editor.getClass() +
                 " and the following text hasn't been released:\n" + editor.getDocument().getText();
@@ -112,6 +113,11 @@ public class EditorFactoryImpl extends EditorFactory {
     else {
       return "Editor of " + editor.getClass() + " hasn't been released:\n" + creator;
     }
+  }
+
+  @Nullable
+  static String getCreator(@NotNull Editor editor) {
+    return editor.getUserData(EDITOR_CREATOR);
   }
 
   @Override
@@ -200,8 +206,8 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void releaseEditor(@NotNull Editor editor) {
-    editor.putUserData(EDITOR_CREATOR, null);
     ((EditorImpl)editor).release();
+    editor.putUserData(EDITOR_CREATOR, null);
     myEditors.remove(editor);
     myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
 

@@ -157,8 +157,12 @@ public class AndroidDxRunner {
     }
     
     if (file.isDirectory()) {
-      for (File child : file.listFiles()) {
-        collectFiles(root, child, result, visited, qNames);
+      final File[] children = file.listFiles();
+
+      if (children != null) {
+        for (File child : children) {
+          collectFiles(root, child, result, visited, qNames);
+        }
       }
     }
     else {

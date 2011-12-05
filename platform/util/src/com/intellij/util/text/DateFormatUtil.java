@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 public class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
@@ -37,6 +38,10 @@ public class DateFormatUtil {
   private static final SyncDateFormat TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.TIME);
   private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT = getFormat(DateFormat.MEDIUM, DateType.TIME);
   private static final SyncDateFormat DATE_TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.DATETIME);
+
+  // fixed formats - should be locale-independent
+  private static final SimpleDateFormat BUILD_DATE_FORMAT = new SimpleDateFormat("dd MMM yyyy HH:ss", Locale.US);
+  private static final DateFormat ABOUT_DATE_FORMAT = DateFormat.getDateInstance(DateFormat.LONG, Locale.US);
 
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
@@ -464,4 +469,14 @@ public class DateFormatUtil {
   private static final int MacFormatterLongStyle = 3;
   private static final int MacFormatterFullStyle = 4;
   private static final int MacFormatterBehavior_10_4 = 1040;
+
+  @NotNull
+  public static String formatBuildDate(@NotNull Calendar cal) {
+    return BUILD_DATE_FORMAT.format(cal.getTime());
+  }
+
+  @NotNull
+  public static String formatAboutDialogDate(@NotNull Date date) {
+    return ABOUT_DATE_FORMAT.format(date);
+  }
 }

@@ -37,58 +37,73 @@ import java.lang.ref.WeakReference;
 
 public class ShowContainerInfoHandler implements CodeInsightActionHandler {
   private static final Key<WeakReference<LightweightHint>> MY_LAST_HINT_KEY = Key.create("MY_LAST_HINT_KEY");
+  private static final Key<PsiElement> CONTAINER_KEY = Key.create("CONTAINER_KEY");
 
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-
+    PsiElement container = null;
     WeakReference<LightweightHint> ref = editor.getUserData(MY_LAST_HINT_KEY);
     if (ref != null){
       LightweightHint hint = ref.get();
       if (hint != null && hint.isVisible()){
         hint.hide();
+        container = hint.getUserData(CONTAINER_KEY);
+        if (container != null && !container.isValid()){
+          container = null;
+        }
       }
     }
 
-    PsiElement container = null;
-      StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
-      if (builder instanceof TreeBasedStructureViewBuilder) {
-        StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel();
+    StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
+    if (builder instanceof TreeBasedStructureViewBuilder) {
+      StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel();
+      boolean goOneLevelUp = true;
+      if (container == null) {
+        goOneLevelUp = false;
         Object element = model.getCurrentEditorElement();
         if (element instanceof PsiElement) {
           container = (PsiElement) element;
-          while(true) {
-            if (container == null || container instanceof PsiFile) {
-              return;
-            }
-            if (!isDeclarationVisible(container, editor)) {
-              break;
-            }
-
-            container = container.getParent();
-            while(container != null && DeclarationRangeUtil.getPossibleDeclarationAtRange(container) == null) {
-              container = container.getParent();
-              if (container instanceof PsiFile) return;
-            }
-          }
         }
       }
-      if (container == null) {
-        return;
+      while(true) {
+        if (container == null || container instanceof PsiFile) {
+          return;
+        }
+        if (goOneLevelUp) {
+          goOneLevelUp = false;
+        }
+        else {
+          if (!isDeclarationVisible(container, editor)) {
+            break;
+          }
+        }
+
+        container = container.getParent();
+        while(container != null && DeclarationRangeUtil.getPossibleDeclarationAtRange(container) == null) {
+          container = container.getParent();
+          if (container instanceof PsiFile) return;
+        }
       }
+    }
+    if (container == null) {
+      return;
+    }
 
     final TextRange range = DeclarationRangeUtil.getPossibleDeclarationAtRange(container);
     if (range == null) {
       return;
     }
+    final PsiElement _container = container;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
-          if (hint != null) {
-            editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<LightweightHint>(hint));
-          }
+      public void run() {
+        LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
+        if (hint != null) {
+          hint.putUserData(CONTAINER_KEY, _container);
+          editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<LightweightHint>(hint));
         }
-      });
+      }
+    });
   }
 
   public boolean startInWriteAction() {

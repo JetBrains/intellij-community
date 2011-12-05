@@ -469,11 +469,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         }
 
         myOccurrenceMarkers = null;
-        if (psiField.isValid()) {
-          psiField.delete();
-        }
+        deleteTemplateField(psiField);
       }
     });
+  }
+
+  protected void deleteTemplateField(V psiField) {
+    if (psiField.isValid()) {
+      psiField.delete();
+    }
   }
 
   @Override

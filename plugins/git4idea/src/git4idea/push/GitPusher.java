@@ -326,7 +326,7 @@ public final class GitPusher {
         return pushNatively(repository, pushSpec);
       }
       else {
-        return GitHttpAdapter.isHttpUrlWithoutUserCredentials(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl) : pushNatively(repository, pushSpec);
+        return GitHttpAdapter.isHttpUrlWithoutUserCredentials(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl, null) : pushNatively(repository, pushSpec);
       }
     }
     else {
@@ -340,12 +340,27 @@ public final class GitPusher {
         }
       }
       if (httpUrl != null) {
-        return GitHttpAdapter.push(repository, remote, httpUrl);
+        return GitHttpAdapter.push(repository, remote, httpUrl, formPushSpec(pushSpec, remote));
       }
       else {
         return pushNatively(repository, pushSpec);
       }
     }
+  }
+
+  @NotNull
+  private static String formPushSpec(@NotNull GitPushSpec spec, @NotNull GitRemote remote) {
+    String destWithRemote = spec.getDest().getName();
+    String prefix = remote.getName() + "/";
+    String destName;
+    if (destWithRemote.startsWith(prefix)) {
+      destName = destWithRemote.substring(prefix.length());
+    }
+    else {
+      LOG.error("Destination remote branch has invalid name. Remote branch name: " + destWithRemote + "\nRemote: " + remote);
+      destName = destWithRemote;
+    }
+    return spec.getSource().getName() + ":" + destName;
   }
 
   @NotNull

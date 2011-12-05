@@ -104,7 +104,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T findElementInRange(final GroovyFileBase file,
+  public static <T extends PsiElement> T findElementInRange(final PsiFile file,
                                                             int startOffset,
                                                             int endOffset,
                                                             final Class<T> klass) {

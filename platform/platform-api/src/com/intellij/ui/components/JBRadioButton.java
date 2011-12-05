@@ -10,7 +10,7 @@ import java.awt.*;
  * @author evgeny.zakrevsky
  */
 public class JBRadioButton extends JRadioButton implements AnchorableComponent {
-  private JComponent anchor;
+  private JComponent myAnchor;
 
   public JBRadioButton() {
   }
@@ -45,18 +45,23 @@ public class JBRadioButton extends JRadioButton implements AnchorableComponent {
 
   @Override
   public JComponent getAnchor() {
-    return anchor;
+    return myAnchor;
   }
 
   @Override
   public void setAnchor(@Nullable JComponent anchor) {
     if (anchor != this) {
-      this.anchor = anchor;
+      this.myAnchor = anchor;
     }
   }
 
   @Override
   public Dimension getPreferredSize() {
-    return anchor == null ? super.getPreferredSize() : anchor.getPreferredSize();
+    return myAnchor == null ? super.getPreferredSize() : myAnchor.getPreferredSize();
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    return myAnchor == null ? super.getMinimumSize() : myAnchor.getMinimumSize();
   }
 }

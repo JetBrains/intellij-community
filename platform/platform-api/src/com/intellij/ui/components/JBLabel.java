@@ -30,9 +30,11 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   private JComponent myAnchor = null;
 
   public JBLabel() {
+    super();
   }
 
   public JBLabel(@NotNull UIUtil.ComponentStyle componentStyle) {
+    super();
     setComponentStyle(componentStyle);
   }
 
@@ -47,6 +49,12 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   public JBLabel(@NotNull String text, @NotNull UIUtil.ComponentStyle componentStyle) {
     super(text);
     setComponentStyle(componentStyle);
+  }
+
+  public JBLabel(@NotNull String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
+    super(text);
+    setComponentStyle(componentStyle);
+    setFontColor(fontColor);
   }
 
   public JBLabel(@NotNull String text, int horizontalAlignment) {
@@ -100,5 +108,10 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   @Override
   public Dimension getPreferredSize() {
     return myAnchor == null ? super.getPreferredSize() : myAnchor.getPreferredSize();
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    return myAnchor == null ? super.getMinimumSize() : myAnchor.getMinimumSize();
   }
 }

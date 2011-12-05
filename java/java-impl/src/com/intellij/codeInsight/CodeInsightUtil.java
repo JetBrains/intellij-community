@@ -230,6 +230,8 @@ public class CodeInsightUtil {
     }, new Comparator<PsiElement>() {
         @Override
         public int compare(PsiElement o1, PsiElement o2) {
+          if (!o1.textMatches(o2)) return 1;
+
           if (o1 instanceof PsiDiamondTypeElementImpl && o2 instanceof PsiDiamondTypeElementImpl) {
             final PsiDiamondType.DiamondInferenceResult thisInferenceResult = new PsiDiamondTypeImpl(o1.getManager(), (PsiTypeElement)o1).resolveInferredTypes();
             final PsiDiamondType.DiamondInferenceResult otherInferenceResult = new PsiDiamondTypeImpl(o2.getManager(), (PsiTypeElement)o2).resolveInferredTypes();

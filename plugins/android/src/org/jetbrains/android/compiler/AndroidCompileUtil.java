@@ -44,6 +44,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.AndroidProjectComponent;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -340,19 +341,24 @@ public class AndroidCompileUtil {
     }
   }
 
-  public static void generate(final Module module, GeneratingCompiler compiler) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
-    final CompileContext[] contextWrapper = new CompileContext[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+  public static void generate(final Module module, final GeneratingCompiler compiler) {
+    module.getProject().getComponent(AndroidProjectComponent.class).runIfNotInCompilation(new Runnable() {
+      @Override
       public void run() {
-        Project project = module.getProject();
-        if (project.isDisposed()) return;
-        CompilerTask task = new CompilerTask(project, true, "Android auto-generation", true);
-        CompileScope scope = new ModuleCompileScope(module, false);
-        contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
+        assert !ApplicationManager.getApplication().isDispatchThread();
+        final CompileContext[] contextWrapper = new CompileContext[1];
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            Project project = module.getProject();
+            if (project.isDisposed()) return;
+            CompilerTask task = new CompilerTask(project, true, "Android auto-generation", true);
+            CompileScope scope = new ModuleCompileScope(module, false);
+            contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
+          }
+        });
+        generate(compiler, contextWrapper[0]);
       }
     });
-    generate(compiler, contextWrapper[0]);
   }
 
   public static boolean isModuleAffected(CompileContext context, Module module) {
@@ -733,8 +739,12 @@ public class AndroidCompileUtil {
     throws IOException {
     
     if (file.isDirectory()) {
-      for (File child : file.listFiles()) {
-        addFileToJar(jar, child, rootDirectory, packRClasses);
+      final File[] children = file.listFiles();
+
+      if (children != null) {
+        for (File child : children) {
+          addFileToJar(jar, child, rootDirectory, packRClasses);
+        }
       }
     }
     else if (file.isFile()) {

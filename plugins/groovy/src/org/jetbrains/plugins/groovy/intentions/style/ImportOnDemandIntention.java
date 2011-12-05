@@ -29,7 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 /**
@@ -41,10 +44,10 @@ public class ImportOnDemandIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    LOG.assertTrue(element instanceof GrReferenceElement);
+    if (!(element instanceof GrReferenceElement)) return;
     final GrReferenceElement ref = (GrReferenceElement)element;
     final PsiElement resolved = ref.resolve();
-    LOG.assertTrue(resolved instanceof PsiClass);
+    if (!(resolved instanceof PsiClass)) return;
 
     final String qname = ((PsiClass)resolved).getQualifiedName();
 
@@ -52,7 +55,7 @@ public class ImportOnDemandIntention extends Intention {
       GroovyPsiElementFactory.getInstance(project).createImportStatementFromText(qname, true, true, null);
 
     final PsiFile containingFile = element.getContainingFile();
-    LOG.assertTrue(containingFile instanceof GroovyFile);
+    if (!(containingFile instanceof GroovyFile)) return;
     ((GroovyFile)containingFile).addImport(importStatement);
 
     for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile), true)) {

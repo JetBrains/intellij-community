@@ -53,12 +53,12 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
   }
 
   @Override
-  public PsiField createPsi(final PsiFieldStub stub) {
+  public PsiField createPsi(@NotNull final PsiFieldStub stub) {
     return getPsiFactory(stub).createField(stub);
   }
 
   @Override
-  public PsiField createPsi(final ASTNode node) {
+  public PsiField createPsi(@NotNull final ASTNode node) {
     if (node instanceof EnumConstantElement) {
       return new PsiEnumConstantImpl(node);
     }

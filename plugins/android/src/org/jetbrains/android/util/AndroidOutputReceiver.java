@@ -37,7 +37,7 @@ public abstract class AndroidOutputReceiver extends MultiLineReceiver {
   public void processNewLines(String[] lines) {
     if (!myTryAgain) {
       for (String line : lines) {
-        line = decodeIso8859_1(line);
+        //line = decodeIso8859_1(line);
         processNewLine(line);
         if (line.indexOf(BAD_ACCESS_ERROR) >= 0) {
           myTryAgain = true;

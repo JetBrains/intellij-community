@@ -79,6 +79,8 @@ public class GrMoveToDirFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!(file instanceof GroovyFile)) return;
+
     final String packageName = ((GroovyFile)file).getPackageName();
     final Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
     PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, null, true);

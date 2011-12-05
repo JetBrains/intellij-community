@@ -135,6 +135,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
     add(myCurrentView.self(), BorderLayout.CENTER);
     myCurrentView.updateView();
+    UIUtil.adjustWindowToMinimumSize(SwingUtilities.getWindowAncestor(this));
     revalidate();
     repaint();
   }
@@ -282,8 +283,8 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       if (window != null) {
         final Dimension d = window.getSize();
         final Dimension preferredSize = getPreferredSize();
-        setPreferredSize(new Dimension(preferredSize.width, d.height / 4));
-        setMinimumSize(new Dimension(preferredSize.width, 100));
+        setPreferredSize(new Dimension(preferredSize.width, 200));
+        setMinimumSize(getPreferredSize());
       }
     }
 

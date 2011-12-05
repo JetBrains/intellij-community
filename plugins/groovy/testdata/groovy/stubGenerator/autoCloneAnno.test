@@ -1,0 +1,30 @@
+@groovy.transform.AutoClone
+class Foo {}
+-----
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public java.lang.Object clone() throws java.lang.CloneNotSupportedException {
+return null;
+}
+
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+}
+---

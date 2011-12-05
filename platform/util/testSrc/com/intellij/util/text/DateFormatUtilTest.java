@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class DateFormatUtilTest extends TestCase {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy hh.mm.ss");
@@ -70,16 +71,20 @@ public class DateFormatUtilTest extends TestCase {
     doTestDateTime("Yesterday " + DateFormatUtil.formatTime(DATE_FORMAT.parse("31.12.2003 15.00.00")), "31.12.2003 15.00.00");
   }
 
-  private void doTestPrettyDate(String expected, String date) throws ParseException {
+  private static void doTestPrettyDate(String expected, String date) throws ParseException {
     assertEquals(expected, DateFormatUtil.formatPrettyDate(DATE_FORMAT.parse(date)));
   }
 
-  private void doTestDateTime(String expected, String date) throws ParseException {
+  private static void doTestDateTime(String expected, String date) throws ParseException {
     assertEquals(expected, DateFormatUtil.formatPrettyDateTime(DATE_FORMAT.parse(date)));
   }
 
+  private static Date date(final int year, final int month, final int day, final int hour, final int minute, final int second) {
+    return new GregorianCalendar(year, month - 1, day, hour, minute, second).getTime();
+  }
+
   public void testConvertingMacToJavaPattern() throws Throwable {
-    Clock.setTime(new Date(2004 - 1900, 1, 5, 16, 6, 7).getTime() + 8);
+    Clock.setTime(date(2004, 2, 5, 16, 6, 7).getTime() + 8);
 
     String mon = new SimpleDateFormat("MMM").format(Clock.getTime());
     String month = new SimpleDateFormat("MMMMM").format(Clock.getTime());
@@ -110,7 +115,7 @@ public class DateFormatUtilTest extends TestCase {
     assertConvertedFormat("%", "");
   }
 
-  private void assertConvertedFormat(String pattern, String expected) throws Throwable {
+  private static void assertConvertedFormat(String pattern, String expected) throws Throwable {
     String converted = DateFormatUtil.convertMacPattern(pattern);
     try {
       assertEquals(expected, new SimpleDateFormat(converted).format(Clock.getTime()));
@@ -121,7 +126,7 @@ public class DateFormatUtilTest extends TestCase {
     }
   }
 
-  private void assertConvertedFormatMatches(String pattern, String expectedPattern) throws Throwable {
+  private static void assertConvertedFormatMatches(String pattern, String expectedPattern) throws Throwable {
     String converted = DateFormatUtil.convertMacPattern(pattern);
     try {
       String actual = new SimpleDateFormat(converted).format(Clock.getTime());
@@ -131,5 +136,12 @@ public class DateFormatUtilTest extends TestCase {
       System.out.println("cannot format with [" + converted + "]");
       throw e;
     }
+  }
+
+  public void testAboutDialogDataFormatter() throws Exception {
+    assertEquals("December 12, 2012",
+                 DateFormatUtil.formatAboutDialogDate(date(2012, 12, 12, 15, 35, 12)));
+    assertEquals("January 1, 1999",
+                 DateFormatUtil.formatAboutDialogDate(date(1999, 1, 1, 0, 0, 0)));
   }
 }
