@@ -130,7 +130,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         if (!processHandler.isProcessTerminating()) {
           enable = true;
         }
-        else if (processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess()) {
+        else if (processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillSoftly()) {
           enable = true;
           icon = KILL_PROCESS_ICON;
           description = "Kill process";
