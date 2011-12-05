@@ -630,11 +630,10 @@ public abstract class MvcFramework {
 
     final Project project = module.getProject();
 
-    final ModificationTracker tracker = MvcModuleStructureSynchronizer.getInstance(project).getFileAndRootsModificationTracker();
-
     return CachedValuesManager.getManager(project).getCachedValue(module, new CachedValueProvider<MvcFramework>() {
       @Override
       public Result<MvcFramework> compute() {
+        final ModificationTracker tracker = MvcModuleStructureSynchronizer.getInstance(project).getFileAndRootsModificationTracker();
         for (final MvcFramework framework : EP_NAME.getExtensions()) {
           if (framework.hasSupport(module)) {
             return Result.create(framework, tracker);
