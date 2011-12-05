@@ -26,7 +26,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     super(debugName);
   }
 
-  public PsiElement createElement(final ASTNode node) {
+  public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyFunctionImpl(node);
   }
 
