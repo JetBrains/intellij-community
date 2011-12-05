@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.io;
 
 import java.io.File;
@@ -25,19 +21,27 @@ import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
+/**
+ * @author max
+ */
 public class ReadOnlyMappedBufferWrapper extends MappedBufferWrapper {
   public ReadOnlyMappedBufferWrapper(final File file, final int pos) {
     super(file, pos, file.length() - pos);
   }
 
-  public MappedByteBuffer map() throws IOException {
-    FileInputStream stream = new FileInputStream(myFile);
-    FileChannel channel = stream.getChannel();
+  @Override
+  protected MappedByteBuffer map() throws IOException {
+    final FileInputStream stream = new FileInputStream(myFile);
     try {
-      return channel.map(FileChannel.MapMode.READ_ONLY, myPosition, myLength);
+      final FileChannel channel = stream.getChannel();
+      try {
+        return channel.map(FileChannel.MapMode.READ_ONLY, myPosition, myLength);
+      }
+      finally {
+        channel.close();
+      }
     }
     finally {
-      channel.close();
       stream.close();
     }
   }
