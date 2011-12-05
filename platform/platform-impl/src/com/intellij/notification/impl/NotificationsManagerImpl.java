@@ -243,8 +243,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
   }
 
+  @Nullable
   public static Window findWindowForBalloon(Project project) {
-    return WindowManager.getInstance().getFrame(project);
+    final JFrame frame = WindowManager.getInstance().getFrame(project);
+    if (frame == null && project == null) {
+      return KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    }
+    return frame;
   }
 
   public static Balloon createBalloon(final Notification notification, final boolean showCallout, final boolean hideOnClickOutside, final boolean fadeOut) {
