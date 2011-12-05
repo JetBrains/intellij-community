@@ -28,4 +28,8 @@ public abstract class CopyHandlerDelegateBase implements CopyHandlerDelegate {
   public boolean canCopy(PsiElement[] elements) {
     return canCopy(elements, false);
   }
+
+  public boolean forbidToClone(PsiElement[] elements, boolean fromUpdate) {
+    return false;
+  }
 }

@@ -330,17 +330,16 @@ public class VariableInplaceRenamer {
                 }
                 finish();
 
+                TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
+                myNewName = getNewName(value != null ? value.toString() : null, snapshot);
+
                 if (snapshot != null && performAutomaticRename()) {
-                  TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-                  if (value != null) {
-                    myNewName = value.toString();
-                    if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
-                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                        public void run() {
-                          snapshot.apply(myNewName);
-                        }
-                      });
-                    }
+                  if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                      public void run() {
+                        snapshot.apply(myNewName);
+                      }
+                    });
                   }
                 }
                 restoreStateBeforeTemplateIsFinished();
@@ -459,6 +458,11 @@ public class VariableInplaceRenamer {
   }
 
   protected void restoreStateBeforeDialogWouldBeShown() {
+  }
+
+  @Nullable
+  protected String getNewName(String newName, ResolveSnapshotProvider.ResolveSnapshot snapshot) {
+    return snapshot != null ? newName : null;
   }
 
   @Nullable

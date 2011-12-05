@@ -47,6 +47,16 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   private static final Logger LOG = Logger.getInstance("#" + CopyClassesHandler.class.getName());
 
   @Override
+  public boolean forbidToClone(PsiElement[] elements, boolean fromUpdate) {
+    final Map<PsiFile, PsiClass[]> fileMap = convertToTopLevelClasses(elements, fromUpdate, null, null);
+    if (fileMap != null && fileMap.size() == 1) {
+      final PsiClass[] psiClasses = fileMap.values().iterator().next();
+      return psiClasses != null && psiClasses.length > 1;
+    }
+    return false;
+  }
+
+  @Override
   public boolean canCopy(PsiElement[] elements, boolean fromUpdate) {
     return canCopyClass(fromUpdate, elements);
   }
@@ -172,8 +182,15 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       } else {
         defaultTargetDirectory = CopyFilesOrDirectoriesHandler.resolveDirectory(defaultTargetDirectory);
         if (defaultTargetDirectory == null) return;
-        final CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(PsiUtilCore.toPsiFileArray(classes.keySet()),
-                                                                               defaultTargetDirectory, project, false);
+        PsiElement[] files = PsiUtilCore.toPsiFileArray(classes.keySet());
+        if (classes.keySet().size() == 1) {
+          //do not choose a new name for a file when multiple classes exist in one file
+          final PsiClass[] psiClasses = classes.values().iterator().next();
+          if (psiClasses != null) {
+            files = psiClasses;
+          }
+        }
+        final CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(files, defaultTargetDirectory, project, false);
         dialog.show();
         if (dialog.isOK()) {
           targetDirectory = dialog.getTargetDirectory();
@@ -198,7 +215,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   public void doClone(PsiElement element) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
     PsiClass[] classes = getTopLevelClasses(element);
-    LOG.assertTrue(classes != null && classes.length == 1, Arrays.toString(classes));
+    if (classes == null) {
+      CopyFilesOrDirectoriesHandler.doCloneFile(element);
+      return;
+    }
     Project project = element.getProject();
 
     CopyClassDialog dialog = new CopyClassDialog(classes[0], null, project, true);

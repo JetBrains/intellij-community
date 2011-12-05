@@ -95,6 +95,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   public void doClone(final PsiElement element) {
+    doCloneFile(element);
+  }
+
+  public static void doCloneFile(PsiElement element) {
     PsiDirectory targetDirectory;
     if (element instanceof PsiDirectory) {
       targetDirectory = ((PsiDirectory)element).getParentDirectory();

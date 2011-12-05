@@ -192,7 +192,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
       }
     });
     myPopup.addPopupMenuListener(listener.get());
-    myPopup.show(this, 0, getY() + getHeight());
+    myPopup.show(this, myMoreRec.x, getY() + getHeight() - getInsets().bottom);
 
     SwingUtilities.invokeLater(new Runnable() {
       @Override

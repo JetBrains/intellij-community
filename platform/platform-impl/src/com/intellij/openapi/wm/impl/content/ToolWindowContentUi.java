@@ -70,7 +70,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
-  private static DefaultActionGroup myGroup;
+  private DefaultActionGroup myGroup;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -252,7 +252,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return true;
   }
 
-  static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
+  void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
     if (c.getClientProperty(ui) != null) return;
 
 

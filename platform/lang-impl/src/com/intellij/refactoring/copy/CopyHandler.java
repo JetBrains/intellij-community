@@ -58,10 +58,28 @@ public class CopyHandler {
     }
   }
 
+  public static boolean canClone(PsiElement[] elements) {
+    if (elements.length > 0) {
+      final CopyHandlerDelegate[] copyHandlers = Extensions.getExtensions(CopyHandlerDelegate.EP_NAME);
+      for (CopyHandlerDelegate delegate : copyHandlers) {
+        if (delegate.canCopy(elements)) {
+          if (delegate instanceof CopyHandlerDelegateBase && ((CopyHandlerDelegateBase)delegate).forbidToClone(elements, true)){
+            return false;
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public static void doClone(PsiElement element) {
     PsiElement[] elements = new PsiElement[]{element};
     for(CopyHandlerDelegate delegate: Extensions.getExtensions(CopyHandlerDelegate.EP_NAME)) {
       if (delegate.canCopy(elements)) {
+        if (delegate instanceof CopyHandlerDelegateBase && ((CopyHandlerDelegateBase)delegate).forbidToClone(elements, false)) {
+          return;
+        }
         delegate.doClone(element);
         break;
       }

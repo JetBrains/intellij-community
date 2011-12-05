@@ -167,9 +167,6 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
           if (eachNode.isNodeAncestor(toAdd.getNode())) {
             eachYielding.setUpdateStamp(newUpdateCount);
           }
-          else {
-            toAdd.expire();
-          }
         }
       }
     }
