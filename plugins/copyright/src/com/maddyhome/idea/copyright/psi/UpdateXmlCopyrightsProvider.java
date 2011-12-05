@@ -42,7 +42,7 @@ public class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider {
     return createDefaultOptions(false);
   }
 
-  private static class UpdateXmlFileCopyright extends UpdatePsiFileCopyright
+  public static class UpdateXmlFileCopyright extends UpdatePsiFileCopyright
   {
       public UpdateXmlFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
       {
