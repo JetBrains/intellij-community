@@ -4,10 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -140,6 +137,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (type != null) {
         return type;
       }
+      type = getTypeFromComment(this);
+      if (type != null) {
+        return type;
+      }
       final PsiElement parent = getParent();
       if (parent instanceof PyAssignmentStatement) {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)parent;
@@ -214,6 +215,24 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     final String docString = PyUtil.strValue(PyUtil.getAttributeDocString(targetExpression));
     if (docString != null) {
       StructuredDocString structuredDocString = StructuredDocString.parse(docString);
+      if (structuredDocString != null) {
+        String typeName = structuredDocString.getParamType(null);
+        if (typeName == null) {
+          typeName = structuredDocString.getParamType(targetExpression.getName());
+        }
+        if (typeName != null) {
+          return PyTypeParser.getTypeByName(targetExpression, typeName);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PyType getTypeFromComment(PyTargetExpressionImpl targetExpression) {
+    String docComment = PyUtil.getAttributeDocComment(targetExpression);
+    if (docComment != null) {
+      StructuredDocString structuredDocString = StructuredDocString.parse(docComment);
       if (structuredDocString != null) {
         String typeName = structuredDocString.getParamType(null);
         if (typeName == null) {

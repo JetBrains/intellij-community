@@ -530,6 +530,21 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static String getAttributeDocComment(PyTargetExpression attr) {
+    if (attr.getParent() instanceof PyAssignmentStatement) {
+      final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();
+      PsiElement prevSibling = assignment.getPrevSibling();
+      while (prevSibling != null && (prevSibling instanceof PsiWhiteSpace)) {
+        prevSibling = prevSibling.getPrevSibling();
+      }
+      if (prevSibling instanceof PsiComment && prevSibling.getText().startsWith("#:")) {
+        return prevSibling.getText().substring(2);
+      }
+    }
+    return null;
+  }
+
   public static boolean isIfNameEqualsMain(PyIfStatement ifStatement) {
     final PyExpression condition = ifStatement.getIfPart().getCondition();
     return isNameEqualsMain(condition);
