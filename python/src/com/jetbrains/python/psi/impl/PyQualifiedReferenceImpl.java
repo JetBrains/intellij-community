@@ -240,6 +240,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     ctx.put(PyType.CTX_NAMES, namesAlready);
     if (qualifierType != null) {
       Collection<Object> variants = new ArrayList<Object>();
+      Collections.addAll(variants, getVariantFromHasAttr(qualifier));
       if (qualifier instanceof PyQualifiedExpression) {
         Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
         variants.addAll(attrs);
@@ -261,6 +262,23 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
     }
     return getUntypedVariants();
+  }
+
+  private Object[] getVariantFromHasAttr(PyExpression qualifier) {
+    Collection<Object> variants = new ArrayList<Object>();
+    PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(myElement, PyIfStatement.class);
+    while (ifStatement != null) {
+      PyExpression condition = ifStatement.getIfPart().getCondition();
+      if (condition instanceof PyCallExpression && ((PyCallExpression)condition).isCalleeText(PyNames.HAS_ATTR)) {
+        PyCallExpression call = (PyCallExpression)condition;
+        if (call.getArguments().length > 1 && call.getArguments()[0].getText().equals(qualifier.getText())) {
+          PyStringLiteralExpression string = call.getArgument(1, PyStringLiteralExpression.class);
+          if (string != null) variants.add(string.getStringValue());
+        }
+      }
+      ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PyIfStatement.class);
+    }
+    return variants.toArray();
   }
 
   private Object[] getUntypedVariants() {
