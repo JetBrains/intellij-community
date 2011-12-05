@@ -21,6 +21,7 @@ import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -346,13 +347,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.startBatchFilesProcessingMode();
     try {
       final List<VirtualFile> result = new ArrayList<VirtualFile>();
-      boolean success = processFilesWithText(scope, searchContext, caseSensitively, text, new Processor<PsiFile>() {
-                                               @Override
-                                               public boolean process(PsiFile file) {
-                                                 result.add(file.getViewProvider().getVirtualFile());
-                                                 return true;
-                                               }
-                                             }, progress);
+      boolean success = processFilesWithText(
+        scope,
+        searchContext,
+        caseSensitively,
+        text,
+        new CommonProcessors.CollectProcessor<VirtualFile>(result),
+        progress
+      );
       LOG.assertTrue(success);
       return result;
     }
@@ -365,7 +367,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                        final short searchContext,
                                        final boolean caseSensitively,
                                        @NotNull String text,
-                                       @NotNull final Processor<PsiFile> processor,
+                                       @NotNull final Processor<VirtualFile> processor,
                                        @Nullable ProgressIndicator progress) {
     List<String> words = StringUtil.getWordsIn(text);
     if (words.isEmpty()) return true;
@@ -375,10 +377,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return o2.length() - o1.length();
       }
     });
-    final Set<PsiFile> fileSet;
+    final Set<VirtualFile> fileSet;
+    CacheManager cacheManager = CacheManager.SERVICE.getInstance(myManager.getProject());
+
     if (words.size() > 1) {
-      fileSet = new THashSet<PsiFile>();
-      Set<PsiFile> copy = new THashSet<PsiFile>();
+      fileSet = new THashSet<VirtualFile>();
+      Set<VirtualFile> copy = new THashSet<VirtualFile>();
       for (int i = 0; i < words.size() - 1; i++) {
         if (progress != null) {
           progress.checkCanceled();
@@ -387,11 +391,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           ProgressManager.checkCanceled();
         }
         final String word = words.get(i);
-        CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(new CommonProcessors.CollectProcessor<PsiFile>(copy), word, searchContext, scope, caseSensitively);
-        if (i == 0) {
-          fileSet.addAll(copy);
-        }
-        else {
+        final int finalI = i;
+        cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(i != 0 ? copy:fileSet) {
+          @Override
+          protected boolean accept(VirtualFile virtualFile) {
+            return finalI == 0 || fileSet.contains(virtualFile);
+          }
+        }, word, searchContext, scope, caseSensitively);
+        if (i != 0) {          
           fileSet.retainAll(copy);
         }
         copy.clear();
@@ -402,15 +409,37 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else {
       fileSet = null;
     }
-    return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(new Processor<PsiFile>() {
-      @Override
-      public boolean process(PsiFile psiFile) {
-        if (fileSet != null && !fileSet.contains(psiFile)) {
+
+    final String lastWord = words.get(words.size() - 1);
+    if (processor instanceof CommonProcessors.CollectProcessor) {
+      final CommonProcessors.CollectProcessor collectProcessor = (CommonProcessors.CollectProcessor)processor;
+      cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(collectProcessor.getResults()) {
+        @Override
+        public boolean process(VirtualFile virtualFile) {
+          if (fileSet == null || fileSet.contains(virtualFile)) return collectProcessor.process(virtualFile);
           return true;
         }
-        return processor.process(psiFile);
+      }, lastWord, searchContext, scope, caseSensitively);
+      return true;
+    } else {
+      THashSet<VirtualFile> files = new THashSet<VirtualFile>();
+      cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(files) {
+        @Override
+        protected boolean accept(VirtualFile virtualFile) {
+          return fileSet == null || fileSet.contains(virtualFile);
+        }
+      }, lastWord, searchContext, scope, caseSensitively);
+      ReadActionProcessor<VirtualFile> readActionProcessor = new ReadActionProcessor<VirtualFile>() {
+        @Override
+        public boolean processInReadAction(VirtualFile virtualFile) {
+          return processor.process(virtualFile);
+        }
+      };
+      for(VirtualFile file:files) {
+        if (!readActionProcessor.process(file)) return false;
       }
-    }, words.get(words.size() - 1), searchContext, scope, caseSensitively);
+      return true;
+    }    
   }
 
   @Override
@@ -828,22 +857,21 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                 @NotNull GlobalSearchScope scope,
                                                 @Nullable final PsiFile fileToIgnoreOccurencesIn,
                                                 @Nullable ProgressIndicator progress) {
-    final int[] count = {0};
-    if (!processFilesWithText(scope, UsageSearchContext.ANY, true, name, new Processor<PsiFile>() {
+    final AtomicInteger count = new AtomicInteger();
+    if (!processFilesWithText(scope, UsageSearchContext.ANY, true, name, new CommonProcessors.CollectProcessor<VirtualFile> (Collections.<VirtualFile>emptyList()) {
+      private final VirtualFile fileToIgnoreOccurencesInVirtualFile =
+        fileToIgnoreOccurencesIn != null ? fileToIgnoreOccurencesIn.getVirtualFile():null;
+
       @Override
-      public boolean process(PsiFile file) {
-        if (file == fileToIgnoreOccurencesIn) return true;
-        synchronized (count) {
-          count[0]++;
-          return count[0] <= 10;
-        }
+      public boolean process(VirtualFile file) {
+        if (file == fileToIgnoreOccurencesInVirtualFile) return true;
+        int value = count.incrementAndGet();
+        return value < 10;
       }
     }, progress)) {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
     }
 
-    synchronized (count) {
-      return count[0] == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
-    }
+    return count.get() == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
   }
 }

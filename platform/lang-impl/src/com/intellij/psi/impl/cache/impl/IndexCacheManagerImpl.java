@@ -45,9 +45,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -78,44 +76,52 @@ public class IndexCacheManagerImpl implements CacheManager{
     return (scope.isSearchOutsideRootModel() || index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
   }
 
+  // IMPORTANT!!!
+  // Since implementation of virtualFileProcessor.process() may call indices directly or indirectly,
+  // we cannot call it inside FileBasedIndex.processValues() method except in collecting form
+  // If we do, deadlocks are possible (IDEADEV-42137). Process the files without not holding indices' read lock.
   @Override
-  public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public void collectVirtualFilesWithWord(@NotNull final CommonProcessors.CollectProcessor<VirtualFile> fileProcessor,
+                                             @NotNull final String word, final short occurrenceMask,
+                                             @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {
-      return true;
+      return;
     }
-    final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject).union(scope);
+
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
           FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+            final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
             @Override
             public boolean process(final VirtualFile file, final Integer value) {
               ProgressManager.checkCanceled();
               final int mask = value.intValue();
-              if ((mask & occurrenceMask) != 0) {
-                vFiles.add(file);
+              if ((mask & occurrenceMask) != 0 && scope.contains(file) && shouldBeFound(scope, file, index)) {
+                if (!fileProcessor.process(file)) return false;
               }
               return true;
             }
-          }, projectScope);
+          }, GlobalSearchScope.allScope(myProject).union(scope));
         }
       });
     }
     catch (IndexNotReadyException e) {
       throw new ProcessCanceledException();
     }
+  }
 
+  @Override
+  public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+    final List<VirtualFile> vFiles = new ArrayList<VirtualFile>(5);
+    collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(vFiles), word, occurrenceMask, scope, caseSensitively);
     if (vFiles.isEmpty()) return true;
-
-    final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
 
     final Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
       @Override
       public boolean processInReadAction(VirtualFile virtualFile) {
-        LOG.assertTrue(virtualFile.isValid());
-        if (virtualFile.isValid() && scope.contains(virtualFile) && shouldBeFound(scope, virtualFile, index)) {
+        if (virtualFile.isValid()) {
           final PsiFile psiFile = myPsiManager.findFile(virtualFile);
           return psiFile == null || psiFileProcessor.process(psiFile);
         }
