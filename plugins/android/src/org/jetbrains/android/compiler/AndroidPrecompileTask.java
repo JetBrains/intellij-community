@@ -139,14 +139,18 @@ public class AndroidPrecompileTask implements CompileTask {
   private static void removeAllPackages(@Nullable String sourceRootPath, @NotNull CompileContext context) {
     final File sourceRoot = new File(sourceRootPath);
 
-    for (File child : sourceRoot.listFiles()) {
-      if (child.isDirectory() &&
-          child.getName() != null &&
-          StringUtil.isJavaIdentifier(child.getName())) {
+    final File[] children = sourceRoot.listFiles();
 
-        if (!FileUtil.delete(child)) {
-          context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete file " + child.getAbsolutePath(),
-                             null, -1, -1);
+    if (children != null) {
+      for (File child : children) {
+        if (child.isDirectory() &&
+            child.getName() != null &&
+            StringUtil.isJavaIdentifier(child.getName())) {
+
+          if (!FileUtil.delete(child)) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete file " + child.getAbsolutePath(),
+                               null, -1, -1);
+          }
         }
       }
     }

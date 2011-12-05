@@ -72,7 +72,7 @@ public class LocalResourceManager extends ResourceManager {
   @Override
   public VirtualFile[] getAllResourceDirs() {
     Set<VirtualFile> result = new HashSet<VirtualFile>();
-    collectResourceDirs(getModule(), result);
+    collectResourceDirs(getModule(), result, new HashSet<Module>());
     return VfsUtil.toVirtualFileArray(result);
   }
 
@@ -101,13 +101,17 @@ public class LocalResourceManager extends ResourceManager {
     return AndroidRootUtil.getResourceOverlayDirs(getModule());
   }
 
-  private static void collectResourceDirs(Module module, Set<VirtualFile> result) {
+  private static void collectResourceDirs(Module module, Set<VirtualFile> result, Set<Module> visited) {
+    if (!visited.add(module)) {
+      return;
+    }
+
     VirtualFile resDir = AndroidRootUtil.getResourceDir(module);
     if (resDir != null && !result.add(resDir)) {
       return;
     }
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, false)) {
-      collectResourceDirs(depFacet.getModule(), result);
+      collectResourceDirs(depFacet.getModule(), result, visited);
     }
   }
 
