@@ -234,8 +234,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
       StringBuffer unparsedBuffer = processHandler.getStdErr();
       if (unparsedBuffer.length() != 0) {
-        compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
-        hasMessages = true;
+        compileContext.addMessage(CompilerMessageCategory.INFORMATION, unparsedBuffer.toString(), null, -1, -1);
       }
 
       final int exitCode = processHandler.getProcess().exitValue();

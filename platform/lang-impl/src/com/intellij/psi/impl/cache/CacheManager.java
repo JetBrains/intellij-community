@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,12 @@ public interface CacheManager {
   @NotNull PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
 
   boolean processFilesWithWord(@NotNull Processor<PsiFile> processor,@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
+
+  // IMPORTANT!!!
+  // Do not call indices directly or indirectly from 'process' method, deadlocks are possible (IDEADEV-42137).
+  public void collectVirtualFilesWithWord(@NotNull final CommonProcessors.CollectProcessor<VirtualFile> fileProcessor,
+                                          @NotNull final String word, final short occurrenceMask,
+                                          @NotNull final GlobalSearchScope scope, final boolean caseSensitively);
 
   /**
    * @return all VirtualFile's that contain todo-items under project roots
