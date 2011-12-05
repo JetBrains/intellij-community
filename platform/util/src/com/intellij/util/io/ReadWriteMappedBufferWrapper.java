@@ -29,7 +29,7 @@ import java.nio.channels.FileChannel;
 public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
   @NonNls private static final String RW = "rw";
 
-  public ReadWriteMappedBufferWrapper(final File file, final int offset, final int len) {
+  protected ReadWriteMappedBufferWrapper(final File file, final int offset, final int len) {
     super(file, offset, len);
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -135,5 +136,17 @@ public class SystemInfo {
 
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
+  }
+
+  public static int getIntProperty(@NotNull final String key, final int defaultValue) {
+    final String value = System.getProperty(key);
+    if (value != null) {
+      try {
+        return Integer.parseInt(value);
+      }
+      catch (NumberFormatException ignored) { }
+    }
+
+    return defaultValue;
   }
 }

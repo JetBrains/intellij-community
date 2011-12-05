@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,45 +22,57 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.misc.VM;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author max
  */
 public class PagedFileStorage implements Forceable {
-
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
-  private static final int MEGABYTE = 1024 * 1024;
-  final static int DEFAULT_BUFFER_SIZE;
 
+  private static final int MB = 1024 * 1024;
+
+  private final static int LOWER_LIMIT;
   private final static int UPPER_LIMIT;
-  private static final int LOWER_LIMIT_IN_MEGABYTES = 100;
-  private final static int LOWER_LIMIT = LOWER_LIMIT_IN_MEGABYTES * MEGABYTE;
+  private final static int BUFFER_SIZE;
   private static final int UNKNOWN_PAGE = -1;
 
   static {
-    String maxPagedStorageCacheProperty = System.getProperty("idea.max.paged.storage.cache");
-    int defaultMaxPagedStorageCacheInMegabytes = SystemInfo.is64Bit ? 500:200;
-    UPPER_LIMIT = (maxPagedStorageCacheProperty == null ? defaultMaxPagedStorageCacheInMegabytes:
-                   Math.max(Integer.valueOf(maxPagedStorageCacheProperty), LOWER_LIMIT_IN_MEGABYTES))*MEGABYTE;
+    final int lower = 100;
+    final int upper = SystemInfo.is64Bit ? 500 : 200;
 
-    String pagedStoragePageSizeProperty = System.getProperty("idea.paged.storage.page.size");
-    int defaultPagedStoragePageSizeInMegabytes = 10;
-    DEFAULT_BUFFER_SIZE = (pagedStoragePageSizeProperty == null ? defaultPagedStoragePageSizeInMegabytes:Math.max(1,Integer.valueOf(pagedStoragePageSizeProperty)))* MEGABYTE;
+    BUFFER_SIZE = Math.max(1, SystemInfo.getIntProperty("idea.paged.storage.page.size", 10)) * MB;
+    if (ByteBufferWrapper.NO_MMAP) {
+      final long max = VM.maxDirectMemory() - 2 * BUFFER_SIZE;
+      LOWER_LIMIT = (int)Math.min(lower * MB, max);
+      UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemInfo.getIntProperty("idea.max.paged.storage.cache", upper) * MB), max);
+    }
+    else {
+      LOWER_LIMIT = lower * MB;
+      UPPER_LIMIT = Math.max(LOWER_LIMIT, SystemInfo.getIntProperty("idea.max.paged.storage.cache", upper) * MB);
+    }
+
+    LOG.info("lower=" + (LOWER_LIMIT / MB) +
+             "; upper=" + (UPPER_LIMIT / MB) +
+             "; buffer=" + (BUFFER_SIZE / MB) +
+             "; mmap=" + (!ByteBufferWrapper.NO_MMAP));
   }
 
   private final StorageLock myLock;
   private int myLastPage = UNKNOWN_PAGE;
   private int myLastPage2 = UNKNOWN_PAGE;
-  private MappedBufferWrapper myLastBuffer;
-  private MappedBufferWrapper myLastBuffer2;
+  private ByteBufferWrapper myLastBuffer;
+  private ByteBufferWrapper myLastBuffer2;
   private int myLastChangeCount;
   private int myLastChangeCount2;
   private int myStorageIndex;
@@ -102,23 +114,23 @@ public class PagedFileStorage implements Forceable {
 
     private class BuffersCache {
       private int changeCount;
-      private final LinkedHashMap<Integer, MappedBufferWrapper> myMap;
+      private final LinkedHashMap<Integer, ByteBufferWrapper> myMap;
       private long mySizeLimit;
       private long mySize;
 
       private BuffersCache() {
         mySizeLimit = UPPER_LIMIT;
-        myMap = new LinkedHashMap<Integer, MappedBufferWrapper>(10) {
+        myMap = new LinkedHashMap<Integer, ByteBufferWrapper>(10) {
           @Override
-          protected boolean removeEldestEntry(Map.Entry<Integer, MappedBufferWrapper> eldest) {
+          protected boolean removeEldestEntry(Map.Entry<Integer, ByteBufferWrapper> eldest) {
             return mySize > mySizeLimit;
           }
 
           @Nullable
           @Override
-          public MappedBufferWrapper remove(Object key) {
+          public ByteBufferWrapper remove(Object key) {
             // this method can be called after removeEldestEntry
-            MappedBufferWrapper wrapper = super.remove(key);
+            ByteBufferWrapper wrapper = super.remove(key);
             if (wrapper != null) {
               mySize -= wrapper.myLength;
               wrapper.dispose();
@@ -128,8 +140,8 @@ public class PagedFileStorage implements Forceable {
         };
       }
 
-      private MappedBufferWrapper get(Integer key) {
-        MappedBufferWrapper wrapper = myMap.get(key);
+      private ByteBufferWrapper get(Integer key) {
+        ByteBufferWrapper wrapper = myMap.get(key);
         if (wrapper != null) {
           return wrapper;
         }
@@ -159,7 +171,7 @@ public class PagedFileStorage implements Forceable {
       }
 
       @NotNull
-      private MappedBufferWrapper createValue(Integer key) {
+      private ByteBufferWrapper createValue(Integer key) {
         checkThreadAccess();
         PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(key & FILE_INDEX_MASK);
         int off = (key & MAX_PAGES_COUNT) * owner.myPageSize;
@@ -167,16 +179,15 @@ public class PagedFileStorage implements Forceable {
           throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + owner.length());
         }
         ++changeCount;
-        ReadWriteMappedBufferWrapper wrapper =
-          new ReadWriteMappedBufferWrapper(owner.myFile, off, Math.min((int)(owner.length() - off), owner.myPageSize));
+        ByteBufferWrapper wrapper = ByteBufferWrapper.readWrite(owner.myFile, off, Math.min((int)(owner.length() - off), owner.myPageSize));
         IOException oome = null;
         while (true) {
           try {
             // ensure it's allocated
-            wrapper.buf();
+            wrapper.getBuffer();
             if (oome != null) {
-              LOG.info("Successfully recovered OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MEGABYTE + "MB " +
-                       "new size limit: " + mySizeLimit / MEGABYTE + "MB " +
+              LOG.info("Successfully recovered OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
+                       "new size limit: " + mySizeLimit / MB + "MB " +
                        "trying to allocate " + wrapper.myLength + " block");
             }
             return wrapper;
@@ -194,8 +205,8 @@ public class PagedFileStorage implements Forceable {
               }
               else {
                 throw new MappingFailedException(
-                  "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MEGABYTE + "MB " +
-                  "new size limit: " + mySizeLimit / MEGABYTE + "MB " +
+                  "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
+                  "new size limit: " + mySizeLimit / MB + "MB " +
                   "trying to allocate " + wrapper.myLength + " block", e);
               }
             }
@@ -210,13 +221,13 @@ public class PagedFileStorage implements Forceable {
         }
       }
 
-      private @Nullable Map<Integer, MappedBufferWrapper> getBuffersOrderedForOwner(int index) {
+      private @Nullable Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index) {
         checkThreadAccess();
-        Map<Integer, MappedBufferWrapper> mineBuffers = null;
-        for (Map.Entry<Integer, MappedBufferWrapper> entry : myMap.entrySet()) {
+        Map<Integer, ByteBufferWrapper> mineBuffers = null;
+        for (Map.Entry<Integer, ByteBufferWrapper> entry : myMap.entrySet()) {
           if ((entry.getKey() & FILE_INDEX_MASK) == index) {
             if (mineBuffers == null) {
-              mineBuffers = new TreeMap<Integer, MappedBufferWrapper>(new Comparator<Integer>() {
+              mineBuffers = new TreeMap<Integer, ByteBufferWrapper>(new Comparator<Integer>() {
                 @Override
                 public int compare(Integer o1, Integer o2) {
                   return o1 - o2;
@@ -230,7 +241,7 @@ public class PagedFileStorage implements Forceable {
       }
 
       private void unmapBuffersForOwner(int index) {
-        final Map<Integer, MappedBufferWrapper> buffers = getBuffersOrderedForOwner(index);
+        final Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index);
 
         if (buffers != null) {
           for (Integer key : buffers.keySet()) {
@@ -240,10 +251,10 @@ public class PagedFileStorage implements Forceable {
       }
 
       private void flushBuffersForOwner(int index) {
-        Map<Integer, MappedBufferWrapper> buffers = getBuffersOrderedForOwner(index);
+        Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index);
 
         if (buffers != null) {
-          for(MappedBufferWrapper buffer:buffers.values()) {
+          for(ByteBufferWrapper buffer:buffers.values()) {
             buffer.flush();
           }
         }
@@ -262,14 +273,14 @@ public class PagedFileStorage implements Forceable {
   public PagedFileStorage(File file, StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
     myFile = file;
     myLock = lock;
-    myPageSize = Math.max(pageSize, Page.PAGE_SIZE);
+    myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = lock.registerPagedFileStorage(this);
     myTypedIOBuffer = valuesAreBufferAligned ? null:new byte[8];
   }
 
   public PagedFileStorage(File file, StorageLock lock) throws IOException {
-    this(file, lock, DEFAULT_BUFFER_SIZE, false);
+    this(file, lock, BUFFER_SIZE, false);
   }
 
   public File getFile() {
@@ -509,12 +520,12 @@ public class PagedFileStorage implements Forceable {
 
   private ByteBuffer getBuffer(int page) {
     if (myLastPage == page) {
-      MappedByteBuffer buf = myLastBuffer.getIfCached();
+      ByteBuffer buf = myLastBuffer.getCachedBuffer();
       if (buf != null && myLastChangeCount == myLock.myBuffersCache.changeCount) return buf;
     }
 
     if (myLastPage2 == page) {
-      MappedByteBuffer buf = myLastBuffer2.getIfCached();
+      ByteBuffer buf = myLastBuffer2.getCachedBuffer();
       if (buf != null && myLastChangeCount2 == myLock.myBuffersCache.changeCount) return buf;
     }
 
@@ -524,17 +535,17 @@ public class PagedFileStorage implements Forceable {
       if (myStorageIndex == -1) {
         myStorageIndex = myLock.registerPagedFileStorage(this);
       }
-      MappedBufferWrapper mappedBufferWrapper = myLock.myBuffersCache.get(myStorageIndex | page);
-      MappedByteBuffer buf = mappedBufferWrapper.buf();
+      ByteBufferWrapper byteBufferWrapper = myLock.myBuffersCache.get(myStorageIndex | page);
+      ByteBuffer buf = byteBufferWrapper.getBuffer();
 
       if (myLastPage != page) {
         myLastPage2 = myLastPage;
         myLastBuffer2 = myLastBuffer;
         myLastChangeCount2 = myLastChangeCount;
-        myLastBuffer = mappedBufferWrapper;
+        myLastBuffer = byteBufferWrapper;
         myLastPage = page;
       } else {
-        myLastBuffer = mappedBufferWrapper;
+        myLastBuffer = byteBufferWrapper;
       }
 
       myLastChangeCount = myLock.myBuffersCache.changeCount;

@@ -25,7 +25,7 @@ import java.nio.channels.FileChannel;
  * @author max
  */
 public class ReadOnlyMappedBufferWrapper extends MappedBufferWrapper {
-  public ReadOnlyMappedBufferWrapper(final File file, final int pos) {
+  protected ReadOnlyMappedBufferWrapper(final File file, final int pos) {
     super(file, pos, file.length() - pos);
   }
 

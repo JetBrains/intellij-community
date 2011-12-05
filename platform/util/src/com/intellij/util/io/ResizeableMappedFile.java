@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock) throws IOException {
-    this(file, initialSize, lock, PagedFileStorage.DEFAULT_BUFFER_SIZE, false);
+    this(file, initialSize, lock, -1, false);
   }
 
   public long length() {

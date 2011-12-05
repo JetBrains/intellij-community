@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,46 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nullable;
 import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-public abstract class MappedBufferWrapper {
+/**
+ * @author max
+ */
+public abstract class MappedBufferWrapper extends ByteBufferWrapper {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
 
-  protected final File myFile;
-  protected final long myPosition;
-  protected final long myLength;
+  private static final int MAX_FORCE_ATTEMPTS = 10;
 
   private volatile MappedByteBuffer myBuffer;
 
-  public MappedBufferWrapper(final File file, final long pos, final long length) {
-    myFile = file;
-    myPosition = pos;
-    myLength = length;
+  protected MappedBufferWrapper(final File file, final long pos, final long length) {
+    super(file, pos, length);
   }
 
   protected abstract MappedByteBuffer map() throws IOException;
 
-  private static final int MAX_FORCE_ATTEMPTS = 10;
-
+  @Override
   public final void unmap() {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
-    MappedByteBuffer buffer = getIfCached();
+    MappedByteBuffer buffer = myBuffer;
     myBuffer = null;
-    if (!unmapMappedByteBuffer142b19(buffer)) {
+    if (!clean(buffer)) {
       LOG.error("Unmapping failed for: " + myFile);
     }
 
@@ -64,21 +60,18 @@ public abstract class MappedBufferWrapper {
     }
   }
 
-  public MappedByteBuffer getIfCached() {
+  @Override
+  public ByteBuffer getCachedBuffer() {
     return myBuffer;
   }
 
-  public MappedByteBuffer buf() throws IOException {
+  @Override
+  public ByteBuffer getBuffer() throws IOException {
     MappedByteBuffer buffer = myBuffer;
     if (buffer == null) {
       myBuffer = buffer = map();
     }
     return buffer;
-  }
-
-
-  private static boolean unmapMappedByteBuffer142b19(MappedByteBuffer buffer) {
-    return clean(buffer);
   }
 
   private static boolean clean(final MappedByteBuffer buffer) {
@@ -89,6 +82,7 @@ public abstract class MappedBufferWrapper {
     }
 
     return AccessController.doPrivileged(new PrivilegedAction<Object>() {
+      @Nullable
       public Object run() {
         try {
           Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
@@ -111,28 +105,20 @@ public abstract class MappedBufferWrapper {
       catch (Throwable e) {
         LOG.info(e);
         try {
+          //noinspection BusyWait
           Thread.sleep(10);
         }
-        catch (InterruptedException e1) {
-          // Can't be
-        }
+        catch (InterruptedException ignored) { }
       }
     }
     return false;
   }
 
-  public boolean isMapped() {
-    return getIfCached() != null;
-  }
-
+  @Override
   public void flush() {
-    final MappedByteBuffer buffer = getIfCached();
+    final MappedByteBuffer buffer = myBuffer;
     if (buffer != null) {
       tryForce(buffer);
     }
-  }
-
-  public void dispose() {
-    unmap();
   }
 }
