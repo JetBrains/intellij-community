@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.ProxySelector;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -91,6 +92,10 @@ public final class GitHttpAdapter {
       logException(repository, remote.getName(), remoteUrl, e, "fetching");
       return GitFetchResult.error(e);
     }
+    catch (URISyntaxException e) {
+      logException(repository, remote.getName(), remoteUrl, e, "fetching");
+      return GitFetchResult.error(e);
+    }
     return new GitFetchResult(resultType);
   }
 
@@ -121,7 +126,7 @@ public final class GitHttpAdapter {
     try {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
-      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remoteUrl, convertRefSpecs(remote.getPushRefSpecs()));
+      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remote.getName(), remoteUrl);
       GeneralResult result = callWithAuthRetry(pushCommand);
       GitSimplePushResult pushResult = pushCommand.getResult();
       if (pushResult == null) {
@@ -144,6 +149,10 @@ public final class GitHttpAdapter {
       logException(repository, remote.getName(), remoteUrl, e, "pushing");
       return makeErrorResultFromException(e);
     }
+    catch (URISyntaxException e) {
+      logException(repository, remote.getName(), remoteUrl, e, "pushing");
+      return makeErrorResultFromException(e);
+    }
   }
   
   @NotNull
@@ -159,6 +168,10 @@ public final class GitHttpAdapter {
       return GitFetchResult.error(e);
     }
     catch (IOException e) {
+      LOG.info("Exception while cloning " + url + " to " + directory, e);
+      return GitFetchResult.error(e);
+    }
+    catch (URISyntaxException e) {
       LOG.info("Exception while cloning " + url + " to " + directory, e);
       return GitFetchResult.error(e);
     }
@@ -191,7 +204,7 @@ public final class GitHttpAdapter {
    * If user enters incorrect data, he has 2 more attempts to go before failure.
    * Cleanups are executed after each incorrect attempt to enter password, and after other retriable actions.
    */
-  private static GeneralResult callWithAuthRetry(@NotNull GitHttpRemoteCommand command) throws InvalidRemoteException, IOException {
+  private static GeneralResult callWithAuthRetry(@NotNull GitHttpRemoteCommand command) throws InvalidRemoteException, IOException, URISyntaxException {
     ProxySelector defaultProxySelector = ProxySelector.getDefault();
     if (GitHttpProxySupport.shouldUseProxy()) {
       ProxySelector.setDefault(GitHttpProxySupport.newProxySelector());
