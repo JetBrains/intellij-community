@@ -79,7 +79,7 @@ public abstract class IndentationParser implements PsiParser {
           currentIndent = 0;
         }
       }
-      builder.advanceLexer();
+      advanceLexer(builder);
     }
 
     // Close all left opened markers
@@ -90,8 +90,18 @@ public abstract class IndentationParser implements PsiParser {
       stack.pop().second.done(myBlockElementType);
     }
 
+    return buildTree(fileMarker, builder, root);
+  }
+
+  protected ASTNode buildTree(final PsiBuilder.Marker fileMarker,
+                              final PsiBuilder builder,
+                              final IElementType root) {
     fileMarker.done(root);
     return builder.getTreeBuilt();
+  }
+
+  protected void advanceLexer(PsiBuilder builder) {
+    builder.advanceLexer();
   }
 
   private void passEOLsAndIndents(final PsiBuilder builder) {
