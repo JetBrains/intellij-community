@@ -202,13 +202,10 @@ public class StatementMover extends LineMover {
       }
       //in case of multiline docstring
       PyElement parent2 = PsiTreeUtil.getParentOfType(element2, PyStringLiteralExpression.class);
-      if (parent2 != null) {
-        PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element2, PyDocStringOwner.class);
-        if (docStringOwner != null && docStringOwner.getDocStringExpression() == parent2) {
-          TextRange textRange2 = parent2.getTextRange();
-          info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()),
-                                                        doc.getLineNumber(textRange2.getEndOffset())+1);
-        }
+      if (parent2 != null && parent2.getParent() instanceof PyExpressionStatement) {
+        TextRange textRange2 = parent2.getTextRange();
+        info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()),
+                                                      doc.getLineNumber(textRange2.getEndOffset())+1);
       }
 
       parent2 = PsiTreeUtil.getParentOfType(element2, PyFunction.class);
