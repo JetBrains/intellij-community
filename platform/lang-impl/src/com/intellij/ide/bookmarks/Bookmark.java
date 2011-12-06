@@ -41,6 +41,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.LightColors;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,28 +53,44 @@ public class Bookmark {
 
   private final VirtualFile myFile;
   private final OpenFileDescriptor myTarget;
-  private final RangeHighlighter myHighlighter;
+  private RangeHighlighter myHighlighter;
   private final Project myProject;
 
   private String myDescription;
   private char myMnemonic = 0;
   public static final Font MNEMONIC_FONT = new Font("Monospaced", 0, 11);
+  private boolean myReleased = false;
 
   public Bookmark(Project project, VirtualFile file, String description) {
     this(project, file, -1, description);
   }
 
-  public Bookmark(Project project, VirtualFile file, int line, String description) {
+  public Bookmark(Project project, VirtualFile file, final int line, String description) {
     myFile = file;
     myProject = project;
     myDescription = description;
 
     if (line >= 0) {
-      Document document = getDocument();
+      final Document document = getDocument();
       if (document == null) {
         myHighlighter = null;
       }
       else {
+        initHighlighter(line, document);
+      }
+    }
+    else {
+      myHighlighter = null;
+    }
+
+    myTarget = new OpenFileDescriptor(project, file, line, -1, true);
+  }
+
+  private void initHighlighter(final int line, final Document document) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        if (myReleased) return;
+
         MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
         myHighlighter = markup.addPersistentLineHighlighter(line, HighlighterLayer.ERROR + 1, null);
 
@@ -85,12 +102,7 @@ public class Bookmark {
           myHighlighter.setErrorStripeTooltip(getBookmarkTooltip());
         }
       }
-    }
-    else {
-      myHighlighter = null;
-    }
-
-    myTarget = new OpenFileDescriptor(project, file, line, -1, true);
+    });
   }
 
   public Document getDocument() {
@@ -98,6 +110,7 @@ public class Bookmark {
   }
 
   public void release() {
+    myReleased = true;
     if (myHighlighter != null) {
       myHighlighter.dispose();
     }
