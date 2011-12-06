@@ -360,6 +360,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  private void debugLogging(final String s) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(s);
+    }
+  }
+
   private void updateImmediately() {
     final DataHolder dataHolder;
 
@@ -385,9 +391,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           myUpdateException = null;
           myAdditionalInfo.clear();
         }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("refresh procedure started, everything = " + wasEverythingDirty);
-        }
+        debugLogging("refresh procedure started, everything = " + wasEverythingDirty + " dirty scope: " +
+                     StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
+                       @Override
+                       public String fun(VcsDirtyScope scope) {
+                         return scope.toString();
+                       }
+                     }, "->\n"));
       }
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
@@ -417,10 +427,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               myWorker = dataHolder.getChangeListWorker();
               myWorker.onAfterWorkerSwitch(oldWorker);
               myModifier.setWorker(myWorker);
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("refresh procedure finished, size: " + dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
-              }
-              final boolean statusChanged = ! myComposite.equals(dataHolder.getComposite());
+              debugLogging("refresh procedure finished, unversioned size: " +
+                           dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\n changes: " + myWorker);
+              final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
               myComposite = dataHolder.getComposite();
               if (statusChanged) {
                 myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();

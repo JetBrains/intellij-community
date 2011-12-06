@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -23,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.*;
+import sun.util.LocaleServiceProviderPool;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -32,6 +34,7 @@ public class SvnRecursiveStatusWalker {
   private final StatusReceiver myReceiver;
   private final LinkedList<MyItem> myQueue;
   private final MyHandler myHandler;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnRecursiveStatusWalker");
 
   public SvnRecursiveStatusWalker(final StatusReceiver receiver, final StatusWalkerPartner partner) {
     myReceiver = receiver;
@@ -142,6 +145,7 @@ public class SvnRecursiveStatusWalker {
     }
 
     public void handleStatus(final SVNStatus status) throws SVNException {
+      debugLogging(status);
       myPartner.checkCanceled();
       final FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
       final VirtualFile vFile = path.getVirtualFile();
@@ -156,6 +160,12 @@ public class SvnRecursiveStatusWalker {
       } else {
         myReceiver.process(path, status, myCurrentItem.isIsInnerCopyRoot());
       }
+    }
+  }
+
+  private void debugLogging(SVNStatus status) {
+    if (status != null && LOG.isDebugEnabled()) {
+      LOG.debug("received: " + status.getFile().getPath() + " status: " + status.getContentsStatus().toString());
     }
   }
 }
