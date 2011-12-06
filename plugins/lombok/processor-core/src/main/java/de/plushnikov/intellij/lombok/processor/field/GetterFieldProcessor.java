@@ -13,6 +13,7 @@ import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
@@ -118,12 +119,10 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
 
     UserMapKeys.addReadUsageFor(psiField);
 
-    //return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiField);
-    //PsiMethod method = PropertyUtil.generateGetterPrototype(psiField);
-    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
+    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
         .setMethodReturnType(psiReturnType)
         .setContainingClass(psiClass)
-        .setNavigationElement(psiField);
+        .withNavigationElement(psiField);
     if (StringUtil.isNotEmpty(methodModifier)) {
       method.addModifier(methodModifier);
     }

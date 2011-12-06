@@ -5,7 +5,6 @@ import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -17,23 +16,31 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightFieldBuilder extends LombokLightVariableBuilder implements PsiField {
+public class LombokLightFieldBuilder9Impl extends LombokLightVariableBuilder implements LombokLightFieldBuilder {
   private PsiClass myContainingClass = null;
   private PsiExpression myInitializer = null;
   private PsiDocComment myDocComment = null;
   private boolean myIsDeprecated = false;
 
-  public LombokLightFieldBuilder(@NotNull PsiManager manager, @NotNull String name, @NotNull PsiType type) {
+  public LombokLightFieldBuilder9Impl(@NotNull PsiManager manager, @NotNull String name, @NotNull PsiType type) {
     super(manager, name, type, StdLanguages.JAVA);
   }
 
+  @Override
   public LombokLightFieldBuilder setContainingClass(PsiClass psiClass) {
     myContainingClass = psiClass;
     return this;
   }
 
-  public LombokLightFieldBuilder addModifier(@Modifier @NotNull @NonNls String modifier) {
+  @Override
+  public LombokLightFieldBuilder9Impl addModifier(@Modifier @NotNull @NonNls String modifier) {
     super.addModifier(modifier);
+    return this;
+  }
+
+  @Override
+  public LombokLightFieldBuilder withNavigationElement(PsiElement navigationElement) {
+    setNavigationElement(navigationElement);
     return this;
   }
 

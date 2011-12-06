@@ -1,29 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
     <artifactId>parent</artifactId>
     <version>0.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>processor-core</artifactId>
-  <name>Lombok processor core modul for IntelliJ IDEA plugin</name>
-  <description>Implementation of Lombok processors for IntelliJ IDEA</description>
+  <artifactId>intellij-facade-9</artifactId>
 
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>processor-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>intellij-facade-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>intellij-facade-factory</artifactId>
     </dependency>
 
     <dependency>
@@ -33,19 +25,20 @@
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
-      <artifactId>idea</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.intellij.idea</groupId>
       <artifactId>util</artifactId>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>annotations</artifactId>
       <scope>provided</scope>
     </dependency>
 
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>idea</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>

@@ -15,6 +15,10 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>intellij-facade-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>processor-api</artifactId>
     </dependency>
     <dependency>
@@ -65,22 +69,6 @@
       <artifactId>picocontainer</artifactId>
     </dependency>
   </dependencies>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>processor-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>processor-core</artifactId>
-        <version>${project.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <properties>
     <skipTests>true</skipTests>
@@ -136,11 +124,11 @@
               <resources>
                 <resource>
                   <directory>${project.build.directory}/generated-test-resources/lombok</directory>
-
+                  <targetPath>lombok-src</targetPath>
                 </resource>
                 <resource>
                   <directory>${project.build.directory}/generated-test-resources/lombok-pg</directory>
-
+                  <targetPath>lombok-pg-src</targetPath>
                 </resource>
               </resources>
             </configuration>

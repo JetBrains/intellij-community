@@ -14,6 +14,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>intellij-facade-api</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>openapi</artifactId>
       <scope>provided</scope>

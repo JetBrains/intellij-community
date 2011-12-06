@@ -227,12 +227,54 @@
 
   <modules>
     <module>lombok-plugin</module>
+    <module>intellij-facade-api</module>
+    <module>intellij-facade-9</module>
+    <module>intellij-facade-10</module>
+    <module>intellij-facade-11</module>
+    <module>intellij-facade-factory</module>
     <module>processor-api</module>
     <module>processor-core</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>intellij-facade-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>intellij-facade-factory</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>intellij-facade-9</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>intellij-facade-10</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>intellij-facade-11</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>processor-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>processor-core</artifactId>
+        <version>${project.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
       <!-- === IntelliJ IDEA === -->
       <dependency>
         <groupId>com.intellij.idea</groupId>

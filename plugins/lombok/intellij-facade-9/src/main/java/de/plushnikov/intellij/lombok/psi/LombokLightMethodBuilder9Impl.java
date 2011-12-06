@@ -53,7 +53,7 @@ import java.util.List;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightMethodBuilder extends LightElement implements PsiMethod {
+public class LombokLightMethodBuilder9Impl extends LightElement implements LombokLightMethodBuilder {
   private final String myName;
   private final LombokLightModifierList myModifierList;
   private final LombokLightParameterListBuilder myParameterList;
@@ -65,11 +65,11 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
   private boolean myConstructor;
   protected PsiElement myNavigationElement;
 
-  public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
+  public LombokLightMethodBuilder9Impl(@NotNull PsiManager manager, @NotNull String name) {
     this(manager, StdLanguages.JAVA, name);
   }
 
-  public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull Language language, @NotNull String name) {
+  public LombokLightMethodBuilder9Impl(@NotNull PsiManager manager, @NotNull Language language, @NotNull String name) {
     super(manager, language);
     myName = name;
     myParameterList = new LombokLightParameterListBuilder(manager, language, this);
@@ -78,11 +78,19 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
     myNavigationElement = this;
   }
 
+  @Override
+  public LombokLightMethodBuilder withNavigationElement(PsiElement navigationElement) {
+    setNavigationElement(navigationElement);
+    return this;
+  }
+
+  @Override
   public LombokLightMethodBuilder addModifier(@Modifier @NotNull @NonNls String modifier) {
     myModifierList.addModifier(modifier);
     return this;
   }
 
+  @Override
   public LombokLightMethodBuilder setMethodReturnType(PsiType returnType) {
     myReturnType = returnType;
     if (null != myReturnType) {
@@ -91,6 +99,7 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
     return this;
   }
 
+  @Override
   public LombokLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
     myParameterList.addParameter(new LombokLightParameter(name, type, this, StdLanguages.JAVA));
     return this;
@@ -103,16 +112,19 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
 //    return addParameter(new LombokLightParameter(name, type, this, StdLanguages.JAVA, isVarArgs));
 //  }
 
+  @Override
   public LombokLightMethodBuilder addException(@NotNull PsiClassType type) {
     myThrowsList.addReference(type);
     return this;
   }
 
+  @Override
   public LombokLightMethodBuilder addException(@NotNull String fqName) {
     myThrowsList.addReference(fqName);
     return this;
   }
 
+  @Override
   public LombokLightMethodBuilder setConstructor(boolean constructor) {
     myConstructor = constructor;
     myReturnType = null;
@@ -152,6 +164,7 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
     return false;
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Please don't rename light methods");
   }
@@ -195,7 +208,8 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
     return myParameterList;
   }
 
-  public LombokLightMethodBuilder setNavigationElement(PsiElement navigationElement) {
+  @Override
+  public LombokLightMethodBuilder9Impl setNavigationElement(PsiElement navigationElement) {
     myNavigationElement = navigationElement;
     return this;
   }
@@ -206,6 +220,7 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
     return myNavigationElement;
   }
 
+  @Override
   public LombokLightMethodBuilder setContainingClass(@NotNull PsiClass containingClass) {
     myContainingClass = containingClass;
     return this;
@@ -392,7 +407,7 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
       return false;
     }
 
-    LombokLightMethodBuilder that = (LombokLightMethodBuilder) o;
+    LombokLightMethodBuilder9Impl that = (LombokLightMethodBuilder9Impl) o;
 
     if (myConstructor != that.myConstructor) {
       return false;

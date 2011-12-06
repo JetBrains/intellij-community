@@ -10,9 +10,12 @@
       <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/annotations" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target/classes" />
       <excludeFolder url="file://$MODULE_DIR$/target/dependency-maven-plugin-markers" />
+      <excludeFolder url="file://$MODULE_DIR$/target/maven-archiver" />
+      <excludeFolder url="file://$MODULE_DIR$/target/surefire" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij-facade-api" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:openapi:10.5.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:10.5.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:10.5.2" level="project" />
