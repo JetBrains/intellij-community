@@ -27,8 +27,8 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
   }
 
   @Override
-  public boolean canKillSoftly() {
-    return super.canKillSoftly() && myShouldTryToKillSoftly;
+  public boolean canKillProcess() {
+    return super.canKillProcess() && myShouldTryToKillSoftly;
   }
 
   @Override
