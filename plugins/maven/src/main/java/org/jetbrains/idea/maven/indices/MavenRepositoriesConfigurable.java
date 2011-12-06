@@ -72,8 +72,8 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   private final Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
   private Timer myRepaintTimer;
   private ActionListener myTimerListener;
-  private ArrayList<String> myServiceUrls = new ArrayList<String>();
   private final Project myProject;
+  private final CollectionListModel<String> myModel = new CollectionListModel<String>();
 
   public MavenRepositoriesConfigurable(Project project) {
     myProject = project;
@@ -83,10 +83,11 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
 
   @Override
   public boolean isModified() {
-    return !myServiceUrls.equals(MavenRepositoryServicesManager.getInstance().getUrls());
+    return !myModel.getItems().equals(MavenRepositoryServicesManager.getInstance().getUrls());
   }
 
   private void configControls() {
+    myServiceList.setModel(myModel);
     myServiceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myAddButton.addActionListener(new ActionListener() {
       @Override
@@ -94,7 +95,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
         final String value = (String)myServiceList.getSelectedValue();
         final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Add Service URL", Messages.getQuestionIcon(),
                                                      value == null ? "http://" : value, new URLInputVaslidator());
-        ((CollectionListModel)myServiceList.getModel()).add(text);
+        myModel.add(text);
         myServiceList.setSelectedValue(text, true);
       }
     });
@@ -102,11 +103,10 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
       @Override
       public void actionPerformed(ActionEvent e) {
         final int index = myServiceList.getSelectedIndex();
-        final CollectionListModel model = (CollectionListModel)myServiceList.getModel();
         final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Edit Service URL", Messages.getQuestionIcon(),
-                                                     (String)model.getElementAt(index), new URLInputVaslidator());
+                                                     myModel.getElementAt(index), new URLInputVaslidator());
         if (text != null) {
-          model.setElementAt(text, index);
+          myModel.setElementAt(text, index);
         }
       }
     });
@@ -238,13 +238,12 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   }
 
   public void apply() throws ConfigurationException {
-    MavenRepositoryServicesManager.getInstance().setUrls(myServiceUrls);
+    MavenRepositoryServicesManager.getInstance().setUrls(myModel.getItems());
   }
 
   public void reset() {
-    myServiceUrls.clear();
-    myServiceUrls.addAll(MavenRepositoryServicesManager.getInstance().getUrls());
-    myServiceList.setModel(new CollectionListModel(myServiceUrls));
+    myModel.removeAll();
+    myModel.add(MavenRepositoryServicesManager.getInstance().getUrls());
 
     myIndicesTable.setModel(new MyTableModel(myManager.getIndices()));
     myIndicesTable.getColumnModel().getColumn(0).setPreferredWidth(400);
