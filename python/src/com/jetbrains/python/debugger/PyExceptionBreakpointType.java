@@ -152,8 +152,8 @@ public class PyExceptionBreakpointType
     @NotNull
     @Override
     public JComponent getComponent() {
-      myNotifyOnTerminateCheckBox = new JCheckBox("On terminate");
-      myNotifyAlwaysCheckBox = new JCheckBox("Always");
+      myNotifyOnTerminateCheckBox = new JCheckBox("On termination");
+      myNotifyAlwaysCheckBox = new JCheckBox("On generation at each level of call chain");
 
       Box notificationsBox = Box.createVerticalBox();
       JPanel panel = new JPanel(new BorderLayout());
@@ -169,7 +169,7 @@ public class PyExceptionBreakpointType
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
       panel.add(innerPanel, BorderLayout.NORTH);
-      panel.setBorder(IdeBorderFactory.createTitledBorder("Notifications", false, true, true));
+      panel.setBorder(IdeBorderFactory.createTitledBorder("Activation policy", false, true, true));
 
       ActionListener listener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
