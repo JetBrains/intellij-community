@@ -23,8 +23,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +31,7 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -239,18 +239,22 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
       final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPaths();
       for (VirtualFile file : addedPaths) {
-        if (file.getFileSystem() instanceof JarFileSystem) {
-          VirtualFile realFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
-          if (realFile != null) {
-            pathList.add(FileUtil.toSystemDependentName(realFile.getPath()));
-          }
-        }
-        else {
-          pathList.add(FileUtil.toSystemDependentName(file.getPath()));
-        }
+        addToPythonPath(file, pathList);
       }
     }
     return pathList;
+  }
+
+  private static void addToPythonPath(VirtualFile file, Collection<String> pathList) {
+    if (file.getFileSystem() instanceof JarFileSystem) {
+      VirtualFile realFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      if (realFile != null) {
+        pathList.add(FileUtil.toSystemDependentName(realFile.getPath()));
+      }
+    }
+    else {
+      pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+    }
   }
 
   protected Collection<String> collectPythonPath() {
@@ -263,13 +267,31 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
     pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
     if (module != null) {
+      addLibrariesFromModule(module, pythonPathList);
       Set<Module> dependencies = new HashSet<Module>();
       ModuleUtil.getDependencies(module, dependencies);
       for (Module dependency : dependencies) {
+        addLibrariesFromModule(module, pythonPathList);
         addRootsFromModule(dependency, pythonPathList);
       }
     }
     return pythonPathList;
+  }
+
+  private static void addLibrariesFromModule(Module module, Collection<String> list) {
+    final OrderEntry[] entries = ModuleRootManager.getInstance(module).getOrderEntries();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry) {
+        final String name = ((LibraryOrderEntry)entry).getLibraryName();
+        if (name != null && name.endsWith(LibraryContributingFacet.PYTHON_FACET_LIBRARY_NAME_SUFFIX)) {
+          // skip libraries from Python facet
+          continue;
+        }
+        for (VirtualFile root : ((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)) {
+          addToPythonPath(root, list);
+        }
+      }
+    }
   }
 
   private static void addRootsFromModule(Module module, Collection<String> pythonPathList) {
@@ -300,7 +322,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private static void addRoots(Collection<String> pythonPathList, VirtualFile[] roots) {
     for (VirtualFile root : roots) {
-      pythonPathList.add(FileUtil.toSystemDependentName(root.getPath()));
+      addToPythonPath(root, pythonPathList);
     }
   }
 
