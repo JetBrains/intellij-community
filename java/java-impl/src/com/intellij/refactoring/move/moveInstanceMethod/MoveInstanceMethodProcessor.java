@@ -79,6 +79,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     myNewVisibility = newVisibility;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetVariable, myTargetClass);
   }

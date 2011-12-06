@@ -129,6 +129,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
     return new IntroduceParameterObjectUsageViewDescriptor(method);
   }

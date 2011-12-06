@@ -114,6 +114,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                   myPropagateParametersMethods, myPropagateExceptionsMethods);
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new ChangeSignatureViewDescriptor(getChangeInfo().getMethod());
   }

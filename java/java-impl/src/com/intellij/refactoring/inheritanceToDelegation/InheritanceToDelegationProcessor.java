@@ -147,6 +147,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new InheritanceToDelegationViewDescriptor(myClass);
   }

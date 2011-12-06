@@ -92,6 +92,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     myElementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
     return new ExtractMethodObjectViewDescriptor(getMethod());
   }

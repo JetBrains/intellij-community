@@ -116,6 +116,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     return "";
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
     return new WrapReturnValueUsageViewDescriptor(method, usageInfos);
   }

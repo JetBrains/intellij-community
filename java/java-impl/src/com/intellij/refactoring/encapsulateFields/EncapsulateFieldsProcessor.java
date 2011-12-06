@@ -67,6 +67,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     myClass = myFields[0].getContainingClass();
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiField[] fields = new PsiField[myFields.length];
     System.arraycopy(myFields, 0, fields, 0, myFields.length);

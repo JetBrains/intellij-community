@@ -83,6 +83,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     myMoveCallback = moveCallback;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MoveFilesOrDirectoriesViewDescriptor(myElementsToMove, myNewParent);
   }

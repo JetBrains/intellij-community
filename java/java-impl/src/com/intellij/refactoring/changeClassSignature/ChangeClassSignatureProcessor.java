@@ -57,6 +57,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     return ChangeClassSignatureDialog.REFACTORING_NAME;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new ChangeClassSigntaureViewDescriptor(myClass);
   }

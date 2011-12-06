@@ -251,6 +251,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       .message("renaming.0.1.to.2", UsageViewUtil.getType(myPrimaryElement), UsageViewUtil.getDescriptiveName(myPrimaryElement), newName);
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new RenameViewDescriptor(myAllRenames);
   }

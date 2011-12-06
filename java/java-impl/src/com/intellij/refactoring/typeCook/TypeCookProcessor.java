@@ -47,6 +47,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     mySettings = settings;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new TypeCookViewDescriptor(myElements);
   }

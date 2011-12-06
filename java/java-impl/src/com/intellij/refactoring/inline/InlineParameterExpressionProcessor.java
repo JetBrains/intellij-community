@@ -79,6 +79,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   protected void refreshElements(PsiElement[] elements) {
   }
 
+  @NotNull
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new InlineViewDescriptor(myParameter);

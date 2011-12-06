@@ -62,6 +62,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     myJavaDocPolicy = javaDocPolicy;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new ExtractSuperClassViewDescriptor(myTargetDirectory, myClass, myMemberInfos);
   }

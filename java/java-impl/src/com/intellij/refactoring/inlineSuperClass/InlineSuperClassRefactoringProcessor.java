@@ -96,6 +96,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return members;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
     return new InlineSuperClassUsageViewDescriptor(mySuperClass);
   }
