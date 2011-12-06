@@ -191,18 +191,14 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
   }
 
   public void loadState(final Element state) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
-        for (Bookmark bookmark : myBookmarks) {
-          bookmark.release();
-          publisher.bookmarkRemoved(bookmark);
-        }
-        myBookmarks.clear();
+    BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
+    for (Bookmark bookmark : myBookmarks) {
+      bookmark.release();
+      publisher.bookmarkRemoved(bookmark);
+    }
+    myBookmarks.clear();
 
-        readExternal(state);
-      }
-    });
+    readExternal(state);
   }
 
   private void readExternal(Element element) {
