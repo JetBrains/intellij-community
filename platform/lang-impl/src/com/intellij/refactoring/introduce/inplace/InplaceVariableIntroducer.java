@@ -141,7 +141,7 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
 
   }
 
-  private void showBalloon() {
+  protected void showBalloon() {
     final JComponent component = getComponent();
     if (component == null) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;

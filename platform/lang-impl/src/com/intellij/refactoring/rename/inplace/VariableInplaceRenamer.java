@@ -84,6 +84,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -167,10 +168,6 @@ public class VariableInplaceRenamer {
       if (notSameFile(file, containingFile)) {
         return false;
       }
-    }
-
-    while (!ourRenamersStack.isEmpty()) {
-      ourRenamersStack.peek().finish();
     }
 
     PsiElement scope = checkLocalScope();
@@ -422,7 +419,7 @@ public class VariableInplaceRenamer {
     return true;
   }
 
-  private void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
+  protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(oldDocument);
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -458,6 +455,18 @@ public class VariableInplaceRenamer {
   }
 
   protected void restoreStateBeforeDialogWouldBeShown() {
+    PsiNamedElement variable = getVariable();
+    final TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+    assert state != null;
+    final String commandName = RefactoringBundle
+      .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable),
+               variable.getName());
+    Runnable runnable = new Runnable() {
+      public void run() {
+        state.gotoEnd(true);
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(myProject, runnable, commandName, null);
   }
 
   @Nullable
