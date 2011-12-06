@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 
@@ -32,7 +31,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   public ValueContainerImpl() {
     myInputIdMapping = new HashMap<Value, Object>(16, 0.98f);
   }
-  
+
   @Override
   public void addValue(int inputId, Value value) {
     final Object input = myInputIdMapping.get(value);
@@ -60,16 +59,18 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   @Override
-  public void removeAllValues(int inputId) {
-    final List<Value> toRemove= new ArrayList<Value>();
+  public void removeAssociatedValue(int inputId) {
+    Value toRemove = null;
     for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
       if (isAssociated(value, inputId)) {
-        toRemove.add(value);
+        assert toRemove == null;
+        toRemove = value;
       }
     }
-    for (Value value : toRemove) {
-      removeValue(inputId, value);
+
+    if (toRemove != null) {
+      removeValue(inputId, toRemove);
     }
   }
 
@@ -109,22 +110,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return Collections.emptyList();
     }
     return new ArrayList<Value>(myInputIdMapping.keySet());
-  }
-
-  @Override
-  public int[] getInputIds(final Value value) {
-    final Object input = myInputIdMapping.get(value);
-    final int[] idSet;
-    if (input instanceof TIntHashSet) {
-      idSet = ((TIntHashSet)input).toArray();
-    }
-    else if (input instanceof Integer ){
-      idSet = new int[] {((Integer)input).intValue()};
-    }
-    else {
-      idSet = ArrayUtil.EMPTY_INT_ARRAY;
-    }
-    return idSet;
   }
 
   @Override
@@ -237,7 +222,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return mySize;
     }
   }
-  
+
   private HashMap<Value, Object> mapCopy(final HashMap<Value, Object> map) {
     if (map == null) {
       return null;

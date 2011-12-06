@@ -50,8 +50,8 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
 
   public static void main(String[] args) throws Exception {
     GradleApiFacadeImpl facade = new GradleApiFacadeImpl();
-    start(facade);
     facade.init();
+    start(facade);
   }
 
   private void init() throws RemoteException {

@@ -213,10 +213,14 @@ public class EPathUtil {
     if (file != null) {
       LOG.assertTrue(file.isValid());
       if (file.getFileSystem() instanceof JarFileSystem) {
-        file = JarFileSystem.getInstance().getVirtualFileForJar(file);
+        final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+        if (jarFile == null) {
+          LOG.assertTrue(false, "Url: \'" + url + "\'; file: " + file);
+          return ProjectRootManagerImpl.extractLocalPath(url);
+        }
+        file = jarFile;
       }
-      LOG.assertTrue(file != null, url);
-      if (contentRoot != null && VfsUtil.isAncestor(contentRoot, file, false)) { //inside current project
+      if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, file, false)) { //inside current project
         return VfsUtilCore.getRelativePath(file, contentRoot, '/');
       } else {
         final String path = collapse2eclipseRelative2OtherModule(project, file); //relative to other project

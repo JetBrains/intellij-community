@@ -20,6 +20,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
@@ -38,7 +39,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
     super(debugName);
   }
 
-  public GrMethodStub createStub(GrMethod psi, StubElement parentStub) {
+  public GrMethodStub createStub(@NotNull GrMethod psi, StubElement parentStub) {
 
     Set<String> namedParameters = psi.getNamedParameters().keySet();
     return new GrMethodStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi),

@@ -54,6 +54,11 @@ public class StringUtil {
     }
   };
 
+  @NotNull
+  public static String escapePattern(final @NotNull String text) {
+    return text.replace("'", "''").replace("{", "'{'");
+  }
+
   public static <T> Function<T, String> createToStringFunction(Class<T> cls) {
     return new Function<T, String>() {
       @Override

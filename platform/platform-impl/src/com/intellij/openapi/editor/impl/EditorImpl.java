@@ -53,6 +53,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -65,6 +66,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
@@ -809,7 +811,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPanel.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        myMarkupModel.repaint(0, myDocument.getTextLength());
+        myMarkupModel.recalcEditorDimensions();
+        myMarkupModel.repaint(-1, -1);
       }
     });
   }
@@ -1570,7 +1573,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
 
-      myMarkupModel.repaint(0, myDocument.getTextLength());
+      myMarkupModel.recalcEditorDimensions();
+      myMarkupModel.repaint(-1, -1);
     }
   }
 
@@ -6117,6 +6121,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setupCorners() {
       super.setupCorners();
+      
+      setBorder(new TablessBorder());
+      
       setCorner(getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT ?
                 LOWER_RIGHT_CORNER :
                 LOWER_LEFT_CORNER, new JPanel() {
@@ -6142,6 +6149,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           g.drawLine(0, 0, width - 1, 0);
         }
       });
+    }
+  }
+  
+  private static class TablessBorder extends SideBorder {
+    private TablessBorder() {
+      super(UIUtil.getBorderColor(), SideBorder.ALL);
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      if (c instanceof JComponent) {
+        Insets insets = ((JComponent)c).getInsets();
+        if (insets.left > 0) {
+          super.paintBorder(c, g, x, y, width, height);
+        } else {
+          g.setColor(UIUtil.getPanelBackground());
+          g.drawLine(x, y, x + width, y);
+          g.setColor(new Color(0, 0, 0, 90));
+          g.drawLine(x, y, x + width, y);
+        }
+      }
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      Container splitters = SwingUtilities.getAncestorOfClass(EditorsSplitters.class, c);
+      return splitters == null ? super.getBorderInsets(c) : new Insets(1, 0, 0, 0);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return true;
     }
   }
 

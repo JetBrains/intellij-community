@@ -45,12 +45,12 @@ public class JavaImportListElementType extends JavaStubElementType<PsiImportList
   }
 
   @Override
-  public PsiImportList createPsi(final PsiImportListStub stub) {
+  public PsiImportList createPsi(@NotNull final PsiImportListStub stub) {
     return getPsiFactory(stub).createImportList(stub);
   }
 
   @Override
-  public PsiImportList createPsi(final ASTNode node) {
+  public PsiImportList createPsi(@NotNull final ASTNode node) {
     return new PsiImportListImpl(node);
   }
 

@@ -16,14 +16,13 @@
 
 package org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9;
 
-import net.sf.saxon.expr.Expression;
-import net.sf.saxon.expr.ExpressionVisitor;
-import net.sf.saxon.expr.StackFrame;
-import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.expr.*;
+import net.sf.saxon.expr.instruct.GeneralVariable;
 import net.sf.saxon.expr.instruct.GlobalVariable;
+import net.sf.saxon.expr.instruct.LocalVariable;
 import net.sf.saxon.expr.instruct.SlotManager;
 import net.sf.saxon.om.*;
-import net.sf.saxon.style.StyleElement;
+import net.sf.saxon.style.*;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.Type;
@@ -32,6 +31,7 @@ import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,13 +57,20 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
   }
 
   public Value eval(String expr) throws Debugger.EvaluationException {
+    Saxon9TraceListener.MUTED = true;
     try {
-      Expression expression = myElement.makeExpression(expr);
-      final TypeHierarchy typeHierarchy = myXPathContext.getConfiguration().getTypeHierarchy();
-      expression = expression.typeCheck(ExpressionVisitor.make(myElement.getStaticContext(), expression.getExecutable()), Type.ITEM_TYPE);
-      final ItemType itemType = expression.getItemType(typeHierarchy);
-      final SequenceIterator it = expression.iterate(myXPathContext);
+      Expression expression =
+        ExpressionTool.make(expr, new EvalContext(myElement), myElement, 0, Token.EOF, 0, false);
 
+      final ExpressionVisitor visitor = ExpressionVisitor.make(myElement.getStaticContext(), expression.getExecutable());
+      expression = expression.typeCheck(visitor, Type.ITEM_TYPE);
+      final int variables = myXPathContext.getStackFrame().getStackFrameMap().getNumberOfVariables();
+      ExpressionTool.allocateSlots(expression, variables, myElement.getContainingSlotManager());
+
+      final TypeHierarchy typeHierarchy = myXPathContext.getConfiguration().getTypeHierarchy();
+      final ItemType itemType = expression.getItemType(typeHierarchy);
+
+      final SequenceIterator it = expression.iterate(myXPathContext);
       Item value = null;
       if (it.next() != null) {
         value = it.current();
@@ -72,16 +79,21 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
         return new SingleValue(value, itemType);        
       }
       return new SequenceValue(value, it, itemType);
-    } catch (IllegalArgumentException e) {
-      throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
-    } catch (XPathException e) {
-      throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
     } catch (AssertionError e) {
+      assert debug(e);
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
     } catch (Exception e) {
-      e.printStackTrace();
+      assert debug(e);
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
+    } finally {
+      Saxon9TraceListener.MUTED = false;
     }
+  }
+
+  @SuppressWarnings("CallToPrintStackTrace")
+  private static boolean debug(Throwable e) {
+    e.printStackTrace();
+    return true;
   }
 
   public List<Debugger.Variable> getVariables() {
@@ -207,6 +219,66 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     @Override
     public Type getType() {
       return new ObjectType(myItemType.toString() + "+");
+    }
+  }
+
+  private static class EvalContext extends ExpressionContext {
+
+    private static Field myRedundant;
+    static {
+      try {
+        myRedundant = XSLGeneralVariable.class.getDeclaredField("redundant");
+        myRedundant.setAccessible(true);
+      } catch (Exception e) {
+        e.printStackTrace();
+        myRedundant = null;
+      }
+    }
+
+    private final StyleElement myElement;
+
+    public EvalContext(final StyleElement element) {
+      super(element);
+      myElement = element;
+    }
+
+    @Override
+    public Expression bindVariable(StructuredQName qName) throws XPathException {
+      final VariableReference expression = (VariableReference)super.bindVariable(qName);
+      final XSLVariableDeclaration declaration = myElement.bindVariable(qName);
+      final Declaration decl = new Declaration(declaration.getPrincipalStylesheetModule(), myElement);
+      final GeneralVariable  var;
+      final Boolean prev = setRedundant(declaration, Boolean.FALSE);
+      try {
+        if (declaration instanceof XSLVariable) {
+          final XSLVariable variable = (XSLVariable)declaration;
+          if (declaration.isGlobal()) {
+            var = (GlobalVariable)variable.compile(declaration.getExecutable(), decl);
+          } else {
+            var = (LocalVariable)variable.compileLocalVariable(declaration.getExecutable(), decl);
+          }
+        } else if (declaration instanceof XSLParam) {
+          var = (GeneralVariable)declaration.compile(declaration.getExecutable(), decl);
+        } else {
+          return expression;
+        }
+      } finally {
+        setRedundant(declaration, prev);
+      }
+      expression.fixup(var);
+      return expression;
+    }
+
+    private static Boolean setRedundant(XSLVariableDeclaration variable, Boolean value) {
+      if (myRedundant == null) return null;
+
+      Object o = Boolean.FALSE;
+      try {
+        o = myRedundant.get(variable);
+        myRedundant.set(variable, value);
+      } catch (IllegalAccessException e) {
+      }
+      return (Boolean)o;
     }
   }
 }

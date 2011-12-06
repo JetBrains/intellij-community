@@ -319,25 +319,6 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return false;
   }
 
-  public static boolean nonFileSystemOrAllJava(PsiElement[] srcElements) {
-    boolean allJava = true;
-    for (PsiElement element : srcElements) {
-      if (element instanceof PsiDirectory) {
-        allJava &= hasPackages((PsiDirectory)element);
-        if (allJava) {
-          allJava = hasJavaFiles((PsiDirectory)element);
-        }
-      }
-      else if (element instanceof PsiFile) {
-        allJava &= VETO_RENAME_CONDITION.value(element);
-      }
-      else {
-        return true;
-      }
-    }
-    return allJava;
-  }
-
   private static class SelectMoveOrRearrangePackageDialog extends DialogWrapper {
      private JRadioButton myRbMovePackage;
      private JRadioButton myRbRearrangePackage;

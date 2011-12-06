@@ -52,12 +52,12 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public PsiClass createPsi(final PsiClassStub stub) {
+  public PsiClass createPsi(@NotNull final PsiClassStub stub) {
     return getPsiFactory(stub).createClass(stub);
   }
 
   @Override
-  public PsiClass createPsi(final ASTNode node) {
+  public PsiClass createPsi(@NotNull final ASTNode node) {
     if (node instanceof EnumConstantInitializerElement) {
       return new PsiEnumConstantInitializerImpl(node);
     }

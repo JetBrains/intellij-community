@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NonNls;
@@ -27,28 +23,30 @@ import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
+/**
+ * @author max
+ */
 public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
   @NonNls private static final String RW = "rw";
 
-  public ReadWriteMappedBufferWrapper(final File file, int offset, int len) {
+  public ReadWriteMappedBufferWrapper(final File file, final int offset, final int len) {
     super(file, offset, len);
   }
 
-  public MappedByteBuffer map() throws IOException {
-    RandomAccessFile raf = null;
-    FileChannel channel = null;
+  @Override
+  protected MappedByteBuffer map() throws IOException {
+    final RandomAccessFile file = new RandomAccessFile(myFile, RW);
     try {
-      raf = new RandomAccessFile(myFile, RW);
-      channel = raf.getChannel();
-      return channel.map(FileChannel.MapMode.READ_WRITE, myPosition, myLength);
-    }
-    finally {
-      if (channel != null) {
+      final FileChannel channel = file.getChannel();
+      try {
+        return channel.map(FileChannel.MapMode.READ_WRITE, myPosition, myLength);
+      }
+      finally {
         channel.close();
       }
-      if (raf != null) {
-        raf.close();
-      }
+    }
+    finally {
+      file.close();
     }
   }
 }

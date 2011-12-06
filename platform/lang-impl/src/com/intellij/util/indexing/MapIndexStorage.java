@@ -248,7 +248,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     try {
       myMap.markDirty();
       // important: assuming the key exists in the index
-      read(key).removeAllValues(inputId);
+      read(key).removeAssociatedValue(inputId);
     }
     catch (IOException e) {
       throw new StorageException(e);

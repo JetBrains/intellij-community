@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class JavaStubPsiElement<T extends StubElement> extends StubBasedPsiElementBase<T> implements StubBasedPsiElement<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.JavaStubPsiElement");
 
-  public JavaStubPsiElement(final T stub, IStubElementType nodeType) {
+  public JavaStubPsiElement(@NotNull T stub, @NotNull IStubElementType nodeType) {
     super(stub, nodeType);
   }
 

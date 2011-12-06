@@ -95,7 +95,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private static final int FLUSH_DELAY = 200; //TODO : make it an option
 
-  private static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
+  public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
 
   static {
     final EditorActionManager actionManager = EditorActionManager.getInstance();

@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *         Date: Dec 10, 2007
  */
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
-  private final Map<Key, UpdatableValueContainer<Value>> myMap = new HashMap<Key,UpdatableValueContainer<Value>>();
+  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<Key,ChangeTrackingValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
@@ -114,13 +114,17 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
         if (stopList.contains(key)) return true;
 
         final UpdatableValueContainer<Value> container = myMap.get(key);
-        if (container != null && container.size() == 0) return true;
+        if (container != null && container.size() == 0) {
+          return true;
+        }
         return processor.process(key);
       }
     };
 
     for (Key key : myMap.keySet()) {
-      if (!decoratingProcessor.process(key)) return false;
+      if (!decoratingProcessor.process(key)) {
+        return false;
+      }
       stopList.add(key);
     }
     return myBackendStorage.processKeys(decoratingProcessor);
@@ -132,9 +136,9 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       getMemValueContainer(key).addValue(inputId, value);
       return;
     }
-    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    final ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer != null) {
-      valueContainer.addValue(inputId, value);
+      valueContainer.dropMergedData();
     }
 
     myBackendStorage.addValue(key, inputId, value);
@@ -146,9 +150,9 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       getMemValueContainer(key).removeValue(inputId, value);
       return;
     }
-    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    final ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer != null) {
-      valueContainer.removeValue(inputId, value);
+      valueContainer.dropMergedData();
     }
     myBackendStorage.removeValue(key, inputId, value);
   }
@@ -156,19 +160,19 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @Override
   public void removeAllValues(Key key, int inputId) throws StorageException {
     if (myBufferingEnabled.get()) {
-      getMemValueContainer(key).removeAllValues(inputId);
+      getMemValueContainer(key).removeAssociatedValue(inputId);
       return;
     }
-    final UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    final ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer != null) {
-      valueContainer.removeAllValues(inputId);
+      valueContainer.dropMergedData();
     }
 
     myBackendStorage.removeAllValues(key, inputId);
   }
 
   private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
-    UpdatableValueContainer<Value> valueContainer = myMap.get(key);
+    ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
       valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
         @Override

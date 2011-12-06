@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
@@ -77,6 +78,11 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
     myExpr = expr;
     myExprMarker = myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null;
     initOccurrencesMarkers();
+  }
+
+  @Override
+  protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
+    return null;
   }
 
   @Nullable
@@ -141,6 +147,7 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
+    Disposer.register(myProject, myBalloon);
     Disposer.register(myBalloon, new Disposable() {
       @Override
       public void dispose() {

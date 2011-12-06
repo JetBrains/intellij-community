@@ -7,7 +7,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="6b492" class="javax.swing.JLabel">
+      <component id="6b492" class="javax.swing.JLabel" binding="myPluginsToUpdateLabel">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag top="0" left="0" bottom="3" right="0" weightx="1.0" weighty="0.0"/>
@@ -16,7 +16,7 @@
           <maximumSize width="-2147483645" height="30"/>
           <minimumSize width="64" height="30"/>
           <preferredSize width="268" height="30"/>
-          <text value="&lt;html&gt;&lt;b&gt;Plugins from configured hosts ready to update.&lt;/b&gt;&lt;br&gt; Uncheck plugins you do not want to update. &lt;/html&gt;"/>
+          <text value="&lt;html&gt;&lt;b&gt;Plugins from configured hosts are ready to update.&lt;/b&gt;&lt;br&gt; Uncheck plugins you do not want to update. &lt;/html&gt;"/>
         </properties>
       </component>
       <grid id="3559e" binding="myPluginsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">

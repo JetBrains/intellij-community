@@ -578,9 +578,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
         if (classUrls != null) {
           urls = new ArrayList<String>();
-          String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE,
-                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE, 999);
+          String signature = formatMethodSignature(method);
           for (String classUrl : classUrls) {
             urls.add(classUrl + "#" + signature);
           }
@@ -612,6 +610,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
       return urls;
     }
+  }
+
+  public static String formatMethodSignature(PsiMethod method) {
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE,
+                                      PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE,
+                                      999);
   }
 
   @Nullable

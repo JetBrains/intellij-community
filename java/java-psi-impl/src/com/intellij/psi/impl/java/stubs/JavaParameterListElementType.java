@@ -45,12 +45,12 @@ public class JavaParameterListElementType extends JavaStubElementType<PsiParamet
   }
 
   @Override
-  public PsiParameterList createPsi(final PsiParameterListStub stub) {
+  public PsiParameterList createPsi(@NotNull final PsiParameterListStub stub) {
     return getPsiFactory(stub).createParameterList(stub);
   }
 
   @Override
-  public PsiParameterList createPsi(final ASTNode node) {
+  public PsiParameterList createPsi(@NotNull final ASTNode node) {
     return new PsiParameterListImpl(node);
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -78,6 +80,14 @@ public class RenameHandlerRegistry {
       if (renameHandler.isRenaming(dataContext)) {
         if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
+      }
+    }
+    if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
+    for (Iterator<Map.Entry<String, RenameHandler>> iterator = availableHandlers.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<String, RenameHandler> entry = iterator.next();
+      if (entry.getValue() instanceof MemberInplaceRenameHandler) {
+        iterator.remove();
+        break;
       }
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();

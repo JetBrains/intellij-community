@@ -19,25 +19,28 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
 * User: anna
 * Date: 11/8/11
 */
 public class StartMarkAction extends BasicUndoableAction {
-  private static StartMarkAction ourCurrentMark;
+  private static final Map<Project, StartMarkAction> ourCurrentMarks = new HashMap<Project, StartMarkAction>();
   private String myCommandName;
   private boolean myGlobal;
+  private Document myDocument;
 
   private StartMarkAction(Editor editor, String commandName) {
     super(DocumentReferenceManager.getInstance().create(editor.getDocument()));
     myCommandName = commandName;
+    myDocument = editor.getDocument();
   }
 
   public void undo() {
@@ -62,48 +65,54 @@ public class StartMarkAction extends BasicUndoableAction {
     myCommandName = commandName;
   }
 
-  public static StartMarkAction start(Editor editor, Project project, String commandName) throws AlreadyStartedException {
-    return start(editor, project, null, commandName);
+  @TestOnly
+  public static void checkCleared() {
+    try {
+      assert ourCurrentMarks.isEmpty() : ourCurrentMarks.values();
+    }
+    finally {
+      ourCurrentMarks.clear();
+    }
   }
 
-  public static StartMarkAction start(Editor editor, Project project, PsiNamedElement namedElement, String commandName) throws AlreadyStartedException {
-    if (ourCurrentMark != null) {
-      throw new AlreadyStartedException(project, ourCurrentMark.myCommandName, namedElement, ourCurrentMark.getAffectedDocuments());
+  public static StartMarkAction start(Editor editor, Project project, String commandName) throws AlreadyStartedException {
+    final StartMarkAction existingMark = ourCurrentMarks.get(project);
+    if (existingMark != null) {
+      throw new AlreadyStartedException(existingMark.myCommandName,
+                                        existingMark.myDocument,
+                                        existingMark.getAffectedDocuments());
     }
     final StartMarkAction markAction = new StartMarkAction(editor, commandName);
     UndoManager.getInstance(project).undoableActionPerformed(markAction);
-    ourCurrentMark = markAction;
+    ourCurrentMarks.put(project, markAction);
     return markAction;
   }
 
-  static void markFinished() {
-    ourCurrentMark = null;
+  static void markFinished(Project project) {
+    final StartMarkAction existingMark = ourCurrentMarks.remove(project);
+    if (existingMark != null) {
+      existingMark.myDocument = null;
+    }
   }
 
   public static class AlreadyStartedException extends Exception {
     private final DocumentReference[] myAffectedDocuments;
-    private SmartPsiElementPointer<PsiNamedElement> myElementInfo;
+    private Document myDocument;
 
-    public AlreadyStartedException(Project project,
-                                   String commandName,
-                                   PsiNamedElement namedElement,
-                                   DocumentReference[] document) {
-      super("Unable to start inplace refactoring. " + commandName + " already started");
-      myAffectedDocuments = document;
-      if (namedElement != null) {
-        myElementInfo = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(namedElement);
-      } else {
-        myElementInfo = null;
-      }
+    public AlreadyStartedException(String commandName,
+                                   Document document,
+                                   DocumentReference[] documentRefs) {
+      super("Unable to start inplace refactoring. "+ commandName + " is not finished yet.");
+      myAffectedDocuments = documentRefs;
+      myDocument = document;
     }
 
     public DocumentReference[] getAffectedDocuments() {
       return myAffectedDocuments;
     }
 
-    @Nullable
-    public PsiNamedElement getElement() {
-      return myElementInfo != null ? myElementInfo.getElement() : null;
+    public Document getDocument() {
+      return myDocument;
     }
   }
 }

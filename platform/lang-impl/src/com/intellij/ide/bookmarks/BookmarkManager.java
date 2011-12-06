@@ -21,7 +21,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -191,7 +193,7 @@ public class BookmarkManager implements PersistentStateComponent<Element>, Proje
   }
 
   public void loadState(final Element state) {
-    SwingUtilities.invokeLater(new Runnable() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       public void run() {
         BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
         for (Bookmark bookmark : myBookmarks) {

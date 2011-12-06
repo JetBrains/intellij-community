@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,33 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class PagedFileStorageTest extends TestCase {
+  private final PagedFileStorage.StorageLock lock = new PagedFileStorage.StorageLock();
   private File f;
   private PagedFileStorage s;
-  private PagedFileStorage.StorageLock lock;
 
   @Override
   public void setUp() throws Exception {
-    f = FileUtil.createTempFile("storage", ".tmp");
-    lock = new PagedFileStorage.StorageLock();
-    s = new PagedFileStorage(f, lock);
+    super.setUp();
+    synchronized (lock) {
+      f = FileUtil.createTempFile("storage", ".tmp");
+      s = new PagedFileStorage(f, lock);
+    }
   }
 
   @Override
-  public void tearDown() {
-    f.delete();
+  public void tearDown() throws Exception {
+    synchronized (lock) {
+      s.close();
+      final File l = new File(f.getPath() + ".len");
+      assert !l.exists() || l.delete() : l.getPath();
+      assert f.delete() : f.getPath();
+    }
+    super.tearDown();
   }
 
   public void testResizing() throws IOException {
@@ -61,15 +72,41 @@ public class PagedFileStorageTest extends TestCase {
   }
 
   public void testResizeableMappedFile() throws Exception {
-    ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock);
     synchronized (lock) {
-      for (int index = 0; index <= 2000000000; index += 2000000) {
+      ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock);
+
+      System.out.println("writing...");
+      long t = System.currentTimeMillis();
+      for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
         file.putInt(index, index);
         assertTrue(file.length() > index);
         assertEquals(index, file.getInt(index));
+        printPct(pct);
       }
       file.putInt(Integer.MAX_VALUE - 20, 1234);
       assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
+      t = System.currentTimeMillis() - t;
+      System.out.println("done in " + t + " ms");
+
+      t = System.currentTimeMillis();
+      System.out.println("checking...");
+      for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
+        assertEquals(index, file.getInt(index));
+        printPct(pct);
+      }
+      assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
+      t = System.currentTimeMillis() - t;
+      System.out.println("done in " + t + " ms");
+
+      file.close();
+    }
+  }
+
+  private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
+
+  private static void printPct(int pct) {
+    if (pct < 1000 && pct % 100 == 0) {
+      System.out.println("  [" + FORMATTER.format(new Date()) + "] " + pct / 10 + "%");
     }
   }
 }

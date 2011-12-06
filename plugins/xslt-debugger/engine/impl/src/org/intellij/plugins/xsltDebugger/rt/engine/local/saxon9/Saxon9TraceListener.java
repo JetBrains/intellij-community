@@ -36,6 +36,8 @@ public class Saxon9TraceListener implements TraceListener {
 
   private LocalDebugger myDebugger;
 
+  static boolean MUTED;
+
   public Saxon9TraceListener() {
   }
 
@@ -65,6 +67,7 @@ public class Saxon9TraceListener implements TraceListener {
   }
 
   public void enter(InstructionInfo instructionInfo, XPathContext xPathContext) {
+    if (MUTED) return;
     if (TRACE) {
       trace("<" + instructionInfo + ">");
     }
@@ -76,6 +79,7 @@ public class Saxon9TraceListener implements TraceListener {
   }
 
   public void leave(InstructionInfo instructionInfo) {
+    if (MUTED) return;
     if (TRACE) {
       trace("</>");
     }
@@ -85,6 +89,7 @@ public class Saxon9TraceListener implements TraceListener {
   }
 
   public void startCurrentItem(Item item) {
+    if (MUTED) return;
     if (item instanceof NodeInfo) {
       if (TRACE) {
         trace("<" + ((NodeInfo)item).getDisplayName() + ">");
@@ -94,6 +99,7 @@ public class Saxon9TraceListener implements TraceListener {
   }
 
   public void endCurrentItem(Item item) {
+    if (MUTED) return;
     if (item instanceof NodeInfo) {
       myDebugger.popSource();
     }
