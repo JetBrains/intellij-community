@@ -1,0 +1,1 @@
+result += header<caret> + " : " + value + "\n"

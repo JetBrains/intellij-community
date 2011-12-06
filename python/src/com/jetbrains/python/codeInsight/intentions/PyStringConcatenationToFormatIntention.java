@@ -3,10 +3,12 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -80,9 +82,10 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     }
     StringBuilder stringLiteral = new StringBuilder();
     StringBuilder parameters = new StringBuilder("(");
+    NotNullFunction<String,String> escaper = StringUtil.escaper(false, null);
     for (PyExpression expression: getSimpleExpressions((PyBinaryExpression) element)) {
       if (expression instanceof PyStringLiteralExpression) {
-        stringLiteral.append(((PyStringLiteralExpression)expression).getStringValue());
+        stringLiteral.append(escaper.fun(((PyStringLiteralExpression)expression).getStringValue()));
       } else {
         stringLiteral.append("%s");
         parameters.append(expression.getText()).append(", ");

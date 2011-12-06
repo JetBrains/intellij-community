@@ -1,0 +1,1 @@
+result += "%s : %s\n" % (header, value)
