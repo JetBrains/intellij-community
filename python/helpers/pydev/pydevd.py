@@ -612,6 +612,7 @@ class PyDB:
                         pass
 
                     else:
+                        found = False
                         try:
                             if type == 'django-line':
                                 del self.django_breakpoints[file][line]
@@ -620,14 +621,22 @@ class PyDB:
                             else:
                                 try:
                                     del self.django_breakpoints[file][line]
+                                    found = True
+                                except:
+                                    pass
+                                try:
                                     del self.breakpoints[file][line] #remove the breakpoint in that line
+                                    found = True
                                 except:
                                     pass
 
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                                sys.stderr.write('Removed breakpoint:%s\n' % (file,))
+                                sys.stderr.write('Removed breakpoint:%s - %s\n' % (file, line))
                                 sys.stderr.flush()
                         except KeyError:
+                            found = False
+
+                        if not found:
                             #ok, it's not there...
                             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                                 #Sometimes, when adding a breakpoint, it adds a remove command before (don't really know why)
@@ -1279,7 +1288,7 @@ if __name__ == '__main__':
     pydevd_vm_type.SetupType(setup.get('vm_type', None))
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', False)
-    DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = setup.get('', -1)
+    DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = setup.get('DEBUG_TRACE_BREAKPOINTS', -1)
     DebugInfoHolder.DEBUG_TRACE_LEVEL = setup.get('DEBUG_TRACE_LEVEL', -1)
 
     port = setup['port']

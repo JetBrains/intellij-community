@@ -31,6 +31,7 @@ import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
 import com.jetbrains.python.debugger.pydev.*;
+import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -527,12 +528,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void processTerminated(ProcessEvent event) {
+    myDebugger.close();
   }
 
   @Override
   public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
     myClosing = true;
-    myDebugger.close();
+    setKillingStrategy();
+  }
+
+  private void setKillingStrategy() {
+    if (getSession().isSuspended() && myProcessHandler instanceof PythonProcessHandler) {
+      ((PythonProcessHandler)myProcessHandler).setShouldTryToKillSoftly(false);    //while process is suspended it can't terminate softly, so its better to kill all the tree hard
+    }
   }
 
   @Override

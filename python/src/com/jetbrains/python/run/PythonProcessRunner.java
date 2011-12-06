@@ -4,6 +4,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.RunnerMediator;
+import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.python.sdk.JythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 
@@ -19,7 +20,7 @@ public class PythonProcessRunner {
       return JythonProcessHandler.createProcessHandler(commandLine);
     }
     else {
-      if (withMediator) {
+      if (withMediator && SystemInfo.isWindows) {
         return RunnerMediator.getInstance().createProcess(commandLine);
       }
       else {
@@ -35,5 +36,4 @@ public class PythonProcessRunner {
   public static ProcessHandler createProcessHandlingCtrlC(GeneralCommandLine commandLine) throws ExecutionException {
     return createProcess(commandLine, true);
   }
-
 }
