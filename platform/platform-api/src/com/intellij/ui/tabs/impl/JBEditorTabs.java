@@ -54,11 +54,6 @@ public class JBEditorTabs extends JBTabsImpl {
     }
   }
 
-  @Override
-  public boolean isTabDraggingEnabled() {
-    return super.isTabDraggingEnabled() && isSingleRow();
-  }
-
   public boolean isGhostsAlwaysVisible() {
     return super.isGhostsAlwaysVisible() && !isEditorTabs();
   }
