@@ -560,6 +560,8 @@
       <category>Django</category>
     </intentionAction>
 
+    <webBrowserUrlProvider implementation="com.jetbrains.django.lang.template.DjangoWebBrowserUrlProvider"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
