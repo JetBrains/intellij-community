@@ -194,6 +194,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           if (transferable != null) {
             pane.putClientProperty(CLIPBOARD_CONTENTS, transferable);
           }
+
+          pane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, null);
         }
       }
     };
@@ -283,29 +285,54 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
     @Nullable
     public static Transferable getContentsSafe() {
+      final Ref<Transferable> result = new Ref<Transferable>();
       if (Registry.is("ide.mac.useNativeClipboard.async")) {
-        JRootPane pane = getRootPane();
+        final JRootPane pane = getRootPane();
         if (pane != null) {
-          ID synchronizer_ = Foundation.getClass("ClipboardSynchronizer_");
-          final ID synchronizer = Foundation.invoke(Foundation.invoke(synchronizer_, "alloc"), "init");
-          Foundation
-            .invoke(synchronizer, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("run:"), null, false);
+          try {
+            Runnable run = new Runnable() {
+              @Override
+              public void run() {
+                ID synchronizer_ = Foundation.getClass("ClipboardSynchronizer_");
+                final ID synchronizer = Foundation.invoke(Foundation.invoke(synchronizer_, "alloc"), "init");
+                Foundation
+                  .invoke(synchronizer, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("run:"), null,
+                          false);
 
-          MacUtil.startModal(pane);
-          
-          Foundation.cfRelease(synchronizer);
+                pane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, Boolean.TRUE);
+                MacUtil.startModal(pane);
 
-          Object contents = pane.getClientProperty(CLIPBOARD_CONTENTS);
-          pane.putClientProperty(CLIPBOARD_CONTENTS, null);
-          if (contents != null) {
-            return (Transferable) contents;
+                Foundation.cfRelease(synchronizer);
+
+                Object contents = pane.getClientProperty(CLIPBOARD_CONTENTS);
+                pane.putClientProperty(CLIPBOARD_CONTENTS, null);
+                if (contents != null) {
+                  result.set((Transferable)contents);
+                }
+              }
+            };
+            
+            
+            if (SwingUtilities.isEventDispatchThread()) {
+              run.run();
+            } else {
+              SwingUtilities.invokeAndWait(run);
+            }
+
+            Transferable transferable = result.get();
+            if (transferable != null) return transferable;
           }
-          
-          return null;
+          catch (InterruptedException e) {
+            // do nothing
+          }
+          catch (InvocationTargetException e) {
+            // do nothing
+          }
         }
+        
+        return null;
       }
       
-      final Ref<Transferable> result = new Ref<Transferable>();
       Foundation.executeOnMainThread(new Runnable() {
         @Override
         public void run() {
