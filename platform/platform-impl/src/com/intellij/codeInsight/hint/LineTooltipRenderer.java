@@ -273,7 +273,9 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   private static void locateOutsideMouseCursor(Editor editor, JComponent editorComponent, Point p, int width, int height, int heightLimit) {
-    Point mouse = MouseInfo.getPointerInfo().getLocation();
+    PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+    if (pointerInfo == null) return;
+    Point mouse = pointerInfo.getLocation();
     SwingUtilities.convertPointFromScreen(mouse, editorComponent);
     Rectangle tooltipRect = new Rectangle(p, new Dimension(width, height));
     // should show at least one line apart
