@@ -45,6 +45,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleModulesImporter {
   
+  private static final Map<LibraryPathType, OrderRootType> LIBRARY_ROOT_MAPPINGS
+    = new EnumMap<LibraryPathType, OrderRootType>(LibraryPathType.class);
+  static {
+    LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.BINARY, OrderRootType.CLASSES);
+    LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.SOURCE, OrderRootType.SOURCES);
+    LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.DOC, JavadocOrderRootType.getInstance());
+    assert LibraryPathType.values().length == LIBRARY_ROOT_MAPPINGS.size();
+  }
+  
   /**
    * We can't modify project modules (add/remove) until it's initialised, so, we delay that activity. Current constant
    * holds number of milliseconds to wait between 'after project initialisation' processing attempts.
@@ -463,7 +472,7 @@ public class GradleModulesImporter {
           continue;
         }
         if (virtualFile.isDirectory()) {
-          model.addRoot(virtualFile, pathType.getRootType());
+          model.addRoot(virtualFile, LIBRARY_ROOT_MAPPINGS.get(pathType));
         }
         else {
           VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
@@ -473,7 +482,7 @@ public class GradleModulesImporter {
             ));
             continue;
           }
-          model.addRoot(jarRoot, pathType.getRootType());
+          model.addRoot(jarRoot, LIBRARY_ROOT_MAPPINGS.get(pathType));
         }
       }
     }
