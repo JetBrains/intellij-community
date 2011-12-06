@@ -200,6 +200,7 @@ def test_generator():
         f_15('foo'.split('o')),
     ]
 
+
 # PY-4025
 def test_function_assignments():
     def g(x):
@@ -312,6 +313,7 @@ def test_subscription():
     c_0 = c[<warning descr="Expected type 'str', got 'int' instead">0</warning>]
     f(<warning descr="Expected type 'str', got 'int' instead">c_0</warning>)
 
+
 def test_comparison_operators():
     def f(x):
         """
@@ -332,16 +334,19 @@ def test_comparison_operators():
     f(<warning descr="Expected type 'str', got 'bool' instead">c == 1</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead">c in [1, 2, 3]</warning>)
 
+
 def test_right_operators():
     o = object()
     xs = [
         <warning descr="Expected type 'one of (int, long)', got 'object' instead">o</warning> * [],
     ]
 
+
 def test_isinstance_implicit_self_types():
     x = 1
     if isinstance(x, unicode):
         x.encode('UTF-8') #pass
+
 
 def test_not_none():
     def test(x):
@@ -375,7 +380,36 @@ def test_not_none():
     elif x3 is not None:
         test(x3)
 
+
 def test_builtin_functions():
     print(map(str, [1, 2, 3]) + ['foo']) #pass
     print(map(lambda x: x.upper(), 'foo')) #pass
     print(filter(lambda x: x % 2 == 0, [1, 2, 3]) + [4, 5, 6]) #pass
+    print(filter(lambda x: x != 'f', 'foo') + 'bar') #pass
+
+
+def test_union_return_types():
+    def f1(c):
+        if c < 0:
+            return []
+        elif c > 0:
+            return 'foo'
+        else:
+            return None
+    def f2(x):
+        """
+        :type x: str
+        """
+        pass
+    def f3(x):
+        """
+        :type x: int
+        """
+    x1 = f1(42)
+    f2(<warning descr="Expected type 'str', got 'one of (list, str, None)' instead">x1</warning>)
+    f3(<warning descr="Expected type 'int', got 'one of (list, str, None)' instead">x1</warning>)
+
+    f2(<warning descr="Expected type 'str', got 'int' instead">x1.count('')</warning>)
+    f3(x1.count(''))
+    f2(x1.strip())
+    f3(<warning descr="Expected type 'int', got 'str' instead">x1.strip()</warning>)
