@@ -185,7 +185,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     }
 
     public int compare(final ShelvedChange o1, final ShelvedChange o2) {
-      return ChangesComparator.getInstance().compare(o1.getChange(myProject), o2.getChange(myProject));
+      return ChangesComparator.getInstance(true).compare(o1.getChange(myProject), o2.getChange(myProject));
     }
   }
 
