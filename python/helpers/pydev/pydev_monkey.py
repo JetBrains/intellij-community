@@ -48,8 +48,9 @@ def patch_args(args):
 def monkey_patch_os(funcname, create_func):
     if hasattr(os, funcname):
         original_name = 'original_' + funcname
-        setattr(os, original_name, getattr(os, funcname))
-        setattr(os, funcname, create_func(original_name))
+        if not hasattr(os, original_name):
+            setattr(os, original_name, getattr(os, funcname))
+            setattr(os, funcname, create_func(original_name))
 
 def create_execl(original_name):
     def new_execl(path, *args):
