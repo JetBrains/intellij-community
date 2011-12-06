@@ -1,13 +1,18 @@
 package de.plushnikov.intellij.plugin;
 
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import de.plushnikov.intellij.lombok.psi.MyLightMethodTreeGenerator;
+import de.plushnikov.intellij.lombok.extension.ExtensionRegister;
+import de.plushnikov.intellij.lombok.extension.LombokExtensionRegisterFactory;
 
 /**
  * Main application component, that loads Lombok support
  */
 public class LombokLoader {
   public LombokLoader() {
-    ChangeUtil.registerTreeGenerator(new MyLightMethodTreeGenerator());
+    ExtensionRegister extensionRegister = LombokExtensionRegisterFactory.getInstance().createExtensionRegister();
+    extensionRegister.registerRenameHandler();
+    extensionRegister.registerTreeHandler();
+
+
+
   }
 }

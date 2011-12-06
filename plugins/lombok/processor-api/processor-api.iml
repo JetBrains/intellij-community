@@ -20,6 +20,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:10.5.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:10.5.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:idea:10.5.2" level="project" />
+    <orderEntry type="module" module-name="intellij-facade-factory" />
   </component>
 </module>
 

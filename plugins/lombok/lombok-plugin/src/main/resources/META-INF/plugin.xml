@@ -35,21 +35,22 @@
 		<implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider" />
 		<inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider" />
 
-		<renameHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementRenameHandler" order="first" />
+		<!--<renameHandler implementation="de.plushnikov.intellij.lombok.extension.LombokElementRenameHandler" order="first" />-->
 		<!--<refactoring.changeSignatureUsageProcessor implementation=""/>-->
 		<!--<refactoring.safeDeleteProcessor      -->
-		<!--<refactoring.moveHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementMoveHandler" order="first"/>-->
+		<!--<refactoring.moveHandler implementation="de.plushnikov.intellij.lombok.extension.LombokElementMoveHandler" order="first"/>-->
 	</extensions>
 
 	<change-notes><![CDATA[
 		<ul>
 			<li>0.3
 				<ol>
+			        <li>TODO: Added support for IntelliJ 11</li>
 			        <li>Fixed issue #4 "Getter/Setter on generic types"</li>
 			        <li>Fixed issue #6 "The Plugin panel in IDEA lists the plugin as "Lombook Plugin (doubled letter 'o')"</li>
 			        <li>Fixed issue #9 "@Data(staticConstructor="of") is not created"</li>
 			        <li>Fixed issue #10 "Empty constructor is created even if it already exists"</li>
-					<li>Added more inspections and QuickFixes for some of lombok annotations.</li>
+					    <li>Added more inspections and QuickFixes for some of lombok annotations.</li>
 				</ol>
 			</li>
 			<li>0.2

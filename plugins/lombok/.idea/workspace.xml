@@ -2,81 +2,28 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" readonly="true" id="63abab39-9c6b-40ad-95fe-410c022ad9ac" name="Default" comment="improve maven configuration">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/psi" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src/main/java/de" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src/main/java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/psi" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src/main/java/de" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src/main/java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/psi" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/intellij-facade-10.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/pom.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/intellij-facade-11.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/pom.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/intellij-facade-9.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/pom.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightFieldBuilder9Impl.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightMethodBuilder9Impl.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/intellij-facade-api.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/pom.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightFieldBuilder.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightMethodBuilder.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/intellij-facade-factory.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/pom.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/LombokPsiElementFactory.java" />
-      <change type="DELETED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightFieldBuilder.java" afterPath="" />
-      <change type="DELETED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightMethodBuilder.java" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/extension" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/extension" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/extension" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/extension" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister10Impl.java" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister11Impl.java" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister9Impl.java" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister.java" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightMethod.java" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/extension/LombokExtensionRegisterFactory.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/LombokPsiElementFactory.java" afterPath="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/LombokPsiElementFactory.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" afterPath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-plugin/pom.xml" afterPath="$PROJECT_DIR$/lombok-plugin/pom.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pom.xml" afterPath="$PROJECT_DIR$/pom.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-api/pom.xml" afterPath="$PROJECT_DIR$/processor-api/pom.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/LombokLoader.java" afterPath="$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/LombokLoader.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml" afterPath="$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-api/processor-api.iml" afterPath="$PROJECT_DIR$/processor-api/processor-api.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/pom.xml" afterPath="$PROJECT_DIR$/processor-core/pom.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/processor-core.iml" afterPath="$PROJECT_DIR$/processor-core/processor-core.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/log/AbstractLogProcessor.java" afterPath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/log/AbstractLogProcessor.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/GetterFieldProcessor.java" afterPath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/GetterFieldProcessor.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/SetterFieldProcessor.java" afterPath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/SetterFieldProcessor.java" />
-      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightModifierList.java" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightModifierList.java" />
-      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightParameter.java" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameter.java" />
-      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightParameterListBuilder.java" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightParameterListBuilder.java" />
-      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightReferenceListBuilder.java" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightReferenceListBuilder.java" />
-      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\LombokLightVariableBuilder.java" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightVariableBuilder.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-api/src/main/java/de/plushnikov/intellij/lombok/util/PsiMethodUtil.java" afterPath="$PROJECT_DIR$/processor-api/src/main/java/de/plushnikov/intellij/lombok/util/PsiMethodUtil.java" />
+      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\handler\LombokElementMoveHandler.java" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/LombokElementMoveHandler.java" />
+      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\lombok-plugin\src\main\java\de\plushnikov\intellij\plugin\handler\LombokElementRenameHandler.java" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/LombokElementRenameHandler.java" />
+      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\MyLightMethod.java" afterPath="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightMethod9Impl.java" />
+      <change type="MOVED" beforePath="D:\Projekte\Idea\LombokIntelliJPlugin\processor-api\src\main\java\de\plushnikov\intellij\lombok\psi\MyLightMethodTreeGenerator.java" afterPath="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/MyLightMethodTreeGenerator.java" />
     </list>
     <list id="64e30ca6-6e33-4b24-964c-ad37c8de018e" name="ignore" comment="ignore" />
     <ignored path="LombokIntelliJPlugin.iws" />
@@ -258,7 +205,37 @@
     <favorites_list name="LombokIntelliJPlugin" />
   </component>
   <component name="FileEditorManager">
-    <leaf />
+    <leaf>
+      <file leaf-file-name="LombokPsiElementFactory.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/LombokPsiElementFactory.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="29" column="44" selection-start="944" selection-end="961" vertical-scroll-proportion="0.0">
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ToStringProcessor.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/ToStringProcessor.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="100" column="61" selection-start="4199" selection-end="4199" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PsiMethodUtil.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/processor-api/src/main/java/de/plushnikov/intellij/lombok/util/PsiMethodUtil.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="32" column="75" selection-start="1302" selection-end="1302" vertical-scroll-proportion="0.40963855">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -272,22 +249,22 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/processor-api/src/main/java/de/plushnikov/intellij/lombok/psi/MyLightMethodTreeGenerator.java" />
-        <option value="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/GetterFieldProcessor.java" />
-        <option value="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/SetterFieldProcessor.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/PsiElementFactory.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/LombokPsiElementFactory.java" />
-        <option value="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/log/AbstractLogProcessor.java" />
-        <option value="$PROJECT_DIR$/intellij-facade-factory/pom.xml" />
-        <option value="$PROJECT_DIR$/intellij-facade-api/pom.xml" />
-        <option value="$PROJECT_DIR$/intellij-facade-9/pom.xml" />
-        <option value="$PROJECT_DIR$/intellij-facade-11/pom.xml" />
-        <option value="$PROJECT_DIR$/intellij-facade-10/pom.xml" />
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/processor-core/pom.xml" />
         <option value="$PROJECT_DIR$/processor-api/pom.xml" />
         <option value="$PROJECT_DIR$/lombok-plugin/pom.xml" />
         <option value="$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/handler/LombokElementRenameHandler.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister10Impl.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister10Impl.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister9Impl.java" />
+        <option value="$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml" />
+        <option value="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/extension/LombokExtensionRegisterFactory.java" />
+        <option value="$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/LombokLoader.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister11Impl.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/LombokPsiElementFactory.java" />
+        <option value="$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/MyLightMethodTreeGenerator.java" />
+        <option value="$PROJECT_DIR$/processor-api/src/main/java/de/plushnikov/intellij/lombok/util/PsiMethodUtil.java" />
       </list>
     </option>
   </component>
@@ -413,6 +390,80 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="processor-core" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="processor-core" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="processor" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="processor-core" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="processor" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="clazz" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="processor-api" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -469,215 +520,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="psi" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="target" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="target" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="test-classes" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="test" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="resources" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="data" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="test" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="main" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="resources" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="META-INF" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="main" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="resources" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="main" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="java" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="main" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="java" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="handler" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="main" />
+              <option name="myItemId" value="util" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -713,6 +556,10 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="psi" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -723,17 +570,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="intellij-facade-api" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="LombokIntelliJPlugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="intellij-facade-api" />
+              <option name="myItemId" value="intellij-facade-factory" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -749,7 +586,11 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="psi" />
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="extension" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -785,6 +626,10 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="psi" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -795,6 +640,36 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="intellij-facade-9" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="extension" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="intellij-facade-11" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -818,6 +693,40 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="intellij-facade-11" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="extension" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -850,6 +759,40 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LombokIntelliJPlugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="intellij-facade-10" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lombok" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="extension" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -886,6 +829,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="de.plushnikov.intellij.lombok.extension" />
       <recent name="de.plushnikov.intellij.lombok.processor.clazz" />
       <recent name="de.plushnikov.intellij.lombok.processor.field" />
       <recent name="de.plushnikov.intellij.lombok.quickfix" />
@@ -898,6 +842,7 @@
       <recent name="de.plushnikov.intellij.lombok.psi" />
     </key>
     <key name="CreateClassDialog.RecentsKey">
+      <recent name="de.plushnikov.intellij.lombok.extension" />
       <recent name="de.plushnikov.intellij.plugin.provider" />
     </key>
   </component>
@@ -1308,7 +1253,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="54" y="-8" width="1874" height="1096" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32979852" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Atlassian " active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -1320,8 +1265,8 @@
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32979852" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32979852" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.18221977" sideWeight="0.6755319" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24792932" sideWeight="0.6755319" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.18221977" sideWeight="0.67021275" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24792932" sideWeight="0.67021275" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Dependency Viewer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32446808" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -1422,118 +1367,121 @@
     </option>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/LombokPsiElementFactory.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="26" selection-start="220" selection-end="220" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/SetterFieldProcessor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="121" column="0" selection-start="4953" selection-end="4953" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/log/AbstractLogProcessor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="38" selection-start="956" selection-end="956" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightFieldBuilder9Impl.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="110" selection-start="892" selection-end="964" vertical-scroll-proportion="0.0">
+        <state line="0" column="35" selection-start="8" selection-end="37" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightMethodBuilder9Impl.java">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="67" column="88" selection-start="2612" selection-end="2661" vertical-scroll-proportion="0.0">
+        <state line="5" column="21" selection-start="109" selection-end="109" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/intellij-facade-api/pom.xml">
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="17" selection-start="503" selection-end="503" vertical-scroll-proportion="-8.84">
+        <state line="37" column="123" selection-start="1233" selection-end="1348" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/intellij-facade-9/pom.xml">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/extension/LombokExtensionRegisterFactory.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="17" selection-start="501" selection-end="501" vertical-scroll-proportion="0.24205914">
+        <state line="17" column="3" selection-start="477" selection-end="477" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/intellij-facade-11/pom.xml">
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/LombokLoader.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="18" selection-start="502" selection-end="502" vertical-scroll-proportion="0.24205914">
+        <state line="12" column="44" selection-start="510" selection-end="510" vertical-scroll-proportion="0.0">
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister9Impl.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="19" column="41" selection-start="660" selection-end="660" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/intellij-facade-10/pom.xml">
+    <entry file="file://$PROJECT_DIR$/../ideaIC-103.255/platform/lang-impl/src/com/intellij/psi/impl/source/tree/TreeGenerator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="14" selection-start="502" selection-end="502" vertical-scroll-proportion="0.24205914">
+        <state line="26" column="17" selection-start="837" selection-end="837" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/processor-core/pom.xml">
+    <entry file="file://$PROJECT_DIR$/../ideaIC-103.255/platform/lang-impl/src/com/intellij/psi/impl/source/tree/ChangeUtil.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="0" selection-start="657" selection-end="657" vertical-scroll-proportion="0.21796276">
+        <state line="51" column="41" selection-start="2160" selection-end="2173" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/intellij-facade-factory/pom.xml">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-api/src/main/java/de/plushnikov/intellij/lombok/extension/MyLightMethodTreeGenerator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="27" column="4" selection-start="916" selection-end="916" vertical-scroll-proportion="0.50273824">
+        <state line="24" column="46" selection-start="885" selection-end="885" vertical-scroll-proportion="0.2849162">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/processor-api/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="18" column="28" selection-start="786" selection-end="786" vertical-scroll-proportion="0.33515882">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.037988827">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/pom.xml">
+    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/ToStringProcessor.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="0" selection-start="637" selection-end="637" vertical-scroll-proportion="0.27929902">
+        <state line="100" column="61" selection-start="4199" selection-end="4199" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pom.xml">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-9/src/main/java/de/plushnikov/intellij/lombok/psi/LombokLightMethod9Impl.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="255" column="13" selection-start="9517" selection-end="9517" vertical-scroll-proportion="0.4977778">
-          <folding>
-            <element signature="tag#profile#2;tag#profiles#0;tag#project#0" expanded="false" />
-          </folding>
+        <state line="20" column="45" selection-start="637" selection-end="637" vertical-scroll-proportion="0.2659218">
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/handler/LombokElementRenameHandler.java">
+    <entry file="file://$PROJECT_DIR$/intellij-facade-10/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister10Impl.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="79" selection-start="1161" selection-end="1161" vertical-scroll-proportion="0.42681563">
+        <state line="13" column="34" selection-start="452" selection-end="452" vertical-scroll-proportion="0.24205914">
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-facade-11/src/main/java/de/plushnikov/intellij/lombok/extension/ExtensionRegister11Impl.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="17" column="11" selection-start="570" selection-end="570" vertical-scroll-proportion="0.26067907">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-facade-factory/src/main/java/de/plushnikov/intellij/lombok/psi/LombokPsiElementFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="29" column="44" selection-start="944" selection-end="961" vertical-scroll-proportion="0.0">
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/processor-api/src/main/java/de/plushnikov/intellij/lombok/util/PsiMethodUtil.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="32" column="75" selection-start="1302" selection-end="1302" vertical-scroll-proportion="0.40963855">
+          <folding />
         </state>
       </provider>
     </entry>

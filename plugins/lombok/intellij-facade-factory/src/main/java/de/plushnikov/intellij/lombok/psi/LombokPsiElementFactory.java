@@ -1,6 +1,8 @@
 package de.plushnikov.intellij.lombok.psi;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,4 +26,10 @@ public class LombokPsiElementFactory {
   public LombokLightMethodBuilder createLightMethod(@NotNull PsiManager manager, @NotNull String methodName) {
     return new LombokLightMethodBuilder9Impl(manager, methodName);
   }
+
+  public LombokLightMethod createLightMethod(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {
+    return new LombokLightMethod9Impl(manager, valuesMethod, psiClass);
+  }
+
+
 }

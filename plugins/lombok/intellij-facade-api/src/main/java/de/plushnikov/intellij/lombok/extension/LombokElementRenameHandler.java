@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.handler;
+package de.plushnikov.intellij.lombok.extension;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;

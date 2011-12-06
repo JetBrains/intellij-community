@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij-facade-api" />
     <orderEntry type="module" module-name="processor-api" />
     <orderEntry type="module" module-name="processor-core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij-facade-factory" />
   </component>
 </module>
 

@@ -23,7 +23,7 @@ public class PsiMethodUtil {
 
     PsiMethod method = elementFactory.createMethodFromText(methodText, psiClass);
 
-    LightMethod lightMethod = new MyLightMethod(manager, method, psiClass);
+    LightMethod lightMethod = LombokPsiElementFactory.getInstance().createLightMethod(manager, method, psiClass);
     lightMethod.setNavigationElement(navigationTarget);
     return lightMethod;
   }
