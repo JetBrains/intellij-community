@@ -117,7 +117,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
     if (activeIntroducer != null) {
-      if (!(activeIntroducer instanceof InplaceIntroduceConstantPopup)/* || !activeIntroducer.startsOnTheSameElement(expr, localVariable)*/) {
+      if (!(activeIntroducer instanceof InplaceIntroduceConstantPopup) || !activeIntroducer.startsOnTheSameElement(expr, localVariable)) {
         AbstractInplaceIntroducer.unableToStartWarning(project, editor, activeIntroducer);
         return null;
       }

@@ -238,21 +238,6 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected void restoreStateBeforeDialogWouldBeShown() {
-    PsiNamedElement variable = getVariable();
-    final TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
-    assert state != null;
-    final String commandName = RefactoringBundle
-            .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), variable.getName());
-    Runnable runnable = new Runnable() {
-      public void run() {
-        state.gotoEnd(true);
-      }
-    };
-    CommandProcessor.getInstance().executeCommand(myProject, runnable, commandName, null);
-  }
-
-  @Override
   protected String getNewName(String newName, ResolveSnapshotProvider.ResolveSnapshot snapshot) {
     return newName;
   }

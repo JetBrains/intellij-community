@@ -75,7 +75,11 @@ public class SendToFavoritesAction extends AnAction{
   public void doSend(final FavoritesManager favoritesManager, final FavoritesTreeNodeDescriptor[] roots, final String listName) {
     for (FavoritesTreeNodeDescriptor root : roots) {
       final AbstractTreeNode rootElement = root.getElement();
-      favoritesManager.removeRoot(listName, rootElement.getValue());
+      String name = listName;
+      if (name == null) {
+        name = root.getFavoritesRoot().getName();
+      }
+      favoritesManager.removeRoot(name, rootElement.getValue());
       favoritesManager.addRoots(toName, Collections.singletonList(rootElement));
     }
   }

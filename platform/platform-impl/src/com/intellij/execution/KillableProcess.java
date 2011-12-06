@@ -19,7 +19,7 @@ package com.intellij.execution;
  * @author nik
  */
 public interface KillableProcess {
-  boolean canKillSoftly();
+  boolean canKillProcess();
 
   void killProcess();
 }

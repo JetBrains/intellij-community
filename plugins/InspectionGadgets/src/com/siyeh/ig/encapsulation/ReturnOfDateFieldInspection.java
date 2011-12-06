@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,16 +31,49 @@ public class ReturnOfDateFieldInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "return.date.calendar.field.display.name");
+    return InspectionGadgetsBundle.message("return.date.calendar.field.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final String type = (String)infos[0];
-    return InspectionGadgetsBundle.message(
-      "return.date.calendar.field.problem.descriptor", type);
+    return InspectionGadgetsBundle.message("return.date.calendar.field.problem.descriptor", type);
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ReturnOfDateFieldFix((String)infos[0]);
+  }
+
+  private static class ReturnOfDateFieldFix extends InspectionGadgetsFix {
+
+    private final String myType;
+
+    public ReturnOfDateFieldFix(String type) {
+      myType = type;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Return clone of '" + myType + '\'';
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      final String type =
+        TypeUtils.expressionHasTypeOrSubtype(referenceExpression, CommonClassNames.JAVA_UTIL_DATE, CommonClassNames.JAVA_UTIL_CALENDAR);
+      if (type == null) {
+        return;
+      }
+      replaceExpression(referenceExpression, '(' + type + ')' + referenceExpression.getText() + ".clone()");
+    }
   }
 
   @Override
@@ -44,26 +81,22 @@ public class ReturnOfDateFieldInspection extends BaseInspection {
     return new ReturnOfDateFieldVisitor();
   }
 
-  private static class ReturnOfDateFieldVisitor
-    extends BaseInspectionVisitor {
+  private static class ReturnOfDateFieldVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReturnStatement(
-      @NotNull PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final PsiExpression returnValue = statement.getReturnValue();
       if (!(returnValue instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression fieldReference =
-        (PsiReferenceExpression)returnValue;
+      final PsiReferenceExpression fieldReference = (PsiReferenceExpression)returnValue;
       final PsiElement element = fieldReference.resolve();
       if (!(element instanceof PsiField)) {
         return;
       }
       final String type = TypeUtils.expressionHasTypeOrSubtype(
-        returnValue, CommonClassNames.JAVA_UTIL_DATE,
-        CommonClassNames.JAVA_UTIL_CALENDAR);
+        returnValue, CommonClassNames.JAVA_UTIL_DATE, CommonClassNames.JAVA_UTIL_CALENDAR);
       if (type == null) {
         return;
       }

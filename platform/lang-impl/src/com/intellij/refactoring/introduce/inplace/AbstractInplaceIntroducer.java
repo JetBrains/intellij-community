@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -77,7 +78,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   private DocumentAdapter myDocumentAdapter;
   protected final JPanel myWholePanel;
-  //private boolean myFinished = false;
+  private boolean myFinished = false;
 
   public AbstractInplaceIntroducer(Project project,
                                    Editor editor,
@@ -325,7 +326,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   public void finish() {
-   // myFinished = true;
+    myFinished = true;
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
     if (templateState != null) {
       myEditor.putUserData(ACTIVE_INTRODUCE, null);
@@ -552,7 +553,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
   }
 
-  /*@Override
+  @Override
   protected void restoreStateBeforeDialogWouldBeShown() {
     stopIntroduce(InjectedLanguageUtil.getTopLevelEditor(myEditor));
   }
@@ -582,7 +583,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
     return false;
   }
-*/
+
   public static void unableToStartWarning(Project project, Editor editor, AbstractInplaceIntroducer introducer) {
     String message = RefactoringBundle
       .getCannotRefactorMessage(introducer.getCommandName() + " is not finished yet. Unable to start a refactoring");
