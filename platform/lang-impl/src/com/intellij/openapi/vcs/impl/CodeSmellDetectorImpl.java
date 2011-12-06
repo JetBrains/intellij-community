@@ -112,10 +112,9 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        int i = 0;
         try {
           @Nullable final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          for (; i < filesToCheck.size(); i++) {
+          for (int i = 0; i < filesToCheck.size(); i++) {
 
             if (progress != null && progress.isCanceled()) throw new ProcessCanceledException();
 
@@ -134,7 +133,6 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
                 result.addAll(codeSmells);
               }
             }
-            throw new NullPointerException();
           }
         } catch (Exception e) {
           LOG.error(e);
