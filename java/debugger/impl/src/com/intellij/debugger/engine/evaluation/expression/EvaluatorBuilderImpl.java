@@ -143,7 +143,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", lExpression.getText()));
       }
 
-      if(!TypeConversionUtil.areTypesAssignmentCompatible(lType, rExpression)) {
+      if(!TypeConversionUtil.areTypesAssignmentCompatible(lType, rExpression) && rExpression.getType() != null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", expression.getOperationSign().getText()));
       }
       lExpression.accept(this);
