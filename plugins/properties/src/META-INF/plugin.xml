@@ -30,6 +30,7 @@
 
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
     <renameHandler implementation="com.intellij.lang.properties.ResourceBundleRenameHandler"/>
+    <renameHandler implementation="com.intellij.lang.properties.ResourceBundleKeyRenameHandler"/>
     <renameHandler implementation="com.intellij.lang.properties.PropertyRenameHandler"/>
     <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePropertyProcessor"/>
