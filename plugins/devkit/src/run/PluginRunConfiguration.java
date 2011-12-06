@@ -30,8 +30,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +56,11 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
   public String PROGRAM_PARAMETERS;
   @NonNls private static final String NAME = "name";
   @NonNls private static final String MODULE = "module";
+  @NonNls private static final String ALTERNATIVE_PATH_ELEMENT = "alternative-path";
+  @NonNls private static final String PATH = "path";
+  @NonNls private static final String ALTERNATIVE_PATH_ENABLED_ATTR = "alternative-path-enabled";
+  private String ALTERNATIVE_JRE_PATH = null;
+  private boolean ALTERNATIVE_JRE_PATH_ENABLED = false;
 
   public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
@@ -111,8 +118,19 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
         fillParameterList(vm, VM_PARAMETERS);
         fillParameterList(params.getProgramParametersList(), PROGRAM_PARAMETERS);
-
-        @NonNls String libPath = ideaJdk.getHomePath() + File.separator + "lib";
+        Sdk usedIdeaJdk = ideaJdk;
+        if (isAlternativeJreEnabled() && !StringUtil.isEmptyOrSpaces(getAlternativeJrePath())) {
+          try {
+            usedIdeaJdk = (Sdk)usedIdeaJdk.clone();
+          }
+          catch (CloneNotSupportedException e) {
+            throw new ExecutionException(e.getMessage());
+          }
+          final SdkModificator sdkToSetUp = usedIdeaJdk.getSdkModificator();
+          sdkToSetUp.setHomePath(getAlternativeJrePath());
+          sdkToSetUp.commitChanges();
+        }
+        @NonNls String libPath = usedIdeaJdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");
 
         vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
@@ -123,8 +141,8 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
           vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
         }
-        
-        String buildNumber = IdeaJdk.getBuildNumber(ideaJdk.getHomePath());
+
+        String buildNumber = IdeaJdk.getBuildNumber(usedIdeaJdk.getHomePath());
         if (buildNumber != null) {
           if (buildNumber.startsWith("IC")) {
             vm.defineProperty("idea.platform.prefix", "Idea");
@@ -146,9 +164,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
           }
         }
 
-        params.setWorkingDirectory(ideaJdk.getHomePath() + File.separator + "bin" + File.separator);
+        params.setWorkingDirectory(usedIdeaJdk.getHomePath() + File.separator + "bin" + File.separator);
 
-        params.setJdk(ideaJdk);
+        params.setJdk(usedIdeaJdk);
 
         params.getClassPath().addFirst(libPath + File.separator + "log4j.jar");
         params.getClassPath().addFirst(libPath + File.separator + "jdom.jar");
@@ -159,7 +177,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         params.getClassPath().addFirst(libPath + File.separator + "bootstrap.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea_rt.jar");
-        params.getClassPath().addFirst(((JavaSdkType)ideaJdk.getSdkType()).getToolsPath(ideaJdk));
+        params.getClassPath().addFirst(((JavaSdkType)usedIdeaJdk.getSdkType()).getToolsPath(usedIdeaJdk));
 
         params.setMainClass("com.intellij.idea.Main");
 
@@ -169,6 +187,22 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     return state;
+  }
+
+  public String getAlternativeJrePath() {
+    return ALTERNATIVE_JRE_PATH;
+  }
+
+  public void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH) {
+    this.ALTERNATIVE_JRE_PATH = ALTERNATIVE_JRE_PATH;
+  }
+
+  public boolean isAlternativeJreEnabled() {
+    return ALTERNATIVE_JRE_PATH_ENABLED;
+  }
+
+  public void setAlternativeJreEnabled(boolean ALTERNATIVE_JRE_PATH_ENABLED) {
+    this.ALTERNATIVE_JRE_PATH_ENABLED = ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
   private static void fillParameterList(ParametersList list, String value) {
@@ -221,6 +255,12 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
       myModuleName = module.getAttributeValue(NAME);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
+    final Element altElement = element.getChild(ALTERNATIVE_PATH_ELEMENT);
+    if (altElement != null) {
+      ALTERNATIVE_JRE_PATH = altElement.getAttributeValue(PATH);
+      final String enabledAttr = altElement.getAttributeValue(ALTERNATIVE_PATH_ENABLED_ATTR);
+      ALTERNATIVE_JRE_PATH_ENABLED = enabledAttr != null && Boolean.parseBoolean(enabledAttr);
+    }
     super.readExternal(element);
   }
 
@@ -235,6 +275,12 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     }));
     element.addContent(moduleElement);
     DefaultJDOMExternalizer.writeExternal(this, element);
+    if (!StringUtil.isEmptyOrSpaces(ALTERNATIVE_JRE_PATH)) {
+      Element altElement = new Element(ALTERNATIVE_PATH_ELEMENT);
+      altElement.setAttribute(PATH, ALTERNATIVE_JRE_PATH);
+      altElement.setAttribute(ALTERNATIVE_PATH_ENABLED_ATTR, String.valueOf(ALTERNATIVE_JRE_PATH_ENABLED));
+      element.addContent(altElement);
+    }
     super.writeExternal(element);
   }
 
