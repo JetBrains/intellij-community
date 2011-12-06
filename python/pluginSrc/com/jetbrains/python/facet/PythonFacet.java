@@ -9,7 +9,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonFacet extends Facet<PythonFacetConfiguration> implements LibraryContributingFacet {
   public static final FacetTypeId<PythonFacet> ID = new FacetTypeId<PythonFacet>("python");
-
-  @NonNls
-  public static final String PYTHON_FACET_LIBRARY_NAME_SUFFIX = " interpreter library";
 
   public PythonFacet(@NotNull final FacetType facetType, @NotNull final Module module, final @NotNull String name, @NotNull final PythonFacetConfiguration configuration,
                      Facet underlyingFacet) {
