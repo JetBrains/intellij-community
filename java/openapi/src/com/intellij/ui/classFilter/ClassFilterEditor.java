@@ -59,13 +59,20 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   private final JButton myRemoveButton;
   protected final Project myProject;
   private final ClassFilter myChooserFilter;
+  @Nullable
+  private final String myPatternsHelpId;
 
   public ClassFilterEditor(Project project) {
     this (project, null);
   }
 
-  public ClassFilterEditor(Project project, com.intellij.ide.util.ClassFilter classFilter) {
+  public ClassFilterEditor(Project project, ClassFilter classFilter) {
+    this (project, classFilter, null);
+  }
+
+  public ClassFilterEditor(Project project, ClassFilter classFilter, @Nullable String patternsHelpId) {
     super(new GridBagLayout());
+    myPatternsHelpId = patternsHelpId;
     myAddClassButton = new JButton(getAddButtonText());
     myAddPatternButton = new JButton(getAddPatternButtonText());
     myRemoveButton = new JButton(UIBundle.message("button.remove"));
@@ -302,7 +309,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   }
 
   protected void addPatternFilter() {
-    ClassFilterEditorAddDialog dialog = new ClassFilterEditorAddDialog(myProject);
+    ClassFilterEditorAddDialog dialog = new ClassFilterEditorAddDialog(myProject, myPatternsHelpId);
     dialog.show();
     if (dialog.isOK()) {
       String pattern = dialog.getPattern();

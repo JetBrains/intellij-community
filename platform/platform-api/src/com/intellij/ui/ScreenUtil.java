@@ -31,8 +31,7 @@ public class ScreenUtil {
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
   static {
     final boolean useCache = (SystemInfo.isLinux || SystemInfo.isSolaris)
-                             && !GraphicsEnvironment.isHeadless()
-                             && SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7");
+                             && !GraphicsEnvironment.isHeadless();
     ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   }
 

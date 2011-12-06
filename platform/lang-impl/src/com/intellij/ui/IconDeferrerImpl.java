@@ -20,10 +20,13 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -39,6 +42,12 @@ public class IconDeferrerImpl extends IconDeferrer {
     connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
       @Override
       public void modificationCountChanged() {
+        clear();
+      }
+    });
+    connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+      @Override
+      public void afterProjectClosed(@NotNull Project project) {
         clear();
       }
     });

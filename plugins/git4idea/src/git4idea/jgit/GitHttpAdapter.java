@@ -42,7 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.ProxySelector;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -57,7 +59,7 @@ public final class GitHttpAdapter {
 
   private static final Pattern HTTP_URL_WITH_USERNAME_AND_PASSWORD = Pattern.compile("http(s?)://([^\\s^@:]+):([^\\s^@:]+)@.*");
 
-  public static boolean isHttpUrl(@NotNull String url) {
+  public static boolean isHttpUrlWithoutUserCredentials(@NotNull String url) {
     // if username & password are specified in the url, give it to the native Git
     return url.startsWith("http") && !HTTP_URL_WITH_USERNAME_AND_PASSWORD.matcher(url).matches();
   }
@@ -91,6 +93,10 @@ public final class GitHttpAdapter {
       logException(repository, remote.getName(), remoteUrl, e, "fetching");
       return GitFetchResult.error(e);
     }
+    catch (URISyntaxException e) {
+      logException(repository, remote.getName(), remoteUrl, e, "fetching");
+      return GitFetchResult.error(e);
+    }
     return new GitFetchResult(resultType);
   }
 
@@ -117,11 +123,11 @@ public final class GitHttpAdapter {
   }
 
   @NotNull
-  public static GitSimplePushResult push(@NotNull final GitRepository repository, @NotNull final GitRemote remote, @NotNull final String remoteUrl) {
+  public static GitSimplePushResult push(@NotNull final GitRepository repository, @NotNull final GitRemote remote, @NotNull final String remoteUrl, @NotNull String pushSpec) {
     try {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
-      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remoteUrl, convertRefSpecs(remote.getPushRefSpecs()));
+      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remote.getName(), remoteUrl, convertRefSpecs(Collections.singletonList(pushSpec)));
       GeneralResult result = callWithAuthRetry(pushCommand);
       GitSimplePushResult pushResult = pushCommand.getResult();
       if (pushResult == null) {
@@ -144,6 +150,10 @@ public final class GitHttpAdapter {
       logException(repository, remote.getName(), remoteUrl, e, "pushing");
       return makeErrorResultFromException(e);
     }
+    catch (URISyntaxException e) {
+      logException(repository, remote.getName(), remoteUrl, e, "pushing");
+      return makeErrorResultFromException(e);
+    }
   }
   
   @NotNull
@@ -159,6 +169,10 @@ public final class GitHttpAdapter {
       return GitFetchResult.error(e);
     }
     catch (IOException e) {
+      LOG.info("Exception while cloning " + url + " to " + directory, e);
+      return GitFetchResult.error(e);
+    }
+    catch (URISyntaxException e) {
       LOG.info("Exception while cloning " + url + " to " + directory, e);
       return GitFetchResult.error(e);
     }
@@ -191,7 +205,7 @@ public final class GitHttpAdapter {
    * If user enters incorrect data, he has 2 more attempts to go before failure.
    * Cleanups are executed after each incorrect attempt to enter password, and after other retriable actions.
    */
-  private static GeneralResult callWithAuthRetry(@NotNull GitHttpRemoteCommand command) throws InvalidRemoteException, IOException {
+  private static GeneralResult callWithAuthRetry(@NotNull GitHttpRemoteCommand command) throws InvalidRemoteException, IOException, URISyntaxException {
     ProxySelector defaultProxySelector = ProxySelector.getDefault();
     if (GitHttpProxySupport.shouldUseProxy()) {
       ProxySelector.setDefault(GitHttpProxySupport.newProxySelector());

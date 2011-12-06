@@ -23,19 +23,19 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
 
@@ -77,7 +77,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     }
 
     params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.getScriptPath()));
-    params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
+    params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
   public static void configureGenericGroovyRunner(JavaParameters params, Module module, String mainClass) {

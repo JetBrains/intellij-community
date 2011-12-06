@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,10 +40,13 @@ import java.awt.event.ActionListener;
 class ClassFilterEditorAddDialog extends DialogWrapper {
   private final Project myProject;
   private TextFieldWithBrowseButton myClassName;
+  @Nullable
+  private final String myHelpId;
 
-  public ClassFilterEditorAddDialog(Project project) {
+  public ClassFilterEditorAddDialog(Project project, @Nullable String helpId) {
     super(project, true);
     myProject = project;
+    myHelpId = helpId;
     setTitle(UIBundle.message("class.filter.editor.add.dialog.title"));
     init();
   }
@@ -103,5 +107,10 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
 
   protected String getDimensionServiceKey(){
     return "#com.intellij.debugger.ui.breakpoints.BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog.AddFieldBreakpointDialog";
+  }
+
+  @Override @Nullable
+  protected String getHelpId() {
+    return myHelpId;
   }
 }

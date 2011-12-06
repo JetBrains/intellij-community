@@ -116,7 +116,7 @@ public class ReferenceElement implements GroovyElementTypes {
           ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) &&
           forImport) {
         internalTypeMarker.drop();
-        return hasTypeArguments? mustBeType : mayBeType;
+        return mayBeType;
       }
 
       ParserUtils.getToken(builder, mDOT);
@@ -132,7 +132,9 @@ public class ReferenceElement implements GroovyElementTypes {
         return fail;
       }
 
-      hasTypeArguments = TypeArguments.parseTypeArguments(builder, expressionPossible) || hasTypeArguments;
+      if (parseTypeArgs) {
+        hasTypeArguments = TypeArguments.parseTypeArguments(builder, expressionPossible, allowDiamond) || hasTypeArguments;
+      }
 
       internalTypeMarker.done(REFERENCE_ELEMENT);
       internalTypeMarker = internalTypeMarker.precede();

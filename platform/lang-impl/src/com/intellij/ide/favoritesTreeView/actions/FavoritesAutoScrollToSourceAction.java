@@ -30,7 +30,7 @@ public class FavoritesAutoScrollToSourceAction extends FavoritesToolbarButtonAct
   public FavoritesAutoScrollToSourceAction(Project project,
                                            AutoScrollToSourceHandler autoScrollToSourceHandler,
                                            FavoritesViewTreeBuilder builder) {
-    super(project, builder, UIBundle.message("autoscroll.to.source.action.name"), IconLoader.getIcon("/general/autoScrollToSource.png"));
+    super(project, builder, UIBundle.message("autoscroll.to.source.action.name"), IconLoader.getIcon("/general/autoscrollToSource.png"));
     myAutoScrollToSourceHandler = autoScrollToSourceHandler;
   }
 

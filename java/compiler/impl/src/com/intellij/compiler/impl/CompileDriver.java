@@ -77,6 +77,7 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.artifacts.ArtifactImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
@@ -2474,6 +2475,7 @@ public class CompileDriver {
         }
       }
     }
+    affectedOutputPaths.addAll(ArtifactCompilerUtil.getArtifactOutputsContainingSourceFiles(myProject));
 
     if (!affectedOutputPaths.isEmpty()) {
       final StringBuilder paths = new StringBuilder();

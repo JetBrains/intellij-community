@@ -36,6 +36,7 @@ public class HomeHandler extends EditorActionHandler {
       return;
     }
 
+    lookup.markSelectionTouched();
     ListScrollingUtil.moveHome(lookup.getList());
   }
 }

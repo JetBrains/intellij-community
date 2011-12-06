@@ -24,6 +24,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -64,6 +65,8 @@ import java.util.Map;
  */
 public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
   implements CommonJavaRunConfigurationParameters {
+  
+  private static final Logger LOG = Logger.getInstance(GroovyScriptRunConfiguration.class);
   private String vmParams;
   private String workDir;
   private boolean isDebugEnabled;
@@ -191,6 +194,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   }
 
+  public void setScriptParameters(String scriptParameters) {
+    scriptParams = scriptParameters;
+  }
+
   public static JavaParameters createJavaParametersWithSdk(Module module) {
     JavaParameters params = new JavaParameters();
     params.setCharset(null);
@@ -292,11 +299,16 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public void setProgramParameters(@Nullable String value) {
-    scriptParams = value;
+    LOG.assertTrue(false, "Don't add program parameters to Groovy script run configuration. Use Script parameters instead");
   }
 
   @Override
   public String getProgramParameters() {
+    return null;
+  }
+
+  @Nullable
+  public String getScriptParameters() {
     return scriptParams;
   }
 

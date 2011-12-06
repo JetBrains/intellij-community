@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,6 +48,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -165,7 +168,7 @@ public abstract class MvcFramework {
 
     return null;
   }
-  
+
   @Nullable
   public VirtualFile findAppRoot(@Nullable PsiElement element) {
     VirtualFile appDirectory = findAppDirectory(element);
@@ -185,7 +188,7 @@ public abstract class MvcFramework {
 
     return null;
   }
-  
+
   @Nullable
   public VirtualFile findAppDirectory(@Nullable PsiElement element) {
     if (element == null) return null;
@@ -404,7 +407,7 @@ public abstract class MvcFramework {
           env = new HashMap<String, String>();
           params.setEnv(env);
         }
-        
+
         env.put("JAVA_HOME", FileUtil.toSystemDependentName(path));
       }
     }
@@ -620,17 +623,26 @@ public abstract class MvcFramework {
   }
 
   @Nullable
-  public static MvcFramework getInstance(@Nullable Module module) {
+  public static MvcFramework getInstance(@Nullable final Module module) {
     if (module == null) {
       return null;
     }
 
-    for (final MvcFramework framework : EP_NAME.getExtensions()) {
-      if (framework.hasSupport(module)) {
-        return framework;
+    final Project project = module.getProject();
+
+    return CachedValuesManager.getManager(project).getCachedValue(module, new CachedValueProvider<MvcFramework>() {
+      @Override
+      public Result<MvcFramework> compute() {
+        final ModificationTracker tracker = MvcModuleStructureSynchronizer.getInstance(project).getFileAndRootsModificationTracker();
+        for (final MvcFramework framework : EP_NAME.getExtensions()) {
+          if (framework.hasSupport(module)) {
+            return Result.create(framework, tracker);
+          }
+        }
+        return Result.create(null, tracker);
+
       }
-    }
-    return null;
+    });
   }
 
   @Nullable
