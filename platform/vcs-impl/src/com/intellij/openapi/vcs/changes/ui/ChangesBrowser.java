@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -313,8 +313,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return sortChanges(list);
   }
 
-  protected static List<Change> sortChanges(final List<Change> list) {
-    Collections.sort(list, ChangesComparator.getInstance());
+  protected List<Change> sortChanges(final List<Change> list) {
+    Collections.sort(list, ChangesComparator.getInstance(myViewer.isShowFlatten()));
     return list;
   }
 

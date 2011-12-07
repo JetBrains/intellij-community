@@ -73,8 +73,10 @@ public class CollectionListModel<T> extends AbstractListModel {
 
   public void removeAll() {
     int size = myItems.size();
-    myItems.clear();
-    fireIntervalRemoved(this, 0, size - 1);
+    if (size > 0) {
+      myItems.clear();
+      fireIntervalRemoved(this, 0, size - 1);
+    }
   }
 
   public void contentsChanged(@NotNull final T element) {

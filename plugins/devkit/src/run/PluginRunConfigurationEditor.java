@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
+import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -55,6 +56,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
   private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
   private JComponent anchor;
+  private AlternativeJREPanel myAlternativeJREPanel = new AlternativeJREPanel();
 
   @NonNls private final JCheckBox myShowLogs = new JCheckBox(DevKitBundle.message("show.smth", "idea.log"));
 
@@ -130,6 +132,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myModules.setSelectedItem(prc.getModule());
     getVMParameters().setText(prc.VM_PARAMETERS);
     getProgramParameters().setText(prc.PROGRAM_PARAMETERS);
+    myAlternativeJREPanel.init(prc.getAlternativeJrePath(), prc.isAlternativeJreEnabled());
   }
 
 
@@ -137,6 +140,8 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     prc.setModule(((Module)myModules.getSelectedItem()));
     prc.VM_PARAMETERS = getVMParameters().getText();
     prc.PROGRAM_PARAMETERS = getProgramParameters().getText();
+    prc.setAlternativeJrePath(myAlternativeJREPanel.getPath());
+    prc.setAlternativeJreEnabled(myAlternativeJREPanel.isPathEnabled());
   }
 
   @NotNull
@@ -163,7 +168,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myProgramParameters.getComponent().setDialogCaption(myProgramParameters.getRawText());
     myProgramParameters.setLabelLocation(BorderLayout.WEST);
 
-    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
     wholePanel.add(myVMParameters, gc);
     wholePanel.add(myProgramParameters, gc);
     gc.gridwidth = 1;
@@ -177,7 +182,9 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     gc.gridx = 0;
     gc.gridy = 4;
     gc.gridwidth = 2;
-    
+
+    wholePanel.add(myAlternativeJREPanel, gc);
+    gc.gridy = 5;
     wholePanel.add(myShowLogs, gc);
     return wholePanel;
   }

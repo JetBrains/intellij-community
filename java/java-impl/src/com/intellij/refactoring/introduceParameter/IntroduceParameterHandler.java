@@ -388,7 +388,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
       if (activeIntroducer != null) {
-        if (!(activeIntroducer instanceof InplaceIntroduceParameterPopup) /*|| !activeIntroducer.startsOnTheSameElement(myExpr, myLocalVar)*/) {
+        if (!(activeIntroducer instanceof InplaceIntroduceParameterPopup) || !activeIntroducer.startsOnTheSameElement(myExpr, myLocalVar)) {
           AbstractInplaceIntroducer.unableToStartWarning(myProject, myEditor, activeIntroducer);
           return;
         }

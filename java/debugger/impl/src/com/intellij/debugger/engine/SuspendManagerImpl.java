@@ -176,9 +176,9 @@ public class SuspendManagerImpl implements SuspendManager {
     SuspendManagerUtil.prepareForResume(context);
 
     myDebugProcess.logThreads();
-    int suspendPolicy = context.getSuspendPolicy();
-    context.resume();
+    final int suspendPolicy = context.getSuspendPolicy();
     popContext(context);
+    context.resume();
     myDebugProcess.clearCashes(suspendPolicy);
   }
 
@@ -194,11 +194,11 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   public void popContext(SuspendContextImpl suspendContext) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     suspends--;
     if (LOG.isDebugEnabled()) {
       LOG.debug("popContext, suspends = " + suspends);
     }
-    DebuggerManagerThreadImpl.assertIsManagerThread();
     myEventContexts.remove(suspendContext);
     myPausedContexts.remove(suspendContext);
   }
@@ -218,7 +218,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   public List<SuspendContextImpl> getEventContexts() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return myEventContexts;
+    return Collections.unmodifiableList(myEventContexts);
   }
 
   public boolean isFrozen(ThreadReferenceProxyImpl thread) {

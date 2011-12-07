@@ -98,8 +98,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
       final FilePath[] targetPath = new FilePath[1];
       ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
                                                                 "Loading revision " + revisionNumber.asString() + " contents", true,
-                                                                BackgroundFromStartOption
-                                                                  .getInstance()) {
+                                                                BackgroundFromStartOption.getInstance()) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
@@ -112,7 +111,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
             targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
             final CommittedChangeList cl = pair.getFirst();
             changes.addAll(cl.getChanges());
-            Collections.sort(changes, ChangesComparator.getInstance());
+            Collections.sort(changes, ChangesComparator.getInstance(true));
           }
           catch (VcsException e1) {
             exc[0] = e1;

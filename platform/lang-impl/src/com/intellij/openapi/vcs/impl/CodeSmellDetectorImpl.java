@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -41,8 +42,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.vcsUtil.Rethrow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.util.LocaleServiceProviderPool;
 
 import java.util.*;
 
@@ -51,6 +54,8 @@ import java.util.*;
  */
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
   private final Project myProject;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl");
+  private Exception myException;
 
   public CodeSmellDetectorImpl(final Project project) {
     myProject = project;
@@ -107,31 +112,39 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        @Nullable final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        for (int i = 0; i < filesToCheck.size(); i++) {
+        try {
+          @Nullable final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+          for (int i = 0; i < filesToCheck.size(); i++) {
 
-          if (progress != null && progress.isCanceled()) throw new ProcessCanceledException();
+            if (progress != null && progress.isCanceled()) throw new ProcessCanceledException();
 
-          VirtualFile file = filesToCheck.get(i);
+            VirtualFile file = filesToCheck.get(i);
 
-          if (progress != null) {
-            progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
-            progress.setFraction((double)i / (double)filesToCheck.size());
-          }
+            if (progress != null) {
+              progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
+              progress.setFraction((double)i / (double)filesToCheck.size());
+            }
 
-          final PsiFile psiFile = manager.findFile(file);
-          if (psiFile != null) {
-            final Document document = fileManager.getDocument(file);
-            if (document != null) {
-              final List<CodeSmellInfo> codeSmells = findCodeSmells(psiFile, progress, document);
-              result.addAll(codeSmells);
+            final PsiFile psiFile = manager.findFile(file);
+            if (psiFile != null) {
+              final Document document = fileManager.getDocument(file);
+              if (document != null) {
+                final List<CodeSmellInfo> codeSmells = findCodeSmells(psiFile, progress, document);
+                result.addAll(codeSmells);
+              }
             }
           }
+        } catch (Exception e) {
+          LOG.error(e);
+          myException = e;
         }
       }
     }, VcsBundle.message("checking.code.smells.progress.title"), true, myProject);
 
     if (!completed) throw new ProcessCanceledException();
+    if (myException != null) {
+      Rethrow.reThrowRuntime(myException);
+    }
 
     return result;
   }

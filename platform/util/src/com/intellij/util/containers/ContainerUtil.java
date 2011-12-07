@@ -646,6 +646,17 @@ public class ContainerUtil {
     return false;
   }
 
+  @NotNull
+  public static <T> Collection<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+    ArrayList<T> result = new ArrayList<T>();
+    for (T t : collection1) {
+      if (collection2.contains(t)) {
+        result.add(t);
+      }
+    }
+    return result;
+  }
+
   @Nullable
   public static <T> T getFirstItem(final Collection<T> items) {
     return getFirstItem(items, null);

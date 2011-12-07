@@ -42,6 +42,7 @@ import java.util.List;
  * @author nik
  */
 public class LibraryTypeServiceImpl extends LibraryTypeService {
+  private static final String DEFAULT_LIBRARY_NAME = "Unnamed";
 
   @Nullable
   public LibraryType<?> findTypeById(@NotNull String typeId) {
@@ -88,10 +89,17 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
     };
   }
 
+  public static String suggestLibraryName(@NotNull VirtualFile[] classesRoots) {
+    if (classesRoots.length >= 1) {
+      return FileUtil.getNameWithoutExtension(PathUtil.getFileName(classesRoots[0].getPath()));
+    }
+    return DEFAULT_LIBRARY_NAME;
+  }
+
   public static String suggestLibraryName(@NotNull List<OrderRoot> roots) {
     if (roots.size() >= 1) {
       return FileUtil.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));
     }
-    return "Unnamed";
+    return DEFAULT_LIBRARY_NAME;
   }
 }

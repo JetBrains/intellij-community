@@ -38,7 +38,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.*;
@@ -427,28 +426,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       fieldBuffer.append('>');
     }
     fieldBuffer.append('(');
-    boolean isFirst = true;
     if (requiresBackpointer) {
       fieldBuffer.append("this");
-      isFirst = false;
-    }
-    for (PsiField field : fields) {
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        continue;
-      }
-      if (!field.hasInitializer()) {
-        continue;
-      }
-      final PsiExpression initializer = field.getInitializer();
-      if (PsiUtil.isConstantExpression(initializer)) {
-        continue;
-      }
-      if (!isFirst) {
-        fieldBuffer.append(", ");
-      }
-      isFirst = false;
-      assert initializer != null;
-      fieldBuffer.append(initializer.getText());
     }
 
     fieldBuffer.append(");");

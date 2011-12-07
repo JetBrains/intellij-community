@@ -86,7 +86,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     String enteredName = null;
     boolean replaceAll = false;
     if (activeIntroducer != null) {
-      if (!(activeIntroducer instanceof InplaceIntroduceFieldPopup)/* || !activeIntroducer.startsOnTheSameElement(expr, localVariable)*/) {
+      if (!(activeIntroducer instanceof InplaceIntroduceFieldPopup) || !activeIntroducer.startsOnTheSameElement(expr, localVariable)) {
         AbstractInplaceIntroducer.unableToStartWarning(project, editor, activeIntroducer);
         return null;
       }
