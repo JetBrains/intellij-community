@@ -30,3 +30,10 @@ public class Test<T> {
 @interface Y {
     Class value();
 }
+
+class Foo extends PresenterWidget<Foo.Bar> { //no warning as Bar here is not accessible
+    interface Bar extends View { }
+}
+
+interface View {}
+class PresenterWidget<T>{}

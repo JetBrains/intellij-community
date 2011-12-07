@@ -168,8 +168,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
       visitReferenceElement(expression);
     }
 
-    private boolean isReferenceToTarget(
-      String referenceText, PsiClass target, PsiElement context) {
+    private boolean isReferenceToTarget(String referenceText, PsiClass target, PsiElement context) {
       final PsiManager manager = target.getManager();
       final JavaPsiFacade facade =
         JavaPsiFacade.getInstance(manager.getProject());
@@ -177,8 +176,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
       final PsiClass referencedClass =
         resolveHelper.resolveReferencedClass(referenceText,
                                              context);
-      return referencedClass == null ||
-             manager.areElementsEquivalent(target, referencedClass);
+      return manager.areElementsEquivalent(target, referencedClass);
     }
 
     private boolean isInImportOrPackage(PsiElement element) {
