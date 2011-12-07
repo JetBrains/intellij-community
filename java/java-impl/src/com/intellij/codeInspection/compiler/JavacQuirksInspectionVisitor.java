@@ -52,7 +52,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
         @Override
         public void visitReferenceParameterList(final PsiReferenceParameterList list) {
           super.visitReferenceParameterList(list);
-          if (QUALIFIER_REFERENCE.accepts(list)) {
+          if (list.getFirstChild() != null && QUALIFIER_REFERENCE.accepts(list)) {
             final String message = InspectionsBundle.message("inspection.compiler.javac.quirks.qualifier.type.args.problem");
             final String fixName = InspectionsBundle.message("inspection.compiler.javac.quirks.qualifier.type.args.fix");
             myHolder.registerProblem(list, message, new RemoveElementQuickFix(fixName));
