@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -190,7 +191,7 @@ public class PyBuiltinCache {
    * Stores the most often used types, returned by getNNNType().
    */
   private final Map<String, PyClassType> myTypeCache = new HashMap<String, PyClassType>();
-  private final Map<String, PyType> myStdlibTypeCache = new HashMap<String, PyType>();
+  private final Map<String, Ref<PyType>> myStdlibTypeCache = new HashMap<String, Ref<PyType>>();
 
   /**
   @return
@@ -306,15 +307,15 @@ public class PyBuiltinCache {
     return getObjectType("staticmethod");
   }
 
-  public PyType getStdlibType(String key) {
+  public Ref<PyType> getStdlibType(@NotNull String key) {
     synchronized (myStdlibTypeCache) {
       return myStdlibTypeCache.get(key);
     }
-  } 
+  }
 
-  public void storeStdlibType(String key, PyType result) {
+  public void storeStdlibType(@NotNull String key, @Nullable PyType result) {
     synchronized (myStdlibTypeCache) {
-      myStdlibTypeCache.put(key, result);
+      myStdlibTypeCache.put(key, new Ref<PyType>(result));
     }
   }
 
