@@ -19,12 +19,15 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.Document;
+import javax.swing.text.NumberFormatter;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.text.NumberFormat;
@@ -63,28 +66,43 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
         add(valueField, constraints);
     }
 
-    public static JFormattedTextField createIntegerFieldTrackingValue(final InspectionProfileEntry owner,
-                                                                      final String property,
+    public static JFormattedTextField createIntegerFieldTrackingValue(@NotNull InspectionProfileEntry owner,
+                                                                      @NotNull String property,
                                                                       int integerFieldColumns) {
-        final NumberFormat formatter = NumberFormat.getIntegerInstance();
-        formatter.setParseIntegerOnly(true);
-        final JFormattedTextField valueField =
-                new JFormattedTextField(formatter);
-        valueField.setValue(getPropertyValue(owner, property));
+        JFormattedTextField valueField = new JFormattedTextField();
         valueField.setColumns(integerFieldColumns);
-        final Document document = valueField.getDocument();
+        setupIntegerFieldTrackingValue(valueField, owner, property);
+        return valueField;
+    }
+
+    /**
+     * Sets integer number format to JFormattedTextField instance,
+     * sets value of JFormattedTextField instance to object's field value,
+     * synchronizes object's field value with the value of JFormattedTextField instance.
+     *
+     * @param textField  JFormattedTextField instance
+     * @param owner      an object whose field is synchronized with {@code textField}
+     * @param property   object's field name for synchronization
+     */
+    public static void setupIntegerFieldTrackingValue(final JFormattedTextField textField,
+                                                      final InspectionProfileEntry owner,
+                                                      final String property) {
+        NumberFormat formatter = NumberFormat.getIntegerInstance();
+        formatter.setParseIntegerOnly(true);
+        textField.setFormatterFactory(new DefaultFormatterFactory(new NumberFormatter(formatter)));
+        textField.setValue(getPropertyValue(owner, property));
+        final Document document = textField.getDocument();
         document.addDocumentListener(new DocumentAdapter() {
             public void textChanged(DocumentEvent e) {
                 try {
-                    valueField.commitEdit();
+                    textField.commitEdit();
                     setPropertyValue(owner, property,
-                            ((Number) valueField.getValue()).intValue());
+                            ((Number) textField.getValue()).intValue());
                 } catch (ParseException e1) {
                     // No luck this time
                 }
             }
         });
-        return valueField;
     }
 
     private static void setPropertyValue(InspectionProfileEntry owner,
