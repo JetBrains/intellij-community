@@ -153,7 +153,7 @@ public class PyExceptionBreakpointType
     @Override
     public JComponent getComponent() {
       myNotifyOnTerminateCheckBox = new JCheckBox("On termination");
-      myNotifyAlwaysCheckBox = new JCheckBox("On generation at each level of call chain");
+      myNotifyAlwaysCheckBox = new JCheckBox("On raise at each level of call chain");
 
       Box notificationsBox = Box.createVerticalBox();
       JPanel panel = new JPanel(new BorderLayout());
