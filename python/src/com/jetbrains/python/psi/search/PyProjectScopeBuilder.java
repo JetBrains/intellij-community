@@ -14,11 +14,8 @@ import com.intellij.psi.search.ProjectScopeImpl;
  * @author yole
  */
 public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
-  private final Project myProject;
-  
   public PyProjectScopeBuilder(Project project) {
     super(project);
-    myProject = project;
   }
 
   /**
