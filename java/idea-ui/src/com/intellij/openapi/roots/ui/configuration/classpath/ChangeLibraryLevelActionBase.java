@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
+import com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
@@ -74,8 +75,9 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
   protected Library doCopy(LibraryEx library) {
     final VirtualFile baseDir = getBaseDir();
     final String libPath = baseDir != null ? baseDir.getPath() + "/lib" : "";
-    boolean allowEmptyName = isConvertingToModuleLibrary() && library.getFiles(OrderRootType.CLASSES).length == 1;
-    final String libraryName = allowEmptyName ? "" : StringUtil.notNullize(library.getName(), "Unnamed");
+    final VirtualFile[] classesRoots = library.getFiles(OrderRootType.CLASSES);
+    boolean allowEmptyName = isConvertingToModuleLibrary() && classesRoots.length == 1;
+    final String libraryName = allowEmptyName ? "" : StringUtil.notNullize(library.getName(), LibraryTypeServiceImpl.suggestLibraryName(classesRoots));
     final LibraryTableModifiableModelProvider provider = getModifiableTableModelProvider();
     final ChangeLibraryLevelDialog dialog = new ChangeLibraryLevelDialog(getParentComponent(), myProject, myCopy,
                                                                          libraryName, libPath, allowEmptyName, provider);
