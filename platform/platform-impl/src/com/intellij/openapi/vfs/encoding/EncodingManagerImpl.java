@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
+import gnu.trove.Equality;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -69,6 +70,12 @@ import java.util.Set;
   }
 )
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<Element>, Disposable {
+  public static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
+    @Override
+    public boolean equals(Reference<Document> o1, Reference<Document> o2) {
+      return o1.get() == o2.get();
+    }
+  };
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private String myDefaultEncoding = CharsetToolkit.UTF8;
   private Charset myCachedCharset = null;
@@ -129,7 +136,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   public void queueUpdateEncodingFromContent(@NotNull Document document) {
-    myChangedDocuments.offer(new WeakReference<Document>(document));
+    myChangedDocuments.offerIfAbsent(new WeakReference<Document>(document), REFERENCE_EQUALITY);
   }
 
   @Override

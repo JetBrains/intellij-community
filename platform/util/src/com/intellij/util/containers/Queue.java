@@ -16,6 +16,8 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -66,7 +68,7 @@ public class Queue<T> {
   }
 
   public T pullFirst() {
-    T result = (T)myArray[myFirst];
+    T result = peekFirst();
     myArray[myFirst] = null;
     myFirst++;
     if (myFirst == myArray.length) {
@@ -77,6 +79,9 @@ public class Queue<T> {
   }
 
   public T peekFirst() {
+    if (isEmpty()) {
+      throw new IndexOutOfBoundsException("queue is empty");
+    }
     return (T)myArray[myFirst];
   }
 
@@ -99,10 +104,27 @@ public class Queue<T> {
   }
 
   public void clear() {
-    for (int i = 0; i < myArray.length; i++) {
-      myArray[i] = null;
-    }
-    isWrapped = false;
+    Arrays.fill(myArray, null);
     myFirst = myLast = 0;
+  }
+
+  public boolean process(@NotNull Processor<T> processor) {
+    if (isWrapped) {
+      for (int i = myFirst; i < myArray.length; i++) {
+        T t = (T)myArray[i];
+        if (!processor.process(t)) return false;
+      }
+      for (int i = 0; i < myLast; i++) {
+        T t = (T)myArray[i];
+        if (!processor.process(t)) return false;
+      }
+    }
+    else {
+      for (int i = myFirst; i < myLast; i++) {
+        T t = (T)myArray[i];
+        if (!processor.process(t)) return false;
+      }
+    }
+    return true;
   }
 }

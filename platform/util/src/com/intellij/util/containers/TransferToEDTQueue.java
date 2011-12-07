@@ -17,12 +17,11 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Processor;
+import gnu.trove.Equality;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -38,7 +37,7 @@ public class TransferToEDTQueue<T> {
   private final Condition<?> myShutUpCondition;
   private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
 
-  private final Queue<T> myQueue = new ConcurrentLinkedQueue<T>();
+  private final Queue<T> myQueue = new Queue<T>(10);
   private final AtomicBoolean invokeLaterScheduled = new AtomicBoolean();
   private final Runnable myUpdateRunnable = new Runnable() {
     @Override
@@ -61,14 +60,23 @@ public class TransferToEDTQueue<T> {
         long finish = System.currentTimeMillis();
         if (myMaxUnitOfWorkThresholdMs != -1 && finish - start > myMaxUnitOfWorkThresholdMs) break;
       }
-      if (!myQueue.isEmpty()) {
+      if (!isEmpty()) {
         scheduleUpdate();
       }
     }
   };
 
+  private boolean isEmpty() {
+    synchronized (myQueue) {
+      return myQueue.isEmpty();
+    }
+  }
+
   private boolean processNext() {
-    T thing = myQueue.poll();
+    T thing;
+    synchronized (myQueue) {
+      thing = myQueue.isEmpty() ? null : myQueue.pullFirst();
+    }
     if (thing == null) return false;
     if (!myProcessor.process(thing)) {
       stop();
@@ -84,9 +92,29 @@ public class TransferToEDTQueue<T> {
     myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
   }
 
-  public void offer(@NotNull T thing) {
-    myQueue.offer(thing);
+  public boolean offer(@NotNull T thing) {
+    synchronized (myQueue) {
+      myQueue.addLast(thing);
+    }
     scheduleUpdate();
+    return true;
+  }
+
+  public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<T> equality) {
+    boolean absent;
+    synchronized (myQueue) {
+      absent = myQueue.process(new Processor<T>() {
+        @Override
+        public boolean process(T t) {
+          return !equality.equals(t, thing);
+        }
+      });
+      if (absent) {
+        myQueue.addLast(thing);
+        scheduleUpdate();
+      }
+    }
+    return absent;
   }
 
   private void scheduleUpdate() {
@@ -101,7 +129,9 @@ public class TransferToEDTQueue<T> {
 
   public void stop() {
     stopped = true;
-    myQueue.clear();
+    synchronized (myQueue) {
+      myQueue.clear();
+    }
   }
 
   // process all queue in current thread
