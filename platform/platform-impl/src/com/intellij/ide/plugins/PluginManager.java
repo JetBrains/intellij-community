@@ -908,6 +908,7 @@ public class PluginManager {
     if (descriptor != null && !descriptor.getOptionalConfigs().isEmpty()) {
       final Map<PluginId, IdeaPluginDescriptorImpl> descriptors = new HashMap<PluginId, IdeaPluginDescriptorImpl>(descriptor.getOptionalConfigs().size());
       for (Map.Entry<PluginId, String> entry: descriptor.getOptionalConfigs().entrySet()) {
+        assert !Comparing.equal(fileName, entry.getValue()) : "recursive dependency: "+fileName;
         final IdeaPluginDescriptorImpl optionalDescriptor = loadDescriptor(file, entry.getValue());
         if (optionalDescriptor != null) {
           descriptors.put(entry.getKey(), optionalDescriptor);
@@ -1122,6 +1123,7 @@ public class PluginManager {
     ourDisabledPlugins = null;
   }
 
+  @NotNull
   public static List<String> getDisabledPlugins() {
     if (ourDisabledPlugins == null) {
       ourDisabledPlugins = new ArrayList<String>();
