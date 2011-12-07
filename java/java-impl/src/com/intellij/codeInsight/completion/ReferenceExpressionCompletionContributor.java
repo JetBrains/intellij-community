@@ -104,32 +104,35 @@ public class ReferenceExpressionCompletionContributor {
     return TrueFilter.INSTANCE;
   }
 
-  public static void fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<LookupElement> result) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final PsiElement element = parameters.getPosition();
-        if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return;
-        if (JavaCompletionData.isAfterPrimitiveOrArrayType(element)) return;
+  @Nullable 
+  public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<LookupElement> result) {
+    final PsiElement element = parameters.getPosition();
+    if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return null;
+    if (JavaCompletionData.isAfterPrimitiveOrArrayType(element)) return null;
 
-        final int offset = parameters.getParameters().getOffset();
-        final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
-        if (reference != null) {
-          final ElementFilter filter = getReferenceFilter(element, false);
-          for (final LookupElement item : completeFinalReference(element, reference, filter, parameters)) {
-            result.consume(item);
-          }
+    final int offset = parameters.getParameters().getOffset();
+    final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
+    if (reference != null) {
+      final ElementFilter filter = getReferenceFilter(element, false);
+      for (final LookupElement item : completeFinalReference(element, reference, filter, parameters)) {
+        result.consume(item);
+      }
 
-          final boolean secondTime = parameters.getParameters().getInvocationCount() >= 2;
+      final boolean secondTime = parameters.getParameters().getInvocationCount() >= 2;
 
-          for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters.getParameters())) {
-            addSingleArrayElementAccess(element, item, parameters, result);
-            
-            if (secondTime) {
+      final Set<LookupElement> base =
+        JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters.getParameters());
+      for (final LookupElement item : base) {
+        addSingleArrayElementAccess(element, item, parameters, result);
+      }
+
+      if (secondTime) {
+        return new Runnable() {
+          @Override
+          public void run() {
+            for (final LookupElement item : base) {
               addSecondCompletionVariants(element, reference, item, parameters, result);
             }
-          }
-
-          if (secondTime) {
             if (!psiElement().afterLeaf(".").accepts(element)) {
               BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, TRUE_MATCHER, new Consumer<LookupElement>() {
                 public void consume(LookupElement baseItem) {
@@ -138,9 +141,10 @@ public class ReferenceExpressionCompletionContributor {
               });
             }
           }
-        }
+        };
       }
-    });
+    }
+    return null;
   }
 
   private static Set<LookupElement> completeFinalReference(final PsiElement element, PsiReference reference, ElementFilter filter,

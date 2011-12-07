@@ -205,7 +205,7 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
   }
 
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    component.dispose();
+    Disposer.dispose(component);
     final Content content = myAdditionalContent.remove(component);
     getUi().removeContent(content, true);
   }

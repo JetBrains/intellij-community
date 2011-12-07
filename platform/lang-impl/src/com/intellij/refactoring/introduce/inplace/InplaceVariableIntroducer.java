@@ -218,4 +218,10 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
   protected TextRange preserveSelectedRange(SelectionModel selectionModel) {
     return null;
   }
+
+  @Override
+  protected void performOnInvalidIdentifier(String newName, LinkedHashSet<String> nameSuggestions) {
+    //move logic to performRefactoring
+  }
+
 }

@@ -18,7 +18,6 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -29,7 +28,6 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -88,7 +86,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,6 +114,8 @@ public class VariableInplaceRenamer {
   protected final Editor myEditor;
   protected final Project myProject;
   private RangeMarker myRenameOffset;
+  private String myInitialName;
+  protected final String myOldName;
 
   public void setAdvertisementText(String advertisementText) {
     myAdvertisementText = advertisementText;
@@ -133,10 +132,20 @@ public class VariableInplaceRenamer {
   public VariableInplaceRenamer(PsiNamedElement elementToRename,
                                 Editor editor,
                                 Project project) {
+    this(elementToRename, editor, project, elementToRename != null ? elementToRename.getName() : null, elementToRename != null ? elementToRename.getName() : null);
+  }
+
+  public VariableInplaceRenamer(PsiNamedElement elementToRename,
+                                Editor editor,
+                                Project project,
+                                final String initialName,
+                                final String oldName) {
     myElementToRename = elementToRename;
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myProject = project;
+    myOldName = oldName;
     if (myElementToRename != null) {
+      myInitialName = initialName;
       final PsiFile containingFile = myElementToRename.getContainingFile();
       if (!notSameFile(containingFile.getVirtualFile(), containingFile)) {
         myRenameOffset = myElementToRename != null && myElementToRename.getTextRange() != null ? myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange()) : null;
@@ -243,7 +252,7 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private boolean runRenameTemplate(LinkedHashSet<String> nameSuggestions,
+  private boolean runRenameTemplate(final LinkedHashSet<String> nameSuggestions,
                                     Collection<PsiReference> refs,
                                     final Collection<Pair<PsiElement, TextRange>> stringUsages,
                                     PsiElement scope,
@@ -252,10 +261,6 @@ public class VariableInplaceRenamer {
     if (context != null) {
       scope = context.getContainingFile();
     }
-
-    final Map<TextRange, TextAttributes> rangesToHighlight = new THashMap<TextRange, TextAttributes>();
-    //it is crucial to highlight AFTER the template is started, so we collect ranges first
-    collectElementsToHighlight(rangesToHighlight, refs, stringUsages);
 
     final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
     ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(scope.getLanguage());
@@ -329,7 +334,10 @@ public class VariableInplaceRenamer {
 
                 TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
                 myNewName = getNewName(value != null ? value.toString() : null, snapshot);
-
+                if (!LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
+                  performOnInvalidIdentifier(myNewName, nameSuggestions);
+                  return;
+                }
                 if (snapshot != null && performAutomaticRename()) {
                   if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
                     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -410,6 +418,23 @@ public class VariableInplaceRenamer {
 
             //add highlights
             if (myHighlighters != null) { // can be null if finish is called during testing
+              Map<TextRange, TextAttributes> rangesToHighlight = new HashMap<TextRange, TextAttributes>();
+              final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
+              if (templateState != null) {
+                EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+                for (int i = 0; i < templateState.getSegmentsCount(); i++) {
+                  final TextRange segmentOffset = templateState.getSegmentRange(i);
+                  final String name = template.getSegmentName(i);
+                  TextAttributes attributes = null;
+                  if (name.equals(PRIMARY_VARIABLE_NAME)) {
+                    attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+                  } else if (name.equals(OTHER_VARIABLE_NAME)) {
+                    attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+                  }
+                  if (attributes == null) continue;
+                  rangesToHighlight.put(segmentOffset, attributes);
+                }
+              }
               addHighlights(rangesToHighlight, topLevelEditor, myHighlighters, highlightManager);
             }
           }
@@ -446,8 +471,24 @@ public class VariableInplaceRenamer {
       }
     }
   }
+  
+  protected VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
+    return new VariableInplaceRenamer(variable, editor, myProject, initialName, myOldName);
+  }
 
-  protected void restoreStateBeforeTemplateIsFinished() {}
+  protected void performOnInvalidIdentifier(final String newName, final LinkedHashSet<String> nameSuggestions) {
+    revertState();
+    JBPopupFactory.getInstance()
+      .createConfirmation("Inserted identifier is not valid", "Continue editing", "Cancel", new Runnable() {
+        @Override
+        public void run() {
+          createInplaceRenamerToRestart(getVariable(), myEditor, newName).performInplaceRename(true, nameSuggestions);
+        }
+      }, 0).showInBestPositionFor(myEditor);
+  }
+
+  protected void restoreStateBeforeTemplateIsFinished(){}
+
 
   @Nullable
   protected PsiElement getNameIdentifier() {
@@ -600,6 +641,36 @@ public class VariableInplaceRenamer {
     }
   }
 
+  public String getInitialName() {
+    if (myInitialName == null) {
+      final PsiNamedElement variable = getVariable();
+      if (variable != null) {
+        return variable.getName();
+      }
+    }
+    return myInitialName;
+  }
+
+  protected void revertState() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+            final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
+            assert state != null;
+            final int segmentsCount = state.getSegmentsCount();
+            final Document document = topLevelEditor.getDocument();
+            for (int i = 0; i < segmentsCount; i++) {
+              final TextRange segmentRange = state.getSegmentRange(i);
+              document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
+            }
+          }
+        });
+      }
+    }, RENAME_TITLE, null);
+  }
+
   private static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {
     VirtualFile file = fileViewProvider.getVirtualFile();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
@@ -630,46 +701,6 @@ public class VariableInplaceRenamer {
 
       myHighlighters = null;
       myEditor.putUserData(INPLACE_RENAMER, null);
-    }
-  }
-
-  private void collectElementsToHighlight(Map<TextRange, TextAttributes> rangesToHighlight,
-                                          Collection<PsiReference> refs,
-                                          Collection<Pair<PsiElement, TextRange>> stringUsages) {
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    PsiElement nameIdentifier = getNameIdentifier();
-    if (nameIdentifier != null) {
-      final TextRange textRange = nameIdentifier.getTextRange();
-      LOG.assertTrue(textRange != null, nameIdentifier);
-      TextRange range = InjectedLanguageManager.getInstance(myProject).injectedToHost(nameIdentifier, textRange);
-      rangesToHighlight.put(range, colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
-    }
-
-    for (PsiReference ref : refs) {
-      final PsiElement element = ref.getElement();
-      TextRange range = ref.getRangeInElement().shiftRight(
-        InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange().getStartOffset()));
-
-      ReadWriteAccessDetector writeAccessDetector = ReadWriteAccessDetector.findDetector(element);
-      // TODO: read / write usages
-      boolean isForWrite = writeAccessDetector != null &&
-        ReadWriteAccessDetector.Access.Write == writeAccessDetector.getExpressionAccess(element);
-      TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(isForWrite ?
-                                                                                EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES :
-                                                                                EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      rangesToHighlight.put(range, attributes);
-    }
-
-    collectAdditionalRangesToHighlight(rangesToHighlight, stringUsages, colorsManager);
-  }
-
-  protected void collectAdditionalRangesToHighlight(Map<TextRange, TextAttributes> rangesToHighlight,
-                                                    Collection<Pair<PsiElement, TextRange>> stringUsages,
-                                                    EditorColorsManager colorsManager) {
-    for (Pair<PsiElement, TextRange> usage : stringUsages) {
-      final TextRange range = usage.second.shiftRight(usage.first.getTextOffset());
-      final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      rangesToHighlight.put(range, attributes);
     }
   }
 
@@ -720,7 +751,7 @@ public class VariableInplaceRenamer {
                            final LinkedHashSet<String> names) {
     if (reference.getElement() == selectedElement &&
         contains(reference.getRangeInElement().shiftRight(selectedElement.getTextRange().getStartOffset()), offset)) {
-      Expression expression = new MyExpression(myElementToRename.getName(), names);
+      Expression expression = new MyExpression(getInitialName(), names);
       builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, expression, true);
     }
     else {
@@ -741,7 +772,7 @@ public class VariableInplaceRenamer {
                            final TemplateBuilderImpl builder,
                            final LinkedHashSet<String> names) {
     if (element == selectedElement) {
-      Expression expression = new MyExpression(myElementToRename.getName(), names);
+      Expression expression = new MyExpression(getInitialName(), names);
       builder.replaceElement(element, PRIMARY_VARIABLE_NAME, expression, true);
     } else if (textRange != null) {
       builder.replaceElement(element, textRange, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
