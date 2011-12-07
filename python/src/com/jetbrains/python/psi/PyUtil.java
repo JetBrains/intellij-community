@@ -38,6 +38,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
@@ -1043,6 +1044,25 @@ public class PyUtil {
         "refactoring.move.class.or.function.error.cannot.place.elements.into.nonpython.file"));
     }
     return (PyFile)psi;
+  }
+
+  /**
+   * counts elements in iterable
+   * @param expression to count containing elements (iterable)
+   * @return element count
+   */
+  public static int getElementsCount(PyExpression expression, TypeEvalContext evalContext) {
+    int valuesLength = 1;
+    PyType type = expression.getType(evalContext);
+    if (type instanceof PyTupleType)
+      valuesLength = ((PyTupleType)type).getElementCount();
+    if (expression instanceof PySequenceExpression)
+      valuesLength = ((PySequenceExpression)expression).getElements().length;
+    else if (expression instanceof PyDictLiteralExpression)
+      valuesLength = ((PyDictLiteralExpression)expression).getElements().length;
+    else if (expression instanceof PyStringLiteralExpression)
+      valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
+    return valuesLength;
   }
 }
 

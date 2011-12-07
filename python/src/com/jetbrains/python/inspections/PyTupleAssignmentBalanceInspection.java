@@ -3,10 +3,10 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,21 +38,15 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
     @Override
     public void visitPyAssignmentStatement(PyAssignmentStatement node) {
       PyExpression lhsExpression = node.getLeftHandSideExpression();
-      PsiElement assignedValue = node.getAssignedValue();
-      if (assignedValue instanceof PyParenthesizedExpression)     // PY-2659
-        assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
+      PyExpression assignedValue = node.getAssignedValue();
       if (lhsExpression instanceof PyParenthesizedExpression)     // PY-4360
         lhsExpression = ((PyParenthesizedExpression)lhsExpression).getContainedExpression();
-      if (assignedValue instanceof PyReferenceExpression) {          // PY-4357
-        assignedValue = ((PyReferenceExpression)assignedValue).followAssignmentsChain(resolveWithoutImplicits()).getElement();
-      }
-      if (lhsExpression instanceof PyTupleExpression) {
-        int valuesLength = 1;
+
+      if (assignedValue == null) return;
+      PyType type = assignedValue.getType(myTypeEvalContext);
+      if (lhsExpression instanceof PyTupleExpression && type != null) {
+        int valuesLength = PyUtil.getElementsCount(assignedValue, myTypeEvalContext);
         PyExpression[] elements = ((PyTupleExpression) lhsExpression).getElements();
-        if (assignedValue instanceof PySequenceExpression)
-          valuesLength = ((PySequenceExpression)assignedValue).getElements().length;
-        else if (assignedValue instanceof PyDictLiteralExpression)
-          valuesLength = ((PyDictLiteralExpression)assignedValue).getElements().length;
 
         boolean containsStarExpression = false;
         VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
@@ -71,9 +65,9 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
         int targetsLength = elements.length;
         if (targetsLength > valuesLength) {
-          registerProblem(node.getAssignedValue(), "Need more values to unpack");
+          registerProblem(assignedValue, "Need more values to unpack");
         } else if (!containsStarExpression && targetsLength < valuesLength) {
-          registerProblem(node.getAssignedValue(), "Too many values to unpack");
+          registerProblem(assignedValue, "Too many values to unpack");
         }
       }
     }
