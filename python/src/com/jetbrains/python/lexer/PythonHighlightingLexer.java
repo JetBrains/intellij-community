@@ -62,6 +62,7 @@ public class PythonHighlightingLexer extends PythonLexer {
       if (tokenText.equals("True")) return PyTokenTypes.TRUE_KEYWORD;
       if (tokenText.equals("False")) return PyTokenTypes.FALSE_KEYWORD;
       if (tokenText.equals("nonlocal")) return PyTokenTypes.NONLOCAL_KEYWORD;
+      if (tokenText.equals("__debug__")) return PyTokenTypes.DEBUG_KEYWORD;
     }
     else {
       if (tokenText.equals("exec")) return PyTokenTypes.EXEC_KEYWORD;
