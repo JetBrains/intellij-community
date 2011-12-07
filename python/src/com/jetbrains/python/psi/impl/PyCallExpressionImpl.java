@@ -34,7 +34,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @Nullable
   public PyExpression getCallee() {
-    // peel off any parens, because we may have smth like (lambda x: x+1)(2) 
+    // peel off any parens, because we may have smth like (lambda x: x+1)(2)
     PyExpression seeker = (PyExpression)getFirstChild();
     while (seeker instanceof PyParenthesizedExpression) seeker = ((PyParenthesizedExpression)seeker).getContainedExpression();
     return seeker;
@@ -99,13 +99,28 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           if (target == null) {
             return null;
           }
+          PyClass cls = null;
+          PyFunction init = null;
           if (target instanceof PyClass) {
-            return new PyClassType((PyClass)target, false); // we call a class name, that is, the constructor, we get an instance.
+            cls = (PyClass)target;
+            init = cls.findInitOrNew(true);
           }
-          else if (target instanceof PyFunction && PyNames.INIT.equals(((PyFunction)target).getName())) {
-            return new PyClassType(((PyFunction)target).getContainingClass(), false); // resolved to __init__, back to class
+          else if (target instanceof PyFunction) {
+            final PyFunction f = (PyFunction)target;
+            if (PyNames.INIT.equals(f.getName())) {
+              init = f;
+              cls = f.getContainingClass();
+            }
           }
-          // TODO: look at well-known functions and their return types
+          if (init != null) {
+            final PyType t = init.getReturnType(context, (PyReferenceExpression)callee);
+            if (t != null && !(t instanceof PyNoneType)) {
+              return t;
+            }
+          }
+          if (cls != null) {
+            return new PyClassType(cls, false);
+          }
           final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, this);
           if (providedType != null) {
             return providedType;
