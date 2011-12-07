@@ -69,7 +69,9 @@ public abstract class AbstractExternalFilter {
   @NonNls private static final String DT = "<DT>";
   private static final Pattern CHARSET_META_PATTERN =
     Pattern.compile("<meta.*content\\s*=\".*[;|\\s]*charset=\\s*(.*)\\s*[;|\\s]*\">", Pattern.CASE_INSENSITIVE);
-    private final HttpConfigurable myHttpConfigurable = HttpConfigurable.getInstance();
+  private static final String FIELD_SUMMARY = "<!-- =========== FIELD SUMMARY =========== -->";
+  private static final String CLASS_SUMMARY = "<div class=\"summary\">";
+  private final HttpConfigurable myHttpConfigurable = HttpConfigurable.getInstance();
 
   protected static abstract class RefConvertor {
     private final Pattern mySelector;
@@ -228,6 +230,21 @@ public abstract class AbstractExternalFilter {
     }
 
     data.append(HTML);
+    data.append( "<style type=\"text/css\">" +
+                 "  ul.inheritance {\n" +
+                 "      margin:0;\n" +
+                 "      padding:0;\n" +
+                 "  }\n" +
+                 "  ul.inheritance li {\n" +
+                 "       display:inline;\n" +
+                 "       list-style:none;\n" +
+                 "  }\n" +
+                 "  ul.inheritance li ul.inheritance {\n" +
+                 "    margin-left:15px;\n" +
+                 "    padding-left:15px;\n" +
+                 "    padding-top:1px;\n" +
+                 "  }\n" +
+                 "</style>");
 
     String read;
     String contentEncoding = null;
@@ -267,7 +284,8 @@ public abstract class AbstractExternalFilter {
     if (isClassDoc) {
       boolean skip = false;
 
-      while (((read = buf.readLine()) != null) && !read.toUpperCase().trim().equals(DL)) {
+      while (((read = buf.readLine()) != null) && !read.toUpperCase().trim().equals(DL) &&
+             !StringUtil.containsIgnoreCase(read, "<div class=\"description\"")) {
         if (read.toUpperCase().contains(H2) && !read.toUpperCase().contains("H2")) { // read=class name in <H2>
           data.append(H2);
           skip = true;
@@ -286,10 +304,12 @@ public abstract class AbstractExternalFilter {
       StringBuffer classDetails = new StringBuffer();
 
       while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(HR) && !read.toUpperCase().equals(P)) {
+        if (reachTheEnd(data, read, classDetails)) return;
         appendLine(classDetails, read);
       }
 
       while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(P) && !read.toUpperCase().equals(HR)) {
+        if (reachTheEnd(data, read, classDetails)) return;
         appendLine(data, read.replaceAll(DT, DT + BR));
       }
 
@@ -300,12 +320,24 @@ public abstract class AbstractExternalFilter {
     while (((read = buf.readLine()) != null) &&
            StringUtil.indexOfIgnoreCase(read, endSection, 0) == -1 &&
            StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) == -1) {
-      if (read.toUpperCase().indexOf(HR) == -1) {
+      if (read.toUpperCase().indexOf(HR) == -1
+          && !StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">")
+          && !StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">")) {
         appendLine(data, read);
       }
     }
 
     data.append(HTML_CLOSE);
+  }
+
+  private static boolean reachTheEnd(StringBuffer data, String read, StringBuffer classDetails) {
+    if (StringUtil.indexOfIgnoreCase(read, FIELD_SUMMARY, 0) != -1 ||
+        StringUtil.indexOfIgnoreCase(read, CLASS_SUMMARY, 0) != -1) {
+      data.append(classDetails);
+      data.append(HTML_CLOSE);
+      return true;
+    }
+    return false;
   }
 
   @Nullable
