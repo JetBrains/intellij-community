@@ -265,7 +265,7 @@ public class Switcher extends AnAction implements DumbAware {
         for (int i = 0; i < len; i++) {
           filesData.add(new FileInfo(recentFiles[i], null));
         }
-        if (editors.size() == 1) {
+        if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
           filesData.add(0, editors.get(0));
         }
       } else {
