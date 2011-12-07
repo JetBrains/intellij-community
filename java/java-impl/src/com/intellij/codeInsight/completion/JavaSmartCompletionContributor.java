@@ -197,9 +197,13 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         };
 
         THashSet<ExpectedTypeInfo> mergedInfos = new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
+        List<Runnable> chainedEtc = new ArrayList<Runnable>();
         for (final ExpectedTypeInfo info : mergedInfos) {
-          ReferenceExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), noTypeCheck);
+          Runnable slowContinuation =
+            ReferenceExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), noTypeCheck);
+          ContainerUtil.addIfNotNull(chainedEtc, slowContinuation);
         }
+        addExpectedTypeMembers(params, mergedInfos, true, noTypeCheck);
 
         for (final ExpectedTypeInfo info : mergedInfos) {
           BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), new Consumer<LookupElement>() {
@@ -216,19 +220,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           }, result.getPrefixMatcher());
           
         }
-        
-        PsiElement position = params.getPosition();
-        final PsiElement parent = position.getParent();
-        if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
-            parent != null &&
-            !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
-          for (ExpectedTypeInfo info : mergedInfos) {
-            final boolean searchInheritors = params.getInvocationCount() > 1;
-            new JavaMembersGetter(info.getType(), position).addMembers(position, searchInheritors, noTypeCheck);
-            if (!info.getDefaultType().equals(info.getType())) {
-              new JavaMembersGetter(info.getDefaultType(), position).addMembers(position, searchInheritors, noTypeCheck);
-            }
-          }
+
+        for (Runnable runnable : chainedEtc) {
+          runnable.run();
+        }
+
+
+        final boolean searchInheritors = params.getInvocationCount() > 1;
+        if (searchInheritors) {
+          addExpectedTypeMembers(params, mergedInfos, false, noTypeCheck);
         }
       }
     });
@@ -347,6 +347,24 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
 
     extend(CompletionType.SMART, AFTER_NEW, new JavaInheritorsGetter(ConstructorInsertHandler.SMART_INSTANCE));
+  }
+
+  private static void addExpectedTypeMembers(CompletionParameters params,
+                                             THashSet<ExpectedTypeInfo> mergedInfos,
+                                             boolean quick,
+                                             Consumer<LookupElement> consumer) {
+    PsiElement position = params.getPosition();
+    final PsiElement parent = position.getParent();
+    if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
+        parent != null &&
+        !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
+      for (ExpectedTypeInfo info : mergedInfos) {
+        new JavaMembersGetter(info.getType(), position).addMembers(position, !quick, consumer);
+        if (!info.getDefaultType().equals(info.getType())) {
+          new JavaMembersGetter(info.getDefaultType(), position).addMembers(position, !quick, consumer);
+        }
+      }
+    }
   }
 
   @Override
