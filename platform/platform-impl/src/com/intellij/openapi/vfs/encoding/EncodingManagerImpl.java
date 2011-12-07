@@ -73,6 +73,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   public static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
     @Override
     public boolean equals(Reference<Document> o1, Reference<Document> o2) {
+      if (o1 == null && o2 == null) return true;
+      if (o1 == null || o2 == null) return false;
       return o1.get() == o2.get();
     }
   };
