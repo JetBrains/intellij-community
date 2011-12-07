@@ -21,6 +21,11 @@ public class IntelliJVersionRangeUtil {
    * 10.0.3 - 103.255
    * 10.5 - 107.105
    * 10.5.1 - 107.322
+   * 10.5.2
+   * 10.5.3
+   * 10.5.4 - 107.777
+   * EAP 11 - 110.3
+   * 11.0  -  111.69
    */
   public static IntelliJVersion getIntelliJVersion(@NotNull final BuildNumber buildNumber) {
     IntelliJVersion result = IntelliJVersion.UNKNOWN;
