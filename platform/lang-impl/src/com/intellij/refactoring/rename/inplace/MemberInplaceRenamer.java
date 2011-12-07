@@ -15,15 +15,11 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
@@ -31,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -55,13 +50,14 @@ import java.util.List;
  * Date: 11/9/11
  */
 public class MemberInplaceRenamer extends VariableInplaceRenamer {
-  protected final String myOldName;
   private final PsiElement mySubstituted;
   private RangeMarker mySubstitutedRange;
-
   public MemberInplaceRenamer(@NotNull PsiNameIdentifierOwner elementToRename, PsiElement substituted, Editor editor) {
-    super(elementToRename, editor);
-    myOldName = elementToRename.getName();
+    this(elementToRename, substituted, editor, elementToRename.getName(), elementToRename.getName());
+  }
+
+  public MemberInplaceRenamer(@NotNull PsiNameIdentifierOwner elementToRename, PsiElement substituted, Editor editor, String initialName, String oldName) {
+    super(elementToRename, editor, elementToRename.getProject(), initialName, oldName);
     mySubstituted = substituted;
     if (mySubstituted != null && mySubstituted != myElementToRename && mySubstituted.getTextRange() != null) {
       final PsiFile containingFile = mySubstituted.getContainingFile();
@@ -74,6 +70,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     }
 
     showDialogAdvertisement("RenameElement");
+  }
+
+  @Override
+  protected VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
+    return new MemberInplaceRenamer((PsiNameIdentifierOwner)variable, getSubstituted(), editor, initialName, myOldName);
   }
 
   @Override
@@ -181,7 +182,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
           if (substituted == null) {
             return;
           }
-  
+
           final String commandName = RefactoringBundle
             .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable), newName);
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -218,23 +219,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void restoreStateBeforeTemplateIsFinished() {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
-            final TemplateState state = TemplateManagerImpl.getTemplateState(editor);
-            assert state != null;
-            final int segmentsCount = state.getSegmentsCount();
-            final Document document = editor.getDocument();
-            for (int i = 0; i < segmentsCount; i++) {
-              final TextRange segmentRange = state.getSegmentRange(i);
-              document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
-            }
-          }
-        });
-      }
-    }, RENAME_TITLE, null);
+    revertState();
   }
 
   @Override

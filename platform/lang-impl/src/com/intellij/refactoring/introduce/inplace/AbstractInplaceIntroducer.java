@@ -395,12 +395,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void correctExpression() {}
 
   @Override
-  protected void collectAdditionalRangesToHighlight(Map<TextRange, TextAttributes> rangesToHighlight,
-                                                    Collection<Pair<PsiElement, TextRange>> stringUsages,
-                                                    EditorColorsManager colorsManager) {
-  }
-
-  @Override
   protected void addHighlights(@NotNull Map<TextRange, TextAttributes> ranges,
                                @NotNull Editor editor,
                                @NotNull Collection<RangeHighlighter> highlighters,
