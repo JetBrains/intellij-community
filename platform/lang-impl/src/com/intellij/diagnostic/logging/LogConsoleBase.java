@@ -246,14 +246,17 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public abstract boolean isActive();
 
   public void activate() {
-    if (myReaderThread == null) return;
-    if (isActive() && !myReaderThread.myRunning) {
-      myFilter.setSelectedItem(myModel.getCustomFilter());
-      myReaderThread.startRunning();
-      ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);
+    final ReaderThread readerThread = myReaderThread;
+    if (readerThread == null) {
+      return;
     }
-    else if (!isActive() && myReaderThread.myRunning) {
-      myReaderThread.stopRunning();
+    if (isActive() && !readerThread.myRunning) {
+      myFilter.setSelectedItem(myModel.getCustomFilter());
+      readerThread.startRunning();
+      ApplicationManager.getApplication().executeOnPooledThread(readerThread);
+    }
+    else if (!isActive() && readerThread.myRunning) {
+      readerThread.stopRunning();
     }
   }
 
@@ -284,21 +287,22 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       fireLoggingWillBeStopped();
     }
 
-    if (myReaderThread != null && myReaderThread.myReader != null) {
+    final ReaderThread readerThread = myReaderThread;
+    if (readerThread != null && readerThread.myReader != null) {
       if (!checkActive) {
-        myReaderThread.stopRunning();
+        readerThread.stopRunning();
         try {
-          myReaderThread.myReader.close();
+          readerThread.myReader.close();
         }
         catch (IOException e) {
           LOG.warn(e);
         }
-        myReaderThread.myReader = null;
+        readerThread.myReader = null;
         myReaderThread = null;
       }
       else {
         try {
-          final BufferedReader reader = myReaderThread.myReader;
+          final BufferedReader reader = readerThread.myReader;
           while (reader != null && reader.ready()) {
             addMessage(reader.readLine());
           }
