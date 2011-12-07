@@ -696,7 +696,7 @@ public class AbstractPopup implements JBPopup {
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
-    myPopup = factory.getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
+    myPopup = factory.getPopup(myOwner, myContent, targetBounds.x, targetBounds.y, this);
 
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
@@ -751,9 +751,6 @@ public class AbstractPopup implements JBPopup {
 
     myWindow = updateMaskAndAlpha(window);
 
-    if (myWindow instanceof JWindow) {
-      ((JWindow)myWindow).getRootPane().putClientProperty(KEY, this);
-    }
 
     if (myWindow != null) {
       // dialogwrapper-based popups do this internally through peer,
