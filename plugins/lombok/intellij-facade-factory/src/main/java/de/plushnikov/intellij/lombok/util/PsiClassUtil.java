@@ -5,7 +5,9 @@ import java.util.Collection;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -64,5 +66,9 @@ public class PsiClassUtil {
   @NotNull
   public static PsiField[] collectClassFieldsIntern(@NotNull PsiClass psiClass) {
     return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
+  }
+
+  public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
+    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
   }
 }

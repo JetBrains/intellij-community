@@ -33,12 +33,6 @@ public class LombokLightFieldBuilder9Impl extends LombokLightVariableBuilder imp
   }
 
   @Override
-  public LombokLightFieldBuilder9Impl addModifier(@Modifier @NotNull @NonNls String modifier) {
-    super.addModifier(modifier);
-    return this;
-  }
-
-  @Override
   public LombokLightFieldBuilder withContainingClass(PsiClass psiClass) {
     setContainingClass(psiClass);
     return this;

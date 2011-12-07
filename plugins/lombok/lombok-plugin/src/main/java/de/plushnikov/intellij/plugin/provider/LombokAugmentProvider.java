@@ -1,5 +1,13 @@
 package de.plushnikov.intellij.plugin.provider;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiAnnotation;
@@ -14,13 +22,6 @@ import de.plushnikov.intellij.lombok.processor.clazz.LombokClassProcessor;
 import de.plushnikov.intellij.lombok.processor.field.LombokFieldProcessor;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.core.GenericServiceLocator;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * Provides support for lombok generated elements
@@ -51,7 +52,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return result;
     }
     // skip processing during index rebuild
-    if (DumbService.isDumb(element.getProject())) {
+    if (DumbService.getInstance(element.getProject()).isDumb()) {
       return result;
     }
 

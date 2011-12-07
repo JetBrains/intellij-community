@@ -54,7 +54,7 @@
 			</activation>
 			<properties>
 				<idea9.version>9.0.4</idea9.version>
-				<idea10.version>10.5.2</idea10.version>
+				<idea10.version>10.5.4</idea10.version>
 				<idea11.version>11.0</idea11.version>
 				<idea.default.version>${idea10.version}</idea.default.version>
 				<idea9.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea9.version}</idea9.home>
@@ -72,7 +72,7 @@
 			</activation>
 			<properties>
 				<idea9.version>9.0.4</idea9.version>
-				<idea10.version>10.5.2</idea10.version>
+				<idea10.version>10.0</idea10.version>
 				<idea11.version>11.0</idea11.version>
 				<idea.default.version>${idea10.version}</idea.default.version>
 				<idea9.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea9.version}</idea9.home>
@@ -93,6 +93,77 @@
 						<artifactId>maven-install-plugin</artifactId>
 						<inherited>false</inherited>
 						<executions>
+							<!-- Install IntelliJ 9 artifacts-->
+							<execution>
+								<id>install_openapi9</id>
+								<phase>initialize</phase>
+								<goals>
+									<goal>install-file</goal>
+								</goals>
+								<configuration>
+									<file>${idea9.home}/lib/openapi.jar</file>
+									<groupId>com.intellij.idea</groupId>
+									<artifactId>openapi</artifactId>
+									<packaging>jar</packaging>
+									<version>${idea9.version}</version>
+								</configuration>
+							</execution>
+							<execution>
+								<id>install_extensions9</id>
+								<phase>initialize</phase>
+								<goals>
+									<goal>install-file</goal>
+								</goals>
+								<configuration>
+									<file>${idea9.home}/lib/extensions.jar</file>
+									<groupId>com.intellij.idea</groupId>
+									<artifactId>extensions</artifactId>
+									<packaging>jar</packaging>
+									<version>${idea9.version}</version>
+								</configuration>
+							</execution>
+							<execution>
+								<id>install_util9</id>
+								<phase>initialize</phase>
+								<goals>
+									<goal>install-file</goal>
+								</goals>
+								<configuration>
+									<file>${idea9.home}/lib/util.jar</file>
+									<groupId>com.intellij.idea</groupId>
+									<artifactId>util</artifactId>
+									<packaging>jar</packaging>
+									<version>${idea9.version}</version>
+								</configuration>
+							</execution>
+							<execution>
+								<id>install_annotations9</id>
+								<phase>initialize</phase>
+								<goals>
+									<goal>install-file</goal>
+								</goals>
+								<configuration>
+									<file>${idea9.home}/lib/annotations.jar</file>
+									<groupId>com.intellij.idea</groupId>
+									<artifactId>annotations</artifactId>
+									<packaging>jar</packaging>
+									<version>${idea9.version}</version>
+								</configuration>
+							</execution>
+							<execution>
+								<id>install_idea9</id>
+								<phase>initialize</phase>
+								<goals>
+									<goal>install-file</goal>
+								</goals>
+								<configuration>
+									<file>${idea9.home}/lib/idea.jar</file>
+									<groupId>com.intellij.idea</groupId>
+									<artifactId>idea</artifactId>
+									<packaging>jar</packaging>
+									<version>${idea9.version}</version>
+								</configuration>
+							</execution>
 							<!-- Install IntelliJ 10 artifacts-->
 							<execution>
 								<id>install_openapi10</id>

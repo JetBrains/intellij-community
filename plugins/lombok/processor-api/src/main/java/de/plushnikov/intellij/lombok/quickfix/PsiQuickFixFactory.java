@@ -1,5 +1,8 @@
 package de.plushnikov.intellij.lombok.quickfix;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -12,8 +15,6 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Plushnikov Michail
@@ -25,7 +26,7 @@ public class PsiQuickFixFactory {
     PsiAnnotation newAnnotation = elementFactory.createAnnotationFromText("@" + annotationFQN + "(" + StringUtil.notNullize(annotationParam) + ")", psiClass);
 
     final PsiNameValuePair[] attributes = newAnnotation.getParameterList().getAttributes();
-
+    //TODO doesn't exist in IntelliJ 9
     return new AddAnnotationFix(annotationFQN, psiClass, attributes);
   }
 

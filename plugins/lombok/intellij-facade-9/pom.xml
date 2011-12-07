@@ -21,31 +21,31 @@
 		<dependency>
 			<groupId>com.intellij.idea</groupId>
 			<artifactId>openapi</artifactId>
-			<version>${idea10.version}</version>
+			<version>${idea9.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.intellij.idea</groupId>
 			<artifactId>extensions</artifactId>
-			<version>${idea10.version}</version>
+			<version>${idea9.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.intellij.idea</groupId>
 			<artifactId>util</artifactId>
-			<version>${idea10.version}</version>
+			<version>${idea9.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.intellij.idea</groupId>
 			<artifactId>annotations</artifactId>
-			<version>${idea10.version}</version>
+			<version>${idea9.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.intellij.idea</groupId>
 			<artifactId>idea</artifactId>
-			<version>${idea10.version}</version>
+			<version>${idea9.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

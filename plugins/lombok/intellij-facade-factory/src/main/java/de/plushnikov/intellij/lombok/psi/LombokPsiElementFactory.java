@@ -1,8 +1,11 @@
 package de.plushnikov.intellij.lombok.psi;
 
+import java.lang.reflect.Constructor;
+
 import org.jetbrains.annotations.NotNull;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -14,6 +17,8 @@ import de.plushnikov.intellij.lombok.util.IntelliJVersionRangeUtil;
  * @author Plushnikov Michail
  */
 public abstract class LombokPsiElementFactory {
+  private static final Logger LOG = Logger.getInstance(LombokPsiElementFactory.class.getName());
+
   private LombokPsiElementFactory() {
   }
 
@@ -68,11 +73,29 @@ public abstract class LombokPsiElementFactory {
 
   static class LombokPsiElementFactory10 extends LombokPsiElementFactory {
     public LombokLightFieldBuilder createLightField(@NotNull PsiManager manager, @NotNull String fieldName, @NotNull PsiType fieldType) {
-      return new LombokLightFieldBuilder10Impl(manager, fieldName, fieldType);
+      LombokLightFieldBuilder result = null;
+      final Class<?> aClass;
+      try {
+        aClass = Class.forName("de.plushnikov.intellij.lombok.psi.LombokLightFieldBuilder10Impl");
+        final Constructor<?> constructor = aClass.getConstructor(PsiManager.class, String.class, PsiType.class);
+        result = (LombokLightFieldBuilder) constructor.newInstance(manager, fieldName, fieldType);
+      } catch (Exception ex) {
+        LOG.error("Class LombokLightFieldBuilder10Impl can not be created", ex);
+      }
+      return result;
     }
 
     public LombokLightMethodBuilder createLightMethod(@NotNull PsiManager manager, @NotNull String methodName) {
-      return new LombokLightMethodBuilder10Impl(manager, methodName);
+      LombokLightMethodBuilder result = null;
+      final Class<?> aClass;
+      try {
+        aClass = Class.forName("de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder10Impl");
+        final Constructor<?> constructor = aClass.getConstructor(PsiManager.class, String.class);
+        result = (LombokLightMethodBuilder) constructor.newInstance(manager, methodName);
+      } catch (Exception ex) {
+        LOG.error("Class LombokLightFieldBuilder10Impl can not be created", ex);
+      }
+      return result;
     }
 
     public LombokLightMethod createLightMethod(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {
@@ -82,11 +105,29 @@ public abstract class LombokPsiElementFactory {
 
   static class LombokPsiElementFactory11 extends LombokPsiElementFactory {
     public LombokLightFieldBuilder createLightField(@NotNull PsiManager manager, @NotNull String fieldName, @NotNull PsiType fieldType) {
-      return new LombokLightFieldBuilder11Impl(manager, fieldName, fieldType);
+      LombokLightFieldBuilder result = null;
+      final Class<?> aClass;
+      try {
+        aClass = Class.forName("de.plushnikov.intellij.lombok.psi.LombokLightFieldBuilder11Impl");
+        final Constructor<?> constructor = aClass.getConstructor(PsiManager.class, String.class, PsiType.class);
+        result = (LombokLightFieldBuilder) constructor.newInstance(manager, fieldName, fieldType);
+      } catch (Exception ex) {
+        LOG.error("Class LombokLightFieldBuilder10Impl can not be created", ex);
+      }
+      return result;
     }
 
     public LombokLightMethodBuilder createLightMethod(@NotNull PsiManager manager, @NotNull String methodName) {
-      return new LombokLightMethodBuilder11Impl(manager, methodName);
+      LombokLightMethodBuilder result = null;
+      final Class<?> aClass;
+      try {
+        aClass = Class.forName("de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder11Impl");
+        final Constructor<?> constructor = aClass.getConstructor(PsiManager.class, String.class);
+        result = (LombokLightMethodBuilder) constructor.newInstance(manager, methodName);
+      } catch (Exception ex) {
+        LOG.error("Class LombokLightFieldBuilder10Impl can not be created", ex);
+      }
+      return result;
     }
 
     public LombokLightMethod createLightMethod(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {

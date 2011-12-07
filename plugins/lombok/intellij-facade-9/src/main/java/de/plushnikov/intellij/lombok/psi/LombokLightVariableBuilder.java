@@ -1,5 +1,10 @@
 package de.plushnikov.intellij.lombok.psi;
 
+import javax.swing.Icon;
+
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.lang.Language;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiElement;
@@ -16,19 +21,15 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author Plushnikov Michail
  */
 public abstract class LombokLightVariableBuilder extends LightElement implements PsiVariable {
-  protected final String myName;
-  protected final PsiType myType;
+  protected final String                  myName;
+  protected final PsiType                 myType;
   protected final LombokLightModifierList myModifierList;
-  protected PsiElement myNavigationElement;
+  protected       PsiElement              myNavigationElement;
   private volatile Icon myBaseIcon = Icons.VARIABLE_ICON;
 
   public LombokLightVariableBuilder(@NotNull PsiManager manager, @NotNull String name, @NotNull PsiType type, @NotNull Language language) {
@@ -136,13 +137,8 @@ public abstract class LombokLightVariableBuilder extends LightElement implements
     throw new UnsupportedOperationException("setName is not implemented yet in com.intellij.psi.impl.light.LightVariableBuilder");
   }
 
-
   public PsiType getTypeNoResolve() {
     return getType();
-  }
-
-  protected boolean isVisibilitySupported() {
-    return true;
   }
 
   public Icon getElementIcon(final int flags) {

@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.intellij.idea:util:10.0">
+    <CLASSES>
+      <root url="jar://$M2_REPO$/com/intellij/idea/util/10.0/util-10.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$M2_REPO$/com/intellij/idea/util/10.0/util-10.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$M2_REPO$/com/intellij/idea/util/10.0/util-10.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

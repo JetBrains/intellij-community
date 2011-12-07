@@ -11,7 +11,7 @@
       <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/test-annotations" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/annotations" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="IDEA IC-111.54" jdkType="IDEA JDK" />
+    <orderEntry type="jdk" jdkName="IDEA IC-111.69" jdkType="IDEA JDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij-facade-api" />
     <orderEntry type="module" module-name="processor-api" />

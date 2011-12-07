@@ -12,18 +12,16 @@
       <excludeFolder url="file://$MODULE_DIR$/target/dependency-maven-plugin-markers" />
       <excludeFolder url="file://$MODULE_DIR$/target/maven-archiver" />
       <excludeFolder url="file://$MODULE_DIR$/target/surefire" />
+      <excludeFolder url="file://$MODULE_DIR$/target/test-classes" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij-facade-api" />
     <orderEntry type="module" module-name="intellij-facade-factory" />
-    <orderEntry type="module" module-name="intellij-facade-9" />
-    <orderEntry type="module" module-name="intellij-facade-10" />
-    <orderEntry type="module" module-name="intellij-facade-11" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:openapi:10.5.2" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:10.5.2" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:10.5.2" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:idea:10.5.2" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:openapi:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:idea:10.0" level="project" />
   </component>
 </module>
 

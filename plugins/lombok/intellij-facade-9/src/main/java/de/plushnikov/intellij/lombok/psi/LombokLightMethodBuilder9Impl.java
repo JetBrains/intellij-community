@@ -198,7 +198,6 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
     return myParameterList;
   }
 
-  @Override
   public LombokLightMethodBuilder9Impl setNavigationElement(PsiElement navigationElement) {
     myNavigationElement = navigationElement;
     return this;

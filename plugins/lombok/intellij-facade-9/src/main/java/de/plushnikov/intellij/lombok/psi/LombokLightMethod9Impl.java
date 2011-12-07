@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.lombok.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -15,14 +17,22 @@ public class LombokLightMethod9Impl extends LightMethod implements LombokLightMe
 
   private final PsiMethod myMethod;
 
+  private PsiElement myNavigationElement;
+
   public LombokLightMethod9Impl(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {
     super(manager, valuesMethod, psiClass);
     myMethod = valuesMethod;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    return myNavigationElement;
+  }
+
   @Override
   public LombokLightMethod withNavigationElement(PsiElement navigationElement) {
-    setNavigationElement(navigationElement);
+    myNavigationElement = navigationElement;
     return this;
   }
 
