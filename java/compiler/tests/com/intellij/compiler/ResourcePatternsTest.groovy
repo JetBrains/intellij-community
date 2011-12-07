@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
@@ -15,6 +16,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
   String[] oldPatterns
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return new DefaultLightProjectDescriptor() {
