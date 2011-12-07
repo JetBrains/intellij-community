@@ -64,6 +64,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     mySearchInNonJavaFiles = searchInNonJavaFiles;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new InlineViewDescriptor(myClass);
   }

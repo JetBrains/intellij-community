@@ -20,6 +20,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -53,9 +54,11 @@ public class ResourceBundleRenameHandler implements RenameHandler {
       return false;
     }
 
+    final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+
     ResourceBundleEditor editor = ResourceBundleUtil.getEditor(dataContext);
     return (editor == null || editor.getState(FileEditorStateLevel.NAVIGATION).getPropertyName() == null /* user selected non-bundle key element */)
-           && bundle.getPropertiesFiles(project).size() > 1;
+           && bundle.getPropertiesFiles(project).size() > 1 && (virtualFile instanceof ResourceBundleAsVirtualFile || virtualFile == null);
   }
 
   public boolean isRenaming(DataContext dataContext) {

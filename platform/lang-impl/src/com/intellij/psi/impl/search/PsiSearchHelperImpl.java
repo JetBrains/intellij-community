@@ -413,14 +413,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final String lastWord = words.get(words.size() - 1);
     if (processor instanceof CommonProcessors.CollectProcessor) {
       final CommonProcessors.CollectProcessor collectProcessor = (CommonProcessors.CollectProcessor)processor;
-      cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(collectProcessor.getResults()) {
+      return cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(collectProcessor.getResults()) {
         @Override
         public boolean process(VirtualFile virtualFile) {
           if (fileSet == null || fileSet.contains(virtualFile)) return collectProcessor.process(virtualFile);
           return true;
         }
       }, lastWord, searchContext, scope, caseSensitively);
-      return true;
     } else {
       THashSet<VirtualFile> files = new THashSet<VirtualFile>();
       cacheManager.collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(files) {

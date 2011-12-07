@@ -77,6 +77,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     return result;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     if (myConstructor != null) {
       return new ReplaceConstructorWithFactoryViewDescriptor(myConstructor);

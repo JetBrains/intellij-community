@@ -55,6 +55,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     myDelegateMethodInfos = memberInfos;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
     return new RemoveMiddlemanUsageViewDescriptor(field);
   }

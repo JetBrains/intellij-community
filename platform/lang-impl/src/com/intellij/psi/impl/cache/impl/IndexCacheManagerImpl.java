@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -81,18 +82,18 @@ public class IndexCacheManagerImpl implements CacheManager{
   // we cannot call it inside FileBasedIndex.processValues() method except in collecting form
   // If we do, deadlocks are possible (IDEADEV-42137). Process the files without not holding indices' read lock.
   @Override
-  public void collectVirtualFilesWithWord(@NotNull final CommonProcessors.CollectProcessor<VirtualFile> fileProcessor,
+  public boolean collectVirtualFilesWithWord(@NotNull final CommonProcessors.CollectProcessor<VirtualFile> fileProcessor,
                                              @NotNull final String word, final short occurrenceMask,
                                              @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {
-      return;
+      return true;
     }
 
     try {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
-        public void run() {
-          FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+        public Boolean compute() {
+          return FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
             final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
             @Override
             public boolean process(final VirtualFile file, final Integer value) {

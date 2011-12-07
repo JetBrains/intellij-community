@@ -53,6 +53,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     myInlineThisOnly = isInlineThisOnly;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new InlineViewDescriptor(myField);
   }

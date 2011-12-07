@@ -66,6 +66,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     mySettings = settings;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MakeMethodOrClassStaticViewDescriptor(myMember);
   }

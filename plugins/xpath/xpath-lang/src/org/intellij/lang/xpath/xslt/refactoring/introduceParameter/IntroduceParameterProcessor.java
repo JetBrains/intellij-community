@@ -62,6 +62,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
 
+    @NotNull
     protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
         return new MyUsageViewDescriptorAdapter();
     }

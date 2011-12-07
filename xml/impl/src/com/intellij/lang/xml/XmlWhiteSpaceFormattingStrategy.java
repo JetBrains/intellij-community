@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
-package com.intellij.psi.formatter;
+package com.intellij.lang.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyAdapter;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -30,8 +27,14 @@ import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
-public class XmlFormatterUtilHelper implements FormatterUtilHelper {
+/**
+ * @author Denis Zhdanov
+ * @since 12/6/11 4:51 PM
+ */
+public class XmlWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
+
   private static void addWhitespaceToTagBody(final ASTNode treePrev, final LeafElement whiteSpaceElement) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(treePrev);
     final ASTNode treeParent = treePrev.getTreeParent();
@@ -64,7 +67,7 @@ public class XmlFormatterUtilHelper implements FormatterUtilHelper {
     }
   }
 
-  protected boolean isInsideTagBody(ASTNode place) {
+  protected boolean isInsideTagBody(@NotNull ASTNode place) {
     final ASTNode treeParent = place.getTreeParent();
     if(treeParent.getElementType() != XmlElementType.XML_TAG
        && treeParent.getElementType() != XmlElementType.HTML_TAG) return false;
@@ -75,7 +78,7 @@ public class XmlFormatterUtilHelper implements FormatterUtilHelper {
     return false;
   }
 
-  public boolean addWhitespace(final ASTNode treePrev, final LeafElement whiteSpaceElement) {
+  public boolean addWhitespace(@NotNull final ASTNode treePrev, @NotNull final LeafElement whiteSpaceElement) {
     if (isInsideTagBody(treePrev)) {
       addWhitespaceToTagBody(treePrev, whiteSpaceElement);
       return true;
@@ -84,7 +87,7 @@ public class XmlFormatterUtilHelper implements FormatterUtilHelper {
     return false;
   }
 
-  public boolean containsWhitespacesOnly(final ASTNode node) {
+  public boolean containsWhitespacesOnly(@NotNull final ASTNode node) {
     return (node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) &&
            node.getText().trim().length() == 0;
   }

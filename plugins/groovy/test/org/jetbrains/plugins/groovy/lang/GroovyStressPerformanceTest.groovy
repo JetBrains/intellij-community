@@ -16,7 +16,7 @@ import com.intellij.util.ThrowableRunnable
 /**
  * @author peter
  */
-class GroovyStressTest extends LightCodeInsightFixtureTestCase {
+class GroovyStressPerformanceTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
     LightGroovyTestCase.GROOVY_DESCRIPTOR

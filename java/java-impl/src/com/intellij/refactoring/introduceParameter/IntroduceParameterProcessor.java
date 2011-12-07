@@ -120,6 +120,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myInitializerWrapper = expressionToSearch == null ? null : new JavaExpressionWrapper(expressionToSearch);
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new IntroduceParameterViewDescriptor(myMethodToSearchFor);
   }

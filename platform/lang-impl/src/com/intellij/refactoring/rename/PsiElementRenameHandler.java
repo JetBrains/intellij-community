@@ -98,14 +98,15 @@ public class PsiElementRenameHandler implements RenameHandler {
   static boolean canRename(Project project, Editor editor, PsiElement element) throws CommonRefactoringUtil.RefactoringErrorHintException {
     String message = renameabilityStatus(project, element);
     if (message != null) {
-      if (message.length() > 0) showErrorMessage(project, editor, message);
+      if (!message.isEmpty()) showErrorMessage(project, editor, message);
 
       return false;
     }
     return true;
   }
 
-  static @Nullable String renameabilityStatus(Project project, PsiElement element) {
+  @Nullable
+  static String renameabilityStatus(Project project, PsiElement element) {
     if (element == null) return "";
 
     boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;

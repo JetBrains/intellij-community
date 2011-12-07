@@ -286,7 +286,6 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     @Nullable
     public static Transferable getContentsSafe() {
       final Ref<Transferable> result = new Ref<Transferable>();
-      if (Registry.is("ide.mac.useNativeClipboard.async")) {
         final JRootPane pane = getRootPane();
         if (pane != null) {
           try {
@@ -312,7 +311,6 @@ public class ClipboardSynchronizer implements ApplicationComponent {
               }
             };
             
-            
             if (SwingUtilities.isEventDispatchThread()) {
               run.run();
             } else {
@@ -331,19 +329,6 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         }
         
         return null;
-      }
-      
-      Foundation.executeOnMainThread(new Runnable() {
-        @Override
-        public void run() {
-          Transferable transferable = getClipboardContentNatively();
-          if (transferable != null) {
-            result.set(transferable);
-          }
-        }
-      }, true, true);
-
-      return result.get();
     }
   }
   

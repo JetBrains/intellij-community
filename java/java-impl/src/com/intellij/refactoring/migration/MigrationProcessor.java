@@ -48,6 +48,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     myPsiMigration = startMigration(project);
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MigrationUsagesViewDescriptor(myMigrationMap, false);
   }

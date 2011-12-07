@@ -323,12 +323,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   private static void indentEachLine(Project project, Editor editor, int startOffset, int endOffset) {
-    Document document = editor.getDocument();
-    CharSequence chars = document.getCharsSequence();
-    endOffset = CharArrayUtil.shiftBackward(chars, endOffset - 1, "\n\r") + 1;
-
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     try {

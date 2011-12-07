@@ -86,6 +86,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     processor.run();
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new TypeMigrationViewDescriptor(myRoot[0]);
   }

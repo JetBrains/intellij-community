@@ -112,6 +112,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     myMoveCallback = moveCallback;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myElementsToMove.length];
     System.arraycopy(myElementsToMove, 0, elements, 0, myElementsToMove.length);

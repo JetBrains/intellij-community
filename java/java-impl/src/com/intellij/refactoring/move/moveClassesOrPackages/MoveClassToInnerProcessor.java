@@ -93,6 +93,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MoveMultipleElementsViewDescriptor(myClassesToMove, myTargetClass.getQualifiedName());
   }

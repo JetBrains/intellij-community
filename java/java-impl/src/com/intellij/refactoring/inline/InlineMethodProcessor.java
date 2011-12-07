@@ -97,6 +97,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new InlineViewDescriptor(myMethod);
   }
