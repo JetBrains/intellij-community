@@ -57,7 +57,7 @@ class GitManualPushToBranch extends JPanel {
     myManualPush = new JCheckBox("Push current branch to alternative branch: ", false);
     myManualPush.setMnemonic('b');
 
-    myDestBranchTextField = new JTextField(15);
+    myDestBranchTextField = new JTextField(20);
     
     myComment = new JBLabel("This will apply to all selected repositories", UIUtil.ComponentStyle.SMALL);
     
@@ -139,6 +139,10 @@ class GitManualPushToBranch extends JPanel {
     return myRemoteSelector.getSelectedValue();
   }
 
+  public void selectRemote(String remoteName) {
+    myRemoteSelector.selectRemote(remoteName);
+  }
+
   @NotNull
   public static Collection<GitRemote> getRemotesWithCommonNames(@NotNull Collection<GitRepository> repositories) {
     if (repositories.isEmpty()) {
@@ -204,6 +208,16 @@ class GitManualPushToBranch extends JPanel {
       if (myRemotes.size() > 1) {
         myRemoteCombobox.setEnabled(selected);
       }
+    }
+
+    public void selectRemote(@NotNull String remoteName) {
+      for (GitRemote remote : myRemotes) {
+        if (remote.getName().equals(remoteName)) {
+          myRemoteCombobox.setSelectedItem(remote);
+          return;
+        }
+      }
+      myRemoteCombobox.setSelectedIndex(0);
     }
 
     private static class RemoteCellRenderer extends ListCellRendererWrapper {

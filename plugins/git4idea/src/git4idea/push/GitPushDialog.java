@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GitPushDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitPushDialog.class);
+  private static final String DEFAULT_REMOTE = "origin";
 
   private JComponent myRootPanel;
   private Project myProject;
@@ -139,6 +140,7 @@ public class GitPushDialog extends DialogWrapper {
           error.set(collectInfoToPush());
         }
         
+        final Pair<String, String> remoteAndBranch = getRemoteAndTrackedBranchForCurrentBranch();
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -147,7 +149,10 @@ public class GitPushDialog extends DialogWrapper {
             } else {
               myListPanel.setCommits(myGitCommitsToPush);
             }
-            myRefspecPanel.setBranchToPushIfNotSet(getTrackedCurrentBranchName());
+            if (!myRefspecPanel.turnedOn()) {
+              myRefspecPanel.selectRemote(remoteAndBranch.getFirst());
+              myRefspecPanel.setBranchToPushIfNotSet(remoteAndBranch.getSecond());
+            }
             myLoadingPanel.stopLoading();
           }
         });
@@ -156,7 +161,7 @@ public class GitPushDialog extends DialogWrapper {
   }
 
   @NotNull
-  private String getTrackedCurrentBranchName() {
+  private Pair<String, String> getRemoteAndTrackedBranchForCurrentBranch() {
     if (myGitCommitsToPush != null) {
       Collection<GitRepository> repositories = myGitCommitsToPush.getRepositories();
       if (!repositories.isEmpty()) {
@@ -164,17 +169,29 @@ public class GitPushDialog extends DialogWrapper {
         GitBranch currentBranch = repository.getCurrentBranch();
         assert currentBranch != null;
         if (myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch() == GitPusher.NO_TARGET_BRANCH) { // push to branch with the same name
-          return currentBranch.getName();
+          return Pair.create(DEFAULT_REMOTE, currentBranch.getName());
         }
-        return getNameWithoutRemote(myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch());
+        String remoteName;
+        try {
+          remoteName = currentBranch.getTrackedRemoteName(myProject, repository.getRoot());
+          if (remoteName == null) {
+            remoteName = DEFAULT_REMOTE;
+          }
+        }
+        catch (VcsException e) {
+          LOG.info("Couldn't retrieve tracked branch for current branch " + currentBranch, e);
+          remoteName = DEFAULT_REMOTE;
+        }
+        String targetBranch = getNameWithoutRemote(myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch(), remoteName);
+        return Pair.create(remoteName, targetBranch);
       }
     }
-    return "";
+    return Pair.create(DEFAULT_REMOTE, "");
   }
 
   @NotNull
-  private String getNameWithoutRemote(@NotNull GitBranch remoteBranch) {
-    String remoteName = myRefspecPanel.getSelectedRemote().getName() + "/";
+  private static String getNameWithoutRemote(@NotNull GitBranch remoteBranch, @NotNull String remoteName) {
+    remoteName += "/";
     String branchName = remoteBranch.getName();
     if (branchName.startsWith(remoteName)) {
       return branchName.substring(remoteName.length());
@@ -228,6 +245,7 @@ public class GitPushDialog extends DialogWrapper {
 
       if (myRefspecPanel.turnedOn()) {
         String manualBranchName = myRefspecPanel.getBranchToPush();
+        remote = myRefspecPanel.getSelectedRemote();
         GitBranch manualBranch = findRemoteBranchByName(repository, remote, manualBranchName);
         if (manualBranch == null) {
           if (!manualBranchName.startsWith("refs/remotes/")) {
