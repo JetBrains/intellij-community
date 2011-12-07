@@ -7,9 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.sdk.PythonSdkType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,5 +65,10 @@ public class PythonModuleBuilder extends ModuleBuilder implements SourcePathsBui
 
   public void addSdkChangedListener(Runnable runnable) {
     mySdkChangedListeners.add(runnable);
+  }
+
+  @Override
+  public boolean isSuitableSdk(Sdk sdk) {
+    return sdk.getSdkType() instanceof PythonSdkType;
   }
 }
