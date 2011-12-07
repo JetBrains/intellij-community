@@ -18,7 +18,6 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -33,14 +32,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -77,7 +75,7 @@ public class DirectoryChooser extends DialogWrapper {
     final JPanel panel = new JPanel(new BorderLayout());
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new ToggleAction(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
-                                     RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
+                                     UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
                                      IconLoader.getIcon("/ant/filter.png")) {
       @Override
       public boolean isSelected(AnActionEvent e) {
