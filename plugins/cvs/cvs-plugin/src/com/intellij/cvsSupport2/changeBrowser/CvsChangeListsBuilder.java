@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.changeBrowser;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -29,35 +30,9 @@ import java.util.*;
 public class CvsChangeListsBuilder {
   @NonNls private static final String INITIALLY_ADDED_ON_BRANCH = "was initially added on branch";
 
-  private static class ChangeListKey {
-    public String branch;
-    public String author;
-    public String message;
-
+  private static class ChangeListKey extends Trinity<String, String, String> {
     public ChangeListKey(final String branch, final String author, final String message) {
-      this.branch = branch;
-      this.author = author;
-      this.message = message;
-    }
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final ChangeListKey that = (ChangeListKey)o;
-
-      if (!author.equals(that.author)) return false;
-      if (branch != null ? !branch.equals(that.branch) : that.branch != null) return false;
-      if (!message.equals(that.message)) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      int result = (branch != null ? branch.hashCode() : 0);
-      result = 31 * result + author.hashCode();
-      result = 31 * result + message.hashCode();
-      return result;
+      super(branch, author, message);
     }
   }
 

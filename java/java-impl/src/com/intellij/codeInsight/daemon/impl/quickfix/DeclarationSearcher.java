@@ -79,7 +79,7 @@ public class DeclarationSearcher {
       if (element instanceof PsiDeclarationStatement) {
         final PsiElement[] declared = ((PsiDeclarationStatement) element).getDeclaredElements();
         for (final PsiElement declaredElement : declared) {
-          if ((declaredElement instanceof PsiLocalVariable) && (myTargetType.equals(((PsiLocalVariable)declaredElement).getType()))) {
+          if (declaredElement instanceof PsiLocalVariable && myTargetType.equals(((PsiLocalVariable)declaredElement).getType())) {
             return goThroughCache(parent, (PsiVariable) declaredElement);
           }
         }

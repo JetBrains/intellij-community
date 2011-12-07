@@ -34,6 +34,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import org.jdom.Element;
@@ -55,37 +56,11 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
   private static final Alarm ourRegisterMetaDataAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  private class MetaDataKey {
-    @NotNull private final String categoryNames;
-    @NotNull private final String familyName;
-
+  private static class MetaDataKey extends Pair<String, String> {
     private MetaDataKey(@NotNull String[] categoryNames, @NotNull final String familyName) {
-      this.categoryNames = StringUtil.join(categoryNames, ":");
-      this.familyName = familyName;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final MetaDataKey that = (MetaDataKey)o;
-
-      if (!categoryNames.equals(that.categoryNames)) return false;
-      if (!familyName.equals(that.familyName)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result;
-      result = categoryNames.hashCode();
-      result = 31 * result + familyName.hashCode();
-      return result;
+      super(StringUtil.join(categoryNames, ":"), familyName);
     }
   }
-  
 
   private final Set<String> myIgnoredActions = new LinkedHashSet<String>();
 

@@ -17,6 +17,7 @@ package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.sun.jdi.Method;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -68,32 +69,9 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return new MethodReturnValueDisplayKey(myMethod, myReturnValue);
   }
 
-  private static final class MethodReturnValueDisplayKey implements DisplayKey<MethodReturnValueDescriptorImpl> {
-    private final @NotNull Method myMethod;
-    private final @Nullable Value myValue;
-
+  private static final class MethodReturnValueDisplayKey extends Pair<Method, Value> implements DisplayKey<MethodReturnValueDescriptorImpl> {
     public MethodReturnValueDisplayKey(@NotNull Method method, @Nullable Value value) {
-      myMethod = method;
-      myValue = value;
-    }
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final MethodReturnValueDisplayKey that = (MethodReturnValueDisplayKey)o;
-
-      if (!myMethod.equals(that.myMethod)) return false;
-      if (myValue != null ? !myValue.equals(that.myValue) : that.myValue != null) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      int result;
-      result = myMethod.hashCode();
-      result = 31 * result + (myValue != null ? myValue.hashCode() : 0);
-      return result;
+      super(method, value);
     }
   }
 }
