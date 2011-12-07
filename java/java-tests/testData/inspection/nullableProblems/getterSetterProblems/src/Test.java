@@ -48,3 +48,11 @@ class C {
     return c1;
   }
 }
+
+class D {
+    @Nullable Long myL;
+
+    D(long l) {
+      myL = l;
+    }
+}

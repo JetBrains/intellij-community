@@ -207,7 +207,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                 if (!method.equals(parameter.getDeclarationScope())) {
                   return true;
                 }
-                if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations())) {
+                if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations()) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
                   final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
                   assert nameIdentifier2 != null : parameter;
                   holder.registerProblem(nameIdentifier2, InspectionsBundle
