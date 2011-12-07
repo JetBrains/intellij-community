@@ -76,7 +76,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
             FileElement treeElement = file.getTreeElement();
             StubTree stubTree = file.getStubTree();
             if (treeElement != null) {
-              throw new AssertionError(file.isPhysical() + "; node=" + myNode + "; file=" + file + " tree=" + treeElement + "; stubTree=" + stubTree);
+              throw new AssertionError("this="+this+"; file.isPhysical="+file.isPhysical() + "; node=" + myNode + "; file=" + file + "; tree=" + treeElement + "; stubTree=" + stubTree);
             }
             final FileElement fileElement = file.loadTreeElement();
             node = myNode;
