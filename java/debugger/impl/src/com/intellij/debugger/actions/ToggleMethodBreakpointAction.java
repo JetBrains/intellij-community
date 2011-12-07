@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -97,10 +96,14 @@ public class ToggleMethodBreakpointAction extends AnAction {
         ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
       final PsiElement psiElement = event.getData(LangDataKeys.PSI_ELEMENT);
       if(psiElement instanceof PsiMethod) {
-        method = psiElement;
-        document = PsiDocumentManager.getInstance(project).getDocument(method.getContainingFile());
+        final PsiFile containingFile = psiElement.getContainingFile();
+        if (containingFile != null) {
+          method = psiElement;
+          document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
+        }
       }
-    } else {
+    }
+    else {
       Editor editor = event.getData(PlatformDataKeys.EDITOR);
       if(editor == null) {
         editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -109,7 +112,6 @@ public class ToggleMethodBreakpointAction extends AnAction {
         document = editor.getDocument();
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
         if (file != null) {
-          FileTypeManager fileTypeManager = FileTypeManager.getInstance();
           final VirtualFile virtualFile = file.getVirtualFile();
           FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
           if (StdFileTypes.JAVA == fileType || StdFileTypes.CLASS  == fileType) {
