@@ -690,6 +690,8 @@
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
 
     <lang.formatter language="JAVA" implementationClass="com.intellij.lang.java.JavaFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="JAVA"
+                                       implementationClass="com.intellij.psi.formatter.JavadocWhiteSpaceFormattingStrategy"/>
 
     <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
     <documentationProvider implementation="com.intellij.lang.java.FileDocumentationProvider" order="last"/>
@@ -969,11 +971,11 @@
 
     <saveFileAsTemplateHandler implementation="com.intellij.ide.fileTemplates.SaveJavaAsTemplateHandler"/>
 
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.JavaCopyFilesOrDirectoriesHandler"/>
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler"/>
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler" order="before copyJavaFilesOrPackages"/>
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyJavaFilesOrPackages"/>
 
-    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler" id="moveJavaFileOrDir"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler" order="before moveJavaFileOrDir"/>
+    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler" id="moveJavaFileOrDir"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveMembers.MoveMembersHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandlerDelegate"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveInner.MoveInnerToUpperHandler"/>

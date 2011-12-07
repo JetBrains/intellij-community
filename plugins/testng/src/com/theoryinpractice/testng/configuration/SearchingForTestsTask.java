@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -418,12 +419,8 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     if (classes != null && classes.length > 0) {
       final Set<String> groupDependencies = new HashSet<String>();
       TestNGUtil.collectAnnotationValues(groupDependencies, "dependsOnGroups", methods, classes);
-
-      final Set<String> testMethodDependencies = new HashSet<String>();
-      TestNGUtil.collectAnnotationValues(testMethodDependencies, "dependsOnMethods", methods, classes);
-
       final Set<PsiMember> membersToCheckNow = new LinkedHashSet<PsiMember>();
-      if (!groupDependencies.isEmpty() || !testMethodDependencies.isEmpty()) {
+      if (!groupDependencies.isEmpty()) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             final Project project = classes[0].getProject();
@@ -431,22 +428,18 @@ public class SearchingForTestsTask extends Task.Backgroundable {
               JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
             LOG.assertTrue(testAnnotation != null);
             for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
-              if (psiMember instanceof PsiMethod && testMethodDependencies.contains(psiMember.getName())) {
+              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN);
+              if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groupDependencies)) {
                 if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
                   membersToCheckNow.add(psiMember);
-                }
-              } else if (!groupDependencies.isEmpty()) {
-                final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN);
-                if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groupDependencies)) {
-                  if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
-                    membersToCheckNow.add(psiMember);
-                  }
                 }
               }
             }
           }
         });
       }
+
+      collectDependsOnMethods(results, alreadyMarkedToBeChecked, membersToCheckNow, methods, classes);
 
       if (methods == null) {
         for (PsiClass c : classes) {
@@ -464,6 +457,62 @@ public class SearchingForTestsTask extends Task.Backgroundable {
           }
           calculateDependencies(meths, results, alreadyMarkedToBeChecked, psiClass);
         }
+      }
+    }
+  }
+
+  private static void collectDependsOnMethods(final Map<PsiClass, Collection<PsiMethod>> results,
+                                              final Set<PsiMember> alreadyMarkedToBeChecked,
+                                              final Set<PsiMember> membersToCheckNow,
+                                              final PsiMethod[] methods,
+                                              final PsiClass... classes) {
+    final PsiClass[] psiClasses;
+    if (methods != null && methods.length > 0) {
+      final Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+      for (PsiMethod method : methods) {
+        containingClasses.add(method.getContainingClass());
+      }
+      psiClasses = containingClasses.toArray(new PsiClass[containingClasses.size()]);
+    } else {
+      psiClasses = classes;
+    }
+    for (final PsiClass containingClass : psiClasses) {
+      final Set<String> testMethodDependencies = new HashSet<String>();
+      TestNGUtil.collectAnnotationValues(testMethodDependencies, "dependsOnMethods", methods, containingClass);
+      if (!testMethodDependencies.isEmpty()) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            final Project project = containingClass.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            for (String dependency : testMethodDependencies) {
+              final String className = StringUtil.getPackageName(dependency);
+              final String methodName = StringUtil.getShortName(dependency);
+              if (StringUtil.isEmpty(className)) {
+                checkClassMethods(methodName, containingClass, alreadyMarkedToBeChecked, membersToCheckNow, results);
+              }
+              else {
+                final PsiClass aClass = psiFacade.findClass(className, containingClass.getResolveScope());
+                if (aClass != null) {
+                  checkClassMethods(methodName, aClass, alreadyMarkedToBeChecked, membersToCheckNow, results);
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+  }
+
+  private static void checkClassMethods(String methodName,
+                                        PsiClass containingClass,
+                                        Set<PsiMember> alreadyMarkedToBeChecked,
+                                        Set<PsiMember> membersToCheckNow, 
+                                        Map<PsiClass, Collection<PsiMethod>> results) {
+    final PsiMethod[] psiMethods = containingClass.findMethodsByName(methodName, true);
+    for (PsiMethod method : psiMethods) {
+      if (AnnotationUtil.isAnnotated(method, TestNGUtil.TEST_ANNOTATION_FQN, false) &&
+          appendMember(method, alreadyMarkedToBeChecked, results)) {
+        membersToCheckNow.add(method);
       }
     }
   }

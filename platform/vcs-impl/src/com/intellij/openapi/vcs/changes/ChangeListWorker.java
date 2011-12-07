@@ -20,8 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlusMinus;
 import com.intellij.util.containers.MultiMap;
@@ -795,5 +797,20 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final String s2 = o2.getFirst().getAfterRevision().getFile().getPresentableUrl();
       return SystemInfo.isFileSystemCaseSensitive ? s1.compareTo(s2) : s1.compareToIgnoreCase(s2);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "ChangeListWorker{" + "myMap=" + StringUtil.join(myMap.values(), new Function<LocalChangeList, String>() {
+      @Override
+      public String fun(LocalChangeList list) {
+        return "list: " + list.getName() + " changes: " + StringUtil.join(list.getChanges(), new Function<Change, String>() {
+          @Override
+          public String fun(Change change) {
+            return change.toString();
+          }
+        }, ", ");
+      }
+    }, "\n") + '}';
   }
 }

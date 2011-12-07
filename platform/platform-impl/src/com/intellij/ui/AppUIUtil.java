@@ -28,6 +28,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
+import java.awt.image.ImageProducer;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +41,9 @@ import java.util.List;
 public class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
 
-  private AppUIUtil() { }
+  private static boolean isDebugMode() {
+    return "true".equals(System.getProperty("idea.debug.mode"));
+  }
 
   public static void updateFrameIcon(final Frame frame) {
     frame.setIconImages(getAppIconImages());
@@ -86,7 +91,10 @@ public class AppUIUtil {
 
   public static String getFrameClass() {
     final String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
-    final String wmClass = VENDOR_PREFIX + StringUtil.replaceChar(name, ' ', '-');
+    String wmClass = VENDOR_PREFIX + StringUtil.replaceChar(name, ' ', '-');
+    if (isDebugMode()) {
+      wmClass += "-debug";
+    }
     return PlatformUtils.isCommunity() ? wmClass + "-ce" : wmClass;
   }
 }

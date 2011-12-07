@@ -188,14 +188,19 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
 
         for (int i = 0, framesSize = frames.size(); i < framesSize; i++) {
           final StackFrame stackFrame = frames.get(i);
-          final Location location = stackFrame.location();
-          buffer.append("\n\t  ").append(renderLocation(location));
+          try {
+            final Location location = stackFrame.location();
+            buffer.append("\n\t  ").append(renderLocation(location));
 
-          final List<ObjectReference> monitors = lockedAt.get(i);
-          if (monitors != null) {
-            for (ObjectReference monitor : monitors) {
-              buffer.append("\n\t  - ").append(renderLockedObject(monitor));
+            final List<ObjectReference> monitors = lockedAt.get(i);
+            if (monitors != null) {
+              for (ObjectReference monitor : monitors) {
+                buffer.append("\n\t  - ").append(renderLockedObject(monitor));
+              }
             }
+          }
+          catch (InvalidStackFrameException e) {
+            buffer.append("\n\t  Invalid stack frame: ").append(e.getMessage());
           }
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.psi.formatter;
 
-import com.intellij.formatting.WhiteSpaceFormattingStrategy;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -99,5 +100,15 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
       result = strategy.adjustWhiteSpaceIfNecessary(result, startElement, startOffset, endOffset);
     }
     return result;
+  }
+
+  @Override
+  public boolean containsWhitespacesOnly(@NotNull ASTNode node) {
+    return false;
+  }
+
+  @Override
+  public boolean addWhitespace(@NotNull ASTNode treePrev, @NotNull LeafElement whiteSpaceElement) {
+    return false;
   }
 }

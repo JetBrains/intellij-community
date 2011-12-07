@@ -137,8 +137,7 @@ public class GroovyBuilder extends Builder {
 
         final StringBuffer unparsedBuffer = handler.getStdErr();
         if (unparsedBuffer.length() != 0) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, unparsedBuffer.toString()));
-          hasMessages = true;
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, unparsedBuffer.toString()));
         }
 
         final int exitValue = handler.getProcess().exitValue();

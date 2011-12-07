@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.formatter.JavadocFormatterUtilHelper;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +36,6 @@ import java.util.List;
  */
 public class JavadocManagerImpl implements JavadocManager {
   private final List<JavadocTagInfo> myInfos;
-
-  static {
-    FormatterUtil.addHelper(new JavadocFormatterUtilHelper());
-  }
 
   public JavadocManagerImpl(Project project) {
     myInfos = new ArrayList<JavadocTagInfo>();

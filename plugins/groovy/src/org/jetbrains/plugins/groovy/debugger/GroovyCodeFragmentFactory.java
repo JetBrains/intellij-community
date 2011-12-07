@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticPara
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author ven
@@ -93,9 +94,29 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     javaText.append("groovy.lang.MetaClass |mc;\n");
     javaText.append("java.lang.Class |clazz;\n");
+
     if (!isStatic) {
-      javaText.append("|clazz = this.getClass();\n");
-      javaText.append("|mc = this.getMetaClass();\n");
+      javaText.append("java.lang.Object |thiz0;\n");
+
+      PsiElement originalContext = context.getContainingFile().getContext();
+      String fileName = originalContext == null ? null : originalContext.getContainingFile().getOriginalFile().getName();
+
+      if (fileName == null) {
+        javaText.append("|thiz0 = this;\n");
+      }
+      else {
+        String s = StringUtil.escapeStringCharacters(Pattern.quote(fileName));
+        javaText.append("if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"[^,]+\\\\$\\\\$[A-Za-z0-9]{8}\\\\.[^,]+\\\\(" + s + ":\\\\d+\\\\), .+com\\\\.springsource\\\\.loaded\\\\..+\")) {\n");
+        javaText.append("  |thiz0 = thiz;\n");
+        javaText.append(" } else {\n");
+        javaText.append("  |thiz0 = this.getClass();\n");
+        javaText.append(" }\n");
+      }
+    }
+
+    if (!isStatic) {
+      javaText.append("|clazz = |thiz0.getClass();\n");
+      javaText.append("|mc = |thiz0.getMetaClass();\n");
     } else {
       assert contextClass != null;
       javaText.append("|clazz = java.lang.Class.forName(\"").append(contextClass.getQualifiedName()).append("\");\n");
@@ -118,7 +139,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     javaText.append("groovy.lang.ExpandoMetaClass |emc = new groovy.lang.ExpandoMetaClass(|clazz);\n");
     if (!isStatic) {
       javaText.append("|emc.setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
-      javaText.append("this.setMetaClass(|emc);\n");
+      javaText.append("|thiz0.setMetaClass(|emc);\n");
     } else {
       javaText.append("|emc.getProperty(\"static\").setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
       javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(|clazz, |emc);\n");
@@ -126,8 +147,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     javaText.append("|emc.initialize();\n");
     javaText.append(unwrapVals(values));
     if (!isStatic) {
-      javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(this, \"").append(EVAL_NAME).append("\", |resVals);\n");
-      javaText.append("this.setMetaClass(|mc);"); //try/finally is not supported
+      javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(|thiz0, \"").append(EVAL_NAME).append("\", |resVals);\n");
+      javaText.append("|thiz0.setMetaClass(|mc);"); //try/finally is not supported
     } else {
       javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \"").append(EVAL_NAME).append("\", |resVals);\n");
       javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(|clazz, |mc);\n");

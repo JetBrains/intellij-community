@@ -152,6 +152,8 @@
     <lang.parserDefinition language="XHTML" implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
 
     <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="XML"
+                                       implementationClass="com.intellij.lang.xml.XmlWhiteSpaceFormattingStrategy"/>
     <lang.formatter language="HTML" implementationClass="com.intellij.lang.html.HtmlFormattingModelBuilder"/>
     <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>
     <lang.lineWrapStrategy language="XML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>

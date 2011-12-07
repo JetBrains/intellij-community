@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class LanguageLineWrapPositionStrategy extends LanguageExtension<LineWrap
    * @param editor    editor that manages document which text should be processed by wrap position strategy
    * @return          line wrap position strategy to use for the lines from the document managed by the given editor
    */
+  @NotNull
   public LineWrapPositionStrategy forEditor(@NotNull Editor editor) {
     LineWrapPositionStrategy result = getDefaultImplementation();
     Project project = editor.getProject();

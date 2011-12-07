@@ -252,7 +252,15 @@ public class GradleApiFacadeManager {
     // Check that significant settings are not changed
     RemoteGradleProcessSettings oldSettings = pair.second;
     RemoteGradleProcessSettings currentSettings = getRemoteSettings();
-    return StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome());
+    if (!StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome())) {
+      try {
+        pair.first.applySettings(currentSettings);
+      }
+      catch (RemoteException e) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull

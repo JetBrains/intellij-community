@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,21 +34,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 public class FormatterUtil {
-
-  private static final List<FormatterUtilHelper> ourHelpers = ContainerUtil.createEmptyCOWList();
 
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtil.addAll(
     new HashSet<String>(), ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME
   ));
 
   private FormatterUtil() {
-  }
-
-  public static void addHelper(FormatterUtilHelper helper) {
-    ourHelpers.add(helper);
   }
 
   public static boolean isWhitespaceOrEmpty(@Nullable ASTNode node) {
@@ -209,10 +202,11 @@ public class FormatterUtil {
     if (node == null) return false;
 
     if (isWhitespaceOrEmpty(node)) return true;
-    for (FormatterUtilHelper helper : ourHelpers) {
-      if (helper.containsWhitespacesOnly(node)) return true;
+    for (WhiteSpaceFormattingStrategy strategy : WhiteSpaceFormattingStrategyFactory.getAllStrategies()) {
+      if (strategy.containsWhitespacesOnly(node)) {
+        return true;
+      }
     }
-
     return false;
   }
 
@@ -350,8 +344,10 @@ public class FormatterUtil {
   }
 
   private static void addWhiteSpace(final ASTNode treePrev, final LeafElement whiteSpaceElement) {
-    for (FormatterUtilHelper helper : ourHelpers) {
-      if (helper.addWhitespace(treePrev, whiteSpaceElement)) return;
+    for (WhiteSpaceFormattingStrategy strategy : WhiteSpaceFormattingStrategyFactory.getAllStrategies()) {
+      if (strategy.addWhitespace(treePrev, whiteSpaceElement)) {
+        return;
+      }
     }
 
     final ASTNode treeParent = treePrev.getTreeParent();

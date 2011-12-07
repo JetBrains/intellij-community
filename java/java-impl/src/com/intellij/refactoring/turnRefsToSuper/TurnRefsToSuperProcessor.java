@@ -55,6 +55,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
                                      UsageViewUtil.getDescriptiveName(myClass), UsageViewUtil.getDescriptiveName(mySuper));
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new RefsToSuperViewDescriptor(myClass, mySuper);
   }

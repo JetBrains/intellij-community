@@ -25,13 +25,16 @@ import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -199,7 +202,7 @@ public class PluginHostsConfigurable extends BaseConfigurable  {
 
       protected Action[] createActions() {
         final Action[] actions = super.createActions();
-        return ArrayUtil.append(actions, new AbstractAction("Check Now") {
+        final AbstractAction checkNowAction = new AbstractAction("Check Now") {
           public void actionPerformed(final ActionEvent e) {
             final boolean [] result = new boolean[1];
             final Exception [] ex = new Exception[1];
@@ -225,7 +228,15 @@ public class PluginHostsConfigurable extends BaseConfigurable  {
               }
             }
           }
+        };
+        myField.getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
+          protected void textChanged(DocumentEvent e) {
+            checkNowAction.setEnabled(!StringUtil.isEmptyOrSpaces(myField.getText()));
+          }
         });
+        checkNowAction.setEnabled(!StringUtil.isEmptyOrSpaces(myField.getText()));
+        return ArrayUtil.append(actions, checkNowAction);
       }
     }
   }

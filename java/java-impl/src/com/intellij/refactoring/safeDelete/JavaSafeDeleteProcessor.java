@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -53,12 +54,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
+public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor");
 
   public boolean handlesElement(final PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod ||
-           element instanceof PsiField || element instanceof PsiParameter || element instanceof PsiLocalVariable;
+           element instanceof PsiField || element instanceof PsiParameter || element instanceof PsiLocalVariable || element instanceof PsiPackage;
   }
 
   @Nullable
@@ -97,9 +98,17 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     return new NonCodeUsageSearchInfo(insideDeletedCondition, element);
   }
 
-  public Collection<? extends PsiElement> getElementsToSearch(final PsiElement element, final Collection<PsiElement> allElementsToDelete) {
+  @Nullable
+  @Override
+  public Collection<? extends PsiElement> getElementsToSearch(PsiElement element,
+                                                              @Nullable Module module,
+                                                              Collection<PsiElement> allElementsToDelete) {
     Project project = element.getProject();
-    if (element instanceof PsiMethod) {
+    if (element instanceof PsiPackage && module != null) {
+      final PsiDirectory[] directories = ((PsiPackage)element).getDirectories(module.getModuleScope());
+      if (directories.length == 0) return null;
+      return Arrays.asList(directories);
+    } else if (element instanceof PsiMethod) {
       final PsiMethod[] methods =
         SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, RefactoringBundle.message("to.delete.with.usage.search"),
                                                  allElementsToDelete);

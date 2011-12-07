@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PropertyUtils {
@@ -252,15 +253,15 @@ public class PropertyUtils {
       prefix = "set";
     }
     else {
-      throw new IllegalArgumentException("argument is not a setter or getter");
+      return null;
     }
     final String name = methodName.substring(prefix.length());
     final PsiField field;
     if (prefix.equals("set")) {
-      field = PropertyUtils.getFieldOfSetter(propertyMethod);
+      field = getFieldOfSetter(propertyMethod);
     }
     else {
-      field = PropertyUtils.getFieldOfGetter(propertyMethod);
+      field = getFieldOfGetter(propertyMethod);
     }
     if (field == null) {
       return null;
@@ -277,15 +278,15 @@ public class PropertyUtils {
     }
   }
 
-  private static PsiMethod findPropertyMethod(PsiClass aClass, String prefix, String propertyName, PsiField field1) {
+  private static PsiMethod findPropertyMethod(@NotNull PsiClass aClass, @NotNull String prefix, @NotNull String propertyName, @NotNull PsiField field1) {
     final PsiMethod[] methods = aClass.findMethodsByName(prefix + propertyName, true);
     for (PsiMethod method : methods) {
       final PsiField field2;
       if (prefix.equals("set")) {
-        field2 = PropertyUtils.getFieldOfSetter(method);
+        field2 = getFieldOfSetter(method);
       }
       else {
-        field2 = PropertyUtils.getFieldOfGetter(method);
+        field2 = getFieldOfGetter(method);
       }
       if (field1.equals(field2)) {
         return method;

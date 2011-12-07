@@ -35,6 +35,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Alarm;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,7 @@ import java.util.regex.Pattern;
 )
 public class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
+  private static final Alarm ourRegisterMetaDataAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private class MetaDataKey {
     @NotNull private final String categoryNames;
@@ -185,7 +187,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
     final TextDescriptor description = metaData.getDescription();
-    app.executeOnPooledThread(new Runnable(){
+    ourRegisterMetaDataAlarm.addRequest(new Runnable(){
       public void run() {
         try {
           SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
@@ -202,7 +204,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
           LOG.error(e);
         }
       }
-    });
+    }, 0);
   }
 
   public synchronized void unregisterMetaData(IntentionAction intentionAction) {

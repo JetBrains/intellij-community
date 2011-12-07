@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.formatting;
+package com.intellij.psi.formatter;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,6 +46,14 @@ public interface WhiteSpaceFormattingStrategy {
   int check(@NotNull CharSequence text, int start, int end);
 
   /**
+   * Allows to answer if given node should be treated as white space node.
+   * 
+   * @param node  node to check
+   * @return      <code>true</code> if given node should be treated as white space; <code>false</code> otherwise
+   */
+  boolean containsWhitespacesOnly(@NotNull ASTNode node);
+  
+  /**
    * @return    <code>true</code> if default white space strategy used by formatter should be replaced by the current one;
    *            <code>false</code> to indicate that current strategy should be used in composition with default strategy
    *            if any, i.e. particular symbols sequence should be considered as white spaces if any of composed
@@ -52,7 +62,7 @@ public interface WhiteSpaceFormattingStrategy {
   boolean replaceDefaultStrategy();
 
   /**
-   * Main formatter duty is to tweak white space symbols (add/remove/modify them). However, it may be necessary
+   * Main formatter's duty is to tweak white space symbols (add/remove/modify them). However, it may be necessary
    * to pay special attention to that. For example it may be necessary to ensure that <code>'\'</code> symbol is
    * used inside multiline expression in case of Python etc.
    * <p/>
@@ -86,4 +96,16 @@ public interface WhiteSpaceFormattingStrategy {
    */
   CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, @NotNull PsiElement startElement, int startOffset,
                                            int endOffset);
+
+  /**
+   * Allows to customize addition of the given white space element to the AST referenced by the given node.
+   * 
+   * @param treePrev           target node to use as an anchor for inserting given white space element
+   * @param whiteSpaceElement  target white space element to insert
+   * @return                   <code>true</code> if given white space element was added in a custom way during the current method call
+   *                           processing;
+   *                           <code>false</code> as an indicator that given white space element has not been inserted during the
+   *                           current method call
+   */
+  boolean addWhitespace(@NotNull ASTNode treePrev, @NotNull LeafElement whiteSpaceElement);
 }

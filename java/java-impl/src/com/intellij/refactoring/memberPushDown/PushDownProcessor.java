@@ -69,6 +69,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return JavaPushDownHandler.REFACTORING_NAME;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new PushDownUsageViewDescriptor(myClass);
   }

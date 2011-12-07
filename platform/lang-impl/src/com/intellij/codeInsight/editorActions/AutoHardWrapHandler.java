@@ -17,7 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.formatting.FormatConstants;
-import com.intellij.formatting.WhiteSpaceFormattingStrategy;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;

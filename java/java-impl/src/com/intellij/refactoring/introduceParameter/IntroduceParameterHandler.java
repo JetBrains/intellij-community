@@ -48,7 +48,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.*;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.IntroduceHandlerBase;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.ui.MethodCellRenderer;
@@ -385,6 +388,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
       final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
       if (activeIntroducer != null) {
+        if (!(activeIntroducer instanceof InplaceIntroduceParameterPopup) || !activeIntroducer.startsOnTheSameElement(myExpr, myLocalVar)) {
+          AbstractInplaceIntroducer.unableToStartWarning(myProject, myEditor, activeIntroducer);
+          return;
+        }
         activeIntroducer.stopIntroduce(myEditor);
         myExpr = (PsiExpression)activeIntroducer.getExpr();
         myLocalVar = (PsiLocalVariable)activeIntroducer.getLocalVariable();

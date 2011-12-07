@@ -116,7 +116,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
       while (stream.available() > 0) {
         final int valueCount = DataInputOutputUtil.readSINT(in);
         if (valueCount < 0) {
-          valueContainer.removeAllValues(-valueCount);
+          valueContainer.removeAssociatedValue(-valueCount);
           valueContainer.setNeedsCompacting(true);
         }
         else {

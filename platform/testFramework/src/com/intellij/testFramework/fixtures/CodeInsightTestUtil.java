@@ -180,15 +180,10 @@ public class CodeInsightTestUtil {
           finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
         }
       }.execute().throwException();
-      assert renamer != null;
-      renamer.finish();
 
       state = TemplateManagerImpl.getTemplateState(editor);
       assert state != null;
       state.gotoEnd(false);
-    }
-    catch (Exception er) {
-      er.printStackTrace();
     }
     finally {
       templateManager.setTemplateTesting(false);

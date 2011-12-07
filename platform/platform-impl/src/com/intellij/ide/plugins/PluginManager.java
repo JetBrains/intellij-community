@@ -34,13 +34,13 @@ import com.intellij.openapi.extensions.LogProvider;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -58,11 +58,13 @@ import sun.reflect.Reflection;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
 import java.util.*;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -581,8 +583,8 @@ public class PluginManager {
             final String description = event.getDescription();
             if (EDIT.equals(description)) {
               final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-              final Project project = null;
-              ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+              final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+              ShowSettingsUtil.getInstance().editConfigurable(focusOwner, configurable);
               return;
             }
             final List<String> disabledPlugins = getDisabledPlugins();
@@ -906,6 +908,7 @@ public class PluginManager {
     if (descriptor != null && !descriptor.getOptionalConfigs().isEmpty()) {
       final Map<PluginId, IdeaPluginDescriptorImpl> descriptors = new HashMap<PluginId, IdeaPluginDescriptorImpl>(descriptor.getOptionalConfigs().size());
       for (Map.Entry<PluginId, String> entry: descriptor.getOptionalConfigs().entrySet()) {
+        assert !Comparing.equal(fileName, entry.getValue()) : "recursive dependency: "+fileName;
         final IdeaPluginDescriptorImpl optionalDescriptor = loadDescriptor(file, entry.getValue());
         if (optionalDescriptor != null) {
           descriptors.put(entry.getKey(), optionalDescriptor);
@@ -1120,6 +1123,7 @@ public class PluginManager {
     ourDisabledPlugins = null;
   }
 
+  @NotNull
   public static List<String> getDisabledPlugins() {
     if (ourDisabledPlugins == null) {
       ourDisabledPlugins = new ArrayList<String>();

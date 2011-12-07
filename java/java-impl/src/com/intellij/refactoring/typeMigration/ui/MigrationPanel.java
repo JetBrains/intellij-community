@@ -256,7 +256,6 @@ public class MigrationPanel extends JPanel implements Disposable {
 
   private void initTree(final Tree tree) {
     final MigrationRootsTreeCellRenderer rootsTreeCellRenderer = new MigrationRootsTreeCellRenderer();
-    rootsTreeCellRenderer.setOpaque(false);
     tree.setCellRenderer(rootsTreeCellRenderer);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
@@ -294,7 +293,6 @@ public class MigrationPanel extends JPanel implements Disposable {
   private static class MyTree extends Tree implements DataProvider {
     private MyTree(final TreeModel treemodel) {
       super(treemodel);
-      setOpaque(false);
     }
 
     @Override

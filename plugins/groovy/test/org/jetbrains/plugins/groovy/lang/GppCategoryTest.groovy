@@ -19,11 +19,13 @@ import com.intellij.psi.PsiReference
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
 class GppCategoryTest extends LightCodeInsightFixtureTestCase {
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GppProjectDescriptor.instance

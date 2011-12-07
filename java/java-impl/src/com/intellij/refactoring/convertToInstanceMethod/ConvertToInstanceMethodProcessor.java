@@ -81,6 +81,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return myTargetClass;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetParameter, myTargetClass);
   }

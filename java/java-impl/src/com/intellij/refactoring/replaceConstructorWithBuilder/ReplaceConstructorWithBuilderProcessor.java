@@ -81,6 +81,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     myCreateNewBuilderClass = createNewBuilderClass;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
     return new ReplaceConstructorWithBuilderViewDescriptor();
   }

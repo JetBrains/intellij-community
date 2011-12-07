@@ -40,10 +40,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import com.intellij.ui.BalloonImpl;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DottedBorder;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +78,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   private DocumentAdapter myDocumentAdapter;
   protected final JPanel myWholePanel;
+  private boolean myFinished = false;
 
   public AbstractInplaceIntroducer(Project project,
                                    Editor editor,
@@ -150,7 +153,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
-    return StartMarkAction.start(myEditor, myProject, getVariable(), getCommandName());
+    return StartMarkAction.start(myEditor, myProject, getCommandName());
   }
 
   /**
@@ -228,6 +231,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             myDocumentAdapter = new DocumentAdapter() {
               @Override
               public void documentChanged(DocumentEvent e) {
+                if (myPreview == null) return;
                 final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
                 if (templateState != null) {
                   final TextResult value = templateState.getVariableValue(VariableInplaceRenamer.PRIMARY_VARIABLE_NAME);
@@ -245,13 +249,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           }
         }
         result.set(started);
-        if (!started && variable != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              variable.delete();
-            }
-          });
+        if (!started) {
+          finish();
         }
       }
 
@@ -327,6 +326,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   public void finish() {
+    myFinished = true;
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
     if (templateState != null) {
       myEditor.putUserData(ACTIVE_INTRODUCE, null);
@@ -551,6 +551,43 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       };
       CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), getCommandName());
     }
+  }
+
+  @Override
+  protected void restoreStateBeforeDialogWouldBeShown() {
+    stopIntroduce(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+  }
+
+  @Override
+  protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
+    finish();
+    super.navigateToAlreadyStarted(oldDocument, exitCode);
+  }
+
+  @Override
+  protected void showBalloon() {
+    if (myFinished) return;
+    super.showBalloon();
+  }
+
+  public boolean startsOnTheSameElement(E expr, V localVariable) {
+    if (myExprMarker != null && myExprMarker.isValid() && expr != null && myExprMarker.getStartOffset() == expr.getTextOffset()) {
+      return true;
+    }
+
+    if (myLocalMarker != null &&
+        myLocalMarker.isValid() &&
+        localVariable != null &&
+        myLocalMarker.getStartOffset() == localVariable.getTextOffset()) {
+      return true;
+    }
+    return false;
+  }
+
+  public static void unableToStartWarning(Project project, Editor editor, AbstractInplaceIntroducer introducer) {
+    String message = RefactoringBundle
+      .getCannotRefactorMessage(introducer.getCommandName() + " is not finished yet. Unable to start a refactoring");
+    CommonRefactoringUtil.showErrorHint(project, editor, message, null, null);
   }
 
   @Nullable

@@ -66,12 +66,12 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   @Override
-  public void removeAllValues(int inputId) {
+  public void removeAssociatedValue(int inputId) {
     if (myMerged != null) {
-      myMerged.removeAllValues(inputId);
+      myMerged.removeAssociatedValue(inputId);
     }
-    myAdded.removeAllValues(inputId);
-    myRemoved.removeAllValues(inputId);
+    myAdded.removeAssociatedValue(inputId);
+    myRemoved.removeAssociatedValue(inputId);
     myInvalidated.add(inputId);
   }
 
@@ -104,11 +104,6 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   @Override
-  public int[] getInputIds(final Value value) {
-    return getMergedData().getInputIds(value);
-  }
-
-  @Override
   public boolean isAssociated(final Value value, final int inputId) {
     return getMergedData().isAssociated(value, inputId);
   }
@@ -117,6 +112,11 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   public IntIterator getInputIdsIterator(final Value value) {
     return getMergedData().getInputIdsIterator(value);
   }
+
+  public void dropMergedData() {
+    myMerged = null;
+  }
+
   // need 'synchronized' to ensure atomic initialization of merged data
   // because several threads that acquired read lock may simultaneously execute the method
   private ValueContainer<Value> getMergedData() {
@@ -133,29 +133,32 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
 
       final ValueContainer<Value> fromDisk = myInitializer.compute();
 
-      final ContainerAction<Value> addAction = new ContainerAction<Value>() {
+      fromDisk.forEach(new ContainerAction<Value>() {
         @Override
         public void perform(final int id, final Value value) {
           newMerged.addValue(id, value);
         }
-      };
-      final ContainerAction<Value> removeAction = new ContainerAction<Value>() {
+      });
+      myInvalidated.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int inputId) {
+          newMerged.removeAssociatedValue(inputId);
+          return true;
+        }
+      });
+      myRemoved.forEach(new ContainerAction<Value>() {
         @Override
         public void perform(final int id, final Value value) {
           newMerged.removeValue(id, value);
         }
-      };
-
-      fromDisk.forEach(addAction);
-      myInvalidated.forEach(new TIntProcedure() {
+      });
+      myAdded.forEach(new ContainerAction<Value>() {
         @Override
-        public boolean execute(int inputId) {
-          newMerged.removeAllValues(inputId);
-          return true;
+        public void perform(final int id, final Value value) {
+          newMerged.removeAssociatedValue(id); // enforcing "one-value-per-file for particular key" invariant
+          newMerged.addValue(id, value);
         }
       });
-      myRemoved.forEach(removeAction);
-      myAdded.forEach(addAction);
       setNeedsCompacting(fromDisk.needsCompacting());
 
       myMerged = newMerged;

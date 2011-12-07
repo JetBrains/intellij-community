@@ -121,7 +121,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         final ComboBoxModel model = getComboBox().getModel();
         for (int i = 0; i < model.getSize(); i++) {
           DirectoryChooser.ItemWrapper item = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
-          if (fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()) == root) {
+          if (item != null && fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()) == root) {
             getComboBox().setSelectedItem(item);
             return;
           }
@@ -223,9 +223,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         oldOne = itemWrapper;
       }
     }
-    if (initialTargetDirectorySourceRoot == null) {
-      items.add(null);
-    }
+    items.add(null);
     final DirectoryChooser.ItemWrapper selection = chooseSelection(initialTargetDirectorySourceRoot, fileIndex, items, initial, oldOne);
     final ComboBoxModel model = comboBox.getModel();
     if (model instanceof CollectionComboBoxModel) {

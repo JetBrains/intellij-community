@@ -72,13 +72,6 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                                            PsiExpression[] occurrences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
 
-    PsiElement element = null;
-    if (expr != null) {
-      element = expr.getUserData(ElementToWorkOn.PARENT);
-      if (element == null) element = expr;
-    }
-    if (element == null) element = anchorElement;
-
     PsiLocalVariable localVariable = null;
     if (expr instanceof PsiReferenceExpression) {
       PsiElement ref = ((PsiReferenceExpression)expr).resolve();
@@ -93,6 +86,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     String enteredName = null;
     boolean replaceAll = false;
     if (activeIntroducer != null) {
+      if (!(activeIntroducer instanceof InplaceIntroduceFieldPopup) || !activeIntroducer.startsOnTheSameElement(expr, localVariable)) {
+        AbstractInplaceIntroducer.unableToStartWarning(project, editor, activeIntroducer);
+        return null;
+      }
       activeIntroducer.stopIntroduce(editor);
       expr = (PsiExpression)activeIntroducer.getExpr();
       localVariable = (PsiLocalVariable)activeIntroducer.getLocalVariable();
@@ -104,7 +101,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
 
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
-    final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(element, parentClass);
+    final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(getElement(expr, anchorElement), parentClass);
     boolean declareStatic = staticParentElement != null;
 
     boolean isInSuperOrThis = false;
@@ -160,6 +157,16 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                                            dialog.getInitializerPlace(), dialog.getFieldVisibility(),
                                            localVariable,
                                            dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
+  }
+
+  private static PsiElement getElement(PsiExpression expr, PsiElement anchorElement) {
+    PsiElement element = null;
+    if (expr != null) {
+      element = expr.getUserData(ElementToWorkOn.PARENT);
+      if (element == null) element = expr;
+    }
+    if (element == null) element = anchorElement;
+    return element;
   }
 
   @Override

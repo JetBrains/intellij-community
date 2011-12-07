@@ -40,8 +40,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.HashSet;
 
-public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
-  public boolean canCopy(final PsiElement[] elements) {
+public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
+  @Override
+  public boolean canCopy(PsiElement[] elements, boolean fromUpdate) {
     HashSet<String> names = new HashSet<String>();
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFileSystemItem)) return false;
@@ -94,6 +95,10 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
   }
 
   public void doClone(final PsiElement element) {
+    doCloneFile(element);
+  }
+
+  public static void doCloneFile(PsiElement element) {
     PsiDirectory targetDirectory;
     if (element instanceof PsiDirectory) {
       targetDirectory = ((PsiDirectory)element).getParentDirectory();

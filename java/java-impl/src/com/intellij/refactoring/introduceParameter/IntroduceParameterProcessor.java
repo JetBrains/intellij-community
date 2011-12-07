@@ -120,6 +120,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myInitializerWrapper = expressionToSearch == null ? null : new JavaExpressionWrapper(expressionToSearch);
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new IntroduceParameterViewDescriptor(myMethodToSearchFor);
   }
@@ -427,6 +428,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       argumentList.add(myParameterInitializer);
     }
     else {
+      if (anchorParameter == null) {
+        argumentList.add(myParameterInitializer);
+      }
       for (int i = 0; i < psiParameters.length; i++) {
         PsiParameter psiParameter = psiParameters[i];
         if (!myParametersToRemove.contains(i)) {

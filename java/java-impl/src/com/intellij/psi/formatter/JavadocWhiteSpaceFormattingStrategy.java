@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.JavaDocTokenType;
+import org.jetbrains.annotations.NotNull;
 
-public interface FormatterUtilHelper {
-  boolean containsWhitespacesOnly(ASTNode node);
-  boolean addWhitespace(final ASTNode treePrev, final LeafElement whiteSpaceElement);
+/**
+ * @author max
+ */
+public class JavadocWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
+  @Override
+  public boolean containsWhitespacesOnly(@NotNull final ASTNode node) {
+    return node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0;
+  }
 }

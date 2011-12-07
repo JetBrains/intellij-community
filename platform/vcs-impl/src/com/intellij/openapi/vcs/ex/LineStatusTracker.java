@@ -77,7 +77,7 @@ public class LineStatusTracker {
   private boolean myAnathemaThrown;
   private FileEditorManager myFileEditorManager;
   private final VirtualFile myVirtualFile;
-  private volatile boolean myReleased;
+  private boolean myReleased = false;
 
   private LineStatusTracker(final Document document, final Document upToDateDocument, final Project project, final VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
@@ -90,15 +90,14 @@ public class LineStatusTracker {
     myRanges = new ArrayList<Range>();
     myAnathemaThrown = false;
     myFileEditorManager = FileEditorManager.getInstance(myProject);
-    myReleased = false;
   }
 
   public void initialize(@NotNull final String upToDateContent, @NotNull RevisionPack baseRevisionNumber) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myReleased) return;
 
     synchronized (myLock) {
       try {
+        if (myReleased) return;
         if (myBaseRevisionNumber != null && myBaseRevisionNumber.after(baseRevisionNumber)) return;
 
         myBaseRevisionNumber = baseRevisionNumber;
@@ -169,7 +168,7 @@ public class LineStatusTracker {
 
   @SuppressWarnings({"AutoBoxing"})
   private RangeHighlighter createHighlighter(final Range range) {
-    assert ! myReleased;
+    LOG.assertTrue(!myReleased, "Already released");
     int first =
       range.getOffset1() >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset1());
 
@@ -207,8 +206,8 @@ public class LineStatusTracker {
       removeAnathema();
       removeHighlightersFromMarkupModel();
       myRanges.clear();
+      myReleased = true;
     }
-    myReleased = true;
   }
 
   public Document getDocument() {
@@ -233,8 +232,9 @@ public class LineStatusTracker {
   }
 
   public void startBulkUpdate() {
-    if (myReleased) return;
     synchronized (myLock) {
+      if (myReleased) return;
+
       myBulkUpdate = true;
       removeAnathema();
       removeHighlightersFromMarkupModel();
@@ -253,8 +253,9 @@ public class LineStatusTracker {
   }
 
   public void finishBulkUpdate() {
-    if (myReleased) return;
     synchronized (myLock) {
+      if (myReleased) return;
+
       myBulkUpdate = false;
       reinstallRanges();
     }
@@ -293,10 +294,10 @@ public class LineStatusTracker {
     private final VcsDirtyScopeManager myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
     public void beforeDocumentChange(DocumentEvent e) {
-      if (myReleased) return;
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
+        if (myReleased) return;
         if (myBulkUpdate || myAnathemaThrown || (BaseLoadState.LOADED != myBaseLoaded)) return;
         try {
           myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
@@ -346,14 +347,10 @@ public class LineStatusTracker {
     }
 
     public void documentChanged(final DocumentEvent e) {
-      if (myReleased) {
-        return;
-      }
-      // TODO: remove assertion when cached document listeners will work ok
-      //assert ! myReleased;
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
+        if (myReleased) return;
         if (myBulkUpdate || myAnathemaThrown || (BaseLoadState.LOADED != myBaseLoaded)) return;
         try {
 

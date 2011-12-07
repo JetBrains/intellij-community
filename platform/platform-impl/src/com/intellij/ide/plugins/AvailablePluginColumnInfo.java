@@ -61,22 +61,16 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
       myPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0));
 
-      final GridBagConstraints gc =
-        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                               new Insets(0, LEFT_MARGIN, 0, 0), 0, 0);
-      final JPanel namePanel = new JPanel(new GridBagLayout());
-      GridBagConstraints gn = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0,0), 0,0);
-      namePanel.add(myNameLabel, gn);
-      gn.insets.left = LEFT_MARGIN;
-      namePanel.add(myStatusLabel, gn);
+      final GridBagConstraints gn = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0,0), 0,0);
+      myPanel.add(myNameLabel, gn);
+      myPanel.add(myStatusLabel, gn);
       gn.weightx = 1;
       gn.fill = GridBagConstraints.HORIZONTAL;
-      namePanel.add(Box.createHorizontalBox(), gn);
-      namePanel.setOpaque(false);
+      myPanel.add(Box.createHorizontalBox(), gn);
+
       gn.fill = GridBagConstraints.NONE;
       gn.weightx = 0;
-      namePanel.add(myCategoryLabel, gn);
-      myPanel.add(namePanel, gc);
+      myPanel.add(myCategoryLabel, gn);
     }
 
     @Override
@@ -101,11 +95,12 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
           myCategoryLabel.setText(category);
           myCategoryLabel.setForeground(grayedFg);
         }
-
-        if (isDownloaded(pluginNode)) {
+        final IdeaPluginDescriptor installed = PluginManager.getPlugin(pluginNode.getPluginId());
+        if (isDownloaded(pluginNode) || (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))) {
           if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_ADDED);
           myStatusLabel.setText("[Downloaded]");
           myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
+          myStatusLabel.setBorder(BorderFactory.createEmptyBorder(0, LEFT_MARGIN, 0, 0));
         }
         else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
           PluginId pluginId = pluginNode.getPluginId();
@@ -118,6 +113,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
             myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
           }
           myStatusLabel.setText("v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (" -> " + pluginNode.getVersion()) : ""));
+          myStatusLabel.setBorder(BorderFactory.createEmptyBorder(0, LEFT_MARGIN, 0, 0));
         }
       }
       return myPanel;

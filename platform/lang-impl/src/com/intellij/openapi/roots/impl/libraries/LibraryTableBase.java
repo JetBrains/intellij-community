@@ -61,7 +61,6 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     try {
       if (myFirstLoad) {
         myModel.readExternal(element);
-        onLibrariesLoaded();
       }
       else {
         final LibraryModel model = new LibraryModel();
@@ -74,9 +73,6 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     catch (InvalidDataException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  protected void onLibrariesLoaded() {
   }
 
   @NotNull

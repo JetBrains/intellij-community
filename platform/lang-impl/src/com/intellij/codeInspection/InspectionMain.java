@@ -52,13 +52,13 @@ public class InspectionMain implements ApplicationStarter {
       }
     };
     myApplication.myProjectPath = args[1];
-    myApplication.myProfileName = args[2];
+    myApplication.myStubProfile = args[2];
     myApplication.myOutPath = args[3];
 
     if (myApplication.myProjectPath == null
         || myApplication.myOutPath == null
-        || myApplication.myProfileName == null) {
-      System.err.println(myApplication.myProjectPath + myApplication.myOutPath + myApplication.myProfileName);
+        || myApplication.myStubProfile == null) {
+      System.err.println(myApplication.myProjectPath + myApplication.myOutPath + myApplication.myStubProfile);
       printHelp();
     }
 
@@ -66,7 +66,11 @@ public class InspectionMain implements ApplicationStarter {
     try {
       for (int i = 4; i < args.length; i++) {
         String arg = args[i];
-        if ("-d".equals(arg)) {
+        if ("-profileName".equals(arg)) {
+          myApplication.myProfileName = args[++i];
+        } else if ("-profilePath".equals(arg)) {
+          myApplication.myProfilePath = args[++i];
+        } else if ("-d".equals(arg)) {
           myApplication.mySourceDirectory = args[++i];
         }
         else if ("-v0".equals(arg)) {

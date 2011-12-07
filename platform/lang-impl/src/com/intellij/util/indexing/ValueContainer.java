@@ -38,8 +38,6 @@ public abstract class ValueContainer<Value> {
   
   public abstract Iterator<Value> getValueIterator();
 
-  public abstract int[] getInputIds(Value value);
-
   public abstract List<Value> toValueList();
 
   public abstract int size();

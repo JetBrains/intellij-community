@@ -54,6 +54,8 @@ public class ResourceBundleUtil {
   public static ResourceBundle getResourceBundleFromDataContext(@NotNull DataContext dataContext) {
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof IProperty) return null; //rename property
+    final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
+    if (bundles != null && bundles.length == 1) return bundles[0];
     VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) {
       return null;

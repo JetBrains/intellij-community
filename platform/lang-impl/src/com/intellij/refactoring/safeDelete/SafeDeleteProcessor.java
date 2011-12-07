@@ -72,6 +72,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     mySearchNonJava = isSearchNonJava;
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new SafeDeleteUsageViewDescriptor(myElements);
   }

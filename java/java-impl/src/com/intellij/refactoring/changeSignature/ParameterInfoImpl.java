@@ -21,6 +21,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
@@ -154,7 +155,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
 
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
-    if (defaultValue != null && defaultValue.length() == 0) return null;
+    if (StringUtil.isEmpty(defaultValue)) return null;
     return JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
   }
 

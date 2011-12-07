@@ -37,6 +37,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
@@ -44,12 +45,18 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -77,6 +84,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -162,10 +170,6 @@ public class VariableInplaceRenamer {
       }
     }
 
-    while (!ourRenamersStack.isEmpty()) {
-      ourRenamersStack.peek().finish();
-    }
-
     PsiElement scope = checkLocalScope();
 
     if (scope == null) {
@@ -176,7 +180,8 @@ public class VariableInplaceRenamer {
     if (containingFile == null){
       return false; // Should have valid local search scope for inplace rename
     }
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return false;
+    //no need to process further when file is read-only
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
 
     myEditor.putUserData(INPLACE_RENAMER, this);
     ourRenamersStack.push(this);
@@ -274,15 +279,19 @@ public class VariableInplaceRenamer {
     try {
       markAction = startRename();
     }
-    catch (StartMarkAction.AlreadyStartedException e) {
-      PsiNamedElement oldElement = e.getElement();
-      boolean otherElement = oldElement != getVariable();
-      if (otherElement) {
-        CommonRefactoringUtil.showErrorHint(myProject, myEditor, e.getMessage(), RENAME_TITLE, null);
-      } else {
+    catch (final StartMarkAction.AlreadyStartedException e) {
+      final Document oldDocument = e.getDocument();
+      if (oldDocument != myEditor.getDocument()) {
+        final int exitCode = Messages.showOkCancelDialog(myProject, e.getMessage(), RENAME_TITLE,
+                                                         "Navigate to continue rename", "Cancel started rename", Messages.getErrorIcon());
+        if (exitCode == -1) return true;
+        navigateToAlreadyStarted(oldDocument, exitCode);
+        return true;
+      }
+      else {
         restoreStateBeforeDialogWouldBeShown();
       }
-      return oldElement != null && otherElement;
+      return false;
     }
 
     final PsiElement scope1 = scope;
@@ -318,17 +327,16 @@ public class VariableInplaceRenamer {
                 }
                 finish();
 
+                TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
+                myNewName = getNewName(value != null ? value.toString() : null, snapshot);
+
                 if (snapshot != null && performAutomaticRename()) {
-                  TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-                  if (value != null) {
-                    myNewName = value.toString();
-                    if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
-                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                        public void run() {
-                          snapshot.apply(myNewName);
-                        }
-                      });
-                    }
+                  if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                      public void run() {
+                        snapshot.apply(myNewName);
+                      }
+                    });
                   }
                 }
                 restoreStateBeforeTemplateIsFinished();
@@ -411,6 +419,34 @@ public class VariableInplaceRenamer {
     return true;
   }
 
+  protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
+    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(oldDocument);
+    if (file != null) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        final FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
+        for (FileEditor editor : editors) {
+          if (editor instanceof TextEditor) {
+            final Editor textEditor = ((TextEditor)editor).getEditor();
+            final TemplateState templateState = TemplateManagerImpl.getTemplateState(textEditor);
+            if (templateState != null) {
+              if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+                final TextRange range = templateState.getVariableRange(PRIMARY_VARIABLE_NAME);
+                if (range != null) {
+                  new OpenFileDescriptor(myProject, virtualFile, range.getStartOffset()).navigate(true);
+                  return;
+                }
+              } else {
+                templateState.gotoEnd();
+                return;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   protected void restoreStateBeforeTemplateIsFinished() {}
 
   @Nullable
@@ -419,11 +455,42 @@ public class VariableInplaceRenamer {
   }
 
   protected void restoreStateBeforeDialogWouldBeShown() {
+    PsiNamedElement variable = getVariable();
+    final TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+    assert state != null;
+    final String commandName = RefactoringBundle
+      .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), UsageViewUtil.getDescriptiveName(variable),
+               variable.getName());
+    Runnable runnable = new Runnable() {
+      public void run() {
+        state.gotoEnd(true);
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(myProject, runnable, commandName, null);
+  }
+
+  @Nullable
+  protected String getNewName(String newName, ResolveSnapshotProvider.ResolveSnapshot snapshot) {
+    return snapshot != null ? newName : null;
   }
 
   @Nullable
   protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
-    return null;
+    final StartMarkAction[] markAction = new StartMarkAction[1];
+    final StartMarkAction.AlreadyStartedException[] ex = new StartMarkAction.AlreadyStartedException[1];
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
+      public void run() {
+        try {
+          markAction[0] = StartMarkAction.start(myEditor, myProject, RENAME_TITLE);
+        }
+        catch (StartMarkAction.AlreadyStartedException e) {
+          ex[0] = e;
+        }
+      }
+    }, RENAME_TITLE, null);
+    if (ex[0] != null) throw ex[0];
+    return markAction[0];
   }
 
   @Nullable

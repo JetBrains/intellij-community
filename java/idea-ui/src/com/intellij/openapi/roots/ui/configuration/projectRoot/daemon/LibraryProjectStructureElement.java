@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -14,7 +13,10 @@ import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
@@ -122,8 +124,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   public boolean shouldShowWarningIfUnused() {
     final LibraryTable libraryTable = myLibrary.getTable();
     if (libraryTable == null) return false;
-    return LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryTable.getTableLevel())
-        || LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libraryTable.getTableLevel()) && !ApplicationLibraryTable.getApplicationTable().isUsedInOtherProjects(myLibrary, myContext.getProject());
+    return LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryTable.getTableLevel());
   }
 
   @Override
