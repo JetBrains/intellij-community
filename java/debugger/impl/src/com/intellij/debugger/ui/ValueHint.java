@@ -245,7 +245,9 @@ public class ValueHint extends AbstractValueHint {
 
         PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
-        if(psiFile == null || !psiFile.isValid()) return;
+        if(psiFile == null || !psiFile.isValid()) {
+          return;
+        }
 
         int selectionStart = editor.getSelectionModel().getSelectionStart();
         int selectionEnd   = editor.getSelectionModel().getSelectionEnd();
@@ -255,11 +257,16 @@ public class ValueHint extends AbstractValueHint {
           try {
             String text = editor.getSelectionModel().getSelectedText();
             if(text != null && ctx != null) {
-              selectedExpression.set(JVMElementFactories.getFactory(ctx.getLanguage(), project).createExpressionFromText(text, ctx));
+              final JVMElementFactory factory = JVMElementFactories.getFactory(ctx.getLanguage(), project);
+              if (factory == null) {
+                return;
+              }
+              selectedExpression.set(factory.createExpressionFromText(text, ctx));
               currentRange.set(new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd()));
             }
           }
-          catch (IncorrectOperationException ignored) { }
+          catch (IncorrectOperationException ignored) {
+          }
         }
 
         if(currentRange.get() == null) {
