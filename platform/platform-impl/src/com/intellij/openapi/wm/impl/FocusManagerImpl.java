@@ -734,32 +734,43 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private int getCurrentModalityCount() {
-    int modalDialogs = 0;
+    int modalityCount = 0;
     Window[] windows = Window.getWindows();
     for (Window each : windows) {
+      if (!each.isShowing()) continue;
+
       if (each instanceof Dialog) {
         Dialog eachDialog = (Dialog)each;
-        if (eachDialog.isModal() && eachDialog.isShowing()) {
-          modalDialogs++;
+        if (eachDialog.isModal()) {
+          modalityCount++;
+        } else if (each instanceof JDialog) {
+          if (isModalContextPopup(((JDialog)each).getRootPane())) {
+            modalityCount++;
+          }
         }
       } else if (each instanceof JWindow) {
-        final JBPopup popup = (JBPopup)((JWindow)each).getRootPane().getClientProperty(JBPopup.KEY);
-        if (popup != null && popup.isModalContext()) {
-          modalDialogs++;
+        JRootPane rootPane = ((JWindow)each).getRootPane();
+        if (isModalContextPopup(rootPane)) {
+          modalityCount++;
         }
       }
     }
     Iterator<Integer> modalityCounts = myModalityCount2FlushCount.keySet().iterator();
     while (modalityCounts.hasNext()) {
       Integer eachModalityCount = modalityCounts.next();
-      if (eachModalityCount > modalDialogs) {
+      if (eachModalityCount > modalityCount) {
         modalityCounts.remove();
       }
     }
 
-    return modalDialogs;
+    return modalityCount;
   }
 
+  private boolean isModalContextPopup(JRootPane rootPane) {
+    final JBPopup popup = (JBPopup)rootPane.getClientProperty(JBPopup.KEY);
+    return popup != null && popup.isModalContext();
+  } 
+  
   public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {
     typeAheadUntil(done);
  }

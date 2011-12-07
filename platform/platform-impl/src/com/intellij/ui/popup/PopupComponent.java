@@ -16,6 +16,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
@@ -38,15 +39,15 @@ public interface PopupComponent {
   boolean isPopupWindow(Window window);
 
   interface Factory {
-    PopupComponent getPopup(Component owner, Component content, int x, int y);
+    PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup);
 
     boolean isNativePopup();
 
     class AwtDefault implements Factory {
-      public PopupComponent getPopup(Component owner, Component content, int x, int y) {
+      public PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup) {
         final PopupFactory factory = PopupFactory.getSharedInstance();
         final Popup popup = factory.getPopup(owner, content, x, y);
-        return new AwtPopupWrapper(popup);
+        return new AwtPopupWrapper(popup, jbPopup);
       }
 
       public boolean isNativePopup() {
@@ -55,7 +56,7 @@ public interface PopupComponent {
     }
 
     class AwtHeavyweight implements Factory {
-      public PopupComponent getPopup(Component owner, Component content, int x, int y) {
+      public PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup) {
         final PopupFactory factory = PopupFactory.getSharedInstance();
 
         final int oldType = PopupUtil.getPopupType(factory);
@@ -63,7 +64,7 @@ public interface PopupComponent {
         final Popup popup = factory.getPopup(owner, content, x, y);
         if (oldType >= 0) PopupUtil.setPopupType(factory, oldType);
 
-        return new AwtPopupWrapper(popup);
+        return new AwtPopupWrapper(popup, jbPopup);
       }
 
       public boolean isNativePopup() {
@@ -72,8 +73,8 @@ public interface PopupComponent {
     }
 
     class Dialog implements Factory {
-      public PopupComponent getPopup(Component owner, Component content, int x, int y) {
-        return new DialogPopupWrapper(owner, content, x, y);
+      public PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup) {
+        return new DialogPopupWrapper(owner, content, x, y, jbPopup);
       }
 
       public boolean isNativePopup() {
@@ -95,7 +96,7 @@ public interface PopupComponent {
       return myDialog != null && myDialog == window;
     }
 
-    public DialogPopupWrapper(Component owner, Component content, int x, int y) {
+    public DialogPopupWrapper(Component owner, Component content, int x, int y, JBPopup jbPopup) {
       if (!owner.isShowing()) {
         throw new IllegalArgumentException("Popup owner must be showing");
       }
@@ -109,6 +110,7 @@ public interface PopupComponent {
 
       myDialog.getContentPane().setLayout(new BorderLayout());
       myDialog.getContentPane().add(content, BorderLayout.CENTER);
+      myDialog.getRootPane().putClientProperty(JBPopup.KEY, jbPopup);
 
       myDialog.setUndecorated(true);
       myDialog.pack();
@@ -123,6 +125,7 @@ public interface PopupComponent {
       myDialog.setVisible(false);
       if (dispose) {
         myDialog.dispose();
+        myDialog.getRootPane().putClientProperty(JBPopup.KEY, null);
       }
     }
 
@@ -142,9 +145,11 @@ public interface PopupComponent {
   class AwtPopupWrapper implements PopupComponent {
 
     private final Popup myPopup;
+    private JBPopup myJBPopup;
 
-    public AwtPopupWrapper(Popup popup) {
+    public AwtPopupWrapper(Popup popup, JBPopup jbPopup) {
       myPopup = popup;
+      myJBPopup = jbPopup;
 
       if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
         final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
@@ -176,6 +181,10 @@ public interface PopupComponent {
 
     public void show() {
       myPopup.show();
+      Window wnd = getWindow();
+      if (wnd instanceof JWindow) {
+        ((JWindow)wnd).getRootPane().putClientProperty(JBPopup.KEY, myJBPopup);
+      }
     }
 
     public Window getWindow() {

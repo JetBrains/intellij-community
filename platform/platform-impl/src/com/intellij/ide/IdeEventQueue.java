@@ -585,8 +585,11 @@ public class IdeEventQueue extends EventQueue {
       if (focusOwner == null || !focusOwner.isShowing() || focusOwner instanceof JFrame || focusOwner instanceof JDialog) {
 
         boolean mouseEventsAhead = isMouseEventAhead(e);
+        boolean focusTransferred = IdeFocusManager.getGlobalInstance().isFocusBeingTransferred();
 
-        if (!mouseEventsAhead) {
+        boolean okToFixFocus = !mouseEventsAhead && (!focusTransferred || !Registry.is("actionSystem.fixLostTyping"));
+
+        if (okToFixFocus) {
           Window showingWindow = mgr.getActiveWindow();
           if (showingWindow == null) {
             Method getNativeFocusOwner = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "getNativeFocusOwner");
