@@ -41,7 +41,6 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG, true);
 
   TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<List<String>>();
-  private final ProgressIndicator myProgressIndicator;
   private final ProgressWindow myProgressWindow;
   private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
 
@@ -61,7 +60,6 @@ public class HotSwapProgressImpl extends HotSwapProgress{
         super.cancel();
       }
     };
-    myProgressIndicator = myProgressWindow;
   }
 
   public void finished() {
@@ -69,15 +67,15 @@ public class HotSwapProgressImpl extends HotSwapProgress{
 
     final List<String> errors = getMessages(MessageCategory.ERROR);
     final List<String> warnings = getMessages(MessageCategory.WARNING);
-    if (errors.size() > 0) {
+    if (!errors.isEmpty()) {
       NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors),
                                                               NotificationType.ERROR, null).notify(getProject());
     }
-    else if (warnings.size() > 0){
+    else if (!warnings.isEmpty()){
       NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.warnings"),
                                             buildMessage(warnings), NotificationType.WARNING, null).notify(getProject());
     }
-    else if (myMessages.size() > 0){
+    else if (!myMessages.isEmpty()){
       List<String> messages = new ArrayList<String>();
       for (int category : myMessages.keys()) {
         messages.addAll(getMessages(category));
@@ -114,16 +112,20 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   public void setText(final String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
       public void run() {
-        myProgressIndicator.setText(text);
+        if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+          myProgressWindow.setText(text);
+        }
       }
-    }, myProgressIndicator.getModalityState());
+    }, myProgressWindow.getModalityState());
 
   }
 
   public void setTitle(final String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
       public void run() {
+        if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
         myProgressWindow.setTitle(text);
+        }
       }
     }, myProgressWindow.getModalityState());
 
@@ -132,17 +134,19 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   public void setFraction(final double v) {
     DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
       public void run() {
-        myProgressIndicator.setFraction(v);
+        if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+        myProgressWindow.setFraction(v);
+        }
       }
-    }, myProgressIndicator.getModalityState());
+    }, myProgressWindow.getModalityState());
   }
 
   public boolean isCancelled() {
-    return myProgressIndicator.isCanceled();
+    return myProgressWindow.isCanceled();
   }
 
   public ProgressIndicator getProgressIndicator() {
-     return myProgressIndicator;
+     return myProgressWindow;
   }
 
   public void setDebuggerSession(DebuggerSession session) {
