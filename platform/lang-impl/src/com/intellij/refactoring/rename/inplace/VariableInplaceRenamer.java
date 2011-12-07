@@ -334,7 +334,7 @@ public class VariableInplaceRenamer {
 
                 TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
                 myNewName = getNewName(value != null ? value.toString() : null, snapshot);
-                if (!LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
+                if (myNewName != null && !LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
                   performOnInvalidIdentifier(myNewName, nameSuggestions);
                   return;
                 }
