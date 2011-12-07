@@ -39,6 +39,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
     mySelectedMemberInfos = selectedMemberInfos;
   }
 
+  @NotNull
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new PyPushDownUsageViewDescriptor(myClass);
