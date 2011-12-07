@@ -13,5 +13,7 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(=~)('=~')
       PsiWhiteSpace(' ')
-      Literal
-        PsiElement(regexp)('/o(b.*r)f/')
+      Compound regular expression
+        PsiElement(regex begin)('/')
+        PsiElement(regex content)('o(b.*r)f')
+        PsiElement(regex end)('/')

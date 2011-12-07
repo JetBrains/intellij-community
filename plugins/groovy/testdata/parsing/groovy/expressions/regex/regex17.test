@@ -1,8 +1,7 @@
-    /abc/
+/sgfdhj$5dhfg/
 -----
 Groovy script
-  PsiWhiteSpace('    ')
   Compound regular expression
     PsiElement(regex begin)('/')
-    PsiElement(regex content)('abc')
+    PsiElement(regex content)('sgfdhj$5dhfg')
     PsiElement(regex end)('/')

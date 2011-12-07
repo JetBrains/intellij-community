@@ -1,8 +1,8 @@
-/$1\/
+/$
 -----
 Groovy script
   Compound regular expression
     PsiElement(regex begin)('/')
-    PsiElement(regex content)('$1\/')
+    PsiElement($)('$')
     PsiErrorElement:Regex ending expected
       <empty list>

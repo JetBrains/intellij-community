@@ -17,7 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 
@@ -42,5 +44,21 @@ public class GrRegexImpl extends GrStringImpl implements GrRegex {
     visitor.visitRegexExpression(this);
   }
 
+  @Override
+  public Object getValue() {
+    if (getInjections().length > 0) return null;
+
+    PsiElement child = getFirstChild();
+    if (child == null) return null;
+
+    child = child.getNextSibling();
+    if (child == null ||
+        child.getNode().getElementType() != GroovyTokenTypes.mREGEX_CONTENT &&
+        child.getNode().getElementType() != GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT) {
+      return null;
+    }
+
+    return child.getText();
+  }
 }
 

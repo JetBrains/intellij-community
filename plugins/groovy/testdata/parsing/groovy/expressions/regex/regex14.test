@@ -11,13 +11,19 @@ Groovy script
       PsiElement(()('(')
       PsiWhiteSpace(' ')
       Compound regular expression
-        PsiElement(regex begin)('/asd $')
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          Literal
-            PsiElement(regexp)('/bugaga/')
-          PsiElement(})('}')
-        PsiElement(regex end)(' asd/')
+        PsiElement(regex begin)('/')
+        PsiElement(regex content)('asd ')
+        GString injection
+          PsiElement($)('$')
+          Closable block
+            PsiElement({)('{')
+            Parameter list
+              <empty list>
+            Compound regular expression
+              PsiElement(regex begin)('/')
+              PsiElement(regex content)('bugaga')
+              PsiElement(regex end)('/')
+            PsiElement(})('}')
+        PsiElement(regex content)(' asd')
+        PsiElement(regex end)('/')
       PsiElement())(')')

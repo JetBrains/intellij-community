@@ -21,7 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralImpl> {
@@ -48,7 +48,7 @@ public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralImpl> {
 
   protected boolean isStrictBackSlash() {
     PsiElement child = myHost.getFirstChild();
-    return child == null || child.getNode().getElementType() != GroovyTokenTypes.mREGEX_LITERAL;
+    return child == null || myHost.getNode().getElementType() != GroovyElementTypes.REGEX;
   }
 
   public boolean isOneLine() {

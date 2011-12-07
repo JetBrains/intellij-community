@@ -18,8 +18,10 @@ Groovy script
         PsiWhiteSpace(' ')
         Unary expression
           PsiElement(~)('~')
-          Literal
-            PsiElement(regexp)('/..../')
+          Compound regular expression
+            PsiElement(regex begin)('/')
+            PsiElement(regex content)('....')
+            PsiElement(regex end)('/')
         PsiWhiteSpace(' ')
         PsiElement(:)(':')
       PsiElement(new line)('\n')
