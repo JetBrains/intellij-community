@@ -61,8 +61,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
 
   private MyDialog myDialog;
-  private final Alarm myUpdateAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Alarm myShowWindowAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm(this);
 
   private final Project myProject;
   private final boolean myShouldShowCancel;
@@ -357,7 +356,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         double fraction = getFraction();
         String text2 = getText2();
 
-        myTextLabel.setText(text != null && text.length() > 0 ? text : " ");
+        myTextLabel.setText(text != null && !text.isEmpty() ? text : " ");
 
         if (myProgressBar.isShowing()) {
           final int perc = (int)(fraction * 100);
@@ -367,7 +366,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
         myText2Label.setText(getTitle2Text(text2, myText2Label.getWidth()));
 
-        myTitlePanel.setText(myTitle != null && myTitle.length() > 0 ? myTitle : " ");
+        myTitlePanel.setText(myTitle != null && !myTitle.isEmpty() ? myTitle : " ");
 
         myLastTimeDrawn = System.currentTimeMillis();
         myRepaintedFlag = true;
@@ -375,7 +374,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     };
 
     private String getTitle2Text(String fullText, int labelWidth) {
-      if (fullText == null || fullText.length() == 0) return " ";
+      if (fullText == null || fullText.isEmpty()) return " ";
       while (myText2Label.getFontMetrics(myText2Label.getFont()).stringWidth(fullText) > labelWidth) {
         int sep = fullText.indexOf(File.separatorChar, 4);
         if (sep < 0) return fullText;
