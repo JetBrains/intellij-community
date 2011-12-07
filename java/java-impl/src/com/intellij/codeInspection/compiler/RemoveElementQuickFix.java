@@ -15,36 +15,37 @@
  */
 package com.intellij.codeInspection.compiler;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.psi.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class JavacQuirksInspection extends BaseLocalInspectionTool {
-  @Nls @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return GroupNames.COMPILER_ISSUES;
-  }
+public class RemoveElementQuickFix implements LocalQuickFix {
+  private final String myName;
 
-  @Nls @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.compiler.javac.quirks.name");
+  public RemoveElementQuickFix(@NotNull @Nls final String name) {
+    myName = name;
   }
 
   @NotNull
   @Override
-  public String getShortName() {
-    return "JavacQuirks";
+  public String getName() {
+    return myName;
   }
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new JavacQuirksInspectionVisitor(holder);
+  public String getFamilyName() {
+    return myName;
+  }
+
+  @Override
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    final PsiElement element = descriptor.getPsiElement();
+    if (element != null) {
+      element.delete();
+    }
   }
 }
