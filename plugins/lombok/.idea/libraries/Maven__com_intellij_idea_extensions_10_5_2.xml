@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.intellij.idea:extensions:10.5.2">
+    <CLASSES>
+      <root url="jar://$M2_REPO$/com/intellij/idea/extensions/10.5.2/extensions-10.5.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$M2_REPO$/com/intellij/idea/extensions/10.5.2/extensions-10.5.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$M2_REPO$/com/intellij/idea/extensions/10.5.2/extensions-10.5.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

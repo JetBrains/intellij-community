@@ -50,16 +50,16 @@
 			        <li>Fixed issue #6 "The Plugin panel in IDEA lists the plugin as "Lombook Plugin (doubled letter 'o')"</li>
 			        <li>Fixed issue #9 "@Data(staticConstructor="of") is not created"</li>
 			        <li>Fixed issue #10 "Empty constructor is created even if it already exists"</li>
-					    <li>Added more inspections and QuickFixes for some of lombok annotations.</li>
+					<li>Added more inspections and QuickFixes for some of lombok annotations.</li>
 				</ol>
 			</li>
 			<li>0.2
 				<ol>
-			<li>Added inspections for lombok annotations.</li>
-            <li>Added some simple QuickFixes for lombok inspections.</li>
-            <li>Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.</li>
-            <li>Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor</li>
-            <li>General bug fixing and many improvements</li>
+					<li>Added inspections for lombok annotations.</li>
+					<li>Added some simple QuickFixes for lombok inspections.</li>
+					<li>Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.</li>
+					<li>Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor</li>
+					<li>General bug fixing and many improvements</li>
 				</ol>
 			</li>
 			<li>0.1

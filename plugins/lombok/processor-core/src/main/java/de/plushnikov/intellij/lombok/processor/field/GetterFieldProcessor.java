@@ -1,5 +1,11 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
@@ -9,6 +15,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
@@ -20,11 +27,6 @@ import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Getter;
 import lombok.core.TransformationsUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Inspect and validate @Getter lombok annotation on a field
@@ -110,7 +112,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiType psiReturnType = psiField.getType();
     String methodName = TransformationsUtil.toGetterName(fieldName, PsiType.BOOLEAN.equals(psiReturnType));
 
-    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField);
+    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField, LombokConstants.NON_NULL_PATTERN);
     final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
     //TODO adapt annotations
 
@@ -120,14 +122,14 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     UserMapKeys.addReadUsageFor(psiField);
 
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
-        .setMethodReturnType(psiReturnType)
-        .setContainingClass(psiClass)
+        .withMethodReturnType(psiReturnType)
+        .withContainingClass(psiClass)
         .withNavigationElement(psiField);
     if (StringUtil.isNotEmpty(methodModifier)) {
-      method.addModifier(methodModifier);
+      method.withModifier(methodModifier);
     }
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-      method.addModifier(PsiModifier.STATIC);
+      method.withModifier(PsiModifier.STATIC);
     }
     return method;
   }

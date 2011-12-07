@@ -11,11 +11,11 @@ import com.intellij.psi.impl.light.LightMethod;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightMethod9Impl extends LightMethod implements LombokLightMethod {
+public class LombokLightMethod10Impl extends LightMethod implements LombokLightMethod {
 
   private final PsiMethod myMethod;
 
-  public LombokLightMethod9Impl(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {
+  public LombokLightMethod10Impl(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {
     super(manager, valuesMethod, psiClass);
     myMethod = valuesMethod;
   }
@@ -38,7 +38,7 @@ public class LombokLightMethod9Impl extends LightMethod implements LombokLightMe
   }
 
   public PsiElement copy() {
-    return new LombokLightMethod9Impl(myManager, (PsiMethod) myMethod.copy(), getContainingClass());
+    return new LombokLightMethod10Impl(myManager, (PsiMethod) myMethod.copy(), getContainingClass());
   }
 
   public ASTNode getNode() {

@@ -1,16 +1,17 @@
 package de.plushnikov.intellij.lombok.util;
 
+import java.util.Collection;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.light.LightMethod;
-import de.plushnikov.intellij.lombok.psi.MyLightMethod;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
+import de.plushnikov.intellij.lombok.psi.LombokLightMethod;
+import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 
 /**
  * @author Plushnikov Michail
@@ -23,8 +24,8 @@ public class PsiMethodUtil {
 
     PsiMethod method = elementFactory.createMethodFromText(methodText, psiClass);
 
-    LightMethod lightMethod = LombokPsiElementFactory.getInstance().createLightMethod(manager, method, psiClass);
-    lightMethod.setNavigationElement(navigationTarget);
+    LombokLightMethod lightMethod = LombokPsiElementFactory.getInstance().createLightMethod(manager, method, psiClass);
+    lightMethod.withNavigationElement(navigationTarget);
     return lightMethod;
   }
 

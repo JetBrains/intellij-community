@@ -11,13 +11,13 @@ import com.intellij.refactoring.rename.RenameHandler;
 public class ExtensionRegister11Impl implements ExtensionRegister {
   @Override
   public void registerTreeHandler() {
-     Extensions.getRootArea().getExtensionPoint(TreeGenerator.EP_NAME).
-        registerExtension(new MyLightMethodTreeGenerator());
+    Extensions.getRootArea().getExtensionPoint(TreeGenerator.EP_NAME).
+        registerExtension(new LombokLightMethodTreeGenerator());
   }
 
   @Override
   public void registerRenameHandler() {
-     Extensions.getRootArea().getExtensionPoint(RenameHandler.EP_NAME).
+    Extensions.getRootArea().getExtensionPoint(RenameHandler.EP_NAME).
         registerExtension(new LombokElementRenameHandler(), LoadingOrder.FIRST);
   }
 }

@@ -1,13 +1,14 @@
 <component name="libraryTable">
   <library name="Maven: com.intellij.idea:openapi:10.5.2">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/idea/openapi/10.5.2/openapi-10.5.2.jar!/" />
+      <root url="jar://$M2_REPO$/com/intellij/idea/openapi/10.5.2/openapi-10.5.2.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/idea/openapi/10.5.2/openapi-10.5.2-javadoc.jar!/" />
+      <root url="jar://$M2_REPO$/com/intellij/idea/openapi/10.5.2/openapi-10.5.2-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/idea/openapi/10.5.2/openapi-10.5.2-sources.jar!/" />
+      <root url="jar://$M2_REPO$/com/intellij/idea/openapi/10.5.2/openapi-10.5.2-sources.jar!/" />
+      <root url="intellijad://intellijad" />
     </SOURCES>
   </library>
 </component>

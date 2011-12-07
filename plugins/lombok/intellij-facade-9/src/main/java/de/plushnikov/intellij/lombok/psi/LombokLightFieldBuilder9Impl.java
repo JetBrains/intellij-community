@@ -1,5 +1,9 @@
 package de.plushnikov.intellij.lombok.psi;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
@@ -9,24 +13,20 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Plushnikov Michail
  */
 public class LombokLightFieldBuilder9Impl extends LombokLightVariableBuilder implements LombokLightFieldBuilder {
-  private PsiClass myContainingClass = null;
-  private PsiExpression myInitializer = null;
-  private PsiDocComment myDocComment = null;
-  private boolean myIsDeprecated = false;
+  private PsiClass      myContainingClass = null;
+  private PsiExpression myInitializer     = null;
+  private PsiDocComment myDocComment      = null;
+  private boolean       myIsDeprecated    = false;
 
   public LombokLightFieldBuilder9Impl(@NotNull PsiManager manager, @NotNull String name, @NotNull PsiType type) {
     super(manager, name, type, StdLanguages.JAVA);
   }
 
-  @Override
   public LombokLightFieldBuilder setContainingClass(PsiClass psiClass) {
     myContainingClass = psiClass;
     return this;
@@ -35,6 +35,18 @@ public class LombokLightFieldBuilder9Impl extends LombokLightVariableBuilder imp
   @Override
   public LombokLightFieldBuilder9Impl addModifier(@Modifier @NotNull @NonNls String modifier) {
     super.addModifier(modifier);
+    return this;
+  }
+
+  @Override
+  public LombokLightFieldBuilder withContainingClass(PsiClass psiClass) {
+    setContainingClass(psiClass);
+    return this;
+  }
+
+  @Override
+  public LombokLightFieldBuilder withModifier(@Modifier @NotNull @NonNls String modifier) {
+    addModifier(modifier);
     return this;
   }
 

@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,11 +12,11 @@ import com.intellij.psi.impl.light.LightMethod;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightMethod9Impl extends LightMethod implements LombokLightMethod {
+public class LombokLightMethod11Impl extends LightMethod implements LombokLightMethod {
 
   private final PsiMethod myMethod;
 
-  public LombokLightMethod9Impl(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {
+  public LombokLightMethod11Impl(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {
     super(manager, valuesMethod, psiClass);
     myMethod = valuesMethod;
   }
@@ -38,10 +39,14 @@ public class LombokLightMethod9Impl extends LightMethod implements LombokLightMe
   }
 
   public PsiElement copy() {
-    return new LombokLightMethod9Impl(myManager, (PsiMethod) myMethod.copy(), getContainingClass());
+    return new LombokLightMethod11Impl(myManager, (PsiMethod) myMethod.copy(), getContainingClass());
   }
 
   public ASTNode getNode() {
     return myMethod.getNode();
+  }
+
+  public FileStatus getFileStatus() {
+    return FileStatus.NOT_CHANGED;
   }
 }

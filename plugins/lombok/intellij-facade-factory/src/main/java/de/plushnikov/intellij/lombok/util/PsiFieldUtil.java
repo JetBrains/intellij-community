@@ -1,11 +1,12 @@
 package de.plushnikov.intellij.lombok.util;
 
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifierList;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.jetbrains.annotations.NotNull;
+
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifierList;
 
 /**
  * @author Plushnikov Michail

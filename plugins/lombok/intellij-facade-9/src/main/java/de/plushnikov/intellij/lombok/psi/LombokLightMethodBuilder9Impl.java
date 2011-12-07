@@ -1,5 +1,13 @@
 package de.plushnikov.intellij.lombok.psi;
 
+import java.util.List;
+
+import javax.swing.Icon;
+
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -43,26 +51,22 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.List;
 
 /**
  * @author Plushnikov Michail
  */
 public class LombokLightMethodBuilder9Impl extends LightElement implements LombokLightMethodBuilder {
-  private final String myName;
-  private final LombokLightModifierList myModifierList;
+  private ASTNode myASTNode;
+
+  private final String                          myName;
+  private final LombokLightModifierList         myModifierList;
   private final LombokLightParameterListBuilder myParameterList;
   private final LombokLightReferenceListBuilder myThrowsList;
 
-  private PsiType myReturnType;
-  private Icon myBaseIcon;
-  private PsiClass myContainingClass;
-  private boolean myConstructor;
+  private   PsiType    myReturnType;
+  private   Icon       myBaseIcon;
+  private   PsiClass   myContainingClass;
+  private   boolean    myConstructor;
   protected PsiElement myNavigationElement;
 
   public LombokLightMethodBuilder9Impl(@NotNull PsiManager manager, @NotNull String name) {
@@ -85,13 +89,13 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
   }
 
   @Override
-  public LombokLightMethodBuilder addModifier(@Modifier @NotNull @NonNls String modifier) {
+  public LombokLightMethodBuilder withModifier(@Modifier @NotNull @NonNls String modifier) {
     myModifierList.addModifier(modifier);
     return this;
   }
 
   @Override
-  public LombokLightMethodBuilder setMethodReturnType(PsiType returnType) {
+  public LombokLightMethodBuilder withMethodReturnType(PsiType returnType) {
     myReturnType = returnType;
     if (null != myReturnType) {
       myConstructor = false;
@@ -100,34 +104,20 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
   }
 
   @Override
-  public LombokLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
+  public LombokLightMethodBuilder withParameter(@NotNull String name, @NotNull PsiType type) {
     myParameterList.addParameter(new LombokLightParameter(name, type, this, StdLanguages.JAVA));
     return this;
   }
 
-//  public LombokLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type, boolean isVarArgs) {
-//    if (isVarArgs && !(type instanceof PsiEllipsisType)) {
-//      type = new PsiEllipsisType(type);
-//    }
-//    return addParameter(new LombokLightParameter(name, type, this, StdLanguages.JAVA, isVarArgs));
-//  }
-
   @Override
-  public LombokLightMethodBuilder addException(@NotNull PsiClassType type) {
+  public LombokLightMethodBuilder withException(@NotNull PsiClassType type) {
     myThrowsList.addReference(type);
     return this;
   }
 
   @Override
-  public LombokLightMethodBuilder addException(@NotNull String fqName) {
+  public LombokLightMethodBuilder withException(@NotNull String fqName) {
     myThrowsList.addReference(fqName);
-    return this;
-  }
-
-  @Override
-  public LombokLightMethodBuilder setConstructor(boolean constructor) {
-    myConstructor = constructor;
-    myReturnType = null;
     return this;
   }
 
@@ -221,7 +211,7 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
   }
 
   @Override
-  public LombokLightMethodBuilder setContainingClass(@NotNull PsiClass containingClass) {
+  public LombokLightMethodBuilder withContainingClass(@NotNull PsiClass containingClass) {
     myContainingClass = containingClass;
     return this;
   }
@@ -278,8 +268,6 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
     }
     return "";
   }
-
-  private ASTNode myASTNode;
 
   @Override
   public ASTNode getNode() {

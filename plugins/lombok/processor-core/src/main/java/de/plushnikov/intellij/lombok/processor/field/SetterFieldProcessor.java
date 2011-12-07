@@ -1,5 +1,11 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
@@ -19,11 +25,6 @@ import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Setter;
 import lombok.core.TransformationsUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Inspect and validate @Setter lombok annotation on a field
@@ -120,15 +121,15 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     UserMapKeys.addWriteUsageFor(psiField);
 
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
-        .setMethodReturnType(getReturnType(psiField))
-        .setContainingClass(psiClass)
-        .addParameter(fieldName, psiFieldType)
+        .withMethodReturnType(getReturnType(psiField))
+        .withContainingClass(psiClass)
+        .withParameter(fieldName, psiFieldType)
         .withNavigationElement(psiField);
     if (StringUtil.isNotEmpty(methodModifier)) {
-      method.addModifier(methodModifier);
+      method.withModifier(methodModifier);
     }
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-      method.addModifier(PsiModifier.STATIC);
+      method.withModifier(PsiModifier.STATIC);
     }
     return method;
 

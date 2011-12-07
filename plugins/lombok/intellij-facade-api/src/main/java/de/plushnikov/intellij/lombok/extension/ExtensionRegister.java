@@ -5,5 +5,6 @@ package de.plushnikov.intellij.lombok.extension;
  */
 public interface ExtensionRegister {
   void registerTreeHandler();
+
   void registerRenameHandler();
 }

@@ -1,5 +1,11 @@
 package de.plushnikov.intellij.lombok.util;
 
+import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -8,11 +14,6 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Copy from com.siyeh.ig.psiutils
