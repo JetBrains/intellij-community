@@ -690,6 +690,8 @@
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
 
     <lang.formatter language="JAVA" implementationClass="com.intellij.lang.java.JavaFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="JAVA"
+                                       implementationClass="com.intellij.psi.formatter.JavadocWhiteSpaceFormattingStrategy"/>
 
     <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
     <documentationProvider implementation="com.intellij.lang.java.FileDocumentationProvider" order="last"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,21 +26,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
-import com.intellij.psi.formatter.XmlFormatterUtilHelper;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.formatter.xml.XmlPolicy;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.lang.xml.XmlFormattingModel;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlFormattingModelBuilder implements FormattingModelBuilder {
-  static {
-    FormatterUtil.addHelper(new XmlFormatterUtilHelper());
-  }
   
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
