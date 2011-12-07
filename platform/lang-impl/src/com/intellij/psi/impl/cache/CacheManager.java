@@ -43,7 +43,7 @@ public interface CacheManager {
 
   // IMPORTANT!!!
   // Do not call indices directly or indirectly from 'process' method, deadlocks are possible (IDEADEV-42137).
-  public void collectVirtualFilesWithWord(@NotNull final CommonProcessors.CollectProcessor<VirtualFile> fileProcessor,
+  public boolean collectVirtualFilesWithWord(@NotNull final CommonProcessors.CollectProcessor<VirtualFile> fileProcessor,
                                           @NotNull final String word, final short occurrenceMask,
                                           @NotNull final GlobalSearchScope scope, final boolean caseSensitively);
 
