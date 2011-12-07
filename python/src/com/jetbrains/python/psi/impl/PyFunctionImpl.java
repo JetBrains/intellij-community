@@ -124,14 +124,16 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   public PyType getReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite) {
-    PyAnnotation anno = getAnnotation();
-    if (anno != null) {
-      PyClass pyClass = anno.resolveToClass();
-      if (pyClass != null) {
-        return new PyClassType(pyClass, false);
+    if (typeEvalContext.maySwitchToAST(this)) {
+      PyAnnotation anno = getAnnotation();
+      if (anno != null) {
+        PyClass pyClass = anno.resolveToClass();
+        if (pyClass != null) {
+          return new PyClassType(pyClass, false);
+        }
       }
     }
-    for(PyTypeProvider typeProvider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final PyType returnType = typeProvider.getReturnType(this, callSite, typeEvalContext);
       if (returnType != null) {
         return returnType;
@@ -141,7 +143,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (docStringType != null) {
       return docStringType;
     }
-    if (typeEvalContext.allowReturnTypes(getContainingFile())) {
+    if (typeEvalContext.allowReturnTypes(this)) {
       final PyType yieldType = getYieldStatementType(typeEvalContext);
       if (yieldType != null) {
         return yieldType;
