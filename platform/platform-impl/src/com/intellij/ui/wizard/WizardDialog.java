@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.ui.CommandButtonGroup;
 import com.intellij.ui.SeparatorComponent;
 import org.jetbrains.annotations.NonNls;
 
@@ -33,7 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WizardDialog<T extends WizardModel> extends DialogWrapper implements WizardCallback {
-
   protected final T myModel;
 
   private final JButton myPrevious = new JButton();
@@ -206,9 +204,9 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
     }
   }
 
-
   protected JComponent createSouthPanel() {
-    final CommandButtonGroup panel = new CommandButtonGroup(BoxLayout.X_AXIS);
+    final JPanel southPanel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new GridLayout(1, 0, 5, 0));
     panel.add(myPrevious);
     panel.add(myNext);
     panel.add(myFinish);
@@ -217,8 +215,9 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
       // we won't be able to show help if there's no HelpManager
       panel.add(myHelp);
     }
-    panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
-    return panel;
+    southPanel.add(panel, BorderLayout.EAST);
+    southPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+    return southPanel;
   }
 
   public void onStepChanged() {
