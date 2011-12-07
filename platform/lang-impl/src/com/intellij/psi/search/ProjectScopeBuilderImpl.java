@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
-  private Project myProject;
+  protected final Project myProject;
 
   public ProjectScopeBuilderImpl(Project project) {
     myProject = project;

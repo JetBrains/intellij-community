@@ -489,42 +489,22 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   @Nullable
   private HighlightInfo processMethod(final PsiMethod method, ProgressIndicator progress) {
-    if (myRefCountHolder.isReferenced(method)) return null;
     boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     PsiClass containingClass = method.getContainingClass();
-    HighlightInfoType highlightInfoType = HighlightInfoType.UNUSED_SYMBOL;
-    HighlightDisplayKey highlightDisplayKey = myUnusedSymbolKey;
-
-    if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass)) return null;
+    if (isMethodReferenced(method, progress, isPrivate, containingClass)) return null;
+    HighlightInfoType highlightInfoType;
+    HighlightDisplayKey highlightDisplayKey;
+    String key;
     if (isPrivate) {
-      if (isIntentionalPrivateConstructor(method, containingClass)) {
-        return null;
-      }
-      if (isImplicitUsage(method, progress)) {
-        return null;
-      }
+      highlightInfoType = HighlightInfoType.UNUSED_SYMBOL;
+      highlightDisplayKey = myUnusedSymbolKey;
+      key = method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used";
     }
     else {
-      //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
-      if (containingClass != null && method.isConstructor()
-          && containingClass.getConstructors().length == 1
-          && isClassUnused(containingClass, progress) == USED) {
-        return null;
-      }
-      if (isImplicitUsage(method, progress)) return null;
-
-      if (method.findSuperMethods().length != 0) {
-        return null;
-      }
-      if (!weAreSureThereAreNoUsages(method, progress)) {
-        return null;
-      }
       highlightInfoType = myDeadCodeInfoType;
       highlightDisplayKey = myDeadCodeKey;
+      key = method.isConstructor() ? "constructor.is.not.used" : "method.is.not.used";
     }
-    String key = isPrivate
-                 ? method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used"
-                 : method.isConstructor() ? "constructor.is.not.used" : "method.is.not.used";
     String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
     String message = JavaErrorMessages.message(key, symbolName);
     PsiIdentifier identifier = method.getNameIdentifier();
@@ -537,11 +517,42 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     });
-    if (method.getReturnType() != null || (containingClass != null && Comparing.strEqual(containingClass.getName(), method.getName()))) {
+    if (method.getReturnType() != null || containingClass != null && Comparing.strEqual(containingClass.getName(), method.getName())) {
       //ignore methods with deleted return types as they are always marked as unused without any reason
       ChangeSignatureGestureDetector.getInstance(myProject).dismissForElement(method);
     }
     return highlightInfo;
+  }
+
+  private boolean isMethodReferenced(PsiMethod method, ProgressIndicator progress, boolean aPrivate, PsiClass containingClass) {
+    if (myRefCountHolder.isReferenced(method)) return true;
+
+    if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass)) return true;
+    if (aPrivate) {
+      if (isIntentionalPrivateConstructor(method, containingClass)) {
+        return true;
+      }
+      if (isImplicitUsage(method, progress)) {
+        return true;
+      }
+    }
+    else {
+      //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
+      if (containingClass != null && method.isConstructor()
+          && containingClass.getConstructors().length == 1
+          && isClassUnused(containingClass, progress) == USED) {
+        return true;
+      }
+      if (isImplicitUsage(method, progress)) return true;
+
+      if (method.findSuperMethods().length != 0) {
+        return true;
+      }
+      if (!weAreSureThereAreNoUsages(method, progress)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean weAreSureThereAreNoUsages(PsiMember member, ProgressIndicator progress) {
@@ -565,7 +576,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
     if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
       if (member instanceof PsiEnumConstant) {
-        return checkEnumValuesUsages(member, progress);
+        return !isEnumValuesMethodUsed(member, progress);
       }
       if (!canBeReferencedViaWeirdNames(member)) return true;
     }
@@ -589,20 +600,18 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     boolean used = findUsagesManager.isUsed(member, findUsagesOptions);
 
     if (!used && member instanceof PsiEnumConstant) {
-      return checkEnumValuesUsages(member, progress);
+      return !isEnumValuesMethodUsed(member, progress);
     }
     return !used;
   }
 
-  private boolean checkEnumValuesUsages(PsiMember member, ProgressIndicator progress) {
+  private boolean isEnumValuesMethodUsed(PsiMember member, ProgressIndicator progress) {
     final PsiClassImpl containingClass = (PsiClassImpl)member.getContainingClass();
-    if (containingClass != null) {
-      final PsiMethod valuesMethod = containingClass.getValuesMethod();
-      if (valuesMethod != null && weAreSureThereAreNoUsages(valuesMethod, progress)) {
-        return true;
-      }
-    }
-    return false;
+    if (containingClass == null) return true;
+    final PsiMethod valuesMethod = containingClass.getValuesMethod();
+    if (valuesMethod == null) return true;
+    boolean isPrivate = valuesMethod.hasModifierProperty(PsiModifier.PRIVATE);
+    return isMethodReferenced(valuesMethod, progress, isPrivate, containingClass);
   }
 
   private static boolean canBeReferencedViaWeirdNames(PsiMember member) {

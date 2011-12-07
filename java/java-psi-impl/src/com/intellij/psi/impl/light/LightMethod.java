@@ -41,7 +41,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   private final PsiMethod myMethod;
   private final PsiClass myContainingClass;
 
-  public LightMethod(PsiManager manager, PsiMethod method, PsiClass containingClass) {
+  public LightMethod(@NotNull PsiManager manager, @NotNull PsiMethod method, @NotNull PsiClass containingClass) {
     super(manager, JavaLanguage.INSTANCE);
     myMethod = method;
     myContainingClass = containingClass;
@@ -212,6 +212,11 @@ public class LightMethod extends LightElement implements PsiMethod {
   @Override
   public PsiClass getContainingClass() {
     return myContainingClass;
+  }
+
+  @Override
+  public PsiFile getContainingFile() {
+    return myContainingClass.getContainingFile();
   }
 
   public String toString() {

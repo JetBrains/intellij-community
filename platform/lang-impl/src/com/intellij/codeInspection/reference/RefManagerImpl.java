@@ -46,6 +46,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import gnu.trove.THashMap;
@@ -384,51 +385,48 @@ public class RefManagerImpl extends RefManager {
 
   @Nullable
   public RefElement getReference(final PsiElement elem, final boolean ignoreScope) {
-    if (elem != null && (elem instanceof PsiDirectory || belongsToScope(elem, ignoreScope))) {
-      if (!elem.isValid()) return null;
-
-      RefElement ref = getFromRefTable(elem);
-      if (ref == null) {
-        if (!isValidPointForReference()) {
-          //LOG.assertTrue(true, "References may become invalid after process is finished");
-          return null;
-        }
-
-        final RefElementImpl refElement = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
-          @Nullable
-          public RefElementImpl compute() {
-            final RefManagerExtension extension = getExtension(elem.getLanguage());
-            if (extension != null) {
-              final RefElement refElement = extension.createRefElement(elem);
-              if (refElement != null) return (RefElementImpl)refElement;
-            }
-            if (elem instanceof PsiFile) {
-              return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
-            }
-            else if (elem instanceof PsiDirectory) {
-              return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
-            }
-            else {
-              return null;
-            }
-          }
-        });
-        if (refElement == null) return null;
-
-        putToRefTable(elem, refElement);
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            refElement.initialize();
-          }
-        });
-
-        return refElement;
-      }
-      return ref;
+    if (elem == null || !elem.isValid() ||
+        elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope)) {
+      return null;
     }
 
-    return null;
+    RefElement ref = getFromRefTable(elem);
+    if (ref != null) return ref;
+    if (!isValidPointForReference()) {
+      //LOG.assertTrue(true, "References may become invalid after process is finished");
+      return null;
+    }
+
+    final RefElementImpl refElement = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+      @Nullable
+      public RefElementImpl compute() {
+        final RefManagerExtension extension = getExtension(elem.getLanguage());
+        if (extension != null) {
+          final RefElement refElement = extension.createRefElement(elem);
+          if (refElement != null) return (RefElementImpl)refElement;
+        }
+        if (elem instanceof PsiFile) {
+          return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+        }
+        else if (elem instanceof PsiDirectory) {
+          return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
+        }
+        else {
+          return null;
+        }
+      }
+    });
+    if (refElement == null) return null;
+
+    putToRefTable(elem, refElement);
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        refElement.initialize();
+      }
+    });
+
+    return refElement;
   }
 
   private RefManagerExtension getExtension(final Language language) {
