@@ -64,6 +64,11 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return PyCallExpressionHelper.resolveCallee(this, resolveContext);
   }
 
+  @Override
+  public Callable resolveCalleeFunction(PyResolveContext resolveContext) {
+    return PyCallExpressionHelper.resolveCalleeFunction(this, resolveContext);
+  }
+
   public PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int offset) {
     return PyCallExpressionHelper.resolveCallee(this, resolveContext, offset);
   }

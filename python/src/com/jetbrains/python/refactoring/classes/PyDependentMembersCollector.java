@@ -17,8 +17,8 @@ public class PyDependentMembersCollector extends DependentMembersCollectorBase<P
     final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
-        final PyCallExpression.PyMarkedCallee markedFunction = node.resolveCallee(PyResolveContext.noImplicits());
-        final PyFunction function = markedFunction != null ? markedFunction.getCallable().asMethod() : null;
+        final Callable markedFunction = node.resolveCalleeFunction(PyResolveContext.noImplicits());
+        final PyFunction function = markedFunction != null ? markedFunction.asMethod() : null;
         if (!existsInSuperClass(function)) {
           myCollection.add(function);
         }

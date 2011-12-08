@@ -87,9 +87,8 @@ public class PyPushDownConflicts {
 
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
-      final PyCallExpression.PyMarkedCallee markedFunction = node.resolveCallee(PyResolveContext.noImplicits());
-      final Callable function = markedFunction != null ? markedFunction.getCallable() : null;
-      if (myMovedMembers.contains(function)) {
+      final Callable function = node.resolveCalleeFunction(PyResolveContext.noImplicits());
+      if (function != null && myMovedMembers.contains(function)) {
         myCollection.add(function);
       }
     }

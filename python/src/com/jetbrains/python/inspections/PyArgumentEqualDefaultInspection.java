@@ -55,13 +55,12 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     @Override
     public void visitPyCallExpression(final PyCallExpression node) {
       PyArgumentList list = node.getArgumentList();
-      PyCallExpression.PyMarkedCallee func = node.resolveCallee(resolveWithoutImplicits());
-      if ((func != null && func.isImplicitlyResolved()) || (list == null)) return;
-      if (func != null) {
-        final Callable callable = func.getCallable();
-        if (hasSpecialCasedDefaults(callable, node)) {
-          return;
-        }
+      if (list == null) {
+        return;
+      }
+      Callable func = node.resolveCalleeFunction(resolveWithoutImplicits());
+      if (func != null && hasSpecialCasedDefaults(func, node)) {
+        return;
       }
       CallArgumentsMapping result = list.analyzeCall(resolveWithoutImplicits());
       checkArguments(result, node.getArguments());

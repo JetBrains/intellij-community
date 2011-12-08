@@ -124,6 +124,11 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     return callee;
   }
 
+  @Override
+  public Callable resolveCalleeFunction(PyResolveContext resolveContext) {
+    return PyCallExpressionHelper.resolveCalleeFunction(this, resolveContext);
+  }
+
   public boolean isCalleeText(@NotNull String... nameCandidates) {
     return PyCallExpressionHelper.isCalleeText(this, nameCandidates);
   }

@@ -301,8 +301,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
     PyCallExpression expr = (PyCallExpression) source;
     if (expr.isCalleeText("range", "xrange")) {
-      final PyCallExpression.PyMarkedCallee callee = expr.resolveCallee(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
-      if (callee != null && !callee.isImplicitlyResolved() && PyBuiltinCache.getInstance(forStatement).hasInBuiltins(callee.getCallable())) {
+      final Callable callee = expr.resolveCalleeFunction(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
+      if (callee != null && PyBuiltinCache.getInstance(forStatement).hasInBuiltins(callee)) {
         return true;
       }
     }

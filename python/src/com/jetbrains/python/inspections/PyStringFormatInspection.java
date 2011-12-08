@@ -127,31 +127,28 @@ public class PyStringFormatInspection extends PyInspection {
           return inspectArguments((PyExpression)pyElement, problemTarget);
         }
         else if (rightExpression instanceof PyCallExpression) {
-          final PyCallExpression.PyMarkedCallee markedFunction = ((PyCallExpression)rightExpression).resolveCallee(resolveContext);
-          if (markedFunction != null && !markedFunction.isImplicitlyResolved()) {
-            final Callable callable = markedFunction.getCallable();
-            // TODO: Switch to Callable.getReturnType()
-            if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST((PyFunction) callable)) {
-              PyStatementList statementList = ((PyFunction)callable).getStatementList();
-              if (statementList == null) {
+          final Callable callable = ((PyCallExpression)rightExpression).resolveCalleeFunction(resolveContext);
+          // TODO: Switch to Callable.getReturnType()
+          if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST((PyFunction) callable)) {
+            PyStatementList statementList = ((PyFunction)callable).getStatementList();
+            if (statementList == null) {
+              return -1;
+            }
+            PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
+            int expressionsSize = -1;
+            for (PyReturnStatement returnStatement : returnStatements) {
+              if (returnStatement.getExpression() instanceof PyCallExpression) {
                 return -1;
               }
-              PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
-              int expressionsSize = -1;
-              for (PyReturnStatement returnStatement : returnStatements) {
-                if (returnStatement.getExpression() instanceof PyCallExpression) {
-                  return -1;
-                }
-                List<PyExpression> expressionList = PyUtil.flattenedParensAndTuples(returnStatement.getExpression());
-                if (expressionsSize < 0) {
-                  expressionsSize = expressionList.size();
-                }
-                if (expressionsSize != expressionList.size()) {
-                  return -1;
-                }
+              List<PyExpression> expressionList = PyUtil.flattenedParensAndTuples(returnStatement.getExpression());
+              if (expressionsSize < 0) {
+                expressionsSize = expressionList.size();
               }
-              return expressionsSize;
+              if (expressionsSize != expressionList.size()) {
+                return -1;
+              }
             }
+            return expressionsSize;
           }
           return -1;
         }
