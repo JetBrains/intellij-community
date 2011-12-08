@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.actions.*;
@@ -57,8 +58,8 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
     }
     final MergeRequest request = DiffRequestFactory.getInstance()
       .create3WayDiffRequest(revisionTexts.getLocal().toString(), revisionTexts.getPatched(), revisionTexts.getBase().toString(), myProject, null, null);
-    request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", myFile.getPresentableUrl()));
-    request.setVersionTitles(new String[] {"Current Version", "Base Version", myAfterTitle});
+    request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", FileUtil.toSystemDependentName(myFile.getPresentableUrl())));
+    request.setVersionTitles(new String[] {"Current Version", "Base Version", FileUtil.toSystemDependentName(myAfterTitle)});
     return new MyResult(request, DiffPresentationReturnValue.useRequest);
   }
 
