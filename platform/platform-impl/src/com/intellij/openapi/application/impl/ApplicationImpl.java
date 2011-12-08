@@ -108,6 +108,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private int myRestartCode = 0;
   private volatile int myExitCode = 0;
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
+  
+  private boolean myHandlingInitComponentError;
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
   @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
@@ -332,36 +334,46 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
-    if (PluginManager.isPluginClass(componentClassName)) {
-      LOG.error(ex);
-      PluginId pluginId = PluginManager.getPluginByClassName(componentClassName);
-      @NonNls final String errorMessage = "Plugin " + pluginId.getIdString() + " failed to initialize and will be disabled:\n" + ex.getMessage() +
-                                          "\nPlease restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
-      PluginManager.disablePlugin(pluginId.getIdString());
-      if (!myHeadlessMode) {
-        JOptionPane.showMessageDialog(null, errorMessage);
-      }
-      else {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println(errorMessage);
-        System.exit(1);
-      }
-      return;  // do not call super
+    if (myHandlingInitComponentError) {
+      return;
     }
-    if (fatal) {
-      LOG.error(ex);
-      @NonNls final String errorMessage = "Fatal error initializing class " + componentClassName + ":\n" +
-                                          ex.toString() +
-                                          "\nComplete error stacktrace was written to " + PathManager.getLogPath() + "/idea.log";
-      if (!myHeadlessMode) {
-        JOptionPane.showMessageDialog(null, errorMessage);
+    myHandlingInitComponentError = true;
+    try {
+      if (PluginManager.isPluginClass(componentClassName)) {
+        LOG.error(ex);
+        PluginId pluginId = PluginManager.getPluginByClassName(componentClassName);
+        @NonNls final String errorMessage =
+          "Plugin " + pluginId.getIdString() + " failed to initialize and will be disabled:\n" + ex.getMessage() +
+          "\nPlease restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
+        PluginManager.disablePlugin(pluginId.getIdString());
+        if (!myHeadlessMode) {
+          JOptionPane.showMessageDialog(null, errorMessage);
+        }
+        else {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println(errorMessage);
+          System.exit(1);
+        }
+        return;  // do not call super
       }
-      else {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println(errorMessage);
+      if (fatal) {
+        LOG.error(ex);
+        @NonNls final String errorMessage = "Fatal error initializing class " + componentClassName + ":\n" +
+                                            ex.toString() +
+                                            "\nComplete error stacktrace was written to " + PathManager.getLogPath() + "/idea.log";
+        if (!myHeadlessMode) {
+          JOptionPane.showMessageDialog(null, errorMessage);
+        }
+        else {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println(errorMessage);
+        }
       }
+      super.handleInitComponentError(ex, fatal, componentClassName);
     }
-    super.handleInitComponentError(ex, fatal, componentClassName);
+    finally {
+      myHandlingInitComponentError = false;
+    }
   }
 
   private void loadApplicationComponents() {
