@@ -241,7 +241,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     final PluginId pluginId = existing.getPluginId();
     final String idString = pluginId.getIdString();
     final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().myInstalledPlugins;
-    if (!installedPlugins.contains(idString)){
+    if (!installedPlugins.contains(idString) && !((IdeaPluginDescriptorImpl)existing).isDeleted()){
       installedPlugins.add(idString);
     }
     final PluginManagerUISettings updateSettings = PluginManagerUISettings.getInstance();

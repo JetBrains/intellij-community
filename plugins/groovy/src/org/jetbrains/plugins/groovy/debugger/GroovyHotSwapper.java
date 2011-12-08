@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
+import java.util.regex.Pattern;
 
 
 /**
@@ -39,6 +40,8 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper");
   private static final String GROOVY_HOTSWAP_AGENT_PATH = "groovy.hotswap.agent.path";
 
+  private static final Pattern SPRING_LOADED_PATTERN = Pattern.compile("-javaagent:.+springloaded-core-[^/\\\\]+\\.jar");
+  
   private static boolean endsWithAny(String s, List<String> endings) {
     for (String extension : endings) {
       if (s.endsWith(extension)) {
@@ -64,6 +67,16 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     return false;
   }
 
+  private static boolean hasSpringLoadedReloader(JavaParameters javaParameters) {
+    for (String param : javaParameters.getVMParametersList().getParameters()) {
+      if (SPRING_LOADED_PATTERN.matcher(param).matches()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+  
   public void patchJavaParameters(Executor executor, RunProfile configuration, JavaParameters javaParameters) {
     if (!executor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID)) {
       return;
@@ -72,7 +85,11 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     if (!Registry.is("enable.groovy.hotswap")) {
       return;
     }
-    
+
+    if (hasSpringLoadedReloader(javaParameters)) {
+      return;
+    }
+
     if (!(configuration instanceof RunConfiguration)) {
       return;
     }
