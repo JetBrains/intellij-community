@@ -17,8 +17,10 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 
 /**
@@ -158,4 +160,24 @@ public class LombokLightMethodBuilder10Impl extends LightMethodBuilder implement
     return "LombokLightMethodBuilder: " + getName();
   }
 
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    // just add new element to the containing class
+    final PsiClass containingClass = getContainingClass();
+    if (null != containingClass) {
+      CheckUtil.checkWritable(containingClass);
+      return containingClass.add(newElement);
+    }
+    return null;
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    // simple do nothing
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {
+    // simple do nothing
+  }
 }

@@ -37,6 +37,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -352,10 +353,6 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  protected boolean isVisibilitySupported() {
-    return true;
-  }
-
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
@@ -383,6 +380,27 @@ public class LombokLightMethodBuilder9Impl extends LightElement implements Lombo
 
   public PsiMethodReceiver getMethodReceiver() {
     return null;
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    // just add new element to the containing class
+    final PsiClass containingClass = getContainingClass();
+    if (null != containingClass) {
+      CheckUtil.checkWritable(containingClass);
+      return containingClass.add(newElement);
+    }
+    return null;
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    // simple do nothing
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {
+    // simple do nothing
   }
 
   @Override

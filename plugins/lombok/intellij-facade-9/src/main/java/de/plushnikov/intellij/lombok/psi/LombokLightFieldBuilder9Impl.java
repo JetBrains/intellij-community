@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 
@@ -92,5 +93,26 @@ public class LombokLightFieldBuilder9Impl extends LombokLightVariableBuilder imp
   @Override
   public PsiClass getContainingClass() {
     return myContainingClass;
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    // just add new element to the containing class
+    final PsiClass containingClass = getContainingClass();
+    if (null != containingClass) {
+      CheckUtil.checkWritable(containingClass);
+      return containingClass.add(newElement);
+    }
+    return null;
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    // simple do nothing
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {
+    // simple do nothing
   }
 }
