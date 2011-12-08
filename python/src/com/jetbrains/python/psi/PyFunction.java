@@ -52,6 +52,9 @@ extends
 
   @Nullable
   PyType getReturnTypeFromDocString();
+  
+  @Nullable
+  String getDocStringValue();
 
   /**
    * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..

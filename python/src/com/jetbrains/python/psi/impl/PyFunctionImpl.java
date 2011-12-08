@@ -210,14 +210,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyType getReturnTypeFromDocString() {
-    String typeName;
-    final PyFunctionStub stub = getStub();
-    if (stub != null) {
-      typeName = stub.getReturnTypeFromDocString();
-    }
-    else {
-      typeName = extractDocStringReturnType();
-    }
+    final String value = getDocStringValue();
+    String typeName = value != null ? extractReturnType(value) : null;
     return PyTypeParser.getTypeByName(this, typeName);
   }
 
@@ -257,13 +251,14 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return null;
   }
 
-  @Nullable
-  public String extractDocStringReturnType() {
-    final PyStringLiteralExpression docString = getDocStringExpression();
-    if (docString != null) {
-      return extractReturnType(docString.getStringValue());
+  @Override
+  public String getDocStringValue() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.getDocString();
     }
-    return null;
+    final PyStringLiteralExpression docStringExpression = getDocStringExpression();
+    return PyUtil.strValue(docStringExpression);
   }
 
   private boolean isGeneratedStub() {

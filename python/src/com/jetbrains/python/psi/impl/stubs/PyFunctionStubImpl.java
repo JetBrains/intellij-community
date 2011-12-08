@@ -10,14 +10,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFunctionStub {
   private final String myName;
-  private final String myReturnTypeFromDocString;
+  private final String myDocString;
   private final StringRef myDeprecationMessage;
 
-  public PyFunctionStubImpl(final String name, final String returnTypeFromDocString, @Nullable final StringRef deprecationMessage,
+  public PyFunctionStubImpl(final String name, final String docString, @Nullable final StringRef deprecationMessage,
                             final StubElement parent, IStubElementType stubElementType) {
     super(parent, stubElementType);
     myName = name;
-    myReturnTypeFromDocString = returnTypeFromDocString;
+    myDocString = docString;
     myDeprecationMessage = deprecationMessage;
   }
 
@@ -25,8 +25,8 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
     return myName;
   }
 
-  public String getReturnTypeFromDocString() {
-    return myReturnTypeFromDocString;
+  public String getDocString() {
+    return myDocString;
   }
 
   @Override
