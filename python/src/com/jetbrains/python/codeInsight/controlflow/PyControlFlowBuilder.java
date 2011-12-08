@@ -62,8 +62,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyCallExpression(final PyCallExpression node) {
     final PyExpression callee = node.getCallee();
     // Flow abrupted
-    if (callee != null && ("sys.exit".equals(PyUtil.getReadableRepr(callee, true)) ||
-                           "fail".equals(callee.getName()))) {
+    final String repr = PyUtil.getReadableRepr(callee, true);
+    if (callee != null && ("sys.exit".equals(repr) ||
+                           "self.fail".equals(repr))) {
       callee.accept(this);
       for (PyExpression expression : node.getArguments()) {
         expression.accept(this);
