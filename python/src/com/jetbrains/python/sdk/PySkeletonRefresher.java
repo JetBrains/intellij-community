@@ -154,7 +154,7 @@ public class PySkeletonRefresher {
 
   List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cached_checker,
                                    @Nullable Ref<Boolean> migration_flag) {
-    final List<String> error_list = new SmartList<String>();
+    final List<String> errorList = new SmartList<String>();
     final String home_path = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
     final File skeletonsDir = new File(skeletonsPath);
@@ -244,13 +244,16 @@ public class PySkeletonRefresher {
       cleanUpSkeletons(skeletonsDir);
     }
 
+    if (binaries.modules.isEmpty()) {
+      return errorList;
+    }
     indicate(PyBundle.message("sdk.gen.updating.$0", readable_path));
-    List<UpdateResult> skel_errors = updateOrCreateSkeletons(binaries.modules);
+    List<UpdateResult> updateErrors = updateOrCreateSkeletons(binaries.modules);
 
-    if (skel_errors.size() > 0) {
+    if (updateErrors.size() > 0) {
       indicateMinor(BLACKLIST_FILE_NAME);
-      for (UpdateResult error : skel_errors) {
-        if (error.isFresh()) error_list.add(error.getName());
+      for (UpdateResult error : updateErrors) {
+        if (error.isFresh()) errorList.add(error.getName());
         myBlacklist.put(error.getPath(), new Pair<Integer, Long>(myGeneratorVersion, error.getTimestamp()));
       }
       storeBlacklist(skeletonsDir, myBlacklist);
@@ -261,7 +264,7 @@ public class PySkeletonRefresher {
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(mySkeletonsPath);
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
-    return error_list;
+    return errorList;
   }
 
   @NotNull
