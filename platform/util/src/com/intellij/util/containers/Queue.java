@@ -106,6 +106,7 @@ public class Queue<T> {
   public void clear() {
     Arrays.fill(myArray, null);
     myFirst = myLast = 0;
+    isWrapped = false;
   }
 
   public boolean process(@NotNull Processor<T> processor) {
