@@ -7,6 +7,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -193,5 +194,12 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     );
     target.append(")");
     return target.toString();
+  }
+
+  @Nullable
+  @Override
+  public PyFunction getContainingFunction() {
+    final PsiElement parent = getStubOrPsiParent();
+    return parent instanceof PyFunction ? (PyFunction) parent : null;
   }
 }

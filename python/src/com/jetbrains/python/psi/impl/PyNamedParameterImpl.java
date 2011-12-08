@@ -147,11 +147,12 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    if (getParent() instanceof PyParameterList) {
-      PyParameterList parameterList = (PyParameterList) getParent();
+    final PsiElement parent = getStubOrPsiParent();
+    if (parent instanceof PyParameterList) {
+      PyParameterList parameterList = (PyParameterList)parent;
       final PyParameter[] params = parameterList.getParameters();
-      if (parameterList.getParent() instanceof PyFunction) {
-        PyFunction func = (PyFunction) parameterList.getParent();
+      PyFunction func = parameterList.getContainingFunction();
+      if (func != null) {
         final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(func);
         if (params [0] == this && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
           // must be 'self' or 'cls'
