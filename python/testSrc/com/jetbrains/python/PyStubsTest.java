@@ -21,7 +21,9 @@ import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.toolbox.Maybe;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -326,6 +328,16 @@ public class PyStubsTest extends PyTestCase {
 
   public void testVariableInComprehension() {  // PY-4029
     ensureVariableNotInIndex("xyzzy");
+  }
+
+  public void testWrappedStaticMethod() {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final PyClass pyClass = file.getTopLevelClasses().get(0);
+    final PyFunction[] methods = pyClass.getMethods();
+    assertEquals(1, methods.length);
+    final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(methods[0]);
+    assertEquals(EnumSet.of(PyFunction.Flag.STATICMETHOD), flags);
+    assertNotParsed(file);
   }
 
   private void ensureVariableNotInIndex(String name) {
