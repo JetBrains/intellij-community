@@ -57,8 +57,6 @@ public interface PyCallExpression extends PyExpression {
 
   /**
    * Resolves callee down to particular function (standalone, method, or constructor).
-   * Return's function part contains a function, never null.
-   * Return's flag part marks the particulars of the call, esp. the implicit first arg situation.
    * Return is null if callee cannot be resolved.
    *
    * @param resolveContext the reference resolve context
