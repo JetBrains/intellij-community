@@ -177,7 +177,6 @@ public class PyCallExpressionHelper {
                                    ? PyUtil.detectDecorationsAndWrappersOf((PyFunction) resolved)
                                    : EnumSet.noneOf(PyFunction.Flag.class);
       if (wrappedFlag != null) {
-        flags.add(PyFunction.Flag.WRAPPED);
         flags.add(wrappedFlag);
       }
       List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();

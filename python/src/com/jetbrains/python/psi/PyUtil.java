@@ -642,7 +642,6 @@ public class PyUtil {
                       flags.add(CLASSMETHOD);
                     }
                     else if (PyNames.STATICMETHOD.equals(wrapper_name)) flags.add(STATICMETHOD);
-                    flags.add(WRAPPED);
                   }
                 }
               }
