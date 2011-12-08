@@ -7,4 +7,8 @@ public interface ExtensionRegister {
   void registerTreeHandler();
 
   void registerRenameHandler();
+
+  void unregisterTreeHandler();
+
+  void unregisterRenameHandler();
 }

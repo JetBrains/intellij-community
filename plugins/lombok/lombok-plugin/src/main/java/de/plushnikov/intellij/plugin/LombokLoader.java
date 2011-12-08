@@ -38,6 +38,8 @@ public class LombokLoader implements ApplicationComponent {
   @Override
   public void disposeComponent() {
     ExtensionRegister extensionRegister = LombokExtensionRegisterFactory.getInstance().createExtensionRegister();
-    //TODO unregister
+
+    extensionRegister.unregisterRenameHandler();
+    extensionRegister.unregisterTreeHandler();
   }
 }
