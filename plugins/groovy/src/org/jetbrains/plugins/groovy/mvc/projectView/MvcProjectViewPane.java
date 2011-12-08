@@ -141,10 +141,10 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     final TreeExpander expander = new DefaultTreeExpander(myTree);
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     group.addAction(new ScrollFromSourceAction());
-    group.addAction(myAutoScrollFromSourceHandler.createToggleAction());
-    group.addAction(myAutoScrollToSourceHandler.createToggleAction());
+    group.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
+    group.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
     group.add(actionsManager.createCollapseAllAction(expander, myTree));
-    group.addAction(new HideEmptyMiddlePackagesAction());
+    group.addAction(new HideEmptyMiddlePackagesAction()).setAsSecondary(true);
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
   }
