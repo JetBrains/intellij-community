@@ -30,6 +30,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_PRINT = "print";
   @NonNls protected static final String TOK_NONE = "None";
   @NonNls protected static final String TOK_TRUE = "True";
+  @NonNls protected static final String TOK_DEBUG = "__debug__";
   @NonNls protected static final String TOK_FALSE = "False";
   @NonNls protected static final String TOK_NONLOCAL = "nonlocal";
   @NonNls protected static final String TOK_EXEC = "exec";
@@ -825,6 +826,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
       if (isWordAtPosition(text, start, end, TOK_FALSE)) {
         return PyTokenTypes.FALSE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_DEBUG)) {
+        return PyTokenTypes.DEBUG_KEYWORD;
       }
       if (isWordAtPosition(text, start, end, TOK_NONLOCAL)) {
         return PyTokenTypes.NONLOCAL_KEYWORD;

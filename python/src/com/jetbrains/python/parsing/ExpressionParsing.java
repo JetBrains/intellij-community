@@ -47,7 +47,9 @@ public class ExpressionParsing extends Parsing {
       buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
-    else if (firstToken == PyTokenTypes.TRUE_KEYWORD || firstToken == PyTokenTypes.FALSE_KEYWORD) {
+    else if (firstToken == PyTokenTypes.TRUE_KEYWORD ||
+             firstToken == PyTokenTypes.FALSE_KEYWORD ||
+             firstToken == PyTokenTypes.DEBUG_KEYWORD) {
       buildTokenElement(PyElementTypes.BOOL_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
