@@ -1,38 +1,37 @@
-package de.plushnikov.intellij.lombok.extension;
+package de.plushnikov.intellij.lombok.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.BuildNumber;
-import de.plushnikov.intellij.lombok.util.IntelliJVersionRangeUtil;
 
 /**
  * @author Plushnikov Michail
  */
-public class LombokExtensionRegisterFactory {
-  private LombokExtensionRegisterFactory() {
+public class PsiPrimitiveTypeFactory {
+  private PsiPrimitiveTypeFactory() {
   }
 
-  private static ExtensionRegister ourInstance;
+  private static PsiPrimitiveTypeUtil ourInstance;
 
-  public static ExtensionRegister getInstance() {
+  public static PsiPrimitiveTypeUtil getInstance() {
     if (null == ourInstance) {
-      ourInstance = createExtensionRegister();
+      ourInstance = createUtil();
     }
     return ourInstance;
   }
 
-  private static ExtensionRegister createExtensionRegister() {
+  private static PsiPrimitiveTypeUtil createUtil() {
     final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
     switch (IntelliJVersionRangeUtil.getIntelliJVersion(buildNumber)) {
       case INTELLIJ_8:
         throw new RuntimeException(String.format("This version (%s) of IntelliJ is not supported!", buildNumber.asString()));
       case INTELLIJ_9:
-        return new ExtensionRegister9Impl();
+        return new PsiPrimitiveTypeUtil9Impl();
       case INTELLIJ_10:
       case INTELLIJ_10_5:
-        return new ExtensionRegister10Impl();
+        return new PsiPrimitiveTypeUtil10Impl();
       case INTELLIJ_11:
       default:
-        return new ExtensionRegister11Impl();
+        return new PsiPrimitiveTypeUtil11Impl();
     }
   }
 }

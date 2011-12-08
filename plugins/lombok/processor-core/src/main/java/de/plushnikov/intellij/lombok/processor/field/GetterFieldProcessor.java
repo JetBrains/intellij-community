@@ -25,6 +25,7 @@ import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
+import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Getter;
 import lombok.core.TransformationsUtil;
 
@@ -90,7 +91,8 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     boolean result = true;
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
-      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+      final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
+      final boolean isBoolean = booleanType.equals(psiField.getType());
       final Collection<String> methodNames = TransformationsUtil.toAllGetterNames(psiField.getName(), isBoolean);
       final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
@@ -110,7 +112,8 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
   public PsiMethod createGetterMethod(@NotNull PsiField psiField, @Modifier @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiReturnType = psiField.getType();
-    String methodName = TransformationsUtil.toGetterName(fieldName, PsiType.BOOLEAN.equals(psiReturnType));
+    final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
+    String methodName = TransformationsUtil.toGetterName(fieldName, booleanType.equals(psiReturnType));
 
     final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField, LombokConstants.NON_NULL_PATTERN);
     final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);

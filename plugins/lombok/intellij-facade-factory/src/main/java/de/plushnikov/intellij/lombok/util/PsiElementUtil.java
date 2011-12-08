@@ -47,12 +47,13 @@ public class PsiElementUtil {
       if (parameterList.getParametersCount() != parameterTypes.size()) {
         return false;
       }
+      final PsiType nullType = PsiPrimitiveTypeFactory.getInstance().getNullType();
       final PsiParameter[] parameters = parameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
         final PsiType type = parameter.getType();
         final PsiType parameterType = parameterTypes.get(i);
-        if (PsiType.NULL.equals(parameterType)) {
+        if (nullType.equals(parameterType)) {
           continue;
         }
         if (parameterType != null &&
@@ -102,10 +103,11 @@ public class PsiElementUtil {
       }
       final PsiParameter[] methodParameters = methodParameterList.getParameters();
       final PsiParameter[] otherParameters = parameterList.getParameters();
+      final PsiType nullType = PsiPrimitiveTypeFactory.getInstance().getNullType();
       for (int i = 0; i < methodParameters.length; i++) {
         final PsiType type = methodParameters[i].getType();
         final PsiType parameterType = otherParameters[i].getType();
-        if (PsiType.NULL.equals(parameterType)) {
+        if (nullType.equals(parameterType)) {
           continue;
         }
         if (!typesAreEquivalent(type,
@@ -154,10 +156,11 @@ public class PsiElementUtil {
     PsiParameter[] secondMethodParameterListParameters = secondMethodParameterList.getParameters();
     PsiSubstitutor firstSubstitutor = firstPair.getSecond();
     PsiSubstitutor secondSubstitutor = secondPair.getSecond();
+    final PsiType nullType = PsiPrimitiveTypeFactory.getInstance().getNullType();
     for (int i = 0; i < firstMethodParameterListParameters.length; i++) {
       PsiType firstMethodParameterListParameterType = firstSubstitutor.substitute(firstMethodParameterListParameters[i].getType());
       PsiType secondMethodParameterListParameterType = secondSubstitutor.substitute(secondMethodParameterListParameters[i].getType());
-      if (PsiType.NULL.equals(firstMethodParameterListParameterType)) {
+      if (nullType.equals(firstMethodParameterListParameterType)) {
         continue;
       }
       if (!typesAreEquivalent(firstMethodParameterListParameterType, secondMethodParameterListParameterType)) {

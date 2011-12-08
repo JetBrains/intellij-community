@@ -10,6 +10,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.FluentSetter;
 
 /**
@@ -37,6 +38,6 @@ public class FluentSetterFieldProcessor extends SetterFieldProcessor {
   @Override
   protected PsiType getReturnType(@NotNull PsiField psiField) {
     final PsiClass containingClass = psiField.getContainingClass();
-    return null != containingClass ? PsiClassUtil.getClassType(containingClass) : PsiType.NULL;
+    return null != containingClass ? PsiClassUtil.getClassType(containingClass) : PsiPrimitiveTypeFactory.getInstance().getNullType();
   }
 }

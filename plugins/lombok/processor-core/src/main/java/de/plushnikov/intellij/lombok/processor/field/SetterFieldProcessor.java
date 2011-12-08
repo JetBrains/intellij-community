@@ -23,6 +23,7 @@ import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
+import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Setter;
 import lombok.core.TransformationsUtil;
 
@@ -82,7 +83,8 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
       final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+      final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
+      final boolean isBoolean = booleanType.equals(psiField.getType());
       final Collection<String> methodNames = getAllSetterNames(psiField, isBoolean);
 
       for (String methodName : methodNames) {
@@ -109,7 +111,8 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   public PsiMethod createSetterMethod(@NotNull PsiField psiField, @Modifier @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
-    final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
+    final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
+    final String methodName = getSetterName(psiField, booleanType.equals(psiFieldType));
 
 //      final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField);
 //      final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
@@ -136,7 +139,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   protected PsiType getReturnType(@NotNull PsiField psiField) {
-    return PsiType.VOID;
+    return PsiPrimitiveTypeFactory.getInstance().getVoidType();
   }
 
 }
