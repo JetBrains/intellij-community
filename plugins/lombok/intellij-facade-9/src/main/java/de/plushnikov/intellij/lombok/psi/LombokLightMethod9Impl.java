@@ -8,7 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author Plushnikov Michail
@@ -53,5 +55,26 @@ public class LombokLightMethod9Impl extends LightMethod implements LombokLightMe
 
   public ASTNode getNode() {
     return myMethod.getNode();
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    // just add new element to the containing class
+    final PsiClass containingClass = getContainingClass();
+    if (null != containingClass) {
+      CheckUtil.checkWritable(containingClass);
+      return containingClass.add(newElement);
+    }
+    return null;
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    // simple do nothing
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {
+    // simple do nothing
   }
 }
