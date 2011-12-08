@@ -41,14 +41,11 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
       final ProjectManager pm = ProjectManager.getInstance();
       final Project[] projects = pm.getOpenProjects();
       final Set<VirtualFile> files = projectsLocationSet(projects);
-      files.remove(project.getBaseDir());
       NewProjectUtil.createNewProject(project, directory.getAbsolutePath());
       final Project[] projectsAfter = pm.getOpenProjects();
-      final Set<VirtualFile> filesAfter = projectsLocationSet(projectsAfter);
-      filesAfter.removeAll(files);
 
       for (Project project1 : projectsAfter) {
-        if (project1.getBaseDir() != null && filesAfter.contains(project1.getBaseDir())) {
+        if (project1.getBaseDir() != null && ! files.contains(project1.getBaseDir())) {
           final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project1);
           vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", vcsKey.getName())));
           break;
