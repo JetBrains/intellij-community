@@ -1517,13 +1517,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private void markOutputPathForDeletion(final int projectId, final String outputPath, final String classname, final String srcUrl) {
-    synchronized (myOutputsToDelete) {
+    final SourceUrlClassNamePair pair = new SourceUrlClassNamePair(srcUrl, classname);
+    synchronized (myDataLock) {
       Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
       if (map == null) {
         map = new HashMap<String, SourceUrlClassNamePair>();
         myOutputsToDelete.put(projectId, map);
       }
-      map.put(outputPath, new SourceUrlClassNamePair(srcUrl, classname));
+      map.put(outputPath, pair);
       if (LOG.isDebugEnabled() || ourDebugMode) {
         final String message = "ADD path to delete: " + outputPath + "; source: " + srcUrl;
         LOG.debug(message);
@@ -1535,7 +1536,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private void unmarkOutputPathForDeletion(String outputPath) {
-    synchronized (myOutputsToDelete) {
+    synchronized (myDataLock) {
       for (int projectId : myOutputsToDelete.keys()) {
         final Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
         if (map != null) {
