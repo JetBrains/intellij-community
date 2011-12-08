@@ -56,7 +56,7 @@
 				<idea9.version>9.0.4</idea9.version>
 				<idea10.version>10.5.4</idea10.version>
 				<idea11.version>11.0</idea11.version>
-				<idea.default.version>${idea10.version}</idea.default.version>
+				<idea.default.version>${idea9.version}</idea.default.version>
 				<idea9.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea9.version}</idea9.home>
 				<idea10.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea10.version}</idea10.home>
 				<idea11.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea11.version}</idea11.home>
@@ -74,7 +74,7 @@
 				<idea9.version>9.0.4</idea9.version>
 				<idea10.version>10.0</idea10.version>
 				<idea11.version>11.0</idea11.version>
-				<idea.default.version>${idea10.version}</idea.default.version>
+				<idea.default.version>${idea9.version}</idea.default.version>
 				<idea9.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea9.version}</idea9.home>
 				<idea10.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea10.version}</idea10.home>
 				<idea11.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea11.version}</idea11.home>

@@ -14,15 +14,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>intellij-facade-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>intellij-facade-factory</artifactId>
-		</dependency>
-
-		<dependency>
 			<groupId>com.intellij.idea</groupId>
 			<artifactId>openapi</artifactId>
 		</dependency>
@@ -33,10 +24,6 @@
 		<dependency>
 			<groupId>com.intellij.idea</groupId>
 			<artifactId>annotations</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.intellij.idea</groupId>
-			<artifactId>idea</artifactId>
 		</dependency>
 	</dependencies>
 	<build>

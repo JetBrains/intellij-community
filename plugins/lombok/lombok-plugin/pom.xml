@@ -19,6 +19,10 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
+			<artifactId>intellij-facade-factory</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>processor-api</artifactId>
 		</dependency>
 		<dependency>
