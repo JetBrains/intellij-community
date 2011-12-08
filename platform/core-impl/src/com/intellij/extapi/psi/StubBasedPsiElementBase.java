@@ -314,6 +314,16 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return PsiTreeUtil.getParentOfType(this, parentClass);
   }
 
+  @Nullable
+  protected PsiElement getStubOrPsiParent() {
+    T stub = myStub;
+    if (stub != null) {
+      //noinspection unchecked
+      return stub.getParentStub().getPsi();
+    }
+    return getParent();
+  }
+
   @Override
   protected Object clone() {
     final StubBasedPsiElementBase stubbless = (StubBasedPsiElementBase)super.clone();
