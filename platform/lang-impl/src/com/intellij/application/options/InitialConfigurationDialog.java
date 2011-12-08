@@ -282,7 +282,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
     if (myPreviewEditor != null) {
       myPreviewEditor.disposeUIResources();
     }
-    myPreviewOptions.disposeUIResources();
+    if (myPreviewOptions != null) {
+      myPreviewOptions.disposeUIResources();
+    }
     // set keymap
     ((KeymapManagerImpl)KeymapManager.getInstance()).setActiveKeymap((Keymap)myKeymapComboBox.getSelectedItem());
     // set color scheme
