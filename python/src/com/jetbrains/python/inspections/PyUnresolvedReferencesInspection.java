@@ -383,7 +383,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         boolean marked_qualified = false;
         if (element instanceof PyQualifiedExpression) {
           final PyQualifiedExpression qexpr = (PyQualifiedExpression)element;
-          if (PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName())) {
+          if (myIgnoredIdentifiers.contains(ref_text) || PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName())) {
             return;
           }
           final PyExpression qualifier = qexpr.getQualifier();
@@ -573,7 +573,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (importStatement != null && !unusedStatements.contains(importStatement) && !myUsedImports.contains(importStatement)) {
           // don't remove as unused imports in try/except statements
           if (PsiTreeUtil.getParentOfType(importStatement, PyTryExceptStatement.class) != null) {
-            continue;            
+            continue;
           }
           // Don't report conditional imports as unused
           if (PsiTreeUtil.getParentOfType(unusedImport, PyIfStatement.class) != null) {
