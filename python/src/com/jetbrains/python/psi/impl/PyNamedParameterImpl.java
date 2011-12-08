@@ -101,6 +101,10 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
 
   @Nullable
   public PyExpression getDefaultValue() {
+    final PyNamedParameterStub stub = getStub();
+    if (stub != null && !stub.hasDefaultValue()) {
+      return null;
+    }
     ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
