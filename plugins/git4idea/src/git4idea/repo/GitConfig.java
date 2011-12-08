@@ -110,7 +110,8 @@ class GitConfig {
       ini.load(configFile);
     }
     catch (IOException e) {
-      throw new GitRepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e);
+      LOG.error(new GitRepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
+      return new GitConfig(Collections.<GitRemote>emptyList(), Collections.<GitBranchTrackInfo>emptyList());
     }
 
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManager.getPluginByClassName(GitConfig.class.getName()));
