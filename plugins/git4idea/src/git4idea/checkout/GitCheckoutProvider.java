@@ -54,7 +54,12 @@ public class GitCheckoutProvider implements CheckoutProvider {
       return;
     }
     dialog.rememberSettings();
-    final VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(dialog.getParentDirectory()));
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final File parent = new File(dialog.getParentDirectory());
+    VirtualFile destinationParent = lfs.findFileByIoFile(parent);
+    if (destinationParent == null) {
+      destinationParent = lfs.refreshAndFindFileByIoFile(parent);
+    }
     if (destinationParent == null) {
       return;
     }
