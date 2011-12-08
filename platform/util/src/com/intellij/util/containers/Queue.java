@@ -127,4 +127,13 @@ public class Queue<T> {
     }
     return true;
   }
+
+  @Override
+  public String toString() {
+    List<Object> list = Arrays.asList(myArray);
+    if (isWrapped) {
+      return "[[[ " +list.subList(0, myLast) + " ||| ... " + list.subList(myLast, myFirst) + " ... ||| " + list.subList(myFirst, myArray.length) + " ]]]";
+    }
+    return "[[[ ... " +list.subList(0, myFirst) + " ... ||| " + list.subList(myFirst, myLast) + " ||| ... " + list.subList(myFirst, myArray.length) + " ... ]]]";
+  }
 }
