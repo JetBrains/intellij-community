@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
@@ -122,8 +123,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           if (pyClass != null && pyClass.isNewStyleClass()) {
             final List<String> slots = pyClass.getSlots();
-            if (slots != null && !slots.contains(node.getReferencedName())) {
-              registerProblem(node, "'" + pyClass.getName() + "' object has no attribute '" + node.getReferencedName() + "'");
+            if (slots != null && !slots.contains(node.getReferencedName()) && !slots.contains("__dict__")) {
+              final ASTNode nameNode = node.getNameElement();
+              final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
+              registerProblem(e, "'" + pyClass.getName() + "' object has no attribute '" + node.getReferencedName() + "'");
             }
           }
         }
