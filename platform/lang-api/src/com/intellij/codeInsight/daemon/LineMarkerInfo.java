@@ -48,22 +48,14 @@ public class LineMarkerInfo<T extends PsiElement> {
   private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
 
-
-  public LineMarkerInfo(T element,
+  public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         GutterIconRenderer.Alignment alignment) {
-    myIcon = icon;
-    myTooltipProvider = tooltipProvider;
-    myIconAlignment = alignment;
-    elementRef = new WeakReference<T>(element);
-    myNavigationHandler = navHandler;
-    this.startOffset = startOffset;
-    this.updatePass = updatePass;
-    endOffset = startOffset;
+    this(element, new TextRange(startOffset, startOffset), icon, updatePass, tooltipProvider, navHandler, alignment);
   }
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
