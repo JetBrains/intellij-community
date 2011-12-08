@@ -81,9 +81,13 @@ public class FileUrlProvider implements TestLocationProvider, DumbAware {
       return Collections.emptyList();
     }
 
+    if (lineNumber < 0) {
+      LOG.warn("Tests location provider: line number should be >= 1. Path: " + path);
+    }
+    
     final List<Location> locations = new ArrayList<Location>(2);
     for (VirtualFile file : virtualFiles) {
-      locations.add(createLocationFor(project, file, lineNumber));
+      locations.add(createLocationFor(project, file, lineNumber < 1 ? 1 : lineNumber));
     }
     return locations;
   }
