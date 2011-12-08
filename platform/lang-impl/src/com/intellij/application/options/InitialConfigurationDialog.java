@@ -223,7 +223,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
     @Override
     public void dispose() {
-      myPreviewEditor.disposeUIResources();
+      if (myPreviewEditor != null) {
+        myPreviewEditor.disposeUIResources();
+      }
       myPreviewOptions.disposeUIResources();
     }
 
@@ -277,7 +279,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
     super.doOKAction();
 
-    myPreviewEditor.disposeUIResources();
+    if (myPreviewEditor != null) {
+      myPreviewEditor.disposeUIResources();
+    }
     myPreviewOptions.disposeUIResources();
     // set keymap
     ((KeymapManagerImpl)KeymapManager.getInstance()).setActiveKeymap((Keymap)myKeymapComboBox.getSelectedItem());
