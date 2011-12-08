@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
@@ -122,8 +123,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           if (pyClass != null && pyClass.isNewStyleClass()) {
             final List<String> slots = pyClass.getSlots();
-            if (slots != null && !slots.contains(node.getReferencedName())) {
-              registerProblem(node, "'" + pyClass.getName() + "' object has no attribute '" + node.getReferencedName() + "'");
+            if (slots != null && !slots.contains(node.getReferencedName()) && !slots.contains("__dict__")) {
+              final ASTNode nameNode = node.getNameElement();
+              final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
+              registerProblem(e, "'" + pyClass.getName() + "' object has no attribute '" + node.getReferencedName() + "'");
             }
           }
         }
@@ -383,7 +386,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         boolean marked_qualified = false;
         if (element instanceof PyQualifiedExpression) {
           final PyQualifiedExpression qexpr = (PyQualifiedExpression)element;
-          if (PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName())) {
+          if (myIgnoredIdentifiers.contains(ref_text) || PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName())) {
             return;
           }
           final PyExpression qualifier = qexpr.getQualifier();
@@ -573,7 +576,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (importStatement != null && !unusedStatements.contains(importStatement) && !myUsedImports.contains(importStatement)) {
           // don't remove as unused imports in try/except statements
           if (PsiTreeUtil.getParentOfType(importStatement, PyTryExceptStatement.class) != null) {
-            continue;            
+            continue;
           }
           // Don't report conditional imports as unused
           if (PsiTreeUtil.getParentOfType(unusedImport, PyIfStatement.class) != null) {

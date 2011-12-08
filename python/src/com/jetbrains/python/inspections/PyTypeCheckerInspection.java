@@ -66,10 +66,14 @@ public class PyTypeCheckerInspection extends PyInspection {
           final PsiElement resolved = result.getElement();
           if (resolved instanceof PyFunction) {
             final PyFunction fun = (PyFunction)resolved;
-            arg = PyNames.isRightOperatorName(fun.getName()) ? node.getLeftExpression() : node.getRightExpression();
-            error = checkSingleArgumentFunction(fun, arg, false);
-            if (error == null) {
+            PyExpression expr = PyNames.isRightOperatorName(fun.getName()) ? node.getLeftExpression() : node.getRightExpression();
+            String msg = checkSingleArgumentFunction(fun, expr, false);
+            if (msg == null) {
               return;
+            }
+            if (error == null) {
+              error = msg;
+              arg = expr;
             }
           }
           else {
