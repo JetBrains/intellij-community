@@ -446,12 +446,16 @@ public class PySkeletonRefresher {
    */
   private void cleanUpSkeletons(final File dir) {
     indicateMinor(dir.getPath());
-    for (File item : dir.listFiles()) {
+    final File[] files = dir.listFiles();
+    if (files == null) {
+      return;
+    }
+    for (File item : files) {
       if (item.isDirectory()) {
         cleanUpSkeletons(item);
         // was the dir emptied?
         File[] remaining = item.listFiles();
-        if (remaining.length == 1) {
+        if (remaining != null && remaining.length == 1) {
           File last_file = remaining[0];
           if (PyNames.INIT_DOT_PY.equals(last_file.getName()) && last_file.length() == 0) {
             boolean deleted = deleteOrLog(last_file);
