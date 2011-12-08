@@ -16,6 +16,8 @@
 package git4idea.jgit;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import git4idea.push.GitSimplePushResult;
 import org.eclipse.jgit.JGitText;
 import org.eclipse.jgit.api.CloneCommand;
@@ -52,6 +54,8 @@ interface GitHttpRemoteCommand {
   void run() throws InvalidRemoteException, URISyntaxException;
   void cleanup();
   GitHttpCredentialsProvider getCredentialsProvider();
+  String getLogString();
+  String getCommandString();
 
   class Fetch implements GitHttpRemoteCommand {
 
@@ -60,7 +64,7 @@ interface GitHttpRemoteCommand {
     private String myUrl;
     private final List<RefSpec> myRefSpecs;
 
-    Fetch(@NotNull Git git, @NotNull GitHttpCredentialsProvider credentialsProvider, String url, List<RefSpec> refSpecs) {
+    Fetch(@NotNull Git git, @NotNull GitHttpCredentialsProvider credentialsProvider, @NotNull String url, @NotNull List<RefSpec> refSpecs) {
       myGit = git;
       myCredentialsProvider = credentialsProvider;
       myUrl = url;
@@ -89,6 +93,25 @@ interface GitHttpRemoteCommand {
     @Override
     public GitHttpCredentialsProvider getCredentialsProvider() {
       return myCredentialsProvider;
+    }
+
+    @Override
+    public String getLogString() {
+      return getCommandString();
+    }
+
+    @Override
+    public String getCommandString() {
+      return String.format("git fetch %s %s", myUrl, getRefspecsAsString(myRefSpecs));
+    }
+
+    static String getRefspecsAsString(@NotNull List<RefSpec> refSpecs) {
+      return StringUtil.join(refSpecs, new Function<RefSpec, String>() {
+        @Override
+        public String fun(RefSpec spec) {
+          return spec.toString();
+        }
+      }, ",");
     }
 
     @Override
@@ -130,6 +153,16 @@ interface GitHttpRemoteCommand {
     @Override
     public GitHttpCredentialsProvider getCredentialsProvider() {
       return myCredentialsProvider;
+    }
+
+    @Override
+    public String getLogString() {
+      return getCommandString();
+    }
+
+    @Override
+    public String getCommandString() {
+      return String.format("git clone %s %s", myUrl, myTargetDirectory.getPath());
     }
 
     @Override
@@ -200,7 +233,17 @@ interface GitHttpRemoteCommand {
     public GitHttpCredentialsProvider getCredentialsProvider() {
       return myCredentialsProvider;
     }
-    
+
+    @Override
+    public String getLogString() {
+      return String.format("git push %s (%s) %s", myRemoteName, myUrl, GitHttpRemoteCommand.Fetch.getRefspecsAsString(myPushSpecs));
+    }
+
+    @Override
+    public String getCommandString() {
+      return String.format("git push %s %s", myRemoteName, GitHttpRemoteCommand.Fetch.getRefspecsAsString(myPushSpecs));
+    }
+
     @Override
     public void cleanup() {
     }
