@@ -118,7 +118,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
 
   @NotNull
   public String getRepr(boolean includeDefaultValue) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     if (isPositionalContainer()) sb.append("*");
     else if (isKeywordContainer()) sb.append("**");
     sb.append(getName());
@@ -131,7 +131,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
 
   @Override
   public PyAnnotation getAnnotation() {
-    return findChildByClass(PyAnnotation.class);
+    return getStubOrPsiChild(PyElementTypes.ANNOTATION);
   }
 
   public Icon getIcon(final int flags) {
