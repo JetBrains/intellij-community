@@ -91,6 +91,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
             }
             continue;
           }
+          if (!(element instanceof PsiFileSystemItem)) return null;
         }
         fillResultsMap(result, containingFile, topLevelClasses);
         if (relativeMap != null) {
