@@ -30,14 +30,14 @@ public class LombokLoader implements ApplicationComponent {
     final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
     LOG.info("Lombok plugin started for IntelliJ IDEA " + buildNumber.asString());
 
-    ExtensionRegister extensionRegister = LombokExtensionRegisterFactory.getInstance().createExtensionRegister();
+    ExtensionRegister extensionRegister = LombokExtensionRegisterFactory.getInstance();
     extensionRegister.registerRenameHandler();
     extensionRegister.registerTreeHandler();
   }
 
   @Override
   public void disposeComponent() {
-    ExtensionRegister extensionRegister = LombokExtensionRegisterFactory.getInstance().createExtensionRegister();
+    ExtensionRegister extensionRegister = LombokExtensionRegisterFactory.getInstance();
 
     extensionRegister.unregisterRenameHandler();
     extensionRegister.unregisterTreeHandler();
