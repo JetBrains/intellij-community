@@ -37,6 +37,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.CollectionFactory;
@@ -938,8 +939,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
           final Throwable debugAllocOther = otherMarker.myDebugAllocationPosition;
           final Throwable debugAllocThis = ((StartMarker)marker).myDebugAllocationPosition;
           if (debugAllocOther != null) {
-            debugAllocThis.printStackTrace(System.err);
-            debugAllocOther.printStackTrace(System.err);
+            Throwable currentTrace = new Throwable();
+            ExceptionUtil.makeStackTraceRelative(debugAllocThis, currentTrace).printStackTrace(System.err);
+            ExceptionUtil.makeStackTraceRelative(debugAllocOther, currentTrace).printStackTrace(System.err);
           }
           LOG.error("Another not done marker added after this one. Must be done before this.");
         }
@@ -1100,7 +1102,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
 
     if (myCurrentLexeme < myLexemeCount) {
       final List<IElementType> missed = CollectionFactory.arrayList(myLexTypes, myCurrentLexeme, myLexemeCount);
-      LOG.error("Tokens " + missed + " were not inserted into the tree. Text:\n" + myText);
+      LOG.error("Tokens " + missed + " were not inserted into the tree. " +(myFile != null? myFile.getLanguage()+", ":"")+"Text:\n" + myText);
     }
 
     if (rootMarker.myDoneMarker.myLexemeIndex < myLexemeCount) {
