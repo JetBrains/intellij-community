@@ -156,4 +156,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   @Nullable
   List<String> getSlots();
+
+  @Nullable
+  String getDocStringValue();
 }

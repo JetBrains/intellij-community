@@ -183,7 +183,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
         if (PyNames.INIT.equals(func.getName()) && docString == null) {
           PyClass pyClass = func.getContainingClass();
           if (pyClass != null)
-            docString = PyUtil.strValue(pyClass.getDocStringExpression());
+            docString = pyClass.getDocStringValue();
         }
         StructuredDocString epydocString = StructuredDocString.parse(docString);
         if (epydocString != null) {
