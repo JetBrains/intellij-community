@@ -50,12 +50,12 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     List<Configurable> result = Lists.newArrayList();
 
     myPythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
-    result.add(createConsoleChildConfigurable("Python console", myPythonConsoleOptionsPanel,
+    result.add(createConsoleChildConfigurable("Python Console", myPythonConsoleOptionsPanel,
                                               myOptionsProvider.getPythonConsoleSettings(), CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON));
 
     if (DjangoFacet.isPresentInAnyModule(myProject)) {
       myDjangoConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
-      result.add(createConsoleChildConfigurable("Django console",
+      result.add(createConsoleChildConfigurable("Django Console",
                                                 myDjangoConsoleOptionsPanel, myOptionsProvider.getDjangoConsoleSettings(),
                                                 CONSOLE_SETTINGS_HELP_REFERENCE_DJANGO));
     }
