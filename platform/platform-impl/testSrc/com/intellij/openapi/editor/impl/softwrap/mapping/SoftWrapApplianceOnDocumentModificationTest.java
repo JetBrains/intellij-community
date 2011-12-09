@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModifi
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.TestFileType;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -847,6 +848,28 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     final VisualPosition visualPosition = getEditor().offsetToVisualPosition(offset);
     assertEquals(visualPosition, getEditor().logicalToVisualPosition(logicalPosition));
     assertEquals(logicalPosition, getEditor().visualToLogicalPosition(visualPosition));
+  }
+
+  public void testSoftWrapsRecalculationOnTabWidthChange() throws IOException {
+    // Inspired by IDEA-78616 - the point is to recalculate soft wraps when tab width is changed.
+    String text = 
+      "\t<caret> my text";
+
+    // Build soft wraps cache.
+    init(300, text);
+    
+    VisualPosition caretPositionBefore = getEditor().getCaretModel().getVisualPosition();
+
+    // Change tab size.
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions();
+    assertNotNull(indentOptions);
+    indentOptions.TAB_SIZE++;
+
+    ((EditorImpl)getEditor()).reinitSettings();
+    assertEquals(
+      new VisualPosition(caretPositionBefore.line, caretPositionBefore.column + 1),
+      getEditor().getCaretModel().getVisualPosition()
+    );
   }
   
   private void init(final int visibleWidth, @NotNull String fileText) throws IOException {
