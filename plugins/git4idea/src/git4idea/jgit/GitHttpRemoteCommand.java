@@ -40,9 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Kirill Likhodedov
@@ -51,7 +49,7 @@ interface GitHttpRemoteCommand {
 
   String getUrl();
   void setUrl(String url);
-  void run() throws InvalidRemoteException, URISyntaxException;
+  void run() throws InvalidRemoteException, URISyntaxException, TransportException;
   void cleanup();
   GitHttpCredentialsProvider getCredentialsProvider();
   String getLogString();
@@ -382,6 +380,118 @@ interface GitHttpRemoteCommand {
     }
   }
 
+  class LsRemote implements GitHttpRemoteCommand {
+
+    private final Git myGit;
+    private final GitHttpCredentialsProvider myCredentialsProvider;
+    private String myUrl;
+    private Collection<Ref> myResultRefs;
+
+    public LsRemote(@NotNull Git git, @NotNull GitHttpCredentialsProvider credentialsProvider, @NotNull String url) {
+      myGit = git;
+      myCredentialsProvider = credentialsProvider;
+      myUrl = url;
+    }
+
+    @Override
+    public void run() throws InvalidRemoteException, TransportException {
+      myResultRefs = call();
+    }
+
+    @Override
+    public void cleanup() {
+    }
+
+    @Override
+    public GitHttpCredentialsProvider getCredentialsProvider() {
+      return myCredentialsProvider;
+    }
+
+    @Override
+    public String getLogString() {
+      return getCommandString();
+    }
+
+    @Override
+    public String getCommandString() {
+      return String.format("git ls-remote --heads %s ", myUrl);
+    }
+
+    @Override
+    public String getUrl() {
+      return myUrl;
+    }
+
+    @Override
+    public void setUrl(@NotNull String url) {
+      myUrl = url;
+    }
+
+    @NotNull
+    public Collection<Ref> getRefs() {
+      return myResultRefs == null ? Collections.<Ref>emptyList() : myResultRefs;
+    }
+
+    /*
+      Copy-paste of org.eclipse.jgit.api.LsRemote#call with the following changes:
+      1. More specific exceptions declaration.
+      2. Use CredentialsProvider.
+      3. We don't need --tags, we always need --heads.
+     */
+    private Collection<Ref> call() throws TransportException, InvalidRemoteException {
+      try {
+        Transport transport = Transport.open(myGit.getRepository(), myUrl);
+
+        try {
+          Collection<RefSpec> refSpecs = new ArrayList<RefSpec>(1);
+          refSpecs.add(new RefSpec("refs/heads/*:refs/remotes/origin/*"));
+          Collection<Ref> refs;
+          Map<String, Ref> refmap = new HashMap<String, Ref>();
+          transport.setCredentialsProvider(myCredentialsProvider);
+          FetchConnection fc = transport.openFetch();
+          try {
+            refs = fc.getRefs();
+            if (refSpecs.isEmpty()) {
+              for (Ref r : refs) {
+                refmap.put(r.getName(), r);
+              }
+            }
+            else {
+              for (Ref r : refs) {
+                for (RefSpec rs : refSpecs) {
+                  if (rs.matchSource(r)) {
+                    refmap.put(r.getName(), r);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          finally {
+            fc.close();
+          }
+          return refmap.values();
+        }
+        catch (TransportException e) {
+          throw new JGitInternalException(
+            JGitText.get().exceptionCaughtDuringExecutionOfLsRemoteCommand,
+            e);
+        }
+        finally {
+          transport.close();
+        }
+      }
+      catch (URISyntaxException e) {
+        throw new InvalidRemoteException(MessageFormat.format(
+          JGitText.get().invalidRemote, myUrl));
+      }
+      catch (NotSupportedException e) {
+        throw new JGitInternalException(
+          JGitText.get().exceptionCaughtDuringExecutionOfLsRemoteCommand,
+          e);
+      }
+    }
+  }
 }
 
 

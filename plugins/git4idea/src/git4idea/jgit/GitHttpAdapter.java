@@ -22,6 +22,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.push.GitSimplePushResult;
 import git4idea.remote.GitRememberedInputs;
@@ -34,6 +35,7 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.NoRemoteRepositoryException;
 import org.eclipse.jgit.errors.NotSupportedException;
 import org.eclipse.jgit.errors.TransportException;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RefSpec;
@@ -45,6 +47,7 @@ import java.io.IOException;
 import java.net.ProxySelector;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -158,6 +161,39 @@ public final class GitHttpAdapter {
     }
   }
   
+  @NotNull
+  public static Collection<String> lsRemote(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String remoteUrl) {
+    try {
+      final Git git = convertToGit(repository);
+      final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
+      GitHttpRemoteCommand.LsRemote lsRemoteCommand = new GitHttpRemoteCommand.LsRemote(git, provider, remoteUrl);
+      callWithAuthRetry(lsRemoteCommand, repository.getProject());
+      return convertRefsToStrings(lsRemoteCommand.getRefs());
+    } catch (IOException e) {
+      logException(repository, remoteName, remoteUrl, e, "fetching");
+    }
+    catch (InvalidRemoteException e) {
+      logException(repository, remoteName, remoteUrl, e, "fetching");
+    }
+    catch (URISyntaxException e) {
+      logException(repository, remoteName, remoteUrl, e, "fetching");
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  private static Collection<String> convertRefsToStrings(@NotNull Collection<Ref> lsRemoteCommandRefs) {
+    Collection<String> refs = new ArrayList<String>();
+    for (Ref ref : lsRemoteCommandRefs) {
+      String refName = ref.getName();
+      if (refName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+        refName = refName.substring(GitBranch.REFS_HEADS_PREFIX.length());
+      }
+      refs.add(refName);
+    }
+    return refs;
+  }
+
   @NotNull
   public static GitFetchResult cloneRepository(@NotNull Project project, @NotNull final File directory, @NotNull final String url) {
     GitFetchResult.Type resultType;
