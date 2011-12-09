@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.Nullable;
 
-public final class PromptMacro extends PromptingMacro implements SecondQueueExpandMacro {
-  public String getName() {
-    return "Prompt";
+/**
+ * @author Eugene Zhuravlev
+ *         Date: 12/9/11
+ */
+public abstract class PromptingMacro extends Macro{
+
+  public final String expand(DataContext dataContext) throws ExecutionCancelledException {
+    final String userInput = promptUser(dataContext);
+    if (userInput == null) {
+      throw new ExecutionCancelledException();
+    }
+    return userInput;
   }
 
-  public String getDescription() {
-    return IdeBundle.message("macro.prompt");
-  }
 
+  /**
+   * Called from expand() method
+   *
+   * @param dataContext
+   * @return user input. If null is returned, ExecutionCancelledException is thrown by expand() method
+   */
   @Nullable
-  protected String promptUser(DataContext dataContext) {
-    return Messages.showInputDialog(IdeBundle.message("prompt.enter.parameters"), IdeBundle.message("title.input"), Messages.getQuestionIcon());
-  }
-
-  public void cachePreview(DataContext dataContext) {
-    myCachedPreview = IdeBundle.message("macro.prompt.preview");
-  }
+  protected abstract String promptUser(DataContext dataContext);
 }

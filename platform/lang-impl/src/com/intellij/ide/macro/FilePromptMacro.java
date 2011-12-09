@@ -29,7 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author yole
  */
-public class FilePromptMacro extends Macro implements SecondQueueExpandMacro {
+public class FilePromptMacro extends PromptingMacro implements SecondQueueExpandMacro {
   @Override
   public String getName() {
     return "FilePrompt";
@@ -40,16 +40,12 @@ public class FilePromptMacro extends Macro implements SecondQueueExpandMacro {
     return "Shows a file chooser dialog";
   }
 
-  @Override
-  public String expand(DataContext dataContext) throws ExecutionCancelledException {
+  protected String promptUser(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     final FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
     final VirtualFile[] result = fileChooser.choose(null, project);
-    if (result.length != 1) {
-      throw new ExecutionCancelledException();
-    }
-    return FileUtil.toSystemDependentName(result [0].getPath());
+    return result.length == 1? FileUtil.toSystemDependentName(result[0].getPath()) : null;
   }
 
   @Override
