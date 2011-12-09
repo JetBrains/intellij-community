@@ -562,6 +562,8 @@
 
     <webBrowserUrlProvider implementation="com.jetbrains.django.lang.template.DjangoWebBrowserUrlProvider"/>
 
+    <xml.xmlExtension implementation="com.jetbrains.django.lang.template.DjangoXmlExtension" order="first"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
