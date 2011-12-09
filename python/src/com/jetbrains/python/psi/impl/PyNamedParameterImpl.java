@@ -101,6 +101,10 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
 
   @Nullable
   public PyExpression getDefaultValue() {
+    final PyNamedParameterStub stub = getStub();
+    if (stub != null && !stub.hasDefaultValue()) {
+      return null;
+    }
     ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
@@ -118,7 +122,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
 
   @NotNull
   public String getRepr(boolean includeDefaultValue) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     if (isPositionalContainer()) sb.append("*");
     else if (isKeywordContainer()) sb.append("**");
     sb.append(getName());
@@ -131,7 +135,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
 
   @Override
   public PyAnnotation getAnnotation() {
-    return findChildByClass(PyAnnotation.class);
+    return getStubOrPsiChild(PyElementTypes.ANNOTATION);
   }
 
   public Icon getIcon(final int flags) {
@@ -147,11 +151,12 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    if (getParent() instanceof PyParameterList) {
-      PyParameterList parameterList = (PyParameterList) getParent();
+    final PsiElement parent = getStubOrPsiParent();
+    if (parent instanceof PyParameterList) {
+      PyParameterList parameterList = (PyParameterList)parent;
       final PyParameter[] params = parameterList.getParameters();
-      if (parameterList.getParent() instanceof PyFunction) {
-        PyFunction func = (PyFunction) parameterList.getParent();
+      PyFunction func = parameterList.getContainingFunction();
+      if (func != null) {
         final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(func);
         if (params [0] == this && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
           // must be 'self' or 'cls'
@@ -174,11 +179,11 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
           }
         }
 
-        String docString = PyUtil.strValue(func.getDocStringExpression());
+        String docString = func.getDocStringValue();
         if (PyNames.INIT.equals(func.getName()) && docString == null) {
           PyClass pyClass = func.getContainingClass();
           if (pyClass != null)
-            docString = PyUtil.strValue(pyClass.getDocStringExpression());
+            docString = pyClass.getDocStringValue();
         }
         StructuredDocString epydocString = StructuredDocString.parse(docString);
         if (epydocString != null) {

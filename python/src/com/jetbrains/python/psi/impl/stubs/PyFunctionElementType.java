@@ -6,7 +6,9 @@ import com.intellij.psi.stubs.*;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -37,23 +39,23 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   public PyFunctionStub createStub(@NotNull final PyFunction psi, final StubElement parentStub) {
     PyFunctionImpl function = (PyFunctionImpl)psi;
     String message = function.extractDeprecationMessage();
-    return new PyFunctionStubImpl(psi.getName(), function.extractDocStringReturnType(),
+    final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
+    return new PyFunctionStubImpl(psi.getName(), PyUtil.strValue(docStringExpression),
                                   message == null ? null : StringRef.fromString(message), parentStub, getStubElementType());
   }
 
   public void serialize(final PyFunctionStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
-    dataStream.writeName(stub.getReturnTypeFromDocString());
+    dataStream.writeUTFFast(stub.getDocString() != null ? stub.getDocString() : "");
     dataStream.writeName(stub.getDeprecationMessage());
   }
 
   public PyFunctionStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
-    StringRef returnType = dataStream.readName();
+    String docString = dataStream.readUTFFast();
     StringRef deprecationMessage = dataStream.readName();
-    return new PyFunctionStubImpl(name, returnType != null ? returnType.getString() : null, deprecationMessage, parentStub,
-                                  getStubElementType());
+    return new PyFunctionStubImpl(name, docString.length() > 0 ? docString : null, deprecationMessage, parentStub, getStubElementType());
   }
 
   public void indexStub(final PyFunctionStub stub, final IndexSink sink) {

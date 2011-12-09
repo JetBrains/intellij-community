@@ -56,6 +56,15 @@ public interface PyCallExpression extends PyExpression {
   PyMarkedCallee resolveCallee(PyResolveContext resolveContext);
 
   /**
+   * Resolves callee down to particular function (standalone, method, or constructor).
+   * Return is null if callee cannot be resolved.
+   *
+   * @param resolveContext the reference resolve context
+   */
+  @Nullable
+  Callable resolveCalleeFunction(PyResolveContext resolveContext);
+
+  /**
    *
    * @param resolveContext the reference resolve context
    * @param implicitOffset known from the context implicit offset

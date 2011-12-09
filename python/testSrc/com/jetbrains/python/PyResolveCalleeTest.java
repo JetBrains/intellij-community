@@ -45,4 +45,11 @@ public class PyResolveCalleeTest extends PyTestCase {
     assertNotNull(resolved.getCallable());
     assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));
   }
+  
+  public void testWrappedStaticMethod() {
+    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    assertNotNull(resolved.getCallable());
+    assertEquals(0, resolved.getImplicitOffset());
+    assertEquals(resolved.getFlags(), EnumSet.of(PyFunction.Flag.STATICMETHOD));
+  }
 }

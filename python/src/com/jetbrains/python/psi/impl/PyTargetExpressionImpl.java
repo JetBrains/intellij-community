@@ -173,9 +173,18 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         }
       }
       if (parent instanceof PyTupleExpression) {
-        final PyType typeFromTupleAssignment = getTypeFromTupleAssignment(context);
-        if (typeFromTupleAssignment != null) {
-          return typeFromTupleAssignment;
+        final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(parent, PyAssignmentStatement.class);
+        if (assignment != null) {
+          final PyExpression value = assignment.getAssignedValue();
+          if (value != null) {
+            final PyType assignedType = value.getType(context);
+            if (assignedType instanceof PyTupleType) {
+              final PyType t = getTypeFromTupleAssignment((PyTupleExpression)parent, (PyTupleType)assignedType);
+              if (t != null) {
+                return t;
+              }
+            }
+          }
         }
       }
       if (parent instanceof PyWithItem) {
@@ -247,56 +256,60 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
-  private PyType getTypeFromTupleAssignment(TypeEvalContext context) {
-    final PyTupleExpression tuple = (PyTupleExpression) getParent();
-    PsiElement pparent = tuple;
-    while (pparent.getParent() instanceof PyParenthesizedExpression) {
-      pparent = pparent.getParent();
-    }
-    if (pparent.getParent() instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement stmt = (PyAssignmentStatement) pparent.getParent();
-      final PyExpression assignedValue = stmt.getAssignedValue();
-      if (assignedValue != null) {
-        final PyType assignedType = context.getType(assignedValue);
-        if (assignedType instanceof PyTupleType) {
-          PyTupleType tupleType = (PyTupleType)assignedType;
-          if (tuple.getElements().length == tupleType.getElementCount()) {
-            int selfIndex = ArrayUtil.indexOf(tuple.getElements(), this);
-            return tupleType.getElementType(selfIndex);
-          }
-        }
-      }
+  private PyType getTypeFromTupleAssignment(@NotNull PyTupleExpression tuple, @NotNull PyTupleType tupleType) {
+    if (tuple.getElements().length == tupleType.getElementCount()) {
+      int selfIndex = ArrayUtil.indexOf(tuple.getElements(), this);
+      return tupleType.getElementType(selfIndex);
     }
     return null;
   }
 
   @Nullable
-  private PyType getTypeFromIteration(TypeEvalContext context) {
-    PyForPart forPart = PsiTreeUtil.getParentOfType(this, PyForPart.class);
-    if (forPart == null) {
-      return null;
+  private PyType getTypeFromIteration(@NotNull TypeEvalContext context) {
+    PyExpression target = null;
+    PyExpression source = null;
+    final PyForPart forPart = PsiTreeUtil.getParentOfType(this, PyForPart.class);
+    if (forPart != null) {
+      final PyExpression expr = forPart.getTarget();
+      if (PsiTreeUtil.isAncestor(expr, this, false)) {
+        target = expr;
+        source = forPart.getSource();
+      }
     }
-    final PyExpression target = forPart.getTarget();
-    final PyExpression source = forPart.getSource();
-    if (source == null) {
-      return null;
+    final PyComprehensionElement comprh = PsiTreeUtil.getParentOfType(this, PyComprehensionElement.class);
+    if (comprh != null) {
+      for (ComprhForComponent c : comprh.getForComponents()) {
+        final PyExpression expr = c.getIteratorVariable();
+        if (PsiTreeUtil.isAncestor(expr, this, false)) {
+          target = expr;
+          source = c.getIteratedList();
+        }
+      }
     }
-    if (this == target) {
+    if (source != null && target != null) {
+      PyType type = null;
       final PyType sourceType = source.getType(context);
       if (sourceType instanceof PyCollectionType) {
-        return ((PyCollectionType) sourceType).getElementType(context);
+        type = ((PyCollectionType)sourceType).getElementType(context);
       }
-      if (sourceType instanceof PyClassType) {
+      else if (sourceType instanceof PyClassType) {
         final PyClass pyClass = ((PyClassType)sourceType).getPyClass();
-        if (pyClass == null) {
-          return null;
-        }
-        for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-          final PyType iterType = provider.getIterationType(pyClass);
-          if (iterType != null) {
-            return iterType;
+        if (pyClass != null) {
+          for (PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+            final PyType iterType = provider.getIterationType(pyClass);
+            if (iterType != null) {
+              type = iterType;
+              break;
+            }
           }
         }
+      }
+      final PsiElement parent = getParent();
+      if (type instanceof PyTupleType && parent instanceof PyTupleExpression) {
+        return getTypeFromTupleAssignment((PyTupleExpression)parent, (PyTupleType)type);
+      }
+      if (target == this && type != null) {
+        return type;
       }
     }
     return null;

@@ -52,6 +52,9 @@ extends
 
   @Nullable
   PyType getReturnTypeFromDocString();
+  
+  @Nullable
+  String getDocStringValue();
 
   /**
    * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
@@ -72,13 +75,6 @@ extends
      * Function is decorated with {@code @staticmethod}, its first param is as in a regular function.
      */
     STATICMETHOD,
-
-    /**
-     * Function is not decorated, but wrapped in an actual call to {@code staticmethod} or {@code classmethod},
-     * e.g. {@code foo = classmethod(foo)}. The callee is the inner version of {@code foo}, not the outer callable produced
-     * by the wrapping call.
-     */
-    WRAPPED,
   }
 
   /**

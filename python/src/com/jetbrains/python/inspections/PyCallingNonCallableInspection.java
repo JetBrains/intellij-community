@@ -49,9 +49,8 @@ public class PyCallingNonCallableInspection extends PyInspection {
         final PyExpression callee = decorator.getCallee();
         checkCallable(decorator, callee, null);
         if (decorator.hasArgumentList()) {
-          final PyCallExpression.PyMarkedCallee marked = decorator.resolveCallee(resolveWithoutImplicits());
-          if (marked != null) {
-            final Callable callable = marked.getCallable();
+          final Callable callable = decorator.resolveCalleeFunction(resolveWithoutImplicits());
+          if (callable != null) {
             final PyReferenceExpression callSite = callee instanceof PyReferenceExpression ? (PyReferenceExpression)callee : null;
             checkCallable(decorator, null, callable.getReturnType(myTypeEvalContext, callSite));
           }

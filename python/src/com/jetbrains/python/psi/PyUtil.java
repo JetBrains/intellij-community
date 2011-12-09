@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -37,6 +38,9 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -53,7 +57,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static com.jetbrains.python.psi.PyFunction.Flag.*;
+import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
 
 public class PyUtil {
@@ -625,6 +630,10 @@ public class PyUtil {
     if (cls != null && PyNames.NEW.equals(function.getName()) && cls.isNewStyleClass()) flags.add(STATICMETHOD);
     //
     if (!flags.contains(CLASSMETHOD) && !flags.contains(STATICMETHOD)) { // not set by decos, look for reassignment
+      final PyFunctionStub stub = function.getStub();
+      if (stub != null) {
+        return getWrappersFromStub(stub);
+      }
       String func_name = function.getName();
       if (func_name != null) {
         PyAssignmentStatement assignment = PsiTreeUtil.getNextSiblingOfType(function, PyAssignmentStatement.class);
@@ -643,7 +652,6 @@ public class PyUtil {
                       flags.add(CLASSMETHOD);
                     }
                     else if (PyNames.STATICMETHOD.equals(wrapper_name)) flags.add(STATICMETHOD);
-                    flags.add(WRAPPED);
                   }
                 }
               }
@@ -653,6 +661,28 @@ public class PyUtil {
       }
     }
     return flags;
+  }
+
+  private static Set<PyFunction.Flag> getWrappersFromStub(PyFunctionStub stub) {
+    final StubElement parentStub = stub.getParentStub();
+    final List childrenStubs = parentStub.getChildrenStubs();
+    int index = childrenStubs.indexOf(stub);
+    if (index >= 0 && index < childrenStubs.size() - 1) {
+      StubElement nextStub = (StubElement) childrenStubs.get(index+1);
+      if (nextStub instanceof PyTargetExpressionStub) {
+        final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)nextStub;
+        if (targetExpressionStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
+          final PyQualifiedName qualifiedName = targetExpressionStub.getInitializer();
+          if (PyQualifiedName.fromComponents(PyNames.CLASSMETHOD).equals(qualifiedName)) {
+            return EnumSet.of(PyFunction.Flag.CLASSMETHOD);
+          }
+          if (PyQualifiedName.fromComponents(PyNames.STATICMETHOD).equals(qualifiedName)) {
+            return EnumSet.of(PyFunction.Flag.STATICMETHOD);
+          }
+        }
+      }
+    }
+    return EnumSet.noneOf(PyFunction.Flag.class);
   }
 
   /**

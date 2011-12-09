@@ -12,4 +12,5 @@ import java.util.List;
 public interface PyClassStub extends NamedStub<PyClass> {
   PyQualifiedName[] getSuperClasses();
   List<String> getSlots();
+  String getDocString();
 }

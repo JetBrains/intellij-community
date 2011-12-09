@@ -103,6 +103,36 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
+  public static Callable resolveCalleeFunction(PyCallExpression call, PyResolveContext resolveContext) {
+    PsiElement resolved;
+    PyExpression callee = call.getCallee();
+    if (callee instanceof PyReferenceExpression) {
+      // dereference
+      PyReferenceExpression ref = (PyReferenceExpression)callee;
+      QualifiedResolveResult resolveResult = ref.followAssignmentsChain(resolveContext);
+      resolved = resolveResult.getElement();
+    }
+    else {
+      resolved = callee;
+    }
+    if (resolved instanceof PyClass) {
+      resolved = ((PyClass)resolved).findInitOrNew(true); // class to constructor call
+    }
+    else if (resolved instanceof PyCallExpression) {
+      PyCallExpression redefiningCall = (PyCallExpression)resolved;
+      Pair<String, PyFunction> wrapperInfo = interpretAsStaticmethodOrClassmethodWrappingCall(redefiningCall, call);
+      if (wrapperInfo != null) {
+        resolved = wrapperInfo.getSecond();
+      }
+    }
+    if (resolved instanceof Callable) {
+      return (Callable) resolved;
+    }
+    return null;
+  }
+  
+
+  @Nullable
   public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, PyResolveContext resolveContext) {
     return resolveCallee(us, resolveContext, 0);
   }
@@ -147,7 +177,6 @@ public class PyCallExpressionHelper {
                                    ? PyUtil.detectDecorationsAndWrappersOf((PyFunction) resolved)
                                    : EnumSet.noneOf(PyFunction.Flag.class);
       if (wrappedFlag != null) {
-        flags.add(PyFunction.Flag.WRAPPED);
         flags.add(wrappedFlag);
       }
       List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();

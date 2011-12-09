@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents function parameter list.
@@ -43,4 +44,7 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
   boolean isCompatibleTo(@NotNull PyParameterList another);
 
   String getPresentableText(boolean includeDefaultValue);
+
+  @Nullable
+  PyFunction getContainingFunction();
 }

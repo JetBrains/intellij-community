@@ -124,14 +124,16 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   public PyType getReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite) {
-    PyAnnotation anno = getAnnotation();
-    if (anno != null) {
-      PyClass pyClass = anno.resolveToClass();
-      if (pyClass != null) {
-        return new PyClassType(pyClass, false);
+    if (typeEvalContext.maySwitchToAST(this)) {
+      PyAnnotation anno = getAnnotation();
+      if (anno != null) {
+        PyClass pyClass = anno.resolveToClass();
+        if (pyClass != null) {
+          return new PyClassType(pyClass, false);
+        }
       }
     }
-    for(PyTypeProvider typeProvider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final PyType returnType = typeProvider.getReturnType(this, callSite, typeEvalContext);
       if (returnType != null) {
         return returnType;
@@ -141,7 +143,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (docStringType != null) {
       return docStringType;
     }
-    if (typeEvalContext.allowReturnTypes(getContainingFile())) {
+    if (typeEvalContext.allowReturnTypes(this)) {
       final PyType yieldType = getYieldStatementType(typeEvalContext);
       if (yieldType != null) {
         return yieldType;
@@ -208,14 +210,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyType getReturnTypeFromDocString() {
-    String typeName;
-    final PyFunctionStub stub = getStub();
-    if (stub != null) {
-      typeName = stub.getReturnTypeFromDocString();
-    }
-    else {
-      typeName = extractDocStringReturnType();
-    }
+    final String value = getDocStringValue();
+    String typeName = value != null ? extractReturnType(value) : null;
     return PyTypeParser.getTypeByName(this, typeName);
   }
 
@@ -255,13 +251,14 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return null;
   }
 
-  @Nullable
-  public String extractDocStringReturnType() {
-    final PyStringLiteralExpression docString = getDocStringExpression();
-    if (docString != null) {
-      return extractReturnType(docString.getStringValue());
+  @Override
+  public String getDocStringValue() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.getDocString();
     }
-    return null;
+    final PyStringLiteralExpression docStringExpression = getDocStringExpression();
+    return PyUtil.strValue(docStringExpression);
   }
 
   private boolean isGeneratedStub() {

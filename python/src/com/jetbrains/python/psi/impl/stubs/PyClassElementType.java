@@ -44,9 +44,11 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     for (final PyExpression expression : exprs) {
       superClasses.add(PyQualifiedName.fromExpression(expression));
     }
+    final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
     return new PyClassStubImpl(psi.getName(), parentStub,
                                superClasses.toArray(new PyQualifiedName[superClasses.size()]),
                                ((PyClassImpl) psi).getOwnSlots(),
+                               PyUtil.strValue(docStringExpression),
                                getStubElementType());
   }
 
@@ -58,6 +60,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       PyQualifiedName.serialize(s, dataStream);
     }
     PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
+    final String docString = pyClassStub.getDocString();
+    dataStream.writeUTFFast(docString != null ? docString : "");
   }
 
   public PyClassStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
@@ -68,7 +72,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       superClasses[i] = PyQualifiedName.deserialize(dataStream);
     }
     List<String> slots = PyFileElementType.readNullableList(dataStream);
-    return new PyClassStubImpl(name, parentStub, superClasses, slots, getStubElementType());
+    final String docString = dataStream.readUTFFast();
+    return new PyClassStubImpl(name, parentStub, superClasses, slots, docString.length() > 0 ? docString : null, getStubElementType());
   }
 
   public void indexStub(final PyClassStub stub, final IndexSink sink) {
