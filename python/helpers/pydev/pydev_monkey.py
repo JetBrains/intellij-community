@@ -1,9 +1,10 @@
 import os
+import pydevd_log
 
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path)-1]
-    filename = os.path.basename(path)
+    filename = os.path.basename(path).lower()
     for name in ['python', 'jython', 'pypy']:
         if filename.find(name) != -1:
             return True
@@ -11,6 +12,8 @@ def is_python(path):
     return False
 
 def patch_args(args):
+    pydevd_log.debug("Patching args: %s"% str(args))
+
     import sys
     new_args = []
     i = 0
@@ -20,6 +23,7 @@ def patch_args(args):
     if is_python(args[0]):
         new_args.append(args[0])
     else:
+        pydevd_log.debug("Process is not python, returning.")
         return args
 
     i = 1
