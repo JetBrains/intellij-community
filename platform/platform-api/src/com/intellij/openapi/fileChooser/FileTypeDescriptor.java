@@ -35,7 +35,15 @@ public class FileTypeDescriptor extends FileChooserDescriptor {
   }
 
   @Override
-  public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+  public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {        
+    if (!showHiddenFiles && FileElement.isFileHidden(file)) {
+      return false;
+    }
+    
+    if (file.isDirectory()) {
+      return true;
+    }
+
     final String ex = file.getExtension();
     return file.isDirectory() || (ex != null && ext.contains(ex.toLowerCase()));
   }
