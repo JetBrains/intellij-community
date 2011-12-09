@@ -26,7 +26,7 @@ public class LightTypeParameter extends LightClass implements PsiTypeParameter {
 
   @Override
   public PsiTypeParameter getDelegate() {
-    return (PsiTypeParameter)myDelegate;
+    return (PsiTypeParameter)super.getDelegate();
   }
 
   @Override

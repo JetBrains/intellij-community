@@ -192,15 +192,16 @@ public class NewProjectUtil {
   }
 
   public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {
-    JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
-    if (version == null) return;
-
     ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
     rootManager.setProjectSdk(jdk);
-    LanguageLevel level = version.getMaxLanguageLevel();
-    LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
-    if (level.compareTo(ext.getLanguageLevel()) < 0) {
-      ext.setLanguageLevel(level);
+
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
+    if (version != null) {
+      LanguageLevel level = version.getMaxLanguageLevel();
+      LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
+      if (level.compareTo(ext.getLanguageLevel()) < 0) {
+        ext.setLanguageLevel(level);
+      }
     }
   }
 

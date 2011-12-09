@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -105,7 +104,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     actionGroup.add(new RefreshAction());
     actionGroup.add(new ActionInstallPlugin(this, installed));
     if (inToolbar) {
-      actionGroup.add(new SortByStatusAction());
+      actionGroup.add(new SortByStatusAction("Sort installed first"));
       actionGroup.add(new MyFilterRepositoryAction());
       actionGroup.add(new MyFilterCategoryAction());
     }
@@ -186,23 +185,6 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
           ((AvailablePluginsTableModel)pluginsModel).setRepository(host, filter);
         }
       };
-    }
-  }
-
-  private class SortByStatusAction extends ToggleAction {
-    private SortByStatusAction() {
-      super("Sort installed first", "Sort installed first", IconLoader.getIcon("/objectBrowser/sortByType.png"));
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return pluginsModel.isSortByStatus();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      pluginsModel.setSortByStatus(state);
-      pluginsModel.sort();
     }
   }
 }

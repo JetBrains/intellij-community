@@ -51,10 +51,13 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
   public void drawChars(char[] data, int offset, int length, int x, int y) {
     if (ALLOW_ENGRAVEMENT) {
       final Color color = getColor();
-      setColor(myShadowColor);
-      super.drawChars(data, offset, length, x + myXOffset, y + myYOffset);
+      
+      if (color != myShadowColor) {
+        setColor(myShadowColor);
+        super.drawChars(data, offset, length, x + myXOffset, y + myYOffset);
 
-      setColor(color);
+        setColor(color);
+      }
     }
 
     super.drawChars(data, offset, length, x, y);
@@ -64,11 +67,12 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
   public void drawString(String str, int x, int y) {
     if (ALLOW_ENGRAVEMENT) {
       final Color color = getColor();
+      if (color != myShadowColor) {
+        setColor(myShadowColor);
+        super.drawString(str, x + myXOffset, y + myYOffset);
 
-      setColor(myShadowColor);
-      super.drawString(str, x + myXOffset, y + myYOffset);
-
-      setColor(color);
+        setColor(color);
+      }
     }
     super.drawString(str, x, y);
   }
@@ -78,10 +82,12 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
     if (ALLOW_ENGRAVEMENT) {
       final Color color = getColor();
 
-      setColor(myShadowColor);
-      super.drawString(iterator, x + myXOffset, y + myYOffset);
+      if (color != myShadowColor) {
+        setColor(myShadowColor);
+        super.drawString(iterator, x + myXOffset, y + myYOffset);
 
-      setColor(color);
+        setColor(color);
+      }
     }
     super.drawString(iterator, x, y);
   }
@@ -91,10 +97,12 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
     if (ALLOW_ENGRAVEMENT) {
       final Color color = getColor();
 
-      setColor(myShadowColor);
-      super.drawString(iterator, x + myXOffset, y + myYOffset);
+      if (color != myShadowColor) {
+        setColor(myShadowColor);
+        super.drawString(iterator, x + myXOffset, y + myYOffset);
 
-      setColor(color);
+        setColor(color);
+      }
     }
     super.drawString(iterator, x, y);
   }
@@ -104,10 +112,12 @@ public class EngravedTextGraphics extends Graphics2DDelegate {
     if (ALLOW_ENGRAVEMENT) {
       final Color color = getColor();
 
-      setColor(myShadowColor);
-      super.drawString(s, x + myXOffset, y + myYOffset);
+      if (color != myShadowColor) {
+        setColor(myShadowColor);
+        super.drawString(s, x + myXOffset, y + myYOffset);
 
-      setColor(color);
+        setColor(color);
+      }
     }
     super.drawString(s, x, y);
   }

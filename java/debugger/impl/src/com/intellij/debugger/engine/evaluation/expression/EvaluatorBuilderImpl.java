@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -321,7 +322,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         if (rType == null) {
           throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
         }
-        PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
+        final PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
+        if (typeForBinOp == null) {
+          throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", wideExpression.getText()));
+        }
         myResult = createBinaryEvaluator(result, lType, rResult, rType, opType, typeForBinOp);
         lType = typeForBinOp;
         result = myResult;
@@ -330,7 +334,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     // constructs binary evaluator handling unboxing and numeric promotion issues
     private static BinaryExpressionEvaluator createBinaryEvaluator(
-      Evaluator lResult, final PsiType lType, Evaluator rResult, final PsiType rType, final IElementType operation, final PsiType expressionExpectedType) {
+      Evaluator lResult, final PsiType lType, Evaluator rResult, final PsiType rType, final IElementType operation, final @NotNull PsiType expressionExpectedType) {
       // handle unboxing if neccesary
       if (isUnboxingInBinaryExpressionApplicable(lType, rType, operation)) {
         if (rType instanceof PsiClassType && UnBoxingEvaluator.isTypeUnboxable(rType.getCanonicalText())) {
@@ -394,7 +398,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
 
-      return new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType == null ? null : expressionExpectedType.getCanonicalText());
+      return new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType.getCanonicalText());
     }
 
     private static boolean isBinaryNumericPromotionApplicable(PsiType lType, PsiType rType, IElementType opType) {

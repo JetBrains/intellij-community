@@ -669,6 +669,7 @@ public class VariableInplaceRenamer {
         });
       }
     }, RENAME_TITLE, null);
+    PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
   }
 
   private static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {

@@ -35,7 +35,7 @@ import java.util.Locale;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
-  private static final int VERSION = 8;
+  private static final int VERSION = 9;
   private static final TObjectLongHashMap<ID<?, ?>> ourIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 

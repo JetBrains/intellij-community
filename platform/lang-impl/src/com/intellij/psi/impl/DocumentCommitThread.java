@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +54,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,6 +156,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
 
       Object[] documentTasks = documentsToCommit.toArray();
       for (Object o : documentTasks) {
+        assert o != null : "Null element in:" + documentsToCommit;
         CommitTask task = (CommitTask)o;
         if (task.document == document) {
           ProgressIndicator current = document.getUserData(COMMIT_PROGRESS);
@@ -316,7 +317,8 @@ public class DocumentCommitThread implements Runnable, Disposable {
               success = false;
             }
             if (success) {
-              UIUtil.invokeLaterIfNeeded(finishRunnable);
+              assert !ApplicationManager.getApplication().isDispatchThread();
+              ApplicationManager.getApplication().invokeLater(finishRunnable, ModalityState.NON_MODAL); // do not commit while modal progress is running
               log("Invoked later finishRunnable", document, false, success, finishRunnable, indicator);
             }
           }
@@ -422,6 +424,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
                                        @NotNull final Object reason) {
     final List<Processor<Document>> finishRunnables = new SmartList<Processor<Document>>();
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         if (project.isDisposed()) return;
         final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
@@ -672,6 +675,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
         final PomModel model = PomManager.getModel(fileImpl.getProject());
 
         model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
+          @Override
           public PomModelEvent runInner() {
             return new TreeAspectEvent(model, diffLog.performActualPsiChange(file));
           }

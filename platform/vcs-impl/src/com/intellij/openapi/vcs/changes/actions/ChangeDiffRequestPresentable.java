@@ -83,12 +83,16 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     String afterPath = aRev != null ? aRev.getFile().getPath() : null;
     String title;
     if (beforePath != null && afterPath != null && !beforePath.equals(afterPath)) {
+      beforePath = FileUtil.toSystemDependentName(beforePath);
+      afterPath = FileUtil.toSystemDependentName(afterPath);
       title = beforePath + " -> " + afterPath;
     }
     else if (beforePath != null) {
+      beforePath = FileUtil.toSystemDependentName(beforePath);
       title = beforePath;
     }
     else if (afterPath != null) {
+      afterPath = FileUtil.toSystemDependentName(afterPath);
       title = afterPath;
     }
     else {

@@ -106,6 +106,7 @@ public class Queue<T> {
   public void clear() {
     Arrays.fill(myArray, null);
     myFirst = myLast = 0;
+    isWrapped = false;
   }
 
   public boolean process(@NotNull Processor<T> processor) {
@@ -126,5 +127,14 @@ public class Queue<T> {
       }
     }
     return true;
+  }
+
+  @Override
+  public String toString() {
+    List<Object> list = Arrays.asList(myArray);
+    if (isWrapped) {
+      return "[[[ " +list.subList(0, myLast) + " ||| ... " + list.subList(myLast, myFirst) + " ... ||| " + list.subList(myFirst, myArray.length) + " ]]]";
+    }
+    return "[[[ ... " +list.subList(0, myFirst) + " ... ||| " + list.subList(myFirst, myLast) + " ||| ... " + list.subList(myFirst, myArray.length) + " ... ]]]";
   }
 }

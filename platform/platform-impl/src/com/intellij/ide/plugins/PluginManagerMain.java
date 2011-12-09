@@ -21,10 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -234,7 +231,7 @@ public abstract class PluginManagerMain implements Disposable {
       public void finished() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
-            if (list != null) {
+            if (list != null && errorMessages.isEmpty()) {
               modifyPluginsList(list);
               propagateUpdates(list);
               setDownloadStatus(false);
@@ -488,6 +485,28 @@ public abstract class PluginManagerMain implements Disposable {
     return false;
   }
 
+  protected class SortByStatusAction extends ToggleAction {
+
+    protected SortByStatusAction(final String title) {
+      super(title, title, IconLoader.getIcon("/objectBrowser/sortByType.png"));
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return pluginsModel.isSortByStatus();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
+      pluginsModel.setSortByStatus(state);
+      pluginsModel.sort();
+      if (selected != null) {
+        select(selected);
+      }
+    }
+  }
+
   public class MyPluginsFilter extends FilterComponent {
 
     public MyPluginsFilter() {
@@ -496,6 +515,7 @@ public abstract class PluginManagerMain implements Disposable {
 
     public void filter() {
       pluginsModel.filter(getFilter().toLowerCase());
+      TableUtil.ensureSelectionExists(getPluginTable());
     }
   }
 

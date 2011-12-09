@@ -44,6 +44,7 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   
   public int AVAILABLE_SORT_MODE = 0;
   public boolean AVAILABLE_SORT_BY_STATUS = false;
+  public boolean INSTALLED_SORT_BY_STATUS = false;
   public JDOMExternalizableStringList myOutdatedPlugins = new JDOMExternalizableStringList();
   public JDOMExternalizableStringList myInstalledPlugins = new JDOMExternalizableStringList();
 

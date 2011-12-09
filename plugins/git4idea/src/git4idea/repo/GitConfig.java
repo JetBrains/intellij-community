@@ -53,7 +53,8 @@ class GitConfig {
 
   private static final Pattern REMOTE_SECTION = Pattern.compile("remote \"(.*)\"");
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"");
-  private static final Pattern BRANCH_SECTION = Pattern.compile("branch \"(.*)\"");
+  private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"");
+  private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch");
 
   private final Collection<GitRemote> myRemotes;
   private final Collection<GitBranchTrackInfo> myBranchTrackInfos;
@@ -109,7 +110,8 @@ class GitConfig {
       ini.load(configFile);
     }
     catch (IOException e) {
-      throw new GitRepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e);
+      LOG.error(new GitRepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
+      return new GitConfig(Collections.<GitRemote>emptyList(), Collections.<GitBranchTrackInfo>emptyList());
     }
 
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManager.getPluginByClassName(GitConfig.class.getName()));
@@ -156,7 +158,7 @@ class GitConfig {
       return null;
     }
     boolean merge = mergeName != null;
-    String remoteBranch = (merge ? mergeName : rebaseName);
+    final String remoteBranch = (merge ? mergeName : rebaseName);
 
     GitRemote branchRemote = null;
     for (GitRemote remote : remotes) {
@@ -170,17 +172,22 @@ class GitConfig {
       return null;
     }
 
+    assert remoteBranch != null; // this is checked in StringUtil.isEmptyOrSpaces
     return new GitBranchTrackInfo(branchName, branchRemote, remoteBranch, merge);
   }
 
   @Nullable
   private static BranchConfig parseBranchSection(String sectionName, Profile.Section section, ClassLoader classLoader) {
     BranchBean branchBean = section.as(BranchBean.class, classLoader);
-    Matcher matcher = BRANCH_SECTION.matcher(sectionName);
+    Matcher matcher = BRANCH_INFO_SECTION.matcher(sectionName);
     if (matcher.matches()) {
       return new BranchConfig(matcher.group(1), branchBean);
     }
-    LOG.error(String.format("Invalid branch section format in .git/config. sectionName: %s section: %s", sectionName, section));
+    if (BRANCH_COMMON_PARAMS_SECTION.matcher(sectionName).matches()) {
+      LOG.debug(String.format("Common branch option(s) defined .git/config. sectionName: %s%n section: %s", sectionName, section));
+      return null;
+    }
+    LOG.error(String.format("Invalid branch section format in .git/config. sectionName: %s%n section: %s", sectionName, section));
     return null;
   }
 

@@ -165,7 +165,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     return comparator;
   }
 
-  private Comparator<IdeaPluginDescriptor> getColumnComparator() {
+  protected Comparator<IdeaPluginDescriptor> getColumnComparator() {
     if (isSortByName()) {
       return new Comparator<IdeaPluginDescriptor>() {
         public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {

@@ -102,7 +102,9 @@ public class CompilerUtil {
    * @param files
    */
   public static void refreshIOFiles(@NotNull final Collection<File> files) {
-    LocalFileSystem.getInstance().refreshIoFiles(files);
+    if (!files.isEmpty()) {
+      LocalFileSystem.getInstance().refreshIoFiles(files);
+    }
   }
 
   public static void refreshIODirectories(@NotNull final Collection<File> files) {
@@ -114,7 +116,9 @@ public class CompilerUtil {
         filesToRefresh.add(virtualFile);
       }
     }
-    RefreshQueue.getInstance().refresh(false, true, null, VfsUtil.toVirtualFileArray(filesToRefresh));
+    if (!filesToRefresh.isEmpty()) {
+      RefreshQueue.getInstance().refresh(false, true, null, VfsUtil.toVirtualFileArray(filesToRefresh));
+    }
   }
 
   public static void refreshIOFile(final File file) {

@@ -176,7 +176,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   private void updateContext(final String qName) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final PsiClass psiClass = DebuggerUtils.findClass(qName, myProject, GlobalSearchScope.allScope(myProject));
+        final Project project = myProject;
+        final PsiClass psiClass = project != null? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
         myLabelEditor.setContext(psiClass);
         myChildrenEditor.setContext(psiClass);
         myChildrenExpandedEditor.setContext(psiClass);

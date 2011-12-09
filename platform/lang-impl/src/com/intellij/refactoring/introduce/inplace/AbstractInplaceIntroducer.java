@@ -417,6 +417,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
       }
     }
+
+    for (RangeHighlighter highlighter : highlighters) {
+      highlighter.setGreedyToLeft(true);
+      highlighter.setGreedyToRight(true);
+    }
   }
 
   protected void restoreState(final V psiField) {

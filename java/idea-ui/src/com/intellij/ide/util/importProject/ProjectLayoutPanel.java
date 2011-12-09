@@ -25,15 +25,19 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -81,9 +85,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     final Splitter splitter = new Splitter(false);
 
-    final JScrollPane entriesPane = ScrollPaneFactory.createScrollPane(myEntriesChooser);
     final JPanel entriesPanel = new JPanel(new BorderLayout());
-    entriesPanel.add(entriesPane, BorderLayout.CENTER);
+    entriesPanel.add(myEntriesChooser, BorderLayout.CENTER);
     entriesPanel.setBorder(IdeBorderFactory.createTitledBorder(StringUtil.capitalize(StringUtil.pluralize(getElementTypeName())), false, false, true));
     splitter.setFirstComponent(entriesPanel);
 
@@ -483,7 +486,26 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           }
         });
       }
+      myChooser.selectElements(ContainerUtil.createMaybeSingletonList(ContainerUtil.getFirstItem(files)));
+      myChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<File>() {
+        @Override
+        public void elementMarkChanged(File element, boolean isMarked) {
+          updateOkButton();
+        }
+      });
+      myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          updateOkButton();
+        }
+      });
+
       init();
+      updateOkButton();
+    }
+
+    private void updateOkButton() {
+      setOKActionEnabled(!getName().isEmpty() && !getChosenFiles().isEmpty());
     }
 
     protected void doOKAction() {
@@ -497,22 +519,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     @Nullable
     protected JComponent createCenterPanel() {
-      final JPanel panel = new JPanel(new BorderLayout());
-
-      final JPanel labelNameField = new JPanel(new BorderLayout());
-      labelNameField.add(new JLabel("Name:"), BorderLayout.NORTH);
-      labelNameField.add(myNameField, BorderLayout.CENTER);
-      labelNameField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-      final JPanel labelChooser = new JPanel(new BorderLayout());
-      labelChooser.add(new JLabel(getSplitDialogChooseFilesPrompt()), BorderLayout.NORTH);
-      labelChooser.add(ScrollPaneFactory.createScrollPane(myChooser), BorderLayout.CENTER);
-      labelChooser.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-      panel.add(labelNameField, BorderLayout.NORTH);
-      panel.add(labelChooser, BorderLayout.CENTER);
-      panel.setPreferredSize(new Dimension(450, 300));
-      return panel;
+      FormBuilder builder = new FormBuilder(true);
+      builder.addLabeledComponent("&Name:", myNameField);
+      builder.addLabeledComponent(getSplitDialogChooseFilesPrompt(), myChooser);
+      myChooser.setPreferredSize(new Dimension(450, 300));
+      return builder.getPanel();
     }
 
     public JComponent getPreferredFocusedComponent() {
