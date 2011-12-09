@@ -137,15 +137,12 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       return true;
     }
     if (isStarImport()) {
-      PyReferenceExpression expr = getImportSource();
-      if (expr != null) {
-        final List<PsiElement> targets = ResolveImportUtil.resolveImportReference(expr);
-        for (PsiElement target : targets) {
-          final PsiElement importedFile = PyUtil.turnDirIntoInit(target);
-          if (importedFile != null) {
-            if (!importedFile.processDeclarations(processor, state, null, place)) {
-              return false;
-            }
+      final List<PsiElement> targets = ResolveImportUtil.resolveFromOrForeignImport(this, getImportSourceQName());
+      for (PsiElement target : targets) {
+        final PsiElement importedFile = PyUtil.turnDirIntoInit(target);
+        if (importedFile != null) {
+          if (!importedFile.processDeclarations(processor, state, null, place)) {
+            return false;
           }
         }
       }

@@ -177,17 +177,20 @@ public class ResolveImportUtil {
       return multiResolveImportElement(import_element, qname);
     }
     else if (parent instanceof PyFromImportStatement) { // "from foo import"
-      PyFromImportStatement from_import_statement = (PyFromImportStatement)parent;
-      final List<PsiElement> results = resolveFromImportStatementSource(from_import_statement, qname);
-      if (results.isEmpty() && qname != null && qname.getComponentCount() > 0) {
-        final PyQualifiedName importedQName = PyQualifiedName.fromComponents(qname.getLastComponent());
-        final PyQualifiedName containingQName = qname.removeLastComponent();
-        final PsiElement result = resolveForeignImport(parent, importedQName, containingQName);
-        return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
-      }
-      return results;
+      return resolveFromOrForeignImport((PyFromImportStatement)parent, qname);
     }
     return Collections.emptyList();
+  }
+
+  public static List<PsiElement> resolveFromOrForeignImport(PyFromImportStatement fromImportStatement, PyQualifiedName qname) {
+    final List<PsiElement> results = resolveFromImportStatementSource(fromImportStatement, qname);
+    if (results.isEmpty() && qname != null && qname.getComponentCount() > 0) {
+      final PyQualifiedName importedQName = PyQualifiedName.fromComponents(qname.getLastComponent());
+      final PyQualifiedName containingQName = qname.removeLastComponent();
+      final PsiElement result = resolveForeignImport(fromImportStatement, importedQName, containingQName);
+      return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
+    }
+    return results;
   }
 
   @Nullable
