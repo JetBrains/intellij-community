@@ -584,13 +584,15 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
     
     private void notifyThreadsRefresh() {
-      myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(new Runnable() {
-        public void run() {
-          final DebuggerStateManager contextManager = getContextManager();
-          contextManager.fireStateChanged(contextManager.getContext(), EVENT_THREADS_REFRESH);
-        }
-      }, 100, ModalityState.NON_MODAL);
+      if (!myUpdateAlarm.isDisposed()) {
+        myUpdateAlarm.cancelAllRequests();
+        myUpdateAlarm.addRequest(new Runnable() {
+          public void run() {
+            final DebuggerStateManager contextManager = getContextManager();
+            contextManager.fireStateChanged(contextManager.getContext(), EVENT_THREADS_REFRESH);
+          }
+        }, 100, ModalityState.NON_MODAL);
+      }
     }
   }
 
