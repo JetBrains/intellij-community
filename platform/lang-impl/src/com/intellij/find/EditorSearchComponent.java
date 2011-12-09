@@ -226,7 +226,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myProject = project;
     myEditor = editor;
 
-    mySearchResults = new SearchResults(myEditor);
+    mySearchResults = new SearchResults(myEditor, myProject);
 
     myDefaultBackground = new JTextField().getBackground();
 

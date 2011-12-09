@@ -15,19 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import org.intellij.lang.xpath.TestBase;
-import org.intellij.lang.xpath.psi.XPathVariableReference;
-import org.intellij.lang.xpath.xslt.psi.XsltElement;
-import org.intellij.lang.xpath.xslt.psi.XsltParameter;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
+import com.intellij.util.ArrayUtil;
+import org.intellij.lang.xpath.TestBase;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
+import org.intellij.lang.xpath.xslt.psi.*;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +46,14 @@ public class XsltResolveTest extends TestBase {
 
     public void testResolveShadowedVariable() throws Throwable {
         doVariableResolveTest(false);
+    }
+
+    public void testResolveIncludedFunction() throws Throwable {
+        doFunctionResolveTest("included-2.xsl");
+    }
+
+    public void testResolveFunction() throws Throwable {
+        doFunctionResolveTest();
     }
 
     public void testResolveSameName() throws Throwable {
@@ -99,9 +105,22 @@ public class XsltResolveTest extends TestBase {
         return var;
     }
 
+    private XsltFunction doFunctionResolveTest(String... files) throws Throwable {
+        final PsiReference reference = findInjectedReferenceAtCaret(files);
+
+        final PsiElement element = reference.resolve();
+        assertTrue(element instanceof XsltFunction);
+
+        final XsltFunction func = (XsltFunction)element;
+        final XPathFunctionCall call = (XPathFunctionCall)reference.getElement();
+        assertEquals(func.getName(), call.getFunctionName());
+        assertEquals(func.getParameters().length, call.getArgumentList().length);
+        return func;
+    }
+
     @NotNull
-    private PsiReference findInjectedReferenceAtCaret() throws Throwable {
-        configure();
+    private PsiReference findInjectedReferenceAtCaret(String... moreFiles) throws Throwable {
+        configure(moreFiles);
 
         final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFixture.getProject());
         final PsiElement e = manager.findInjectedElementAt(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset());
@@ -112,8 +131,8 @@ public class XsltResolveTest extends TestBase {
         return reference;
     }
 
-    private void configure() throws Throwable {
-        myFixture.configureByFile(getTestFileName() + ".xsl");
+    private void configure(String... moreFiles) throws Throwable {
+      myFixture.configureByFiles(ArrayUtil.mergeArrays(new String[]{getTestFileName() + ".xsl"}, moreFiles));
     }
 
     @Override

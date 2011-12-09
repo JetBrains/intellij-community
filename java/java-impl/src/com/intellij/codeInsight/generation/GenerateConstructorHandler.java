@@ -134,6 +134,32 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return members;
   }
 
+  @Override
+  protected MemberChooser<ClassMember> createMembersChooser(ClassMember[] members,
+                                                            boolean allowEmptySelection,
+                                                            boolean copyJavadocCheckbox,
+                                                            Project project) {
+    final MemberChooser<ClassMember> chooser = super.createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project);
+    final List<ClassMember> preselection = preselect(members);
+    if (!preselection.isEmpty()) {
+      chooser.selectElements(preselection.toArray(new ClassMember[preselection.size()]));
+    }
+    return chooser;
+  }
+
+  protected static List<ClassMember> preselect(ClassMember[] members) {
+    final List<ClassMember> preselection = new ArrayList<ClassMember>();
+    for (ClassMember member : members) {
+      if (member instanceof PsiFieldMember) {
+        final PsiField psiField = ((PsiFieldMember)member).getElement();
+        if (psiField != null && psiField.hasModifierProperty(PsiModifier.FINAL)) {
+          preselection.add(member);
+        }
+      }
+    }
+    return preselection;
+  }
+
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     List<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();

@@ -183,13 +183,21 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   @Nullable
   protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
-    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project);
-    chooser.setTitle(myChooserTitle);
-    chooser.setCopyJavadocVisible(copyJavadocCheckbox);
+    MemberChooser<ClassMember> chooser = createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project);
     chooser.show();
     myToCopyJavaDoc = chooser.isCopyJavadoc();
     final List<ClassMember> list = chooser.getSelectedElements();
     return list == null ? null : list.toArray(new ClassMember[list.size()]);
+  }
+
+  protected MemberChooser<ClassMember> createMembersChooser(ClassMember[] members,
+                                                            boolean allowEmptySelection,
+                                                            boolean copyJavadocCheckbox,
+                                                            Project project) {
+    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project);
+    chooser.setTitle(myChooserTitle);
+    chooser.setCopyJavadocVisible(copyJavadocCheckbox);
+    return chooser;
   }
 
   @NotNull

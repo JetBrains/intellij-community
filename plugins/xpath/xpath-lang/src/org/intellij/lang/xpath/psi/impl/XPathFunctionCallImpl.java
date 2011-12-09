@@ -145,8 +145,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         if (name == null) return null;
 
         final Function functionDecl = contextProvider.getFunctionContext().resolve(name, getArgumentList().length);
-
-        final XPathFunction impl = functionDecl instanceof XPathFunction ? (XPathFunction)functionDecl : new FunctionImpl(functionDecl);
+        final XPathFunction impl = functionDecl == null ? null : functionDecl instanceof XPathFunction ? (XPathFunction)functionDecl : new FunctionImpl(functionDecl);
         return (myFunction = Pair.create(getQName().toString(), impl)).second;
       }
     }

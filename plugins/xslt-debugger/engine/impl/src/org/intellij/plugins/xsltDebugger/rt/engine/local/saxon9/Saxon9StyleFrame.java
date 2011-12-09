@@ -21,17 +21,20 @@ import net.sf.saxon.expr.instruct.GeneralVariable;
 import net.sf.saxon.expr.instruct.GlobalVariable;
 import net.sf.saxon.expr.instruct.LocalVariable;
 import net.sf.saxon.expr.instruct.SlotManager;
+import net.sf.saxon.functions.FunctionLibrary;
 import net.sf.saxon.om.*;
 import net.sf.saxon.style.*;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.Type;
 import net.sf.saxon.type.TypeHierarchy;
+import net.sf.saxon.value.SequenceType;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -186,12 +189,10 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       myItemType = itemType;
     }
 
-    @Override
     public Object getValue() {
       return myValue != null ? myValue.getStringValue() : null;
     }
 
-    @Override
     public Type getType() {
       return new ObjectType(myItemType.toString());
     }
@@ -211,12 +212,10 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       myItemType = type;
     }
 
-    @Override
     public Object getValue() {
       return myValue;
     }
 
-    @Override
     public Type getType() {
       return new ObjectType(myItemType.toString() + "+");
     }
@@ -240,6 +239,11 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     public EvalContext(final StyleElement element) {
       super(element);
       myElement = element;
+    }
+
+    @Override
+    public FunctionLibrary getFunctionLibrary() {
+      return new FunctionLibraryWrapper(myElement);
     }
 
     @Override
@@ -277,8 +281,60 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
         o = myRedundant.get(variable);
         myRedundant.set(variable, value);
       } catch (IllegalAccessException e) {
+        debug(e);
       }
       return (Boolean)o;
+    }
+
+    private static class FunctionLibraryWrapper implements FunctionLibrary {
+      private static Method myGetFunction;
+      static {
+        try {
+          myGetFunction = PrincipalStylesheetModule.class.getDeclaredMethod("getFunction", StructuredQName.class, int.class);
+          myGetFunction.setAccessible(true);
+        } catch (Exception e) {
+          e.printStackTrace();
+          myGetFunction = null;
+        }
+      }
+
+      private final FunctionLibrary myLibrary;
+      private final PrincipalStylesheetModule myModule;
+
+      public FunctionLibraryWrapper(StyleElement element) {
+        myLibrary = element.getStaticContext().getFunctionLibrary();
+        myModule = element.getPrincipalStylesheetModule();
+      }
+
+      public SequenceType[] getFunctionSignature(StructuredQName functionName, int arity) {
+        return myLibrary.getFunctionSignature(functionName, arity);
+      }
+
+      public Expression bind(StructuredQName functionName, Expression[] staticArgs, StaticContext env, Container container)
+        throws XPathException {
+        final Expression call = myLibrary.bind(functionName, staticArgs, env, container);
+        if (call instanceof UserFunctionCall) {
+          final XSLFunction fn = getFunction(functionName, staticArgs);
+          if (fn != null) {
+            ((UserFunctionCall)call).setFunction(fn.getCompiledFunction());
+          }
+        }
+        return call;
+      }
+
+      private XSLFunction getFunction(StructuredQName functionName, Expression[] staticArgs) {
+        if (myGetFunction == null) return null;
+        try {
+          return (XSLFunction)myGetFunction.invoke(myModule, functionName, staticArgs.length);
+        } catch (Exception e) {
+          debug(e);
+          return null;
+        }
+      }
+
+      public FunctionLibrary copy() {
+        return this;
+      }
     }
   }
 }
