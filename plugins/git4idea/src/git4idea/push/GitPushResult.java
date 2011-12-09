@@ -192,10 +192,16 @@ class GitPushResult {
       String trackedBranchName;
       try {
         String simpleName = currentBranch.getTrackedBranchName(myProject, repository.getRoot());
-        if (simpleName != null && simpleName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+        if (simpleName == null) {
+          continue;
+        }
+        if (simpleName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
           simpleName = simpleName.substring(GitBranch.REFS_HEADS_PREFIX.length());
         }
         String remote = currentBranch.getTrackedRemoteName(myProject, repository.getRoot());
+        if (remote == null) {
+          continue;
+        }
         trackedBranchName = remote + "/" + simpleName;
       }
       catch (VcsException e) {
