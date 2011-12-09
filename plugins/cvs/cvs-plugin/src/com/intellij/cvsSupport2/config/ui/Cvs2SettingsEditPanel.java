@@ -91,7 +91,7 @@ public class Cvs2SettingsEditPanel {
     myConnectionSettingsPanel.setLayout(new CardLayout());
     myExtConnectionSettingsEditor = new ExtConnectionDualPanel();
     mySshConnectionSettingsEditor = new SshConnectionSettingsPanel();
-    myLocalConnectionSettingsPanel = new LocalConnectionSettingsPanel();
+    myLocalConnectionSettingsPanel = new LocalConnectionSettingsPanel(project);
     myConnectionSettingsPanel.add(myExtConnectionSettingsEditor.getPanel(), CvsMethod.EXT_METHOD.getDisplayName());
     myConnectionSettingsPanel.add(new JPanel(), CvsMethod.PSERVER_METHOD.getDisplayName());
     myConnectionSettingsPanel.add(mySshConnectionSettingsEditor.getPanel(), CvsMethod.SSH_METHOD.getDisplayName());
@@ -121,7 +121,9 @@ public class Cvs2SettingsEditPanel {
     myProxySettingsPanel.add(myProxySettingsNonEmptyPanel.getPanel(), NON_EMPTY_PROXY_SETTINGS);
     myProxySettingsPanel.add(new JPanel(), EMPTY);
 
-    if (readOnly) setEnabled(myDateOrRevisionOrTagSettingsPanel, false);
+    if (readOnly) {
+      setEnabled(myDateOrRevisionOrTagSettingsPanel, false);
+    }
   }
 
   public void addCvsRootChangeListener(CvsRootChangeListener cvsRootChangeListener) {

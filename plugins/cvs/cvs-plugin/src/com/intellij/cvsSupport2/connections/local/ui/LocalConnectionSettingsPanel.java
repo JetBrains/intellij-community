@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.connections.local.ui;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.LocalSettings;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 
 import javax.swing.*;
@@ -30,9 +31,8 @@ public class LocalConnectionSettingsPanel {
   private TextFieldWithBrowseButton myPathToCvsClient;
   private JPanel myPanel;
 
-  public LocalConnectionSettingsPanel() {
-    myPathToCvsClient.addBrowseFolderListener(CvsBundle.message("dialog.title.select.path.to.cvs.client"),
-                                              CvsBundle.message("dialog.description.select.path.to.cvs.client"), null,
+  public LocalConnectionSettingsPanel(Project project) {
+    myPathToCvsClient.addBrowseFolderListener(CvsBundle.message("dialog.title.select.path.to.cvs.client"), null, project,
                                               FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
   }
 
