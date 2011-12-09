@@ -15,6 +15,7 @@
  */
 package com.intellij.platform;
 
+import com.intellij.conversion.ConversionResult;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -142,7 +143,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
           processor.refreshProjectFiles(projectDir);
         }
         
-        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath());
+        Ref<ConversionResult> conversionResultRef = new Ref<ConversionResult>();
+        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath(), conversionResultRef);
+        if (conversionResultRef.get().openingIsCanceled()) {
+          return null;
+        }
         runConfigurators = false;
       }
       catch (Exception e) {
