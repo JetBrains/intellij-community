@@ -594,9 +594,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
 
       Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
+      final PyUnresolvedReferencesInspection suppressableInspection = new PyUnresolvedReferencesInspection();
       for (NameDefiner unusedImport : unusedImports) {
         PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
         if (importStatement != null && !unusedStatements.contains(importStatement) && !myUsedImports.contains(importStatement)) {
+          if (suppressableInspection.isSuppressedFor(importStatement)) {
+            continue;
+          }
           // don't remove as unused imports in try/except statements
           if (PsiTreeUtil.getParentOfType(importStatement, PyTryExceptStatement.class) != null) {
             continue;
