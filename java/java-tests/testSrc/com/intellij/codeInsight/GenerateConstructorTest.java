@@ -10,6 +10,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
+import java.util.List;
+
 public class GenerateConstructorTest extends LightCodeInsightTestCase {
   public void testAbstractClass() throws Exception { doTest(); }
   public void testPackageLocalClass() throws Exception { doTest(); }
@@ -36,6 +38,22 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
     final CodeStyleSettings settings = styleSettingsManager.getCurrentSettings();
     settings.BLANK_LINES_AFTER_CLASS_HEADER = 1;
     doTest();
+  }
+
+  public void testFinalFieldPreselection() throws Exception {
+    String name = getTestName(false);
+    configureByFile("/codeInsight/generateConstructor/before" + name + ".java");
+    new GenerateConstructorHandler() {
+      @Override
+      protected ClassMember[] chooseMembers(ClassMember[] members,
+                                            boolean allowEmptySelection,
+                                            boolean copyJavadocCheckbox,
+                                            Project project) {
+        final List<ClassMember> preselection = GenerateConstructorHandler.preselect(members);
+        return preselection.toArray(new ClassMember[preselection.size()]);
+      }
+    }.invoke(getProject(), getEditor(), getFile());
+    checkResultByFile("/codeInsight/generateConstructor/after" + name +".java");
   }
 
   private void doTest() throws Exception {
