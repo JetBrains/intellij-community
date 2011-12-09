@@ -355,7 +355,7 @@ public class ResolveImportUtil {
       return visitor.resultsAsList();
     }
     else if (foothold != null) {
-      visitRoots(foothold, visitor);
+      visitSdkRoots(foothold, visitor);
       return visitor.resultsAsList();
     }
     else {
@@ -463,7 +463,7 @@ public class ResolveImportUtil {
 
       // out-of-project file or non-file(e.g. console) - use roots of SDK assigned to project
       if (orderEntries == null) {
-        final Sdk sdk = PyBuiltinCache.findSdkForFile(elt_psifile);
+        final Sdk sdk = ProjectRootManager.getInstance(elt.getProject()).getProjectSdk();
         if (sdk != null) {
           visitSdkRoots(visitor, sdk);
         }
@@ -728,8 +728,9 @@ public class ResolveImportUtil {
     final PsiElement module = findPyFileInDir(dir, referencedName);
     if (module != null) return module;
 
-    if (isInSdk(dir)) {
-      PsiDirectory skeletonDir = findSkeletonDir(dir, root);
+    final Sdk sdk = sdkForDir(dir);
+    if (sdk != null) {
+      PsiDirectory skeletonDir = findSkeletonDir(dir, root, sdk);
       if (skeletonDir != null) {
         final PsiFile skeletonFile = findPyFileInDir(skeletonDir, referencedName);
         if (skeletonFile != null) {
@@ -759,19 +760,20 @@ public class ResolveImportUtil {
     return null;
   }
 
-  private static boolean isInSdk(PsiDirectory dir) {
+  @Nullable
+  private static Sdk sdkForDir(PsiDirectory dir) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
     final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(dir.getVirtualFile());
     for (OrderEntry entry : entries) {
       if (entry instanceof JdkOrderEntry) {
-        return true;
+        return ((JdkOrderEntry) entry).getJdk();
       }
     }
-    return false;
+    return null;
   }
 
   @Nullable
-  private static PsiDirectory findSkeletonDir(PsiDirectory dir, @Nullable VirtualFile root) {
+  private static PsiDirectory findSkeletonDir(PsiDirectory dir, @Nullable VirtualFile root, Sdk sdk) {
     String relativeName = null;
     if (root != null) {
       relativeName = VfsUtilCore.getRelativePath(dir.getVirtualFile(), root, '/');
@@ -782,22 +784,13 @@ public class ResolveImportUtil {
         relativeName = relativeQName.join("/");
       }
     }
-    VirtualFile skeletonsRoot = findSkeletonsRoot(dir);
+    VirtualFile skeletonsRoot = PythonSdkType.findSkeletonsDir(sdk);
     if (skeletonsRoot != null && relativeName != null) {
       VirtualFile skeletonsVFile =
         relativeName.length() == 0 ? skeletonsRoot : skeletonsRoot.findFileByRelativePath(relativeName.replace(".", "/"));
       if (skeletonsVFile != null) {
         return dir.getManager().findDirectory(skeletonsVFile);
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static VirtualFile findSkeletonsRoot(PsiFileSystemItem fsItem) {
-    Sdk sdk = PyBuiltinCache.findSdkForFile(fsItem);
-    if (sdk != null) {
-      return PythonSdkType.findSkeletonsDir(sdk);
     }
     return null;
   }
