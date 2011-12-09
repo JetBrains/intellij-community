@@ -34,6 +34,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 import git4idea.stash.GitChangesSaver;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -242,7 +243,8 @@ public class GitUpdateProcess {
         if (branch == null) {
           LOG.info("checkTrackedBranchesConfigured current branch is null");
           notifyImportantError(myProject, "Can't update: no current branch",
-                               "You are in 'detached HEAD' state, which means that you're not on any branch.<br/>" +
+                               "You are in 'detached HEAD' state, which means that you're not on any branch" +
+                               rootStringIfNeeded(root) +
                                "Checkout a branch to make update possible.");
           return false;
         }
@@ -251,15 +253,17 @@ public class GitUpdateProcess {
           final String branchName = branch.getName();
           LOG.info("checkTrackedBranchesConfigured tracked branch is null for current branch " + branch);
           notifyImportantError(myProject, "Can't update: no tracked branch",
-                               "No tracked branch configured for branch " + branchName +
-                               "<br/>To make your branch track a remote branch call, for example,<br/>" +
+                               "No tracked branch configured for branch " + GitUIUtil.code(branchName) +
+                               rootStringIfNeeded(root) +
+                               "To make your branch track a remote branch call, for example,<br/>" +
                                "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
           return false;
         }
         if (!tracked.exists(root)) {
           LOG.info("checkTrackedBranchesConfigured tracked branch " + tracked + "  doesn't exist.");
           notifyMessage(myProject, "Can't update: tracked branch doesn't exist.",
-                        "Tracked branch <code>" + tracked.getName() + "</code> doesn't exist, so there is nothing to update.<br/>" +
+                        "Tracked branch <code>" + tracked.getName() + "</code> doesn't exist, so there is nothing to update" +
+                        rootStringIfNeeded(root) +
                         "The branch will be automatically created when you push to it.",
                         NotificationType.WARNING, true, null);
           return false;
@@ -272,6 +276,13 @@ public class GitUpdateProcess {
       }
     }
     return true;
+  }
+
+  private String rootStringIfNeeded(@NotNull VirtualFile root) {
+    if (myRoots.size() < 2) {
+      return ".<br/>";
+    }
+    return "<br/>in Git repository " + GitUIUtil.code(root.getPresentableUrl()) + "<br/>";
   }
 
   /**
