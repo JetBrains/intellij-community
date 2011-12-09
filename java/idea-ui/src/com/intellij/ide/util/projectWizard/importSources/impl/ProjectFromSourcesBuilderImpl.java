@@ -35,7 +35,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -55,6 +54,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -357,20 +357,31 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
     for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
       for (ModuleDescriptor moduleDescriptor : projectDescriptor.getModules()) {
         try {
-          final File file = new File(moduleDescriptor.computeModuleFilePath());
-          if (file.exists()) {
-            final Element rootElement = JDOMUtil.loadDocument(file).getRootElement();
-            final String type = rootElement.getAttributeValue("type");
-            if (type != null) {
-              final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
-              if (moduleType != null && !moduleType.createModuleBuilder().isSuitableSdk(sdk)) return false;
-            }
-          }
+          final ModuleType moduleType = getModuleType(moduleDescriptor);
+          if (moduleType != null && !moduleType.createModuleBuilder().isSuitableSdk(sdk)) return false;
         }
         catch (Exception ignore) {
         }
       }
     }
-    return sdk.getSdkType() == JavaSdk.getInstance();
+    return true;
+  }
+
+  @Nullable
+  private static ModuleType getModuleType(ModuleDescriptor moduleDescriptor) throws InvalidDataException, JDOMException, IOException {
+    if (moduleDescriptor.isReuseExistingElement()) {
+      final File file = new File(moduleDescriptor.computeModuleFilePath());
+      if (file.exists()) {
+        final Element rootElement = JDOMUtil.loadDocument(file).getRootElement();
+        final String type = rootElement.getAttributeValue("type");
+        if (type != null) {
+          return ModuleTypeManager.getInstance().findByID(type);
+        }
+      }
+      return null;
+    }
+    else {
+      return moduleDescriptor.getModuleType();
+    }
   }
 }

@@ -274,11 +274,12 @@ public class JavacCompiler extends ExternalCompiler {
   }
 
   public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings, boolean isAnnotationProcessing,
-                                                   JavaSdkVersion version, Project project, final boolean annotationProcessorsEnabled) {
+                                                   JavaSdkVersion version, Project project, boolean annotationProcessorsEnabled) {
     final List<String> additionalOptions = new ArrayList<String>();
     StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(project), " ");
     if (!version.isAtLeast(JavaSdkVersion.JDK_1_6)) {
       isAnnotationProcessing = false; // makes no sense for these versions
+      annotationProcessorsEnabled = false;
     }
     if (isAnnotationProcessing) {
       final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
@@ -311,7 +312,7 @@ public class JavacCompiler extends ExternalCompiler {
       }
     }
     else {
-      if (version.isAtLeast(JavaSdkVersion.JDK_1_6) && annotationProcessorsEnabled) {
+      if (annotationProcessorsEnabled) {
         // Unless explicitly specified by user, disable annotation processing by default for 'java compilation' mode
         // This is needed to suppress unwanted side-effects from auto-discovered processors from compilation classpath
         additionalOptions.add("-proc:none");
@@ -326,12 +327,20 @@ public class JavacCompiler extends ExternalCompiler {
       if (!version.isAtLeast(JavaSdkVersion.JDK_1_5) && "-Xlint".equals(token)) {
         continue; // not supported in these versions
       }
-      if (token.startsWith("-proc:")) {
-        continue;
-      }
       if (isAnnotationProcessing) {
+        if (token.startsWith("-proc:")) {
+          continue;
+        }
         if (token.startsWith("-implicit:")) {
           continue;
+        }
+      }
+      else { // compiling java
+        if (annotationProcessorsEnabled) {
+          // in this mode we have -proc:none already added above, so user's settings should be ignored
+          if (token.startsWith("-proc:")) {
+            continue;
+          }
         }
       }
       if (token.startsWith("-J-")) {

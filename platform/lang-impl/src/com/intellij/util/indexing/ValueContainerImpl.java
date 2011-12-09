@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 
@@ -26,6 +27,8 @@ import java.util.*;
  *         Date: Dec 20, 2007
  */
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ValueContainerImpl");
+
   private HashMap<Value, Object> myInputIdMapping;
 
   public ValueContainerImpl() {
@@ -60,17 +63,19 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @Override
   public void removeAssociatedValue(int inputId) {
-    Value toRemove = null;
+    final List<Value> toRemove = new ArrayList<Value>(1);
     for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
       if (isAssociated(value, inputId)) {
-        assert toRemove == null;
-        toRemove = value;
+        LOG.assertTrue(toRemove.isEmpty(), "Expected only one value per-inputId");
+        toRemove.add(value);
       }
     }
 
-    if (toRemove != null) {
-      removeValue(inputId, toRemove);
+    if (!toRemove.isEmpty()) {
+      for (Value value : toRemove) {
+        removeValue(inputId, value);
+      }
     }
   }
 
