@@ -22,6 +22,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import git4idea.GitVcs;
 import git4idea.push.GitSimplePushResult;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.repo.GitRemote;
@@ -83,7 +84,8 @@ public final class GitHttpAdapter {
     try {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
-      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Fetch(git, provider, remoteUrl, convertRefSpecs(remote.getFetchRefSpecs())));
+      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Fetch(git, provider, remoteUrl, convertRefSpecs(remote.getFetchRefSpecs())),
+                                               repository.getProject());
       resultType = convertToFetchResultType(result);
     } catch (IOException e) {
       logException(repository, remote.getName(), remoteUrl, e, "fetching");
@@ -128,7 +130,7 @@ public final class GitHttpAdapter {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
       GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remote.getName(), remoteUrl, convertRefSpecs(Collections.singletonList(pushSpec)));
-      GeneralResult result = callWithAuthRetry(pushCommand);
+      GeneralResult result = callWithAuthRetry(pushCommand, repository.getProject());
       GitSimplePushResult pushResult = pushCommand.getResult();
       if (pushResult == null) {
         return convertToPushResultType(result);
@@ -161,7 +163,7 @@ public final class GitHttpAdapter {
     GitFetchResult.Type resultType;
     try {
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(project, url);
-      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Clone(directory,  provider, url));
+      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Clone(directory,  provider, url), project);
       resultType = convertToFetchResultType(result);
     }
     catch (InvalidRemoteException e) {
@@ -205,7 +207,7 @@ public final class GitHttpAdapter {
    * If user enters incorrect data, he has 2 more attempts to go before failure.
    * Cleanups are executed after each incorrect attempt to enter password, and after other retriable actions.
    */
-  private static GeneralResult callWithAuthRetry(@NotNull GitHttpRemoteCommand command) throws InvalidRemoteException, IOException, URISyntaxException {
+  private static GeneralResult callWithAuthRetry(@NotNull GitHttpRemoteCommand command, @NotNull Project project) throws InvalidRemoteException, IOException, URISyntaxException {
     ProxySelector defaultProxySelector = ProxySelector.getDefault();
     if (GitHttpProxySupport.shouldUseProxy()) {
       ProxySelector.setDefault(GitHttpProxySupport.newProxySelector());
@@ -271,8 +273,17 @@ public final class GitHttpAdapter {
       return GeneralResult.NOT_AUTHORIZED;
     }
     finally {
+      log(command, project);
       ProxySelector.setDefault(defaultProxySelector);
     }
+  }
+
+  private static void log(@NotNull GitHttpRemoteCommand command, @NotNull Project project) {
+    GitVcs vcs = GitVcs.getInstance(project);
+    if (vcs != null) {
+      vcs.showCommandLine(command.getCommandString());
+    }
+    LOG.info(command.getLogString());
   }
 
   private static boolean smartHttpPushNotSupported(JGitInternalException e) {
