@@ -19,6 +19,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ExtConfiguration;
 import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -38,13 +39,12 @@ public class ExtConnectionDualPanel {
   @NonNls private static final String EXT = "EXT";
   @NonNls private static final String SSH = "SSH";
 
-  public ExtConnectionDualPanel() {
-    myExtSettingsPanel = new ExtConnectionSettingsPanel();
-    mySshSettingsPanel = new SshConnectionSettingsPanel();
+  public ExtConnectionDualPanel(Project project) {
+    myExtSettingsPanel = new ExtConnectionSettingsPanel(project);
+    mySshSettingsPanel = new SshConnectionSettingsPanel(project);
 
     myDualPanel.add(myExtSettingsPanel.getPanel(), EXT);
     myDualPanel.add(mySshSettingsPanel.getPanel(), SSH);
-
 
     myPanel.add(myUseInternalImplementationCheckBox, BorderLayout.NORTH);
     myPanel.add(myDualPanel, BorderLayout.CENTER);
@@ -57,8 +57,7 @@ public class ExtConnectionDualPanel {
   }
 
   private void updatePage() {
-    CardLayout cardLayout = ((CardLayout)myDualPanel.getLayout());
-
+    final CardLayout cardLayout = ((CardLayout)myDualPanel.getLayout());
     if (myUseInternalImplementationCheckBox.isSelected()){
       cardLayout.show(myDualPanel, SSH);
     } else {

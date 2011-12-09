@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.config.ui;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
 
@@ -27,11 +28,12 @@ import javax.swing.*;
  * author: lesya
  */
 public class ConfigureCvsGlobalSettingsDialog extends DialogWrapper {
-  private final GlobalCvsSettingsPanel myGlobalCvsSettingsPanel = new GlobalCvsSettingsPanel();
+  private final GlobalCvsSettingsPanel myGlobalCvsSettingsPanel;
 
-  public ConfigureCvsGlobalSettingsDialog() {
+  public ConfigureCvsGlobalSettingsDialog(Project project) {
     super(true);
     setTitle(CvsBundle.message("dialog.title.global.cvs.settings"));
+    myGlobalCvsSettingsPanel = new GlobalCvsSettingsPanel(project);
     myGlobalCvsSettingsPanel.updateFrom(CvsApplicationLevelConfiguration.getInstance());
     init();
   }

@@ -46,6 +46,7 @@ import java.util.List;
  * author: lesya
  */
 public class CvsConfigurationsListEditor extends DialogWrapper implements DataProvider{
+  private final Project myProject;
   private final JList myList = new JBList();
   private final DefaultListModel myModel = new DefaultListModel();
   private CvsRootConfiguration mySelection;
@@ -59,6 +60,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   public CvsConfigurationsListEditor(List<CvsRootConfiguration> configs, Project project, boolean readOnly) {
     super(true);
+    myProject = project;
     myCvs2SettingsEditPanel = new Cvs2SettingsEditPanel(project, readOnly);
     setTitle(CvsBundle.message("operation.name.edit.configurations"));
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -106,7 +108,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     final AbstractAction globalSettingsAction = new AbstractAction(CvsBundle.message("button.text.global.settings")) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        new ConfigureCvsGlobalSettingsDialog().show();
+        new ConfigureCvsGlobalSettingsDialog(myProject).show();
       }
     };
     return new Action[]{globalSettingsAction};

@@ -17,7 +17,8 @@ package com.intellij.cvsSupport2.connections.ssh.ui;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.SshSettings;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 
@@ -33,17 +34,14 @@ public class SshConnectionSettingsPanel {
   private JCheckBox myUsePrivateKeyFile;
   private JPanel myPanel;
 
-  public SshConnectionSettingsPanel() {
-    myPathToPrivateKeyFile.addBrowseFolderListener(CvsBundle.message("dialog.title.path.to.private.key.file"),
-                                                   CvsBundle.message("dialog.description.path.to.private.key.file"),
-                                                   null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    final ActionListener actionListener = new ActionListener() {
+  public SshConnectionSettingsPanel(Project project) {
+    CvsConfigurationPanel.addBrowseHandler(project, myPathToPrivateKeyFile, CvsBundle.message("dialog.title.path.to.private.key.file"));
+    myUsePrivateKeyFile.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         setPathToPPKEnabled();
       }
-    };
-    myUsePrivateKeyFile.addActionListener(actionListener);
+    });
   }
 
   public JPanel getPanel() {
@@ -77,8 +75,9 @@ public class SshConnectionSettingsPanel {
   }
 
   public boolean equalsTo(SshSettings ssh_configuration) {
-    if (ssh_configuration.USE_PPK != myUsePrivateKeyFile.isSelected()) return false;
-    if (!ssh_configuration.PATH_TO_PPK.equals(myPathToPrivateKeyFile.getText().trim())) return false;
-    return true;
+    if (ssh_configuration.USE_PPK != myUsePrivateKeyFile.isSelected()) {
+      return false;
+    }
+    return ssh_configuration.PATH_TO_PPK.equals(myPathToPrivateKeyFile.getText().trim());
   }
 }

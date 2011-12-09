@@ -89,8 +89,8 @@ public class Cvs2SettingsEditPanel {
     myCvsRootConfigurationPanel.add(myCvsRootConfigurationPanelView.getPanel(), BorderLayout.CENTER);
 
     myConnectionSettingsPanel.setLayout(new CardLayout());
-    myExtConnectionSettingsEditor = new ExtConnectionDualPanel();
-    mySshConnectionSettingsEditor = new SshConnectionSettingsPanel();
+    myExtConnectionSettingsEditor = new ExtConnectionDualPanel(project);
+    mySshConnectionSettingsEditor = new SshConnectionSettingsPanel(project);
     myLocalConnectionSettingsPanel = new LocalConnectionSettingsPanel(project);
     myConnectionSettingsPanel.add(myExtConnectionSettingsEditor.getPanel(), CvsMethod.EXT_METHOD.getDisplayName());
     myConnectionSettingsPanel.add(new JPanel(), CvsMethod.PSERVER_METHOD.getDisplayName());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.cvsSupport2.connections.ext.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ExtConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 
@@ -34,9 +36,9 @@ public class ExtConnectionSettingsPanel {
   private JLabel myAdditionalParametersLabel;
   private JLabel myPathToPPKLabel;
 
-  public ExtConnectionSettingsPanel() {
-    CvsConfigurationPanel.addBrowseHandler(myPathToRsh, com.intellij.CvsBundle.message("dialog.title.select.path.to.external.rsh"));
-    CvsConfigurationPanel.addBrowseHandler(myPathToPrivateKeyFile, com.intellij.CvsBundle.message("dialog.title.select.path.to.ssh.private.key"));
+  public ExtConnectionSettingsPanel(Project project) {
+    CvsConfigurationPanel.addBrowseHandler(project, myPathToRsh, CvsBundle.message("dialog.title.select.path.to.external.rsh"));
+    CvsConfigurationPanel.addBrowseHandler(project, myPathToPrivateKeyFile, CvsBundle.message("dialog.title.select.path.to.ssh.private.key"));
     myRshLabel.setLabelFor(myPathToRsh.getTextField());
     myAdditionalParametersLabel.setLabelFor(myAdditionalParameters);
     myPathToPPKLabel.setLabelFor(myPathToPrivateKeyFile.getTextField());
