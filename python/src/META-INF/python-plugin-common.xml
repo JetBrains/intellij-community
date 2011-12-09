@@ -526,6 +526,7 @@
                     implementationClass="com.jetbrains.django.lang.template.formatter.DjangoTemplateFormattingModelBuilder"/>
 
     <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
+
     <xml.elementDescriptorProvider implementation="com.jetbrains.django.lang.template.DjangoTemplateDescriptorProvider"/>
 
     <completion.contributor language="DjangoTemplate"
