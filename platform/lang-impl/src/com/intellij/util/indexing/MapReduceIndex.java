@@ -140,12 +140,12 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   @Override
-  public Lock getReadLock() {
+  public final Lock getReadLock() {
     return myLock.readLock();
   }
 
   @Override
-  public Lock getWriteLock() {
+  public final Lock getWriteLock() {
     return myLock.writeLock();
   }
 

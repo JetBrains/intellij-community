@@ -85,7 +85,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
 
 /**
  * @author Eugene Zhuravlev
@@ -874,9 +873,8 @@ public class FileBasedIndex implements ApplicationComponent {
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter, restrictToFile);
 
-      final Lock readLock = index.getReadLock();
       try {
-        readLock.lock();
+        index.getReadLock().lock();
         final ValueContainer<V> container = index.getData(dataKey);
 
         boolean shouldContinue = true;
@@ -952,10 +950,9 @@ public class FileBasedIndex implements ApplicationComponent {
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter);
 
-      final Lock readLock = index.getReadLock();
       try {
-        readLock.lock();
-        List<TIntHashSet> locals = new ArrayList<TIntHashSet>();
+        index.getReadLock().lock();
+        final List<TIntHashSet> locals = new ArrayList<TIntHashSet>();
         for (K dataKey : dataKeys) {
           TIntHashSet local = new TIntHashSet();
           locals.add(local);
@@ -970,7 +967,9 @@ public class FileBasedIndex implements ApplicationComponent {
           }
         }
 
-        if (locals.isEmpty()) return true;
+        if (locals.isEmpty()) {
+          return true;
+        }
 
         Collections.sort(locals, new Comparator<TIntHashSet>() {
           @Override
@@ -986,7 +985,9 @@ public class FileBasedIndex implements ApplicationComponent {
           //VirtualFile file = IndexInfrastructure.findFileById(fs, id);
           VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
           if (file != null && filter.accept(file)) {
-            if (!processor.process(file)) return false;
+            if (!processor.process(file)) {
+              return false;
+            }
           }
         }
       }
