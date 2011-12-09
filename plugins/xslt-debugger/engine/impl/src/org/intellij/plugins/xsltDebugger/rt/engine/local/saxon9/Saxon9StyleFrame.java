@@ -186,12 +186,10 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       myItemType = itemType;
     }
 
-    @Override
     public Object getValue() {
       return myValue != null ? myValue.getStringValue() : null;
     }
 
-    @Override
     public Type getType() {
       return new ObjectType(myItemType.toString());
     }
@@ -211,12 +209,10 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       myItemType = type;
     }
 
-    @Override
     public Object getValue() {
       return myValue;
     }
 
-    @Override
     public Type getType() {
       return new ObjectType(myItemType.toString() + "+");
     }
