@@ -160,18 +160,17 @@ public class PyCompatibilityInspection extends PyInspection {
       commonRegisterProblem(message, " not have method " + node.getCallee().getText(),
                             len, node, null, false);
     }
+
     @Override
-    public void visitPyImportStatement(PyImportStatement node) {
-      super.visitPyImportStatement(node);
-      PyIfStatement ifParent = PsiTreeUtil.getParentOfType(node, PyIfStatement.class);
+    public void visitPyImportElement(PyImportElement importElement) {
+      PyIfStatement ifParent = PsiTreeUtil.getParentOfType(importElement, PyIfStatement.class);
       if (ifParent != null)
         return;
-      PyImportElement[] importElements = node.getImportElements();
       int len = 0;
       String moduleName = "";
       StringBuilder message = new StringBuilder("Python version ");
 
-      PyTryExceptStatement tryExceptStatement = PsiTreeUtil.getParentOfType(node, PyTryExceptStatement.class);
+      PyTryExceptStatement tryExceptStatement = PsiTreeUtil.getParentOfType(importElement, PyTryExceptStatement.class);
       if (tryExceptStatement != null) {
         PyExceptPart[] parts = tryExceptStatement.getExceptParts();
         for (PyExceptPart part : parts) {
@@ -181,18 +180,24 @@ public class PyCompatibilityInspection extends PyInspection {
         }
       }
 
+      PyQualifiedName sourceName = null;
+      PyFromImportStatement fromImportStatement = PsiTreeUtil.getParentOfType(importElement, PyFromImportStatement.class);
+      if (fromImportStatement != null) {
+        sourceName = fromImportStatement.getImportSourceQName();
+      }
+      
       for (int i = 0; i != myVersionsToProcess.size(); ++i) {
         LanguageLevel languageLevel = myVersionsToProcess.get(i);
-        for (PyImportElement importElement : importElements) {
-          final PyQualifiedName qName = importElement.getImportedQName();
-          if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
-            moduleName = qName.toString();
-            if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName))
-              len = appendLanguageLevel(message, len, languageLevel);
+        final PyQualifiedName qName = importElement.getImportedQName();
+        if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
+          if (sourceName != null) moduleName = sourceName.append(qName.toString()).toString();
+          else moduleName = qName.toString();
+          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName)) {
+            len = appendLanguageLevel(message, len, languageLevel);
           }
         }
       }
-      commonRegisterProblem(message, " not have module " + moduleName, len, node, null);
+      commonRegisterProblem(message, " not have module " + moduleName, len, importElement, null);
     }
 
     @Override
@@ -200,17 +205,17 @@ public class PyCompatibilityInspection extends PyInspection {
       super.visitPyFromImportStatement(node);
       int len = 0;
       StringBuilder message = new StringBuilder("Python version ");
-      PyReferenceExpression importSource  = node.getImportSource();
-      if (importSource != null) {
-        String name = importSource.getText();
+      PyQualifiedName name = node.getImportSourceQName();
+      PyReferenceExpression source = node.getImportSource();
+      if (name != null) {
         for (int i = 0; i != myVersionsToProcess.size(); ++i) {
           LanguageLevel languageLevel = myVersionsToProcess.get(i);
-          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(name)) {
+          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(name.toString())) {
             len = appendLanguageLevel(message, len, languageLevel);
           }
         }
         commonRegisterProblem(message, " not have module " + name,
-                              len, node, null, false);
+                              len, source, null, false);
       }
     }
   }

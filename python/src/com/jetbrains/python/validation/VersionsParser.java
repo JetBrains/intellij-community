@@ -21,7 +21,7 @@ public class VersionsParser extends DefaultHandler {
               String qName,
               Attributes attr) throws SAXException {
     myContent.reset();
-    if ( localName.equals( "python" ) ) {
+    if (localName.equals("python")) {
       UnsupportedFeaturesUtil.BUILTINS.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<String>());
       UnsupportedFeaturesUtil.MODULES.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<String>());
       myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
