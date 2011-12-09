@@ -106,6 +106,11 @@ public final class GitPusher {
     public boolean shouldUpdate() {
       return getUpdateMethod() != null;
     }
+
+    @Override
+    public String toString() {
+      return String.format("UpdateSettings{myUpdateAllRoots=%s, myUpdateMethod=%s}", myUpdateAllRoots, myUpdateMethod);
+    }
   }
 
   public GitPusher(@NotNull Project project, @NotNull ProgressIndicator indicator) {
@@ -446,6 +451,9 @@ public final class GitPusher {
 
       if (pushAttempt <= MAX_PUSH_ATTEMPTS && !rejectedPushesForCurrentBranch.isEmpty()) {
 
+        LOG.info(
+          String.format("Rejected pushes for current branches: %n%s%nUpdate settings: %s", rejectedPushesForCurrentBranch, updateSettings));
+        
         if (updateSettings == null) {
           // show dialog only when push is rejected for the first time in a row, otherwise reuse previously chosen update method
           // and don't show the dialog again if user has chosen not to ask again
