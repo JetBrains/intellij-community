@@ -174,7 +174,7 @@ class GitPushResult {
   }
 
   @NotNull
-  Map<GitRepository, GitBranch> getRejectedPushesForCurrentBranch() {
+  Map<GitRepository, GitBranch> getRejectedPushesFromCurrentBranchToTrackedBranch(GitPushInfo pushInfo) {
     final Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = new HashMap<GitRepository, GitBranch>();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : group().myRejectedResults.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -184,7 +184,29 @@ class GitPushResult {
       }
       GitPushRepoResult repoResult = entry.getValue();
       GitPushBranchResult curBranchResult = repoResult.getBranchResults().get(currentBranch);
-      if (curBranchResult != null && curBranchResult.isRejected()) {
+
+      if (curBranchResult == null) {
+        continue;
+      }
+
+      String trackedBranchName;
+      try {
+        String simpleName = currentBranch.getTrackedBranchName(myProject, repository.getRoot());
+        if (simpleName != null && simpleName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+          simpleName = simpleName.substring(GitBranch.REFS_HEADS_PREFIX.length());
+        }
+        String remote = currentBranch.getTrackedRemoteName(myProject, repository.getRoot());
+        trackedBranchName = remote + "/" + simpleName;
+      }
+      catch (VcsException e) {
+        LOG.info("Couldn't get tracked branch for branch " + currentBranch, e);
+        continue;
+      }
+      if (!pushInfo.getPushSpecs().get(repository).getDest().getName().equals(trackedBranchName)) {
+        // push from current branch was rejected, but it was a push not to the tracked branch => ignore
+        continue;
+      }
+      if (curBranchResult.isRejected()) {
         rejectedPushesForCurrentBranch.put(repository, currentBranch);
       }
     }

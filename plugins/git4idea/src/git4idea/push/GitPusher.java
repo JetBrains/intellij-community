@@ -447,7 +447,7 @@ public final class GitPusher {
     else {
       // there were no errors, but there might be some rejected branches on some of the repositories
       // => for current branch propose to update and re-push it. For others just warn
-      Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = result.getRejectedPushesForCurrentBranch();
+      Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = result.getRejectedPushesFromCurrentBranchToTrackedBranch(pushInfo);
 
       if (pushAttempt <= MAX_PUSH_ATTEMPTS && !rejectedPushesForCurrentBranch.isEmpty()) {
 
