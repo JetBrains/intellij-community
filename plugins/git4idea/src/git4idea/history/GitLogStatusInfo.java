@@ -44,9 +44,9 @@ class GitLogStatusInfo {
    */
   private static void verifyParameters(@NotNull GitChangeType type, @NotNull String path, @Nullable String secondPath) {
     if (type.requiresSecondPath()) {
-      LOG.assertTrue(secondPath != null, "Rename change should have the second path");
+      LOG.assertTrue(secondPath != null, String.format("Rename change should have the second path. type=%s, path1=%s, path2=%s", type, path, secondPath));
     } else {
-      LOG.assertTrue(secondPath == null, "Second path should be null in case of change type [" + type + "]");
+      LOG.assertTrue(secondPath == null, String.format("Second path should be null. type=%s, path1=%s, path2=%s", type, path, secondPath));
     }
   }
 
