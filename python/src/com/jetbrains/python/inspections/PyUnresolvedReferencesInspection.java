@@ -271,7 +271,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           myAllImports.remove(node.getParent());
         }
       }
-      else if (reference instanceof PyImportReferenceImpl && target == reference.getElement().getContainingFile()) {
+      else if (reference instanceof PyImportReferenceImpl &&
+               target == reference.getElement().getContainingFile() &&
+               PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class) == null) {
         registerProblem(node, "Import resolves to its containing file");
       }
     }
