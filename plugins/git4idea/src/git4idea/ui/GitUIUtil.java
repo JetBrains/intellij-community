@@ -58,12 +58,16 @@ public class GitUIUtil {
   private GitUIUtil() { }
 
   public static void notifyMessages(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
-    if (StringUtil.isEmptyOrSpaces(title)) {
-      title = description;
+    if (title == null) {
+      title = "";
     }
     String desc = (description != null ? description.replace("\n", "<br/>") : "");
     if (messages != null && !messages.isEmpty()) {
       desc += "<hr/>" + StringUtil.join(messages, "<br/>");
+    }
+    if (StringUtil.isEmptyOrSpaces(desc)) {
+      desc = StringUtil.isEmptyOrSpaces(title) ? "Error" : title;    // description is not allowed to be empty, title is => moving title text to description
+      title = "";
     }
     NotificationGroup group = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
     group.createNotification(title, desc, type, null).notify(project.isDefault() ? null : project);
