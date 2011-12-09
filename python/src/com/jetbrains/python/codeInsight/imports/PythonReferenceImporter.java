@@ -9,6 +9,8 @@ import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,6 +30,7 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +68,11 @@ public class PythonReferenceImporter implements ReferenceImporter {
 
   @Nullable
   public static AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference, String ref_text) {
+    // don't propose meaningless auto imports if no interpreter is configured
+    final Module module = ModuleUtil.findModuleForPsiElement(node);
+    if (module != null && PythonSdkType.findPythonSdk(module) == null) {
+      return null;
+    }
     PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
     AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seen_file_names = new HashSet<String>(); // true import names
