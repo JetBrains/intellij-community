@@ -1,5 +1,5 @@
 import os
-import pydevd_log
+import pydev_log
 
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
@@ -12,7 +12,7 @@ def is_python(path):
     return False
 
 def patch_args(args):
-    pydevd_log.debug("Patching args: %s"% str(args))
+    pydev_log.debug("Patching args: %s"% str(args))
 
     import sys
     new_args = []
@@ -23,7 +23,7 @@ def patch_args(args):
     if is_python(args[0]):
         new_args.append(args[0])
     else:
-        pydevd_log.debug("Process is not python, returning.")
+        pydev_log.debug("Process is not python, returning.")
         return args
 
     i = 1
