@@ -51,21 +51,17 @@ public class FormBuilder {
   }
 
   public FormBuilder addLabeledComponent(String labelText, JComponent component, final int verticalSpace) {
-    JLabel label = null;
-    if (labelText != null) {
-      label = new JLabel(UIUtil.removeMnemonic(labelText));
-      label.setDisplayedMnemonicIndex(UIUtil.getDisplayMnemonicIndex(labelText));
-      label.setLabelFor(component);
-    }
-
-    return addLabelAndValueComponents(label, component, verticalSpace, false, false);
+    return addLabeledComponent(labelText, component, verticalSpace, false);
   }
 
   public FormBuilder addLabeledComponent(String labelText, JComponent component, final int verticalSpace, boolean labelOnTop) {
     JLabel label = null;
     if (labelText != null) {
       label = new JLabel(UIUtil.removeMnemonic(labelText));
-      label.setDisplayedMnemonicIndex(UIUtil.getDisplayMnemonicIndex(labelText));
+      final int index = UIUtil.getDisplayMnemonicIndex(labelText);
+      if (index != -1) {
+        label.setDisplayedMnemonic(labelText.charAt(index+1));
+      }
       label.setLabelFor(component);
     }
 
@@ -104,7 +100,7 @@ public class FormBuilder {
       c.weightx = 1.0;
       c.fill = GridBagConstraints.NONE;
       c.anchor = GridBagConstraints.WEST;
-      c.insets = new Insets(verticalInset, 0, 0, this.indent);
+      c.insets = new Insets(verticalInset, 0, this.indent, 0);
 
       if (label != null) panel.add(label, c);
 
