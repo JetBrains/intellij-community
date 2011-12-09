@@ -84,7 +84,7 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   protected String getSplitDialogChooseFilesPrompt() {
-    return "Select jars to extract to the new library:";
+    return "&Select jars to extract to the new library:";
   }
 
   protected String getNameAlreadyUsedMessage(final String name) {

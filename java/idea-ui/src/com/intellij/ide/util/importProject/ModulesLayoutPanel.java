@@ -100,7 +100,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   protected String getSplitDialogChooseFilesPrompt() {
-    return "Select content roots to extract to the new module:";
+    return "&Select content roots to extract to the new module:";
   }
 
   protected String getNameAlreadyUsedMessage(final String name) {
