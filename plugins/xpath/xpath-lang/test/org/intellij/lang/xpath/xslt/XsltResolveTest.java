@@ -49,6 +49,10 @@ public class XsltResolveTest extends TestBase {
     }
 
     public void testResolveIncludedFunction() throws Throwable {
+        doFunctionResolveTest("included-2.xsl");
+    }
+
+    public void testResolveFunction() throws Throwable {
         doFunctionResolveTest();
     }
 
@@ -101,15 +105,16 @@ public class XsltResolveTest extends TestBase {
         return var;
     }
 
-    private XsltFunction doFunctionResolveTest() throws Throwable {
-        final PsiReference reference = findInjectedReferenceAtCaret("included-2.xsl");
+    private XsltFunction doFunctionResolveTest(String... files) throws Throwable {
+        final PsiReference reference = findInjectedReferenceAtCaret(files);
 
         final PsiElement element = reference.resolve();
         assertTrue(element instanceof XsltFunction);
 
         final XsltFunction func = (XsltFunction)element;
-        assertEquals(func.getName(), ((XPathFunctionCall)reference.getElement()).getFunctionName());
-
+        final XPathFunctionCall call = (XPathFunctionCall)reference.getElement();
+        assertEquals(func.getName(), call.getFunctionName());
+        assertEquals(func.getParameters().length, call.getArgumentList().length);
         return func;
     }
 
