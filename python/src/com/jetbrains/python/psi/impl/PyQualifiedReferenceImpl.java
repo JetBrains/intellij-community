@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -273,7 +274,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         PyCallExpression call = (PyCallExpression)condition;
         if (call.getArguments().length > 1 && call.getArguments()[0].getText().equals(qualifier.getText())) {
           PyStringLiteralExpression string = call.getArgument(1, PyStringLiteralExpression.class);
-          if (string != null) variants.add(string.getStringValue());
+          if (string != null && StringUtil.isJavaIdentifier(string.getStringValue())) variants.add(string.getStringValue());
         }
       }
       ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PyIfStatement.class);
