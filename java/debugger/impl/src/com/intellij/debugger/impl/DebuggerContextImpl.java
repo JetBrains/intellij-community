@@ -101,7 +101,8 @@ public final class DebuggerContextImpl implements DebuggerContext {
 
   public PsiElement getContextElement() {
     LOG.assertTrue(myInitialized);
-    if(myContextElement != null && !myContextElement.isValid()) {
+    PsiElement contextElement = myContextElement;
+    if(contextElement != null && !contextElement.isValid()) {
       myContextElement = ContextUtil.getContextElement(mySourcePosition);
     }
     return myContextElement;

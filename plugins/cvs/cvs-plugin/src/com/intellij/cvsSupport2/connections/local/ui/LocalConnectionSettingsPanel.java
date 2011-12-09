@@ -17,7 +17,7 @@ package com.intellij.cvsSupport2.connections.local.ui;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.LocalSettings;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 
@@ -32,8 +32,7 @@ public class LocalConnectionSettingsPanel {
   private JPanel myPanel;
 
   public LocalConnectionSettingsPanel(Project project) {
-    myPathToCvsClient.addBrowseFolderListener(CvsBundle.message("dialog.title.select.path.to.cvs.client"), null, project,
-                                              FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    CvsConfigurationPanel.addBrowseHandler(project, myPathToCvsClient, CvsBundle.message("dialog.title.select.path.to.cvs.client"));
   }
 
   public void updateFrom(LocalSettings localConfiguration) {

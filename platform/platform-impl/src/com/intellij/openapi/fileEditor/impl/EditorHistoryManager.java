@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,14 +144,28 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       trimToSize();
     }
   }
-
-  private void updateHistoryEntry(final VirtualFile file, final boolean changeEntryOrderOnly){
+  
+  private void updateHistoryEntry(@Nullable final VirtualFile file, final boolean changeEntryOrderOnly) {
+    updateHistoryEntry(file, null, null, changeEntryOrderOnly);
+  }
+  
+  private void updateHistoryEntry(@Nullable final VirtualFile file,
+                                  @Nullable final FileEditor fallbackEditor,
+                                  @Nullable FileEditorProvider fallbackProvider,
+                                  final boolean changeEntryOrderOnly)
+  {
     if (file == null){
       return;
     }
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
     final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
-    final FileEditor[]   editors = editorsWithProviders.getFirst();
+    FileEditor[] editors = editorsWithProviders.getFirst();
+    FileEditorProvider[] providers = editorsWithProviders.getSecond();
+    if (editors.length <= 0 && fallbackEditor != null) {
+      editors = new FileEditor[] {fallbackEditor};
+      providers = new FileEditorProvider[] {fallbackProvider};
+    }
+    
     if (editors.length == 0) {
       // obviously not opened in any editor at the moment,
       // makes no sense to put the file in the history
@@ -167,7 +182,6 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     }
 
     if (!changeEntryOrderOnly) { // update entry state
-      final FileEditorProvider [] providers = editorsWithProviders.getSecond();
       //LOG.assertTrue(editors.length > 0);
       for (int i = editors.length - 1; i >= 0; i--) {
         final FileEditor           editor = editors   [i];
@@ -311,7 +325,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     }
 
     public void selectionChanged(final FileEditorManagerEvent event){
-      updateHistoryEntry(event.getOldFile(), false);
+      updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
       updateHistoryEntry(event.getNewFile(), true);
     }
   }

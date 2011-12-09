@@ -29,6 +29,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.util.Function;
@@ -482,7 +483,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     private JLabel myNameLabel = new JLabel();
     private JLabel myBundledLabel = new JLabel();
-    private JPanel myPanel = new JPanel(new GridBagLayout());
+    private JPanel myPanel = new JPanel(new BorderLayout());
 
     private final IdeaPluginDescriptor myPluginDescriptor;
 
@@ -493,19 +494,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       myBundledLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       myPanel.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 1));
       
-      final GridBagConstraints gn =
-        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                               new Insets(0, 0, 0, 0), 0, 0);
-      myPanel.add(myNameLabel, gn);
-      gn.insets.left = 5;
-      gn.anchor = GridBagConstraints.NORTHWEST;
-      gn.weightx = 1;
-      gn.fill = GridBagConstraints.HORIZONTAL;
-      myPanel.add(Box.createHorizontalBox(), gn);
-      gn.fill = GridBagConstraints.NONE;
-      gn.weightx = 0;
-      gn.anchor = GridBagConstraints.EAST;
-      myPanel.add(myBundledLabel, gn);
+      myNameLabel.setOpaque(true);
+      myPanel.add(myNameLabel, BorderLayout.WEST);
+      myPanel.add(myBundledLabel, BorderLayout.EAST);
     }
 
     @Override
@@ -520,7 +511,12 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         } else {
           final String host = myPlugin2host.get(idString);
           if (host != null) {
-            myBundledLabel.setText("From: " + host);
+            String presentableUrl = VfsUtil.urlToPath(host);
+            final int idx = presentableUrl.indexOf('/');
+            if (idx > -1) {
+              presentableUrl = presentableUrl.substring(0, idx);
+            }
+            myBundledLabel.setText("From " + presentableUrl);
           } else {
             if (PluginManagerUISettings.getInstance().myInstalledPlugins.contains(idString)) {
               myBundledLabel.setText("From repository");

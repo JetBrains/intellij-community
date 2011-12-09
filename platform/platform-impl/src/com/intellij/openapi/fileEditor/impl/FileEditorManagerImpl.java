@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1318,26 +1318,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public void fireSelectionChanged(final EditorComposite oldSelectedComposite, final EditorComposite newSelectedComposite) {
-    final VirtualFile oldSelectedFile = oldSelectedComposite != null ? oldSelectedComposite.getFile() : null;
-    final VirtualFile newSelectedFile = newSelectedComposite != null ? newSelectedComposite.getFile() : null;
-
-    final FileEditor oldSelectedEditor =
-      oldSelectedComposite != null && !oldSelectedComposite.isDisposed() ? oldSelectedComposite.getSelectedEditor() : null;
-    final FileEditor newSelectedEditor =
-      newSelectedComposite != null && !newSelectedComposite.isDisposed() ? newSelectedComposite.getSelectedEditor() : null;
-
-    final boolean filesEqual = oldSelectedFile == null ? newSelectedFile == null : oldSelectedFile.equals(newSelectedFile);
-    final boolean editorsEqual = oldSelectedEditor == null ? newSelectedEditor == null : oldSelectedEditor.equals(newSelectedEditor);
+    final Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(oldSelectedComposite);
+    final Trinity<VirtualFile, FileEditor, FileEditorProvider> newData = extract(newSelectedComposite);
+    final boolean filesEqual = oldData.first == null ? newData.first == null : oldData.first.equals(newData.first);
+    final boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
     if (!filesEqual || !editorsEqual) {
       final FileEditorManagerEvent event =
-        new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
+        new FileEditorManagerEvent(this, oldData.first, oldData.second, oldData.third, newData.first, newData.second, newData.third);
       final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-      if (newSelectedEditor != null) {
-        final JComponent component = newSelectedEditor.getComponent();
+      if (newData.first != null) {
+        final JComponent component = newData.second.getComponent();
         final EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, component);
         if (holder != null) {
-          addSelectionRecord(newSelectedFile, holder.getEditorWindow());
+          addSelectionRecord(newData.first, holder.getEditorWindow());
         }
       }
       notifyPublisher(new Runnable() {
@@ -1348,7 +1342,26 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       });
     }
   }
-
+  
+  @NotNull
+  private static Trinity<VirtualFile, FileEditor, FileEditorProvider> extract(@Nullable EditorComposite composite) {
+    final VirtualFile file;
+    final FileEditor editor;
+    final FileEditorProvider provider;
+    if (composite == null || composite.isDisposed()) {
+      file = null;
+      editor = null;
+      provider = null;
+    }
+    else {
+      file = composite.getFile();
+      final Pair<FileEditor, FileEditorProvider> pair = composite.getSelectedEditorWithProvider();
+      editor = pair.first;
+      provider = pair.second;
+    }
+    return new Trinity<VirtualFile, FileEditor, FileEditorProvider>(file, editor, provider);
+  }
+  
   public boolean isChanged(@NotNull final EditorComposite editor) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {

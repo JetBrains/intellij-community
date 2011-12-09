@@ -257,6 +257,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void setVarValue(DfaVariableValue var, DfaValue value) {
+    if (var == value) return;
+
     flushVariable(var);
     if (value instanceof DfaUnknownValue) return;
 
