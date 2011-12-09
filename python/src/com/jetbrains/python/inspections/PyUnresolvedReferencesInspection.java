@@ -35,6 +35,7 @@ import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportReferenceImpl;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyOperatorReferenceImpl;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -272,9 +273,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       else if (reference instanceof PyImportReferenceImpl &&
-               target == reference.getElement().getContainingFile() &&
-               PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class) == null) {
-        registerProblem(node, "Import resolves to its containing file");
+               target == reference.getElement().getContainingFile()) {
+        final boolean insideFromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class) != null;
+        if ((insideFromImport && PyImportStatementNavigator.getImportStatementByElement(node) != null) || !insideFromImport) {
+          registerProblem(node, "Import resolves to its containing file");
+        }
       }
     }
 
