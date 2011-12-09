@@ -26,10 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.EditorTextFieldWithBrowseButton;
-import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -162,19 +159,18 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private void removeParameter() {
-    final int selectedRow = myTable.getSelectedRow();
-    if (selectedRow < 0 || selectedRow >= myTable.getRowCount()) return;
-    final ArrayList<AppletConfiguration.AppletParameter> newItems =
-      new ArrayList<AppletConfiguration.AppletParameter>(myParameters.getItems());
-    newItems.remove(selectedRow);
-    myParameters.setItems(newItems);
+    TableUtil.removeSelectedItems(myTable);
   }
 
   private void addParameter() {
-    final ArrayList<AppletConfiguration.AppletParameter> newItems =
-      new ArrayList<AppletConfiguration.AppletParameter>(myParameters.getItems());
-    newItems.add(new AppletConfiguration.AppletParameter("newParameter", ""));
+    final ArrayList<AppletConfiguration.AppletParameter> newItems = new ArrayList<AppletConfiguration.AppletParameter>(myParameters.getItems());
+    final AppletConfiguration.AppletParameter parameter = new AppletConfiguration.AppletParameter("newParameter", "");
+    newItems.add(parameter);
     myParameters.setItems(newItems);
+
+    int index = newItems.size() - 1;
+    myTable.getSelectionModel().setSelectionInterval(index, index);
+    myTable.scrollRectToVisible(myTable.getCellRect(index, 0, true));
   }
 
   private JComboBox getModuleComponent() {
@@ -185,14 +181,9 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myPolicyFile.getComponent();
   }
 
-  private void getConfigurationTo(final AppletConfiguration configuration) {
-
-  }
-
-  private List<AppletConfiguration.AppletParameter> cloneParameters(final List<AppletConfiguration.AppletParameter> items) {
+  private static List<AppletConfiguration.AppletParameter> cloneParameters(final List<AppletConfiguration.AppletParameter> items) {
     final List<AppletConfiguration.AppletParameter> params = new ArrayList<AppletConfiguration.AppletParameter>();
-    for (Iterator<AppletConfiguration.AppletParameter> iterator = items.iterator(); iterator.hasNext();) {
-      AppletConfiguration.AppletParameter appletParameter = iterator.next();
+    for (AppletConfiguration.AppletParameter appletParameter : items) {
       params.add(new AppletConfiguration.AppletParameter(appletParameter.getName(), appletParameter.getValue()));
     }
     return params;
@@ -309,15 +300,6 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private static abstract class MyColumnInfo extends ColumnInfo<AppletConfiguration.AppletParameter, String> {
     public MyColumnInfo(final String name) {
       super(name);
-    }
-
-    public Comparator<AppletConfiguration.AppletParameter> getComparator() {
-      return new Comparator<AppletConfiguration.AppletParameter>() {
-        public int compare(final AppletConfiguration.AppletParameter parameter1,
-                           final AppletConfiguration.AppletParameter parameter2) {
-          return valueOf(parameter1).compareTo(valueOf(parameter2));
-        }
-      };
     }
 
     public TableCellEditor getEditor(final AppletConfiguration.AppletParameter item) {
