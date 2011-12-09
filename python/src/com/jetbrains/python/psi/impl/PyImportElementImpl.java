@@ -198,22 +198,28 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return Collections.singleton(ret);
   }
 
-  public PsiElement getElementNamed(final String the_name) {
+  public PsiElement getElementNamed(final String name) {
+    return getElementNamed(name, true);
+  }
+
+  @Override
+  public PsiElement getElementNamed(String name, boolean resolveImportElement) {
     String asName = getAsName();
     if (asName != null) {
-      if (!Comparing.equal(the_name, asName)) return null;
+      if (!Comparing.equal(name, asName)) return null;
+      // [yole] I'm not sure why we always resolve the module in this branch but the tests seem to rely on that
       return ResolveImportUtil.resolveImportElement(this);
     }
     else {
       final PyQualifiedName qName = getImportedQName();
-      if (qName == null || qName.getComponentCount() == 0 || !qName.getComponents().get(0).equals(the_name)) {
+      if (qName == null || qName.getComponentCount() == 0 || !qName.getComponents().get(0).equals(name)) {
         return null;
       }
       if (qName.getComponentCount() == 1) {
-        return ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(the_name));
+        return resolveImportElement ? ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(name)) : this;
       }
       final PsiNamedElement container = getStubOrPsiParentOfType(PsiNamedElement.class);
-      return new PyImportedModule(container, PyQualifiedName.fromComponents(the_name));
+      return new PyImportedModule(container, PyQualifiedName.fromComponents(name));
     }
   }
 
