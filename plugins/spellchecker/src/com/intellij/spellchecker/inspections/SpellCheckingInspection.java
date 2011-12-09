@@ -16,10 +16,7 @@
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -32,23 +29,21 @@ import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
-import com.intellij.spellchecker.tokenizer.LanguageSpellchecking;
-import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
-import com.intellij.spellchecker.tokenizer.TokenConsumer;
-import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 
 
-public class SpellCheckingInspection extends LocalInspectionTool {
+public class SpellCheckingInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
 
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
   private static final AcceptWordAsCorrect BATCH_ACCEPT_FIX = new AcceptWordAsCorrect();
@@ -66,6 +61,28 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return SpellCheckerBundle.message("spellchecking.inspection.name");
   }
 
+  @Override
+  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+    if (element != null) {
+      SpellcheckingStrategy strategy = LanguageSpellchecking.INSTANCE.forLanguage(element.getLanguage());
+      if(strategy instanceof SuppressibleSpellcheckingStrategy) {
+        return ((SuppressibleSpellcheckingStrategy)strategy).getSuppressActions(element, getShortName());
+      }
+    }
+    return new SuppressIntentionAction[0];
+  }
+
+  @Override
+  public boolean isSuppressedFor(PsiElement element) {
+    if (element!=null) {
+      SpellcheckingStrategy strategy = LanguageSpellchecking.INSTANCE.forLanguage(element.getLanguage());
+      if(strategy instanceof SuppressibleSpellcheckingStrategy) {
+        return ((SuppressibleSpellcheckingStrategy)strategy).isSuppressedFor(element, getShortName());
+      }
+    }
+    return false;
+  }
+
   @NonNls
   @NotNull
   public String getShortName() {
@@ -81,6 +98,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return SpellCheckerManager.getHighlightDisplayLevel();
   }
 
+  @Nullable
   private static SpellcheckingStrategy getFactoryByLanguage(@NotNull Language lang) {
     return LanguageSpellchecking.INSTANCE.forLanguage(lang);
   }
@@ -132,7 +150,9 @@ public class SpellCheckingInspection extends LocalInspectionTool {
    */
   public static void tokenize(@NotNull final PsiElement element, @NotNull final Language language, TokenConsumer consumer) {
     final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(language);
-    final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
+    if(factoryByLanguage==null) return;
+    Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
+    //noinspection unchecked
     tokenizer.tokenize(element, consumer);
   }
 
@@ -161,7 +181,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     assert highlightRange.getStartOffset()>=0;
 
     return holder.getManager()
-      .createProblemDescriptor(element, highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, holder.isOnTheFly(), fixes);
+      .createProblemDescriptor(element, highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly, fixes);
   }
 
   @SuppressWarnings({"PublicField"})
