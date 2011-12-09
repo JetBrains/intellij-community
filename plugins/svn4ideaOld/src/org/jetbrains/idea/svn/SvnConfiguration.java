@@ -259,7 +259,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
         myAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
       getInteractiveManager(svnVcs);
       // to init
-      myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider));
+      myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, RUNTIME_AUTH_CACHE));
       myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myAuthManager;
