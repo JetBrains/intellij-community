@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -196,6 +197,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       final List<PsiElement> children = PyPsiUtils.collectAllStubChildren(this, getStub());
       final List<PyExceptPart> exceptParts = new ArrayList<PyExceptPart>();
       for (int i=children.size()-1; i >= 0; i--) {
+        ProgressManager.checkCanceled();
         PsiElement child = children.get(i);
         if (child instanceof PyExceptPart) {
           exceptParts.add((PyExceptPart) child);
@@ -208,6 +210,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         }
       }
       for (int i = exceptParts.size() - 1; i >= 0; i--) {
+        ProgressManager.checkCanceled();
         PyExceptPart part = exceptParts.get(i);
         final List<PsiElement> exceptChildren = PyPsiUtils.collectAllStubChildren(part, part.getStub());
         for (int j = exceptChildren.size() - 1; j >= 0; j--) {
