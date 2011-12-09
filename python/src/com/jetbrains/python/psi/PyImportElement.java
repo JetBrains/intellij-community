@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
@@ -28,5 +29,7 @@ public interface PyImportElement extends PyElement, NameDefiner, StubBasedPsiEle
   String getVisibleName();
 
   PyStatement getContainingImportStatement();
-
+  
+  @Nullable
+  PsiElement getElementNamed(String name, boolean resolveImportElement);
 }

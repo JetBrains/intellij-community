@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -18,14 +17,9 @@ import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
-import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import com.jetbrains.python.psi.stubs.PyFileStub;
-import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
-import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -199,40 +193,29 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     stack.add(name);
     try {
-      final StubElement stub = getStub();
-      if (stub != null) {
-        final List children = stub.getChildrenStubs();
-        final List<PyExceptPartStub> exceptParts = new ArrayList<PyExceptPartStub>();
-        for (int i=children.size()-1; i >= 0; i--) {
-          Object child = children.get(i);
-          if (child instanceof PyExceptPartStub) {
-            exceptParts.add((PyExceptPartStub) child);
-          }
-          else {
-            PsiElement element = findNameInStub(child, name);
-            if (element != null) {
-              return element;
-            }
-          }
+      final List<PsiElement> children = PyPsiUtils.collectAllStubChildren(this, getStub());
+      final List<PyExceptPart> exceptParts = new ArrayList<PyExceptPart>();
+      for (int i=children.size()-1; i >= 0; i--) {
+        PsiElement child = children.get(i);
+        if (child instanceof PyExceptPart) {
+          exceptParts.add((PyExceptPart) child);
         }
-        for (int i = exceptParts.size() - 1; i >= 0; i--) {
-          PyExceptPartStub part = exceptParts.get(i);
-          final List<StubElement> exceptChildren = part.getChildrenStubs();
-          for (int j = exceptChildren.size() - 1; j >= 0; j--) {
-            Object child = exceptChildren.get(j);
-            PsiElement element = findNameInStub(child, name);
-            if (element != null) {
-              return element;
-            }
+        else {
+          PsiElement element = findNameInStub(child, name);
+          if (element != null) {
+            return element;
           }
         }
       }
-      else {
-        // dull plain resolve, as fast as stub index or better
-        ResolveProcessor proc = new ResolveProcessor(name);
-        PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
-        if (proc.getResult() != null) {
-          return proc.getResult();
+      for (int i = exceptParts.size() - 1; i >= 0; i--) {
+        PyExceptPart part = exceptParts.get(i);
+        final List<PsiElement> exceptChildren = PyPsiUtils.collectAllStubChildren(part, part.getStub());
+        for (int j = exceptChildren.size() - 1; j >= 0; j--) {
+          PsiElement child = exceptChildren.get(j);
+          PsiElement element = findNameInStub(child, name);
+          if (element != null) {
+            return element;
+          }
         }
       }
       List<String> allNames = getDunderAll();
@@ -247,26 +230,25 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Nullable
-  private PsiElement findNameInStub(Object child, String name) {
-    if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
-      return ((NamedStub) child).getPsi();
+  private PsiElement findNameInStub(PsiElement child, String name) {
+    if (child instanceof PsiNamedElement && name.equals(((PsiNamedElement)child).getName())) {
+      return child;
     }
-    else if (child instanceof PyFromImportStatementStub) {
-      return findNameInFromImportStatementStub(name, (PyFromImportStatementStub)child);
+    else if (child instanceof PyFromImportStatement) {
+      return findNameInFromImportStatement(name, (PyFromImportStatement)child);
     }
-    else if (child instanceof PyImportStatementStub) {
-      return findNameInImportStatementStub(name, (PyImportStatementStub)child);
+    else if (child instanceof PyImportStatement) {
+      return findNameInImportStatement(name, (PyImportStatement)child);
     }
     return null;
   }
 
   @Nullable
-  private PsiElement findNameInFromImportStatementStub(String name, PyFromImportStatementStub stub) {
-    if (stub.isStarImport()) {
+  private PsiElement findNameInFromImportStatement(String name, PyFromImportStatement statement) {
+    if (statement.isStarImport()) {
       if (PyUtil.isClassPrivateName(name)) {
         return null;
       }
-      final PyFromImportStatement statement = stub.getPsi();
       PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
       if (starImportSource != null) {
         starImportSource = PyUtil.turnDirIntoInit(starImportSource);
@@ -279,11 +261,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
     else {
-      final List<StubElement> importElements = stub.getChildrenStubs();
-      for (StubElement importElement : importElements) {
-        final PsiElement psi = importElement.getPsi();
-        if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
-          final PsiElement resolved = ((PyImportElement) psi).getElementNamed(name);
+      for (PyImportElement importElement : statement.getImportElements()) {
+        if (name.equals(importElement.getVisibleName())) {
+          final PsiElement resolved = importElement.getElementNamed(name);
           if (resolved != null) {
             return resolved;
           }
@@ -292,9 +272,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
     if (PyNames.INIT_DOT_PY.equals(getName())) {
-      final PyQualifiedName qName = stub.getImportSourceQName();
+      final PyQualifiedName qName = statement.getImportSourceQName();
       if (qName != null && qName.endsWith(name)) {
-        final PsiElement element = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveFromImportStatementSource(stub.getPsi()));
+        final PsiElement element = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveFromImportStatementSource(statement));
         if (element != null && element.getParent() == getContainingDirectory()) {
           return element;
         }
@@ -304,34 +284,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Nullable
-  private PsiElement findNameInImportStatementStub(String name, PyImportStatementStub child) {
-    final List<StubElement> importElements = child.getChildrenStubs();
-    for (StubElement importElementStub : importElements) {
-      final PsiElement psi = importElementStub.getPsi();
-      if (psi instanceof PyImportElement) {
-        final PyImportElement importElement = (PyImportElement)psi;
-        final String asName = importElement.getAsName();
-        if (asName != null && asName.equals(name)) {
-          final PsiElement resolved = importElement.getElementNamed(name);
-          if (resolved != null) {
-            return resolved;
-          }
-        }
-        final PyQualifiedName qName = importElement.getImportedQName();
-        if (qName != null && qName.getComponentCount() > 0) {
-          if (qName.getComponents().get(0).equals(name)) {
-            if (qName.getComponentCount() == 1) {
-              return psi;
-            }
-            return new PyImportedModule(this, PyQualifiedName.fromComponents(name));
-          }
-          // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
-          if (qName.getComponentCount() > 1 && name.equals(qName.getLastComponent()) && PyNames.INIT_DOT_PY.equals(getName())) {
-            final PsiElement element = ResolveImportUtil.resolveImportElement(importElement, qName.removeLastComponent());
-            if (PyUtil.turnDirIntoInit(element) == this) {
-              return importElement;
-            }
-          }
+  private PsiElement findNameInImportStatement(String name, PyImportStatement child) {
+    for (PyImportElement importElement: child.getImportElements()) {
+      final PsiElement result = importElement.getElementNamed(name, false);
+      if (result != null) {
+        return result;
+      }
+      final PyQualifiedName qName = importElement.getImportedQName();
+      // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
+      if (qName != null && qName.getComponentCount() > 1 && name.equals(qName.getLastComponent()) && PyNames.INIT_DOT_PY.equals(getName())) {
+        final PsiElement element = ResolveImportUtil.resolveImportElement(importElement, qName.removeLastComponent());
+        if (PyUtil.turnDirIntoInit(element) == this) {
+          return importElement;
         }
       }
     }
