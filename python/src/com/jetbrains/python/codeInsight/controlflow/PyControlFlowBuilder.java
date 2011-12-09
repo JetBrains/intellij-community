@@ -28,7 +28,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public static final TokenSet CALL_OR_REF_EXPR = TokenSet.create(PyElementTypes.CALL_EXPRESSION, PyElementTypes.REFERENCE_EXPRESSION);
   public static final String SELF_ASSERT_RAISES = "self.assertRaises";
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
-  private List<Pair<PsiElement, Instruction>> myPendindBackup = null;
 
   public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
     return myBuilder.build(this, owner);
@@ -431,17 +430,20 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
 
     // Process except parts
-    final ArrayList<Instruction> exceptInstructions = new ArrayList<Instruction>();
-    resetPendingBackup();
+    final List<Instruction> exceptInstructions = emptyMutableList();
+    List<Pair<PsiElement, Instruction>> pendingBackup = emptyMutableList();
     for (PyExceptPart exceptPart : node.getExceptParts()) {
-      backupAndClearPending();
+      pendingBackup.addAll(myBuilder.pending);
+      myBuilder.pending = emptyMutableList();
       myBuilder.flowAbrupted();
       final Instruction exceptInstrcution = myBuilder.startNode(exceptPart);
       exceptPart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
       exceptInstructions.add(exceptInstrcution);
     }
-    restorePending();
+    for (Pair<PsiElement, Instruction> pair : pendingBackup) {
+      myBuilder.addPendingEdge(pair.first, pair.second);
+    }
 
     final List<Instruction> normalExits = new ArrayList<Instruction>();
     final PyFinallyPart finallyPart = node.getFinallyPart();
@@ -532,12 +534,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       final Instruction finallyInstruction;
       if (!normalExits.isEmpty()) {
         // Finally-success part handling
-        resetPendingBackup();
-        backupAndClearPending();
+        pendingBackup = emptyMutableList();
+        pendingBackup.addAll(myBuilder.pending);
+        myBuilder.pending = emptyMutableList();
         myBuilder.flowAbrupted();
         Instruction finallySuccessInstruction = myBuilder.startNode(finallyPart);
         finallyPart.accept(this);
-        restorePending();
+        for (Pair<PsiElement, Instruction> pair : pendingBackup) {
+          myBuilder.addPendingEdge(pair.first, pair.second);
+        }
         finallyInstruction = finallySuccessInstruction;
       }
       else {
@@ -551,19 +556,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
   }
 
-  private void resetPendingBackup() {
-    myPendindBackup = new ArrayList<Pair<PsiElement, Instruction>>();
-  }
-
-  private void backupAndClearPending() {
-    myPendindBackup.addAll(myBuilder.pending);
-    myBuilder.pending = new ArrayList<Pair<PsiElement, Instruction>>();
-  }
-
-  private void restorePending() {
-    for (Pair<PsiElement, Instruction> pair : myPendindBackup) {
-      myBuilder.addPendingEdge(pair.first, pair.second);
-    }
+  private static <T> List<T> emptyMutableList() {
+    return new ArrayList<T>();
   }
 
   @Override
