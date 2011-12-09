@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testTypeParams5() { doTypeParamsParserTest("<T extends X & Y<Z>>"); }
   public void testTypeParams6() { doTypeParamsParserTest("<T supers X>"); }
   public void testTypeParams7() { doTypeParamsParserTest("<T extends X, Y>"); }
+  public void testTypeParams8() { doTypeParamsParserTest("<?>"); }
 
   private void doRefParserTest(final String text, final boolean incomplete) {
     doParserTest(text, new MyTestParser(incomplete));
@@ -84,7 +85,6 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   private void doTypeParamsParserTest(final String text) {
     doParserTest(text, new MyTestParser3());
   }
-
   private static class MyTestParser3 implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {

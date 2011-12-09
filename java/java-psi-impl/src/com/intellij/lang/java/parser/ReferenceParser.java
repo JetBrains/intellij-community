@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,8 +68,7 @@ public class ReferenceParser {
 
   @Nullable
   public TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags) {
-    final TypeInfo typeInfo =
-      parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
+    final TypeInfo typeInfo = parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), false, isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
 
     if (typeInfo != null && isSet(flags, DISJUNCTIONS) && builder.getTokenType() == JavaTokenType.OR) {
       typeInfo.marker = typeInfo.marker.precede();
@@ -79,7 +78,7 @@ public class ReferenceParser {
         if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
           error(builder, JavaErrorMessages.message("expected.identifier"));
         }
-        parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
+        parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), false, isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
       }
 
       typeInfo.marker.done(JavaElementType.TYPE);
@@ -90,7 +89,7 @@ public class ReferenceParser {
 
   @Nullable
   private TypeInfo parseTypeInfo(final PsiBuilder builder,
-                                        final boolean eatLastDot, final boolean wildcard, final boolean diamonds, final boolean ellipsis) {
+                                 final boolean eatLastDot, final boolean wildcard, final boolean badWildcard, final boolean diamonds, final boolean ellipsis) {
     if (builder.getTokenType() == null) return null;
 
     final TypeInfo typeInfo = new TypeInfo();
@@ -108,9 +107,9 @@ public class ReferenceParser {
     else if (tokenType == JavaTokenType.IDENTIFIER) {
       parseJavaCodeReference(builder, eatLastDot, true, annotationsSupported, false, false, false, diamonds, typeInfo);
     }
-    else if (wildcard && tokenType == JavaTokenType.QUEST) {
+    else if ((wildcard || badWildcard) && tokenType == JavaTokenType.QUEST) {
       type.drop();
-      typeInfo.marker = parseWildcardType(builder);
+      typeInfo.marker = parseWildcardType(builder, wildcard);
       return typeInfo.marker != null ? typeInfo : null;
     }
     else if (diamonds && tokenType == JavaTokenType.GT) {
@@ -157,7 +156,7 @@ public class ReferenceParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseWildcardType(final PsiBuilder builder) {
+  private PsiBuilder.Marker parseWildcardType(final PsiBuilder builder, final boolean wildcard) {
     final PsiBuilder.Marker type = builder.mark();
     builder.advanceLexer();
 
@@ -167,13 +166,18 @@ public class ReferenceParser {
       }
     }
 
-    type.done(JavaElementType.TYPE);
+    if (wildcard) {
+      type.done(JavaElementType.TYPE);
+    }
+    else {
+      type.error(JavaErrorMessages.message("wildcard.not.expected"));
+    }
     return type;
   }
 
   @Nullable
   public PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
-                                                         final boolean annotations, final boolean isNew, final boolean diamonds) {
+                                                  final boolean annotations, final boolean isNew, final boolean diamonds) {
     return parseJavaCodeReference(builder, eatLastDot, parameterList, annotations, false, false, isNew, diamonds, new TypeInfo());
   }
 
@@ -185,8 +189,8 @@ public class ReferenceParser {
 
   @Nullable
   private PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
-                                                          final boolean annotations, final boolean isImport, final boolean isStaticImport,
-                                                          final boolean isNew, final boolean diamonds, final TypeInfo typeInfo) {
+                                                   final boolean annotations, final boolean isImport, final boolean isStaticImport,
+                                                   final boolean isNew, final boolean diamonds, final TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     if (annotations) {
@@ -276,8 +280,14 @@ public class ReferenceParser {
 
     boolean isOk = true;
     while (true) {
-      if (parseTypeInfo(builder, true, wildcard, diamonds, false) == null) {
+      if (parseTypeInfo(builder, true, wildcard, true, diamonds, false) == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
+      }
+      else {
+        final IElementType tokenType = builder.getTokenType();
+        if (WILDCARD_KEYWORD_SET.contains(tokenType)) {
+          parseReferenceList(builder, tokenType, null, JavaTokenType.AND);
+        }
       }
 
       if (expect(builder, JavaTokenType.GT)) {
@@ -338,20 +348,27 @@ public class ReferenceParser {
     final PsiBuilder.Marker param = builder.mark();
 
     myDeclarationParser.parseAnnotations(builder);
-    if (!expect(builder, JavaTokenType.IDENTIFIER)) {
+
+    final boolean wild = expect(builder, JavaTokenType.QUEST);
+    if (!wild && !expect(builder, JavaTokenType.IDENTIFIER)) {
       param.rollbackTo();
       return null;
     }
 
     parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_BOUND_LIST, JavaTokenType.AND);
 
-    param.done(JavaElementType.TYPE_PARAMETER);
+    if (!wild) {
+      param.done(JavaElementType.TYPE_PARAMETER);
+    }
+    else {
+      param.error(JavaErrorMessages.message("wildcard.not.expected"));
+    }
     return param;
   }
 
   @NotNull
   public PsiBuilder.Marker parseReferenceList(final PsiBuilder builder, final IElementType start,
-                                                     final IElementType type, final IElementType delimiter) {
+                                              @Nullable final IElementType type, final IElementType delimiter) {
     final PsiBuilder.Marker element = builder.mark();
 
     if (expect(builder, start)) {
@@ -366,7 +383,12 @@ public class ReferenceParser {
       }
     }
 
-    element.done(type);
+    if (type != null) {
+      element.done(type);
+    }
+    else {
+      element.error(JavaErrorMessages.message("bound.not.expected"));
+    }
     return element;
   }
 }

@@ -1,6 +1,6 @@
 PsiJavaFile:IllegalWildcard.java
-  PsiConditionalExpression:this.<?
-    PsiReferenceExpression:this.<
+  PsiMethodCallExpression:this.<?>foo()
+    PsiReferenceExpression:this.<?>foo
       PsiThisExpression:this
         PsiReferenceParameterList
           <empty list>
@@ -8,17 +8,10 @@ PsiJavaFile:IllegalWildcard.java
       PsiJavaToken:DOT('.')
       PsiReferenceParameterList
         PsiJavaToken:LT('<')
-        PsiErrorElement:Identifier expected
-          <empty list>
-        PsiErrorElement:'>' or ',' expected.
-          <empty list>
-      PsiErrorElement:Identifier expected
-        <empty list>
-    PsiJavaToken:QUEST('?')
-    PsiErrorElement:Expression expected
-      <empty list>
-  PsiErrorElement:Unparsed tokens
-    PsiJavaToken:GT('>')
-    PsiIdentifier:foo('foo')
-    PsiJavaToken:LPARENTH('(')
-    PsiJavaToken:RPARENTH(')')
+        PsiErrorElement:Unexpected wildcard
+          PsiJavaToken:QUEST('?')
+        PsiJavaToken:GT('>')
+      PsiIdentifier:foo('foo')
+    PsiExpressionList
+      PsiJavaToken:LPARENTH('(')
+      PsiJavaToken:RPARENTH(')')
