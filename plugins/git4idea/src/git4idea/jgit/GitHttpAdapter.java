@@ -170,13 +170,13 @@ public final class GitHttpAdapter {
       callWithAuthRetry(lsRemoteCommand, repository.getProject());
       return convertRefsToStrings(lsRemoteCommand.getRefs());
     } catch (IOException e) {
-      logException(repository, remoteName, remoteUrl, e, "fetching");
+      logException(repository, remoteName, remoteUrl, e, "ls-remote");
     }
     catch (InvalidRemoteException e) {
-      logException(repository, remoteName, remoteUrl, e, "fetching");
+      logException(repository, remoteName, remoteUrl, e, "ls-remote");
     }
     catch (URISyntaxException e) {
-      logException(repository, remoteName, remoteUrl, e, "fetching");
+      logException(repository, remoteName, remoteUrl, e, "ls-remote");
     }
     return Collections.emptyList();
   }
