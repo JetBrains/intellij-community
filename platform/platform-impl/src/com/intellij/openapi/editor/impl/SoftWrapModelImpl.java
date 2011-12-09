@@ -25,6 +25,10 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +96,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
   private int myActive;
   private boolean myUseSoftWraps;
+  private int myTabWidth = -1;
 
   /**
    * Standard IJ editor starts showing horizontal scroll bar event when text line ends couple of symbols before the right visual
@@ -191,7 +196,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     boolean softWrapsUsedBefore = myUseSoftWraps;
     EditorSettings settings = myEditor.getSettings();
     myUseSoftWraps = settings.isUseSoftWraps();
-    if (myUseSoftWraps && (!softWrapsUsedBefore || settings.getAdditionalColumnsCount() > 0)) {
+
+    int tabWidthBefore = myTabWidth;
+    myTabWidth = getCurrentTabWidth();
+    
+    if ((myUseSoftWraps && (!softWrapsUsedBefore || settings.getAdditionalColumnsCount() > 0))
+        || (tabWidthBefore >= 0 && myTabWidth != tabWidthBefore))
+    {
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
       myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
@@ -203,6 +214,20 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
+  /**
+   * @return    tab width for the file used at the current editor (if it's possible to calculate the one);
+   *            <code>'-1'</code> otherwise
+   */
+  private int getCurrentTabWidth() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myEditor.getProject());
+    final VirtualFile file = myEditor.getVirtualFile();
+    if (file == null) {
+      return -1;
+    } 
+    final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
+    return indentOptions.TAB_SIZE;
+  }
+  
   @Override
   public boolean isSoftWrappingEnabled() {
     if (!myUseSoftWraps || myEditor.isOneLineMode()) {
