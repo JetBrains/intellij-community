@@ -84,7 +84,7 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
         parent.delete();
       }
       else {
-        PyElement parentScope = PsiTreeUtil.getParentOfType(lambdaExpression, PyClass.class, PyFile.class);
+        PsiFile parentScope = lambdaExpression.getContainingFile();
         final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parentScope);
         PsiElement functionName = function.getNameIdentifier();
         functionName = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(functionName);
