@@ -30,10 +30,6 @@ public class RootFormatter<Settings extends CvsSettings> {
     myBuilder = builder; 
   }
 
-  public Settings createConfiguration(String rootAsString) {
-    return createConfiguration(rootAsString, true);
-  }
-  
   public Settings createConfiguration(String rootAsString, boolean check) {
     final CvsRootParser root = CvsRootParser.valueOf(rootAsString, check);
     final Settings result = myBuilder.createSettings(root.METHOD, rootAsString);
@@ -43,10 +39,7 @@ public class RootFormatter<Settings extends CvsSettings> {
     else if (CvsMethod.PSERVER_METHOD.equals(root.METHOD)) {
       fillPServerSettings(root, result, rootAsString);
     }
-    else if (CvsMethod.EXT_METHOD.equals(root.METHOD)) {
-      fillSettings(root, result);
-    }
-    else if (CvsMethod.SSH_METHOD.equals(root.METHOD)) {
+    else if (CvsMethod.EXT_METHOD.equals(root.METHOD) || CvsMethod.SSH_METHOD.equals(root.METHOD)) {
       fillSettings(root, result);
     }
     else {
@@ -69,10 +62,8 @@ public class RootFormatter<Settings extends CvsSettings> {
   }
 
   private void fillSettings(CvsRootParser root, Settings settings) {
-    String[] hostAndPort = root.HOST.split(":");
-
+    final String[] hostAndPort = root.HOST.split(":");
     settings.setHost(hostAndPort[0]);
-
     if (hostAndPort.length > 1) {
       settings.setPort(Integer.parseInt(hostAndPort[1]));
     }
@@ -89,12 +80,11 @@ public class RootFormatter<Settings extends CvsSettings> {
     }
 
     String repository = root.REPOSITORY;
-    if (StringUtil.startsWithChar(repository, ':')) repository = repository.substring(1);
-
+    if (StringUtil.startsWithChar(repository, ':')) {
+      repository = repository.substring(1);
+    }
     settings.setRepository(repository);
-
-    String[] userAndPassword = root.USER_NAME.split(":");
-
+    final String[] userAndPassword = root.USER_NAME.split(":");
     settings.setUser(userAndPassword[0]);
 
     if (root.PROXY_HOST != null) {
@@ -103,7 +93,7 @@ public class RootFormatter<Settings extends CvsSettings> {
   }
 
   private String getPServerConnectionPassword(String cvsRoot, CvsRootParser root) {
-    String[] userAndPassword = root.USER_NAME.split(":");
+    final String[] userAndPassword = root.USER_NAME.split(":");
     if (userAndPassword.length > 1) {
       return PServerPasswordScrambler.getInstance().scramble(userAndPassword[1]);
     }
