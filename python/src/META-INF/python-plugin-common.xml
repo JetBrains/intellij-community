@@ -526,6 +526,7 @@
                     implementationClass="com.jetbrains.django.lang.template.formatter.DjangoTemplateFormattingModelBuilder"/>
 
     <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
+    <xml.elementDescriptorProvider implementation="com.jetbrains.django.lang.template.DjangoTemplateDescriptorProvider"/>
 
     <completion.contributor language="DjangoTemplate"
                             implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCompletionContributor"/>
@@ -561,6 +562,8 @@
     </intentionAction>
 
     <webBrowserUrlProvider implementation="com.jetbrains.django.lang.template.DjangoWebBrowserUrlProvider"/>
+
+    <xml.xmlExtension implementation="com.jetbrains.django.lang.template.DjangoXmlExtension" order="first"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
