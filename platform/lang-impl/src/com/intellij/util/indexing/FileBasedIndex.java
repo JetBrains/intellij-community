@@ -367,13 +367,6 @@ public class FileBasedIndex implements ApplicationComponent {
   private <K, V> boolean registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
-    if (!extension.dependsOnFileContent()) {
-      myNotRequiringContentIndices.add(name);
-    }
-    else {
-      myRequiringContentIndices.add(name);
-    }
-    myIndexIdToVersionMap.put(name, version);
     final File versionFile = IndexInfrastructure.getVersionFile(name);
     final boolean versionFileExisted = versionFile.exists();
     boolean versionChanged = false;
@@ -397,6 +390,13 @@ public class FileBasedIndex implements ApplicationComponent {
         
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(inputFilter)));
         myUnsavedDataIndexingSemaphores.put(name, new Semaphore());
+        myIndexIdToVersionMap.put(name, version);
+        if (!extension.dependsOnFileContent()) {
+          myNotRequiringContentIndices.add(name);
+        }
+        else {
+          myRequiringContentIndices.add(name);
+        }
         myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
         break;
       }
