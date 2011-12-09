@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -243,25 +242,33 @@ public class PyPsiUtils {
       }
     }
     else {
-      e.acceptChildren(new PyRecursiveElementVisitor() {
-        public void visitPyElement(final PyElement node) {
-          super.visitPyElement(node);
-          checkAddElement(node);
-        }
-
-        public void visitPyClass(final PyClass node) {
-          checkAddElement(node);  // do not recurse into functions
-        }
-
-        public void visitPyFunction(final PyFunction node) {
-          checkAddElement(node);  // do not recurse into classes
-        }
-
-        private void checkAddElement(PsiElement node) {
+      e.acceptChildren(new TopLevelVisitor() {
+        @Override
+        protected void checkAddElement(PsiElement node) {
           if (node.getNode().getElementType() == elementType) {
             //noinspection unchecked
             result.add((T)node);
           }
+        }
+      });
+    }
+    return result;
+  }
+
+  static List<PsiElement> collectAllStubChildren(PsiElement e, StubElement stub) {
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    if (stub != null) {
+      final List<StubElement> children = stub.getChildrenStubs();
+      for (StubElement child : children) {
+        //noinspection unchecked
+        result.add(child.getPsi());
+      }
+    }
+    else {
+      e.acceptChildren(new TopLevelVisitor() {
+        @Override
+        protected void checkAddElement(PsiElement node) {
+          result.add(node);
         }
       });
     }
@@ -297,5 +304,22 @@ public class PyPsiUtils {
       }
     }
     return -1;
+  }
+
+  private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
+    public void visitPyElement(final PyElement node) {
+      super.visitPyElement(node);
+      checkAddElement(node);
+    }
+
+    public void visitPyClass(final PyClass node) {
+      checkAddElement(node);  // do not recurse into functions
+    }
+
+    public void visitPyFunction(final PyFunction node) {
+      checkAddElement(node);  // do not recurse into classes
+    }
+
+    protected abstract void checkAddElement(PsiElement node);
   }
 }
