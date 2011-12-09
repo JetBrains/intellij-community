@@ -63,6 +63,7 @@ public final class GitPusher {
 
   private static final Logger LOG = Logger.getInstance(GitPusher.class);
   private static final String INDICATOR_TEXT = "Pushing";
+  private static final int MAX_PUSH_ATTEMPTS = 10;
 
   private final Project myProject;
   private final ProgressIndicator myProgressIndicator;
@@ -202,7 +203,7 @@ public final class GitPusher {
    * Makes push, shows the result in a notification. If push for current branch is rejected, shows a dialog proposing to update.
    */
   public void push(@NotNull GitPushInfo pushInfo) {
-    push(pushInfo, null, null);
+    push(pushInfo, null, null, 0);
   }
 
   /**
@@ -212,9 +213,9 @@ public final class GitPusher {
    * option.
    * Also, at the end results are merged and are shown in a single notification.
    */
-  private void push(@NotNull GitPushInfo pushInfo, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings) {
+  private void push(@NotNull GitPushInfo pushInfo, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings, int attempt) {
     GitPushResult result = tryPushAndGetResult(pushInfo);
-    handleResult(pushInfo, result, previousResult, updateSettings);
+    handleResult(pushInfo, result, previousResult, updateSettings, attempt);
   }
 
   @NotNull
@@ -427,7 +428,8 @@ public final class GitPusher {
   // if in a failed repo, a branch was rejected that had nothing to push, don't notify about the rejection.
   // Besides all of the above, don't confuse users with 1 repository with all this "repository/root" stuff;
   // don't confuse users which push only a single branch with all this "branch" stuff.
-  private void handleResult(@NotNull GitPushInfo pushInfo, @NotNull GitPushResult result, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings) {
+  private void handleResult(@NotNull GitPushInfo pushInfo, @NotNull GitPushResult result, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings, 
+                            int pushAttempt) {
     result.mergeFrom(previousResult);
 
     if (result.isEmpty()) {
@@ -442,7 +444,7 @@ public final class GitPusher {
       // => for current branch propose to update and re-push it. For others just warn
       Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = result.getRejectedPushesForCurrentBranch();
 
-      if (!rejectedPushesForCurrentBranch.isEmpty()) {
+      if (pushAttempt <= MAX_PUSH_ATTEMPTS && !rejectedPushesForCurrentBranch.isEmpty()) {
 
         if (updateSettings == null) {
           // show dialog only when push is rejected for the first time in a row, otherwise reuse previously chosen update method
@@ -464,7 +466,7 @@ public final class GitPusher {
           if (updateResult) {
             myProgressIndicator.setText(INDICATOR_TEXT);
             GitPushInfo newPushInfo = pushInfo.retain(rejectedPushesForCurrentBranch);
-            push(newPushInfo, adjustedPushResult, updateSettings);
+            push(newPushInfo, adjustedPushResult, updateSettings, pushAttempt + 1);
             return; // don't notify - next push will notify all results in compound
           }
         }
