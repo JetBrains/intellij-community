@@ -24,6 +24,9 @@ class DjangoLineBreakpoint(LineBreakpoint):
         line = get_template_line(frame)
         return self.file == file and self.line == line
 
+    def __str__(self):
+        return "DjangoLineBreakpoint: %s-%d" %(self.file, self.line)
+
 
 def inherits(cls, *names):
     if cls.__name__ in names:

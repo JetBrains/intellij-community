@@ -1033,6 +1033,12 @@ class PyDB:
         pydev_imports.execfile(file, globals, locals) #execute the script
 
 
+def set_debug(setup):
+    setup['DEBUG_RECORD_SOCKET_READS'] = True
+    setup['DEBUG_TRACE_BREAKPOINTS'] = 1
+    setup['DEBUG_TRACE_LEVEL'] = 3
+
+
 def processCommandLine(argv):
     """ parses the arguments.
         removes our arguments from the command line """
@@ -1069,9 +1075,7 @@ def processCommandLine(argv):
             setup['DEBUG_RECORD_SOCKET_READS'] = True
         elif (argv[i] == '--DEBUG'):
             del argv[i]
-            setup['DEBUG_RECORD_SOCKET_READS'] = True
-            setup['DEBUG_TRACE_BREAKPOINTS'] = 1
-            setup['DEBUG_TRACE_LEVEL'] = 3
+            set_debug(setup)
         elif (argv[i] == '--multiproc'):
             del argv[i]
             setup['multiproc'] = True
@@ -1284,8 +1288,10 @@ if __name__ == '__main__':
     pydev_log.debug("arguments: %s"% str(sys.argv))
 
 
-
     pydevd_vm_type.SetupType(setup.get('vm_type', None))
+
+    if os.getenv('PYCHARM_DEBUG'):
+        set_debug(setup)
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', False)
     DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = setup.get('DEBUG_TRACE_BREAKPOINTS', -1)
