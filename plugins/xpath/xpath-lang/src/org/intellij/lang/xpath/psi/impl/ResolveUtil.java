@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -35,6 +36,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ResolveUtil {
+    public static final Key<List<PsiElement>> DEPENDENCIES = Key.create("XSLT_DEPENDENCIES");
+
     @SuppressWarnings({"unchecked"})
     private final THashSet<PsiElement> myHistory = new THashSet<PsiElement>(TObjectHashingStrategy.IDENTITY);
 
