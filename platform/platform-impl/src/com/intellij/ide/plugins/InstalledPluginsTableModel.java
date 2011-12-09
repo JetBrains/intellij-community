@@ -609,25 +609,49 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       return true;
     }
 
-    /*@Override
+    @Override
     public Comparator<IdeaPluginDescriptor> getComparator() {
-      final Comparator<IdeaPluginDescriptor> comparator = super.getComparator();
-        return new Comparator<IdeaPluginDescriptor>() {
-          @Override
-          public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            if (o1.isBundled() && o2.isBundled()) return comparator.compare(o1, o2);
-            if (o1.isBundled()) return -1;
-            if (o2.isBundled()) return 1;
-            final String host1 = myPlugin2host.get(o1.getPluginId().getIdString());
-            final String host2 = myPlugin2host.get(o2.getPluginId().getIdString());
-            if (host1 == null && host2 == null) return comparator.compare(o1, o2);
-            if (host1 == null) return 1;
-            if (host2 == null) return -1;
-            if (host1.equals(host2)) return comparator.compare(o1, o2);
-            return host1.compareToIgnoreCase(host2);
-          }
-        };
+      final Comparator<IdeaPluginDescriptor> comparator = super.getColumnComparator();
+      return new Comparator<IdeaPluginDescriptor>() {
+        @Override
+        public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
+          if (isSortByStatus()) {
+            final boolean hasNewerVersion1 = hasNewerVersion(o1.getPluginId());
+            final boolean hasNewerVersion2 = hasNewerVersion(o2.getPluginId());
+            if (hasNewerVersion1) {
+              if (hasNewerVersion2) return comparator.compare(o1, o2);
+              return -1;
+            }
+            if (hasNewerVersion2) return 1;
 
-    }*/
+
+            final boolean wasUpdated1 = wasUpdated(o1.getPluginId());
+            final boolean wasUpdated2 = wasUpdated(o2.getPluginId());
+            if (wasUpdated1) {
+              if (wasUpdated2) return comparator.compare(o1, o2);
+              return -1;
+            }
+            if (wasUpdated2) return 1;
+
+
+            if (o1 instanceof PluginNode) {
+              if (o2 instanceof PluginNode) return comparator.compare(o1, o2);
+              return -1;
+            }
+            if (o2 instanceof PluginNode) return 1;
+
+
+            final boolean deleted1 = o1 instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)o1).isDeleted();
+            final boolean deleted2 = o2 instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)o2).isDeleted();
+            if (deleted1) {
+              if (deleted2) return comparator.compare(o1, o2);
+              return -1;
+            }
+            if (deleted2) return 1;
+          }
+          return comparator.compare(o1, o2);
+        }
+      };
+    }
   }
 }

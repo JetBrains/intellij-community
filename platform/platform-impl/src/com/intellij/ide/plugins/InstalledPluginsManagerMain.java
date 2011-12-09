@@ -158,6 +158,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     actionGroup.add(new ActionInstallPlugin(this, this));
     actionGroup.add(new ActionUninstallPlugin(this, pluginTable));
     if (inToolbar) {
+      actionGroup.add(new SortByStatusAction("Sort by status"));
       actionGroup.add(new MyFilterEnabledAction());
       //actionGroup.add(new MyFilterBundleAction());
     }
@@ -256,8 +257,12 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         gr.add(new AnAction(enabledValue) {
           @Override
           public void actionPerformed(AnActionEvent e) {
+            final IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
             final String filter = myFilter.getFilter().toLowerCase();
             ((InstalledPluginsTableModel)pluginsModel).setEnabledFilter(enabledValue, filter);
+            if (selection != null) {
+              select(selection);
+            }
           }
         });
       }

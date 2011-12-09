@@ -73,11 +73,11 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
       if (column >= 0) {
         myPluginManagerMain.pluginsModel.setSortKey(new RowSorter.SortKey(column, SortOrder.ASCENDING));
       }
-      if (myUISettings.AVAILABLE_SORT_BY_STATUS) {
-        myPluginManagerMain.pluginsModel.setSortByStatus(true);
-      }
-      myPluginManagerMain.pluginsModel.sort();
+      myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.AVAILABLE_SORT_BY_STATUS);
+    } else {
+      myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.INSTALLED_SORT_BY_STATUS);
     }
+    myPluginManagerMain.pluginsModel.sort();
     getSplitterProportions().restoreSplitterProportions(myPluginManagerMain.getMainPanel());
   }
 
@@ -99,6 +99,8 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
           }
         }
         myUISettings.AVAILABLE_SORT_BY_STATUS = myPluginManagerMain.pluginsModel.isSortByStatus();
+      } else {
+        myUISettings.INSTALLED_SORT_BY_STATUS = myPluginManagerMain.pluginsModel.isSortByStatus();
       }
 
       Disposer.dispose(myPluginManagerMain);
