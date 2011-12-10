@@ -1,47 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>de.plushnikov.lombok-intellij-plugin</groupId>
-		<artifactId>parent</artifactId>
-		<version>0.3-SNAPSHOT</version>
-	</parent>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
+    <artifactId>parent</artifactId>
+    <version>0.3-SNAPSHOT</version>
+  </parent>
 
-	<artifactId>processor-core</artifactId>
-	<name>Lombok processor core modul for IntelliJ IDEA plugin</name>
-	<description>Implementation of Lombok processors for IntelliJ IDEA</description>
+  <artifactId>processor-core</artifactId>
+  <name>Lombok processor core modul for IntelliJ IDEA plugin</name>
+  <description>Implementation of Lombok processors for IntelliJ IDEA</description>
 
-	<dependencies>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>processor-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>intellij-facade-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>intellij-facade-factory</artifactId>
-		</dependency>
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>processor-api</artifactId>
+      <classifier>${idea.version}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>intellij-facade-api</artifactId>
+      <classifier>${idea.version}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>intellij-facade-factory</artifactId>
+      <classifier>${idea.version}</classifier>
+    </dependency>
 
-		<dependency>
-			<groupId>com.intellij.idea</groupId>
-			<artifactId>openapi</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.intellij.idea</groupId>
-			<artifactId>idea</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.intellij.idea</groupId>
-			<artifactId>util</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.intellij.idea</groupId>
-			<artifactId>annotations</artifactId>
-		</dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>idea</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>util</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>annotations</artifactId>
+    </dependency>
+  </dependencies>
 
-	</dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <classifier>${idea.version}</classifier>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

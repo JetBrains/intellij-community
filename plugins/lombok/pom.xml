@@ -53,10 +53,6 @@
         </property>
       </activation>
       <properties>
-        <idea9.version>9.0.2</idea9.version>
-        <idea10.version>10.0</idea10.version>
-        <idea11.version>11.0</idea11.version>
-        <idea.default.version>${idea9.version}</idea.default.version>
         <idea9.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea9.version}</idea9.home>
         <idea10.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea10.version}</idea10.home>
         <idea11.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea11.version}</idea11.home>
@@ -71,13 +67,51 @@
         </property>
       </activation>
       <properties>
-        <idea9.version>9.0.4</idea9.version>
-        <idea10.version>10.0</idea10.version>
-        <idea11.version>11.0</idea11.version>
-        <idea.default.version>${idea9.version}</idea.default.version>
         <idea9.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea9.version}</idea9.home>
         <idea10.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea10.version}</idea10.home>
         <idea11.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea11.version}</idea11.home>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>intellij-last</id>
+      <activation>
+        <property>
+          <name>!IntelliJ</name>
+        </property>
+      </activation>
+      <properties>
+        <idea.version>${idea11.version}</idea.version>
+        <plugin.supported.build.from>110.3</plugin.supported.build.from>
+        <plugin.supported.build.to></plugin.supported.build.to>
+      </properties>
+    </profile>
+    <profile>
+      <id>intellij-10</id>
+      <activation>
+        <property>
+          <name>IntelliJ</name>
+          <value>10</value>
+        </property>
+      </activation>
+      <properties>
+        <idea.version>${idea10.version}</idea.version>
+        <plugin.supported.build.from>99.18</plugin.supported.build.from>
+        <plugin.supported.build.to>110.0</plugin.supported.build.to>
+      </properties>
+    </profile>
+    <profile>
+      <id>intellij-9</id>
+      <activation>
+        <property>
+          <name>IntelliJ</name>
+          <value>9</value>
+        </property>
+      </activation>
+      <properties>
+        <idea.version>${idea9.version}</idea.version>
+        <plugin.supported.build.from>93.13</plugin.supported.build.from>
+        <plugin.supported.build.to>99.0</plugin.supported.build.to>
       </properties>
     </profile>
 
@@ -368,6 +402,10 @@
   </profiles>
 
   <properties>
+    <idea9.version>9.0.4</idea9.version>
+    <idea10.version>10.5.4</idea10.version>
+    <idea11.version>11.0</idea11.version>
+
     <!-- maven.build.timestamp since 2.1.0-M1 -->
     <maven.min.version>2.1.0</maven.min.version>
     <!-- Idea requires JDK 1.6 -->
@@ -423,11 +461,13 @@
         <groupId>${project.groupId}</groupId>
         <artifactId>intellij-facade-api</artifactId>
         <version>${project.version}</version>
+        <classifier>${idea.version}</classifier>
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>intellij-facade-factory</artifactId>
         <version>${project.version}</version>
+        <classifier>${idea.version}</classifier>
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
@@ -448,11 +488,13 @@
         <groupId>${project.groupId}</groupId>
         <artifactId>processor-api</artifactId>
         <version>${project.version}</version>
+        <classifier>${idea.version}</classifier>
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>processor-core</artifactId>
         <version>${project.version}</version>
+        <classifier>${idea.version}</classifier>
         <scope>runtime</scope>
       </dependency>
 
@@ -460,31 +502,31 @@
       <dependency>
         <groupId>com.intellij.idea</groupId>
         <artifactId>openapi</artifactId>
-        <version>${idea.default.version}</version>
+        <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.intellij.idea</groupId>
         <artifactId>extensions</artifactId>
-        <version>${idea.default.version}</version>
+        <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.intellij.idea</groupId>
         <artifactId>util</artifactId>
-        <version>${idea.default.version}</version>
+        <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.intellij.idea</groupId>
         <artifactId>annotations</artifactId>
-        <version>${idea.default.version}</version>
+        <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.intellij.idea</groupId>
         <artifactId>idea</artifactId>
-        <version>${idea.default.version}</version>
+        <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>
 
