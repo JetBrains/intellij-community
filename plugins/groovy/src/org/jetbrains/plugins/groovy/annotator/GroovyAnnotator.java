@@ -860,17 +860,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       return;
     }
 
-    for (String part : parts) {            
-      if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(text.length()), null, !quote.equals("/"))) {
-        myHolder.createErrorAnnotation(literal, GroovyBundle.message("illegal.escape.character.in.string.literal"));
-        return;
+    for (String part : parts) {
+      if (literal instanceof GrRegex) {
+        if (!GrStringUtil.parseRegexCharacters(part, new StringBuilder(text.length()), null, literal.getText().startsWith("/"))) {
+          myHolder.createErrorAnnotation(literal, GroovyBundle.message("illegal.escape.character.in.string.literal"));
+          return;
+        }
+      }
+      else {
+        if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(text.length()), null)) {
+          myHolder.createErrorAnnotation(literal, GroovyBundle.message("illegal.escape.character.in.string.literal"));
+          return;
+        }
       }
     }
 
     
     if (isSimpleString) {
       int[] offsets = new int[substring.length() + 1];
-      boolean result = GrStringUtil.parseStringCharacters(substring, builder, offsets, !quote.equals("/"));
+      boolean result = GrStringUtil.parseStringCharacters(substring, builder, offsets);
       LOG.assertTrue(result);
       if (!builder.toString().endsWith(quote) || substring.charAt(offsets[builder.length() - quote.length()]) == '\\') {
         myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
@@ -893,7 +901,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    if (literal instanceof GrRegex) {
+    if (literal instanceof GrRegex && ((GrRegex)literal).getInjections().length > 0) {
       if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
         myHolder.createErrorAnnotation(literal, GroovyBundle.message("slashy.strings.with.injections.are.not.allowed.in.groovy.0",
                                                                      GroovyConfigUtils.getInstance().getSDKVersion(literal)));

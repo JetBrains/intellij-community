@@ -12,4 +12,7 @@ ptint """""\n\a\t"""
 print """\n${x}\t"""
 print "dfg\$fg"
 print 'fg\$fg'
-print """\n${x}\"""<EOLError descr="String end expected"></EOLError>
+print (<error descr="Illegal escape character in string literal">/abc\n\r\y\o \u12 /</error>)
+print (/abc\n\r\y\o \u1234 /)
+print """\n${x}\"""
+<EOLError descr="String end expected"></EOLError>
