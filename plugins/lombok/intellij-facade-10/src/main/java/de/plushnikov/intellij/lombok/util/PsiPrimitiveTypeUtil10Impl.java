@@ -1,60 +1,64 @@
 package de.plushnikov.intellij.lombok.util;
 
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.PsiElementFactoryImpl;
 
 /**
  * Gets all of primitive types as PsiType
  * Attention: IntelliJ 11 returns PsiPrimitiveType instead of PsiType, so we need a facade here.
+ * Before build 103.72 is was PsiType and after this build PsiPrimitiveType
+ *
  * @author Plushnikov Michail
  */
 public class PsiPrimitiveTypeUtil10Impl implements PsiPrimitiveTypeUtil {
   @Override
   public PsiType getBooleanType() {
-    return PsiType.BOOLEAN;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.BOOLEAN);
   }
 
   @Override
   public PsiType getNullType() {
-    return PsiType.NULL;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.NULL);
   }
 
   @Override
   public PsiType getVoidType() {
-    return PsiType.VOID;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.VOID);
   }
 
   @Override
   public PsiType getByteType() {
-    return PsiType.BYTE;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.BYTE);
   }
 
   @Override
   public PsiType getCharType() {
-    return PsiType.CHAR;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.CHAR);
   }
 
   @Override
   public PsiType getFloatType() {
-    return PsiType.FLOAT;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.FLOAT);
   }
 
   @Override
   public PsiType getDoubleType() {
-    return PsiType.DOUBLE;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.DOUBLE);
   }
 
   @Override
   public PsiType getShortType() {
-    return PsiType.SHORT;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.SHORT);
   }
 
   @Override
   public PsiType getIntType() {
-    return PsiType.INT;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.INT);
   }
 
   @Override
   public PsiType getLongType() {
-    return PsiType.LONG;
+    return PsiElementFactoryImpl.getPrimitiveType(PsiKeyword.LONG);
   }
 }
