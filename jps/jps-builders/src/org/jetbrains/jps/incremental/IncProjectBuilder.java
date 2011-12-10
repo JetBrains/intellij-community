@@ -95,7 +95,9 @@ public class IncProjectBuilder {
   }
 
   private void runBuild(CompileContext context) throws ProjectBuildException {
-    cleanOutputRoots(context);
+    if (!context.isMake()) {
+      cleanOutputRoots(context);
+    }
 
     context.processMessage(new ProgressMessage("Running 'before' tasks"));
     runTasks(context, myBuilderRegistry.getBeforeTasks());
@@ -127,29 +129,18 @@ public class IncProjectBuilder {
   private static void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     final CompileScope scope = context.getScope();
     final Collection<Module> allProjectModules = scope.getProject().getModules().values();
-    final Collection<Module> modulesToClean = new HashSet<Module>();
+    final Collection<Module> modulesToClean = new HashSet<Module>(scope.getAffectedModules());
 
-    if (context.isMake()) {
-      for (Module module : scope.getAffectedModules()) {
-        if (context.isDirty(module)) {
-          modulesToClean.add(module);
-        }
+    final Set<Module> allModules = new HashSet<Module>(allProjectModules);
+    allModules.removeAll(modulesToClean);
+    if (allModules.isEmpty()) {
+      // whole project is affected
+      context.getBuildDataManager().clean();
+      try {
+        context.getMappings().clean();
       }
-    }
-    else {
-      modulesToClean.addAll(scope.getAffectedModules());
-
-      final Set<Module> allModules = new HashSet<Module>(allProjectModules);
-      allModules.removeAll(scope.getAffectedModules());
-      if (allModules.isEmpty()) {
-        // whole project is affected
-        context.getBuildDataManager().clean();
-        try {
-          context.getMappings().clean();
-        }
-        catch (IOException e) {
-          throw new ProjectBuildException(e);
-        }
+      catch (IOException e) {
+        throw new ProjectBuildException(e);
       }
     }
 
