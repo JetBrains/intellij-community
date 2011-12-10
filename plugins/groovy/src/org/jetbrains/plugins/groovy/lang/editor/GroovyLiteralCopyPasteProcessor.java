@@ -17,10 +17,13 @@ package org.jetbrains.plugins.groovy.lang.editor;
 
 import com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -38,8 +41,51 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   @Override
   protected boolean isStringLiteral(@NotNull PsiElement token) {
     ASTNode node = token.getNode();
-    return node != null ? TokenSets.STRING_LITERALS.contains(node.getElementType()):false;
+    return node != null && TokenSets.STRING_LITERALS.contains(node.getElementType());
   }
+
+  @Nullable
+  protected PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
+    PsiElement elementAtSelectionStart = file.findElementAt(selectionStart);
+    if (elementAtSelectionStart == null) {
+      return null;
+    }
+    IElementType elementType = elementAtSelectionStart.getNode().getElementType();
+    if ((elementType == mREGEX_END || elementType == mDOLLAR_SLASH_REGEX_END || elementType == mGSTRING_END) &&
+        elementAtSelectionStart.getTextOffset() == selectionStart) {
+      elementAtSelectionStart = elementAtSelectionStart.getPrevSibling();
+      if (elementAtSelectionStart == null) return null;
+      elementType = elementAtSelectionStart.getNode().getElementType();
+    }
+
+    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart)) {
+      return null;
+    }
+
+    if (elementAtSelectionStart.getTextRange().getEndOffset() < selectionEnd) {
+      final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
+      if (elementAtSelectionEnd == null) {
+        return null;
+      }
+      if (elementAtSelectionEnd.getNode().getElementType() == elementType &&
+          elementAtSelectionEnd.getTextRange().getStartOffset() < selectionEnd) {
+        return elementAtSelectionStart;
+      }
+    }
+
+    final TextRange textRange = elementAtSelectionStart.getTextRange();
+
+    //content elements don't have quotes, so they are shorter than whole string literals
+    if (elementType == mREGEX_CONTENT || elementType == mGSTRING_CONTENT || elementType == mDOLLAR_SLASH_REGEX_CONTENT) {
+      selectionStart++;
+      selectionEnd--;
+    }
+    if (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset()) {
+      return null;
+    }
+    return elementAtSelectionStart;
+  }
+
 
   @Override
   protected String getLineBreaker(PsiElement token) {
@@ -65,7 +111,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token, boolean escapeSlashes) {
     IElementType tokenType = token.getNode().getElementType();
 
-    if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
+    if (tokenType == mREGEX_CONTENT ||
+        tokenType == mREGEX_LITERAL ||
+        tokenType == mDOLLAR_SLASH_REGEX_CONTENT ||
+        tokenType == mDOLLAR_SLASH_REGEX_LITERAL) {
       if (escapeSlashes) {
         return StringUtil.escapeSlashes(s);
       }
@@ -100,7 +149,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   protected String unescape(String text, PsiElement token) {
     final IElementType tokenType = token.getNode().getElementType();
 
-    if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
+    if (tokenType == mREGEX_CONTENT ||
+        tokenType == mREGEX_LITERAL ||
+        tokenType == mDOLLAR_SLASH_REGEX_CONTENT ||
+        tokenType == mDOLLAR_SLASH_REGEX_LITERAL) {
       return StringUtil.unescapeSlashes(text);
     }
 

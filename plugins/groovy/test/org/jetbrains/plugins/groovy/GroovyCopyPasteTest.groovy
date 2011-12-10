@@ -54,7 +54,7 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testEscapeSlashesInRegexFromRegex() {
-    doTest 'a.groovy', 'def x = /<selection>a\\/b</selection>/', 'def x = /smth<caret>/', 'def x = /smtha\\/b<caret>/'
+    doTest 'a.groovy', 'def x = / <selection>a\\/b</selection>/', 'def x = /smth<caret>/', 'def x = /smtha\\/b<caret>/'
   }
 
   void testDontEscapeSymbolsInRegex(){
@@ -98,6 +98,10 @@ second
 first
 second
 <caret>"""'''
+  }
+
+  void testPasteInGStringContent() {
+    doTest 'a.groovy', 'def a = <selection>5\\6</selection>', 'def x = "<caret> "', 'def x = "5\\\\6 "'
   }
 
 }
