@@ -6,7 +6,12 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
@@ -15,6 +20,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonNames;
 import com.jetbrains.cython.psi.CythonFile;
@@ -35,11 +41,13 @@ import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportReferenceImpl;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyOperatorReferenceImpl;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,6 +116,17 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
       super(holder, session);
       myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
+    }
+
+    @Override
+    public void visitPyFile(PyFile node) {
+      super.visitPyFile(node);
+      if (PlatformUtils.isPyCharm()) {
+        final Module module = ModuleUtil.findModuleForPsiElement(node);
+        if (module != null && PythonSdkType.findPythonSdk(module) == null && PlatformUtils.isPyCharm()) {
+          registerProblem(node, "No Python interpreter configured for the project", new ConfigureInterpreterFix());
+        }
+      }
     }
 
     @Override
@@ -271,8 +290,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           myAllImports.remove(node.getParent());
         }
       }
-      else if (reference instanceof PyImportReferenceImpl && target == reference.getElement().getContainingFile()) {
-        registerProblem(node, "Import resolves to its containing file");
+      else if (reference instanceof PyImportReferenceImpl &&
+               target == reference.getElement().getContainingFile()) {
+        final boolean insideFromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class) != null;
+        if ((insideFromImport && PyImportStatementNavigator.getImportStatementByElement(node) != null) || !insideFromImport) {
+          registerProblem(node, "Import resolves to its containing file");
+        }
       }
     }
 
@@ -571,9 +594,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
 
       Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
+      final PyUnresolvedReferencesInspection suppressableInspection = new PyUnresolvedReferencesInspection();
       for (NameDefiner unusedImport : unusedImports) {
         PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
         if (importStatement != null && !unusedStatements.contains(importStatement) && !myUsedImports.contains(importStatement)) {
+          if (suppressableInspection.isSuppressedFor(importStatement)) {
+            continue;
+          }
           // don't remove as unused imports in try/except statements
           if (PsiTreeUtil.getParentOfType(importStatement, PyTryExceptStatement.class) != null) {
             continue;
@@ -628,6 +655,31 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       for (PsiElement element : elementsToDelete) {
         element.delete();
       }
+    }
+  }
+
+  private static class ConfigureInterpreterFix implements LocalQuickFix {
+    @NotNull
+    @Override
+    public String getName() {
+      return "Configure Python Interpreter";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Configure Python Interpreter";
+    }
+
+    @Override
+    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          // outside of read action
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
+        }
+      });
     }
   }
 }

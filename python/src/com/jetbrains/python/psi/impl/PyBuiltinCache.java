@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -48,11 +47,6 @@ public class PyBuiltinCache {
   private PyType STRING_TYPE_PY2 = null;
 
   /**
-   * Used in cases when a virtual file as absent in test mode; then the project may store its own SDK.
-   */
-  public static final Key<Sdk> TEST_SDK = new Key<Sdk>("test.sdk.instance");
-
-  /**
    * Returns an instance of builtin cache. Instances differ per module and are cached.
    * @param reference something to define the module from.
    * @return an instance of cache. If reference was null, the instance is a fail-fast dud one.
@@ -95,10 +89,6 @@ public class PyBuiltinCache {
             }
           }
         }
-      }
-      else if (ApplicationManager.getApplication().isUnitTestMode()) {
-        // did they store a test SDK for us?
-        sdk = project.getUserData(TEST_SDK);
       }
     }
     return sdk;
