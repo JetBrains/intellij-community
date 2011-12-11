@@ -157,6 +157,8 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testregex$regex18() throws Throwable { doTest(); }
   public void testregex$regex19() throws Throwable { doTest(); }
   public void testregex$regex2() throws Throwable { doTest(); }
+  public void testregex$regex20() throws Throwable { doTest(); }
+  public void testregex$regex21() throws Throwable { doTest(); }
   public void testregex$regex3() throws Throwable { doTest(); }
   public void testregex$regex33() throws Throwable { doTest(); }
   public void testregex$regex4() throws Throwable { doTest(); }
