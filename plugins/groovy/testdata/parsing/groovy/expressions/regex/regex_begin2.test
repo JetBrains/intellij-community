@@ -2,5 +2,7 @@
 -----
 Groovy script
   PsiWhiteSpace('       ')
-  Literal
-    PsiElement(regexp)('/temp_regex/')
+  Compound regular expression
+    PsiElement(regex begin)('/')
+    PsiElement(regex content)('temp_regex')
+    PsiElement(regex end)('/')

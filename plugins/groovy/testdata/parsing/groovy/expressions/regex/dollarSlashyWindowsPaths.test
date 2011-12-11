@@ -10,5 +10,7 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      Literal
-        PsiElement(regexp)('$/C:\temp\/$')
+      Compound regular expression
+        PsiElement($/ regex begin)('$/')
+        PsiElement($/ regex content)('C:\temp\')
+        PsiElement($/ regex end)('/$')

@@ -112,7 +112,7 @@ public class GroovyBuilder extends Builder {
         Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
       );
 
-      context.deleteCorrespondingClasses(toCompile);
+      deleteCorrespondingClasses(context, toCompile);
 
       List<GroovycOSProcessHandler.OutputItem> successfullyCompiled = Collections.emptyList();
       try {

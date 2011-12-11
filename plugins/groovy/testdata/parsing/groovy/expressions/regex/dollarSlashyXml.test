@@ -15,7 +15,11 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Compound regular expression
-        PsiElement(regex begin)('$/\n  <xml>\n  $')
-        Reference expression
-          PsiElement(identifier)('tic')
-        PsiElement(regex end)('\tac\n  </xml>\n/$')
+        PsiElement($/ regex begin)('$/')
+        PsiElement($/ regex content)('\n  <xml>\n  ')
+        GString injection
+          PsiElement($)('$')
+          Reference expression
+            PsiElement(identifier)('tic')
+        PsiElement($/ regex content)('\tac\n  </xml>\n')
+        PsiElement($/ regex end)('/$')

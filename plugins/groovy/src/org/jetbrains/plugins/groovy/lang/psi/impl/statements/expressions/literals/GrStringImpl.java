@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.List;
@@ -86,6 +86,17 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
   }
 
   public Object getValue() {
-    return null;
+    if (findChildByClass(GrStringInjection.class) != null) return null;
+
+    final PsiElement fchild = getFirstChild();
+    if (fchild == null) return null;
+
+    final PsiElement content = fchild.getNextSibling();
+    if (content == null || content.getNode().getElementType() != GroovyTokenTypes.mGSTRING_CONTENT) return null;
+
+    final String text = content.getText();
+    StringBuilder chars = new StringBuilder(text.length());
+    boolean result = GrStringUtil.parseStringCharacters(text, chars, null);
+    return result ? chars.toString() : null;
   }
 }

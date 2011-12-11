@@ -11,20 +11,30 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Compound regular expression
-        PsiElement(regex begin)('$/ $')
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          Literal
-            PsiElement(regexp)('$/ a /$')
-          PsiElement(})('}')
-        PsiElement(regex content)(' $')
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          Literal
-            PsiElement(regexp)('$/ b /$')
-          PsiElement(})('}')
-        PsiElement(regex end)(' /$')
+        PsiElement($/ regex begin)('$/')
+        PsiElement($/ regex content)(' ')
+        GString injection
+          PsiElement($)('$')
+          Closable block
+            PsiElement({)('{')
+            Parameter list
+              <empty list>
+            Compound regular expression
+              PsiElement($/ regex begin)('$/')
+              PsiElement($/ regex content)(' a ')
+              PsiElement($/ regex end)('/$')
+            PsiElement(})('}')
+        PsiElement($/ regex content)(' ')
+        GString injection
+          PsiElement($)('$')
+          Closable block
+            PsiElement({)('{')
+            Parameter list
+              <empty list>
+            Compound regular expression
+              PsiElement($/ regex begin)('$/')
+              PsiElement($/ regex content)(' b ')
+              PsiElement($/ regex end)('/$')
+            PsiElement(})('}')
+        PsiElement($/ regex content)(' ')
+        PsiElement($/ regex end)('/$')

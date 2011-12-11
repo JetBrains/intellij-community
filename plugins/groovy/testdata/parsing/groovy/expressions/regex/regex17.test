@@ -1,0 +1,7 @@
+/sgfdhj$5dhfg/
+-----
+Groovy script
+  Compound regular expression
+    PsiElement(regex begin)('/')
+    PsiElement(regex content)('sgfdhj$5dhfg')
+    PsiElement(regex end)('/')

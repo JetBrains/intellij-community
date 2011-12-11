@@ -8,53 +8,63 @@ Groovy script
     PsiElement(==~)('==~')
     PsiWhiteSpace(' ')
     Compound regular expression
-      PsiElement(regex begin)('/abc $')
-      Closable block
-        PsiElement({)('{')
-        Parameter list
-          <empty list>
-        Call expression
-          Reference expression
-            PsiElement(identifier)('doo')
-          PsiWhiteSpace(' ')
-          Command arguments
-            Compound Gstring
-              PsiElement(Gstring begin)('"')
-              PsiElement(Gstring content)('def ')
-              GString injection
-                PsiElement($)('$')
-                Closable block
-                  PsiElement({)('{')
-                  Parameter list
-                    <empty list>
-                  Additive expression
-                    Reference expression
-                      PsiElement(identifier)('a')
-                    PsiElement(+)('+')
-                    Reference expression
-                      PsiElement(identifier)('b')
-                  PsiElement(})('}')
-              PsiElement(Gstring end)('"')
-        PsiElement(})('}')
-      PsiElement(regex content)(' fgh$')
-      Reference expression
-        PsiElement(identifier)('st')
-      PsiElement(regex content)(' $')
-      Closable block
-        PsiElement({)('{')
-        Parameter list
-          <empty list>
-        Method call
-          Property selection
+      PsiElement(regex begin)('/')
+      PsiElement(regex content)('abc ')
+      GString injection
+        PsiElement($)('$')
+        Closable block
+          PsiElement({)('{')
+          Parameter list
+            <empty list>
+          Call expression
             Reference expression
-              PsiElement(identifier)('frg')
-            PsiElement(.)('.')
-            Compound regular expression
-              PsiElement(regexp)('/sdf/')
-          Arguments
-            PsiElement(()('(')
-            Literal
-              PsiElement(Integer)('5')
-            PsiElement())(')')
-        PsiElement(})('}')
-      PsiElement(regex end)(' /')
+              PsiElement(identifier)('doo')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Compound Gstring
+                PsiElement(Gstring begin)('"')
+                PsiElement(Gstring content)('def ')
+                GString injection
+                  PsiElement($)('$')
+                  Closable block
+                    PsiElement({)('{')
+                    Parameter list
+                      <empty list>
+                    Additive expression
+                      Reference expression
+                        PsiElement(identifier)('a')
+                      PsiElement(+)('+')
+                      Reference expression
+                        PsiElement(identifier)('b')
+                    PsiElement(})('}')
+                PsiElement(Gstring end)('"')
+          PsiElement(})('}')
+      PsiElement(regex content)(' fgh')
+      GString injection
+        PsiElement($)('$')
+        Reference expression
+          PsiElement(identifier)('st')
+      PsiElement(regex content)(' ')
+      GString injection
+        PsiElement($)('$')
+        Closable block
+          PsiElement({)('{')
+          Parameter list
+            <empty list>
+          Method call
+            Property selection
+              Reference expression
+                PsiElement(identifier)('frg')
+              PsiElement(.)('.')
+              Compound regular expression
+                PsiElement(regex begin)('/')
+                PsiElement(regex content)('sdf')
+                PsiElement(regex end)('/')
+            Arguments
+              PsiElement(()('(')
+              Literal
+                PsiElement(Integer)('5')
+              PsiElement())(')')
+          PsiElement(})('}')
+      PsiElement(regex content)(' ')
+      PsiElement(regex end)('/')

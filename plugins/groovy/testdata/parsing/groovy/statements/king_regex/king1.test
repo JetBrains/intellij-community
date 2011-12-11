@@ -11,5 +11,6 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Compound regular expression
-        PsiElement(regex begin)('/I cost $$@$@$$')
+        PsiElement(regex begin)('/')
+        PsiElement(regex content)('I cost $$@$@$$')
         PsiElement(regex end)('/')

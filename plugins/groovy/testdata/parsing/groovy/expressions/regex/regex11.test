@@ -7,8 +7,10 @@ Groovy script
     Reference expression
       PsiElement(identifier)('i')
     PsiElement(=)('=')
-    Literal
-      PsiElement(regexp)('/ab \\ncd/')
+    Compound regular expression
+      PsiElement(regex begin)('/')
+      PsiElement(regex content)('ab \\ncd')
+      PsiElement(regex end)('/')
   PsiElement(new line)('\n')
   Assignment expression
     Reference expression

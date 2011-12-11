@@ -34,23 +34,26 @@ public class RegexConstructorExpression implements GroovyElementTypes {
 
     PsiBuilder.Marker sMarker = builder.mark();
     if (ParserUtils.getToken(builder, mREGEX_BEGIN)) {
-      if (!regexConstructorValuePart(builder, parser)) {
+      ParserUtils.getToken(builder, mREGEX_CONTENT);
+      if (!parseInjection(builder, parser)) {
         if (!ParserUtils.getToken(builder, mREGEX_END)) {
-          builder.error(GroovyBundle.message("identifier.or.block.expected"));
-        }
-        sMarker.done(REGEX);
-        return REGEX;
-      } else {
-        while (ParserUtils.getToken(builder, mREGEX_CONTENT)) {
-          if (!regexConstructorValuePart(builder, parser)) break;
-        }
-        if (!ParserUtils.getToken(builder, mREGEX_END)) {
-          builder.error(GroovyBundle.message("identifier.or.block.expected"));
+          builder.error(GroovyBundle.message("regex.end.expected"));
         }
         sMarker.done(REGEX);
         return REGEX;
       }
-    } else {
+      else {
+        while (ParserUtils.getToken(builder, mREGEX_CONTENT)) {
+          if (!parseInjection(builder, parser)) break;
+        }
+        if (!ParserUtils.getToken(builder, mREGEX_END)) {
+          builder.error(GroovyBundle.message("regex.end.expected"));
+        }
+        sMarker.done(REGEX);
+        return REGEX;
+      }
+    }
+    else {
       sMarker.drop();
       return WRONGWAY;
     }
@@ -62,16 +65,24 @@ public class RegexConstructorExpression implements GroovyElementTypes {
    * @param builder given builder
    * @return nothing
    */
-  private static boolean regexConstructorValuePart(PsiBuilder builder, GroovyParser parser) {
-    //ParserUtils.getToken(builder, mSTAR);
+  private static boolean parseInjection(PsiBuilder builder, GroovyParser parser) {
+    if (builder.getTokenType() != mDOLLAR) return false;
+
+    final PsiBuilder.Marker injection = builder.mark();
+    ParserUtils.getToken(builder, mDOLLAR);
+
     if (mIDENT.equals(builder.getTokenType())) {
       PathExpression.parse(builder, parser);
-      return true;
-    } else if (mLCURLY.equals(builder.getTokenType())) {
-      OpenOrClosableBlock.parseClosableBlock(builder, parser);
-      return true;
     }
-    return false;
-  }
+    else if (mLCURLY.equals(builder.getTokenType())) {
+      OpenOrClosableBlock.parseClosableBlock(builder, parser);
+    }
+    else {
+      injection.drop();
+      return false;
+    }
 
+    injection.done(GSTRING_INJECTION);
+    return true;
+  }
 }

@@ -1,0 +1,7 @@
+/gsdfjk$ gsdkf$ $/
+-----
+Groovy script
+  Compound regular expression
+    PsiElement(regex begin)('/')
+    PsiElement(regex content)('gsdfjk$ gsdkf$ $')
+    PsiElement(regex end)('/')

@@ -134,7 +134,7 @@ mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
 
 mSTRING_NL = {mONE_NL}
 mSTRING_ESC = \\ [^] | \\ ({WHITE_SPACE})+ (\n|\r)
-mREGEX_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | "\\" "\\" | \\ "$" | \\ \" | \\ \'
+mREGEX_ESC = \\ "$"
 | "\\""u"{mHEX_DIGIT}{4}
 | "\\" [0..3] ([0..7] ([0..7])?)?
 | "\\" [4..7] ([0..7])?
@@ -142,18 +142,10 @@ mREGEX_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | "\\" "\\" | \\ "$" | \\ \" | \\ 
 
 /// Regexes ////////////////////////////////////////////////////////////////
 
-ESCAPPED_REGEX_SEP = \\ "/"
-mREGEX_BEGIN = "/""$"
-   |  "/" ([^"/""$"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT}"$"
-mREGEX_CONTENT = ({mREGEX_ESC}
-   | {ESCAPPED_REGEX_SEP}
-   | [^"/""$"])*
+ESCAPED_REGEX_SEP = \\ "/"
+mREGEX_CONTENT = ({mREGEX_ESC} | {ESCAPED_REGEX_SEP} | [^"/""$"])+
 
-mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} ("$""/" | "/")
-mDOLLAR_SLASHY_LITERAL_1 = \$\/ ([^\/] | \/[^\$] )* \/\$
-mDOLLAR_SLASHY_LITERAL_2 = \$\/ ([^\/] | \/[^\$] | {mDOLLAR_SLASHY_LITERAL_1} )* \/\$
-mDOLLAR_SLASHY_LITERAL_3 = \$\/ ([^\/] | \/[^\$] | {mDOLLAR_SLASHY_LITERAL_2} )* \/\$
-mDOLLAR_SLASHY_LITERAL = {mDOLLAR_SLASHY_LITERAL_3}
+mDOLLAR_SLASH_REGEX_CONTENT = ([^\/\$] | \/[^\$] )+
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -208,10 +200,6 @@ mGSTRING_LITERAL = \"\"
 %xstate IN_TRIPLE_IDENT
 %xstate IN_TRIPLE_DOT
 %xstate IN_TRIPLE_NLS
-%xstate KING_STATE
-%xstate KING_STATE_INNER
-%xstate KING_STATE_CONTENT
-%xstate KING_STATE_INNER_CONTENT
 
 %state IN_INNER_BLOCK
 
@@ -220,6 +208,10 @@ mGSTRING_LITERAL = \"\"
 %xstate IN_REGEX
 %xstate IN_REGEX_IDENT
 %xstate IN_REGEX_DOT
+%xstate IN_DOLLAR_SLASH_REGEX_DOLLAR
+%xstate IN_DOLLAR_SLASH_REGEX
+%xstate IN_DOLLAR_SLASH_REGEX_IDENT
+%xstate IN_DOLLAR_SLASH_REGEX_DOT
 
 // Not to separate NewLine sequence by comments
 %xstate NLS_AFTER_COMMENT
@@ -371,6 +363,7 @@ mGSTRING_LITERAL = \"\"
                                                if (br.equals(mLPAREN)) yybegin(IN_SINGLE_GSTRING);
                                                if (br.equals(mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
                                                if (br.equals(mDIV)) yybegin(IN_REGEX);
+                                               if (br.equals(mDOLLAR)) yybegin(IN_DOLLAR_SLASH_REGEX);
                                              }
                                              while (!braceCount.isEmpty() && mLCURLY != braceCount.peek()) {
                                                braceCount.pop();
@@ -490,93 +483,25 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////  regexes //////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-<KING_STATE> {  // Processing nasty $ signs
-  ("{" | {mIDENT_NOBUCKS})                {  yypushback(yytext().length());
-                                             gStringStack.push(mDIV);       // For regexes
-                                             yybegin(IN_REGEX_DOLLAR); }
-
-  . | {mNLS}                              {  yypushback(yytext().length());
-                                             yybegin(KING_STATE_INNER);
-                                          }
-}
-
-<KING_STATE_CONTENT> {  // Processing nasty $ signs
-  ("{" | {mIDENT_NOBUCKS})                {  yypushback(yytext().length());
-                                             gStringStack.push(mDIV);       // For regexes
-                                             yybegin(IN_REGEX_DOLLAR); }
-
-  . | {mNLS}                              {  yypushback(yytext().length());
-                                             yybegin(KING_STATE_INNER_CONTENT);
-                                          }
-}
-
-<KING_STATE_INNER> {
-  "$"                                     {  yybegin(KING_STATE);
-                                             return mREGEX_BEGIN; }
-
-  {ESCAPPED_REGEX_SEP}                    {  return mREGEX_BEGIN; }
-
-  "/"                                     {  if (blockStack.isEmpty()){
-                                               yybegin(YYINITIAL);
-                                             } else {
-                                               yybegin(IN_INNER_BLOCK);
-                                             }
-                                             return mREGEX_END; }
-
-  . | {mNLS}                              {  return mREGEX_BEGIN; }
-
-}
-
-<KING_STATE_INNER_CONTENT> {
-  "$"                                     {  yybegin(KING_STATE_CONTENT);
-                                             return mREGEX_CONTENT; }
-
-  {ESCAPPED_REGEX_SEP}                    {  return mREGEX_CONTENT; }
-
-  "/"                                     {  if (blockStack.isEmpty()){
-                                               yybegin(YYINITIAL);
-                                             } else {
-                                               yybegin(IN_INNER_BLOCK);
-                                             }
-                                             return mREGEX_END; }
-
-  . | {mNLS}                                       {  return mREGEX_CONTENT; }
-
-
-}
-
-
-
 
 <WAIT_FOR_REGEX> {
 
-{WHITE_SPACE}                             {  afterComment = YYINITIAL;
-                                             return(WHITE_SPACE);  }
+  {WHITE_SPACE}                           {  afterComment = YYINITIAL;
+                                           return(WHITE_SPACE);  }
 
-{mSL_COMMENT}                             {  return mSL_COMMENT; }
-{mML_COMMENT}                             {  return mML_COMMENT; }
-{mDOC_COMMENT}                            {  return GROOVY_DOC_COMMENT; }
+  {mSL_COMMENT}                           {  return mSL_COMMENT; }
+  {mML_COMMENT}                           {  return mML_COMMENT; }
+  {mDOC_COMMENT}                          {  return GROOVY_DOC_COMMENT; }
 
-{mDOLLAR_SLASHY_LITERAL}                  {  if (blockStack.isEmpty()){
-                                               yybegin(YYINITIAL);
-                                             } else {
-                                               yybegin(IN_INNER_BLOCK);
-                                             }
-                                             return(mDOLLAR_SLASHY_LITERAL); }
-
-{mREGEX_LITERAL}                          {  if (blockStack.isEmpty()){
-                                               yybegin(YYINITIAL);
-                                             } else {
-                                               yybegin(IN_INNER_BLOCK);
-                                             }
-                                             return(mREGEX_LITERAL); }
-
-{mREGEX_BEGIN}                            {  yybegin(KING_STATE);
+  "/"                                     {  yybegin(IN_REGEX);
+                                             gStringStack.push(mDIV);
                                              return mREGEX_BEGIN; }
 
-"/" ([^\"\$\/] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
+  "$""/"                                  {  yybegin(IN_DOLLAR_SLASH_REGEX);
+                                             gStringStack.push(mDOLLAR);
+                                             return mDOLLAR_SLASH_REGEX_BEGIN; }
 
-[^]                                       {  yypushback(1);
+  [^]                                     {  yypushback(1);
                                              if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
                                              } else {
@@ -585,17 +510,24 @@ mGSTRING_LITERAL = \"\"
                                           }
 }
 
-<IN_REGEX_IDENT>{
-  {mIDENT_NOBUCKS}                        {  yybegin(IN_REGEX_DOT);
-                                             return mIDENT;  }
-  [^]                                     {  yypushback(1);
-                                             yybegin(IN_REGEX);  }
-}
-<IN_REGEX_DOT>{
-  "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_REGEX_IDENT);
-                                             return mDOT;  }
-  [^]                                     {  yypushback(1);
-                                             yybegin(IN_REGEX);  }
+<IN_REGEX> {
+  "/"                                     {  if (!gStringStack.isEmpty()) {
+                                               gStringStack.pop();
+                                             }
+                                             if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                             return mREGEX_END; }
+
+  {mREGEX_CONTENT}? "$"
+  /[^"{"[:letter:]"_"]                    {  return mREGEX_CONTENT; }
+
+  {mREGEX_CONTENT}                        {  return mREGEX_CONTENT; }
+
+  "$"                                     {  yybegin(IN_REGEX_DOLLAR);
+                                             return mDOLLAR;}
 }
 
 <IN_REGEX_DOLLAR> {
@@ -606,20 +538,24 @@ mGSTRING_LITERAL = \"\"
                                              braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
-  ([^{[:jletter:]\n\r] | "$")
-                {mSTRING_ESC}*            {  gStringStack.clear();
-                                             yybegin(YYINITIAL);
-                                             return mWRONG_REGEX_LITERAL;  }
-  {mNLS}                                  {  yybegin(NLS_AFTER_NLS);
-                                             afterComment = YYINITIAL;
-                                             clearStacks();
-                                             return mNLS;}
 }
 
-<IN_REGEX> {
-  {mREGEX_CONTENT}"$"                     {  yybegin(KING_STATE_CONTENT);
-                                             return mREGEX_CONTENT; }
-  {mREGEX_CONTENT} ("$" "/" | "/")        {  if (!gStringStack.isEmpty()) {
+<IN_REGEX_DOT>{
+  "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_REGEX_IDENT);
+                                             return mDOT;  }
+  [^]                                     {  yypushback(1);
+                                             yybegin(IN_REGEX);  }
+}
+
+<IN_REGEX_IDENT>{
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_REGEX_DOT);
+                                             return mIDENT;  }
+  [^]                                     {  yypushback(1);
+                                             yybegin(IN_REGEX);  }
+}
+
+<IN_DOLLAR_SLASH_REGEX> {
+  "/""$"                                  {  if (!gStringStack.isEmpty()) {
                                                gStringStack.pop();
                                              }
                                              if (blockStack.isEmpty()){
@@ -627,15 +563,44 @@ mGSTRING_LITERAL = \"\"
                                              } else {
                                                yybegin(IN_INNER_BLOCK);
                                              }
-                                             return mREGEX_END; }
-  {mREGEX_CONTENT}                        {  gStringStack.clear();
-                                             yybegin(YYINITIAL);
-                                             return mWRONG_REGEX_LITERAL; }
-  {mNLS}                                  {  clearStacks();
-                                             yybegin(NLS_AFTER_NLS);
-                                             afterComment = YYINITIAL;
-                                             return mNLS; }
+                                             return mDOLLAR_SLASH_REGEX_END; }
+
+  {mDOLLAR_SLASH_REGEX_CONTENT}? "$"
+    /[^"{"[:letter:]"_"]                  {  return mDOLLAR_SLASH_REGEX_CONTENT; }
+
+  "/"                                     {  return mDOLLAR_SLASH_REGEX_CONTENT; }
+
+  {mDOLLAR_SLASH_REGEX_CONTENT}           {  return mDOLLAR_SLASH_REGEX_CONTENT; }
+
+  "$"                                     {  yybegin(IN_DOLLAR_SLASH_REGEX_DOLLAR);
+                                             return mDOLLAR;}
 }
+
+<IN_DOLLAR_SLASH_REGEX_DOLLAR> {
+
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_DOLLAR_SLASH_REGEX_DOT);
+                                             return mIDENT; }
+  "{"                                     {  blockStack.push(mDOLLAR);
+                                             braceCount.push(mLCURLY);
+                                             yybegin(NLS_AFTER_LBRACE);
+                                             return mLCURLY; }
+}
+
+<IN_DOLLAR_SLASH_REGEX_DOT>{
+  "." /{mIDENT_NOBUCKS}                   {  yybegin(IN_DOLLAR_SLASH_REGEX_IDENT);
+                                             return mDOT;  }
+  [^]                                     {  yypushback(1);
+                                             yybegin(IN_DOLLAR_SLASH_REGEX);  }
+}
+
+<IN_DOLLAR_SLASH_REGEX_IDENT>{
+  {mIDENT_NOBUCKS}                        {  yybegin(IN_DOLLAR_SLASH_REGEX_DOT);
+                                             return mIDENT;  }
+  [^]                                     {  yypushback(1);
+                                             yybegin(IN_DOLLAR_SLASH_REGEX);  }
+}
+
+
 
 <YYINITIAL> {
 
@@ -646,7 +611,7 @@ mGSTRING_LITERAL = \"\"
                                              if (!braceCount.isEmpty() && mLCURLY == braceCount.peek()) {
                                                braceCount.pop();
                                              }
-                                             return(mRCURLY);  }
+                                             return mRCURLY;  }
 
 }
 
@@ -698,6 +663,9 @@ mGSTRING_LITERAL = \"\"
                                                               return mGSTRING_BEGIN; }
 
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
+
+"$""/"                                                     {  yypushback(2);
+                                                              yybegin(WAIT_FOR_REGEX); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// keywords /////////////////////////////////////////////////////////////////////////////////////

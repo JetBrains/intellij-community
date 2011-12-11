@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -31,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
@@ -112,30 +110,16 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     }
     else if (elemType == mSTRING_LITERAL) {
       if (!text.startsWith("'")) return null;
-      text = text.substring(1);
-      if (text.endsWith("'")) {
-        text = text.substring(0, text.length() - 1);
-      }
+      text = GrStringUtil.removeQuotes(text);
       StringBuilder chars = new StringBuilder(text.length());
-      boolean result = GrStringUtil.parseStringCharacters(text, chars, null, true);
+      boolean result = GrStringUtil.parseStringCharacters(text, chars, null);
       return result ? chars.toString() : null;
     }
     else if (elemType == mGSTRING_LITERAL) {
       if (!text.startsWith("\"")) return null;
-      if (text.startsWith("\"\"\"")) {
-        text = StringUtil.trimEnd(text.substring(3), "\"\"\"");
-      }
-      else {
-        text = StringUtil.trimEnd(text.substring(1), "\"");
-      }
+      text = GrStringUtil.removeQuotes(text);
       StringBuilder chars = new StringBuilder(text.length());
-      boolean result = GrStringUtil.parseStringCharacters(text, chars, null, true);
-      return result ? chars.toString() : null;
-    }
-    else if (elemType == mREGEX_LITERAL) {
-      text = StringUtil.trimStart(StringUtil.trimEnd(text, "/"), "/");
-      StringBuilder chars = new StringBuilder(text.length());
-      boolean result = GrStringUtil.parseStringCharacters(text, chars, null, false);
+      boolean result = GrStringUtil.parseStringCharacters(text, chars, null);
       return result ? chars.toString() : null;
     }
     return null;

@@ -8,5 +8,6 @@ Groovy script
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     Compound regular expression
-      PsiElement(regex begin)('/abs$$$')
+      PsiElement(regex begin)('/')
+      PsiElement(regex content)('abs$$$')
       PsiElement(regex end)('/')
