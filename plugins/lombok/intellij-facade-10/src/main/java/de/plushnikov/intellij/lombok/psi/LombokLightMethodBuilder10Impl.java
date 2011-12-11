@@ -1,10 +1,7 @@
 package de.plushnikov.intellij.lombok.psi;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
@@ -20,18 +17,23 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.psi.impl.light.LightParameterListBuilder;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Plushnikov Michail
  */
 public class LombokLightMethodBuilder10Impl extends LightMethodBuilder implements LombokLightMethodBuilder {
-  private       ASTNode                               myASTNode;
+  private ASTNode myASTNode;
   private final LombokLightReferenceListBuilder10Impl myThrowsList;
 
   public LombokLightMethodBuilder10Impl(@NotNull PsiManager manager, @NotNull String name) {
-    super(manager, name);
+    super(manager, StdLanguages.JAVA, name,
+        new LightParameterListBuilder(manager, StdLanguages.JAVA), new LombokLightModifierList10Impl(manager, StdLanguages.JAVA));
 
     myThrowsList = new LombokLightReferenceListBuilder10Impl(manager, PsiReferenceList.Role.THROWS_LIST);
   }

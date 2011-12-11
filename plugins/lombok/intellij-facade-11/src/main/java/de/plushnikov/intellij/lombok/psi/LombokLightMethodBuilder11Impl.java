@@ -1,11 +1,7 @@
 package de.plushnikov.intellij.lombok.psi;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiClass;
@@ -20,8 +16,12 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.psi.impl.light.LightParameterListBuilder;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Plushnikov Michail
@@ -30,7 +30,8 @@ public class LombokLightMethodBuilder11Impl extends LightMethodBuilder implement
   private ASTNode myASTNode;
 
   public LombokLightMethodBuilder11Impl(@NotNull PsiManager manager, @NotNull String name) {
-    super(manager, name);
+    super(manager, JavaLanguage.INSTANCE, name,
+        new LightParameterListBuilder(manager, JavaLanguage.INSTANCE), new LombokLightModifierList11Impl(manager, JavaLanguage.INSTANCE));
   }
 
   @Override
@@ -150,10 +151,6 @@ public class LombokLightMethodBuilder11Impl extends LightMethodBuilder implement
 
   public String toString() {
     return "LombokLightMethodBuilder: " + getName();
-  }
-
-  public FileStatus getFileStatus() {
-    return FileStatus.NOT_CHANGED;
   }
 
   @Override
