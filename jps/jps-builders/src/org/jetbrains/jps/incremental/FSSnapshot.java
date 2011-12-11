@@ -12,8 +12,6 @@ import java.util.List;
  *         Date: 10/8/11
  */
 public class FSSnapshot {
-  private static final Node[] EMPTY_NODE_ARRAY = new Node[0];
-
   private final List<Root> myRoots = new ArrayList<Root>();
   private final Module myModule;
 
