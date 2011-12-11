@@ -218,16 +218,13 @@ public class IncProjectBuilder {
       if (context.isMake()) {
         // cleanup outputs
         
-        // todo: use dirty and removed paths passed from IDEA instead of collecting all chunk sources
-        final HashSet<File> allChunkSources = new HashSet<File>();
-        context.processFiles(chunk, new FilesCollector(allChunkSources, FilesCollector.ALL_FILES));
-
+        // todo: use removed paths passed from IDEA?
         final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
         final HashSet<File> allChunkRemovedSources = new HashSet<File>();
         for (Module module : chunk.getModules()) {
           final File moduleOutput = context.getProjectPaths().getModuleOutputDir(module, context.isCompilingTests());
           if (moduleOutput != null && moduleOutput.exists()) {
-            deleteOutputsOfRemovedSources(moduleOutput, storage, allChunkSources, allChunkRemovedSources);
+            deleteOutputsOfRemovedSources(moduleOutput, storage, allChunkRemovedSources);
           }
         }
 
@@ -272,12 +269,12 @@ public class IncProjectBuilder {
     while (nextPassRequired);
   }
 
-  private static void deleteOutputsOfRemovedSources(File file, final OutputToSourceMapping outputToSourceStorage, Set<File> allChunkSources, Set<File> removedSources) throws Exception {
+  private static void deleteOutputsOfRemovedSources(File file, final OutputToSourceMapping outputToSourceStorage, Set<File> removedSources) throws Exception {
     if (file.isDirectory()) {
       final File[] files = file.listFiles();
       if (files != null) {
         for (File child : files) {
-          deleteOutputsOfRemovedSources(child, outputToSourceStorage, allChunkSources, removedSources);
+          deleteOutputsOfRemovedSources(child, outputToSourceStorage, removedSources);
         }
       }
     }
@@ -286,9 +283,10 @@ public class IncProjectBuilder {
       final String srcPath = outputToSourceStorage.getState(outPath);
       if (srcPath != null) {
         // if we know about the association
-        final File outputSource = new File(srcPath);
-        if (!allChunkSources.contains(outputSource)) {
-          removedSources.add(outputSource);
+        final File srcFile = new File(srcPath);
+        // todo: optimize
+        if (!srcFile.exists()) {
+          removedSources.add(srcFile);
           FileUtil.delete(file);
           outputToSourceStorage.remove(outPath);
         }

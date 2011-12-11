@@ -4,14 +4,15 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ether.dependencyView.ClassRepr;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -28,7 +29,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final BuildDataManager myDataManager;
   private final Mappings myMappings;
   private final Set<Module> myDirtyModules = new HashSet<Module>();
-  private final Map<Module, Collection<File>> myTempSourceRoots = new HashMap<Module, Collection<File>>();
 
   private SLRUCache<Module, FSSnapshot> myFilesCache = new SLRUCache<Module, FSSnapshot>(10, 10) {
     @NotNull
@@ -126,15 +126,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   void setCompilingTests(boolean compilingTests) {
     myCompilingTests = compilingTests;
-    myFilesCache.clear();
-    for (Collection<File> roots : myTempSourceRoots.values()) {
-      if (roots != null) {
-        for (File root : roots) {
-          FileUtil.delete(root);
-        }
-      }
-    }
-    myTempSourceRoots.clear();
+    myFilesCache.clear(); // todo: do we really need this?
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) {
@@ -142,14 +134,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       myFilesCache.remove(module);
     }
     myMappings.clearMemoryCaches();
-    for (Module module : chunk.getModules()) {
-      final Collection<File> roots = myTempSourceRoots.remove(module);
-      if (roots != null) {
-        for (File root : roots) {
-          FileUtil.delete(root);
-        }
-      }
-    }
   }
 
   public CompileScope getScope() {
@@ -178,35 +162,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return removed != null && !removed.isEmpty();
   }
 
-  // delete all class files that according to mappings correspond to given sources
-  public void deleteCorrespondingClasses(Collection<File> sources) {
-    if (isMake() && !sources.isEmpty()) {
-      final Mappings mappings = getMappings();
-      for (File file : sources) {
-        final Set<ClassRepr> classes = mappings.getClasses(FileUtil.toSystemIndependentName(file.getPath()));
-        if (classes != null) {
-          for (ClassRepr aClass : classes) {
-            final String fileName = aClass.getFileName();
-            if (fileName != null) {
-              FileUtil.delete(new File(fileName));
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // assuming the root file exists
-  public void registerTempSourceRoot(Module module, File root) {
-    Collection<File> roots = myTempSourceRoots.get(module);
-    if (roots == null) {
-      roots = new HashSet<File>();
-      myTempSourceRoots.put(module, roots);
-    }
-    roots.add(root);
-  }
-
-
   /** @noinspection unchecked*/
   private FSSnapshot buildSnapshot(Module module) {
     final Set<File> excludes = new HashSet<File>();
@@ -220,13 +175,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       final File rootFile = new File(normalizedRoot);
       if (rootFile.exists()) {
         final FSSnapshot.Root root = snapshot.addRoot(rootFile, normalizedRoot);
-        buildStructure(root.getNode(), excludes);
-      }
-    }
-    final Collection<File> tempRoots = myTempSourceRoots.get(module);
-    if (tempRoots != null) {
-      for (File tempRoot : tempRoots) {
-        final FSSnapshot.Root root = snapshot.addRoot(tempRoot, FileUtil.toSystemIndependentName(tempRoot.getPath()));
         buildStructure(root.getNode(), excludes);
       }
     }

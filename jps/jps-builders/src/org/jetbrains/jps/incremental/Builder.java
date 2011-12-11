@@ -1,10 +1,11 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.ether.dependencyView.ClassRepr;
 import org.jetbrains.ether.dependencyView.Mappings;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
@@ -101,19 +102,35 @@ public abstract class Builder {
     return additionalPassRequired;
   }
 
-  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws Exception {
-    final Ref<Boolean> result = new Ref<Boolean>(false);
-    // todo: avoid calling processFiles to implement this logic
-    context.processFiles(chunk, new FileProcessor() {
-      public boolean apply(Module module, File file, String sourceRoot) throws Exception {
-        if (affected.contains(file)) {
-          result.set(true);
-          return false;
+  // delete all class files that according to mappings correspond to given sources
+  public static void deleteCorrespondingClasses(CompileContext context, Collection<File> sources) {
+    if (context.isMake() && !sources.isEmpty()) {
+      final Mappings mappings = context.getMappings();
+      for (File file : sources) {
+        final Set<ClassRepr> classes = mappings.getClasses(FileUtil.toSystemIndependentName(file.getPath()));
+        if (classes != null) {
+          for (ClassRepr aClass : classes) {
+            final String fileName = aClass.getFileName();
+            if (fileName != null) {
+              FileUtil.delete(new File(fileName));
+            }
+          }
         }
+      }
+    }
+  }
+
+  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws Exception {
+    final Set<File> chunkRoots = new HashSet<File>();
+    for (String r : context.isCompilingTests() ? chunk.getTestRoots() : chunk.getSourceRoots()) {
+      chunkRoots.add(new File(r));
+    }
+    for (File file : affected) {
+      if (PathUtil.isUnder(chunkRoots, file)) {
         return true;
       }
-    });
-    return result.get();
+    }
+    return false;
   }
 
   private static Set<File> getAllAffectedFilesContainer(CompileContext context) {

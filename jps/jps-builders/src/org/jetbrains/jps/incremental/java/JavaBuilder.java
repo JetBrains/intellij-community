@@ -29,7 +29,8 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -169,7 +170,7 @@ public class JavaBuilder extends Builder{
       }
       upToDateForms.clear();
 
-      context.deleteCorrespondingClasses(filesToCompile);
+      deleteCorrespondingClasses(context, filesToCompile);
 
       return compile(context, chunk, filesToCompile, formsToCompile);
     }
