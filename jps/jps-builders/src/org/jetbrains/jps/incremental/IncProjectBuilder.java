@@ -220,7 +220,7 @@ public class IncProjectBuilder {
         
         // todo: use removed paths passed from IDEA?
         final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
-        final HashSet<File> allChunkRemovedSources = new HashSet<File>();
+        final HashSet<String> allChunkRemovedSources = new HashSet<String>();
         for (Module module : chunk.getModules()) {
           final File moduleOutput = context.getProjectPaths().getModuleOutputDir(module, context.isCompilingTests());
           if (moduleOutput != null && moduleOutput.exists()) {
@@ -269,7 +269,7 @@ public class IncProjectBuilder {
     while (nextPassRequired);
   }
 
-  private static void deleteOutputsOfRemovedSources(File file, final OutputToSourceMapping outputToSourceStorage, Set<File> removedSources) throws Exception {
+  private static void deleteOutputsOfRemovedSources(File file, final OutputToSourceMapping outputToSourceStorage, Set<String> removedSources) throws Exception {
     if (file.isDirectory()) {
       final File[] files = file.listFiles();
       if (files != null) {
@@ -286,7 +286,7 @@ public class IncProjectBuilder {
         final File srcFile = new File(srcPath);
         // todo: optimize
         if (!srcFile.exists()) {
-          removedSources.add(srcFile);
+          removedSources.add(srcPath);
           FileUtil.delete(file);
           outputToSourceStorage.remove(outPath);
         }

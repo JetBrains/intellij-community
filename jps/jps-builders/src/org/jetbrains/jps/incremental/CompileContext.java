@@ -158,7 +158,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   public boolean hasRemovedSources() {
-    final Set<File> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(this);
+    final Set<String> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(this);
     return removed != null && !removed.isEmpty();
   }
 

@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class Paths {
   private static final Paths ourInstance = new Paths();
-  public static final Key<Set<File>> CHUNK_REMOVED_SOURCES_KEY = Key.create("_chunk_removed_sources_");
+  public static final Key<Set<String>> CHUNK_REMOVED_SOURCES_KEY = Key.create("_chunk_removed_sources_");
   private volatile File mySystemRoot = new File(System.getProperty("user.home", ".jps-server"));
 
   private Paths() {
