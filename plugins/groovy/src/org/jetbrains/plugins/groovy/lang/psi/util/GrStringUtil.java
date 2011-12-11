@@ -29,6 +29,8 @@ public class GrStringUtil {
   private static final String DOUBLE_QUOTES = "\"";
   private static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
   private static final String SLASH = "/";
+  private static final String DOLLAR_SLASH = "$/";
+  private static final String SLASH_DOLLAR = "/$";
 
   private GrStringUtil() {
   }
@@ -179,6 +181,15 @@ public class GrStringUtil {
     String quote = getStartQuote(s);
     int sL = s.length();
     int qL = quote.length();
+    if (sL >= qL * 2 && DOLLAR_SLASH.equals(quote)) {
+      if (s.endsWith(SLASH_DOLLAR)) {
+        return s.substring(qL, sL - qL);
+      }
+      else {
+        return s.substring(qL);
+      }
+    }
+
     if (sL >= qL * 2 && s.endsWith(quote)) {
       return s.substring(qL, sL - qL);
     }
@@ -337,6 +348,7 @@ public class GrStringUtil {
     if (text.startsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
     if (text.startsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
     if (text.startsWith(SLASH)) return SLASH;
+    if (text.startsWith(DOLLAR_SLASH)) return DOLLAR_SLASH;
     return "";
   }
 
