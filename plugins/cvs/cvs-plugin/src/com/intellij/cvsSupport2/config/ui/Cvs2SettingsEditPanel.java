@@ -109,7 +109,7 @@ public class Cvs2SettingsEditPanel {
     addCvsRootChangeListener(new CvsRootChangeListener() {
       @Override
       public void onCvsRootChanged() {
-        setExtPanelEnabling();
+        conditionallyEnableComponents();
       }
     });
 
@@ -120,6 +120,23 @@ public class Cvs2SettingsEditPanel {
 
     if (readOnly) {
       setEnabled(myDateOrRevisionOrTagSettingsPanel, false);
+    }
+  }
+
+  public boolean isValidRootConfigured() {
+    final CvsRootConfiguration rootConfiguration = createConfigurationWithCurrentSettings();
+    if (rootConfiguration == null) {
+      return false;
+    }
+    final String rootString = rootConfiguration.getCvsRootAsString();
+    if (rootString.trim().isEmpty()) {
+      return false;
+    }
+    try {
+      CvsRootParser.valueOf(rootString, true);
+      return true;
+    } catch (CvsRootException ignore) {
+      return false;
     }
   }
 
@@ -141,7 +158,7 @@ public class Cvs2SettingsEditPanel {
     finally {
       myIsUpdating.set(null);
     }
-    setExtPanelEnabling();
+    conditionallyEnableComponents();
   }
 
   public boolean saveTo(CvsRootConfiguration configuration) {
@@ -252,10 +269,11 @@ public class Cvs2SettingsEditPanel {
 
   private void setEnabled(boolean enabled) {
     setEnabled(myPanel, enabled);
-    setExtPanelEnabling();
+    conditionallyEnableComponents();
   }
 
-  private void setExtPanelEnabling() {
+  private void conditionallyEnableComponents() {
+    myTestButton.setEnabled(isValidRootConfigured());
     try {
       final CvsRootData currentRootData = CvsRootDataBuilder.createSettingsOn(myCvsRootConfigurationPanelView.getCvsRoot(), true);
       final String settingsPanelName = getSettingsPanelName(currentRootData);
@@ -288,14 +306,11 @@ public class Cvs2SettingsEditPanel {
     if (method == null) {
       return EMPTY;
     }
-    else {
-      return method.getDisplayName();
-    }
+    return method.getDisplayName();
   }
 
   private static void setEnabled(Component component, boolean enabled) {
     component.setEnabled(enabled);
-
     if (component instanceof Container) {
       final Container container = (Container)component;
       for (int i = 0; i < container.getComponentCount(); i++) {
