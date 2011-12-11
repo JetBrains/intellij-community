@@ -92,22 +92,6 @@ public class PrimaryExpression implements GroovyElementTypes {
     if (TokenSets.CONSTANTS.contains(tokenType)) {
       return ParserUtils.eatElement(builder, LITERAL);
     }
-    if (mWRONG_REGEX_LITERAL == tokenType) {
-      PsiBuilder.Marker marker = builder.mark();
-      builder.advanceLexer();
-      builder.error(GroovyBundle.message("regex.end.expected"));
-      marker.done(LITERAL);
-      return LITERAL;
-    }
-    if (mWRONG_DOLLAR_SLASH_LITERAL == tokenType) {
-      final PsiBuilder.Marker marker = builder.mark();
-      builder.advanceLexer();
-      builder.error(GroovyBundle.message("dollar.slash.end.expected"));
-      marker.done(LITERAL);
-      return LITERAL;
-    }
-
-    // TODO implement all cases!
 
     return WRONGWAY;
   }

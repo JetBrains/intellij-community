@@ -19,11 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author Maxim.Medvedev
@@ -45,8 +46,7 @@ public class GroovyWordSelectionFilter implements Condition<PsiElement> {
         type == mGDOC_TAG_VALUE_TOKEN ||
         type == mREGEX_BEGIN ||
         type == mREGEX_CONTENT ||
-        type == mREGEX_END ||
-        type == mWRONG_REGEX_LITERAL) {
+        type == mREGEX_END) {
       return true;
     }
 
