@@ -70,4 +70,9 @@ public class DateInfo
     }
 
     private final Calendar calendar;
+
+    @Override
+    public String toString() {
+      return new SimpleDateFormat().format(calendar.getTime());
+    }
 }
