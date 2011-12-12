@@ -93,6 +93,9 @@ def exists(file):
         return True
 
     ind = file.find('.zip')
+    if ind == -1:
+        ind = file.find('.egg')
+
     if ind != -1:
         ind+=4
         zip_path = file[:ind]
@@ -111,7 +114,7 @@ def exists(file):
             return True
         except KeyError:
             return False
-
+    return False
 
     
 #Now, let's do a quick test to see if we're working with a version of python that has no problems
