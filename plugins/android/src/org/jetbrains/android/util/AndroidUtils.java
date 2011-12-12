@@ -738,6 +738,7 @@ public class AndroidUtils {
 
     if (ddmsEnabled && bridge != null && isDdmsCorrupted(bridge)) {
       shouldRestartDdms = true;
+      LOG.info("DDMLIB is corrupted and will be restarted");
       AndroidEnableDdmsAction.setDdmsEnabled(project, false);
     }
 
