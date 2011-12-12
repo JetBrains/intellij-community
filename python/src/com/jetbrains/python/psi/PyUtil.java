@@ -1095,6 +1095,16 @@ public class PyUtil {
       valuesLength = ((PyDictLiteralExpression)expression).getElements().length;
     else if (expression instanceof PyStringLiteralExpression)
       valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
+    else if (expression instanceof PyCallExpression) {
+      PyCallExpression call = (PyCallExpression)expression;
+      if (call.isCalleeText("dict"))
+        valuesLength = call.getArguments().length;
+      else if (call.isCalleeText("tuple")) {
+        PyExpression[] arguments = call.getArguments();
+        if (arguments.length > 0 && arguments[0] instanceof PySequenceExpression)
+          valuesLength = ((PySequenceExpression)arguments[0]).getElements().length;
+      }
+    }
     return valuesLength;
   }
 }
