@@ -2,6 +2,7 @@ package com.jetbrains.python.lexer;
 
 import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
@@ -83,10 +84,6 @@ public class PyStringLiteralLexer extends LexerBase {
     return myLastState;
   }
 
-  private static boolean isHexDigit(char c) {
-    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-  }
-
   public IElementType getTokenType() {
     if (myStart >= myEnd) return null;
 
@@ -107,7 +104,7 @@ public class PyStringLiteralLexer extends LexerBase {
       if (isUnicodeMode()) {
         final int width = nextChar == 'u'? 4 : 8; // is it uNNNN or Unnnnnnnn
         for(int i = myStart + 2; i < myStart + width + 2; i++) {
-          if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return INVALID_UNICODE_ESCAPE_TOKEN;
+          if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return INVALID_UNICODE_ESCAPE_TOKEN;
         }
         return VALID_STRING_ESCAPE_TOKEN;
       }
@@ -116,7 +113,7 @@ public class PyStringLiteralLexer extends LexerBase {
 
     if (nextChar == 'x') { // \xNN is allowed both in bytes and unicode.
       for(int i = myStart + 2; i < myStart + 4; i++) {
-        if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return INVALID_UNICODE_ESCAPE_TOKEN;
+        if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return INVALID_UNICODE_ESCAPE_TOKEN;
       }
       return VALID_STRING_ESCAPE_TOKEN;
     }
