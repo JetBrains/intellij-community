@@ -65,7 +65,12 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testException1() throws Exception { doTest(); }
   public void testException2() throws Exception { doTest(); }
   public void testException3() throws Exception { doTest(); }
-  public void testException4() throws Exception { doTest(); }
+  public void testException4() throws Exception { 
+    final JavaDocLocalInspection javaDocLocalInspection = new JavaDocLocalInspection();
+    javaDocLocalInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
+    enableInspectionTool(javaDocLocalInspection);
+    doTest(); 
+  }
   public void testMultipleThrows() throws Exception { doTest(); }
   public void testInheritJavaDoc() throws Exception {doTestWithLangLevel(LanguageLevel.JDK_1_3);}
   public void testLink0() throws Exception { doTest(); }
