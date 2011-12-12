@@ -36,6 +36,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -1086,12 +1087,24 @@ public class PyUtil {
     PyType type = expression.getType(evalContext);
     if (type instanceof PyTupleType)
       valuesLength = ((PyTupleType)type).getElementCount();
-    if (expression instanceof PySequenceExpression)
+    else if (type instanceof PyNamedTupleType)
+      valuesLength = ((PyNamedTupleType)type).getElementCount();
+    else if (expression instanceof PySequenceExpression)
       valuesLength = ((PySequenceExpression)expression).getElements().length;
     else if (expression instanceof PyDictLiteralExpression)
       valuesLength = ((PyDictLiteralExpression)expression).getElements().length;
     else if (expression instanceof PyStringLiteralExpression)
       valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
+    else if (expression instanceof PyCallExpression) {
+      PyCallExpression call = (PyCallExpression)expression;
+      if (call.isCalleeText("dict"))
+        valuesLength = call.getArguments().length;
+      else if (call.isCalleeText("tuple")) {
+        PyExpression[] arguments = call.getArguments();
+        if (arguments.length > 0 && arguments[0] instanceof PySequenceExpression)
+          valuesLength = ((PySequenceExpression)arguments[0]).getElements().length;
+      }
+    }
     return valuesLength;
   }
 }

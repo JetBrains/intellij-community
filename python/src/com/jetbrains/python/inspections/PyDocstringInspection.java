@@ -95,7 +95,7 @@ public class PyDocstringInspection extends PyInspection {
           return;
         }
         if (marker == null) marker = node;
-        if (node instanceof PyFunction)
+        if (node instanceof PyFunction || (node instanceof PyClass && ((PyClass)node).findInitOrNew(false) != null))
           registerProblem(marker, PyBundle.message("INSP.no.docstring"), new DocstringQuickFix(null, null));
         else
           registerProblem(marker, PyBundle.message("INSP.no.docstring"));

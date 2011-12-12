@@ -139,4 +139,8 @@ public class PyNamedTupleType extends PyClassType implements PyCallableType {
     }
     return result;
   }
+
+  public int getElementCount() {
+    return myFields.size();
+  }
 }

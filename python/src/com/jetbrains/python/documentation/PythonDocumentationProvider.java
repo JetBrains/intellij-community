@@ -448,11 +448,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       result += offset;
     return result;
   }
-  
-  public static void inserDocStub(PyFunction function, Project project, Editor editor) {
+
+  public static void inserDocStub(PyFunction function, PyStatementList insertPlace, Project project, Editor editor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PyStatementList list = function.getStatementList();
-    PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(list, PsiWhiteSpace.class);
+    PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(insertPlace, PsiWhiteSpace.class);
     String ws = "\n";
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
@@ -461,13 +460,18 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     String docContent = ws + generateDocumentationContentStub(function, ws, true);
     PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
-    if (list.getStatements().length != 0)
-      list.addBefore(string, list.getStatements()[0]);
-    if (editor != null) {
-      int offset = function.getDocStringExpression().getTextOffset();
+    if (insertPlace.getStatements().length != 0)
+      insertPlace.addBefore(string, insertPlace.getStatements()[0]);
+    PyStringLiteralExpression docstring = function.getDocStringExpression();
+    if (editor != null && docstring != null) {
+      int offset = docstring.getTextOffset();
       editor.getCaretModel().moveToOffset(offset);
       editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
     }
+  }
+
+  public static void inserDocStub(PyFunction function, Project project, Editor editor) {
+    inserDocStub(function, function.getStatementList(), project, editor);
   }
 
   public String generateDocumentationContentStub(PyFunction element, boolean checkReturn) {

@@ -75,10 +75,17 @@ public class DocstringQuickFix implements LocalQuickFix {
     PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
     if (docStringOwner == null) return;
     PyStringLiteralExpression element = docStringOwner.getDocStringExpression();
-    if (element == null) {
+    if (element == null && myMissing == null && myUnexpected == null) {
       if (docStringOwner instanceof PyFunction) {
         PsiDocumentManager.getInstance(project).getDocument(docStringOwner.getContainingFile());
         PythonDocumentationProvider.inserDocStub((PyFunction)docStringOwner, project, getEditor(project, docStringOwner.getContainingFile()));
+      }
+      if (docStringOwner instanceof PyClass) {
+        PsiDocumentManager.getInstance(project).getDocument(docStringOwner.getContainingFile());
+        PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false);
+        if (init == null) return;
+        PythonDocumentationProvider.inserDocStub(init, ((PyClass)docStringOwner).getStatementList(),
+                                                 project, getEditor(project, docStringOwner.getContainingFile()));
       }
       return;
     }
