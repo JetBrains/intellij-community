@@ -217,7 +217,7 @@ public class IncProjectBuilder {
          // TODO: check how the output-source storage is filled and!
       if (context.isMake()) {
         // cleanup outputs
-        
+
         // todo: use removed paths passed from IDEA?
         final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
         final HashSet<String> allChunkRemovedSources = new HashSet<String>();
@@ -281,8 +281,7 @@ public class IncProjectBuilder {
     else {
       final String outPath = file.getPath();
       final String srcPath = outputToSourceStorage.getState(outPath);
-      if (srcPath != null) {
-        // if we know about the association
+      if (srcPath != null) { // if we know about the association
         final File srcFile = new File(srcPath);
         // todo: optimize
         if (!srcFile.exists()) {
