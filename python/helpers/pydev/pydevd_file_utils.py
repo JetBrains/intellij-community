@@ -45,7 +45,7 @@ from pydevd_constants import * #@UnusedWildImport
 import os.path
 import sys
 import traceback
-import zipfile
+
 
 normcase = os.path.normcase
 basename = os.path.basename
@@ -104,6 +104,7 @@ def exists(file):
             zip = ZIP_SEARCH_CACHE[zip_path]
         except KeyError:
             try:
+                import zipfile
                 zip = zipfile.ZipFile(zip_path, 'r')
                 ZIP_SEARCH_CACHE[zip_path] = zip
             except :
