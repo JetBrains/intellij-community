@@ -207,7 +207,7 @@ static bool is_directory(struct dirent* entry, const char* path) {
   if (entry->d_type == DT_DIR) {
     return true;
   }
-  else if (entry->d_type == DT_UNKNOWN) {  // filesystem doesn't support d_type
+  else if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK) {
     struct stat st;
     return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
   }
