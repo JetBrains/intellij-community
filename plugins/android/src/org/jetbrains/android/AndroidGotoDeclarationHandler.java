@@ -16,9 +16,14 @@
 package org.jetbrains.android;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
+import org.jetbrains.android.dom.wrappers.FileResourceElementWrapper;
+import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
 
@@ -55,6 +60,23 @@ public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
     }
 
     final PsiElement[] resources = AndroidResourceUtil.findResources(resolvedField);
-    return resources.length > 0 ? resources : null;
+    final PsiElement[] wrappedResources = new PsiElement[resources.length];
+    
+    for (int i = 0; i < resources.length; i++) {
+      final PsiElement resource = resources[i];
+      
+      if (resource instanceof XmlAttributeValue && 
+          resource instanceof PsiMetaOwner && 
+          resource instanceof NavigationItem) {
+        wrappedResources[i] = new ValueResourceElementWrapper((XmlAttributeValue)resource);
+      }
+      else if (resource instanceof PsiFile) {
+        wrappedResources[i] = new FileResourceElementWrapper((PsiFile)resource);
+      }
+      else {
+        wrappedResources[i] = resource;
+      }
+    }
+    return wrappedResources.length > 0 ? wrappedResources : null;
   }
 }
