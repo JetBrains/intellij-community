@@ -6,8 +6,10 @@ import com.google.common.collect.Collections2;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -16,6 +18,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -38,9 +42,9 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(false);
-    final Project project = e.getData(LangDataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
-      Pair<Sdk, Module> sdkAndModule = findPythonSdkAndModule(project);
+      Pair<Sdk, Module> sdkAndModule = findPythonSdkAndModule(project, e.getData(LangDataKeys.MODULE));
       if (sdkAndModule.first != null) {
         e.getPresentation().setEnabled(true);
       }
@@ -48,15 +52,15 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(LangDataKeys.PROJECT);
-    runPythonConsole(project);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    runPythonConsole(project, e.getData(LangDataKeys.MODULE));
   }
 
   @Nullable
-  public static PydevConsoleRunner runPythonConsole(Project project) {
+  public static PydevConsoleRunner runPythonConsole(Project project, Module contextModule) {
     assert project != null : "Project is null";
 
-    Pair<Sdk, Module> sdkAndModule = findPythonSdkAndModule(project);
+    Pair<Sdk, Module> sdkAndModule = findPythonSdkAndModule(project, contextModule);
 
     Module module = sdkAndModule.second;
     Sdk sdk = sdkAndModule.first;
@@ -100,7 +104,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static Pair<Sdk, Module> findPythonSdkAndModule(Project project) {
+  private static Pair<Sdk, Module> findPythonSdkAndModule(Project project, Module contextModule) {
     Sdk sdk = null;
     Module module = null;
     PyConsoleOptionsProvider.PyConsoleSettings settings = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
@@ -111,16 +115,17 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
         module = ModuleManager.getInstance(project).findModuleByName(settings.getModuleName());
       }
       else {
-        if (ModuleManager.getInstance(project).getModules().length == 1) {
+        module = contextModule;
+        if (module == null && ModuleManager.getInstance(project).getModules().length > 0) {
           module = ModuleManager.getInstance(project).getModules()[0];
-        }
-        else {
-          module = null; //why??? oh no....
         }
       }
     }
     if (sdk == null && settings.isUseModuleSdk()) {
-      if (settings.getModuleName() != null) {
+      if (contextModule != null) {
+        module = contextModule;
+      }
+      else if (settings.getModuleName() != null) {
         module = ModuleManager.getInstance(project).findModuleByName(settings.getModuleName());
       }
       if (module != null) {
@@ -128,6 +133,10 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
           sdk = PythonSdkType.findPythonSdk(module);
         }
       }
+    }
+    else if (contextModule != null) {
+      module = contextModule;
+      sdk = PythonSdkType.findPythonSdk(module);
     }
 
     if (sdk == null) {

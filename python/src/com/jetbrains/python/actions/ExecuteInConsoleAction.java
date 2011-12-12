@@ -19,15 +19,14 @@ import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
@@ -125,13 +124,16 @@ public class ExecuteInConsoleAction extends AnAction {
         selectConsole(project, editor, consumer);
       }
       else {
-        startConsole(project, editor, consumer);
+        startConsole(project, editor, consumer, e.getData(LangDataKeys.MODULE));
       }
     }
   }
 
-  private static void startConsole(final Project project, final Editor editor, final Consumer<PyCodeExecutor> consumer) {
-    PydevConsoleRunner runner = RunPythonConsoleAction.runPythonConsole(project);
+  private static void startConsole(final Project project,
+                                   final Editor editor,
+                                   final Consumer<PyCodeExecutor> consumer,
+                                   Module context) {
+    PydevConsoleRunner runner = RunPythonConsoleAction.runPythonConsole(project, context);
     assert runner != null;
     runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
       @Override
