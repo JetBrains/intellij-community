@@ -69,6 +69,9 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
     HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, command, args);
     if (result == HgCommandResult.CANCELLED || HgErrorUtil.isAuthorizationError(result)) {
       final HgVcs vcs = HgVcs.getInstance(project);
+      if (vcs == null) {
+        return result;
+      }
       Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, "Checking for incoming/outgoing changes disabled",
                                                 "Authentication is required to check incoming/outgoing changes in " + repositoryURL +
                                                 "<br/>You may enable checking for changes <a href='#'>in the Settings</a>."
