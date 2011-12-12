@@ -73,7 +73,9 @@ public class HgPushCommand {
     executor.execute(myRepo, "push", arguments, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
-        myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
+        if (!myProject.isDisposed()) {
+          myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
+        }
         resultHandler.process(result);
       }
     });
