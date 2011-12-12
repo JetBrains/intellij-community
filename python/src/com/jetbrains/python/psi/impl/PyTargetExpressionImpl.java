@@ -302,6 +302,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
               break;
             }
           }
+          if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
+            final PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
+            if (next != null) {
+              type = next.getReturnType(context, null);
+            }
+          }
         }
       }
       final PsiElement parent = getParent();
