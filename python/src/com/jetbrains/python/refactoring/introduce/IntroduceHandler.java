@@ -37,10 +37,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Alexey.Ivanov
@@ -90,11 +87,16 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     int line = editor.getDocument().getLineNumber(offset);
     for (PsiElement occurrence : occurrences) {
-      if (editor.getDocument().getLineNumber(occurrence.getTextRange().getStartOffset()) == line) {
+      if (occurrence.isValid() && editor.getDocument().getLineNumber(occurrence.getTextRange().getStartOffset()) == line) {
         return occurrence;
       }
     }
-    return occurrences.get(0);
+    for (PsiElement occurrence : occurrences) {
+      if (occurrence.isValid()) {
+        return occurrence;
+      }
+    }
+    return null;
   }
 
   public enum InitPlace {
@@ -494,7 +496,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           operation.setOccurrences(newOccurrences);
         }
         else {
-          replaceExpression(expression, newExpression, operation);
+          final PsiElement replaced = replaceExpression(expression, newExpression, operation);
+          operation.setOccurrences(Collections.singletonList(replaced));
         }
 
         postRefactoring(operation.getElement());
