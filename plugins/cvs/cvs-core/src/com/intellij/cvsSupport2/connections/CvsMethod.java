@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.cvsSupport2.connections;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.CvsBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
@@ -25,17 +26,13 @@ public class CvsMethod {
 
   public static final CvsMethod EXT_METHOD = new CvsMethod("ext", true, true, true, false);
   public static final CvsMethod PSERVER_METHOD = new CvsMethod("pserver", true, true, true, true);
-  public static final CvsMethod SSH_METHOD = new CvsMethod("ssh", com.intellij.CvsBundle.message("cvs.root.description.ssh.internal.implementation"), true, true, true, true);
+  public static final CvsMethod SSH_METHOD = new CvsMethod("ssh", CvsBundle.message("cvs.root.description.ssh.internal.implementation"), true, true, true, true);
 
-  public static final CvsMethod LOCAL_METHOD = new CvsMethod(null, com.intellij.CvsBundle.message("cvs.root.description.local"), false, false, false, false);
+  public static final CvsMethod LOCAL_METHOD = new CvsMethod("local", CvsBundle.message("cvs.root.description.local"), false, false, false, false);
 
   private final String myName;
   private final String myDescription;
-  public static CvsMethod[] AVAILABLE_METHODS =
-    new CvsMethod[]{PSERVER_METHOD,
-                    EXT_METHOD,
-                    SSH_METHOD,
-                    LOCAL_METHOD};
+  public static final CvsMethod[] AVAILABLE_METHODS = new CvsMethod[]{PSERVER_METHOD, EXT_METHOD, SSH_METHOD, LOCAL_METHOD};
 
   private boolean myHasUserValue;
   private boolean myHasHostValue;
@@ -78,10 +75,12 @@ public class CvsMethod {
     return myDescription;
   }
 
+  @Nullable
   public static CvsMethod getValue(String method) {
-    CvsMethod[] availableMethods = AVAILABLE_METHODS;
-    for (CvsMethod availableMethod : availableMethods) {
-      if (Comparing.equal(availableMethod.getName(), method)) return availableMethod;
+    for (CvsMethod availableMethod : AVAILABLE_METHODS) {
+      if (availableMethod.getName().equals(method)) {
+        return availableMethod;
+      }
     }
     return null;
   }
