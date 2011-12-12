@@ -257,15 +257,22 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         throw new RuntimeConfigurationWarning(ExecutionBundle.message("html.file.not.specified.error.message"));
       }
       try {
-        new URL(HTML_FILE_NAME);
+        new URL(getHtmlURL().getUrl());
+      }
+      catch (CantRunException ex) {
+        checkUrlIsValid(ex);
       }
       catch (MalformedURLException ex) {
-        throw new RuntimeConfigurationWarning("URL " + HTML_FILE_NAME + " is not valid: " + ex.getLocalizedMessage());
+        checkUrlIsValid(ex);
       }
     }
     else {
       getConfigurationModule().checkClassName(MAIN_CLASS_NAME, ExecutionBundle.message("no.applet.class.specified.error.message"));
     }
+  }
+
+  private void checkUrlIsValid(Exception ex) throws RuntimeConfigurationWarning {
+    throw new RuntimeConfigurationWarning("URL " + HTML_FILE_NAME + " is not valid: " + ex.getLocalizedMessage());
   }
 
   public AppletParameter[] getAppletParameters() {

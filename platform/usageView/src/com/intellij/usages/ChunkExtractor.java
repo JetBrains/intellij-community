@@ -16,6 +16,7 @@
 package com.intellij.usages;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +30,7 @@ import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -96,7 +98,7 @@ public class ChunkExtractor {
   };
 
   public static TextChunk[] extractChunks(@NotNull PsiFile file, UsageInfo2UsageAdapter usageAdapter) {
-    return ourExtractors.get().getValue().get(file).extractChunks(usageAdapter);
+    return ourExtractors.get().getValue().get(file).extractChunks(usageAdapter, file);
   }
 
 
@@ -124,7 +126,7 @@ public class ChunkExtractor {
     return minStart == Integer.MAX_VALUE ? -1 : minStart;
   }
 
-  private TextChunk[] extractChunks(UsageInfo2UsageAdapter usageInfo2UsageAdapter) {
+  private TextChunk[] extractChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter, @NotNull PsiFile file) {
     int absoluteStartOffset = usageInfo2UsageAdapter.getNavigationOffset();
     if (absoluteStartOffset == -1) return TextChunk.EMPTY_ARRAY;
 
@@ -149,6 +151,14 @@ public class ChunkExtractor {
     if (lineEndOffset - lineStartOffset > MAX_LINE_TO_SHOW) {
       lineStartOffset = Math.max(lineStartOffset, absoluteStartOffset - OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE);
       lineEndOffset = Math.min(lineEndOffset, absoluteStartOffset + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);
+    }
+    if (myDocument instanceof DocumentWindow) {
+      List<TextRange> editable = InjectedLanguageManager.getInstance(file.getProject())
+        .intersectWithAllEditableFragments(file, new TextRange(lineStartOffset, lineEndOffset));
+      for (TextRange range : editable) {
+        createTextChunks(usageInfo2UsageAdapter, chars, range.getStartOffset(), range.getEndOffset(), result);
+      }
+      return result.toArray(new TextChunk[result.size()]);
     }
     return createTextChunks(usageInfo2UsageAdapter, chars, lineStartOffset, lineEndOffset, result);
   }

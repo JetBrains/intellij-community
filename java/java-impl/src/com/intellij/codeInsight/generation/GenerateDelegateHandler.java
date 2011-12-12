@@ -47,6 +47,7 @@ import java.util.Set;
  */
 public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateDelegateHandler");
+  private boolean myToCopyJavaDoc = false;
 
   @Override
   public boolean isValidFor(Editor editor, PsiFile file) {
@@ -101,7 +102,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     return false;
   }
 
-  private static PsiGenerationInfo<PsiMethod> generateDelegatePrototype(PsiMethodMember methodCandidate, PsiElement target) throws IncorrectOperationException {
+  private PsiGenerationInfo<PsiMethod> generateDelegatePrototype(PsiMethodMember methodCandidate, PsiElement target) throws IncorrectOperationException {
     PsiMethod method = GenerateMembersUtil.substituteGenericMethod(methodCandidate.getElement(), methodCandidate.getSubstitutor());
     clearMethod(method);
 
@@ -184,7 +185,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     return new PsiGenerationInfo<PsiMethod>(method);
   }
 
-  private static void clearMethod(PsiMethod method) throws IncorrectOperationException {
+  private void clearMethod(PsiMethod method) throws IncorrectOperationException {
     LOG.assertTrue(!method.isPhysical());
     PsiCodeBlock codeBlock = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlock();
     if (method.getBody() != null) {
@@ -194,9 +195,11 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       method.add(codeBlock);
     }
 
-    final PsiDocComment docComment = method.getDocComment();
-    if (docComment != null) {
-      docComment.delete();
+    if (!myToCopyJavaDoc) {
+      final PsiDocComment docComment = method.getDocComment();
+      if (docComment != null) {
+        docComment.delete();
+      }
     }
   }
 
@@ -208,7 +211,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
   }
 
   @Nullable
-  private static PsiMethodMember[] chooseMethods(PsiElement target, PsiFile file, Editor editor, Project project) {
+  private PsiMethodMember[] chooseMethods(PsiElement target, PsiFile file, Editor editor, Project project) {
     PsiClassType.ClassResolveResult resolveResult = null;
 
     if (target instanceof PsiField) {
@@ -232,6 +235,8 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     final PsiMethod[] allMethods = targetClass.getAllMethods();
     final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
+    final Set<MethodSignature> existingSignatures = new HashSet<MethodSignature>(aClass.getVisibleSignatures());
+    final Set<PsiMethodMember> selection = new HashSet<PsiMethodMember>();
     Map<PsiClass, PsiSubstitutor> superSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(target.getProject());
     for (PsiMethod method : allMethods) {
@@ -248,7 +253,11 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       if (!signatures.contains(signature)) {
         signatures.add(signature);
         if (facade.getResolveHelper().isAccessible(method, target, aClass)) {
-          methodInstances.add(new PsiMethodMember(method, methodSubstitutor));
+          final PsiMethodMember methodMember = new PsiMethodMember(method, methodSubstitutor);
+          methodInstances.add(methodMember);
+          if (!existingSignatures.contains(signature)) {
+            selection.add(methodMember);
+          }
         }
       }
     }
@@ -257,19 +266,27 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser<PsiElementClassMember> chooser = new MemberChooser<PsiElementClassMember>(methodInstances.toArray(new PsiMethodMember[methodInstances.size()]), false, true, project);
       chooser.setTitle(CodeInsightBundle.message("generate.delegate.method.chooser.title"));
-      chooser.setCopyJavadocVisible(false);
+      chooser.setCopyJavadocVisible(true);
+      if (!selection.isEmpty()) {
+        chooser.selectElements(selection.toArray(new ClassMember[selection.size()]));
+      }
       chooser.show();
 
       if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return null;
 
+      myToCopyJavaDoc = chooser.isCopyJavadoc();
       final List<PsiElementClassMember> list = chooser.getSelectedElements();
       result = list.toArray(new PsiMethodMember[list.size()]);
     }
     else {
-      result = new PsiMethodMember[] {methodInstances.get(0)};
+      result = methodInstances.isEmpty() ? new PsiMethodMember[0] : new PsiMethodMember[] {methodInstances.get(0)};
     }
 
     return result;
+  }
+
+  public void setToCopyJavaDoc(boolean toCopyJavaDoc) {
+    myToCopyJavaDoc = toCopyJavaDoc;
   }
 
   public static boolean isApplicable(PsiFile file, Editor editor) {

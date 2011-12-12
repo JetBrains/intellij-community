@@ -52,7 +52,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   private String myLastProjectLocation;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
-  private int myConfirmOpenNewProject = -1;
+  private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
   @NonNls private static final String ELEMENT_OPTION = "option";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
@@ -74,7 +74,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_USE_CYCLIC_BUFFER = "useCyclicBuffer";
   @NonNls private static final String OPTION_SEARCH_IN_BACKGROUND = "searchInBackground";
   @NonNls private static final String OPTION_CONFIRM_EXIT = "confirmExit";
-  @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject";
+  @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject2";
   @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
   @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
   @Deprecated
@@ -331,7 +331,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
           myConfirmOpenNewProject = Integer.valueOf(value).intValue();
         }
         catch (Exception ex) {
-          myConfirmOpenNewProject = -1;
+          myConfirmOpenNewProject = OPEN_PROJECT_ASK;
         }
       }
 
@@ -477,9 +477,9 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   /**
    * @return
    * <ul>
-   * <li>0 if new project should be opened in new window
-   * <li>1 if new project should be opened in same window
-   * <li>-1 if a confirmation dialog should be shown
+   * <li>{@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} if new project should be opened in new window
+   * <li>{@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} if new project should be opened in same window
+   * <li>{@link GeneralSettings#OPEN_PROJECT_ASK} if a confirmation dialog should be shown
    * </ul>
    */
   public int getConfirmOpenNewProject() {

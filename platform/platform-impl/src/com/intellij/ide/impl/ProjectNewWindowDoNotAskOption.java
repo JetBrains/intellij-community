@@ -25,7 +25,9 @@ public class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOpt
   }
 
   public void setToBeShown(boolean value, int exitCode) {
-    GeneralSettings.getInstance().setConfirmOpenNewProject(value || exitCode == 2 ? -1 : exitCode);
+    int confirmOpenNewProject = value || exitCode == 2 ? GeneralSettings.OPEN_PROJECT_ASK :
+                                exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW ;
+    GeneralSettings.getInstance().setConfirmOpenNewProject(confirmOpenNewProject);
   }
 
   public boolean canBeHidden() {
