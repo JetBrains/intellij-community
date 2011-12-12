@@ -74,7 +74,12 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     File suggestedProjectDirectory = FileUtil.findSequentNonexistentFile(new File(myBaseDir), "untitled", "");
 
     myLocationField.setText(suggestedProjectDirectory.toString());
+
+    myProjectNameTextField.setDocument(new NameFieldDocument());
+
     myProjectNameTextField.setText(suggestedProjectDirectory.getName());
+
+    myProjectNameTextField.selectAll();
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
@@ -125,9 +130,6 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
       }
     });
 
-    myProjectNameTextField.setDocument(new NameFieldDocument());
-
-    myProjectNameTextField.selectAll();
 
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
     if (generators.length == 0) {
