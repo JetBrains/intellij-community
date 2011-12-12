@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyReturnTypeReference;
+import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
       if (assignedValue == null) return;
       PyType type = assignedValue.getType(myTypeEvalContext);
+      if (assignedValue instanceof PyReferenceExpression && !(type instanceof PyTupleType)) return;
       if (lhsExpression instanceof PyTupleExpression && type != null && !(type instanceof PyReturnTypeReference)){
         int valuesLength = PyUtil.getElementsCount(assignedValue, myTypeEvalContext);
         PyExpression[] elements = ((PyTupleExpression) lhsExpression).getElements();
