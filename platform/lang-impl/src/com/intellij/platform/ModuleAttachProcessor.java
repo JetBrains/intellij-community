@@ -31,6 +31,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -40,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -82,10 +86,10 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     return rc != Messages.YES;
   }
 
-  private static void attachModule(Project project, VirtualFile file, @Nullable ProjectOpenedCallback callback) {
+  private static void attachModule(Project project, VirtualFile imlFile, @Nullable ProjectOpenedCallback callback) {
     try {
       final ModifiableModuleModel model = ModuleManager.getInstance(project).getModifiableModel();
-      final Module module = model.loadModule(file.getPath());
+      final Module module = model.loadModule(imlFile.getPath());
 
       AccessToken token = WriteAction.start();
       try {
@@ -95,7 +99,13 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
         token.finish();
       }
       final Module newModule = ModuleManager.getInstance(project).findModuleByName(module.getName());
-      addPrimaryModuleDependency(project, newModule);
+      final Module primaryModule = addPrimaryModuleDependency(project, newModule);
+      if (primaryModule != null) {
+        VirtualFile dotIdeaDir = imlFile.getParent();
+        if (dotIdeaDir != null) {
+          updateVcsMapping(primaryModule, dotIdeaDir.getParent());
+        }
+      }
 
       if (callback != null) {
         callback.projectOpened(project, newModule);
@@ -107,7 +117,31 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     }
   }
 
-  private static void addPrimaryModuleDependency(Project project, @NotNull Module newModule) {
+  private static void updateVcsMapping(Module primaryModule, VirtualFile addedModuleContentRoot) {
+    final Project project = primaryModule.getProject();
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    final List<VcsDirectoryMapping> mappings = vcsManager.getDirectoryMappings();
+    if (mappings.size() == 1) {
+      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(primaryModule).getContentRoots();
+      // if we had one mapping for the root of the primary module and the added module uses the same VCS, change mapping to <Project Root>
+      if (contentRoots.length == 1 && new File(contentRoots[0].getPath()).equals(new File(mappings.get(0).getDirectory()))) {
+        final AbstractVcs vcs = vcsManager.findVersioningVcs(addedModuleContentRoot);
+        if (vcs != null && vcs.getName().equals(mappings.get(0).getVcs())) {
+          vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", vcs.getName())));
+          return;
+        }
+      }
+    }
+    final AbstractVcs vcs = vcsManager.findVersioningVcs(addedModuleContentRoot);
+    if (vcs != null) {
+      ArrayList<VcsDirectoryMapping> newMappings = new ArrayList<VcsDirectoryMapping>(mappings);
+      newMappings.add(new VcsDirectoryMapping(addedModuleContentRoot.getPath(), vcs.getName()));
+      vcsManager.setDirectoryMappings(newMappings);
+    }
+  }
+
+  @Nullable
+  private static Module addPrimaryModuleDependency(Project project, @NotNull Module newModule) {
     final Module module = getPrimaryModule(project);
     if (module != null && module != newModule) {
       final ModifiableRootModel modifiableRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -119,7 +153,9 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       finally {
         token.finish();
       }
+      return module;
     }
+    return null;
   }
 
   @Nullable
