@@ -2,6 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +24,10 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
     List<String> candidates = new ArrayList<String>();
     VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/bin");
     if (rootDir != null) {
+      if (rootDir instanceof NewVirtualFile) {
+        ((NewVirtualFile)rootDir).markDirty();
+      }
+      rootDir.refresh(false, false);
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
