@@ -44,7 +44,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-class ChangedConstantsDependencyProcessor {
+public class ChangedConstantsDependencyProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.ChangedConstantsDependencyProcessor");
   private final Project myProject;
   private final CachingSearcher mySearcher;
@@ -357,7 +357,11 @@ class ChangedConstantsDependencyProcessor {
   private static final Key<Integer> CONSTANTS_COUNTER = Key.create("_constant_searches_counter_");
 
   private int getConstantSearchesCount() {
-    final Integer value = CONSTANTS_COUNTER.get(myContext);
+    return getConstantSearchesCount(myContext);
+  }
+
+  public static int getConstantSearchesCount(CompileContext context) {
+    final Integer value = CONSTANTS_COUNTER.get(context);
     return value != null? value.intValue() : 0;
   }
 

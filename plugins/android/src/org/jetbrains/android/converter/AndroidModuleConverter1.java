@@ -76,16 +76,15 @@ public class AndroidModuleConverter1 extends ConversionProcessor<ModuleSettings>
 
         if (androidSdk == null) {
           androidSdk = AndroidSdkUtils.createNewAndroidPlatform(androidPlatform.getTarget(), androidPlatform.getSdk().getLocation(), false);
-        }
+          final SdkModificator modificator = androidSdk.getSdkModificator();
 
-        SdkModificator modificator = androidSdk.getSdkModificator();
-
-        for (OrderRootType type : OrderRootType.getAllTypes()) {
-          for (VirtualFile root : androidLibrary.getFiles(type)) {
-            modificator.addRoot(root, type);
+          for (OrderRootType type : OrderRootType.getAllTypes()) {
+            for (VirtualFile root : androidLibrary.getFiles(type)) {
+              modificator.addRoot(root, type);
+            }
           }
+          modificator.commitChanges();
         }
-        modificator.commitChanges();
 
         addNewDependency(moduleSettings, androidSdk.getName());
       }

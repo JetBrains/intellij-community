@@ -24,8 +24,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -33,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -284,44 +282,55 @@ public class ImportDependenciesUtil {
                                            @NotNull Project project,
                                            @NotNull ModuleProvider moduleProvider,
                                            @NotNull Pair<Properties, VirtualFile> defaultProperties) {
-    final VirtualFile baseDir = defaultProperties.second.getParent();
+    for (VirtualFile libDir : getLibDirs(defaultProperties)) {
+      final Module depModule = ModuleUtil.findModuleForFile(libDir, project);
+
+      if (depModule != null) {
+        if ((allowedDepModule == null || allowedDepModule == depModule) &&
+            ArrayUtil.find(ModuleRootManager.getInstance(depModule).getContentRoots(), libDir) >= 0 &&
+            !(module != null && ModuleRootManager.getInstance(module).isDependsOn(depModule))) {
+
+          tasks.add(new AddModuleDependencyTask(moduleProvider, ModuleProvider.create(depModule)));
+        }
+      }
+      else {
+        final VirtualFile libModuleFile = findModuleFileChild(libDir);
+        final ModuleProvidingTask task = libModuleFile != null && new File(libModuleFile.getPath()).exists()
+                                         ? new ImportModuleTask(project, libModuleFile.getPath(), libDir)
+                                         : new CreateNewModuleTask(project, libDir);
+        if (!tasks.contains(task)) {
+          tasks.add(task);
+          final ModuleProvider newModuleProvider = ModuleProvider.create(task);
+          tasks.add(new AddModuleDependencyTask(moduleProvider, newModuleProvider));
+          importDependenciesForNewModule(project, newModuleProvider, libDir, tasks, unresolvedDependencies);
+        }
+        else {
+          unresolvedDependencies.add(new MyUnresolvedDependency(moduleProvider, libDir));
+        }
+      }
+    }
+  }
+
+  @NotNull
+  public static Set<VirtualFile> getLibDirs(@NotNull Pair<Properties, VirtualFile> properties) {
+    final Set<VirtualFile> resultSet = new HashSet<VirtualFile>(); 
+    final VirtualFile baseDir = properties.second.getParent();
+    
     String libDirPath;
     int i = 1;
     do {
-      libDirPath = defaultProperties.first.getProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + i);
+      libDirPath = properties.first.getProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + i);
       if (libDirPath != null) {
         final VirtualFile libDir = AndroidUtils.findFileByAbsoluteOrRelativePath(baseDir, FileUtil.toSystemIndependentName(libDirPath));
         if (libDir != null) {
-          final Module depModule = ModuleUtil.findModuleForFile(libDir, project);
-
-          if (depModule != null) {
-            if ((allowedDepModule == null || allowedDepModule == depModule) &&
-                ArrayUtil.find(ModuleRootManager.getInstance(depModule).getContentRoots(), libDir) >= 0 &&
-                !(module != null && ModuleRootManager.getInstance(module).isDependsOn(depModule))) {
-
-              tasks.add(new AddModuleDependencyTask(moduleProvider, ModuleProvider.create(depModule)));
-            }
-          }
-          else {
-            final VirtualFile libModuleFile = findModuleFileChild(libDir);
-            final ModuleProvidingTask task = libModuleFile != null && new File(libModuleFile.getPath()).exists()
-                                             ? new ImportModuleTask(project, libModuleFile.getPath(), libDir)
-                                             : new CreateNewModuleTask(project, libDir);
-            if (!tasks.contains(task)) {
-              tasks.add(task);
-              final ModuleProvider newModuleProvider = ModuleProvider.create(task);
-              tasks.add(new AddModuleDependencyTask(moduleProvider, newModuleProvider));
-              importDependenciesForNewModule(project, newModuleProvider, libDir, tasks, unresolvedDependencies);
-            }
-            else {
-              unresolvedDependencies.add(new MyUnresolvedDependency(moduleProvider, libDir));
-            }
-          }
+          resultSet.add(libDir);
         }
       }
       i++;
     }
     while (libDirPath != null);
+    
+    return resultSet;
   }
 
   private static void importBackwardDependencies(@NotNull Module module, @NotNull List<ImportDependenciesTask> tasks,
