@@ -184,6 +184,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   private static class MacClipboardHandler extends ClipboardHandler {
 
     private static final String CLIPBOARD_CONTENTS = "CLIPBOARD_CONTENTS";
+    private static final String MAC_CLIPBOARD_SYNC_ACTIVE = "Mac.Clipboard.Sync.Active";
     private Pair<String,Transferable> myFullTransferable;
 
     private static Callback myClipboardQueryCallback = new Callback() {
@@ -195,7 +196,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
             pane.putClientProperty(CLIPBOARD_CONTENTS, transferable);
           }
 
-          pane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, null);
+          pane.putClientProperty(MAC_CLIPBOARD_SYNC_ACTIVE, null);
         }
       }
     };
@@ -298,8 +299,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
                   .invoke(synchronizer, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("run:"), null,
                           false);
 
-                pane.putClientProperty(MacUtil.MAC_NATIVE_WINDOW_SHOWING, Boolean.TRUE);
-                MacUtil.startModal(pane);
+                pane.putClientProperty(MAC_CLIPBOARD_SYNC_ACTIVE, Boolean.TRUE);
+                MacUtil.startModal(pane, MAC_CLIPBOARD_SYNC_ACTIVE);
 
                 Foundation.cfRelease(synchronizer);
 
