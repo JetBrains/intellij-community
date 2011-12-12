@@ -34,7 +34,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
   private volatile boolean myOptional;
   private volatile GrModifierList myModifierList;
-  private PsiElement myScope;
+  private final PsiElement myScope;
 
   public GrLightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement scope) {
     super(scope.getManager(), name, type, GroovyFileType.GROOVY_LANGUAGE);
@@ -59,10 +59,12 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
+  @Override
   public GrTypeElement getTypeElementGroovy() {
     return null;
   }
 
+  @Override
   public GrExpression getDefaultInitializer() {
     return null;
   }
@@ -82,34 +84,42 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
     return this;
   }
 
+  @Override
   public boolean isOptional() {
     return myOptional;
   }
 
+  @Override
   public GrExpression getInitializerGroovy() {
     return null;
   }
 
+  @Override
   public void setType(@Nullable PsiType type) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     return null;
   }
 
+  @Override
   public PsiType getTypeGroovy() {
     return getType();
   }
 
+  @Override
   public PsiType getDeclaredType() {
     return getType();
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
   }
 
+  @Override
   public void acceptChildren(GroovyElementVisitor visitor) {
 
   }

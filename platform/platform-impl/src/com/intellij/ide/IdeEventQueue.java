@@ -152,6 +152,7 @@ public class IdeEventQueue extends EventQueue {
     //noinspection HardCodedStringLiteral
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", new PropertyChangeListener() {
 
+      @Override
       public void propertyChange(final PropertyChangeEvent e) {
         final Application application = ApplicationManager.getApplication();
         if (application == null) {
@@ -184,6 +185,7 @@ public class IdeEventQueue extends EventQueue {
     myIdleTimeCounterAlarm.cancelAllRequests();
     myLastActiveTime = System.currentTimeMillis();
     myIdleTimeCounterAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         myIdleTime += System.currentTimeMillis() - myLastActiveTime;
         addIdleTimeCounterRequest();
@@ -297,6 +299,7 @@ public class IdeEventQueue extends EventQueue {
     set.add(dispatcher);
     if (parent != null) {
       Disposer.register(parent, new Disposable() {
+        @Override
         public void dispose() {
           removeDispatcher(dispatcher);
         }
@@ -364,6 +367,7 @@ public class IdeEventQueue extends EventQueue {
 
   */
 
+  @Override
   public void dispatchEvent(final AWTEvent e) {
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
@@ -619,6 +623,7 @@ public class IdeEventQueue extends EventQueue {
           if (showingWindow != null) {
             final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
             ExpirableRunnable maybeRequestDefaultFocus = new ExpirableRunnable() {
+              @Override
               public void run() {
                 if (getPopupManager().requestDefaultFocus(false)) return;
 
@@ -746,7 +751,7 @@ public class IdeEventQueue extends EventQueue {
           final Object s = event.getSource();
           if (s instanceof Component) {
             Component c = (Component)s;
-            Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
+            Window modalWindow = modalComponent == null ? null : SwingUtilities.windowForComponent(modalComponent);
             while (c != null && c != modalWindow) c = c.getParent();
             if (c == null) {
               eventOk = false;
@@ -784,6 +789,7 @@ public class IdeEventQueue extends EventQueue {
     }
 
 
+    @Override
     public void run() {
       myRunnable.run();
       synchronized (myLock) {
@@ -802,6 +808,7 @@ public class IdeEventQueue extends EventQueue {
 
   private final class ExitSuspendModeRunnable implements Runnable {
 
+    @Override
     public void run() {
       if (mySuspendMode) {
         exitSuspendMode();
@@ -861,6 +868,7 @@ public class IdeEventQueue extends EventQueue {
     }
     else {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myReady.add(runnable);
           maybeReady();
@@ -881,6 +889,7 @@ public class IdeEventQueue extends EventQueue {
 
     private Robot myRobot;
 
+    @Override
     public boolean dispatch(AWTEvent e) {
       boolean dispatch = true;
       if (e instanceof KeyEvent) {
@@ -914,6 +923,7 @@ public class IdeEventQueue extends EventQueue {
             else {
               myWaiterScheduled = true;
               SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   try {
                     myWaitingForAltRelease = true;
