@@ -46,7 +46,10 @@ public class GroovyWordSelectionFilter implements Condition<PsiElement> {
         type == mGDOC_TAG_VALUE_TOKEN ||
         type == mREGEX_BEGIN ||
         type == mREGEX_CONTENT ||
-        type == mREGEX_END) {
+        type == mREGEX_END ||
+        type == mDOLLAR_SLASH_REGEX_BEGIN ||
+        type == mDOLLAR_SLASH_REGEX_CONTENT ||
+        type == mDOLLAR_SLASH_REGEX_END) {
       return true;
     }
 

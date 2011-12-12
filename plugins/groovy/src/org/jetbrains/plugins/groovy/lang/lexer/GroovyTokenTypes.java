@@ -73,9 +73,6 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
   IElementType mGSTRING_CONTENT = new GroovyElementType("Gstring content");
   IElementType mGSTRING_END = new GroovyElementType("Gstring end");
 
-  IElementType mREGEX_LITERAL = new GroovyElementType("regexp");
-  IElementType mDOLLAR_SLASH_REGEX_LITERAL = new GroovyElementType("$/ regexp");
-
   IElementType mREGEX_BEGIN = new GroovyElementType("regex begin");
   IElementType mREGEX_CONTENT = new GroovyElementType("regex content");
   IElementType mREGEX_END = new GroovyElementType("regex end");

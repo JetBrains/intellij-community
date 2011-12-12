@@ -58,7 +58,6 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor("Number", DefaultHighlighter.NUMBER),
       new AttributesDescriptor("GString", DefaultHighlighter.GSTRING),
       new AttributesDescriptor("String", DefaultHighlighter.STRING),
-      new AttributesDescriptor("Regular expression", DefaultHighlighter.REGEXP),
       new AttributesDescriptor("Braces", DefaultHighlighter.BRACES),
       new AttributesDescriptor("Brackets", DefaultHighlighter.BRACKETS),
       new AttributesDescriptor("Parentheses", DefaultHighlighter.PARENTHESES),
