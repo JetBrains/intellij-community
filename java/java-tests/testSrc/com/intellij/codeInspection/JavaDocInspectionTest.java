@@ -46,7 +46,9 @@ public class JavaDocInspectionTest extends InspectionTestCase {
   }
 
   public void testMissedThrowsTag() throws Exception {
-    doTest();
+    final JavaDocLocalInspection localInspection = new JavaDocLocalInspection();
+    localInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
+    doTest("javaDocInspection/" + getTestName(true), localInspection);
   }
 
   public void testMisorderedThrowsTag() throws Exception {
