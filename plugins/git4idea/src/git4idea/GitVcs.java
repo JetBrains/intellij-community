@@ -121,7 +121,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
   private final EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
   private final EventDispatcher<GitReferenceListener> myReferenceListeners = EventDispatcher.create(GitReferenceListener.class);
-  private GitIgnoreTracker myGitIgnoreTracker;
   private GitConfigTracker myConfigTracker;
   private final BackgroundTaskQueue myTaskQueue; // The queue that is used to schedule background task from actions
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
@@ -363,9 +362,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myConfigTracker == null) {
       myConfigTracker = new GitConfigTracker(myProject, this, myConfigListeners.getMulticaster());
     }
-    if (myGitIgnoreTracker == null) {
-      myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
-    }
     myReferenceTracker.activate();
     NewGitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
@@ -390,10 +386,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myVFSListener != null) {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
-    }
-    if (myGitIgnoreTracker != null) {
-      myGitIgnoreTracker.dispose();
-      myGitIgnoreTracker = null;
     }
     if (myConfigTracker != null) {
       myConfigTracker.dispose();
