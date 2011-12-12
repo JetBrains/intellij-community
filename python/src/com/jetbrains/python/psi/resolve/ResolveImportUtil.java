@@ -941,7 +941,7 @@ public class ResolveImportUtil {
     if (qname.getComponentCount() > 0) {
       final List<String> components = qname.getComponents();
       final String head = components.get(0);
-      if (head.equals("_abcoll")) {
+      if (head.equals("_abcoll") || head.equals("_collections")) {
         components.set(0, "collections");
         return PyQualifiedName.fromComponents(components);
       }
