@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrRefer
  * @author ilyas
  */
 public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implements GrPropertySelection {
+  private static final Logger LOG = Logger.getInstance(GrPropertySelectionImpl.class);
 
   public GrPropertySelectionImpl(@NotNull ASTNode node) {
     super(node);
@@ -70,7 +72,7 @@ public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implement
   @Override
   public PsiElement getReferenceNameElement() {
     final PsiElement last = getLastChild();
-    assert last != null;
+    LOG.assertTrue(last!=null);
     return last;
   }
 

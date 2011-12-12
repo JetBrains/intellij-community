@@ -355,7 +355,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       codeStyleManager.shortenClassReferences(expression);
     }
     new OptimizeImportsProcessor(project, createdFiles, null).run();
-    return newElement;
+    return newElement != null ? newElement : createdFiles.length > 0 ? createdFiles[0] : null;
   }
 
   private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath) {

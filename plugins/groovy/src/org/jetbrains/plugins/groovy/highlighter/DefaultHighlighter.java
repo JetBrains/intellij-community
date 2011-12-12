@@ -49,8 +49,6 @@ public class DefaultHighlighter {
   @NonNls
   static final String STRING_ID = "String";
   @NonNls
-  static final String REGEXP_ID = "Regular expression";
-  @NonNls
   static final String BRACES_ID = "Braces";
   @NonNls
   static final String BRACKETS_ID = "Brackets";
@@ -149,9 +147,6 @@ public class DefaultHighlighter {
 
   public static TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey(STRING_ID,
       SyntaxHighlighterColors.STRING.getDefaultAttributes());
-
-  public static TextAttributesKey REGEXP = TextAttributesKey.createTextAttributesKey(REGEXP_ID,
-      SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes());
 
   public static TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(BRACES_ID,
       SyntaxHighlighterColors.BRACES.getDefaultAttributes());

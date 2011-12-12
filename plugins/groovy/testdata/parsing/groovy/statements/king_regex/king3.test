@@ -2,10 +2,16 @@
 -----
 Groovy script
   Compound regular expression
-    PsiElement(regex begin)('/abcde $2$$  $')
-    Reference expression
-      PsiElement(identifier)('ident')
-    PsiElement(regex content)('  $$ $')
-    Reference expression
-      PsiElement(identifier)('ident2')
-    PsiElement(regex end)(' asd/')
+    PsiElement(regex begin)('/')
+    PsiElement(regex content)('abcde $2$$  ')
+    GString injection
+      PsiElement($)('$')
+      Reference expression
+        PsiElement(identifier)('ident')
+    PsiElement(regex content)('  $$ ')
+    GString injection
+      PsiElement($)('$')
+      Reference expression
+        PsiElement(identifier)('ident2')
+    PsiElement(regex content)(' asd')
+    PsiElement(regex end)('/')

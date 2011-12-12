@@ -2,5 +2,6 @@
 -----
 Groovy script
   Compound regular expression
-    PsiElement(regex begin)('/$1\/')
+    PsiElement(regex begin)('/')
+    PsiElement(regex content)('$1\/')
     PsiElement(regex end)('/')

@@ -52,6 +52,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -72,6 +73,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.android.compiler.*;
 import org.jetbrains.android.dom.manifest.Manifest;
+import org.jetbrains.android.importDependencies.ImportDependenciesUtil;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.resourceManagers.SystemResourceManager;
@@ -391,18 +393,22 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
             PsiDocumentManager.getInstance(getModule().getProject()).commitAllDocuments();
 
-            final PropertiesFile propertiesFile = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_PROJECT_PROPERTIES);
-            if (propertiesFile == null) {
+            final PropertiesFile projectProperties = AndroidUtils.findPropertyFile(getModule(), SdkConstants.FN_PROJECT_PROPERTIES);
+            if (projectProperties == null) {
               return;
             }
+            final Pair<Properties, VirtualFile> localProperties = 
+              AndroidUtils.readPropertyFile(getModule(), SdkConstants.FN_LOCAL_PROPERTIES);
 
-            updateTargetProperty(propertiesFile);
-            updateLibraryProperty(propertiesFile);
+            updateTargetProperty(projectProperties);
+            updateLibraryProperty(projectProperties);
 
-            final String[] dependencies = collectDependencies();
-            if (myDependencies == null || !Comparing.equal(myDependencies, dependencies)) {
-              updateDependenciesInPropertyFile(propertiesFile, dependencies);
-              myDependencies = dependencies;
+            final VirtualFile[] dependencies = collectDependencies();
+            final String[] dependencyPaths = toSortedPaths(dependencies);
+
+            if (myDependencies == null || !Comparing.equal(myDependencies, dependencyPaths)) {
+              updateDependenciesInPropertyFile(projectProperties, localProperties, dependencies);
+              myDependencies = dependencyPaths;
             }
           }
         });
@@ -410,8 +416,10 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     });
   }
 
-  private void updateDependenciesInPropertyFile(@NotNull final PropertiesFile propertiesFile, @NotNull final String[] dependencies) {
-    final VirtualFile vFile = propertiesFile.getVirtualFile();
+  private static void updateDependenciesInPropertyFile(@NotNull final PropertiesFile projectProperties,
+                                                       @Nullable final Pair<Properties, VirtualFile> localProperties,
+                                                       @NotNull final VirtualFile[] dependencies) {
+    final VirtualFile vFile = projectProperties.getVirtualFile();
     if (vFile == null) {
       return;
     }
@@ -419,7 +427,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        for (IProperty property : propertiesFile.getProperties()) {
+        for (IProperty property : projectProperties.getProperties()) {
           final String name = property.getName();
           if (name != null && name.startsWith(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX)) {
             property.getPsiElement().delete();
@@ -428,33 +436,45 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
         final VirtualFile baseDir = vFile.getParent();
         final String baseDirPath = baseDir.getPath();
-        final Project project = getModule().getProject();
-
+        final Set<VirtualFile> localDependencies = localProperties != null
+                                                   ? ImportDependenciesUtil.getLibDirs(localProperties)
+                                                   : Collections.<VirtualFile>emptySet();
         int index = 1;
-        for (String dependency : dependencies) {
-          final String relPath = FileUtil.getRelativePath(baseDirPath, dependency, '/');
-          final String value = relPath != null ? relPath : dependency;
-          propertiesFile.addProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + index, value);
-          index++;
+        for (VirtualFile dependency : dependencies) {
+          if (!localDependencies.contains(dependency)) {
+            final String relPath = FileUtil.getRelativePath(baseDirPath, dependency.getPath(), '/');
+            final String value = relPath != null ? relPath : dependency.getPath();
+            projectProperties.addProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + index, value);
+            index++;
+          }
         }
       }
     });
   }
 
-  private String[] collectDependencies() {
-    final List<String> dependenciesList = new ArrayList<String>();
+  @NotNull
+  private VirtualFile[] collectDependencies() {
+    final List<VirtualFile> dependenciesList = new ArrayList<VirtualFile>();
 
     for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(getModule(), true)) {
       final Module depModule = depFacet.getModule();
       final VirtualFile libDir = getBaseAndroidContentRoot(depModule);
       if (libDir != null) {
-        dependenciesList.add(libDir.getPath());
+        dependenciesList.add(libDir);
       }
     }
+    return dependenciesList.toArray(new VirtualFile[dependenciesList.size()]);
+  }
 
-    final String[] dependencies = ArrayUtil.toStringArray(dependenciesList);
-    Arrays.sort(dependencies);
-    return dependencies;
+  @NotNull
+  private static String[] toSortedPaths(@NotNull VirtualFile[] files) {
+    final String[] result = new String[files.length];
+    
+    for (int i = 0; i < files.length; i++) {
+      result[i] = files[i].getPath();
+    }
+    Arrays.sort(result);
+    return result;
   }
 
   @Nullable

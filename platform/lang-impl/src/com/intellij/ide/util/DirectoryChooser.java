@@ -70,64 +70,15 @@ public class DirectoryChooser extends DialogWrapper {
     super.doOKAction();
   }
 
-  @Override
-  protected JComponent createNorthPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(new ToggleAction(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
-                                     UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
-                                     IconLoader.getIcon("/ant/filter.png")) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return myFilterExisting;
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        myFilterExisting = state;
-        final ItemWrapper selectedItem = myView.getSelectedItem();
-        PsiDirectory directory = selectedItem != null ? selectedItem.getDirectory() : null;
-        if (directory == null && myDefaultSelection != null) {
-          directory = myDefaultSelection;
-        }
-        myView.clearItems();
-        int idx = 0;
-        int selectionId = -1;
-        for (ItemWrapper item : myItems) {
-          if (myFilterExisting) {
-            if (item.myPostfix != null &&
-                item.getDirectory().getVirtualFile().findFileByRelativePath(StringUtil.trimStart(item.myPostfix, File.separator)) == null) {
-              continue;
-            }
-          }
-          if (item.getDirectory() == directory) {
-            selectionId = idx;
-          }
-          idx++;
-          myView.addItem(item);
-        }
-        buildFragments();
-        myView.listFilled();
-        if (selectionId < 0) {
-          myView.clearSelection();
-          if (myView.getItemsSize() > 0) {
-            myView.selectItemByIndex(0);
-          }
-        }
-        else {
-          myView.selectItemByIndex(selectionId);
-        }
-        enableButtons();
-        myView.getComponent().repaint();
-      }
-    });
-    final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent();
-    component.setBorder(null);
-    panel.add(component, BorderLayout.WEST);
-    return panel;
-  }
-
   protected JComponent createCenterPanel(){
+    final JPanel panel = new JPanel(new BorderLayout());
+
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(new FilterExistentAction());
+    final JComponent toolbarComponent = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent();
+    toolbarComponent.setBorder(null);
+    panel.add(toolbarComponent, BorderLayout.NORTH);
+
     final Runnable runnable = new Runnable() {
       public void run() {
         enableButtons();
@@ -141,8 +92,8 @@ public class DirectoryChooser extends DialogWrapper {
     jScrollPane.setPreferredSize(new Dimension(Math.max(300, prototypeWidth),300));
 
     installEnterAction(component);
-
-    return jScrollPane;
+    panel.add(jScrollPane, BorderLayout.CENTER);
+    return panel;
   }
 
   private void installEnterAction(final JComponent component) {
@@ -470,4 +421,55 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
 
+  private class FilterExistentAction extends ToggleAction {
+    public FilterExistentAction() {
+      super(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
+            UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
+            IconLoader.getIcon("/ant/filter.png"));
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myFilterExisting;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myFilterExisting = state;
+      final ItemWrapper selectedItem = myView.getSelectedItem();
+      PsiDirectory directory = selectedItem != null ? selectedItem.getDirectory() : null;
+      if (directory == null && myDefaultSelection != null) {
+        directory = myDefaultSelection;
+      }
+      myView.clearItems();
+      int idx = 0;
+      int selectionId = -1;
+      for (ItemWrapper item : myItems) {
+        if (myFilterExisting) {
+          if (item.myPostfix != null &&
+              item.getDirectory().getVirtualFile().findFileByRelativePath(StringUtil.trimStart(item.myPostfix, File.separator)) == null) {
+            continue;
+          }
+        }
+        if (item.getDirectory() == directory) {
+          selectionId = idx;
+        }
+        idx++;
+        myView.addItem(item);
+      }
+      buildFragments();
+      myView.listFilled();
+      if (selectionId < 0) {
+        myView.clearSelection();
+        if (myView.getItemsSize() > 0) {
+          myView.selectItemByIndex(0);
+        }
+      }
+      else {
+        myView.selectItemByIndex(selectionId);
+      }
+      enableButtons();
+      myView.getComponent().repaint();
+    }
+  }
 }

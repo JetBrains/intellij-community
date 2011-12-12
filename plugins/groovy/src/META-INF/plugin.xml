@@ -161,8 +161,6 @@
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedFieldProcessor" order="first"/>
     <rename.inplace.resolveSnapshotProvider language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
-    <!--<renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGrAccessorProcessor" order="first"/>-->
-    
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 
     <statementUpDownMover implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyStatementMover"/>

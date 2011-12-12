@@ -835,6 +835,63 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkStringLiteral(literal, text);
   }
 
+  @Override
+  public void visitRegexExpression(GrRegex regex) {
+    String text = regex.getText();
+    String quote = GrStringUtil.getStartQuote(text);
+
+    final GroovyConfigUtils config = GroovyConfigUtils.getInstance();
+
+    if ("$/".equals(quote)) {
+      if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_9)) {
+        myHolder
+          .createErrorAnnotation(regex, GroovyBundle.message("dollar.slash.strings.are.not.allowed.in.0", config.getSDKVersion(regex)));
+      }
+      if (regex.getParent() instanceof GrCommandArgumentList &&
+          ((GrCommandArgumentList)regex.getParent()).getAllArguments()[0] == regex) {
+        final Annotation annotation =
+          myHolder.createErrorAnnotation(regex, GroovyBundle.message("regex.cannot.be.first.argument.of.command.method.call"));
+        annotation.registerFix(new AddParenthesesFix());
+        return;
+      }
+    }
+
+    for (String part : regex.getTextParts()) {
+      if (!GrStringUtil.parseRegexCharacters(part, new StringBuilder(part.length()), null, regex.getText().startsWith("/"))) {
+        myHolder.createErrorAnnotation(regex, GroovyBundle.message("illegal.escape.character.in.string.literal"));
+        return;
+      }
+    }
+
+    if ("/".equals(quote)) {
+      if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_8)) {
+        if (text.contains("\n") || text.contains("\r")) {
+          myHolder.createErrorAnnotation(regex, GroovyBundle
+            .message("multiline.slashy.strings.are.not.allowed.in.groovy.0", config.getSDKVersion(regex)));
+          return;
+        }
+      }
+    }
+
+    if (regex.getInjections().length > 0) {
+      if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_8)) {
+        myHolder.createErrorAnnotation(regex, GroovyBundle
+          .message("slashy.strings.with.injections.are.not.allowed.in.groovy.0", config.getSDKVersion(regex)));
+      }
+    }
+
+  }
+
+  @Override
+  public void visitGStringExpression(GrString gstring) {
+    for (String part : gstring.getTextParts()) {
+      if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(part.length()), null)) {
+        myHolder.createErrorAnnotation(gstring, GroovyBundle.message("illegal.escape.character.in.string.literal"));
+        return;
+      }
+    }
+  }
+
   private void checkStringLiteral(PsiElement literal, String text) {
 
     StringBuilder builder = new StringBuilder(text.length());
@@ -842,63 +899,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (quote.isEmpty()) return;
 
     String substring = text.substring(quote.length());
-
-    String[] parts;
-    PsiElement child = literal.getFirstChild();
-    if (child == null) child = literal;
-    IElementType elementType = child.getNode().getElementType();
-    boolean isSimpleString = elementType == GroovyTokenTypes.mSTRING_LITERAL ||
-                             elementType == GroovyTokenTypes.mGSTRING_LITERAL ||
-                             elementType == GroovyTokenTypes.mREGEX_LITERAL;
-    if (isSimpleString) {
-      parts = new String[]{substring};
-    }
-    else if (literal instanceof GrString) {
-      parts = ((GrString)literal).getTextParts();
-    }
-    else {
+    if (!GrStringUtil.parseStringCharacters(substring, new StringBuilder(text.length()), null)) {
+      myHolder.createErrorAnnotation(literal, GroovyBundle.message("illegal.escape.character.in.string.literal"));
       return;
     }
 
-    for (String part : parts) {            
-      if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(text.length()), null, !quote.equals("/"))) {
-        myHolder.createErrorAnnotation(literal, GroovyBundle.message("illegal.escape.character.in.string.literal"));
-        return;
-      }
-    }
-
-    
-    if (isSimpleString) {
-      int[] offsets = new int[substring.length() + 1];
-      boolean result = GrStringUtil.parseStringCharacters(substring, builder, offsets, !quote.equals("/"));
-      LOG.assertTrue(result);
-      if (!builder.toString().endsWith(quote) || substring.charAt(offsets[builder.length() - quote.length()]) == '\\') {
-        myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
-        return;
-      }
-    }
-    else {
-      LOG.assertTrue(literal instanceof GrString);
-      //absence of closing quote is registered by lexer
-    }
-
-
-    if (quote.equals("/")) {
-      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
-        if (text.contains("\n") || text.contains("\r")) {
-          myHolder.createErrorAnnotation(literal, GroovyBundle.message("multiline.slashy.strings.are.not.allowed.in.groovy.0",
-                                                                       GroovyConfigUtils.getInstance().getSDKVersion(literal)));
-          return;
-        }
-      }
-    }
-
-    if (literal instanceof GrRegex) {
-      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
-        myHolder.createErrorAnnotation(literal, GroovyBundle.message("slashy.strings.with.injections.are.not.allowed.in.groovy.0",
-                                                                     GroovyConfigUtils.getInstance().getSDKVersion(literal)));
-        return;
-      }
+    int[] offsets = new int[substring.length() + 1];
+    boolean result = GrStringUtil.parseStringCharacters(substring, builder, offsets);
+    LOG.assertTrue(result);
+    if (!builder.toString().endsWith(quote) || substring.charAt(offsets[builder.length() - quote.length()]) == '\\') {
+      myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
     }
   }
 

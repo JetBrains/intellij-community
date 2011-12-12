@@ -33,7 +33,7 @@ public class XsltStackFrame extends XStackFrame {
 
   @Override
   public Object getEqualityObject() {
-    return super.getEqualityObject();
+    return XsltStackFrame.class;
   }
 
   @Override

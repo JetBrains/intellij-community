@@ -380,8 +380,9 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     PsiDocComment docComment = psiClass.getDocComment();
     final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
     final PsiElement elementToHighlight = nameIdentifier != null ? nameIdentifier : psiClass;
+    final boolean required = isJavaDocRequired(psiClass);
     if (docComment == null) {
-      return isJavaDocRequired(psiClass)
+      return required
              ? new ProblemDescriptor[]{createDescriptor(elementToHighlight, REQUIRED_JAVADOC_IS_ABSENT, manager, isOnTheFly)}
              : null;
     }
@@ -392,36 +393,37 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       "inspection.javadoc.problem.missing.author.description",
       "inspection.javadoc.problem.missing.version.description",
       "inspection.javadoc.problem.missing.since.description"};
+    final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
+    if (required) {
+      boolean[] isTagRequired = new boolean[tagsToCheck.length];
+      boolean[] isTagPresent = new boolean[tagsToCheck.length];
 
-    boolean[] isTagRequired = new boolean[tagsToCheck.length];
-    boolean[] isTagPresent = new boolean[tagsToCheck.length];
+      boolean someTagsAreRequired = false;
+      for (int i = 0; i < tagsToCheck.length; i++) {
+        final String tag = tagsToCheck[i];
+        someTagsAreRequired |= isTagRequired[i] = isTagRequired(psiClass, tag);
+      }
 
-    boolean someTagsAreRequired = false;
-    for (int i = 0; i < tagsToCheck.length; i++) {
-      final String tag = tagsToCheck[i];
-      someTagsAreRequired |= isTagRequired[i] = isTagRequired(psiClass, tag);
-    }
-
-    if (someTagsAreRequired) {
-      for (PsiDocTag tag : tags) {
-        String tagName = tag.getName();
-        for (int i = 0; i < tagsToCheck.length; i++) {
-          final String tagToCheck = tagsToCheck[i];
-          if (tagToCheck.equals(tagName)) {
-            isTagPresent[i] = true;
+      if (someTagsAreRequired) {
+        for (PsiDocTag tag : tags) {
+          String tagName = tag.getName();
+          for (int i = 0; i < tagsToCheck.length; i++) {
+            final String tagToCheck = tagsToCheck[i];
+            if (tagToCheck.equals(tagName)) {
+              isTagPresent[i] = true;
+            }
           }
+        }
+      }
+
+      for (int i = 0; i < tagsToCheck.length; i++) {
+        final String tagToCheck = tagsToCheck[i];
+        if (isTagRequired[i] && !isTagPresent[i]) {
+          problems.add(createMissingTagDescriptor(elementToHighlight, tagToCheck, manager, isOnTheFly));
         }
       }
     }
 
-    final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
-
-    for (int i = 0; i < tagsToCheck.length; i++) {
-      final String tagToCheck = tagsToCheck[i];
-      if (isTagRequired[i] && !isTagPresent[i]) {
-        problems.add(createMissingTagDescriptor(elementToHighlight, tagToCheck, manager, isOnTheFly));
-      }
-    }
     ArrayList<ProblemDescriptor> tagProblems = getTagValuesProblems(psiClass, tags, manager, isOnTheFly);
     if (tagProblems != null) {
       problems.addAll(tagProblems);
@@ -441,7 +443,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     checkDuplicateTags(tags, problems, manager, isOnTheFly);
 
-    if (isTagRequired(psiClass, "param") && psiClass.hasTypeParameters() && nameIdentifier != null) {
+    if (required && isTagRequired(psiClass, "param") && psiClass.hasTypeParameters() && nameIdentifier != null) {
       ArrayList<PsiTypeParameter> absentParameters = null;
       final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
       for (PsiTypeParameter typeParameter : typeParameters) {
@@ -506,8 +508,9 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
     PsiDocComment docComment = psiMethod.getDocComment();
     final PsiMethod[] superMethods = psiMethod.findSuperMethods();
+    final boolean required = isJavaDocRequired(psiMethod);
     if (docComment == null) {
-      if (isJavaDocRequired(psiMethod)) {
+      if (required) {
         if (superMethods.length > 0) return null;
         ExtensionPoint<Condition<PsiMember>> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVADOC_LOCAL);
         final Condition<PsiMember>[] addins = point.getExtensions();
@@ -564,7 +567,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     ArrayList<PsiParameter> absentParameters = null;
-    if (superMethods.length == 0 && isTagRequired(psiMethod, "param") ) {
+    if (required && superMethods.length == 0 && isTagRequired(psiMethod, "param") ) {
       PsiParameter[] params = psiMethod.getParameterList().getParameters();
       for (PsiParameter param : params) {
         if (!isFound(tags, param)) {
@@ -576,7 +579,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
 
 
-    if (isReturnRequired && isReturnAbsent) {
+    if (required && isReturnRequired && isReturnAbsent) {
       final PsiIdentifier psiIdentifier = psiMethod.getNameIdentifier();
       if (psiIdentifier != null) {
         problems.add(createMissingTagDescriptor(psiIdentifier, "return", manager, isOnTheFly));
@@ -617,7 +620,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
-    if (superMethods.length == 0 && isTagRequired(psiMethod, "@throws") && psiMethod.getThrowsList().getReferencedTypes().length > 0) {
+    if (required && superMethods.length == 0 && isTagRequired(psiMethod, "@throws") && psiMethod.getThrowsList().getReferencedTypes().length > 0) {
       final Map<PsiClassType, PsiClass> declaredExceptions = new HashMap<PsiClassType, PsiClass>();
       final PsiClassType[] classTypes = psiMethod.getThrowsList().getReferencedTypes();
       for (PsiClassType classType : classTypes) {

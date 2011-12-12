@@ -69,7 +69,12 @@ public class PrimaryExpression implements GroovyElementTypes {
       return StringConstructorExpression.parse(builder, parser);
     }
     if (mREGEX_BEGIN == tokenType) {
-      return RegexConstructorExpression.parse(builder, parser);
+      RegexConstructorExpression.parse(builder, parser);
+      return REGEX;
+    }
+    if (mDOLLAR_SLASH_REGEX_BEGIN == tokenType) {
+      DollarSlashRegexConstructorExpression.parse(builder, parser);
+      return REGEX;
     }
     if (mLBRACK == tokenType) {
       return ListOrMapConstructorExpression.parse(builder, parser);
@@ -80,23 +85,12 @@ public class PrimaryExpression implements GroovyElementTypes {
     if (mLCURLY == tokenType) {
       return OpenOrClosableBlock.parseClosableBlock(builder, parser);
     }
-    if (tokenType == mSTRING_LITERAL ||
-        tokenType == mGSTRING_LITERAL ||
-        tokenType == mREGEX_LITERAL) {
+    if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL) {
       return ParserUtils.eatElement(builder, literalsAsRefExprs ? REFERENCE_EXPRESSION : LITERAL);
     }
     if (TokenSets.CONSTANTS.contains(tokenType)) {
       return ParserUtils.eatElement(builder, LITERAL);
     }
-    if (mWRONG_REGEX_LITERAL == tokenType) {
-      PsiBuilder.Marker marker = builder.mark();
-      builder.advanceLexer();
-      builder.error(GroovyBundle.message("wrong.string"));
-      marker.done(LITERAL);
-      return LITERAL;
-    }
-
-    // TODO implement all cases!
 
     return WRONGWAY;
   }

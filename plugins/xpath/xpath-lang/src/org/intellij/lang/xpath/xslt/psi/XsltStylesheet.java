@@ -18,7 +18,8 @@ package org.intellij.lang.xpath.xslt.psi;
 import org.jetbrains.annotations.NotNull;
 
 public interface XsltStylesheet extends XsltElement {
-    @NotNull
+
+  @NotNull
     XsltParameter[] getParameters();
 
     /**
@@ -29,4 +30,7 @@ public interface XsltStylesheet extends XsltElement {
 
     @NotNull
     XsltTemplate[] getTemplates();
+
+    @NotNull
+    XsltFunction[] getFunctions();
 }

@@ -107,12 +107,23 @@ public abstract class SourcePosition implements Navigatable{
     }
 
     private void updateData() {
-      if(myModificationStamp != myFile.getModificationStamp()) {
+      if(dataUpdateNeeded()) {
         myModificationStamp = myFile.getModificationStamp();
         myLine = null;
         myOffset = null;
         myPsiElement = null;
       }
+    }
+
+    private boolean dataUpdateNeeded() {
+      if (myModificationStamp != myFile.getModificationStamp()) {
+        return true;
+      }
+      final PsiElement psiElement = myPsiElement;
+      if (psiElement != null && !psiElement.isValid()) {
+        return true;
+      }
+      return false;
     }
 
     public int getLine() {

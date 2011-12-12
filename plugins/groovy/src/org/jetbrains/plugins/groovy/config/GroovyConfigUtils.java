@@ -52,6 +52,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public static final String NO_VERSION = "<no version>";
   public static final String GROOVY1_7 = "1.7";
   public static final String GROOVY1_8 = "1.8";
+  public static final String GROOVY1_9 = "1.9";
 
   private GroovyConfigUtils() {
   }

@@ -2,18 +2,28 @@
 -----
 Groovy script
   Compound regular expression
-    PsiElement(regex begin)('/abcde $2$$  $')
-    Closable block
-      PsiElement({)('{')
-      Parameter list
-        <empty list>
-      Compound regular expression
-        PsiElement(regex begin)('/asdc $$ asdd $')
-        Reference expression
-          PsiElement(identifier)('ident3')
-        PsiElement(regex end)(' 123/')
-      PsiElement(})('}')
-    PsiElement(regex content)('  $$ $')
-    Reference expression
-      PsiElement(identifier)('ident2')
-    PsiElement(regex end)(' asd/')
+    PsiElement(regex begin)('/')
+    PsiElement(regex content)('abcde $2$$  ')
+    GString injection
+      PsiElement($)('$')
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          <empty list>
+        Compound regular expression
+          PsiElement(regex begin)('/')
+          PsiElement(regex content)('asdc $$ asdd ')
+          GString injection
+            PsiElement($)('$')
+            Reference expression
+              PsiElement(identifier)('ident3')
+          PsiElement(regex content)(' 123')
+          PsiElement(regex end)('/')
+        PsiElement(})('}')
+    PsiElement(regex content)('  $$ ')
+    GString injection
+      PsiElement($)('$')
+      Reference expression
+        PsiElement(identifier)('ident2')
+    PsiElement(regex content)(' asd')
+    PsiElement(regex end)('/')

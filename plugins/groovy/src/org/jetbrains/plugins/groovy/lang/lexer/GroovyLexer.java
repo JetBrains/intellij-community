@@ -30,12 +30,11 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  */
 public class GroovyLexer extends LookAheadLexer {
   private static final TokenSet tokensToMerge = TokenSet.create(
-      mSL_COMMENT,
-      mML_COMMENT,
-      mREGEX_BEGIN,
-      mREGEX_CONTENT,
-      mREGEX_END,
-      WHITE_SPACE
+    mSL_COMMENT,
+    mML_COMMENT,
+    mREGEX_CONTENT,
+    mDOLLAR_SLASH_REGEX_CONTENT,
+    WHITE_SPACE
   );
 
   public GroovyLexer() {
@@ -56,41 +55,13 @@ public class GroovyLexer extends LookAheadLexer {
       if (token == kDEF || token == kAS || token == kIN) {
         addToken(mIDENT);
         baseLexer.advance();
-      } else {
+      }
+      else {
         addToken(token);
         baseLexer.advance();
       }
-    } else if (type == mDOLLAR_SLASHY_LITERAL) {
-      //todo rewrite groovy literal treatment with normal dollar-slashy strings treatment
-
-      String text = baseLexer.getTokenText();
-      assert text.startsWith("$/");
-      assert text.endsWith("/$");
-      if (text.length() == 4) {
-        addToken(mREGEX_LITERAL);
-        baseLexer.advance();
-        return;
-      }
-
-      int start = baseLexer.getTokenStart() + 1;
-
-      GroovyLexer regex = new GroovyLexer();
-      regex.start("/" + text.substring(2, text.length() - 2).replace('/', 'a') + "/");
-      while (true) {
-        IElementType tokenType = regex.getTokenType();
-        int tokenEnd = regex.getTokenEnd();
-        regex.advance();
-
-        boolean last = regex.getTokenType() == null;
-        if (last) {
-          addToken(tokenType);
-          baseLexer.advance();
-          return;
-        }
-
-        addToken(start + tokenEnd, tokenType);
-      }
-    } else {
+    }
+    else {
       super.lookAhead(baseLexer);
     }
   }

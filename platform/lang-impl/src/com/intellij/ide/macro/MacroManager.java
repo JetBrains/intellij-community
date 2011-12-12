@@ -158,14 +158,17 @@ public final class MacroManager {
   }
 
   public String expandSilentMarcos(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
-    return expandMacroSet(str, firstQueueExpand, dataContext,
-                          ConvertingIterator.create(getMacros().iterator(), new Convertor<Macro, Macro>() {
-                            public Macro convert(Macro macro) {
-                              if (macro instanceof PromptMacro)
-                                return new Macro.Silent(macro, "");
-                              return macro;
-                            }
-                          }));
+    final Convertor<Macro, Macro> convertor = new Convertor<Macro, Macro>() {
+      public Macro convert(Macro macro) {
+        if (macro instanceof PromptingMacro) {
+          return new Macro.Silent(macro, "");
+        }
+        return macro;
+      }
+    };
+    return expandMacroSet(
+      str, firstQueueExpand, dataContext, ConvertingIterator.create(getMacros().iterator(), convertor)
+    );
   }
 
 }

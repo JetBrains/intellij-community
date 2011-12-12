@@ -29,6 +29,8 @@ public class GrStringUtil {
   private static final String DOUBLE_QUOTES = "\"";
   private static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
   private static final String SLASH = "/";
+  private static final String DOLLAR_SLASH = "$/";
+  private static final String SLASH_DOLLAR = "/$";
 
   private GrStringUtil() {
   }
@@ -179,10 +181,21 @@ public class GrStringUtil {
     String quote = getStartQuote(s);
     int sL = s.length();
     int qL = quote.length();
+    if (sL >= qL * 2 && DOLLAR_SLASH.equals(quote)) {
+      if (s.endsWith(SLASH_DOLLAR)) {
+        return s.substring(qL, sL - qL);
+      }
+      else {
+        return s.substring(qL);
+      }
+    }
+
     if (sL >= qL * 2 && s.endsWith(quote)) {
       return s.substring(qL, sL - qL);
     }
-    return s;
+    else {
+      return s.substring(qL);
+    }
   }
 
   public static String addQuotes(String s, boolean forGString) {
@@ -335,16 +348,99 @@ public class GrStringUtil {
     if (text.startsWith(TRIPLE_DOUBLE_QUOTES)) return TRIPLE_DOUBLE_QUOTES;
     if (text.startsWith(DOUBLE_QUOTES)) return DOUBLE_QUOTES;
     if (text.startsWith(SLASH)) return SLASH;
+    if (text.startsWith(DOLLAR_SLASH)) return DOLLAR_SLASH;
     return "";
+  }
+
+  public static boolean parseRegexCharacters(@NotNull String chars,
+                                             @NotNull StringBuilder outChars,
+                                             @Nullable int[] sourceOffsets,
+                                             boolean escapeSlash) {
+    assert sourceOffsets == null || sourceOffsets.length == chars.length() + 1;
+    if (chars.indexOf('\\') < 0) {
+      outChars.append(chars);
+      if (sourceOffsets != null) {
+        for (int i = 0; i < sourceOffsets.length; i++) {
+          sourceOffsets[i] = i;
+        }
+      }
+      return true;
+    }
+
+    int index = 0;
+    final int outOffset = outChars.length();
+    while (index < chars.length()) {
+      char c = chars.charAt(index++);
+      if (sourceOffsets != null) {
+        sourceOffsets[outChars.length() - outOffset] = index - 1;
+        sourceOffsets[outChars.length() + 1 - outOffset] = index;
+      }
+      if (c != '\\') {
+        outChars.append(c);
+        continue;
+      }
+      if (index == chars.length()) {
+        outChars.append('\\');
+        return true;
+      }
+      c = chars.charAt(index++);
+      switch (c) {
+        case '/':
+          if (escapeSlash) {
+            outChars.append(c);
+            if (sourceOffsets != null) {
+              sourceOffsets[outChars.length() - outOffset] = index;
+            }
+          }
+          else {
+            outChars.append('\\').append('/');
+          }
+
+          break;
+        case '\n':
+          //do nothing
+          if (sourceOffsets != null) {
+            sourceOffsets[outChars.length() - outOffset] = index;
+          }
+          break;
+        case 'u':
+          // uuuuu1234 is valid too
+          while (index != chars.length() && chars.charAt(index) == 'u') {
+            index++;
+          }
+          if (index + 4 <= chars.length()) {
+            try {
+              int code = Integer.parseInt(chars.substring(index, index + 4), 16);
+              //line separators are invalid here
+              if (code == 0x000a || code == 0x000d) return false;
+              c = chars.charAt(index);
+              if (c == '+' || c == '-') return false;
+              outChars.append((char)code);
+              index += 4;
+
+              if (sourceOffsets != null) {
+                sourceOffsets[outChars.length() - outOffset] = index;
+              }
+            }
+            catch (Exception e) {
+              return false;
+            }
+          }
+          else {
+            return false;
+          }
+          break;
+        default:
+          outChars.append('\\').append(c);
+      }
+    }
+    return true;
   }
 
   /**
    * @see com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl#parseStringCharacters(String, StringBuilder, int[])
    */
-  public static boolean parseStringCharacters(@NotNull String chars,
-                                              @NotNull StringBuilder outChars,
-                                              @Nullable int[] sourceOffsets,
-                                              final boolean strictBackSlash) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);
@@ -371,15 +467,31 @@ public class GrStringUtil {
       c = chars.charAt(index++);
       switch (c) {
         case'b':
+          outChars.append('\b');
+          break;
         case't':
+          outChars.append('\t');
+          break;
         case'n':
+          outChars.append('\n');
+          break;
         case'f':
+          outChars.append('\f');
+          break;
         case'r':
+          outChars.append('\r');
+          break;
         case'"':
+          outChars.append('\"');
+          break;
         case'\'':
+          outChars.append('\'');
+          break;
         case'$':
+          outChars.append('$');
+          break;
         case'\\':
-          outChars.append(c);
+          outChars.append('\\');
           break;
         case '\n':
           //do nothing
@@ -442,9 +554,6 @@ public class GrStringUtil {
           }
           break;
         default:
-          if (!strictBackSlash) {
-            break;
-          }
           return false;
       }
       if (sourceOffsets != null) {

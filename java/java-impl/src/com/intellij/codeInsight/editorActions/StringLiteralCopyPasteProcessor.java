@@ -168,7 +168,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @Nullable
-  private PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
+  protected PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
     final PsiElement elementAtSelectionStart = file.findElementAt(selectionStart);
     if (elementAtSelectionStart == null) {
       return null;

@@ -342,11 +342,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     @Override
     public void clear() throws StorageException {
       final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
+      final Collection<StubIndexKey> allStubIndexKeys = stubIndex != null? stubIndex.getAllStubIndexKeys() : Collections.<StubIndexKey>emptyList();
       try {
-        if (stubIndex != null) {
-          for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
-            stubIndex.getWriteLock(key).lock();
-          }
+        for (StubIndexKey key : allStubIndexKeys) {
+          //noinspection ConstantConditions
+          stubIndex.getWriteLock(key).lock();
         }
         getWriteLock().lock();
         if (stubIndex != null) {
@@ -356,10 +356,9 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
       finally {
         getWriteLock().unlock();
-        if (stubIndex != null) {
-          for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
-            stubIndex.getWriteLock(key).unlock();
-          }
+        for (StubIndexKey key : allStubIndexKeys) {
+          //noinspection ConstantConditions
+          stubIndex.getWriteLock(key).unlock();
         }
       }
     }

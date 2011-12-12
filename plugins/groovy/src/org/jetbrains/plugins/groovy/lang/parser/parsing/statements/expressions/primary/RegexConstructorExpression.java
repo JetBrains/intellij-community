@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -29,31 +29,28 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author ilyas
  */
 public class RegexConstructorExpression implements GroovyElementTypes {
+  private static final Logger LOG = Logger.getInstance(RegexConstructorExpression.class);
 
-  public static GroovyElementType parse(PsiBuilder builder, GroovyParser parser) {
+  /**
+   * @return true if there are any injections
+   */
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+    PsiBuilder.Marker marker = builder.mark();
+    final boolean result = ParserUtils.getToken(builder, mREGEX_BEGIN);
+    LOG.assertTrue(result);
 
-    PsiBuilder.Marker sMarker = builder.mark();
-    if (ParserUtils.getToken(builder, mREGEX_BEGIN)) {
-      if (!regexConstructorValuePart(builder, parser)) {
-        if (!ParserUtils.getToken(builder, mREGEX_END)) {
-          builder.error(GroovyBundle.message("identifier.or.block.expected"));
-        }
-        sMarker.done(REGEX);
-        return REGEX;
-      } else {
-        while (ParserUtils.getToken(builder, mREGEX_CONTENT)) {
-          if (!regexConstructorValuePart(builder, parser)) break;
-        }
-        if (!ParserUtils.getToken(builder, mREGEX_END)) {
-          builder.error(GroovyBundle.message("identifier.or.block.expected"));
-        }
-        sMarker.done(REGEX);
-        return REGEX;
-      }
-    } else {
-      sMarker.drop();
-      return WRONGWAY;
+    boolean inj = false;
+    ParserUtils.getToken(builder, mREGEX_CONTENT);
+    while (parseInjection(builder, parser)) {
+      inj = true;
+      ParserUtils.getToken(builder, mREGEX_CONTENT);
     }
+
+    if (!ParserUtils.getToken(builder, mREGEX_END)) {
+      builder.error(GroovyBundle.message("regex.end.expected"));
+    }
+    marker.done(REGEX);
+    return inj;
   }
 
   /**
@@ -62,16 +59,24 @@ public class RegexConstructorExpression implements GroovyElementTypes {
    * @param builder given builder
    * @return nothing
    */
-  private static boolean regexConstructorValuePart(PsiBuilder builder, GroovyParser parser) {
-    //ParserUtils.getToken(builder, mSTAR);
+  private static boolean parseInjection(PsiBuilder builder, GroovyParser parser) {
+    if (builder.getTokenType() != mDOLLAR) return false;
+
+    final PsiBuilder.Marker injection = builder.mark();
+    ParserUtils.getToken(builder, mDOLLAR);
+
     if (mIDENT.equals(builder.getTokenType())) {
       PathExpression.parse(builder, parser);
-      return true;
-    } else if (mLCURLY.equals(builder.getTokenType())) {
-      OpenOrClosableBlock.parseClosableBlock(builder, parser);
-      return true;
     }
-    return false;
-  }
+    else if (mLCURLY.equals(builder.getTokenType())) {
+      OpenOrClosableBlock.parseClosableBlock(builder, parser);
+    }
+    else {
+      injection.drop();
+      return false;
+    }
 
+    injection.done(GSTRING_INJECTION);
+    return true;
+  }
 }

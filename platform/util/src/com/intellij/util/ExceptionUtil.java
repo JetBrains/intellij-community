@@ -18,9 +18,11 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 
 public class ExceptionUtil {
   private ExceptionUtil() {
@@ -43,10 +45,24 @@ public class ExceptionUtil {
   public static boolean causedBy(Throwable e, Class klass) {
     return findCause(e, klass) != null;
   }
+  
+  @NotNull
+  public static Throwable makeStackTraceRelative(@NotNull Throwable th, @NotNull Throwable relativeTo) {
+    StackTraceElement[] trace = th.getStackTrace();
+    StackTraceElement[] rootTrace = relativeTo.getStackTrace();
+    for (int i=0, len = Math.min(trace.length, rootTrace.length); i < len; i++) {
+      if (trace[trace.length - i - 1].equals(rootTrace[rootTrace.length - i - 1])) continue;
+      int newDepth = trace.length - i;
+      th.setStackTrace(Arrays.asList(trace).subList(0, newDepth).toArray(new StackTraceElement[newDepth]));
+      break;
+    }
+    return th;
+  }
 
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable) {
     StringWriter stringWriter = new StringWriter();
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     PrintWriter writer = new PrintWriter(stringWriter);
     aThrowable.printStackTrace(writer);
     return stringWriter.getBuffer().toString();
@@ -57,6 +73,7 @@ public class ExceptionUtil {
     @NonNls final String prefix = "\tat ";
     final String skipPattern = prefix + stackFrameSkipPattern;
     final StringWriter stringWriter = new StringWriter();
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final PrintWriter writer = new PrintWriter(stringWriter) {
       boolean skipping = false;
       public void println(final String x) {
@@ -75,13 +92,14 @@ public class ExceptionUtil {
   @NotNull
   public static String getUserStackTrace(@NotNull Throwable aThrowable, Logger logger) {
     final String result = getThrowableText(aThrowable, "com.intellij.");
-    if (result.indexOf("\n\tat") == -1) {
+    if (!result.contains("\n\tat")) {
       // no stack frames found
       logger.error(aThrowable);
     }
     return result;
   }
 
+  @Nullable
   public static String getMessage(@NotNull Throwable e) {
     String result = e.getMessage();
     @NonNls final String exceptionPattern = "Exception: ";

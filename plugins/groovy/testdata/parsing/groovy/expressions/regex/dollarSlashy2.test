@@ -18,18 +18,21 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Compound regular expression
-        PsiElement(regex begin)('$/\n    Hello $')
-        Reference expression
-          PsiElement(identifier)('name')
-        PsiElement(regex content)(',\n    today we're $')
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
+        PsiElement($/ regex begin)('$/')
+        PsiElement($/ regex content)('\n    Hello ')
+        GString injection
+          PsiElement($)('$')
           Reference expression
-            PsiElement(identifier)('date')
-          PsiElement(})('}')
-        PsiElement(regex content)('\n    $ dollar-sign\n    $$ dollar-sign\n    \ backslash\n    / slash\n    $')
-        Reference expression
-          PsiElement(identifier)('/')
-        PsiElement(regex end)(' slash/$')
+            PsiElement(identifier)('name')
+        PsiElement($/ regex content)(',\n    today we're ')
+        GString injection
+          PsiElement($)('$')
+          Closable block
+            PsiElement({)('{')
+            Parameter list
+              <empty list>
+            Reference expression
+              PsiElement(identifier)('date')
+            PsiElement(})('}')
+        PsiElement($/ regex content)('\n    $ dollar-sign\n    $$ dollar-sign\n    \ backslash\n    / slash\n    $/ slash')
+        PsiElement($/ regex end)('/$')

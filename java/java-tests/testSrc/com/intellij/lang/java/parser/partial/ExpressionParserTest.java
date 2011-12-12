@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testShiftRight() { doParserTest("x >>= 2"); }
 
   public void testIllegalWildcard() { doParserTest("this.<?>foo()"); }
+  public void testIllegalBound() { doParserTest("C.<T extends S>foo()"); }
 
   public void testQualifiedSuperMethodCall0() { doParserTest("new D().super(0)"); }
   public void testQualifiedSuperMethodCall1() { doParserTest("d.super(0)"); }
@@ -120,7 +121,6 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   private void doParserTest(@NonNls final String text) {
     doParserTest(text, new MyTestParser());
   }
-
   private static class MyTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {

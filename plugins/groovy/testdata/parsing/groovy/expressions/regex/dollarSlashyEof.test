@@ -10,9 +10,7 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      Multiplicative expression
-        Reference expression
-          PsiElement(identifier)('$')
-        PsiElement(/)('/')
-        PsiErrorElement:Expression expected
+      Compound regular expression
+        PsiElement($/ regex begin)('$/')
+        PsiErrorElement:Dollar slash ending expected
           <empty list>

@@ -412,7 +412,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     myPreviouslyRegistered = state;
   }
 
-  public Lock getWriteLock(StubIndexKey indexKey) {
+  public final Lock getWriteLock(StubIndexKey indexKey) {
     return myIndices.get(indexKey).getWriteLock();
   }
 

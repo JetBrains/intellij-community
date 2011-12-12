@@ -23,8 +23,8 @@ PsiJavaFile:IllegalWildcard.java
         PsiJavaToken:LBRACE('{')
         PsiWhiteSpace('\n    ')
         PsiExpressionStatement
-          PsiConditionalExpression:this.<?
-            PsiReferenceExpression:this.<
+          PsiMethodCallExpression:this.<?>foo()
+            PsiReferenceExpression:this.<?>foo
               PsiThisExpression:this
                 PsiReferenceParameterList
                   <empty list>
@@ -32,24 +32,9 @@ PsiJavaFile:IllegalWildcard.java
               PsiJavaToken:DOT('.')
               PsiReferenceParameterList
                 PsiJavaToken:LT('<')
-                PsiErrorElement:Identifier expected
-                  <empty list>
-                PsiErrorElement:'>' or ',' expected.
-                  <empty list>
-              PsiErrorElement:Identifier expected
-                <empty list>
-            PsiJavaToken:QUEST('?')
-            PsiErrorElement:Expression expected
-              <empty list>
-          PsiErrorElement:';' expected
-            <empty list>
-        PsiErrorElement:Unexpected token
-          PsiJavaToken:GT('>')
-        PsiExpressionStatement
-          PsiMethodCallExpression:foo()
-            PsiReferenceExpression:foo
-              PsiReferenceParameterList
-                <empty list>
+                PsiErrorElement:Unexpected wildcard
+                  PsiJavaToken:QUEST('?')
+                PsiJavaToken:GT('>')
               PsiIdentifier:foo('foo')
             PsiExpressionList
               PsiJavaToken:LPARENTH('(')

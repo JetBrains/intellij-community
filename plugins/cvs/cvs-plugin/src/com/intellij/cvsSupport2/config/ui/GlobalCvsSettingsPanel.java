@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  */
 package com.intellij.cvsSupport2.config.ui;
 
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.pserver.ui.PServerSettingsPanel;
-import com.intellij.cvsSupport2.application.CvsEntriesManager;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.CharsetToolkit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +30,7 @@ import java.nio.charset.Charset;
  * author: lesya
  */
 public class GlobalCvsSettingsPanel {
-  private final PServerSettingsPanel myPServerSettingsPanel = new PServerSettingsPanel();
+  private final PServerSettingsPanel myPServerSettingsPanel;
   private JComponent myPanel;
   private JPanel myPServerPanel;
   private JCheckBox myUseGZIPCompression;
@@ -37,17 +38,16 @@ public class GlobalCvsSettingsPanel {
   private JCheckBox myLogOutput;
   private JCheckBox mySendEnvironment;
 
-  public GlobalCvsSettingsPanel() {
+  public GlobalCvsSettingsPanel(Project project) {
     myPServerPanel.setLayout(new BorderLayout());
+    myPServerSettingsPanel = new PServerSettingsPanel(project);
     myPServerPanel.add(myPServerSettingsPanel.getPanel(), BorderLayout.CENTER);
 
-    Charset[] availableCharsets = CharsetToolkit.getAvailableCharsets();
-
     myCharset.addItem(CvsApplicationLevelConfiguration.DEFAULT);
+    final Charset[] availableCharsets = CharsetToolkit.getAvailableCharsets();
     for (Charset charset : availableCharsets) {
       myCharset.addItem(charset.name());
     }
-
   }
 
   public void updateFrom(CvsApplicationLevelConfiguration config) {
@@ -60,7 +60,7 @@ public class GlobalCvsSettingsPanel {
 
   public void saveTo(CvsApplicationLevelConfiguration config) {
     myPServerSettingsPanel.saveTo(config);
-    String oldEncoding = config.ENCODING;
+    final String oldEncoding = config.ENCODING;
     config.ENCODING = myCharset.getSelectedItem().toString();
     if (!Comparing.equal(oldEncoding, config.ENCODING)) {
       CvsEntriesManager.getInstance().encodingChanged();

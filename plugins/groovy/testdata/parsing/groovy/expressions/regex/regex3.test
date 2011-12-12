@@ -1,5 +1,7 @@
 /abc/
 -----
 Groovy script
-  Literal
-    PsiElement(regexp)('/abc/')
+  Compound regular expression
+    PsiElement(regex begin)('/')
+    PsiElement(regex content)('abc')
+    PsiElement(regex end)('/')

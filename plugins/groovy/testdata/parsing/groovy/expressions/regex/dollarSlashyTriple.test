@@ -11,31 +11,47 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Compound regular expression
-        PsiElement(regex begin)('$/ $')
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          Literal
-            PsiElement(regexp)('$/ a /$')
-          PsiElement(})('}')
-        PsiElement(regex content)(' $')
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          Compound regular expression
-            PsiElement(regex begin)('$/ $')
-            Reference expression
-              PsiElement(identifier)('b')
-            PsiElement(regex content)(' $')
-            Closable block
-              PsiElement({)('{')
-              Parameter list
-                <empty list>
-              Literal
-                PsiElement(regexp)('$/ c /$')
-              PsiElement(})('}')
-            PsiElement(regex end)(' /$')
-          PsiElement(})('}')
-        PsiElement(regex end)(' /$')
+        PsiElement($/ regex begin)('$/')
+        PsiElement($/ regex content)(' ')
+        GString injection
+          PsiElement($)('$')
+          Closable block
+            PsiElement({)('{')
+            Parameter list
+              <empty list>
+            Compound regular expression
+              PsiElement($/ regex begin)('$/')
+              PsiElement($/ regex content)(' a ')
+              PsiElement($/ regex end)('/$')
+            PsiElement(})('}')
+        PsiElement($/ regex content)(' ')
+        GString injection
+          PsiElement($)('$')
+          Closable block
+            PsiElement({)('{')
+            Parameter list
+              <empty list>
+            Compound regular expression
+              PsiElement($/ regex begin)('$/')
+              PsiElement($/ regex content)(' ')
+              GString injection
+                PsiElement($)('$')
+                Reference expression
+                  PsiElement(identifier)('b')
+              PsiElement($/ regex content)(' ')
+              GString injection
+                PsiElement($)('$')
+                Closable block
+                  PsiElement({)('{')
+                  Parameter list
+                    <empty list>
+                  Compound regular expression
+                    PsiElement($/ regex begin)('$/')
+                    PsiElement($/ regex content)(' c ')
+                    PsiElement($/ regex end)('/$')
+                  PsiElement(})('}')
+              PsiElement($/ regex content)(' ')
+              PsiElement($/ regex end)('/$')
+            PsiElement(})('}')
+        PsiElement($/ regex content)(' ')
+        PsiElement($/ regex end)('/$')

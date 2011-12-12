@@ -110,7 +110,6 @@ public class TypesUtil {
   static {
     ourPrimitiveTypesToClassNames.put(mSTRING_LITERAL, JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(mGSTRING_LITERAL, JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(mREGEX_LITERAL, JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(mNUM_INT, JAVA_LANG_INTEGER);
     ourPrimitiveTypesToClassNames.put(mNUM_LONG, JAVA_LANG_LONG);
     ourPrimitiveTypesToClassNames.put(mNUM_FLOAT, JAVA_LANG_FLOAT);

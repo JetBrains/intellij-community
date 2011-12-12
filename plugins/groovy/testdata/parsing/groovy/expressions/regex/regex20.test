@@ -1,0 +1,14 @@
+print (/a\${2}/)
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('print')
+    PsiWhiteSpace(' ')
+    Arguments
+      PsiElement(()('(')
+      Compound regular expression
+        PsiElement(regex begin)('/')
+        PsiElement(regex content)('a\${2}')
+        PsiElement(regex end)('/')
+      PsiElement())(')')

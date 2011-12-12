@@ -1,5 +1,7 @@
 /\//
 -----
 Groovy script
-  Literal
-    PsiElement(regexp)('/\//')
+  Compound regular expression
+    PsiElement(regex begin)('/')
+    PsiElement(regex content)('\/')
+    PsiElement(regex end)('/')

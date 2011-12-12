@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.DollarSlashRegexConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.RegexConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.StringConstructorExpression;
@@ -227,17 +228,15 @@ public class PathExpression implements GroovyElementTypes {
     }
 
     final IElementType tokenType = builder.getTokenType();
-    if (mREGEX_LITERAL.equals(tokenType)) {
-      ParserUtils.eatElement(builder, REGEX);
-      return PATH_PROPERTY_REFERENCE;
-    }
     if (mGSTRING_BEGIN.equals(tokenType)) {
       StringConstructorExpression.parse(builder, parser);
       return PATH_PROPERTY_REFERENCE;
     }
     if (mREGEX_BEGIN.equals(tokenType)) {
-      RegexConstructorExpression.parse(builder, parser);
-      return PATH_PROPERTY_REFERENCE;
+      return RegexConstructorExpression.parse(builder, parser) ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
+    }
+    if (mDOLLAR_SLASH_REGEX_BEGIN.equals(tokenType)) {
+      return DollarSlashRegexConstructorExpression.parse(builder, parser) ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
     }
     if (mLCURLY.equals(tokenType)) {
       OpenOrClosableBlock.parseOpenBlock(builder, parser);

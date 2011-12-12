@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.connections.pserver.ui;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -36,8 +37,9 @@ public class PServerSettingsPanel {
   private JLabel myConnectionTimeoutLabel;
   private JLabel myPasswordFileLabel;
 
-  public PServerSettingsPanel() {
-    CvsConfigurationPanel.addBrowseHandler(myPathToPasswordFile, CvsBundle.message("dialog.title.select.path.to.cvs.password.file"));
+  public PServerSettingsPanel(Project project) {
+    CvsConfigurationPanel.addBrowseHandler(project, myPathToPasswordFile,
+                                           CvsBundle.message("dialog.title.select.path.to.cvs.password.file"));
     myConnectionTimeoutLabel.setLabelFor(myTimeout);
     myPasswordFileLabel.setLabelFor(myPathToPasswordFile.getTextField());
   }
@@ -71,8 +73,10 @@ public class PServerSettingsPanel {
     }
     config.setPathToPasswordFile(pathToPasswordFile);
     try {
-      int timeout = Integer.parseInt(myTimeout.getText());
-      if (timeout < 0) throwInvalidTimeoutException();
+      final int timeout = Integer.parseInt(myTimeout.getText());
+      if (timeout < 0) {
+        throwInvalidTimeoutException();
+      }
       config.TIMEOUT = timeout;
     }
     catch (NumberFormatException ex) {

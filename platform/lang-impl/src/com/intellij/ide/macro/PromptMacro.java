@@ -19,8 +19,9 @@ package com.intellij.ide.macro;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.Nullable;
 
-public final class PromptMacro extends Macro implements SecondQueueExpandMacro {
+public final class PromptMacro extends PromptingMacro implements SecondQueueExpandMacro {
   public String getName() {
     return "Prompt";
   }
@@ -29,11 +30,9 @@ public final class PromptMacro extends Macro implements SecondQueueExpandMacro {
     return IdeBundle.message("macro.prompt");
   }
 
-  public String expand(DataContext dataContext) throws ExecutionCancelledException {
-    String userInput = Messages.showInputDialog(IdeBundle.message("prompt.enter.parameters"),
-                                                IdeBundle.message("title.input"), Messages.getQuestionIcon());
-    if (userInput == null) throw new ExecutionCancelledException();
-    return userInput;
+  @Nullable
+  protected String promptUser(DataContext dataContext) {
+    return Messages.showInputDialog(IdeBundle.message("prompt.enter.parameters"), IdeBundle.message("title.input"), Messages.getQuestionIcon());
   }
 
   public void cachePreview(DataContext dataContext) {

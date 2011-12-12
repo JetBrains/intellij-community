@@ -225,7 +225,7 @@ public class CvsTabbedWindow {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      new ConfigureCvsGlobalSettingsDialog().show();
+      new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
     }
   }
 

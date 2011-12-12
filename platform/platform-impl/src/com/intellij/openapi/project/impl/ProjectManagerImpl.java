@@ -453,7 +453,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
 
-    final Project project = convertAndLoadProject(filePath);
+    final Project project = convertAndLoadProject(filePath, null);
     if (project == null) {
       showWelcomeScreenIfNoProjectOpened();
       return null;
@@ -480,9 +480,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
   
   @Nullable
-  public Project convertAndLoadProject(String filePath) throws IOException {
+  public Project convertAndLoadProject(String filePath, @Nullable Ref<ConversionResult> conversionResultRef) throws IOException {
     final String fp = canonicalize(filePath);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(fp);
+    if (conversionResultRef != null) {
+      conversionResultRef.set(conversionResult);
+    }
     if (conversionResult.openingIsCanceled()) {
       return null;
     }
