@@ -19,6 +19,7 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditCvsConfigurationFieldByFieldDialog;
 import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
+import com.intellij.cvsSupport2.ui.FormUtils;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.DocumentAdapter;
 
@@ -88,7 +89,7 @@ public class CvsRootAsStringConfigurationPanel {
   }
 
   public void saveTo(CvsRootConfiguration config) {
-    config.CVS_ROOT = myCvsRoot.getText().trim();
+    config.CVS_ROOT = FormUtils.getFieldValue(myCvsRoot, true);
   }
 
   public String getCvsRoot() {

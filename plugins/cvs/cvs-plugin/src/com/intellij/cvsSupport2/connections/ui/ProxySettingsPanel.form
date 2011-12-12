@@ -74,6 +74,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="6c959"/>
               <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.proxy.login"/>
             </properties>
           </component>
@@ -82,6 +83,7 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="f4e35"/>
               <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.proxy.password"/>
             </properties>
           </component>
@@ -106,6 +108,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="327d8"/>
               <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.proxy.proxy.host"/>
             </properties>
           </component>
@@ -114,6 +117,7 @@
               <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="802e6"/>
               <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.proxy.proxy.port"/>
             </properties>
           </component>

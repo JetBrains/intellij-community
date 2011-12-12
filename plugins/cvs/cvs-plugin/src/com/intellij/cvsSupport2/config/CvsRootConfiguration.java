@@ -82,11 +82,14 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   private static String createFieldByFieldCvsRoot(CvsRepository cvsRepository) {
-    return createStringRepresentationOn(CvsMethod.getValue(cvsRepository.getMethod()), cvsRepository.getUser(), cvsRepository.getHost(),
-                                        String.valueOf(cvsRepository.getPort()), cvsRepository.getRepository());
+    return createStringRepresentationOn(CvsMethod.getValue(cvsRepository.getMethod()),
+                                        cvsRepository.getUser(),
+                                        cvsRepository.getHost(),
+                                        cvsRepository.getPort(),
+                                        cvsRepository.getRepository());
   }
 
-  public static String createStringRepresentationOn(CvsMethod method, String user, String host, String port, String repository) {
+  public static String createStringRepresentationOn(CvsMethod method, String user, String host, int port, String repository) {
     if (method == CvsMethod.LOCAL_METHOD) {
       final StringBuilder result = new StringBuilder();
       result.append(SEPARATOR);
@@ -102,7 +105,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     result.append(user);
     result.append(AT);
     result.append(host);
-    if (port.length() > 0) {
+    if (port > 0) {
       result.append(SEPARATOR);
       result.append(port);
     }
@@ -115,12 +118,12 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   public String toString() {
     if (useBranch()) {
-      return CvsBundle
-        .message("cvs.root.configuration.on.branch.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.BRANCH);
+      return CvsBundle.message("cvs.root.configuration.on.branch.string.representation", getCvsRootAsString(),
+                                DATE_OR_REVISION_SETTINGS.BRANCH);
     }
     else if (useDate()) {
-      return CvsBundle
-        .message("cvs.root.configuration.on.date.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.getDate());
+      return CvsBundle.message("cvs.root.configuration.on.date.string.representation", getCvsRootAsString(),
+                                DATE_OR_REVISION_SETTINGS.getDate());
     }
     else {
       return getCvsRootAsString();
@@ -128,11 +131,11 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   private boolean useDate() {
-    return DATE_OR_REVISION_SETTINGS.USE_DATE && (DATE_OR_REVISION_SETTINGS.getDate().length() > 0);
+    return DATE_OR_REVISION_SETTINGS.USE_DATE && !DATE_OR_REVISION_SETTINGS.getDate().isEmpty();
   }
 
   private boolean useBranch() {
-    return DATE_OR_REVISION_SETTINGS.USE_BRANCH && (DATE_OR_REVISION_SETTINGS.BRANCH.length() > 0);
+    return DATE_OR_REVISION_SETTINGS.USE_BRANCH && !DATE_OR_REVISION_SETTINGS.BRANCH.isEmpty();
   }
 
   public CvsRootConfiguration getMyCopy() {

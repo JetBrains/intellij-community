@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.intellij.cvsSupport2.config.ui;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsMethod;
 import com.intellij.cvsSupport2.connections.CvsRootData;
-import com.intellij.openapi.ui.InputException;
+import com.intellij.cvsSupport2.ui.FormUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -40,8 +39,8 @@ public class CvsRootFieldByFieldConfigurationPanel {
 
   public void updateFrom(CvsRootData config) {
     myMethods.removeAllItems();
-    for (int i = 0; i < CvsMethod.AVAILABLE_METHODS.length; i++) {
-      myMethods.addItem(CvsMethod.AVAILABLE_METHODS[i]);
+    for (CvsMethod method : CvsMethod.AVAILABLE_METHODS) {
+      myMethods.addItem(method);
     }
 
     myMethods.addActionListener(new ActionListener() {
@@ -65,31 +64,12 @@ public class CvsRootFieldByFieldConfigurationPanel {
   }
 
   public String getSettings() {
-    final String port = myPort.getText().trim();
-    if (port.length() > 0) {
-      try {
-        final int intPort = Integer.parseInt(port);
-        if (intPort <= 0) throw new InputException(CvsBundle.message("error.message.invalid.port.value", port), myPort);
-      }
-      catch (NumberFormatException ex) {
-        throw new InputException(CvsBundle.message("error.message.invalid.port.value", port), myPort);
-      }
-    }
-
+    final int port = FormUtils.getPositiveIntFieldValue(myPort, true, true);
     final CvsMethod cvsMethod = (CvsMethod)myMethods.getSelectedItem();
-    final String user = checkedField(myUser, CvsBundle.message("configure.root.field.name.user"), cvsMethod.hasUserValue());
-    final String host = checkedField(myHost, CvsBundle.message("configure.root.field.name.host"), cvsMethod.hasHostValue());
-    final String repository = checkedField(myRepository, CvsBundle.message("configure.root.field.name.repository"), true);
-
+    final String user = FormUtils.getFieldValue(myUser, cvsMethod.hasUserValue());
+    final String host = FormUtils.getFieldValue(myHost, cvsMethod.hasHostValue());
+    final String repository = FormUtils.getFieldValue(myRepository, true);
     return CvsRootConfiguration.createStringRepresentationOn(cvsMethod, user, host, port, repository);
-  }
-
-  private static String checkedField(JTextField field, String name, boolean checkParameters) {
-    final String value = field.getText().trim();
-    if (checkParameters && (value.length() == 0)) {
-      throw new InputException(CvsBundle.message("error.message.value.cannot.be.empty", name), field);
-    }
-    return value;
   }
 
   public JComponent getPanel() {
