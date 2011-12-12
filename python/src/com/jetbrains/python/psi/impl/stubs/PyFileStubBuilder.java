@@ -9,6 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyFileStubBuilder extends DefaultStubBuilder {
   @Override
-  protected StubElement createStubForFile(PsiFile file) {
+  protected StubElement createStubForFile(@NotNull PsiFile file) {
     if (file instanceof PyFile) {
       return new PyFileStubImpl((PyFile)file);
     }
@@ -25,7 +26,7 @@ public class PyFileStubBuilder extends DefaultStubBuilder {
   }
 
   @Override
-  protected boolean skipChildProcessingWhenBuildingStubs(PsiElement element, PsiElement child) {
+  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement element, @NotNull PsiElement child) {
     return element instanceof PyIfStatement && PyUtil.isIfNameEqualsMain((PyIfStatement)element);
   }
 
