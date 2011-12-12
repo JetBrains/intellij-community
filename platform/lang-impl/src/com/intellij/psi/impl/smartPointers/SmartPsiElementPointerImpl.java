@@ -106,7 +106,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     myElement = element == null ? null : new SoftReference<E>(element);
   }
 
-  private E getCachedElement() {
+  public E getCachedElement() {
     Reference<E> ref = myElement;
     return ref == null ? null : ref.get();
   }
@@ -203,7 +203,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     myElementInfo.fastenBelt(offset, cachedRangeMarker);
   }
 
-  @Override
   @NotNull
   public SmartPointerElementInfo getElementInfo() {
     return myElementInfo;
