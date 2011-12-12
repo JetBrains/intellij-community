@@ -16,52 +16,40 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_INJECTION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.REGEX;
 
 /**
  * @author Max Medvedev
  */
 public class DollarSlashRegexConstructorExpression {
-  public static GroovyElementType parse(PsiBuilder builder, GroovyParser parser) {
+  private static final Logger LOG = Logger.getInstance(DollarSlashRegexConstructorExpression.class);
 
-    PsiBuilder.Marker sMarker = builder.mark();
-    if (ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_BEGIN)) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+    PsiBuilder.Marker marker = builder.mark();
+    final boolean result = ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_BEGIN);
+    LOG.assertTrue(result);
+
+    boolean inj = false;
+    ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_CONTENT);
+    while (parseInjection(builder, parser)) {
+      inj = true;
       ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_CONTENT);
-      if (!parseInjection(builder, parser)) {
-        if (!ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_END)) {
-          builder.error(GroovyBundle.message("dollar.slash.end.expected"));
-        }
-        sMarker.done(REGEX);
-        return REGEX;
-      }
-      else {
-        while (ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_CONTENT)) {
-          if (!parseInjection(builder, parser)) break;
-        }
-        if (!ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_END)) {
-          builder.error(GroovyBundle.message("dollar.slash.end.expected"));
-        }
-        sMarker.done(REGEX);
-        return REGEX;
-      }
     }
-    else {
-      sMarker.drop();
-      return WRONGWAY;
+
+    if (!ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_END)) {
+      builder.error(GroovyBundle.message("dollar.slash.end.expected"));
     }
+    marker.done(REGEX);
+    return inj;
   }
 
   /**

@@ -115,11 +115,12 @@ public class ArgumentList implements GroovyElementTypes {
       marker.done(ARGUMENT_LABEL);
       return true;
     }
-    else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
-             TokenSets.KEYWORDS.contains(builder.getTokenType()) ||
-             mSTRING_LITERAL.equals(builder.getTokenType()) ||
-             mGSTRING_LITERAL.equals(builder.getTokenType()) ||
-             mREGEX_LITERAL.equals(builder.getTokenType())) {
+
+    final IElementType type = builder.getTokenType();
+    if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
+        TokenSets.KEYWORDS.contains(type) ||
+        mSTRING_LITERAL.equals(type) ||
+        mGSTRING_LITERAL.equals(type)) {
       builder.advanceLexer();
       if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
@@ -130,12 +131,14 @@ public class ArgumentList implements GroovyElementTypes {
         return false;
       }
     }
-    else if (mGSTRING_BEGIN.equals(builder.getTokenType()) ||
-             mREGEX_BEGIN.equals(builder.getTokenType()) ||
-             TokenSets.NUMBERS.contains(builder.getTokenType()) ||
-             mLBRACK.equals(builder.getTokenType()) ||
-             mLPAREN.equals(builder.getTokenType()) ||
-             mLCURLY.equals(builder.getTokenType())) {
+
+    if (mGSTRING_BEGIN.equals(type) ||
+        mREGEX_BEGIN.equals(type) ||
+        mDOLLAR_SLASH_REGEX_BEGIN.equals(type) ||
+        TokenSets.NUMBERS.contains(type) ||
+        mLBRACK.equals(type) ||
+        mLPAREN.equals(type) ||
+        mLCURLY.equals(type)) {
       PrimaryExpression.parsePrimaryExpression(builder, parser);
       if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
@@ -146,11 +149,8 @@ public class ArgumentList implements GroovyElementTypes {
         return false;
       }
     }
-    else {
-      marker.drop();
-      return false;
-    }
 
+    marker.drop();
+    return false;
   }
-
 }
