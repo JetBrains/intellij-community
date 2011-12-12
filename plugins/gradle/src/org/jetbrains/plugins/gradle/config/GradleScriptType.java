@@ -93,7 +93,7 @@ public class GradleScriptType extends GroovyScriptType {
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
     String target = getTaskTarget(location);
     if (target != null) {
-      configuration.setProgramParameters(target);
+      configuration.setScriptParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
 
@@ -174,7 +174,9 @@ public class GradleScriptType extends GroovyScriptType {
       public void configureCommandLine(JavaParameters params,
                                        @Nullable Module module,
                                        boolean tests,
-                                       VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
+                                       VirtualFile script, GroovyScriptRunConfiguration configuration)
+        throws CantRunException
+      {
         final Project project = configuration.getProject();
         final GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
         final VirtualFile gradleHome = libraryManager.getGradleHome(module, project);
@@ -208,10 +210,15 @@ public class GradleScriptType extends GroovyScriptType {
         params.getVMParametersList().add("-Dgradle.home=" + FileUtil.toSystemDependentName(gradleHome.getPath()));
 
         setToolsJar(params);
-
+        
+        final String scriptPath = configuration.getScriptPath();
+        if (scriptPath == null) {
+          throw new CantRunException("Target script is undefined");
+        } 
         params.getProgramParametersList().add("--build-file");
-        params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.getScriptPath()));
+        params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
         params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
+        params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
       }
     };
   }
