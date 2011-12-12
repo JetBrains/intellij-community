@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 
@@ -91,10 +92,6 @@ public class StringLiteralLexer extends LexerBase {
     return myLastState;
   }
 
-  private static boolean isHexDigit(char c) {
-    return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F';
-  }
-
   public IElementType getTokenType() {
     if (myStart >= myEnd) return null;
 
@@ -113,14 +110,14 @@ public class StringLiteralLexer extends LexerBase {
     }
     if (nextChar == 'u') {
       for(int i = myStart + 2; i < myStart + 6; i++) {
-        if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+        if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
       }
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
 
     if (nextChar == 'x' && myAllowHex) {
       for(int i = myStart + 2; i < myStart + 4; i++) {
-        if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+        if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
       }
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
