@@ -37,6 +37,7 @@ public class GitRepositoryFiles {
   private final String myRefsHeadsDirPath;
   private final String myRefsRemotesDirPath;
   private final String myCommitMessagePath;
+  private final String myExcludePath;
 
   public static GitRepositoryFiles getInstance(@NotNull VirtualFile root) {
     // maybe will be cached later to store a single GitRepositoryFiles for a root. 
@@ -60,6 +61,7 @@ public class GitRepositoryFiles {
     myPackedRefsPath = gitDirPath + "/packed-refs";
     myRefsHeadsDirPath = gitDirPath + "/refs/heads";
     myRefsRemotesDirPath = gitDirPath + "/refs/remotes";
+    myExcludePath = gitDirPath + "/info/exclude";
   }
 
   /**
@@ -120,6 +122,13 @@ public class GitRepositoryFiles {
 
   public boolean isCommitMessageFile(@NotNull String file) {
     return file.equals(myCommitMessagePath);
+  }
+
+  /**
+   * {@code $GIT_DIR/info/exclude}
+   */
+  public boolean isExclude(@NotNull String path) {
+    return path.equals(myExcludePath);
   }
 
 }

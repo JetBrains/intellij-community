@@ -261,7 +261,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   private boolean totalRefreshNeeded(@NotNull String path) {
-    return indexChanged(path) || externallyCommitted(path);
+    return indexChanged(path) || externallyCommitted(path) || gitignoreChanged(path);
   }
 
   private boolean indexChanged(@NotNull String path) {
@@ -270,6 +270,11 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   private boolean externallyCommitted(@NotNull String path) {
     return myRepositoryFiles.isCommitMessageFile(path);
+  }
+
+  private boolean gitignoreChanged(@NotNull String path) {
+    // TODO watch file stored in core.excludesfile
+    return path.endsWith(".gitignore") || myRepositoryFiles.isExclude(path);
   }
 
   @Nullable
