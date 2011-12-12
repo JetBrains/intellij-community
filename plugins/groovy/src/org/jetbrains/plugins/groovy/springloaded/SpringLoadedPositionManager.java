@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  */
 public class SpringLoadedPositionManager implements PositionManager {
 
-  private static final Pattern GENERATED_CLASS_NAME = Pattern.compile(".*\\$\\$[A-Za-z0-9]{8}");
+  private static final Pattern GENERATED_CLASS_NAME = Pattern.compile("\\$\\$[A-Za-z0-9]{8}");
   
   private final DebugProcess myDebugProcess;
 
@@ -158,6 +158,16 @@ public class SpringLoadedPositionManager implements PositionManager {
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(requestor, className + "*");
   }
 
+  private static boolean isSpringLoadedGeneratedClass(ReferenceType ownerClass, ReferenceType aClass) {
+    String name = aClass.name();
+    String ownerClassName = ownerClass.name();
+
+    // return   name == ownerClassName + "$$" + /[A-Za-z0-9]{8}/
+    return name.length() == ownerClassName.length() + 2 + 8
+      && name.startsWith(ownerClassName)
+      && GENERATED_CLASS_NAME.matcher(name.substring(ownerClassName.length())).matches();
+  }
+  
   @Nullable
   private static List<ReferenceType> findNested(ReferenceType fromClass, SourcePosition classPosition) {
     if (!fromClass.isPrepared()) return null;
@@ -169,7 +179,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     for (ReferenceType nested : nestedTypes) {
       if (!nested.isPrepared()) continue;
 
-      if (GENERATED_CLASS_NAME.matcher(nested.name()).matches()) {
+      if (isSpringLoadedGeneratedClass(fromClass, nested)) {
         if (springLoadedGeneratedClasses.size() > 0 && !springLoadedGeneratedClasses.get(0).name().equals(nested.name())) {
           springLoadedGeneratedClasses.clear(); // Only latest generated classes should be used.
         }
