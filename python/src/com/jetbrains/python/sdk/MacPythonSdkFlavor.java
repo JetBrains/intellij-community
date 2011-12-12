@@ -2,6 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +28,9 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
   private static void collectPythonInstallations(String pythonPath, List<String> candidates) {
     VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
     if (rootVDir != null) {
+      if (rootVDir instanceof NewVirtualFile) {
+        ((NewVirtualFile)rootVDir).markDirty();
+      }
       rootVDir.refresh(false, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
         final String dir_name = dir.getName().toLowerCase();

@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
 import java.io.File;
 import java.util.Collection;
@@ -56,6 +57,9 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   private static void findSubdirInstallations(Collection<String> candidates, String rootDir, String dir_prefix, String exe_name) {
     VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(rootDir);
     if (rootVDir != null) {
+      if (rootVDir instanceof NewVirtualFile) {
+        ((NewVirtualFile)rootVDir).markDirty();
+      }
       rootVDir.refresh(false, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
         if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
