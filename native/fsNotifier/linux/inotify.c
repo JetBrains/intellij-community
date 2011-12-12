@@ -135,8 +135,17 @@ static int add_watch(const char* path, watch_node* parent) {
   watch_node* node = table_get(watches, wd);
   if (node != NULL) {
     if (node->wd != wd || strcmp(node->name, path) != 0) {
-      userlog(LOG_ERR, "table error: collision (new %d:%s, existing %d:%s)", wd, path, node->wd, node->name);
-      return ERR_ABORT;
+      char buf1[PATH_MAX], buf2[PATH_MAX];
+      const char* normalized1 = realpath(node->name, buf1);
+      const char* normalized2 = realpath(path, buf2);
+      if (normalized1 == NULL || normalized2 == NULL || strcmp(normalized1, normalized2) != 0) {
+        userlog(LOG_ERR, "table error: collision at %d (new %s, existing %s)", wd, path, node->name);
+        return ERR_ABORT;
+      }
+      else {
+        userlog(LOG_WARNING, "intersection at %d: (new %s, existing %s, real %s)", wd, path, node->name, normalized1);
+        return ERR_IGNORE;
+      }
     }
 
     return wd;
