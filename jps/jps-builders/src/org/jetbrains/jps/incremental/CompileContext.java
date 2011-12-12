@@ -126,7 +126,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   void setCompilingTests(boolean compilingTests) {
     myCompilingTests = compilingTests;
-    myFilesCache.clear(); // todo: do we really need this?
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) {
@@ -158,7 +157,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   public boolean hasRemovedSources() {
-    final Set<File> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(this);
+    final Set<String> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(this);
     return removed != null && !removed.isEmpty();
   }
 
@@ -175,20 +174,19 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       final File rootFile = new File(normalizedRoot);
       if (rootFile.exists()) {
         final FSSnapshot.Root root = snapshot.addRoot(rootFile, normalizedRoot);
-        buildStructure(root.getNode(), excludes);
+        buildStructure(root.getNode(), rootFile, excludes);
       }
     }
     return snapshot;
   }
 
-  private static void buildStructure(final FSSnapshot.Node from, final Set<File> excluded) {
+  private static void buildStructure(final FSSnapshot.Node from, final File nodeFile, final Set<File> excluded) {
     if (from.isDirectory()) {
-      final File nodeFile = from.getFile();
       if (!PathUtil.isUnder(excluded, nodeFile)) {
         final File[] children = nodeFile.listFiles();
         if (children != null) {
           for (File child : children) {
-            buildStructure(from.addChild(child), excluded);
+            buildStructure(from.addChild(child), child, excluded);
           }
         }
       }

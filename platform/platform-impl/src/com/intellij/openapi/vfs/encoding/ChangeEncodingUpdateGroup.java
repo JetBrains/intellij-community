@@ -27,26 +27,38 @@ import com.intellij.pom.Navigatable;
  * @author cdr
  */
 public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
+  private boolean myUpdating;
+  
   @Override
   public void update(final AnActionEvent e) {
+    if (myUpdating) {
+      return;
+    }
     VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null && files.length > 1) {
       virtualFile = null;
     }
-    if (virtualFile != null){
+    if (virtualFile != null) {
       Navigatable navigatable = e.getData(PlatformDataKeys.NAVIGATABLE);
       if (navigatable instanceof OpenFileDescriptor) {
         // prefer source to the class file
         virtualFile = ((OpenFileDescriptor)navigatable).getFile();
       }
     }
-    if(virtualFile != null && !virtualFile.isInLocalFileSystem()){
+    if (virtualFile != null && !virtualFile.isInLocalFileSystem()) {
       virtualFile = null;
     }
 
     Pair<String, Boolean> result = ChooseFileEncodingAction.update(virtualFile);
-    e.getPresentation().setText(result.getFirst());
-    e.getPresentation().setEnabled(result.getSecond());
+    myUpdating = true;
+    try {
+      e.getPresentation().setText(result.getFirst());
+      // updating the enabled state of the action can trigger the menuSelected handler, which updates the action group again
+      e.getPresentation().setEnabled(result.getSecond());
+    }
+    finally {
+      myUpdating = false;
+    }
   }
 }

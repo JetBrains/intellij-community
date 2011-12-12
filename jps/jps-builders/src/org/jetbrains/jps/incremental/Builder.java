@@ -152,18 +152,8 @@ public abstract class Builder {
   }
 
   private static Set<String> getRemovedPaths(CompileContext context) {
-    final Set<String> removedPaths;
-    final Set<File> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
-    if (removed == null || removed.isEmpty()){
-      removedPaths = Collections.emptySet();
-    }
-    else {
-      removedPaths = new HashSet<String>();
-      for (File file : removed) {
-        removedPaths.add(file.getPath());
-      }
-    }
-    return removedPaths;
+    final Set<String> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
+    return removed != null? removed : Collections.<String>emptySet();
   }
 
 }

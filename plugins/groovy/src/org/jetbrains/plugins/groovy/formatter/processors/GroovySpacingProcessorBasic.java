@@ -182,9 +182,11 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     }
 
     // For Gstrings and regexes
-    if (leftNode.getPsi().getParent() != null &&
-        leftNode.getPsi().getParent().equals(rightNode.getPsi().getParent()) &&
-        leftNode.getPsi().getParent() instanceof GrString) {
+    if (left.getParent() != null &&
+        left.getParent().equals(right.getParent()) &&
+        (left.getParent() instanceof GrString ||
+         leftNode.getTreeParent().getElementType() == mREGEX_LITERAL ||
+         leftNode.getTreeParent().getElementType() == mDOLLAR_SLASH_REGEX_LITERAL)) {
       return NO_SPACING;
     }
     if (isDollarInGStringInjection(leftNode) || isDollarInGStringInjection(rightNode)) {

@@ -73,20 +73,16 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
   IElementType mGSTRING_CONTENT = new GroovyElementType("Gstring content");
   IElementType mGSTRING_END = new GroovyElementType("Gstring end");
 
-  IElementType mREGEX_LITERAL = new GroovyElementType("regexp");
-  IElementType mDOLLAR_SLASH_REGEX_LITERAL = new GroovyElementType("$/ regexp");
-  IElementType mWRONG_DOLLAR_SLASH_LITERAL = new GroovyElementType("wrong dollar slash literal");
-
   IElementType mREGEX_BEGIN = new GroovyElementType("regex begin");
   IElementType mREGEX_CONTENT = new GroovyElementType("regex content");
   IElementType mREGEX_END = new GroovyElementType("regex end");
+  IElementType mREGEX_LITERAL = new GroovyElementType("regex literal");
 
   IElementType mDOLLAR_SLASH_REGEX_BEGIN = new GroovyElementType("$/ regex begin");
   IElementType mDOLLAR_SLASH_REGEX_CONTENT = new GroovyElementType("$/ regex content");
   IElementType mDOLLAR_SLASH_REGEX_END = new GroovyElementType("$/ regex end");
+  IElementType mDOLLAR_SLASH_REGEX_LITERAL = new GroovyElementType("$/ regex literal");
 
-  IElementType mWRONG_REGEX_LITERAL = new GroovyElementType("wrong regex");
-  IElementType mWRONG_DOLLAR_SLASH_REGEX_LITERAL = new GroovyElementType("wrong $/ regex");
 
   /* **************************************************************************************************
  *  Common tokens: operators, braces etc.

@@ -434,10 +434,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollingModel = new ScrollingModelImpl(this);
     
-    if (mySettings.isUseSoftWraps()) {
-      mySettings.setAdditionalColumnsCount(0);
-    }
-
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
     myEditorComponent.setSize(preferredSize);
@@ -3108,7 +3104,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     final Dimension draft = getSizeWithoutCaret();
-    final int additionalSpace = mySettings.getAdditionalColumnsCount() * EditorUtil.getSpaceWidth(Font.PLAIN, this);
+    final int additionalSpace = mySoftWrapModel.isRespectAdditionalColumns()
+                                ? mySettings.getAdditionalColumnsCount() * EditorUtil.getSpaceWidth(Font.PLAIN, this)
+                                : 0;
 
     if (!myDocument.isInBulkUpdate() && getCaretModel().isUpToDate()) {
       int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;

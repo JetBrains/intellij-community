@@ -137,6 +137,13 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
             if (window1 instanceof JFrame) {
               ID w = MacUtil.findWindowForTitle(((JFrame)window1).getTitle());
               if (w != null && w.intValue() > 0) {
+                try {
+                  Thread.sleep(300);
+                }
+                catch (InterruptedException e1) {
+                  // ignore
+                }
+                
                 invoke(w, "setCollectionBehavior:", 1 << 7);
               }
             }

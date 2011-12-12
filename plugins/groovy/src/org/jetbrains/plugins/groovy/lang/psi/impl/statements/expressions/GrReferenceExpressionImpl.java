@@ -52,7 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -371,8 +371,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       IElementType nodeType = nameElement.getNode().getElementType();
-      if (nodeType == mSTRING_LITERAL || nodeType == mGSTRING_LITERAL) {
-        return GrStringUtil.removeQuotes(nameElement.getText());
+      if (TokenSets.STRING_LITERAL_SET.contains(nodeType)) {
+        final Object value = GrLiteralImpl.getLiteralValue(nameElement);
+        if (value instanceof String) {
+          return (String)value;
+        }
       }
 
       return nameElement.getText();

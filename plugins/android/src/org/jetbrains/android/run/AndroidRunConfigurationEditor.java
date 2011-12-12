@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +74,16 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myCommandLineField = myCommandLineComponent.getComponent();
     myCommandLineField.setDialogCaption(myCommandLineComponent.getRawText());
     myCommandLineComponent.getLabel().setLabelFor(myCommandLineField.getTextField());
-    myModuleSelector = new ConfigurationModuleSelector(project, myModulesComboBox);
+    myModuleSelector = new ConfigurationModuleSelector(project, myModulesComboBox) {
+      @Override
+      public boolean isModuleAccepted(Module module) {
+        if (module == null || !super.isModuleAccepted(module)) {
+          return false;
+        }
+        final AndroidFacet facet = AndroidFacet.getInstance(module);
+        return facet != null && !facet.getConfiguration().LIBRARY_PROJECT;
+      }
+    };
 
     myAvdComboComponent.setComponent(new AvdComboBox(true, false) {
       @Override

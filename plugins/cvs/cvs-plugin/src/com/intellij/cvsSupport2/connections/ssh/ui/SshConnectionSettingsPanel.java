@@ -18,8 +18,8 @@ package com.intellij.cvsSupport2.connections.ssh.ui;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
+import com.intellij.cvsSupport2.ui.FormUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 
 import javax.swing.*;
@@ -48,9 +48,9 @@ public class SshConnectionSettingsPanel {
     return myPanel;
   }
 
-  public void updateFrom(SshSettings ssh_configuration) {
-    myUsePrivateKeyFile.setSelected(ssh_configuration.USE_PPK);
-    myPathToPrivateKeyFile.setText(ssh_configuration.PATH_TO_PPK);
+  public void updateFrom(SshSettings sshConfiguration) {
+    myUsePrivateKeyFile.setSelected(sshConfiguration.USE_PPK);
+    myPathToPrivateKeyFile.setText(sshConfiguration.PATH_TO_PPK);
     setPathToPPKEnabled();
   }
 
@@ -65,19 +65,15 @@ public class SshConnectionSettingsPanel {
     }
   }
 
-  public void saveTo(SshSettings ssh_configuration) {
-    if (myUsePrivateKeyFile.isSelected() && myPathToPrivateKeyFile.getText().trim().length() == 0){
-      throw new InputException(CvsBundle.message("error.message.path.to.private.key.file.must.not.be.empty"),
-                               myPathToPrivateKeyFile.getTextField());
-    }
-    ssh_configuration.USE_PPK = myUsePrivateKeyFile.isSelected();
-    ssh_configuration.PATH_TO_PPK = myPathToPrivateKeyFile.getText().trim();
+  public void saveTo(SshSettings sshConfiguration) {
+    sshConfiguration.USE_PPK = myUsePrivateKeyFile.isSelected();
+    sshConfiguration.PATH_TO_PPK = FormUtils.getFieldValue(myPathToPrivateKeyFile, sshConfiguration.USE_PPK);
   }
 
-  public boolean equalsTo(SshSettings ssh_configuration) {
-    if (ssh_configuration.USE_PPK != myUsePrivateKeyFile.isSelected()) {
+  public boolean equalsTo(SshSettings sshConfiguration) {
+    if (sshConfiguration.USE_PPK != myUsePrivateKeyFile.isSelected()) {
       return false;
     }
-    return ssh_configuration.PATH_TO_PPK.equals(myPathToPrivateKeyFile.getText().trim());
+    return sshConfiguration.PATH_TO_PPK.equals(myPathToPrivateKeyFile.getText().trim());
   }
 }

@@ -69,10 +69,12 @@ public class PrimaryExpression implements GroovyElementTypes {
       return StringConstructorExpression.parse(builder, parser);
     }
     if (mREGEX_BEGIN == tokenType) {
-      return RegexConstructorExpression.parse(builder, parser);
+      RegexConstructorExpression.parse(builder, parser, false);
+      return REGEX;
     }
     if (mDOLLAR_SLASH_REGEX_BEGIN == tokenType) {
-      return DollarSlashRegexConstructorExpression.parse(builder, parser);
+      DollarSlashRegexConstructorExpression.parse(builder, parser, false);
+      return REGEX;
     }
     if (mLBRACK == tokenType) {
       return ListOrMapConstructorExpression.parse(builder, parser);
@@ -83,31 +85,12 @@ public class PrimaryExpression implements GroovyElementTypes {
     if (mLCURLY == tokenType) {
       return OpenOrClosableBlock.parseClosableBlock(builder, parser);
     }
-    if (tokenType == mSTRING_LITERAL ||
-        tokenType == mGSTRING_LITERAL ||
-        tokenType == mREGEX_LITERAL ||
-        tokenType == mDOLLAR_SLASH_REGEX_LITERAL) {
+    if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL) {
       return ParserUtils.eatElement(builder, literalsAsRefExprs ? REFERENCE_EXPRESSION : LITERAL);
     }
     if (TokenSets.CONSTANTS.contains(tokenType)) {
       return ParserUtils.eatElement(builder, LITERAL);
     }
-    if (mWRONG_REGEX_LITERAL == tokenType) {
-      PsiBuilder.Marker marker = builder.mark();
-      builder.advanceLexer();
-      builder.error(GroovyBundle.message("regex.end.expected"));
-      marker.done(LITERAL);
-      return LITERAL;
-    }
-    if (mWRONG_DOLLAR_SLASH_LITERAL == tokenType) {
-      final PsiBuilder.Marker marker = builder.mark();
-      builder.advanceLexer();
-      builder.error(GroovyBundle.message("dollar.slash.end.expected"));
-      marker.done(LITERAL);
-      return LITERAL;
-    }
-
-    // TODO implement all cases!
 
     return WRONGWAY;
   }

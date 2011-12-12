@@ -35,14 +35,13 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -90,6 +89,21 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     super.setupRootModel(rootModel);
 
     rootModel.setSdk(mySdk);
+
+    final LanguageLevelModuleExtension moduleExt = rootModel.getModuleExtension(LanguageLevelModuleExtension.class);
+
+    if (moduleExt != null) {
+      LanguageLevel languageLevel = moduleExt.getLanguageLevel();
+      if (languageLevel == null) {
+        final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(rootModel.getProject());
+        if (projectExt != null) {
+          languageLevel = projectExt.getLanguageLevel();
+        }
+      }
+      if (languageLevel == LanguageLevel.JDK_1_3) {
+        moduleExt.setLanguageLevel(LanguageLevel.JDK_1_5);
+      }
+    }
 
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
@@ -306,6 +320,20 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                     assignApplicationName(facet);
                     createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_ASSETS);
                     createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
+                  }
+                  else if (myProjectType == ProjectType.LIBRARY && myPackageName != null) {
+                    final String[] dirs = myPackageName.split("\\.");
+                    VirtualFile file = sourceRoot;
+
+                    for (String dir : dirs) {
+                      if (file == null || dir.length() == 0) {
+                        break;
+                      }
+                      final VirtualFile childDir = file.findChild(dir);
+                      file = childDir != null
+                             ? childDir
+                             : file.createChildDirectory(project, dir);
+                    }
                   }
                 }
                 catch (IOException e) {

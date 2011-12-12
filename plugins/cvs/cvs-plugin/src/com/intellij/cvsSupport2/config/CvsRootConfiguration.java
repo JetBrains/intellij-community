@@ -82,15 +82,22 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   private static String createFieldByFieldCvsRoot(CvsRepository cvsRepository) {
-
-    return createStringRepresentationOn(CvsMethod.getValue(cvsRepository.getMethod()), cvsRepository.getUser(), cvsRepository.getHost(),
-                                        String.valueOf(cvsRepository.getPort()), cvsRepository.getRepository());
-
+    return createStringRepresentationOn(CvsMethod.getValue(cvsRepository.getMethod()),
+                                        cvsRepository.getUser(),
+                                        cvsRepository.getHost(),
+                                        cvsRepository.getPort(),
+                                        cvsRepository.getRepository());
   }
 
-  public static String createStringRepresentationOn(CvsMethod method, String user, String host, String port, String repository) {
-    if (method == CvsMethod.LOCAL_METHOD) return repository;
-
+  public static String createStringRepresentationOn(CvsMethod method, String user, String host, int port, String repository) {
+    if (method == CvsMethod.LOCAL_METHOD) {
+      final StringBuilder result = new StringBuilder();
+      result.append(SEPARATOR);
+      result.append(method.getName());
+      result.append(SEPARATOR);
+      result.append(repository);
+      return result.toString();
+    }
     final StringBuilder result = new StringBuilder();
     result.append(SEPARATOR);
     result.append(method.getName());
@@ -98,7 +105,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     result.append(user);
     result.append(AT);
     result.append(host);
-    if (port.length() > 0) {
+    if (port > 0) {
       result.append(SEPARATOR);
       result.append(port);
     }
@@ -111,12 +118,12 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   public String toString() {
     if (useBranch()) {
-      return CvsBundle
-        .message("cvs.root.configuration.on.branch.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.BRANCH);
+      return CvsBundle.message("cvs.root.configuration.on.branch.string.representation", getCvsRootAsString(),
+                                DATE_OR_REVISION_SETTINGS.BRANCH);
     }
     else if (useDate()) {
-      return CvsBundle
-        .message("cvs.root.configuration.on.date.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.getDate());
+      return CvsBundle.message("cvs.root.configuration.on.date.string.representation", getCvsRootAsString(),
+                                DATE_OR_REVISION_SETTINGS.getDate());
     }
     else {
       return getCvsRootAsString();
@@ -124,11 +131,11 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   private boolean useDate() {
-    return DATE_OR_REVISION_SETTINGS.USE_DATE && (DATE_OR_REVISION_SETTINGS.getDate().length() > 0);
+    return DATE_OR_REVISION_SETTINGS.USE_DATE && !DATE_OR_REVISION_SETTINGS.getDate().isEmpty();
   }
 
   private boolean useBranch() {
-    return DATE_OR_REVISION_SETTINGS.USE_BRANCH && (DATE_OR_REVISION_SETTINGS.BRANCH.length() > 0);
+    return DATE_OR_REVISION_SETTINGS.USE_BRANCH && !DATE_OR_REVISION_SETTINGS.BRANCH.isEmpty();
   }
 
   public CvsRootConfiguration getMyCopy() {
@@ -143,11 +150,8 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   public void testConnection(Project project) throws AuthenticationException, IOException {
     final IConnection connection = createSettings().createConnection(new ReadWriteStatistics());
     final ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
-    final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(errorProcessor,
-                                                                                        CvsExecutionEnvironment.DUMMY_STOPPER,
-                                                                                        errorProcessor,
-                                                                                        PostCvsActivity.DEAF,
-                                                                                        project);
+    final CvsExecutionEnvironment cvsExecutionEnvironment =
+      new CvsExecutionEnvironment(errorProcessor, CvsExecutionEnvironment.DUMMY_STOPPER, errorProcessor, PostCvsActivity.DEAF, project);
     final CvsResult result = new CvsResultEx();
     try {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {

@@ -123,23 +123,6 @@ public class Cvs2SettingsEditPanel {
     }
   }
 
-  public boolean isValidRootConfigured() {
-    final CvsRootConfiguration rootConfiguration = createConfigurationWithCurrentSettings();
-    if (rootConfiguration == null) {
-      return false;
-    }
-    final String rootString = rootConfiguration.getCvsRootAsString();
-    if (rootString.trim().isEmpty()) {
-      return false;
-    }
-    try {
-      CvsRootParser.valueOf(rootString, true);
-      return true;
-    } catch (CvsRootException ignore) {
-      return false;
-    }
-  }
-
   public void addCvsRootChangeListener(CvsRootChangeListener cvsRootChangeListener) {
     myCvsRootConfigurationPanelView.addCvsRootChangeListener(cvsRootChangeListener);
   }
@@ -161,43 +144,37 @@ public class Cvs2SettingsEditPanel {
     conditionallyEnableComponents();
   }
 
-  public boolean saveTo(CvsRootConfiguration configuration) {
-    try {
-      myCvsRootConfigurationPanelView.saveTo(configuration);
-      final CvsApplicationLevelConfiguration globalCvsSettings = CvsApplicationLevelConfiguration.getInstance();
-
-      if (!myExtConnectionSettingsEditor.equalsTo(configuration.EXT_CONFIGURATION, configuration.SSH_FOR_EXT_CONFIGURATION)) {
-        myExtConnectionSettingsEditor.saveTo(configuration.EXT_CONFIGURATION, configuration.SSH_FOR_EXT_CONFIGURATION);
-        myExtConnectionSettingsEditor.saveTo(globalCvsSettings.EXT_CONFIGURATION, globalCvsSettings.SSH_FOR_EXT_CONFIGURATION);
-      }
-
-      if (!mySshConnectionSettingsEditor.equalsTo(configuration.SSH_CONFIGURATION)) {
-        mySshConnectionSettingsEditor.saveTo(configuration.SSH_CONFIGURATION);
-        mySshConnectionSettingsEditor.saveTo(globalCvsSettings.SSH_CONFIGURATION);
-      }
-
-      if (!myLocalConnectionSettingsPanel.equalsTo(configuration.LOCAL_CONFIGURATION)) {
-        myLocalConnectionSettingsPanel.saveTo(configuration.LOCAL_CONFIGURATION);
-        myLocalConnectionSettingsPanel.saveTo(globalCvsSettings.LOCAL_CONFIGURATION);
-      }
-
-      if (!myProxySettingsNonEmptyPanel.equalsTo(configuration.PROXY_SETTINGS)) {
-        myProxySettingsNonEmptyPanel.saveTo(configuration.PROXY_SETTINGS);
-        myProxySettingsNonEmptyPanel.saveTo(globalCvsSettings.PROXY_SETTINGS);
-      }
-      myDateOrRevisionOrTagSettings.saveTo(configuration.DATE_OR_REVISION_SETTINGS);
-      return true;
+  public void saveTo(CvsRootConfiguration configuration) {
+    myCvsRootConfigurationPanelView.saveTo(configuration);
+    final CvsApplicationLevelConfiguration globalCvsSettings = CvsApplicationLevelConfiguration.getInstance();
+    if (!myExtConnectionSettingsEditor.equalsTo(configuration.EXT_CONFIGURATION, configuration.SSH_FOR_EXT_CONFIGURATION)) {
+      myExtConnectionSettingsEditor.saveTo(configuration.EXT_CONFIGURATION, configuration.SSH_FOR_EXT_CONFIGURATION);
+      myExtConnectionSettingsEditor.saveTo(globalCvsSettings.EXT_CONFIGURATION, globalCvsSettings.SSH_FOR_EXT_CONFIGURATION);
     }
-    catch (InputException ex) {
-      ex.show();
-      return false;
+    if (!mySshConnectionSettingsEditor.equalsTo(configuration.SSH_CONFIGURATION)) {
+      mySshConnectionSettingsEditor.saveTo(configuration.SSH_CONFIGURATION);
+      mySshConnectionSettingsEditor.saveTo(globalCvsSettings.SSH_CONFIGURATION);
     }
+    if (!myLocalConnectionSettingsPanel.equalsTo(configuration.LOCAL_CONFIGURATION)) {
+      myLocalConnectionSettingsPanel.saveTo(configuration.LOCAL_CONFIGURATION);
+      myLocalConnectionSettingsPanel.saveTo(globalCvsSettings.LOCAL_CONFIGURATION);
+    }
+    if (!myProxySettingsNonEmptyPanel.equalsTo(configuration.PROXY_SETTINGS)) {
+      myProxySettingsNonEmptyPanel.saveTo(configuration.PROXY_SETTINGS);
+      myProxySettingsNonEmptyPanel.saveTo(globalCvsSettings.PROXY_SETTINGS);
+    }
+    myDateOrRevisionOrTagSettings.saveTo(configuration.DATE_OR_REVISION_SETTINGS);
   }
 
   private void testConfiguration() {
     final CvsRootConfiguration newConfiguration = createConfigurationWithCurrentSettings();
     if (newConfiguration == null) return;
-    testConnection(newConfiguration, myPanel, myProject);
+    try {
+      testConnection(newConfiguration, myPanel, myProject);
+    } catch (CvsRootException e) {
+      e.show();
+      return;
+    }
     updateFrom(newConfiguration);
   }
 
@@ -205,7 +182,12 @@ public class Cvs2SettingsEditPanel {
   private CvsRootConfiguration createConfigurationWithCurrentSettings() {
     final CvsRootConfiguration newConfiguration =
       CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
-    if (!saveTo(newConfiguration)) return null;
+    try {
+      saveTo(newConfiguration);
+    } catch (InputException e) {
+      e.show();
+      return null;
+    }
     return newConfiguration;
   }
 
@@ -273,7 +255,6 @@ public class Cvs2SettingsEditPanel {
   }
 
   private void conditionallyEnableComponents() {
-    myTestButton.setEnabled(isValidRootConfigured());
     try {
       final CvsRootData currentRootData = CvsRootDataBuilder.createSettingsOn(myCvsRootConfigurationPanelView.getCvsRoot(), true);
       final String settingsPanelName = getSettingsPanelName(currentRootData);

@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -29,34 +29,42 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author ilyas
  */
 public class RegexConstructorExpression implements GroovyElementTypes {
+  private static final Logger LOG = Logger.getInstance(RegexConstructorExpression.class);
 
-  public static GroovyElementType parse(PsiBuilder builder, GroovyParser parser) {
+  /**
+   * @return true if there are any injections
+   */
+  public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean forRefExpr) {
+    PsiBuilder.Marker marker = builder.mark();
+    final PsiBuilder.Marker marker2 = builder.mark();
+    final boolean result = ParserUtils.getToken(builder, mREGEX_BEGIN);
+    LOG.assertTrue(result);
 
-    PsiBuilder.Marker sMarker = builder.mark();
-    if (ParserUtils.getToken(builder, mREGEX_BEGIN)) {
+    boolean inj = false;
+    ParserUtils.getToken(builder, mREGEX_CONTENT);
+    while (parseInjection(builder, parser)) {
+      inj = true;
       ParserUtils.getToken(builder, mREGEX_CONTENT);
-      if (!parseInjection(builder, parser)) {
-        if (!ParserUtils.getToken(builder, mREGEX_END)) {
-          builder.error(GroovyBundle.message("regex.end.expected"));
-        }
-        sMarker.done(REGEX);
-        return REGEX;
-      }
-      else {
-        while (ParserUtils.getToken(builder, mREGEX_CONTENT)) {
-          if (!parseInjection(builder, parser)) break;
-        }
-        if (!ParserUtils.getToken(builder, mREGEX_END)) {
-          builder.error(GroovyBundle.message("regex.end.expected"));
-        }
-        sMarker.done(REGEX);
-        return REGEX;
-      }
+    }
+
+    if (!ParserUtils.getToken(builder, mREGEX_END)) {
+      builder.error(GroovyBundle.message("regex.end.expected"));
+    }
+
+    if (inj) {
+      marker2.drop();
+      marker.done(REGEX);
     }
     else {
-      sMarker.drop();
-      return WRONGWAY;
+      marker2.done(mREGEX_LITERAL);
+      if (forRefExpr) {
+        marker.drop();
+      }
+      else {
+        marker.done(LITERAL);
+      }
     }
+    return inj;
   }
 
   /**

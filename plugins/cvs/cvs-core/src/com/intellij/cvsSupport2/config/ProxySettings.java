@@ -32,7 +32,7 @@ public class ProxySettings implements JDOMExternalizable, Cloneable {
 
   public boolean USE_PROXY = false;
   public String PROXY_HOST = "";
-  public int PROXY_PORT = 1234;
+  public int PROXY_PORT = 8080;
   public int TYPE = HTTP;
   public String LOGIN = "";
 

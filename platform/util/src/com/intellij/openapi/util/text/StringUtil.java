@@ -2213,4 +2213,12 @@ public class StringUtil {
     m.appendTail(result);
     return result.toString();
   }
+
+  public static boolean isHexDigit(char c) {
+    return '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F';
+  }
+
+  public static boolean isOctalDigit(char c) {
+    return '0' <= c && c <= '7';
+  }
 }

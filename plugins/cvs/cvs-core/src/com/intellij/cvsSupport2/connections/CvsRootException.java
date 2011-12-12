@@ -15,6 +15,9 @@
  */
 package com.intellij.cvsSupport2.connections;
 
+import com.intellij.CvsBundle;
+import com.intellij.openapi.ui.Messages;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -22,5 +25,12 @@ public class CvsRootException extends RuntimeException {
 
   public CvsRootException(String message) {
     super(message);
+  }
+
+  public void show(){
+    final String message = getMessage();
+    if (message != null) {
+      Messages.showErrorDialog(message, CvsBundle.message("error.title.invalid.cvs.root"));
+    }
   }
 }

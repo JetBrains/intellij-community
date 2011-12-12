@@ -85,7 +85,8 @@ public abstract class TokenSets {
       kDOUBLE
   );
 
-  public static final TokenSet PROPERTY_NAMES = TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL);
+  public static final TokenSet PROPERTY_NAMES =
+    TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL);
 
   public static final TokenSet KEYWORDS = TokenSet.create(kABSTRACT, kAS, kASSERT, kBOOLEAN, kBREAK, kBYTE, kCASE, kCATCH, kCHAR, kCLASS,
                                                           kCONTINUE, kDEF, kDEFAULT, kDO, kDOUBLE, kELSE, kEXTENDS, kENUM, kFALSE, kFINAL,
@@ -123,14 +124,14 @@ public abstract class TokenSets {
 
   public static TokenSet STRING_LITERALS = TokenSet.create(
       mSTRING_LITERAL,
-      mREGEX_LITERAL,
       mREGEX_CONTENT,
       mDOLLAR_SLASH_REGEX_CONTENT,
-      mDOLLAR_SLASH_REGEX_LITERAL,
       mGSTRING_LITERAL,
       mGSTRING_CONTENT,
       mGSTRING_BEGIN,
-      mGSTRING_END
+      mGSTRING_END,
+      mREGEX_LITERAL,
+      mDOLLAR_SLASH_REGEX_LITERAL
   );
 
   public static TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
@@ -146,7 +147,7 @@ public abstract class TokenSets {
 
   public static final TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT, GROOVY_DOC_COMMENT);
 
-  public static final TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL);
+  public static final TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL);
 
   public static final TokenSet BRACES = TokenSet.create(mLBRACK, mRBRACK, mLPAREN, mRPAREN, mLCURLY, mRCURLY);
 

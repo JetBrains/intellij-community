@@ -99,19 +99,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private int myTabWidth = -1;
 
   /**
-   * Standard IJ editor starts showing horizontal scroll bar event when text line ends couple of symbols before the right visual
-   * area edge (exact value of columns to use for such preliminary scrolling is identified by
-   * {@link EditorSettings#getAdditionalColumnsCount() additionalColumnsCount} value).
-   * <p/>
-   * However, we want to avoid using horizontal scrolling within soft wraps whenever possible. Hence, we set that additional
-   * columns property to zero when soft wraps are used and restore it if soft wraps are turned off.
-   * <p/>
-   * Current field holds initial <code>'additional columns count'</code> property value that is to be restored if
-   * soft wraps are turned off.
-   */
-  private int myAdditionalColumnsCount;
-
-  /**
    * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold
    * regions etc). Hence, we need to react to all types of target changes. However, soft wraps processing uses various information
    * provided by editor and there is a possible case that that information is inconsistent during update time (e.g. fold model 
@@ -132,6 +119,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * Current field serves as a flag for that <code>'dirty document, need complete soft wraps cache recalculation'</code> state. 
    */
   private boolean myDirty;
+  
+  private boolean myForceAdditionalColumns;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
     this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
@@ -183,7 +172,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       }
     });
     EditorSettings settings = myEditor.getSettings();
-    myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
     myUseSoftWraps = settings.isUseSoftWraps();
     
     editor.addPropertyChangeListener(this);
@@ -200,18 +188,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     int tabWidthBefore = myTabWidth;
     myTabWidth = getCurrentTabWidth();
     
-    if ((myUseSoftWraps && (!softWrapsUsedBefore || settings.getAdditionalColumnsCount() > 0))
-        || (tabWidthBefore >= 0 && myTabWidth != tabWidthBefore))
-    {
+    if ((myUseSoftWraps ^ softWrapsUsedBefore) || (tabWidthBefore >= 0 && myTabWidth != tabWidthBefore)) {
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
-      myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
-      settings.setAdditionalColumnsCount(0);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
-    else if (!myUseSoftWraps && softWrapsUsedBefore) {
-      settings.setAdditionalColumnsCount(myAdditionalColumnsCount);
-    }
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
   /**
@@ -227,7 +208,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
     return indentOptions.TAB_SIZE;
   }
-  
+
+  @Override
+  public boolean isRespectAdditionalColumns() {
+    return myForceAdditionalColumns || myApplianceManager.hasLinesWithFailedWrap();
+  }
+
+  @Override
+  public void forceAdditionalColumnsUsage() {
+    myForceAdditionalColumns = true; 
+  }
+
   @Override
   public boolean isSoftWrappingEnabled() {
     if (!myUseSoftWraps || myEditor.isOneLineMode()) {

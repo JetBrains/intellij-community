@@ -27,23 +27,23 @@ public class FSSnapshot {
 
   public boolean processFiles(FileProcessor processor) throws Exception {
     for (Root root : myRoots) {
-      if (!processRecursively(root.node, processor, root.path)) {
+      if (!processRecursively(root.node, root.path, processor, root.path)) {
         return false;
       }
     }
     return true;
   }
 
-  private boolean processRecursively(Node from, FileProcessor processor, String srcRoot) throws Exception {
+  private boolean processRecursively(Node from, String currentPath, FileProcessor processor, String srcRoot) throws Exception {
     if (from.isDirectory()) {
       for (Node child : from.children) {
-        if (!processRecursively(child, processor, srcRoot)) {
+        if (!processRecursively(child, currentPath + "/" + child.getName(), processor, srcRoot)) {
           return false;
         }
       }
       return true;
     }
-    return processor.apply(myModule, from.file, srcRoot);
+    return processor.apply(myModule, new File(currentPath), srcRoot);
   }
 
   static class Root {
@@ -65,12 +65,12 @@ public class FSSnapshot {
   }
 
   static class Node {
-    private final File file;
+    private final String myName;
     private final boolean myIsDirectory;
     private final List<Node> children = new ArrayList<Node>();
 
     Node(File file) {
-      this.file = file;
+      myName = file.getName();
       myIsDirectory = file.isDirectory();
     }
 
@@ -80,16 +80,16 @@ public class FSSnapshot {
       return node;
     }
 
-    public File getFile() {
-      return file;
-    }
-
     public List<Node> getChildren() {
       return Collections.unmodifiableList(children);
     }
 
     public boolean isDirectory() {
       return myIsDirectory;
+    }
+
+    public String getName() {
+      return myName;
     }
   }
 
