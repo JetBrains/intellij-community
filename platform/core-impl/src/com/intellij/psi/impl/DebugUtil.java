@@ -490,7 +490,7 @@ public class DebugUtil {
   }
 
   public static void onInvalidated(@NotNull TreeElement treeElement) {
-    treeElement.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    treeElement.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
       @Override
       protected void visitNode(TreeElement element) {
         List<Pair<Object, Processor<PsiElement>>> callbacks = element.getUserData(TRACK_INVALIDATION_KEY);
@@ -501,6 +501,7 @@ public class DebugUtil {
             if (psi != null) callback.process(psi);
           }
         }
+        super.visitNode(element);
       }
     });
   }

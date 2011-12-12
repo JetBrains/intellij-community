@@ -161,10 +161,10 @@ public class ProjectUtil {
 
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = confirmOpenNewProject(false);
-      if (exitCode == 0) { // this window option
+      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         if (!closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }
-      else if (exitCode != 1) { // not in a new window
+      else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
         return null;
       }
     }
@@ -192,30 +192,33 @@ public class ProjectUtil {
   }
 
   /**
-   * @return 0 - this window
-   *         1 - new window
-   *         2 - cancel
+   * @return {@link com.intellij.ide.GeneralSettings#OPEN_PROJECT_SAME_WINDOW}
+   *         {@link com.intellij.ide.GeneralSettings#OPEN_PROJECT_NEW_WINDOW}
+   *         {@link com.intellij.openapi.ui.Messages#CANCEL} - if user canceled the dialog
    * @param isNewProject
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
     final GeneralSettings settings = GeneralSettings.getInstance();
-    if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
+    int confirmOpenNewProject = settings.getConfirmOpenNewProject();
+    if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
       if (isNewProject) {
-        return Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
-                                 IdeBundle.message("title.new.project"),
-                                 IdeBundle.message("button.existingframe"),
-                                 IdeBundle.message("button.newframe"),
-                                 Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
+        int exitCode = Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
+                                         IdeBundle.message("title.new.project"),
+                                         IdeBundle.message("button.existingframe"),
+                                         IdeBundle.message("button.newframe"),
+                                         Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
+        return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
       }
       else {
-        return Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
-                                              IdeBundle.message("title.open.project"),
-                                              IdeBundle.message("button.existingframe"), IdeBundle.message("button.newframe"),
-                                              CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(),
-                                              new ProjectNewWindowDoNotAskOption());
+        int exitCode = Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
+                                               IdeBundle.message("title.open.project"),
+                                               IdeBundle.message("button.existingframe"), IdeBundle.message("button.newframe"),
+                                               CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(),
+                                               new ProjectNewWindowDoNotAskOption());
+        return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
       }
     }
-    return settings.getConfirmOpenNewProject();
+    return confirmOpenNewProject;
   }
 
   private static boolean isSameProject(String path, Project p) {

@@ -19,6 +19,7 @@
  */
 package com.intellij.ide.impl;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -209,7 +210,7 @@ public class NewProjectUtil {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
       int exitCode = ProjectUtil.confirmOpenNewProject(true);
-      if (exitCode == 0) { // this window option
+      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         ProjectUtil.closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
       }
     }

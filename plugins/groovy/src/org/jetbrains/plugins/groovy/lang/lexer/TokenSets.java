@@ -68,9 +68,7 @@ public abstract class TokenSets {
       kFALSE,
       kNULL,
       mSTRING_LITERAL,
-      mGSTRING_LITERAL,
-      mREGEX_LITERAL,
-      mDOLLAR_SLASH_REGEX_LITERAL
+      mGSTRING_LITERAL
   );
 
   public static final TokenSet BUILT_IN_TYPE = TokenSet.create(
@@ -123,10 +121,8 @@ public abstract class TokenSets {
 
   public static TokenSet STRING_LITERALS = TokenSet.create(
       mSTRING_LITERAL,
-      mREGEX_LITERAL,
       mREGEX_CONTENT,
       mDOLLAR_SLASH_REGEX_CONTENT,
-      mDOLLAR_SLASH_REGEX_LITERAL,
       mGSTRING_LITERAL,
       mGSTRING_CONTENT,
       mGSTRING_BEGIN,

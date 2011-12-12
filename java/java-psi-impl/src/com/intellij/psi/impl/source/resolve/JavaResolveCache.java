@@ -27,13 +27,17 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +57,9 @@ public class JavaResolveCache {
 
   private final ConcurrentMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
   private final ConcurrentMap<PsiElement, PsiType> myCachedReferencesInPsiTypes = new ConcurrentWeakHashMap<PsiElement, PsiType>();
+  // e.g. given FileOutputStream os, os2;
+  // PsiJavaCodeReferenceElement("FileOutputStream") -> [ PsiReferenceExpression("os"), PsiReferenceExpression("os2") ]
+  private final Map<PsiElement, WeakList<PsiElement>> myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere  = new WeakHashMap<PsiElement, WeakList<PsiElement>>();
 
   private final Map<PsiVariable,Object> myVarToConstValueMapPhysical;
   private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical;
@@ -78,6 +85,7 @@ public class JavaResolveCache {
   private void clearCaches(boolean isPhysical) {
     myCalculatedTypes.clear();
     myCachedReferencesInPsiTypes.clear();
+    myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere.clear();
     if (isPhysical) {
       myVarToConstValueMapPhysical.clear();
     }
@@ -96,8 +104,15 @@ public class JavaResolveCache {
       if (type == null) {
         type = TypeConversionUtil.NULL_TYPE;
       }
-      type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
+      PsiType stored = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
+
+      if (stored == type && DebugUtil.DO_EXPENSIVE_CHECKS) {
+        registerDiagnosticsHooks(expr, type);
+      }
+
+      type = stored;
     }
+
     if (!type.isValid()) {
       if (expr.isValid()) {
         PsiJavaCodeReferenceElement refInside = type instanceof PsiClassReferenceType ? ((PsiClassReferenceType)type).getReference() : null;
@@ -109,44 +124,86 @@ public class JavaResolveCache {
       }
     }
 
-    if (DebugUtil.DO_EXPENSIVE_CHECKS) {
-      if (type instanceof PsiClassReferenceType) {
-        PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
-        ConcurrencyUtil.cacheOrGet(myCachedReferencesInPsiTypes, reference, type);
-        DebugUtil.trackInvalidation(reference, "Reference inside PsiClassReferenceType was invalidated", new Processor<PsiElement>() {
-          @Override
-          public boolean process(PsiElement element) {
-            PsiType cached = myCalculatedTypes.get(element);
-            if (cached != null) {
-              LOG.error(element + " (inside ref) is invalid and yet it is still cached: " + cached);
-            }
-            PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
-            if (cachedRef != null) {
-              LOG.error(element + " (inside ref) is invalid and yet it is still cached in ref cache: " + cachedRef);
-            }
-            return true;
-          }
-        });
+    return type == TypeConversionUtil.NULL_TYPE ? null : type;
+  }
 
+  private <T extends PsiExpression> void registerDiagnosticsHooks(T expr, PsiType type) {
+    if (type instanceof PsiClassReferenceType) {
+      PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
+      ConcurrencyUtil.cacheOrGet(myCachedReferencesInPsiTypes, reference, type);
+      synchronized (myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere) {
+        WeakList<PsiElement> refsTo = myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere.get(reference);
+        if (refsTo==null) {
+          refsTo = new WeakList<PsiElement>();
+          myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere.put(reference, refsTo);
+        }
+        refsTo.add(expr);
       }
-      DebugUtil.trackInvalidation(expr, "Expression invalidated", new Processor<PsiElement>() {
+      final PsiFile dummyHolder = reference.getContainingFile();
+      if (dummyHolder != null && !dummyHolder.isPhysical()) {
+        PsiElement physicalContext = dummyHolder.getContext();
+        PsiFile physicalFile;
+        if (physicalContext != null &&
+            (physicalFile = physicalContext.getContainingFile()) != null &&
+            physicalFile.getVirtualFile() != null &&
+            !((PsiManagerEx)PsiManager.getInstance(dummyHolder.getProject())).isAssertOnFileLoading(physicalFile.getVirtualFile())) {
+          DebugUtil.trackInvalidation(physicalContext, "dummy holder was invalidated", new Processor<PsiElement>() {
+            @Override
+            public boolean process(PsiElement element) {
+              DebugUtil.onInvalidated((TreeElement)dummyHolder.getNode());
+              return true;
+            }
+          });
+        }
+      }
+
+      DebugUtil.trackInvalidation(reference, "Reference inside PsiClassReferenceType was invalidated", new Processor<PsiElement>() {
         @Override
         public boolean process(PsiElement element) {
           PsiType cached = myCalculatedTypes.get(element);
           if (cached != null) {
-            LOG.error(element + " is invalid and yet it is still cached: " + cached);
+            LOG.error(element + " (inside ref) is invalid and yet it is still cached: " + cached);
           }
-
           PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
           if (cachedRef != null) {
-            LOG.error(element + " is invalid and yet it is still cached (inside PsiType): " + cachedRef);
+            LOG.error(element + " (inside ref) is invalid and yet it is still cached in ref cache: " + cachedRef);
           }
+
+
+          synchronized (myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere) {
+            WeakList<PsiElement> refsTo = myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere.get(element);
+            if (refsTo != null) {
+              for (PsiElement ref : refsTo) {
+                PsiType cachedT = myCalculatedTypes.get(ref);
+                if (cachedT != null && !cachedT.isValid()) {
+                  LOG.error("During invalidation of " + element + " ("+element.getClass()+")"+
+                            " cached type " + cachedT + " of the ref "+ref+" ("+ref.getClass()+")"+
+                            " became invalid and yet it is still cached"
+                  );
+                }
+              }
+            }
+          }
+
           return true;
         }
       });
     }
+    DebugUtil.trackInvalidation(expr, "Expression invalidated", new Processor<PsiElement>() {
+      @Override
+      public boolean process(PsiElement element) {
+        PsiType cached = myCalculatedTypes.get(element);
+        if (cached != null) {
+          LOG.error(element + " is invalid and yet it is still cached: " + cached);
+        }
 
-    return type == TypeConversionUtil.NULL_TYPE ? null : type;
+        PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
+        if (cachedRef != null) {
+          LOG.error(element + " is invalid and yet it is still cached (inside PsiType): " + cachedRef);
+        }
+        return true;
+      }
+    });
   }
 
   @Nullable

@@ -62,10 +62,6 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
       mWRONG
   );
 
-  static final TokenSet tWRONG_REGEX = TokenSet.create(
-      mWRONG_REGEX_LITERAL
-  );
-
   static final TokenSet tGSTRINGS = TokenSet.create(
       mGSTRING_BEGIN,
       mGSTRING_CONTENT,
@@ -75,15 +71,6 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
 
   static final TokenSet tSTRINGS = TokenSet.create(
       mSTRING_LITERAL
-  );
-
-  static final TokenSet tREGEXP = TokenSet.create(
-      mREGEX_LITERAL,
-
-      mREGEX_BEGIN,
-      mREGEX_CONTENT,
-      mREGEX_END
-
   );
 
   static final TokenSet tBRACES = TokenSet.create(
@@ -210,8 +197,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(ATTRIBUTES, tNUMBERS, DefaultHighlighter.NUMBER);
     fillMap(ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
-    fillMap(ATTRIBUTES, tREGEXP, DefaultHighlighter.REGEXP);
-    fillMap(ATTRIBUTES, tWRONG_REGEX, DefaultHighlighter.REGEXP);
+    fillMap(ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
     fillMap(ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
     fillMap(ATTRIBUTES, tBRACKETS, DefaultHighlighter.BRACKETS);
     fillMap(ATTRIBUTES, tPARENTHESES, DefaultHighlighter.PARENTHESES);
@@ -234,6 +220,8 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
                                 new IElementType[]{GroovyTokenTypes.mGSTRING_LITERAL}, IElementType.EMPTY_ARRAY);
       registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, GroovyTokenTypes.mGSTRING_CONTENT, true, "$"),
                                 new IElementType[]{GroovyTokenTypes.mGSTRING_CONTENT}, IElementType.EMPTY_ARRAY);
+      registerSelfStoppingLayer(new GroovySlashyStringLexer(), new IElementType[]{GroovyTokenTypes.mREGEX_CONTENT},
+                                IElementType.EMPTY_ARRAY);
     }
   }
 

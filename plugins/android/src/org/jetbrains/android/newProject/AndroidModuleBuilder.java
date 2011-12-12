@@ -307,6 +307,20 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                     createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_ASSETS);
                     createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
                   }
+                  else if (myProjectType == ProjectType.LIBRARY && myPackageName != null) {
+                    final String[] dirs = myPackageName.split("\\.");
+                    VirtualFile file = sourceRoot;
+
+                    for (String dir : dirs) {
+                      if (file == null || dir.length() == 0) {
+                        break;
+                      }
+                      final VirtualFile childDir = file.findChild(dir);
+                      file = childDir != null
+                             ? childDir
+                             : file.createChildDirectory(project, dir);
+                    }
+                  }
                 }
                 catch (IOException e) {
                   LOG.error(e);
