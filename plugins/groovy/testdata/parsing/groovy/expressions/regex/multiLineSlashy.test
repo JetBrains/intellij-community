@@ -14,7 +14,8 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      Compound regular expression
-        PsiElement(regex begin)('/')
-        PsiElement(regex content)('\nto be\nor\nnot to be\n')
-        PsiElement(regex end)('/')
+      Literal
+        GroovyASTPsiElementImpl(regex literal)
+          PsiElement(regex begin)('/')
+          PsiElement(regex content)('\nto be\nor\nnot to be\n')
+          PsiElement(regex end)('/')

@@ -23,9 +23,14 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOr
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_INJECTION;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.REGEX;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
 /**
  * @author Max Medvedev
@@ -33,8 +38,9 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.REGEX;
 public class DollarSlashRegexConstructorExpression {
   private static final Logger LOG = Logger.getInstance(DollarSlashRegexConstructorExpression.class);
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean forRefExpr) {
     PsiBuilder.Marker marker = builder.mark();
+    final PsiBuilder.Marker marker2 = builder.mark();
     final boolean result = ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_BEGIN);
     LOG.assertTrue(result);
 
@@ -48,7 +54,20 @@ public class DollarSlashRegexConstructorExpression {
     if (!ParserUtils.getToken(builder, mDOLLAR_SLASH_REGEX_END)) {
       builder.error(GroovyBundle.message("dollar.slash.end.expected"));
     }
-    marker.done(REGEX);
+
+    if (inj) {
+      marker2.drop();
+      marker.done(REGEX);
+    }
+    else {
+      marker2.done(mDOLLAR_SLASH_REGEX_LITERAL);
+      if (forRefExpr) {
+        marker.drop();
+      }
+      else {
+        marker.done(LITERAL);
+      }
+    }
     return inj;
   }
 

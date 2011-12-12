@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.litera
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralImpl> {
@@ -34,7 +36,18 @@ public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralImpl> {
     ProperTextRange.assertProperRange(rangeInsideHost);
     String subText = rangeInsideHost.substring(myHost.getText());
     outSourceOffsets = new int[subText.length() + 1];
-    return GrStringUtil.parseStringCharacters(subText, outChars, outSourceOffsets);
+
+    final IElementType elementType = myHost.getFirstChild().getNode().getElementType();
+    if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
+      return GrStringUtil.parseStringCharacters(subText, outChars, outSourceOffsets);
+    }
+    else if (elementType == GroovyTokenTypes.mREGEX_LITERAL) {
+      return GrStringUtil.parseRegexCharacters(subText, outChars, outSourceOffsets, true);
+    }
+    else if (elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
+      return GrStringUtil.parseRegexCharacters(subText, outChars, outSourceOffsets, false);
+    }
+    else return false;
   }
 
   @Override

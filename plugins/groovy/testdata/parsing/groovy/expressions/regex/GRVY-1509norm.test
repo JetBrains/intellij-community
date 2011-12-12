@@ -1,7 +1,8 @@
 /$1\//
 -----
 Groovy script
-  Compound regular expression
-    PsiElement(regex begin)('/')
-    PsiElement(regex content)('$1\/')
-    PsiElement(regex end)('/')
+  Literal
+    GroovyASTPsiElementImpl(regex literal)
+      PsiElement(regex begin)('/')
+      PsiElement(regex content)('$1\/')
+      PsiElement(regex end)('/')

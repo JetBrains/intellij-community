@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyASTPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -250,7 +250,8 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == SPREAD_ARGUMENT) return new GrSpreadArgumentImpl(node);
     if (elem == ARGUMENT_LABEL) return new GrArgumentLabelImpl(node);
 
-    if (elem == BALANCED_BRACKETS) return new GroovyPsiElementImpl(node){};
+    if (elem == BALANCED_BRACKETS) return new GroovyASTPsiElementImpl(node);
+    if (elem == mREGEX_LITERAL || elem == mDOLLAR_SLASH_REGEX_LITERAL) return new GroovyASTPsiElementImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }
