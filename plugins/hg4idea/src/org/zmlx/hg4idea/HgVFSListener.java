@@ -269,7 +269,11 @@ public class HgVFSListener extends VcsVFSListener {
       protected void process(final MovedFileInfo file) throws VcsException {
         final FilePath source = VcsUtil.getFilePath(file.myOldPath);
         final FilePath target = VcsUtil.getFilePath(file.myNewPath);
-        (new HgMoveCommand(myProject)).execute(new HgFile(VcsUtil.getVcsRootFor(myProject, source), source), new HgFile(VcsUtil.getVcsRootFor(myProject, target), target));
+        VirtualFile sourceRoot = VcsUtil.getVcsRootFor(myProject, source);
+        VirtualFile targetRoot = VcsUtil.getVcsRootFor(myProject, target);
+        if (sourceRoot != null && targetRoot != null) {
+          (new HgMoveCommand(myProject)).execute(new HgFile(sourceRoot, source), new HgFile(targetRoot, target));
+        }
         dirtyScopeManager.fileDirty(source);
         dirtyScopeManager.fileDirty(target);
       }
