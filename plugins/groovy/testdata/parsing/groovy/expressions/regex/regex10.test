@@ -40,7 +40,7 @@ Groovy script
               Reference expression
                 PsiElement(identifier)('frg')
               PsiElement(.)('.')
-              Compound regular expression
+              GroovyASTPsiElementImpl(regex literal)
                 PsiElement(regex begin)('/')
                 PsiElement(regex content)('sdf')
                 PsiElement(regex end)('/')

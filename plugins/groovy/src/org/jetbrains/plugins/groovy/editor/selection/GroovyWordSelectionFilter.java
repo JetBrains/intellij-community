@@ -40,6 +40,8 @@ public class GroovyWordSelectionFilter implements Condition<PsiElement> {
         type == mSTRING_LITERAL ||
         type == mGSTRING_LITERAL ||
         type == mGSTRING_CONTENT ||
+        type == mREGEX_LITERAL ||
+        type == mDOLLAR_SLASH_REGEX_LITERAL ||
         type == mGDOC_COMMENT_DATA ||
         type == mGDOC_TAG_NAME ||
         type == mGDOC_TAG_PLAIN_VALUE_TOKEN ||

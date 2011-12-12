@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -681,6 +681,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       // deal with width
       final int width = Math.max(editorSize.width, historySize.width);
       newEditorSize.width = width + editor.getScrollPane().getHorizontalScrollBar().getHeight();
+      editor.getSoftWrapModel().forceAdditionalColumnsUsage();
       editor.getSettings().setAdditionalColumnsCount(2 + (width - editorSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, editor));
       history.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, history));
 

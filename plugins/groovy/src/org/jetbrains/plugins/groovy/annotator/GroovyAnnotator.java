@@ -261,7 +261,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiElement refNameElement = referenceExpression.getReferenceNameElement();
     if (refNameElement != null && referenceExpression.getQualifier() == null) {
       final IElementType type = refNameElement.getNode().getElementType();
-      if (type == GroovyTokenTypes.mGSTRING_LITERAL || type == GroovyTokenTypes.mSTRING_LITERAL) return false;
+      if (TokenSets.STRING_LITERAL_SET.contains(type)) return false;
     }
 
     if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return false;
@@ -831,12 +831,21 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitLiteralExpression(GrLiteral literal) {
-    String text = literal.getText();
-    checkStringLiteral(literal, text);
+    final IElementType elementType = literal.getFirstChild().getNode().getElementType();
+    if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
+      checkStringLiteral(literal, literal.getText());
+    }
+    else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
+      checkRegexLiteral(literal.getFirstChild());
+    }
   }
 
   @Override
   public void visitRegexExpression(GrRegex regex) {
+    checkRegexLiteral(regex);
+  }
+
+  private void checkRegexLiteral(PsiElement regex) {
     String text = regex.getText();
     String quote = GrStringUtil.getStartQuote(text);
 
@@ -856,7 +865,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    for (String part : regex.getTextParts()) {
+
+    String[] parts;
+    if (regex instanceof GrRegex) {
+      parts = ((GrRegex)regex).getTextParts();
+    }
+    else {
+      parts = new String[]{regex.getFirstChild().getNextSibling().getText()};
+    }
+
+    for (String part : parts) {
       if (!GrStringUtil.parseRegexCharacters(part, new StringBuilder(part.length()), null, regex.getText().startsWith("/"))) {
         myHolder.createErrorAnnotation(regex, GroovyBundle.message("illegal.escape.character.in.string.literal"));
         return;
@@ -873,13 +891,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    if (regex.getInjections().length > 0) {
+    if (regex instanceof GrRegex && ((GrRegex)regex).getInjections().length > 0) {
       if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_8)) {
         myHolder.createErrorAnnotation(regex, GroovyBundle
           .message("slashy.strings.with.injections.are.not.allowed.in.groovy.0", config.getSDKVersion(regex)));
       }
     }
-
   }
 
   @Override

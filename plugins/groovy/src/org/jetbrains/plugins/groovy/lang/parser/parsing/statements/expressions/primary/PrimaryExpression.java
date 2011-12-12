@@ -69,11 +69,11 @@ public class PrimaryExpression implements GroovyElementTypes {
       return StringConstructorExpression.parse(builder, parser);
     }
     if (mREGEX_BEGIN == tokenType) {
-      RegexConstructorExpression.parse(builder, parser);
+      RegexConstructorExpression.parse(builder, parser, false);
       return REGEX;
     }
     if (mDOLLAR_SLASH_REGEX_BEGIN == tokenType) {
-      DollarSlashRegexConstructorExpression.parse(builder, parser);
+      DollarSlashRegexConstructorExpression.parse(builder, parser, false);
       return REGEX;
     }
     if (mLBRACK == tokenType) {

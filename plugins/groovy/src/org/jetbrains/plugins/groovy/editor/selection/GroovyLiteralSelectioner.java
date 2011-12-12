@@ -21,9 +21,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
@@ -43,13 +43,12 @@ public class GroovyLiteralSelectioner extends GroovyBasicSelectioner {
     if (element instanceof GrListOrMap) return true;
 
     if (!(element instanceof GrLiteral)) return false;
-    if (element instanceof GrRegex && ((GrRegex)element).getInjections().length == 0) return true;
 
     ASTNode node = element.getNode();
     if (node == null) return false;
     ASTNode firstNode = node.getFirstChildNode();
     final IElementType type = firstNode.getElementType();
-    return firstNode == node.getLastChildNode() && (type == mSTRING_LITERAL || type == mGSTRING_LITERAL);
+    return firstNode == node.getLastChildNode() && TokenSets.STRING_LITERAL_SET.contains(type);
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {

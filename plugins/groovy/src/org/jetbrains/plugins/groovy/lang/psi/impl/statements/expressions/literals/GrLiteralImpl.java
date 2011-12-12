@@ -122,6 +122,27 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
       boolean result = GrStringUtil.parseStringCharacters(text, chars, null);
       return result ? chars.toString() : null;
     }
+    else if (elemType == mREGEX_LITERAL) {
+      final PsiElement cchild = child.getFirstChild();
+      if (cchild == null) return null;
+      final PsiElement sibling = cchild.getNextSibling();
+      if (sibling == null) return null;
+      text = sibling.getText();
+      final StringBuilder chars = new StringBuilder(text.length());
+      boolean result = GrStringUtil.parseRegexCharacters(text, chars, null, true);
+      return result ? chars.toString() : null;
+    }
+    else if (elemType == mDOLLAR_SLASH_REGEX_LITERAL) {
+      final PsiElement cchild = child.getFirstChild();
+      if (cchild == null) return null;
+      final PsiElement sibling = cchild.getNextSibling();
+      if (sibling == null) return null;
+      text = sibling.getText();
+      final StringBuilder chars = new StringBuilder(text.length());
+      boolean result = GrStringUtil.parseRegexCharacters(text, chars, null, false);
+      return result ? chars.toString() : null;
+    }
+
     return null;
   }
 

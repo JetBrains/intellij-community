@@ -233,10 +233,10 @@ public class PathExpression implements GroovyElementTypes {
       return PATH_PROPERTY_REFERENCE;
     }
     if (mREGEX_BEGIN.equals(tokenType)) {
-      return RegexConstructorExpression.parse(builder, parser) ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
+      return RegexConstructorExpression.parse(builder, parser, true) ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
     }
     if (mDOLLAR_SLASH_REGEX_BEGIN.equals(tokenType)) {
-      return DollarSlashRegexConstructorExpression.parse(builder, parser) ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
+      return DollarSlashRegexConstructorExpression.parse(builder, parser, true) ? PATH_PROPERTY_REFERENCE : REFERENCE_EXPRESSION;
     }
     if (mLCURLY.equals(tokenType)) {
       OpenOrClosableBlock.parseOpenBlock(builder, parser);

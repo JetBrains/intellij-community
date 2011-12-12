@@ -76,10 +76,13 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
   IElementType mREGEX_BEGIN = new GroovyElementType("regex begin");
   IElementType mREGEX_CONTENT = new GroovyElementType("regex content");
   IElementType mREGEX_END = new GroovyElementType("regex end");
+  IElementType mREGEX_LITERAL = new GroovyElementType("regex literal");
 
   IElementType mDOLLAR_SLASH_REGEX_BEGIN = new GroovyElementType("$/ regex begin");
   IElementType mDOLLAR_SLASH_REGEX_CONTENT = new GroovyElementType("$/ regex content");
   IElementType mDOLLAR_SLASH_REGEX_END = new GroovyElementType("$/ regex end");
+  IElementType mDOLLAR_SLASH_REGEX_LITERAL = new GroovyElementType("$/ regex literal");
+
 
   /* **************************************************************************************************
  *  Common tokens: operators, braces etc.
