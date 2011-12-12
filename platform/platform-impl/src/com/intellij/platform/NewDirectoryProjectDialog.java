@@ -37,6 +37,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.PlainDocument;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -57,7 +60,6 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   private boolean myExternalModify = false;
 
   private static final Object EMPTY_PROJECT_GENERATOR = new Object();
-  private final String mySuggestedProjectName;
   private boolean myProjectNameWasChanged = false;
 
   protected NewDirectoryProjectDialog(Project project) {
@@ -73,7 +75,6 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
 
     myLocationField.setText(suggestedProjectDirectory.toString());
     myProjectNameTextField.setText(suggestedProjectDirectory.getName());
-    mySuggestedProjectName = suggestedProjectDirectory.getName();
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
@@ -87,7 +88,8 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
             myExternalModify = true;
             myLocationField.setText(new File(chosenFile.getPath(), myProjectNameTextField.getText()).toString());
             myExternalModify = false;
-          } else {
+          }
+          else {
             myExternalModify = true;
             myLocationField.setText(chosenFile.getPath());
             myProjectNameTextField.setText(chosenFile.getName());
@@ -123,17 +125,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
       }
     });
 
-    myProjectNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (!myModifyingLocation && !myExternalModify) {
-          myProjectNameWasChanged = true;
-          myModifyingProjectName = true;
-          File f = new File(myBaseDir);
-          myLocationField.setText(new File(f, myProjectNameTextField.getText()).getPath());
-          myModifyingProjectName = false;
-        }
-      }
-    });
+    myProjectNameTextField.setDocument(new NameFieldDocument());
 
     myProjectNameTextField.selectAll();
 
@@ -172,8 +164,31 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     });
   }
 
-  private boolean projectNameWasChanged() {
-    return mySuggestedProjectName != null && !mySuggestedProjectName.equals(myProjectNameTextField.getText());
+  private class NameFieldDocument extends PlainDocument {
+    public NameFieldDocument() {
+      addDocumentListener(new DocumentAdapter() {
+        protected void textChanged(final DocumentEvent e) {
+          if (!myModifyingLocation && !myExternalModify) {
+            myProjectNameWasChanged = true;
+            myModifyingProjectName = true;
+            File f = new File(myBaseDir);
+            myLocationField.setText(new File(f, myProjectNameTextField.getText()).getPath());
+            myModifyingProjectName = false;
+          }
+        }
+      });
+    }
+
+    public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+      boolean ok = true;
+      for (int idx = 0; idx < str.length() && ok; idx++) {
+        char ch = str.charAt(idx);
+        ok = ch != File.separatorChar && ch != '\\' && ch != '/' && ch != '|' && ch != ':';
+      }
+      if (ok) {
+        super.insertString(offs, str, a);
+      }
+    }
   }
 
   private void checkValid() {
