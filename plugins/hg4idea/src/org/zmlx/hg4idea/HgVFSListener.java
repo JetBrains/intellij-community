@@ -245,7 +245,10 @@ public class HgVFSListener extends VcsVFSListener {
         continue;
       }
 
-      deletes.add(new HgFile(VcsUtil.getVcsRootFor(myProject, file), file));
+      VirtualFile root = VcsUtil.getVcsRootFor(myProject, file);
+      if (root != null) {
+        deletes.add(new HgFile(root, file));
+      }
     }
 
     if (!deletes.isEmpty()) {
