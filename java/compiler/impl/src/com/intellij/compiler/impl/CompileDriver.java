@@ -25,6 +25,7 @@ import com.intellij.CommonBundle;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
+import com.intellij.compiler.make.ChangedConstantsDependencyProcessor;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.diagnostic.IdeErrorsDialog;
@@ -953,6 +954,8 @@ public class CompileDriver {
           if (!executeCompileTasks(context, false)) {
             return ExitStatus.CANCELLED;
           }
+          final int constantSearchesCount = ChangedConstantsDependencyProcessor.getConstantSearchesCount(context);
+          LOG.debug("Constants searches: " + constantSearchesCount);
         }
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
