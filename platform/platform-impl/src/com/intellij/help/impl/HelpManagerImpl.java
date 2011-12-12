@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.ide.plugins.HelpSetPath;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
@@ -31,38 +31,32 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.help.BadIDException;
 import javax.help.HelpSet;
-import javax.help.HelpSetException;
 import java.awt.*;
 import java.net.URL;
 
 public class HelpManagerImpl extends HelpManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.help.impl.HelpManagerImpl");
 
+  @NonNls private static final String HELP_HS = "Help.hs";
+
   private HelpSet myHelpSet = null;
   private IdeaHelpBroker myBroker = null;
-  @NonNls private static final String HELP_HS = "Help.hs";
 
   public void invokeHelp(String id) {
     if (myHelpSet == null) {
-      try {
-        myHelpSet = createHelpSet();
-      }
-      catch (Exception ex) {
-        LOG.info("Failed to create help set", ex);
-        // Ignore, will fallback to use web help
-      }
+      myHelpSet = createHelpSet();
     }
 
     if (myHelpSet == null) {
-      BrowserUtil.launchBrowser(ApplicationInfoImpl.getInstanceEx().getWebHelpUrl() + "?" + id);
+      BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);
       return;
     }
-    
+
     if (myBroker == null) {
       myBroker = new IdeaHelpBroker(myHelpSet);
     }
 
-    Window activeWindow=KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     myBroker.setActivationWindow(activeWindow);
 
     if (id != null) {
@@ -70,8 +64,7 @@ public class HelpManagerImpl extends HelpManager {
         myBroker.setCurrentID(id);
       }
       catch (BadIDException e) {
-        Messages.showMessageDialog(IdeBundle.message("help.topic.not.found.error", id),
-                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
         return;
       }
     }
@@ -81,35 +74,32 @@ public class HelpManagerImpl extends HelpManager {
   @Nullable
   private static HelpSet createHelpSet() {
     String urlToHelp = ApplicationInfo.getInstance().getHelpURL() + "/" + HELP_HS;
+    HelpSet mainHelpSet = loadHelpSet(urlToHelp);
+    if (mainHelpSet == null) return null;
 
-    try {
-      HelpSet helpSet = new HelpSet(null, new URL (urlToHelp));
-
-      // merge plugins help sets
-      IdeaPluginDescriptor[] pluginDescriptors = PluginManager.getPlugins();
-      for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
-        HelpSetPath[] sets = pluginDescriptor.getHelpSets();
-        for (HelpSetPath hsPath : sets) {
-          final String url = "jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() +
-                             "!" + hsPath.getPath();
-          try {
-            URL hsURL = new URL(url);
-            HelpSet pluginHelpSet = new HelpSet(null, hsURL);
-            helpSet.add(pluginHelpSet);
-          }
-          catch (HelpSetException e) {
-            LOG.error(e);
-          }
-          catch (Exception e) {
-            LOG.info("Error adding plugin help url " + url, e);
-          }
+    // merge plugins help sets
+    IdeaPluginDescriptor[] pluginDescriptors = PluginManager.getPlugins();
+    for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
+      HelpSetPath[] sets = pluginDescriptor.getHelpSets();
+      for (HelpSetPath hsPath : sets) {
+        String url = "jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() + "!/" + hsPath.getPath();
+        HelpSet pluginHelpSet = loadHelpSet(url);
+        if (pluginHelpSet != null) {
+          mainHelpSet.add(pluginHelpSet);
         }
       }
-
-      return helpSet;
     }
-    catch (Exception ee) {
-      LOG.info("Failed to create help set", ee);
+
+    return mainHelpSet;
+  }
+
+  @Nullable
+  private static HelpSet loadHelpSet(final String url) {
+    try {
+      return new HelpSet(null, new URL(url));
+    }
+    catch (Exception e) {
+      LOG.info("Failed to load help set from '" + url + "'", e);
       return null;
     }
   }
