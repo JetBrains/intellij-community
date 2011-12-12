@@ -189,7 +189,11 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  private boolean isInjectedWhiteSpace(TextRange range, OuterLanguageElement element) {
+  private boolean isInjectedWhiteSpace(@NotNull TextRange range, @NotNull OuterLanguageElement element) {
+    PsiElement psi = element.getContainingFile().getViewProvider().getPsi(element.getLanguage());
+    if (psi == null) {
+      return false;
+    }
     List<PsiElement> injectedElements = PsiTreeUtil.getInjectedElements(element);
     for (PsiElement el : injectedElements) {
       if (!isWhiteSpaceOrComment(el, range)) {

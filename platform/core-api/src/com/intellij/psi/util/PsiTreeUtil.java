@@ -952,7 +952,7 @@ public class PsiTreeUtil {
     throw new AssertionError(descendant + " is not a descendant of " + ancestor);
   }
 
-  public static List<PsiElement> getInjectedElements(OuterLanguageElement outerLanguageElement) {
+  public static List<PsiElement> getInjectedElements(@NotNull OuterLanguageElement outerLanguageElement) {
     PsiElement psi = outerLanguageElement.getContainingFile().getViewProvider().getPsi(outerLanguageElement.getLanguage());
     TextRange injectionRange = outerLanguageElement.getTextRange();
     List<PsiElement> res = Lists.newArrayList();
