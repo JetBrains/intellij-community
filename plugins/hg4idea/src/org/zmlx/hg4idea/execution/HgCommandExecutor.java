@@ -337,7 +337,7 @@ public final class HgCommandExecutor {
       DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
       String command = new String(readDataBlock(dataInputStream));
-      assert "getpass".equals(command);
+      assert "getpass".equals(command) : "Invalid command: " + command;
       String uri = new String(readDataBlock(dataInputStream));
       String path = new String(readDataBlock(dataInputStream));
       String proposedLogin = new String(readDataBlock(dataInputStream));
