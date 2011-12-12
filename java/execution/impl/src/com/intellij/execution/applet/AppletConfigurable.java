@@ -32,6 +32,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -250,6 +251,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
 
+  @NotNull
   public JComponent createEditor() {
     return myWholePanel;
   }
