@@ -22,6 +22,7 @@ public interface AbstractPythonRunConfigurationParams {
 
   void setSdkHome(String sdkHome);
 
+  @Nullable
   Module getModule();
 
   void setModule(Module module);

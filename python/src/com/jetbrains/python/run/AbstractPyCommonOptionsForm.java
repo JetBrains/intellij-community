@@ -9,4 +9,6 @@ import javax.swing.*;
  */
 public interface AbstractPyCommonOptionsForm extends AbstractPythonRunConfigurationParams, PanelWithAnchor {
   JComponent getMainPanel();
+
+  void subscribe();
 }
