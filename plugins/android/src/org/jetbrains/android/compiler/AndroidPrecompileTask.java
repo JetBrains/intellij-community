@@ -90,18 +90,18 @@ public class AndroidPrecompileTask implements CompileTask {
       final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
       final int platformToolsRevision = platform != null ? platform.getSdk().getPlatformToolsRevision() : -1;
 
-      LOG.info("Platform-tools revision for module {0} is " + module.getName());
+      LOG.debug("Platform-tools revision for module " + module.getName() + " is " + platformToolsRevision);
 
       if (platformToolsRevision >= 0 && platformToolsRevision <= 7) {
         if (facet.getConfiguration().LIBRARY_PROJECT) {
-          LOG.info("Excluded sources of module " + module.getName());
+          LOG.debug("Excluded sources of module " + module.getName());
           excludeAllSourceRoots(module, configuration, addedEntries);
         }
       }
     }
 
     if (addedEntries.size() > 0) {
-      LOG.info("Files excluded by Android: " + addedEntries.size());
+      LOG.debug("Files excluded by Android: " + addedEntries.size());
       CompilerManager.getInstance(project).addCompilationStatusListener(new MyCompilationStatusListener(project, addedEntries), project);
     }
 
