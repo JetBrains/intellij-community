@@ -74,7 +74,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_USE_CYCLIC_BUFFER = "useCyclicBuffer";
   @NonNls private static final String OPTION_SEARCH_IN_BACKGROUND = "searchInBackground";
   @NonNls private static final String OPTION_CONFIRM_EXIT = "confirmExit";
-  @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject";
+  @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject2";
   @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
   @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
   @Deprecated
