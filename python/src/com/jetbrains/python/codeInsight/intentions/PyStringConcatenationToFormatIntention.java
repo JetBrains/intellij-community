@@ -81,12 +81,15 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
       element = element.getParent();
     }
     StringBuilder stringLiteral = new StringBuilder();
-    StringBuilder parameters = new StringBuilder("(");
+    StringBuilder parameters = new StringBuilder();
     NotNullFunction<String,String> escaper = StringUtil.escaper(false, null);
-    for (PyExpression expression: getSimpleExpressions((PyBinaryExpression) element)) {
+
+    int addParens = 0;
+    for (PyExpression expression : getSimpleExpressions((PyBinaryExpression) element)) {
       if (expression instanceof PyStringLiteralExpression) {
         stringLiteral.append(escaper.fun(((PyStringLiteralExpression)expression).getStringValue()));
       } else {
+        ++addParens;
         stringLiteral.append("%s");
         parameters.append(expression.getText()).append(", ");
       }
@@ -94,8 +97,10 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyStringLiteralExpression stringLiteralExpression =
       elementGenerator.createStringLiteralAlreadyEscaped("\"" + stringLiteral.toString() + "\"");
-    PyParenthesizedExpression expression = (PyParenthesizedExpression)elementGenerator
-      .createFromText(LanguageLevel.getDefault(), PyExpressionStatement.class, parameters.substring(0, parameters.length() - 2) + ")").getExpression();
+    String paramString = addParens > 1? "(" + parameters.substring(0, parameters.length() - 2) +")"
+                                                     : parameters.substring(0, parameters.length() - 2);
+    PyExpression expression = elementGenerator.createFromText(LanguageLevel.getDefault(),
+                                                              PyExpressionStatement.class, paramString).getExpression();
     element.replace(elementGenerator.createBinaryExpression("%", stringLiteralExpression, expression));
   }
 }
