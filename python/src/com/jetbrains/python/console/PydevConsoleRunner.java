@@ -125,9 +125,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   @Nullable
   public static PydevConsoleRunner createAndRun(@NotNull final Project project,
                                                 @NotNull final Sdk sdk,
-                                                final PyConsoleType consoleType,
-                                                final String projectRoot,
-                                                final Map<String, String> environmentVariables,
+                                                @NotNull final PyConsoleType consoleType,
+                                                @Nullable final String projectRoot,
+                                                @NotNull final Map<String, String> environmentVariables,
                                                 final String... statements2execute) {
     final PydevConsoleRunner consoleRunner = create(project, sdk, consoleType, projectRoot, environmentVariables);
     if (consoleRunner == null) return null;
@@ -136,7 +136,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   public void run(final String... statements2execute) {
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Connecting to console", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText("Connecting to console...");
         try {
@@ -144,7 +144,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         }
         catch (ExecutionException e) {
           LOG.error("Error running console", e);
-          ExecutionHelper.showErrors(getProject(), Arrays.<Exception>asList(e), getTitle(), null);
+          ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
         }
       }
     });
@@ -157,11 +157,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return create(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(sdk));
   }
 
-  private static PydevConsoleRunner create(Project project,
-                                           Sdk sdk,
-                                           PyConsoleType consoleType,
-                                           String projectRoot,
-                                           final Map<String, String> environmentVariables) {
+  private static PydevConsoleRunner create(@NotNull Project project,
+                                           @NotNull Sdk sdk,
+                                           @NotNull PyConsoleType consoleType,
+                                           @Nullable String projectRoot,
+                                           @NotNull final Map<String, String> environmentVariables) {
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -196,8 +196,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       }
     };
 
-    final PydevConsoleRunner consoleRunner = new PydevConsoleRunner(project, sdk, consoleType, provider, projectRoot, ports);
-    return consoleRunner;
+    return new PydevConsoleRunner(project, sdk, consoleType, provider, projectRoot, ports);
   }
 
   @Override
