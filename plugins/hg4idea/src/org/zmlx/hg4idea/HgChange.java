@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.jetbrains.annotations.NotNull;
 
 public final class HgChange {
 
@@ -21,33 +22,36 @@ public final class HgChange {
   private HgFile afterFile;
   private HgFileStatusEnum status;
 
-  public HgChange(HgFile hgFile, HgFileStatusEnum status) {
+  public HgChange(@NotNull HgFile hgFile, @NotNull HgFileStatusEnum status) {
     this.beforeFile = hgFile;
     this.afterFile = hgFile;
     this.status = status;
   }
 
+  @NotNull
   public HgFile beforeFile() {
     return beforeFile;
   }
 
+  @NotNull
   public HgFile afterFile() {
     return afterFile;
   }
 
+  @NotNull
   public HgFileStatusEnum getStatus() {
     return status;
   }
 
-  public void setBeforeFile(HgFile beforeFile) {
+  public void setBeforeFile(@NotNull HgFile beforeFile) {
     this.beforeFile = beforeFile;
   }
 
-  public void setAfterFile(HgFile afterFile) {
+  public void setAfterFile(@NotNull HgFile afterFile) {
     this.afterFile = afterFile;
   }
 
-  public void setStatus(HgFileStatusEnum status) {
+  public void setStatus(@NotNull HgFileStatusEnum status) {
     this.status = status;
   }
 

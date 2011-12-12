@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgResolveStatusEnum;
@@ -123,7 +124,7 @@ public class HgChangeProvider implements ChangeProvider {
     }
   }
 
-  private static boolean isDeleteOfCopiedFile(HgChange change, Set<HgChange> changes) {
+  private static boolean isDeleteOfCopiedFile(@NotNull HgChange change, Set<HgChange> changes) {
     if (change.getStatus().equals(HgFileStatusEnum.DELETED)) {
       for (HgChange otherChange : changes) {
         if (otherChange.getStatus().equals(HgFileStatusEnum.COPY) &&
