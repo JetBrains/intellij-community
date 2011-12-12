@@ -56,9 +56,8 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
     }
     String elementMarker = tokenizer.nextToken();
     if (TOP_LEVEL_CHILD_MARKER.equals(elementMarker)) {
-      PsiElement[] children = file.getChildren();
       PsiElement result = null;
-      for (PsiElement child : children) {
+      for (PsiElement child = file.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof PsiWhiteSpace) {
           continue;
         }
@@ -69,7 +68,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
           if (processingInfoStorage != null) {
             processingInfoStorage.append(String.format(
               "Stopping '%s' provider because it has top level marker but more than one non white-space child: %s",
-              getClass().getName(), Arrays.toString(children)
+              getClass().getName(), Arrays.toString(file.getChildren())
             ));
           }
           // More than one top-level non-white space children. Can't match.
@@ -79,7 +78,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       if (processingInfoStorage != null) {
         processingInfoStorage.append(String.format(
           "Finished processing of '%s' provider because all of its top-level children have been processed: %s",
-          getClass().getName(), Arrays.toString(children)
+          getClass().getName(), Arrays.toString(file.getChildren())
         ));
       }
       return result;
@@ -89,7 +88,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       return candidate instanceof PsiComment ? candidate : null; 
     }
     else if (CODE_BLOCK_MARKER.equals(elementMarker)) {
-      for (PsiElement child : parent.getChildren()) {
+      for (PsiElement child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
         PsiElement firstChild = child.getFirstChild();
         PsiElement lastChild = child.getLastChild();
         if (firstChild != null && lastChild != null && "{".equals(firstChild.getText()) && "}".equals(lastChild.getText())) {
@@ -145,7 +144,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
     if (parent == null) {
       return false;
     }
-    for (PsiElement child : parent.getChildren()) {
+    for (PsiElement child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiWhiteSpace) {
         continue;
       }
