@@ -941,7 +941,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PyQualifiedName restoreStdlibCanonicalPath(PyQualifiedName qname) {
+  public static PyQualifiedName restoreStdlibCanonicalPath(PyQualifiedName qname) {
     if (qname.getComponentCount() > 0) {
       final List<String> components = qname.getComponents();
       final String head = components.get(0);
@@ -951,6 +951,10 @@ public class ResolveImportUtil {
       }
       else if (head.equals("_functools")) {
         components.set(0, "functools");
+        return PyQualifiedName.fromComponents(components);
+      }
+      else if (head.equals("_io") || head.equals("_pyio") || head.equals("_fileio")) {
+        components.set(0, "io");
         return PyQualifiedName.fromComponents(components);
       }
       else if (head.equals("ntpath")) {

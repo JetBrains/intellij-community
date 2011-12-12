@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.100" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.101" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
@@ -777,7 +777,7 @@ class ModuleRedeclarator(object):
     if version[0] <= 2:
         REPLACE_MODULE_VALUES[(BUILTIN_MOD_NAME, "None")] = "object()"
         for std_file in ("stdin", "stdout", "stderr"):
-            REPLACE_MODULE_VALUES[("sys", std_file)] = "file('')" #
+            REPLACE_MODULE_VALUES[("sys", std_file)] = "open('')" #
 
     # Some functions and methods of some builtin classes have special signatures.
     # {("class", "method"): ("signature_string")}
@@ -881,6 +881,10 @@ class ModuleRedeclarator(object):
         ("datetime", "tzinfo", "fromutc"): ("(self, date_time)", "datetime(1, 1, 1)"),
         ("datetime", "tzinfo", "tzname"): ("(self, date_time)", DEFAULT_STR_LIT),
         ("datetime", "tzinfo", "utcoffset"): ("(self, date_time)", INT_LIT),
+
+        ("_io", None, "open"): ("(name, mode=None, buffering=None)", "file('/dev/null')"),
+        ("_io", "FileIO", "read"): ("(self, size=-1)", DEFAULT_STR_LIT),
+        ("_fileio", "_FileIO", "read"): ("(self, size=-1)", DEFAULT_STR_LIT),
 
         # NOTE: here we stand on shaky ground providing sigs for 3rd-party modules, though well-known
         ("numpy.core.multiarray", "ndarray", "__array__") : ("(self, dtype=None)", None),

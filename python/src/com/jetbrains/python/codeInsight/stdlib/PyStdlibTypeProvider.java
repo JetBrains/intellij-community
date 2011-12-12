@@ -7,6 +7,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
@@ -116,7 +117,20 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             if (p.isPositionalContainer() || p.isKeywordContainer() || name == null) {
               continue;
             }
-            final PyType argType = entry.getKey().getType(context);
+            PyType argType = entry.getKey().getType(context);
+            // Special case for the 'mode' argument of the 'open()' builtin
+            if (("__builtin__.open".equals(qname) || "io.open".equals(qname)) && "mode".equals(name)) {
+              final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
+              final LanguageLevel level = LanguageLevel.forElement(anchor);
+              argType = cache.getUnicodeType(level);
+              final PyExpression modeExpr = entry.getKey();
+              if (modeExpr instanceof PyStringLiteralExpression) {
+                final String literal = ((PyStringLiteralExpression)modeExpr).getStringValue();
+                if (literal.contains("b")) {
+                  argType = cache.getBytesType(level);
+                }
+              }
+            }
             final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
             if (!PyTypeChecker.match(paramType, argType, context)) {
               matched = false;
@@ -174,6 +188,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                              module,
                              c != null ? c.getName() + "." : "",
                              result);
+      final PyQualifiedName qname = ResolveImportUtil.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(result));
+      if (qname != null) {
+        return qname.toString();
+      }
     }
     return result;
   }
