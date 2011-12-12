@@ -15,8 +15,6 @@
  */
 package com.intellij.platform;
 
-import com.intellij.conversion.ConversionResult;
-
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -145,9 +143,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
           processor.refreshProjectFiles(projectDir);
         }
         
-        Ref<ConversionResult> conversionResultRef = new Ref<ConversionResult>();
-        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath(), conversionResultRef);
-        if (conversionResultRef.get().openingIsCanceled()) {
+        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath());
+        if (project == null) {
           return null;
         }
         runConfigurators = false;
