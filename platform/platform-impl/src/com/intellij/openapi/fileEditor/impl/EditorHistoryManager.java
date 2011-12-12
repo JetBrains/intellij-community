@@ -154,7 +154,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
                                   @Nullable FileEditorProvider fallbackProvider,
                                   final boolean changeEntryOrderOnly)
   {
-    if (file == null){
+    if (file == null) {
       return;
     }
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
