@@ -1050,36 +1050,38 @@ public class FileUtil {
     return file.canExecute();
   }
 
+  /** @deprecated use {@link FileSystemUtil#isSymLink(File)} (to remove in IDEA 12) */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isSymbolicLink(File file) {
-    return isSymbolicLink(file.getParentFile(), file.getName());
+    return FileSystemUtil.isSymLink(file);
   }
 
+  /** @deprecated use {@link FileSystemUtil#isSymLink(File)} (to remove in IDEA 12) */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isSymbolicLink(File parent, String name) {
-    try {
-      File toTest = parent != null
-                    ? new File(parent.getCanonicalPath(), name)
-                    : new File(name);
-      return !toTest.getAbsolutePath().equals(toTest.getCanonicalPath());
-    }
-    catch (IOException e) {
-      return false;
-    }
+    return FileSystemUtil.isSymLink(new File(parent, name));
   }
 
-
-  public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyStatus) throws IOException {
-    new File(path).setWritable(!readOnlyStatus);
+  public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) throws IOException {
+    final boolean writableFlag = !readOnlyFlag;
+    final File file = new File(path);
+    if (!file.setWritable(writableFlag) && file.canWrite() != writableFlag) {
+      LOG.warn("Can't set writable attribute of '" + path + "' to " + readOnlyFlag);
+    }
   }
 
   /**
-   * Set executable attibute, it makes sense only on non-windows platforms.
+   * Set executable attribute, it makes sense only on non-windows platforms.
    *
    * @param path           the path to use
    * @param executableFlag new value of executable attribute
    * @throws IOException if there is a problem with setting the flag
    */
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
-    new File(path).setExecutable(executableFlag);
+    final File file = new File(path);
+    if (!file.setExecutable(!executableFlag) && file.canExecute() != executableFlag) {
+      LOG.warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
+    }
   }
 
   public static void appendToFile(@NotNull File file, @NotNull String text) throws IOException {
