@@ -145,11 +145,12 @@
           </grid>
           <component id="6f8cf" class="javax.swing.JCheckBox" binding="myChkUseSafeWrite">
             <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="Use &quot;safe write&quot;"/>
+              <text value="Use &quot;safe write&quot; (save changes to a temp. file first)"/>
+              <toolTipText value="&lt;html&gt;Save changes to a temporary file first.&lt;br/&gt;Replace original file if write succeeded, leave original file untouched if write failed.&lt;/html&gt; "/>
             </properties>
           </component>
         </children>
