@@ -1,7 +1,5 @@
 package com.jetbrains.python.run;
 
-import com.intellij.openapi.project.Project;
-
 /**
  * @author yole
  */

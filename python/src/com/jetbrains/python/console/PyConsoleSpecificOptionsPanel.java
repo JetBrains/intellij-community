@@ -32,9 +32,11 @@ public class PyConsoleSpecificOptionsPanel {
   public JPanel createPanel(final Project project, final PyConsoleOptionsProvider.PyConsoleSettings optionsProvider) {
     myInterpreterPanel.setLayout(new BorderLayout());
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(createCommonOptionsFormData(project));
+    myCommonOptionsForm.subscribe();
 
     myInterpreterPanel.add(myCommonOptionsForm.getMainPanel(),
                            BorderLayout.CENTER);
+
     configureStartingScriptPanel(project, optionsProvider);
 
     return myWholePanel;
@@ -69,19 +71,20 @@ public class PyConsoleSpecificOptionsPanel {
   }
 
   private void configureStartingScriptPanel(final Project project, final PyConsoleOptionsProvider.PyConsoleSettings optionsProvider) {
-    myEditorTextField = new EditorTextField(createDocument(project, optionsProvider.myCustomStartScript), project, PythonFileType.INSTANCE) {
-      @Override
-      protected EditorEx createEditor() {
-        final EditorEx editor = super.createEditor();
-        editor.setVerticalScrollbarVisible(true);
-        return editor;
-      }
+    myEditorTextField =
+      new EditorTextField(createDocument(project, optionsProvider.myCustomStartScript), project, PythonFileType.INSTANCE) {
+        @Override
+        protected EditorEx createEditor() {
+          final EditorEx editor = super.createEditor();
+          editor.setVerticalScrollbarVisible(true);
+          return editor;
+        }
 
-      @Override
-      protected boolean isOneLineMode() {
-        return false;
-      }
-    };
+        @Override
+        protected boolean isOneLineMode() {
+          return false;
+        }
+      };
     myStartingScriptPanel.setLayout(new BorderLayout());
     myStartingScriptPanel.add(myEditorTextField, BorderLayout.CENTER);
     myConsoleSettings = optionsProvider;

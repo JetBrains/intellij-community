@@ -68,6 +68,10 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     return myMainPanel;
   }
 
+  @Override
+  public void subscribe() {
+  }
+
   public String getInterpreterOptions() {
     return myInterpreterOptionsTextField.getText().trim();
   }

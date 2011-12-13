@@ -175,7 +175,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   protected void waitForConnection(final String connectionMessage, String connectionTitle) {
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, connectionTitle, false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(getSession().getProject(), connectionTitle, false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText(connectionMessage);
         try {
