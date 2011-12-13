@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
@@ -48,17 +49,29 @@ public class GroovySlashyStringLexer extends LexerBase {
     if (myEnd >= myBufferEnd) return null;
 
     myStart = myEnd;
-    if (checkForEscape(myStart)) {
+    if (checkForSlashEscape(myStart)) {
       myEnd = myStart + 2;
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
+    else if (checkForHexCodeStart(myStart)) {
+      for (myEnd = myStart + 2; myEnd < myStart + 6; myEnd++) {
+        if (myEnd >= myBufferEnd || !StringUtil.isHexDigit(myBuffer.charAt(myEnd))) {
+          return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+        }
+      }
+      return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+    }
 
-    while (myEnd < myBufferEnd && !checkForEscape(myEnd)) myEnd++;
+    while (myEnd < myBufferEnd && !checkForSlashEscape(myEnd) && !checkForHexCodeStart(myEnd)) myEnd++;
     return GroovyTokenTypes.mREGEX_CONTENT;
   }
 
-  private boolean checkForEscape(int start) {
+  private boolean checkForSlashEscape(int start) {
     return myBuffer.charAt(start) == '\\' && start + 1 < myBufferEnd && myBuffer.charAt(start + 1) == '/';
+  }
+  
+  private boolean checkForHexCodeStart(int start) {
+    return myBuffer.charAt(start) == '\\' && start + 1 < myBufferEnd && myBuffer.charAt(start + 1) == 'u';
   }
 
   @Override

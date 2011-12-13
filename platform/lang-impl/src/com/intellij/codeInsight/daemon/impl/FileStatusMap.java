@@ -167,11 +167,11 @@ public class FileStatusMap implements Disposable {
     }
   }
 
-  public void markFileUpToDate(@NotNull Document document, @NotNull PsiFile file, int passId) {
+  public void markFileUpToDate(@NotNull Project project, @NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
-        status = new FileStatus(file.getProject());
+        status = new FileStatus(project);
         myDocumentToStatusMap.put(document, status);
       }
       status.defensivelyMarked=false;

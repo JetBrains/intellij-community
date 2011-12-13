@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,6 +105,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     type.setSyntaxTable(getSyntaxTable());
   }
 
+  @NotNull
   public JComponent createEditor() {
     JComponent panel = createCenterPanel();
     for (int i = 0; i < myKeywordsLists.length; i++) {

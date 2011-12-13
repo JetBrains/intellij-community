@@ -97,6 +97,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   private int                      myCustomIndentValueUsedLastTime;
   private int                      myVisibleAreaWidth;
   private boolean                  myInProgress;
+  private boolean                  myHasLinesWithFailedWrap;
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorEx editor,
@@ -109,6 +110,15 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     myRepresentationHelper = representationHelper;
     myDataMapper = dataMapper;
     myWidthProvider = new DefaultVisibleAreaWidthProvider(editor);
+  }
+
+  /**
+   * @return    <code>true</code> if soft wraps processing detected line(s) that exceeds viewport's size but can't be soft-wrapped;
+   *            i.e. part of it lays outside of the screen;
+   *            <code>false</code> otherwise
+   */
+  public boolean hasLinesWithFailedWrap() {
+    return myHasLinesWithFailedWrap;
   }
 
   public void registerSoftWrapIfNecessary() {
@@ -163,6 +173,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     myActiveEvents.addAll(events);
     myEventsStorage.release();
     myInProgress = true;
+    myHasLinesWithFailedWrap = false;
     try {
       for (IncrementalCacheUpdateEvent event : events) {
         recalculateSoftWraps(event);
@@ -457,6 +468,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     );
     if (softWrap == null) {
       myContext.tryToShiftToNextLine();
+      myHasLinesWithFailedWrap = true;
       return;
     }
     

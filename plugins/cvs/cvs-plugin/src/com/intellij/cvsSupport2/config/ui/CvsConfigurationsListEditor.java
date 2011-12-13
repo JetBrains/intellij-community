@@ -19,10 +19,14 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AnActionButton;
@@ -53,6 +57,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private final Cvs2SettingsEditPanel myCvs2SettingsEditPanel;
   @NonNls private static final String SAMPLE_CVSROOT = ":pserver:user@host/server/home/user/cvs";
+  private boolean myIsUpdating = false;
 
   public CvsConfigurationsListEditor(List<CvsRootConfiguration> configs, Project project) {
     this(configs, project, false);
@@ -71,13 +76,13 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
       @Override
       public void onCvsRootChanged() {
         if (mySelection == null) return;
-        myCvs2SettingsEditPanel.saveTo(mySelection);
+        try {
+          myCvs2SettingsEditPanel.saveTo(mySelection);
+        } catch (InputException ignore) {}
         myList.repaint();
       }
     });
-
     setTitle(CvsBundle.message("dialog.title.cvs.roots"));
-
     if (!configs.isEmpty()) {
       myList.setSelectedIndex(0);
     }
@@ -166,8 +171,6 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
     myList.setModel(myModel);
     addSelectionListener();
-
-
     final int minWidth = myList.getFontMetrics(myList.getFont()).stringWidth(SAMPLE_CVSROOT) + 40;
     final Dimension minSize = new Dimension(minWidth, myList.getMaximumSize().height);
     listPanel.setMinimumSize(minSize);
@@ -181,7 +184,13 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private boolean saveSelectedConfiguration() {
     if (getSelectedConfiguration() == null) return true;
-    return myCvs2SettingsEditPanel.saveTo(getSelectedConfiguration());
+    try {
+      myCvs2SettingsEditPanel.saveTo(getSelectedConfiguration());
+      return true;
+    } catch (InputException e) {
+      e.show();
+      return false;
+    }
   }
 
   private void copySelectedConfiguration() {
@@ -213,6 +222,9 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (myIsUpdating) {
+          return;
+        }
         final int selectedIndex = myList.getSelectedIndex();
         if (selectedIndex < 0 || selectedIndex >= myModel.getSize()) {
           selectNone();
@@ -221,16 +233,31 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
           final CvsRootConfiguration newSelection = (CvsRootConfiguration)myModel.getElementAt(selectedIndex);
           if (newSelection == mySelection) return;
           if (!select(newSelection)) {
+            myIsUpdating = true;
             myList.setSelectedValue(mySelection, true);
+            myIsUpdating = false;
           }
         }
       }
     });
   }
 
-  private boolean select(CvsRootConfiguration cvs2Configuration) {
-    if (mySelection != null && !myCvs2SettingsEditPanel.saveTo(mySelection)) return false;
-    mySelection = cvs2Configuration;
+  private boolean select(CvsRootConfiguration cvsConfiguration) {
+    if (mySelection != null) {
+      try {
+        myCvs2SettingsEditPanel.saveTo(mySelection);
+      } catch (final InputException e) {
+        SwingUtilities.invokeLater(new Runnable() {
+
+          @Override
+          public void run() {
+            e.show();
+          }
+        });
+        return false;
+      }
+    }
+    mySelection = cvsConfiguration;
     editSelectedConfiguration();
     return true;
   }

@@ -34,8 +34,9 @@ public class RegexConstructorExpression implements GroovyElementTypes {
   /**
    * @return true if there are any injections
    */
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+  public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean forRefExpr) {
     PsiBuilder.Marker marker = builder.mark();
+    final PsiBuilder.Marker marker2 = builder.mark();
     final boolean result = ParserUtils.getToken(builder, mREGEX_BEGIN);
     LOG.assertTrue(result);
 
@@ -49,7 +50,20 @@ public class RegexConstructorExpression implements GroovyElementTypes {
     if (!ParserUtils.getToken(builder, mREGEX_END)) {
       builder.error(GroovyBundle.message("regex.end.expected"));
     }
-    marker.done(REGEX);
+
+    if (inj) {
+      marker2.drop();
+      marker.done(REGEX);
+    }
+    else {
+      marker2.done(mREGEX_LITERAL);
+      if (forRefExpr) {
+        marker.drop();
+      }
+      else {
+        marker.done(LITERAL);
+      }
+    }
     return inj;
   }
 

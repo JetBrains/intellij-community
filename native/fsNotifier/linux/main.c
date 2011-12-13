@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@
 #define LOG_ENV_WARNING "warning"
 #define LOG_ENV_ERROR "error"
 #define LOG_ENV_OFF "off"
+
+#define VERSION "1.0"
+#define VERSION_MSG "fsnotifier " VERSION "\n"
 
 #define USAGE_MSG \
     "fsnotifier - IntelliJ IDEA companion program for watching and reporting file and directory structure modifications.\n\n" \
@@ -78,6 +81,10 @@ int main(int argc, char** argv) {
       printf(USAGE_MSG);
       return 0;
     }
+    else if (strcmp(argv[1], "--version") == 0) {
+      printf(VERSION_MSG);
+      return 0;
+    }
     else if (strcmp(argv[1], "--selftest") == 0) {
       self_test = true;
     }
@@ -90,10 +97,10 @@ int main(int argc, char** argv) {
 
   init_log();
   if (!self_test) {
-    userlog(LOG_INFO, "started");
+    userlog(LOG_INFO, "started (v." VERSION ")");
   }
   else {
-    userlog(LOG_INFO, "started (self-test mode)");
+    userlog(LOG_INFO, "started (self-test mode) (v." VERSION ")");
   }
 
   setvbuf(stdin, NULL, _IONBF, 0);

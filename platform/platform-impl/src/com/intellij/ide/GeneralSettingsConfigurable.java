@@ -67,7 +67,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
         settings.setInactiveTimeout(newInactiveTimeout);
       }
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
 
 
@@ -85,13 +85,14 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
 
     int openProjectOption = settings.getConfirmOpenNewProject();
 
-    isModified |= (myComponent.myConfirmFrameToOpenCheckBox.isSelected() && openProjectOption >= 0) || (!myComponent.myConfirmFrameToOpenCheckBox.isSelected() == openProjectOption < 0);
+    boolean savedOptionIsAsk = openProjectOption == GeneralSettings.OPEN_PROJECT_ASK;
+    isModified |= myComponent.myConfirmFrameToOpenCheckBox.isSelected() != savedOptionIsAsk;
 
     int inactiveTimeout = -1;
     try {
       inactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
 
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
@@ -141,7 +142,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     myComponent.myTfInactiveTimeout.setText(Integer.toString(settings.getInactiveTimeout()));
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
-    myComponent.myConfirmFrameToOpenCheckBox.setSelected(settings.getConfirmOpenNewProject() < 0);
+    myComponent.myConfirmFrameToOpenCheckBox.setSelected(settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK);
   }
 
   public void disposeUIResources() {

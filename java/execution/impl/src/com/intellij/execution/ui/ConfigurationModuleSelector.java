@@ -91,7 +91,7 @@ public class ConfigurationModuleSelector {
     myModules.setSelectedItem(configuration.getConfigurationModule().getModule());
   }
 
-  public static boolean isModuleAccepted(final Module module) {
+  public boolean isModuleAccepted(final Module module) {
     return ModuleTypeManager.getInstance().isClasspathProvider(ModuleType.get(module));
   }
 

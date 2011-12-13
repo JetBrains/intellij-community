@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.smartPointers;
+package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPsiElementPointer;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
-public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
-  void fastenBelt(int offset, @Nullable RangeMarker cachedRangeMarker);
-  void documentAndPsiInSync();
-
-  void unfastenBelt(int offset);
-
-  PsiElement getCachedElement();
+/**
+ * @author Max Medvedev
+ */
+public class GroovyASTPsiElementImpl extends GroovyPsiElementImpl {
+  public GroovyASTPsiElementImpl(@NotNull ASTNode node) {
+    super(node);
+  }
 }

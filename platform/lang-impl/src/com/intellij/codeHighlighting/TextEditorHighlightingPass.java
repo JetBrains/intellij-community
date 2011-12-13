@@ -94,7 +94,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
       Document document = getDocument();
       PsiFile file = document == null ? null : PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (file != null) {
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().markFileUpToDate(getDocument(), file, getId());
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().markFileUpToDate(file.getProject(), getDocument(), getId());
       }
       return;
     }

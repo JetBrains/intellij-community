@@ -101,7 +101,13 @@ public class GroovyParserDefinition implements ParserDefinition {
     }
 
     final IElementType parentType = left.getTreeParent().getElementType();
-    if (parentType == GSTRING || parentType == REGEX || parentType == GSTRING_INJECTION) return MUST_NOT;
+    if (parentType == GSTRING ||
+        parentType == REGEX ||
+        parentType == GSTRING_INJECTION ||
+        parentType == mREGEX_LITERAL ||
+        parentType == mDOLLAR_SLASH_REGEX_LITERAL) {
+      return MUST_NOT;
+    }
 
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, new GroovyLexer());
   }

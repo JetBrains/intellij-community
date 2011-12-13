@@ -19,10 +19,11 @@ Groovy script
             PsiElement({)('{')
             Parameter list
               <empty list>
-            Compound regular expression
-              PsiElement($/ regex begin)('$/')
-              PsiElement($/ regex content)(' a ')
-              PsiElement($/ regex end)('/$')
+            Literal
+              GroovyASTPsiElementImpl($/ regex literal)
+                PsiElement($/ regex begin)('$/')
+                PsiElement($/ regex content)(' a ')
+                PsiElement($/ regex end)('/$')
             PsiElement(})('}')
         PsiElement($/ regex content)(' ')
         GString injection
@@ -45,10 +46,11 @@ Groovy script
                   PsiElement({)('{')
                   Parameter list
                     <empty list>
-                  Compound regular expression
-                    PsiElement($/ regex begin)('$/')
-                    PsiElement($/ regex content)(' c ')
-                    PsiElement($/ regex end)('/$')
+                  Literal
+                    GroovyASTPsiElementImpl($/ regex literal)
+                      PsiElement($/ regex begin)('$/')
+                      PsiElement($/ regex content)(' c ')
+                      PsiElement($/ regex end)('/$')
                   PsiElement(})('}')
               PsiElement($/ regex content)(' ')
               PsiElement($/ regex end)('/$')

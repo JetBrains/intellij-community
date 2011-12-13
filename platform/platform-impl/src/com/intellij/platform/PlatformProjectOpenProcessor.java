@@ -15,7 +15,7 @@
  */
 package com.intellij.platform;
 
-import com.intellij.conversion.ConversionResult;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -125,10 +125,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
       else {
         int exitCode = ProjectUtil.confirmOpenNewProject(false);
-        if (exitCode == 0) { // this window option
+        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
           if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
         }
-        else if (exitCode != 1) { // not in a new window
+        else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) { // not in a new window
           return null;
         }
       }
@@ -143,9 +143,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
           processor.refreshProjectFiles(projectDir);
         }
         
-        Ref<ConversionResult> conversionResultRef = new Ref<ConversionResult>();
-        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath(), conversionResultRef);
-        if (conversionResultRef.get().openingIsCanceled()) {
+        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath());
+        if (project == null) {
           return null;
         }
         runConfigurators = false;

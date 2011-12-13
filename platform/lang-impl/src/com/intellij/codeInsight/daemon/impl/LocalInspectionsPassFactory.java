@@ -66,9 +66,6 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   @Override
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
     final TextRange textRange = file.getTextRange();
-    if (textRange == null) {
-      return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, document);
-    }
     return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE);
   }
 

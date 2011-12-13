@@ -453,7 +453,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
 
-    final Project project = convertAndLoadProject(filePath, null);
+    final Project project = convertAndLoadProject(filePath);
     if (project == null) {
       showWelcomeScreenIfNoProjectOpened();
       return null;
@@ -478,14 +478,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     }
   }
-  
+
+  /**
+   * Converts and loads the project at the specified path.
+   *
+   * @param filePath the path to open the project.
+   * @return the project, or null if the user has cancelled opening the project.
+   */
   @Nullable
-  public Project convertAndLoadProject(String filePath, @Nullable Ref<ConversionResult> conversionResultRef) throws IOException {
+  public Project convertAndLoadProject(String filePath) throws IOException {
     final String fp = canonicalize(filePath);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(fp);
-    if (conversionResultRef != null) {
-      conversionResultRef.set(conversionResult);
-    }
     if (conversionResult.openingIsCanceled()) {
       return null;
     }
@@ -503,6 +506,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return project;
   }
 
+  /**
+   * Opens the project at the specified path.
+   *
+   * @param filePath the path to open the project.
+   * @return the project, or null if the user has cancelled opening the project.
+   */
   @Nullable
   private Project loadProjectWithProgress(final @NotNull String filePath) throws IOException {
 

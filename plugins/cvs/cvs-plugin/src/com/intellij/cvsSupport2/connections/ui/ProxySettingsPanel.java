@@ -15,10 +15,9 @@
  */
 package com.intellij.cvsSupport2.connections.ui;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ProxySettings;
 import com.intellij.cvsSupport2.connections.CvsRootData;
-import com.intellij.openapi.ui.InputException;
+import com.intellij.cvsSupport2.ui.FormUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,9 +35,8 @@ public class ProxySettingsPanel {
   private JPasswordField myPassword;
   private JTextField myLogin;
 
-
   public ProxySettingsPanel() {
-    ButtonGroup buttonGroup = new ButtonGroup();
+    final ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(myHTTP);
     buttonGroup.add(mySocks4);
     buttonGroup.add(mySocks5);
@@ -55,7 +53,6 @@ public class ProxySettingsPanel {
         }
       }
     });
-
   }
 
   public void disableAll(boolean disableUseProxyButton) {
@@ -121,18 +118,16 @@ public class ProxySettingsPanel {
     }
   }
 
-  public boolean equalsTo(ProxySettings proxy_settings) {
-    try {
-      return myUseProxy.isSelected() == proxy_settings.USE_PROXY
-             && myProxyHost.getText().equals(proxy_settings.PROXY_HOST)
-             && getIntPortValue(myProxyPort.getText(), myProxyPort) == proxy_settings.PROXY_PORT
-             && getSelectedType() == proxy_settings.getType()
-             && proxy_settings.getLogin().equals(myLogin.getText())
-             && proxy_settings.getPassword().equals(new String(myPassword.getPassword()));
+  public boolean equalsTo(ProxySettings proxySettings) {
+    if (!myUseProxy.isSelected()) {
+      return !proxySettings.USE_PROXY;
     }
-    catch (Exception e) {
-      return false;
-    }
+    return myUseProxy.isSelected() == proxySettings.USE_PROXY
+           && myProxyHost.getText().equals(proxySettings.PROXY_HOST)
+           && FormUtils.getPositiveIntFieldValue(myProxyPort, false, false) == proxySettings.PROXY_PORT
+           && getSelectedType() == proxySettings.getType()
+           && myLogin.getText().equals(proxySettings.getLogin())
+           && new String(myPassword.getPassword()).equals(proxySettings.getPassword());
   }
 
   private int getSelectedType() {
@@ -147,28 +142,14 @@ public class ProxySettingsPanel {
     }
   }
 
-  private static int getIntPortValue(String text, JComponent component) {
-    try {
-      final int result = Integer.parseInt(text);
-      if (result < 0) {
-        throw new InputException(CvsBundle.message("error.message.invalid.port.value", text), component);
-      }
-      return result;
-    }
-    catch (NumberFormatException e) {
-      throw new InputException(CvsBundle.message("error.message.invalid.port.value", text), component);
-    }
+  public void saveTo(ProxySettings proxySettings) {
+    proxySettings.USE_PROXY = myUseProxy.isSelected();
+    proxySettings.PROXY_HOST = FormUtils.getFieldValue(myProxyHost, proxySettings.USE_PROXY);
+    proxySettings.PROXY_PORT = FormUtils.getPositiveIntFieldValue(myProxyPort, true, false);
+    proxySettings.TYPE = getSelectedType();
+    proxySettings.LOGIN = myLogin.getText();
+    proxySettings.PASSWORD = new String(myPassword.getPassword());
   }
-
-  public void saveTo(ProxySettings proxy_settings) {
-    proxy_settings.USE_PROXY = myUseProxy.isSelected();
-    proxy_settings.PROXY_HOST = myProxyHost.getText();
-    proxy_settings.PROXY_PORT = getIntPortValue(myProxyPort.getText(), myProxyPort);
-    proxy_settings.TYPE = getSelectedType();
-    proxy_settings.LOGIN = myLogin.getText();
-    proxy_settings.PASSWORD = new String(myPassword.getPassword());
-  }
-
 
   public void disablePanel() {
     disableAll(true);

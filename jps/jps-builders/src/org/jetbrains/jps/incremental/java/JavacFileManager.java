@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental.java;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.Paths;
@@ -141,7 +142,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
           return entry.getKey();
         }
       }
-      file = file.getParentFile();
+      file = FileUtil.getParentFile(file);
     }
     return null;
   }

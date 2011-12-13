@@ -29,9 +29,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -42,6 +44,7 @@ import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,6 +134,16 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myWelcomePane = myWelcomeScreen.getWelcomePanel();
     myContentPane.add(myWelcomePane);
     updateToolbarVisibility();
+    final MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
+    connect.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+      @Override
+      public void projectComponentsInitialized(Project project) {
+        Disposer.dispose(myDisposable);
+        myWelcomeScreen = null;
+        myWelcomePane = null;
+        connect.disconnect();
+      }
+    });
   }
 
   public WelcomeScreen getWelcomeScreen() {
@@ -154,7 +167,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    * Invoked when enclosed frame is being disposed.
    */
   public final void removeNotify(){
-    Disposer.dispose(myDisposable);
     super.removeNotify();
   }
 

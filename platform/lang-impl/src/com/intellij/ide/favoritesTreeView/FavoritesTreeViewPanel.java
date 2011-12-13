@@ -199,6 +199,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
     decorator.addExtraAction(new FavoritesAutoScrollToSourceAction(myProject, myAutoScrollToSourceHandler, myBuilder));
 
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT);
+    action.registerCustomShortcutSet(action.getShortcutSet(), myTree);
     final JPanel panel = decorator.createPanel();
 
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
@@ -532,6 +534,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             }
           }
           return ((PsiDirectoryContainer)psiElement).getDirectories(searchScope);
+        } else if (psiElement != null) {
+          PsiFile file = psiElement.getContainingFile();
+          if (file != null) {
+            PsiDirectory parent = file.getParent();
+            if (parent != null) {
+              return new PsiDirectory[]{parent};
+            }
+          }
         }
       }
       return selectedNodeElements[0] instanceof PsiDirectory ? new PsiDirectory[] {(PsiDirectory)selectedNodeElements[0]} : null;
