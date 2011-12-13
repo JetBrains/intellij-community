@@ -297,10 +297,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static boolean elementsEqual(Element e1, Element e2) {
-    if(e1 == null) return e2 == null;
-    return Comparing.equal(e1.getName(), e2.getName()) &&
-           elementListsEqual  ((List<Element>  )e1.getChildren  (), (List<Element>  )e2.getChildren  ()) &&
-           attributeListsEqual((List<Attribute>)e1.getAttributes(), (List<Attribute>)e2.getAttributes());
+    if(e1 == null) {
+      return e2 == null;
+    }
+    if (!Comparing.equal(e1.getName(), e2.getName())) {
+      return false;
+    }
+    if (!elementListsEqual  ((List<Element>)e1.getChildren(), (List<Element>)e2.getChildren())) {
+      return false;
+    }
+    if (!attributeListsEqual((List<Attribute>)e1.getAttributes(), (List<Attribute>)e2.getAttributes())) {
+      return false;
+    }
+    return true;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
