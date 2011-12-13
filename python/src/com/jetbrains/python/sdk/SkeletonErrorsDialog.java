@@ -1,6 +1,5 @@
 package com.jetbrains.python.sdk;
 
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.python.PyBundle;
 
@@ -11,8 +10,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
-
-import static java.lang.Math.*;
 
 public class SkeletonErrorsDialog extends JDialog {
   private JPanel contentPane;
@@ -35,8 +32,13 @@ public class SkeletonErrorsDialog extends JDialog {
     myMessagePane.setContentType("text/html");
     myMessagePane.setBorder(new EmptyBorder(0, 0, 0, 0));
     StringBuilder sb = new StringBuilder("<html><body style='margin: 4pt;' ");
-    sb.append("text='").append(getHTMLColor(getParent().getForeground())).append("' ");
-    sb.append("bgcolor='").append(getHTMLColor(getParent().getBackground())).append("'>");
+    final Color foreground = getParent().getForeground();
+    final Color background = getParent().getBackground();
+    if (foreground != null && background != null) {
+      sb.append("text='").append(getHTMLColor(foreground)).append("' ");
+      sb.append("bgcolor='").append(getHTMLColor(background)).append("'");
+    }
+    sb.append(">");
 
     if (failed_sdks.size() > 0) {
       sb.append("<h1>").append(PyBundle.message("sdk.error.dialog.failed.sdks")).append("</h1>");
