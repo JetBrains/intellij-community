@@ -105,7 +105,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == ANNOTATION_ARGUMENTS) return new GrAnnotationArgumentListImpl(node);
     if (elem == ANNOTATION_ARRAY_INITIALIZER) return new GrAnnotationArrrayInitializerImpl(node);
     if (elem == ANNOTATION_MEMBER_VALUE_PAIR) return new GrAnnotationNameValuePairImpl(node);
-    if (elem == ANNOTATION_MEMBER_VALUE_PAIRS) return new GrAnnotationNameValuePairsImpl(node);
 
     if (elem == DEFAULT_ANNOTATION_VALUE) return new GrDefaultAnnotationValueImpl(node);
 
