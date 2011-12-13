@@ -111,15 +111,13 @@
     </action>
 
     <action id="DebugListen" internal="true" class="com.intellij.debugger.actions.ThrowDebugExceptionAction">
-      <add-to-group group-id="Internal1" anchor="before" relative-to-action="VirtualFileInfo"/>
+      <add-to-group group-id="Internal.Errors"/>
     </action>
 
-    <group id="Internal2" internal="true">
-      <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
-              text="Generate Hierarchy Visitor"/>
-      <separator/>
-      <add-to-group group-id="Internal1" anchor="before" relative-to-action="CheckVfsSanity"/>
-    </group>
+    <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
+            text="Generate Hierarchy Visitor">
+      <add-to-group group-id="Internal"/>
+    </action>
 
     <group id="JavaDebuggerActions">
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction"/>
