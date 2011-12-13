@@ -144,25 +144,14 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing,
                                                       switchedFiles, switchedRoots, ignoredFiles, lockedFolders, logicallyLockedFiles);
 
-    TreeSelectionListener[] listeners = getTreeSelectionListeners();
-    for (TreeSelectionListener listener : listeners) {
-      removeTreeSelectionListener(listener);
-    }
-
-    try {
-      storeState();
-      DefaultTreeModel oldModel = getModel();
-      setModel(model);
-      setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
-      ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-      expandPath(new TreePath(root.getPath()));
-      restoreState();
-      expandDefaultChangeList(oldModel, root);
-    } finally {
-      for (TreeSelectionListener listener : listeners) {
-        addTreeSelectionListener(listener);
-      }
-    }
+    storeState();
+    DefaultTreeModel oldModel = getModel();
+    setModel(model);
+    setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
+    ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+    expandPath(new TreePath(root.getPath()));
+    restoreState();
+    expandDefaultChangeList(oldModel, root);
   }
 
   private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
