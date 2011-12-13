@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -240,8 +241,8 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     assertNotNull(targets);
     assertEquals(1, targets.length);
     PsiElement targetElement = targets[0];
-    assertInstanceOf(targetElement, XmlFile.class);
-    assertEquals("main.xml", ((XmlFile)targetElement).getName());
+    assertInstanceOf(targetElement, PsiFile.class);
+    assertEquals("main.xml", ((PsiFile)targetElement).getName());
   }
 
   public void testLayoutFileMarkers() throws Exception {
