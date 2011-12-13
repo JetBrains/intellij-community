@@ -139,6 +139,9 @@ public class PyStructureViewElement implements StructureViewTreeElement {
 
   private Collection<PyElement> getElementChildren(final PyElement element) {
     final Collection<PyElement> children = new ArrayList<PyElement>();
+    if (!element.isValid()) {
+      return children;
+    }
     element.acceptChildren(new PyElementVisitor() {
       @Override
       public void visitElement(PsiElement e) {
