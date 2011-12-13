@@ -236,8 +236,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
 
     frame.setBounds(myFrameBounds);
-    frame.setVisible(true);
     frame.setExtendedState(myFrameExtendedState);
+    frame.setVisible(true);
   }
 
   public IdeFrameImpl[] getAllFrames() {
@@ -712,13 +712,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
     final IdeFrameImpl frame = getFrame(project);
     if (frame != null) {
-      boolean usePreviousBounds = SystemInfo.isMacOSLion && WindowManagerEx.getInstanceEx().isFullScreen(frame);
+      int extendedState = frame.getExtendedState();
+      boolean usePreviousBounds = extendedState == Frame.MAXIMIZED_BOTH ||
+                                  SystemInfo.isMacOSLion && WindowManagerEx.getInstanceEx().isFullScreen(frame);
       final Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
       frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
       frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
       frameElement.setAttribute(WIDTH_ATTR, Integer.toString(rectangle.width));
       frameElement.setAttribute(HEIGHT_ATTR, Integer.toString(rectangle.height));
-      frameElement.setAttribute(EXTENDED_STATE_ATTR, Integer.toString(frame.getExtendedState()));
+      frameElement.setAttribute(EXTENDED_STATE_ATTR, Integer.toString(extendedState));
 
       // Save default layout
       final Element layoutElement = new Element(DesktopLayout.TAG);
