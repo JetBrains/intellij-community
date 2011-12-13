@@ -456,7 +456,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
       if (spaces.length > 1)
-        ws = ws + whitespace.getText().split("\n")[1];
+        ws = ws + spaces[spaces.length-1];
     }
     String docContent = ws + generateDocumentationContentStub(function, ws, true);
     PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
