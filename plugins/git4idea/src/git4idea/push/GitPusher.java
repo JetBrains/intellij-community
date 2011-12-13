@@ -63,6 +63,7 @@ public final class GitPusher {
 
   private static final Logger LOG = Logger.getInstance(GitPusher.class);
   private static final String INDICATOR_TEXT = "Pushing";
+  private static final int MAX_PUSH_ATTEMPTS = 10;
 
   private final Project myProject;
   private final ProgressIndicator myProgressIndicator;
@@ -104,6 +105,11 @@ public final class GitPusher {
 
     public boolean shouldUpdate() {
       return getUpdateMethod() != null;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("UpdateSettings{myUpdateAllRoots=%s, myUpdateMethod=%s}", myUpdateAllRoots, myUpdateMethod);
     }
   }
 
@@ -202,7 +208,7 @@ public final class GitPusher {
    * Makes push, shows the result in a notification. If push for current branch is rejected, shows a dialog proposing to update.
    */
   public void push(@NotNull GitPushInfo pushInfo) {
-    push(pushInfo, null, null);
+    push(pushInfo, null, null, 0);
   }
 
   /**
@@ -212,9 +218,9 @@ public final class GitPusher {
    * option.
    * Also, at the end results are merged and are shown in a single notification.
    */
-  private void push(@NotNull GitPushInfo pushInfo, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings) {
+  private void push(@NotNull GitPushInfo pushInfo, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings, int attempt) {
     GitPushResult result = tryPushAndGetResult(pushInfo);
-    handleResult(pushInfo, result, previousResult, updateSettings);
+    handleResult(pushInfo, result, previousResult, updateSettings, attempt);
   }
 
   @NotNull
@@ -326,7 +332,7 @@ public final class GitPusher {
         return pushNatively(repository, pushSpec);
       }
       else {
-        return GitHttpAdapter.isHttpUrl(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl) : pushNatively(repository, pushSpec);
+        return GitHttpAdapter.isHttpUrlWithoutUserCredentials(remoteUrl) ? GitHttpAdapter.push(repository, null, remoteUrl, null) : pushNatively(repository, pushSpec);
       }
     }
     else {
@@ -334,18 +340,33 @@ public final class GitPusher {
       assert remote != null : "Remote can't be null for pushSpec " + pushSpec;
       String httpUrl = null;
       for (String pushUrl : remote.getPushUrls()) {
-        if (GitHttpAdapter.isHttpUrl(pushUrl)) {
+        if (GitHttpAdapter.isHttpUrlWithoutUserCredentials(pushUrl)) {
           httpUrl = pushUrl;
           break;            // TODO support http and ssh urls in one origin
         }
       }
       if (httpUrl != null) {
-        return GitHttpAdapter.push(repository, remote, httpUrl);
+        return GitHttpAdapter.push(repository, remote, httpUrl, formPushSpec(pushSpec, remote));
       }
       else {
         return pushNatively(repository, pushSpec);
       }
     }
+  }
+
+  @NotNull
+  private static String formPushSpec(@NotNull GitPushSpec spec, @NotNull GitRemote remote) {
+    String destWithRemote = spec.getDest().getName();
+    String prefix = remote.getName() + "/";
+    String destName;
+    if (destWithRemote.startsWith(prefix)) {
+      destName = destWithRemote.substring(prefix.length());
+    }
+    else {
+      LOG.error("Destination remote branch has invalid name. Remote branch name: " + destWithRemote + "\nRemote: " + remote);
+      destName = destWithRemote;
+    }
+    return spec.getSource().getName() + ":" + destName;
   }
 
   @NotNull
@@ -412,7 +433,8 @@ public final class GitPusher {
   // if in a failed repo, a branch was rejected that had nothing to push, don't notify about the rejection.
   // Besides all of the above, don't confuse users with 1 repository with all this "repository/root" stuff;
   // don't confuse users which push only a single branch with all this "branch" stuff.
-  private void handleResult(@NotNull GitPushInfo pushInfo, @NotNull GitPushResult result, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings) {
+  private void handleResult(@NotNull GitPushInfo pushInfo, @NotNull GitPushResult result, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings, 
+                            int pushAttempt) {
     result.mergeFrom(previousResult);
 
     if (result.isEmpty()) {
@@ -425,10 +447,13 @@ public final class GitPusher {
     else {
       // there were no errors, but there might be some rejected branches on some of the repositories
       // => for current branch propose to update and re-push it. For others just warn
-      Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = result.getRejectedPushesForCurrentBranch();
+      Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = result.getRejectedPushesFromCurrentBranchToTrackedBranch(pushInfo);
 
-      if (!rejectedPushesForCurrentBranch.isEmpty()) {
+      if (pushAttempt <= MAX_PUSH_ATTEMPTS && !rejectedPushesForCurrentBranch.isEmpty()) {
 
+        LOG.info(
+          String.format("Rejected pushes for current branches: %n%s%nUpdate settings: %s", rejectedPushesForCurrentBranch, updateSettings));
+        
         if (updateSettings == null) {
           // show dialog only when push is rejected for the first time in a row, otherwise reuse previously chosen update method
           // and don't show the dialog again if user has chosen not to ask again
@@ -449,7 +474,7 @@ public final class GitPusher {
           if (updateResult) {
             myProgressIndicator.setText(INDICATOR_TEXT);
             GitPushInfo newPushInfo = pushInfo.retain(rejectedPushesForCurrentBranch);
-            push(newPushInfo, adjustedPushResult, updateSettings);
+            push(newPushInfo, adjustedPushResult, updateSettings, pushAttempt + 1);
             return; // don't notify - next push will notify all results in compound
           }
         }

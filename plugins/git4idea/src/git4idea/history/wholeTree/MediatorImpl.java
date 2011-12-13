@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.Ticket;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.CachedRefs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +33,7 @@ import java.util.*;
  * @author irengrig
  */
 public class MediatorImpl implements Mediator {
+  private boolean myHaveRestrictingFilters;
   private final Ticket myTicket;
   private final Project myProject;
   private final GitCommitsSequentially myGitCommitsSequentially;
@@ -49,6 +50,7 @@ public class MediatorImpl implements Mediator {
     myTicket = new Ticket();
     myController = new LoadGrowthController();
     mySequenceBuffers = new HashMap<VirtualFile, SequenceSupportBuffer>();
+    myHaveRestrictingFilters = false;
   }
 
   @CalledInBackground
@@ -84,7 +86,7 @@ public class MediatorImpl implements Mediator {
 
   @CalledInBackground
   @Override
-  public void reportSymbolicRefs(final Ticket ticket, final VirtualFile root, final SymbolicRefs symbolicRefs) {
+  public void reportSymbolicRefs(final Ticket ticket, final VirtualFile root, final CachedRefs symbolicRefs) {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -140,6 +142,7 @@ public class MediatorImpl implements Mediator {
     myTableWrapper.reset(filters.isEmpty(), startingPoints.isEmpty());
     myController.reset();
 
+    myHaveRestrictingFilters = filters.haveCommitterOrCommentFilters();
     /*if (filters.isEmpty()) {
       mySequenceBuffers.clear();
       for (VirtualFile root : rootsHolder.getRoots()) {
@@ -296,9 +299,9 @@ public class MediatorImpl implements Mediator {
     private int nextCut() {
       int nextCut = myRecentCut;
       while (true) {
-        final CommitI commitAt = myTableModel.getCommitAt(nextCut + ourManyLoadedStep);
+        final CommitI commitAt = myTableModel.getCommitAt(nextCut + getLoadSize());
         if (commitAt != null && myController.isEverybodyLoadedMoreThan(commitAt.getTime())) {
-          nextCut += ourManyLoadedStep;
+          nextCut += getLoadSize();
           continue;
         }
         break;
@@ -332,5 +335,9 @@ public class MediatorImpl implements Mediator {
       mySuspend = true;
       myForcedStop = true;
     }
+  }
+
+  private int getLoadSize() {
+    return myHaveRestrictingFilters ? ourManyLoadedStep/2 : ourManyLoadedStep;
   }
 }

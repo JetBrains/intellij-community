@@ -84,14 +84,15 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   protected CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
-                                            @NotNull final String namespacePrefix, XmlFile containingFile) {
+                                            @NotNull final String namespacePrefix, 
+                                            @NotNull XmlFile containingFile) {
     this(element, namespacePrefix, null, containingFile);
   }
 
   public CreateNSDeclarationIntentionFix(final PsiElement element,
                                          final String namespacePrefix,
                                          @Nullable final XmlToken token,
-                                         XmlFile containingFile) {
+                                         @NotNull XmlFile containingFile) {
     myNamespacePrefix = namespacePrefix;
     myElement = element;
     myFile = containingFile;
@@ -132,7 +133,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!myElement.isValid() || !CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
-    final Set<String> set = XmlExtension.getExtension(file).guessUnboundNamespaces(myElement, (XmlFile)file);
+    final Set<String> set = XmlExtension.getExtension(myFile).guessUnboundNamespaces(myElement, myFile);
     final String[] namespaces = ArrayUtil.toStringArray(set);
     Arrays.sort(namespaces);
 

@@ -67,6 +67,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   private final ToolWindowHeader.ActionButton myHideButton;
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
+  private ToolWindowType myImageType;
 
   public ToolWindowHeader(final ToolWindowImpl toolWindow, WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
     setLayout(new BorderLayout());
@@ -84,7 +85,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
           Component c = getComponent(0);
           Dimension size = c.getPreferredSize();
           if (size.width < (r.width - insets.left - insets.right)) {
-            c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
+            c.setBounds(insets.left, insets.top, r.width, r.height - insets.top - insets.bottom);
           } else {
             c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
           }
@@ -151,7 +152,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
     addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup());
+        toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
     });
     
@@ -220,20 +221,24 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     Graphics2D g2d = (Graphics2D)g;
     Shape clip = g2d.getClip();
 
+    ToolWindowType type = myToolWindow.getType();
+
     Image image;
     if (isActive()) {
-      if (myActiveImage == null || myActiveImage.getHeight() != r.height) {
-        myActiveImage = drawToBuffer(true, r.height);
+      if (myActiveImage == null || myActiveImage.getHeight() != r.height || type != myImageType) {
+        myActiveImage = drawToBuffer(true, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
       
       image = myActiveImage;
     } else {
-      if (myImage == null || myImage.getHeight() != r.height) {
-        myImage = drawToBuffer(false, r.height);
+      if (myImage == null || myImage.getHeight() != r.height || type != myImageType) {
+        myImage = drawToBuffer(false, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
       
       image = myImage;
     }
+    
+    myImageType = myToolWindow.getType();
 
     Rectangle clipBounds = clip.getBounds();
     for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x+=150) {
@@ -241,7 +246,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     }
   }
   
-  private static BufferedImage drawToBuffer(boolean active, int height) {
+  private static BufferedImage drawToBuffer(boolean active, int height, boolean floating) {
     final int width = 150;
     
     BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -254,7 +259,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     _g.fillRect(0, 0, width, height);
 
     _g.setColor(new Color(0, 0, 0, 90));
-    _g.drawLine(0, 0, width, 0);
+    if (!floating) _g.drawLine(0, 0, width, 0);
     _g.drawLine(0, height - 1, width, height - 1);
 
     _g.setColor(new Color(255, 255, 255, 100));

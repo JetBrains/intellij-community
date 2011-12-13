@@ -25,6 +25,7 @@ import com.intellij.CommonBundle;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
+import com.intellij.compiler.make.ChangedConstantsDependencyProcessor;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.diagnostic.IdeErrorsDialog;
@@ -77,6 +78,7 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.artifacts.ArtifactImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
@@ -952,6 +954,8 @@ public class CompileDriver {
           if (!executeCompileTasks(context, false)) {
             return ExitStatus.CANCELLED;
           }
+          final int constantSearchesCount = ChangedConstantsDependencyProcessor.getConstantSearchesCount(context);
+          LOG.debug("Constants searches: " + constantSearchesCount);
         }
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
@@ -2474,6 +2478,7 @@ public class CompileDriver {
         }
       }
     }
+    affectedOutputPaths.addAll(ArtifactCompilerUtil.getArtifactOutputsContainingSourceFiles(myProject));
 
     if (!affectedOutputPaths.isEmpty()) {
       final StringBuilder paths = new StringBuilder();

@@ -261,8 +261,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     checkFilesAreInList(new VirtualFile[] {file}, targetName, changeListManager);
   }
 
-  @Test
-  public void testComplex() throws Exception {
+  public void _testComplex() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final VirtualFile fileB = createFileInCommand("b.txt", "old content");

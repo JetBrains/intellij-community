@@ -18,7 +18,6 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
@@ -31,6 +30,8 @@ import java.util.List;
 
 public class XmlTagBlock extends AbstractXmlBlock{
   private final Indent myIndent;
+
+  public static boolean ourPrintDebugMessages = false;
 
   public XmlTagBlock(final ASTNode node,
                        final Wrap wrap,
@@ -50,9 +51,20 @@ public class XmlTagBlock extends AbstractXmlBlock{
     super(node, wrap, alignment, policy, preserveSpace);
     myIndent = indent;
   }
+  
+  @Nullable
+  private String getTagName() {
+    final XmlTag tag = getTag();
+    return tag != null ? tag.getName() : null;
+  }
 
   protected List<Block> buildChildren() {
     ASTNode child = myNode.getFirstChildNode();
+
+    if (ourPrintDebugMessages && "head".equals(getTagName())) {
+      System.out.println("First child is " + child + "; type " +
+                         (child != null ? child.getClass().getCanonicalName() : "NULL"));
+    }
     final Wrap attrWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
     final Wrap textWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getTextWrap(getTag())), true);
     final Wrap tagBeginWrap = createTagBeginWrapping(getTag());
@@ -139,6 +151,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
   protected
   @Nullable
   ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
+    if (ourPrintDebugMessages && "head".equals(getTagName())) {
+      new Exception().printStackTrace(System.out);
+      System.out.println("Indent: " + indent);
+    }
+
     IElementType type = child.getElementType();
     if (type == XmlElementType.XML_TEXT) {
       final PsiElement parent = child.getPsi().getParent();
@@ -157,6 +174,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private Indent getChildrenIndent() {
+    if (ourPrintDebugMessages && "head".equals(getTagName())) {
+      new Exception().printStackTrace(System.out);
+      System.out.println("Policy: " + myXmlFormattingPolicy.toString() + "; type: " +
+                         myXmlFormattingPolicy.getClass().getCanonicalName());
+    }
     return myXmlFormattingPolicy.indentChildrenOf(getTag())
            ? Indent.getNormalIndent()
            : Indent.getNoneIndent();

@@ -17,7 +17,6 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction;
-import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -48,11 +47,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     new LinkedHashMap<String, LinkedHashSet<Pair<AbstractUrl, String>>>();
   private final Project myProject;
   private final List<FavoritesListener> myListeners = new ArrayList<FavoritesListener>();
-  public interface FavoritesListener {
-    void rootsChanged(String listName);
-    void listAdded(String listName);
-    void listRemoved(String listName);
-  }
+  private final FavoritesViewSettings myViewSettings = new FavoritesViewSettings();
+  
   private final FavoritesListener fireListeners = new FavoritesListener() {
     public void rootsChanged(String listName) {
       FavoritesListener[] listeners = myListeners.toArray(new FavoritesListener[myListeners.size()]);
@@ -101,6 +97,10 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     fireListeners.listAdded(name);
   }
 
+  public FavoritesViewSettings getViewSettings() {
+    return myViewSettings;
+  }
+
   public synchronized boolean removeFavoritesList(@NotNull String name){
     if (name.equals(myProject.getName())) return false;
     boolean result = myName2FavoritesRoots.remove(name) != null;
@@ -115,7 +115,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
-    Collection<AbstractTreeNode> nodes = AddToFavoritesAction.createNodes(myProject, moduleContext, elements, true, ViewSettings.DEFAULT);
+    Collection<AbstractTreeNode> nodes = AddToFavoritesAction.createNodes(myProject, moduleContext, elements, true, getViewSettings());
     return !nodes.isEmpty() && addRoots(name, nodes);
   }
 

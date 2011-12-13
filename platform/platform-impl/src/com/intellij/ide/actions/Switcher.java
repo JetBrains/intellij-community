@@ -48,6 +48,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -159,6 +160,7 @@ public class Switcher extends AnAction implements DumbAware {
     final JPanel descriptions;
     final Project project;
     final Map<String, ToolWindow> twShortcuts;
+    final Alarm myAlarm;
 
     @SuppressWarnings({"ManualArrayToCollectionCopy"})
     SwitcherPanel(Project project) {
@@ -263,7 +265,7 @@ public class Switcher extends AnAction implements DumbAware {
         for (int i = 0; i < len; i++) {
           filesData.add(new FileInfo(recentFiles[i], null));
         }
-        if (editors.size() == 1) {
+        if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
           filesData.add(0, editors.get(0));
         }
       } else {
@@ -378,7 +380,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (comp == null) {
         comp = ideFrame.getContentPane();
       }
-
+      myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
       myPopup.showInCenterOf(comp);
     }
 
@@ -466,17 +468,12 @@ public class Switcher extends AnAction implements DumbAware {
         }
         final int selectedIndex = jList.getSelectedIndex();
         final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-        new Thread() { //TODO[kb]: think how to do it better. Need to remove all hacks & work correctly with activateEditorComponentImpl method
+        myAlarm.addRequest(new Runnable() {
           @Override
           public void run() {
-            try {
-              sleep(300);
-            }
-            catch (InterruptedException e) {//
-            }
             focusManager.requestFocus(SwitcherPanel.this, true);
           }
-        }.start();
+        }, 300);
         if (jList.getModel().getSize() == 1) {
           goLeft();
           ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);

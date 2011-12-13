@@ -108,6 +108,7 @@ public class ModuleUtil {
     if (!element.isValid()) return null;
 
     Project project = element.getProject();
+    if (project.isDefault()) return null;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     if (element instanceof PsiFileSystemItem && (!(element instanceof PsiFile) || element.getContext() == null)) {

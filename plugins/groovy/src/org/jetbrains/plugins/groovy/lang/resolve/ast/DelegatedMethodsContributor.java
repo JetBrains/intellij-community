@@ -57,6 +57,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       for (PsiMethod method : methods) {
         if (method.isConstructor()) continue;
         if (!deprecated && PsiImplUtil.getAnnotation(method, "java.lang.Deprecated") != null) continue;
+        if (clazz.findCodeMethodsBySignature(method, false).length > 0) continue;
         collector.add(generateDelegateMethod(method, clazz, resolveResult.getSubstitutor()));
       }
     }
@@ -95,16 +96,21 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
     builder.setNavigationElement(method);
     builder.addModifier(PsiModifier.PUBLIC);
+
+    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      builder.addTypeParameter(typeParameter);
+    }
+
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();
 
     final PsiClass containingClass = method.getContainingClass();
     boolean isRaw = containingClass != null && PsiUtil.isRawSubstitutor(containingClass, substitutor);
     if (isRaw) {
-      PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
-      substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, methodTypeParameters);
+      substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
     }
 
-    for (int i = 0, originalParametersLength = originalParameters.length; i < originalParametersLength; i++) {
+    for (int i = 0; i < originalParameters.length; i++) {
       PsiParameter originalParameter = originalParameters[i];
       PsiType type;
       if (isRaw) {

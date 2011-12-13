@@ -143,6 +143,9 @@ private def layoutMac(Map args, String home, Paths paths) {
     </array>
   """
   args["idea.properties.path"] = "$home/bin/idea.properties"
+  if (!isEap()) {
+    args["idea.properties"] = ["idea.fatal.error.notification":"disabled"];
+  }
   def system_selector = args.system_selector
   // TODO remove the next line when system_selector for Mac and other OS will be unified
   system_selector = args.system_selector_mac

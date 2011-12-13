@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class StructureViewModuleNode extends AbstractModuleNode {
@@ -34,15 +35,20 @@ public class StructureViewModuleNode extends AbstractModuleNode {
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
+    final Module module = getValue();
+    if (module == null) {
+      // just deleted a module from project view
+      return Collections.emptyList();
+    }
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(2);
-    children.add(new LibraryGroupNode(getProject(), new LibraryGroupElement(getValue()), getSettings()) {
+    children.add(new LibraryGroupNode(getProject(), new LibraryGroupElement(module), getSettings()) {
       @Override
       public boolean isAlwaysExpand() {
         return true;
       }
     });
 
-    children.add(new ModuleListNode(getProject(), getValue(), getSettings()));
+    children.add(new ModuleListNode(getProject(), module, getSettings()));
     return children;
   }
 

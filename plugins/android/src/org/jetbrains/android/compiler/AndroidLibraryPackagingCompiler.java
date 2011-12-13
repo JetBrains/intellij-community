@@ -89,8 +89,8 @@ public class AndroidLibraryPackagingCompiler implements ClassPostProcessingCompi
       final String outputJarOsPath = FileUtil.toSystemDependentName(processingItem.getOutputDirectory().getPath() + '/' +
                                                                     AndroidCompileUtil.CLASSES_JAR_FILE_NAME);
 
+      final File outputJarFile = new File(outputJarOsPath);
       try {
-        final File outputJarFile = new File(outputJarOsPath);
         AndroidCompileUtil.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, classesDirOsPaths, outputJarFile);
         CompilerUtil.refreshIOFile(outputJarFile);
         result.add(processingItem);
@@ -101,7 +101,12 @@ public class AndroidLibraryPackagingCompiler implements ClassPostProcessingCompi
         }
         else {
           LOG.info(e);
-          context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+          context.addMessage(CompilerMessageCategory.ERROR, "Cannot pack sources of module " +
+                                                            processingItem.getModule().getName() +
+                                                            " to " +
+                                                            outputJarFile.getName() +
+                                                            ": " +
+                                                            e.getMessage(), null, -1, -1);
         }
       }
     }

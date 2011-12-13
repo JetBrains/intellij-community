@@ -58,4 +58,6 @@ public interface DfaMemoryState {
   boolean canBeNaN(DfaValue dfaValue);
 
   boolean isNotNull(DfaVariableValue dfaVar);
+
+  void flushVariableOutOfScope(DfaVariableValue variable);
 }

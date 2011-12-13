@@ -17,6 +17,7 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.impl.FrameworkDetectionContextBase;
@@ -54,8 +55,14 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
     }
 
     final List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
+    final FacetType<F,C> facetType = detector.getFacetType();
     for (ModuleDescriptor module : filesByModule.keySet()) {
-      final List<Pair<C,Collection<VirtualFile>>> pairs = detector.createConfigurations(filesByModule.get(module), Collections.<C>emptyList());
+      if (!facetType.isSuitableModuleType(module.getModuleType())) {
+        continue;
+      }
+
+      final List<Pair<C, Collection<VirtualFile>>> pairs =
+        detector.createConfigurations(filesByModule.get(module), Collections.<C>emptyList());
       for (Pair<C, Collection<VirtualFile>> pair : pairs) {
         result.add(new FacetBasedDetectedFrameworkDescriptionInWizard<F, C>(module, detector, pair.getFirst(),
                                                                             new HashSet<VirtualFile>(pair.getSecond())));

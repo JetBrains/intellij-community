@@ -16,7 +16,7 @@
           <maximumSize width="-2147483645" height="30"/>
           <minimumSize width="64" height="30"/>
           <preferredSize width="268" height="30"/>
-          <text value="&lt;html&gt;&lt;b&gt;Plugins from configured hosts ready to update.&lt;/b&gt;&lt;br&gt; Uncheck plugins you do not want to update. &lt;/html&gt;"/>
+          <text value="&lt;html&gt;&lt;b&gt;Plugins from configured hosts are ready to update.&lt;/b&gt;&lt;br&gt; Uncheck plugins you do not want to update. &lt;/html&gt;"/>
         </properties>
       </component>
       <grid id="3559e" binding="myPluginsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -52,7 +52,7 @@
         <properties>
           <contentType value="text/html"/>
           <maximumSize width="2147483647" height="25"/>
-          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
+          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;&#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      &#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
         </properties>
       </component>
       <vspacer id="bf1d9">

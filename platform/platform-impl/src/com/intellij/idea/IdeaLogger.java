@@ -15,10 +15,10 @@
  */
 package com.intellij.idea;
 
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.ApplicationInfoProvider;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -185,14 +185,8 @@ public class IdeaLogger extends Logger {
   private static ApplicationInfoProvider getIdeaInfoProvider() {
     return new ApplicationInfoProvider() {
       public String getInfo() {
-        ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-        if (application != null && application.isComponentsCreated()) {
-          if (application.hasComponent(ApplicationInfo.class)) {
-            ApplicationInfoEx ideInfo = (ApplicationInfoEx)application.getComponent(ApplicationInfo.class);
-            return ideInfo.getFullApplicationName() + "  " + "Build #" + ideInfo.getBuild().asString();
-          }
-        }
-        return null;
+        final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
+        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
       }
     };
   }

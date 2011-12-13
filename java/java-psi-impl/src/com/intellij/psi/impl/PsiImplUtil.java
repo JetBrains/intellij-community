@@ -525,4 +525,9 @@ public class PsiImplUtil {
     }
     return result;
   }
+
+  public static boolean isVarArgs(PsiMethod method) {
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
+  }
 }

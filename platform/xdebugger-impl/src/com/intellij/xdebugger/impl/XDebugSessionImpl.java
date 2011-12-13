@@ -438,7 +438,9 @@ public class XDebugSessionImpl implements XDebugSession {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        mySessionTab.getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        if (mySessionTab != null) {
+          mySessionTab.getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        }
       }
     });
     myDispatcher.getMulticaster().sessionResumed();

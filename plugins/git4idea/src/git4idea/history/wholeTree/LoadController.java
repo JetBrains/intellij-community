@@ -31,7 +31,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.SymbolicRefsI;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 
@@ -49,7 +49,7 @@ public class LoadController implements Loader {
   private LoadAlgorithm myPreviousAlgorithm;
   private NewGitUsersComponent myUsersComponent;
   private static final Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.LoadController");
-  private final Map<VirtualFile, Pair<String, Long>> mySortOrder;
+  private final Map<VirtualFile, Long> mySortOrder;
 
   public LoadController(final Project project, final Mediator mediator, final DetailsCache detailsCache, final GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
@@ -58,7 +58,7 @@ public class LoadController implements Loader {
     myGitCommitsSequentially = gitCommitsSequentially;
     myUsersIndex = new UsersIndex();
     myUsersComponent = NewGitUsersComponent.getInstance(myProject);
-    mySortOrder = new HashMap<VirtualFile, Pair<String, Long>>();
+    mySortOrder = new HashMap<VirtualFile, Long>();
   }
 
   @CalledInAwt
@@ -128,26 +128,15 @@ public class LoadController implements Loader {
 
     @Override
     public void run(ContinuationContext context) {
-      final Map<VirtualFile, SymbolicRefs> map = new HashMap<VirtualFile, SymbolicRefs>();
+      final Map<VirtualFile, SymbolicRefsI> map = new HashMap<VirtualFile, SymbolicRefsI>();
       for (ByRootLoader shortLoader : myShortLoaders) {
         final VirtualFile root = shortLoader.getRootHolder().getRoot();
-        final SymbolicRefs refs = shortLoader.initSymbRefs();
+        final SymbolicRefsI refs = shortLoader.initSymbRefs();
         map.put(root, refs);
 
         try {
-          final GitRepository repositoryForRoot = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-          final String currentRevisionName = repositoryForRoot == null ? null : repositoryForRoot.getCurrentRevision();
-          final Pair<String, Long> pair = mySortOrder.get(root);
-          if (pair != null && pair.getFirst() != null && Comparing.equal(pair.getFirst(), currentRevisionName)) {
-            continue;
-          }
-          final VcsRevisionNumber currentRevision = GitHistoryUtils.getCurrentRevision(myProject, new FilePathImpl(root), null);
-          if (currentRevision != null) {
-            mySortOrder.put(root,
-                            new Pair<String, Long>(currentRevision.asString(), ((GitRevisionNumber)currentRevision).getTimestamp().getTime()));
-            continue;
-          }
-          mySortOrder.put(root, new Pair<String, Long>(currentRevisionName, Long.MAX_VALUE));
+          long ts = GitHistoryUtils.getHeadTs(myProject, new FilePathImpl(root));
+          mySortOrder.put(root, ts);
         }
         catch (VcsException e) {
           LOG.info(e);
@@ -161,21 +150,17 @@ public class LoadController implements Loader {
       Collections.sort(myShortLoaders, new Comparator<ByRootLoader>() {
         @Override
         public int compare(ByRootLoader rl1, ByRootLoader rl2) {
-          final Pair<String, Long> pair1 = mySortOrder.get(rl1.getRootHolder().getRoot());
-          final Pair<String, Long> pair2 = mySortOrder.get(rl2.getRootHolder().getRoot());
-          final Long l1 = pair1 == null ? null : pair1.getSecond();
-          final Long l2 = pair2 == null ? null : pair2.getSecond();
-          return Comparing.compare(l2, l1);
+          final Long pair1 = mySortOrder.get(rl1.getRootHolder().getRoot());
+          final Long pair2 = mySortOrder.get(rl2.getRootHolder().getRoot());
+          return Comparing.compare(pair2, pair1);
         }
       });
       Collections.sort(mySimpleLoaders, new Comparator<LoaderAndRefresher<CommitHashPlusParents>>() {
         @Override
         public int compare(LoaderAndRefresher<CommitHashPlusParents> lr1, LoaderAndRefresher<CommitHashPlusParents> lr2) {
-          final Pair<String, Long> pair1 = mySortOrder.get(lr1.getRoot());
-          final Pair<String, Long> pair2 = mySortOrder.get(lr2.getRoot());
-          final Long l1 = pair1 == null ? null : pair1.getSecond();
-          final Long l2 = pair2 == null ? null : pair2.getSecond();
-          return Comparing.compare(l2, l1);
+          final Long pair1 = mySortOrder.get(lr1.getRoot());
+          final Long pair2 = mySortOrder.get(lr2.getRoot());
+          return Comparing.compare(pair2, pair1);
         }
       });
 

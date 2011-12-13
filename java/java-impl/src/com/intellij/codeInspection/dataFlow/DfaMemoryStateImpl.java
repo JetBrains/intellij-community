@@ -257,6 +257,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void setVarValue(DfaVariableValue var, DfaValue value) {
+    if (var == value) return;
+
     flushVariable(var);
     if (value instanceof DfaUnknownValue) return;
 
@@ -687,6 +689,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return;
     }
 
+    doFlash(variable);
+    doFlash((DfaVariableValue)variable.createNegated());
+  }
+
+  @Override
+  public void flushVariableOutOfScope(DfaVariableValue variable) {
     doFlash(variable);
     doFlash((DfaVariableValue)variable.createNegated());
   }

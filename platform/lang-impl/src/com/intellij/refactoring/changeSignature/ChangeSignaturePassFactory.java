@@ -81,6 +81,7 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
       if (changeInfo != null) {
         final PsiElement element = changeInfo.getMethod();
         int offset = myEditor.getCaretModel().getOffset();
+        if (element == null) return;
         final TextRange elementTextRange = element.getTextRange();
         if (elementTextRange == null || !elementTextRange.contains(offset)) return;
         final TextRange range = getHighlightingRange(changeInfo);

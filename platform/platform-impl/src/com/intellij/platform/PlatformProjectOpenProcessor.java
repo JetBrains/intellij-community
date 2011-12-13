@@ -15,6 +15,7 @@
  */
 package com.intellij.platform;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -143,6 +144,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         }
         
         project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath());
+        if (project == null) {
+          return null;
+        }
         runConfigurators = false;
       }
       catch (Exception e) {

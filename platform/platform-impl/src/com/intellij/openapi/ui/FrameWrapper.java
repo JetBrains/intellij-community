@@ -128,7 +128,7 @@ public class FrameWrapper implements Disposable, DataProvider {
         }
 
         if (toFocus != null) {
-          fm.requestFocus(myPreferedFocus, true).notify(myFocusedCallback);
+          fm.requestFocus(toFocus, true).notify(myFocusedCallback);
         } else {
           myFocusedCallback.setRejected();
         }
@@ -152,6 +152,11 @@ public class FrameWrapper implements Disposable, DataProvider {
     myFocusWatcher.install(myComponent);
     myShown = true;
     frame.setVisible(true);
+
+    if (UIUtil.isUnderAlloyLookAndFeel()) {
+      //please ask [kb] before remove it
+      frame.setMaximizedBounds(null);
+    }
   }
 
   public void close() {

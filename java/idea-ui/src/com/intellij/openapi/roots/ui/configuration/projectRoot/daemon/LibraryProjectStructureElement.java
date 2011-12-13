@@ -72,7 +72,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
     StringBuilder buffer = new StringBuilder();
     buffer.append("<html>");
-    buffer.append("Library '").append(libraryName).append("' has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
+    buffer.append("Library '").append(StringUtil.escapeXml(libraryName)).append("' has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
     for (String url : invalidClasses) {
       buffer.append("<br>&nbsp;&nbsp;");
       buffer.append(PathUtil.toPresentableUrl(url));
@@ -129,7 +129,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix());
-    return new ProjectStructureProblemDescription(getPresentableName() + " is not used", null, createPlace(),
+    return new ProjectStructureProblemDescription("Library '" + StringUtil.escapeXml(myLibrary.getName()) + "'" + " is not used", null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
                                                   fixes, false);
   }

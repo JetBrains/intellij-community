@@ -56,10 +56,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
-import com.intellij.util.Consumer;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.Restarter;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -419,6 +416,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           LOG.error(t);
         }
         finally {
+          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
         }
       }
@@ -439,6 +437,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           LOG.error(t);
         }
         finally {
+          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
         }
         return null;

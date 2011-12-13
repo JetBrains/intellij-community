@@ -1,9 +1,9 @@
 <component>
-  <version codename="Community Edition" major="11" minor="0" eap="true" update-channel="IDEA11EAP"/>
+  <version codename="Community Edition" major="11" minor="0" eap="false" update-channel="IDEA11"/>
 
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="0" maxbuild="0" version="10.5"/>
-  <logo url="/idea_community_logo.png" textcolor="FFFFFF" progressColor="1d5680" progressY="235"/>
+  <logo url="/idea_community_logo.png" textcolor="FFFFFF" progressColor="f58220" progressY="235"/>
   <about url="/idea_community_about.png"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/general/toolWindowProject.png"/>
   <package code="__PACKAGE_CODE__"/>

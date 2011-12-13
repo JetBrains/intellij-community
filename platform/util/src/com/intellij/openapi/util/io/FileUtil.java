@@ -1050,10 +1050,14 @@ public class FileUtil {
     return file.canExecute();
   }
 
+  /** Use {@link FileSystemUtil#isSymLink(java.io.File)} instead */
+  @Deprecated
   public static boolean isSymbolicLink(File file) {
     return isSymbolicLink(file.getParentFile(), file.getName());
   }
 
+  /** Use {@link FileSystemUtil#isSymLink(java.io.File)} instead */
+  @Deprecated
   public static boolean isSymbolicLink(File parent, String name) {
     try {
       File toTest = parent != null

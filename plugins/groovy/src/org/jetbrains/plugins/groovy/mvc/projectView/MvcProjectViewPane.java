@@ -141,10 +141,10 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     final TreeExpander expander = new DefaultTreeExpander(myTree);
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     group.addAction(new ScrollFromSourceAction());
-    group.addAction(myAutoScrollFromSourceHandler.createToggleAction());
-    group.addAction(myAutoScrollToSourceHandler.createToggleAction());
+    group.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
+    group.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
     group.add(actionsManager.createCollapseAllAction(expander, myTree));
-    group.addAction(new HideEmptyMiddlePackagesAction());
+    group.addAction(new HideEmptyMiddlePackagesAction()).setAsSecondary(true);
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
   }
@@ -299,15 +299,25 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   }
 
   public void selectElement(PsiElement element) {
-    if (!(element instanceof PsiFileSystemItem)) return;
+    PsiFileSystemItem psiFile;
 
-    VirtualFile virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
+    if (!(element instanceof PsiFileSystemItem)) {
+      psiFile = element.getContainingFile();
+    }
+    else {
+      psiFile = (PsiFileSystemItem)element;
+    }
+
+    if (psiFile == null) return;
+
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return;
 
     selectFile(virtualFile, false);
 
     boolean requestFocus = true;
 
-    if (element instanceof PsiFile) {
+    if (psiFile instanceof PsiFile) {
       Editor editor = EditorHelper.openInEditor(element);
       if (editor != null) {
         ToolWindowManager.getInstance(myProject).activateEditorComponent();

@@ -88,6 +88,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private List<AddItemPopupAction<?>> myPopupActions = null;
   private AnActionButton myEditButton;
   private final ModuleConfigurationState myState;
+  private AnActionButton myRemoveButton;
 
   public ClasspathPanelImpl(ModuleConfigurationState state) {
     super(new BorderLayout());
@@ -316,47 +317,56 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     //downButton.setShortcut(CustomShortcutSet.fromString("alt DOWN"));
     myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
 
-    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
-    decorator
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          initPopupActions();
-          final JBPopup popup = JBPopupFactory.getInstance().createListPopup(
-            new BaseListPopupStep<AddItemPopupAction<?>>(null, myPopupActions) {
-              @Override
-              public Icon getIconFor(AddItemPopupAction<?> aValue) {
-                return aValue.getIcon();
-              }
-
-              @Override
-              public boolean hasSubstep(AddItemPopupAction<?> selectedValue) {
-                return selectedValue.hasSubStep();
-              }
-
-              public boolean isMnemonicsNavigationEnabled() {
-                return true;
-              }
-
-              public PopupStep onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
-                if (selectedValue.hasSubStep()) {
-                  return selectedValue.createSubStep();
-                }
-                return doFinalStep(new Runnable() {
-                  public void run() {
-                    selectedValue.execute();
-                  }
-                });
-              }
-
-              @NotNull
-              public String getTextFor(AddItemPopupAction<?> value) {
-                return "&" + value.getIndex() + "  " + value.getTitle();
-              }
-            });
-          popup.show(button.getPreferredPopupPoint());
+    // we need to register our listener before ToolbarDecorator registers its own. Otherwise
+    myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) {
+          return;
         }
-      })
+        updateButtons();
+      }
+    });
+
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
+    decorator.setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        initPopupActions();
+        final JBPopup popup = JBPopupFactory.getInstance().createListPopup(
+          new BaseListPopupStep<AddItemPopupAction<?>>(null, myPopupActions) {
+            @Override
+            public Icon getIconFor(AddItemPopupAction<?> aValue) {
+              return aValue.getIcon();
+            }
+
+            @Override
+            public boolean hasSubstep(AddItemPopupAction<?> selectedValue) {
+              return selectedValue.hasSubStep();
+            }
+
+            public boolean isMnemonicsNavigationEnabled() {
+              return true;
+            }
+
+            public PopupStep onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
+              if (selectedValue.hasSubStep()) {
+                return selectedValue.createSubStep();
+              }
+              return doFinalStep(new Runnable() {
+                public void run() {
+                  selectedValue.execute();
+                }
+              });
+            }
+
+            @NotNull
+            public String getTextFor(AddItemPopupAction<?> value) {
+              return "&" + value.getIndex() + "  " + value.getTitle();
+            }
+          });
+        popup.show(button.getPreferredPopupPoint());
+      }
+    })
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -379,32 +389,36 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     if (isAnalyzeShown) {
       decorator.addExtraAction(analyzeButton);
     }
+
     final JPanel panel = decorator.createPanel();
-
-    myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) {
-          return;
-        }
-        final int[] selectedRows = myEntryTable.getSelectedRows();
-        boolean removeButtonEnabled = true;
-        int minRow = myEntryTable.getRowCount() + 1;
-        int maxRow = -1;
-        for (final int selectedRow : selectedRows) {
-          minRow = Math.min(minRow, selectedRow);
-          maxRow = Math.max(maxRow, selectedRow);
-          final ClasspathTableItem<?> item = myModel.getItemAt(selectedRow);
-          if (!item.isRemovable()) {
-            removeButtonEnabled = false;
-          }
-        }
-        ToolbarDecorator.findRemoveButton(panel).setEnabled(removeButtonEnabled);
-        ClasspathTableItem<?> selectedItem = selectedRows.length == 1 ? myModel.getItemAt(selectedRows[0]) : null;
-        myEditButton.setEnabled(selectedItem != null && selectedItem.isEditable());
-      }
-    });
-
+    myRemoveButton = ToolbarDecorator.findRemoveButton(panel);
     return panel;
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    updateButtons();
+  }
+
+  private void updateButtons() {
+    final int[] selectedRows = myEntryTable.getSelectedRows();
+    boolean removeButtonEnabled = true;
+    int minRow = myEntryTable.getRowCount() + 1;
+    int maxRow = -1;
+    for (final int selectedRow : selectedRows) {
+      minRow = Math.min(minRow, selectedRow);
+      maxRow = Math.max(maxRow, selectedRow);
+      final ClasspathTableItem<?> item = myModel.getItemAt(selectedRow);
+      if (!item.isRemovable()) {
+        removeButtonEnabled = false;
+      }
+    }
+    if (myRemoveButton != null) {
+      myRemoveButton.setEnabled(removeButtonEnabled && selectedRows.length > 0);
+    }
+    ClasspathTableItem<?> selectedItem = selectedRows.length == 1 ? myModel.getItemAt(selectedRows[0]) : null;
+    myEditButton.setEnabled(selectedItem != null && selectedItem.isEditable());
   }
 
   private void removeSelectedItems(final List removedRows) {

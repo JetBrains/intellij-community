@@ -25,12 +25,15 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.MacUtil;
+import com.sun.jna.Callback;
 import com.sun.jna.IntegerType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.datatransfer.DataTransferer;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
@@ -180,7 +183,33 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
   private static class MacClipboardHandler extends ClipboardHandler {
 
+    private static final String CLIPBOARD_CONTENTS = "CLIPBOARD_CONTENTS";
+    private static final String MAC_CLIPBOARD_SYNC_ACTIVE = "Mac.Clipboard.Sync.Active";
     private Pair<String,Transferable> myFullTransferable;
+
+    private static Callback myClipboardQueryCallback = new Callback() {
+      public void callback(ID self, String selector, ID params) {
+        JRootPane pane = getRootPane();
+        if (pane != null) {
+          Transferable transferable = getClipboardContentNatively();
+          if (transferable != null) {
+            pane.putClientProperty(CLIPBOARD_CONTENTS, transferable);
+          }
+
+          pane.putClientProperty(MAC_CLIPBOARD_SYNC_ACTIVE, null);
+        }
+      }
+    };
+
+    static {
+      if (SystemInfo.isMac) {
+        final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "ClipboardSynchronizer_");
+        if (!Foundation.addMethod(delegateClass, Foundation.createSelector("run:"), myClipboardQueryCallback, "v*")) {
+          throw new RuntimeException("Unable to add method to objective-c delegate class!");
+        }
+        Foundation.registerObjcClassPair(delegateClass);
+      }
+    }
 
     @Nullable
     private Transferable doGetContents() throws IllegalStateException {
@@ -247,49 +276,100 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         super.setContent(content, owner);
       }
     }
+    
+    @Nullable
+    private static JRootPane getRootPane() {
+      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (window == null) return null;
+      return SwingUtilities.getRootPane(window);
+    }
 
+    @Nullable
     public static Transferable getContentsSafe() {
       final Ref<Transferable> result = new Ref<Transferable>();
-      Foundation.executeOnMainThread(new Runnable() {
-        @Override
-        public void run() {
-          String plainText = "public.utf8-plain-text";
-          String jvmObject = "application/x-java-jvm";
+        final JRootPane pane = getRootPane();
+        if (pane != null) {
+          try {
+            Runnable run = new Runnable() {
+              @Override
+              public void run() {
+                ID synchronizer_ = Foundation.getClass("ClipboardSynchronizer_");
+                final ID synchronizer = Foundation.invoke(Foundation.invoke(synchronizer_, "alloc"), "init");
+                Foundation
+                  .invoke(synchronizer, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("run:"), null,
+                          false);
 
-          ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
-          ID types = Foundation.invoke(pasteboard, "types");
-          IntegerType count = Foundation.invoke(types, "count");
+                pane.putClientProperty(MAC_CLIPBOARD_SYNC_ACTIVE, Boolean.TRUE);
+                MacUtil.startModal(pane, MAC_CLIPBOARD_SYNC_ACTIVE);
 
-          ID plainTextType = null;
+                Foundation.cfRelease(synchronizer);
 
-          for (int i = 0; i < count.intValue(); i++) {
-            ID each = Foundation.invoke(types, "objectAtIndex:", i);
-            String eachType = Foundation.toStringViaUTF8(each);
-            if (plainText.equals(eachType)) {
-              plainTextType = each;
-              break;
+                Object contents = pane.getClientProperty(CLIPBOARD_CONTENTS);
+                pane.putClientProperty(CLIPBOARD_CONTENTS, null);
+                if (contents != null) {
+                  result.set((Transferable)contents);
+                }
+              }
+            };
+            
+            if (SwingUtilities.isEventDispatchThread()) {
+              run.run();
+            } else {
+              SwingUtilities.invokeAndWait(run);
             }
+
+            Transferable transferable = result.get();
+            if (transferable != null) return transferable;
           }
-
-          // will put string value even if we doesn't found java object. this is needed because java caches clipboard value internally and
-          // will reset it ONLY IF we'll put jvm-object into clipboard (see our setContent optimizations which avoids putting jvm-objects 
-          // into clipboard) 
-          
-          if (plainTextType != null) {
-            ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
-            String value = Foundation.toStringViaUTF8(text);
-            if (value == null) {
-              LOG.info(String.format("[Clipboard] Strange string value (null?) for type: %s", plainTextType));
-            }
-            else {
-              result.set(new StringSelection(value));
-            }
+          catch (InterruptedException e) {
+            // do nothing
+          }
+          catch (InvocationTargetException e) {
+            // do nothing
           }
         }
-      }, true, true);
-
-      return result.get();
+        
+        return null;
     }
+  }
+  
+  @Nullable
+  private static Transferable getClipboardContentNatively() {
+    String plainText = "public.utf8-plain-text";
+    String jvmObject = "application/x-java-jvm";
+
+    ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
+    ID types = Foundation.invoke(pasteboard, "types");
+    IntegerType count = Foundation.invoke(types, "count");
+
+    ID plainTextType = null;
+
+    for (int i = 0; i < count.intValue(); i++) {
+      ID each = Foundation.invoke(types, "objectAtIndex:", i);
+      String eachType = Foundation.toStringViaUTF8(each);
+      if (plainText.equals(eachType)) {
+        plainTextType = each;
+        break;
+      }
+    }
+
+    // will put string value even if we doesn't found java object. this is needed because java caches clipboard value internally and
+    // will reset it ONLY IF we'll put jvm-object into clipboard (see our setContent optimizations which avoids putting jvm-objects 
+    // into clipboard) 
+    
+    Transferable result = null;
+    if (plainTextType != null) {
+      ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
+      String value = Foundation.toStringViaUTF8(text);
+      if (value == null) {
+        LOG.info(String.format("[Clipboard] Strange string value (null?) for type: %s", plainTextType));
+      }
+      else {
+        result = new StringSelection(value);
+      }
+    }
+    
+    return result;
   }
 
   private static class LinuxClipboardHandler extends ClipboardHandler {

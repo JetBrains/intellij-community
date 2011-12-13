@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
                                          null);
         }
         else {
-          problemsHolder.registerProblem(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()), null,
+          problemsHolder.registerProblem(ProjectBundle.message("project.roots.library.problem.message", StringUtil.escapeXml(entry.getPresentableName())), null,
                                          ProjectStructureProblemType.error("invalid-module-dependency"), createPlace(entry),
                                          null);
         }

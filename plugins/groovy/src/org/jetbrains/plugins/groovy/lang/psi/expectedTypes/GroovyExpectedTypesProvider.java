@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -65,8 +66,13 @@ public class GroovyExpectedTypesProvider {
     if (cached == null) {
       expression.putUserData(CACHED_EXPECTED_TYPES, cached = CachedValuesManager.getManager(expression.getProject()).createCachedValue(new CachedValueProvider<TypeConstraint[]>() {
         public Result<TypeConstraint[]> compute() {
+          final PsiElement parent = expression.getParent();
+          if (!(parent instanceof GroovyPsiElement)) {
+            return Result.create(TypeConstraint.EMPTY_ARRAY, PsiModificationTracker.MODIFICATION_COUNT);
+          }
+
           MyCalculator calculator = new MyCalculator(expression);
-          ((GroovyPsiElement)expression.getParent()).accept(calculator);
+          ((GroovyPsiElement)parent).accept(calculator);
           final TypeConstraint[] result = calculator.getResult();
 
           List<TypeConstraint> custom = new ArrayList<TypeConstraint>();
@@ -248,7 +254,7 @@ public class GroovyExpectedTypesProvider {
       final IElementType type = expression.getOperationTokenType();
       final GrExpression left = expression.getLeftOperand();
       final GrExpression right = expression.getRightOperand();
-      
+
 
       if (type == mREGEX_FIND || type == mREGEX_MATCH) {
         final PsiClassType string = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, expression);
@@ -260,7 +266,7 @@ public class GroovyExpectedTypesProvider {
       final PsiType otherType = other != null ? other.getType() : null;
 
       if (otherType == null) return;
-      
+
       if (type== mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         final PsiClassType obj = TypesUtil.getJavaLangObject(expression);
         myResult = new TypeConstraint[]{new SubtypeConstraint(obj, obj)};
@@ -347,7 +353,13 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
-      ((GroovyPsiElement)expression.getParent()).accept(this);
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof GroovyPsiElement) {
+        ((GroovyPsiElement)parent).accept(this);
+      }
+      else {
+        parent.accept(new GroovyPsiElementVisitor(this));
+      }
     }
 
     @Override

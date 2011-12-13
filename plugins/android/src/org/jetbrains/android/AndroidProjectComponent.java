@@ -19,11 +19,15 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.android.compiler.AndroidPrecompileTask;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidProjectComponent extends AbstractProjectComponent {
+  private volatile boolean myCompilationRunning = false;
+  private final Object COMPILATION_FLAG_LOCK = new Object();
+
   protected AndroidProjectComponent(Project project) {
     super(project);
   }
@@ -31,6 +35,26 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
   @Override
   public void projectOpened() {
     final CompilerManager manager = CompilerManager.getInstance(myProject);
-    manager.addBeforeTask(new AndroidPrecompileTask());
+    manager.addBeforeTask(new AndroidPrecompileTask(this));
+  }
+
+  public void setCompilationStarted() {
+    synchronized (COMPILATION_FLAG_LOCK) {
+      myCompilationRunning = true;
+    }
+  }
+
+  public void setCompilationFinished() {
+    synchronized (COMPILATION_FLAG_LOCK) {
+      myCompilationRunning = false;
+    }
+  }
+
+  public void runIfNotInCompilation(@NotNull Runnable r) {
+    synchronized (COMPILATION_FLAG_LOCK) {
+      if (!myCompilationRunning) {
+        r.run();
+      }
+    }
   }
 }

@@ -55,7 +55,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private final ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
   private final FileStatusListener myFileStatusListener;
   private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
-  private final FavoritesManager.FavoritesListener myFavoritesListener;
+  private final FavoritesListener myFavoritesListener;
 
   public FavoritesViewTreeBuilder(Project project,
                                   JTree tree,
@@ -102,7 +102,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
 
-    myFavoritesListener = new FavoritesManager.FavoritesListener() {
+    myFavoritesListener = new FavoritesListener() {
       public void rootsChanged(String listName) {
         //if (myListName.equals(listName)) { //todo[kb]: add optimizations?
           updateFromRoot();

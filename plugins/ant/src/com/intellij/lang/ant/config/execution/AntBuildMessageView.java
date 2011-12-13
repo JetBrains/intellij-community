@@ -48,7 +48,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.content.*;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -76,14 +75,17 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private static final Key<AntBuildMessageView> KEY = Key.create("BuildMessageView.KEY");
   private static final String BUILD_CONTENT_NAME = AntBundle.message("ant.build.tab.content.title");
 
+  public static final int PRIORITY_ERR = 0;
+  public static final int PRIORITY_WARN = 1;
+  public static final int PRIORITY_BRIEF = 2;
+  public static final int PRIORITY_VERBOSE = 3;
+
   private OutputParser myParsingThread;
   private final Project myProject;
   private final JPanel myMessagePanel;
   private AntBuildFileBase myBuildFile;
   private final String[] myTargets;
-  private static final int VERBOSE_MODE = AntMain2.MSG_VERBOSE;
-  private static final int BRIEF_MODE = AntMain2.MSG_VERBOSE - 1;
-  private int myPriorityThreshold = BRIEF_MODE;
+  private int myPriorityThreshold = PRIORITY_BRIEF;
   private int myErrorCount;
   private int myWarningCount;
   private boolean myIsOutputPaused = false;
@@ -97,6 +99,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private int myCommandsProcessedCount = 0;
 
   private JPanel myProgressPanel;
+
+  private final AntMessageCustomizer[] myMessageCustomizers = AntMessageCustomizer.EP_NAME.getExtensions();
 
   private final Timer myScrollerTimer = UIUtil.createNamedTimer("Ant message view timer", 1000, new ActionListener() {
     public void actionPerformed(ActionEvent e) {
@@ -161,14 +165,14 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   public void setVerboseMode(boolean verbose) {
-    changeDetalizationLevel(verbose ? VERBOSE_MODE : BRIEF_MODE);
+    changeDetalizationLevel(verbose ? PRIORITY_VERBOSE : PRIORITY_BRIEF);
     if (myBuildFile != null) {
       myBuildFile.setVerboseMode(verbose);
     }
   }
 
   public boolean isVerboseMode() {
-    return myPriorityThreshold == VERBOSE_MODE;
+    return myPriorityThreshold == PRIORITY_VERBOSE;
   }
 
   private synchronized void changeDetalizationLevel(int priorityThreshold) {
@@ -380,9 +384,27 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     addCommand(new StartTaskCommand(taskName));
   }
 
-  public void outputMessage(String message, int priority) {
-    updateErrorAndWarningCounters(priority);
-    addMessage(MessageType.MESSAGE, priority, message, null, 0, 0);
+  public void outputMessage(final String text, final int priority) {
+    final AntMessage customizedMessage = getCustomizedMessage(text, priority);
+    final AntMessage message = customizedMessage != null
+                               ? customizedMessage
+                               : new AntMessage(MessageType.MESSAGE, priority, text, null, 0, 0);
+    updateErrorAndWarningCounters(message.getPriority());
+    addCommand(new AddMessageCommand(message));
+  }
+
+  @Nullable
+  private AntMessage getCustomizedMessage(final String text, final int priority) {
+    AntMessage customizedMessage = null;
+
+    for (AntMessageCustomizer customizer : myMessageCustomizers) {
+      customizedMessage = customizer.createCustomizedMessage(text, priority);
+      if (customizedMessage != null) {
+        break;
+      }
+    }
+
+    return customizedMessage;
   }
 
   public void outputError(String error, int priority) {
@@ -394,7 +416,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   public void outputException(String exception) {
-    updateErrorAndWarningCounters(0);
+    updateErrorAndWarningCounters(PRIORITY_ERR);
     AntMessage message = createErrorMessage(MessageType.ERROR, 0, exception);
     addCommand(new AddExceptionCommand(message));
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
@@ -403,10 +425,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
 
   private void updateErrorAndWarningCounters(int priority) {
-    if (priority == AntMain2.MSG_ERR) {
+    if (priority == PRIORITY_ERR) {
       myErrorCount++;
     }
-    else if (priority == AntMain2.MSG_WARN) {
+    else if (priority == PRIORITY_WARN) {
       myWarningCount++;
     }
   }
@@ -474,7 +496,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   public void outputJavacMessage(MessageType type, String[] text, VirtualFile file, String url, int line, int column) {
-    int priority = type == MessageType.ERROR ? AntMain2.MSG_ERR : AntMain2.MSG_VERBOSE;
+    int priority = type == MessageType.ERROR ? PRIORITY_ERR : PRIORITY_VERBOSE;
     updateErrorAndWarningCounters(priority);
     AntMessage message = new AntMessage(type, priority, text, file, line, column);
     addCommand(new AddJavacMessageCommand(message, url));

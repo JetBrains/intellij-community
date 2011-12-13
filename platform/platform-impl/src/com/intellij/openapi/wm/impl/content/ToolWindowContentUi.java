@@ -70,7 +70,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
-  private static DefaultActionGroup myGroup;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -252,7 +251,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return true;
   }
 
-  static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
+  void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
     if (c.getClientProperty(ui) != null) return;
 
 
@@ -291,39 +290,38 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     });
 
 
-    myGroup = new DefaultActionGroup();
-    if (c instanceof BaseLabel) {
-      final Content content = ((BaseLabel)c).getContent();
-      if (content != null) {
-        myGroup.add(ui.myShowContent);
-        myGroup.addSeparator();
-        myGroup.add(new TabbedContentAction.CloseAction(content));
-        myGroup.add(ui.myCloseAllAction);
-        myGroup.add(new TabbedContentAction.CloseAllButThisAction(content));
-        myGroup.addSeparator();
-        if (content.isPinnable()) {
-          myGroup.add(PinToolwindowTabAction.getPinAction());
-          myGroup.addSeparator();
-        }
-
-        myGroup.add(ui.myNextTabAction);
-        myGroup.add(ui.myPreviousTabAction);
-        myGroup.addSeparator();
-      }
-    }
-
     c.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        ui.showContextMenu(comp, x, y, ui.myWindow.getPopupGroup());
+        if (c instanceof BaseLabel) {
+          final Content content = ((BaseLabel)c).getContent();
+          ui.showContextMenu(comp, x, y, ui.myWindow.getPopupGroup(), content);
+        }
       }
     });
 
     c.putClientProperty(ui, Boolean.TRUE);
   }
 
-  public void showContextMenu(Component comp, int x, int y, ActionGroup toolWindowGroup) {
+  private void initActionGroup(DefaultActionGroup group, final Content content) {
+    group.add(myShowContent);
+    group.addSeparator();
+    group.add(new TabbedContentAction.CloseAction(content));
+    group.add(myCloseAllAction);
+    group.add(new TabbedContentAction.CloseAllButThisAction(content));
+    group.addSeparator();
+    if (content.isPinnable()) {
+      group.add(PinToolwindowTabAction.getPinAction());
+      group.addSeparator();
+    }
+
+    group.add(myNextTabAction);
+    group.add(myPreviousTabAction);
+    group.addSeparator();
+  }
+
+  public void showContextMenu(Component comp, int x, int y, ActionGroup toolWindowGroup, Content selectedContent) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.addAll(myGroup);
+    initActionGroup(group, selectedContent);
 
     if (toolWindowGroup != null) {
       group.addAll(toolWindowGroup);

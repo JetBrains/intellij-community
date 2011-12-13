@@ -64,17 +64,26 @@ public class BuildArtifactAction extends AnAction {
     if (artifacts.isEmpty()) return;
 
     final Artifact first = artifacts.get(0);
+    List<ArtifactPopupItem> items = new ArrayList<ArtifactPopupItem>();
     if (artifacts.size() > 1) {
-      artifacts.add(0, null);
+      items.add(0, new ArtifactPopupItem(null, "All Artifacts", EmptyIcon.ICON_16));
     }
+    final Artifact selectedArtifact = ContainerUtil.getFirstItem(ArtifactsWorkspaceSettings.getInstance(project).getArtifactsToBuild());
+    ArtifactPopupItem selectedItem = null;
+    for (Artifact artifact : artifacts) {
+      final ArtifactPopupItem item = new ArtifactPopupItem(artifact, artifact.getName(), artifact.getArtifactType().getIcon());
+      if (artifact.equals(selectedArtifact)) {
+        selectedItem = item;
+      }
+      items.add(item);
+    }
+    
     final ProjectSettingsService projectSettingsService = ProjectSettingsService.getInstance(project);
     final ArtifactAwareProjectSettingsService settingsService = projectSettingsService instanceof ArtifactAwareProjectSettingsService ? (ArtifactAwareProjectSettingsService)projectSettingsService : null;
     
-    final ChooseArtifactStep step = new ChooseArtifactStep(artifacts, first, project, settingsService);
-    
-    final Artifact toSelect = ContainerUtil.getFirstItem(ArtifactsWorkspaceSettings.getInstance(project).getArtifactsToBuild());
-    if (toSelect != null) {
-      step.setDefaultOptionIndex(artifacts.indexOf(toSelect));
+    final ChooseArtifactStep step = new ChooseArtifactStep(items, first, project, settingsService);
+    if (selectedItem != null) {
+      step.setDefaultOptionIndex(items.indexOf(selectedItem));
     }
     
     final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance().createListPopup(step);
@@ -83,16 +92,17 @@ public class BuildArtifactAction extends AnAction {
       popup.registerAction("editArtifact", editKeyStroke, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          final Artifact artifact = (Artifact)popup.getSelectedValue();
+          final ArtifactPopupItem item = (ArtifactPopupItem)popup.getSelectedValue();
           popup.cancel();
-          settingsService.openArtifactSettings(artifact);
+          settingsService.openArtifactSettings(item.getArtifact());
         }
       });
     }
     popup.showCenteredInCurrentWindow(project);
   }
 
-  protected static void doBuild(@NotNull Project project, final @Nullable Artifact artifact, boolean rebuild) {
+  protected static void doBuild(@NotNull Project project, final @NotNull ArtifactPopupItem item, boolean rebuild) {
+    final Artifact artifact = item.getArtifact();
     final List<Artifact> artifacts = artifact != null ? Collections.singletonList(artifact) : ArtifactUtil.getArtifactWithOutputPaths(project);
     final CompileScope scope = ArtifactCompileScope.createArtifactsScope(project, artifacts);
     ArtifactsWorkspaceSettings.getInstance(project).setArtifactsToBuild(ContainerUtil.createMaybeSingletonList(artifact));
@@ -105,49 +115,48 @@ public class BuildArtifactAction extends AnAction {
   }
 
   private static class BuildArtifactItem extends ArtifactActionItem {
-    private BuildArtifactItem(Artifact artifact, Project project) {
-      super(artifact, project, "Build");
+    private BuildArtifactItem(ArtifactPopupItem item, Project project) {
+      super(item, project, "Build");
     }
 
     @Override
     public void run() {
-      doBuild(myProject, myArtifact, false);
+      doBuild(myProject, myArtifactPopupItem, false);
     }
   }
 
   private static class RebuildArtifactItem extends ArtifactActionItem {
-    private RebuildArtifactItem(Artifact artifact, Project project) {
-      super(artifact, project, "Rebuild");
+    private RebuildArtifactItem(ArtifactPopupItem item, Project project) {
+      super(item, project, "Rebuild");
     }
 
     @Override
     public void run() {
-      doBuild(myProject, myArtifact, true);
+      doBuild(myProject, myArtifactPopupItem, true);
     }
   }
 
   private static class EditArtifactItem extends ArtifactActionItem {
     private final ArtifactAwareProjectSettingsService mySettingsService;
 
-    private EditArtifactItem(Artifact artifact, Project project, final ArtifactAwareProjectSettingsService projectSettingsService) {
-      super(artifact, project, "Edit...");
+    private EditArtifactItem(ArtifactPopupItem item, Project project, final ArtifactAwareProjectSettingsService projectSettingsService) {
+      super(item, project, "Edit...");
       mySettingsService = projectSettingsService;
     }
 
     @Override
     public void run() {
-      mySettingsService.openArtifactSettings(myArtifact);
+      mySettingsService.openArtifactSettings(myArtifactPopupItem.getArtifact());
     }
   }
 
   private static abstract class ArtifactActionItem implements Runnable {
-    @Nullable
-    protected final Artifact myArtifact;
+    protected final ArtifactPopupItem myArtifactPopupItem;
     protected final Project myProject;
     private String myActionName;
 
-    protected ArtifactActionItem(@Nullable Artifact artifact, @NotNull Project project, @NotNull String name) {
-      myArtifact = artifact;
+    protected ArtifactActionItem(@NotNull ArtifactPopupItem item, @NotNull Project project, @NotNull String name) {
+      myArtifactPopupItem = item;
       myProject = project;
       myActionName = name;
     }
@@ -157,12 +166,37 @@ public class BuildArtifactAction extends AnAction {
     }
   }
 
-  private static class ChooseArtifactStep extends BaseListPopupStep<Artifact> {
+  private static class ArtifactPopupItem {
+    @Nullable private final Artifact myArtifact;
+    private final String myText;
+    private final Icon myIcon;
+
+    private ArtifactPopupItem(Artifact artifact, String text, Icon icon) {
+      myArtifact = artifact;
+      myText = text;
+      myIcon = icon;
+    }
+
+    @Nullable
+    public Artifact getArtifact() {
+      return myArtifact;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
+  }
+  
+  private static class ChooseArtifactStep extends BaseListPopupStep<ArtifactPopupItem> {
     private final Artifact myFirst;
     private final Project myProject;
     private ArtifactAwareProjectSettingsService mySettingsService;
 
-    public ChooseArtifactStep(List<Artifact> artifacts,
+    public ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
                               Artifact first,
                               Project project, final ArtifactAwareProjectSettingsService settingsService) {
       super("Build Artifact", artifacts);
@@ -177,28 +211,28 @@ public class BuildArtifactAction extends AnAction {
     }
 
     @Override
-    public Icon getIconFor(Artifact aValue) {
-      return aValue != null ? aValue.getArtifactType().getIcon() : EmptyIcon.ICON_16;
+    public Icon getIconFor(ArtifactPopupItem aValue) {
+      return aValue.getIcon();
     }
 
     @NotNull
     @Override
-    public String getTextFor(Artifact value) {
-      return value != null ? value.getName() : "All Artifacts";
+    public String getTextFor(ArtifactPopupItem value) {
+      return value.getText();
     }
 
     @Override
-    public boolean hasSubstep(Artifact selectedValue) {
+    public boolean hasSubstep(ArtifactPopupItem selectedValue) {
       return true;
     }
 
     @Override
-    public ListSeparator getSeparatorAbove(Artifact value) {
-      return myFirst.equals(value) ? new ListSeparator() : null;
+    public ListSeparator getSeparatorAbove(ArtifactPopupItem value) {
+      return myFirst.equals(value.getArtifact()) ? new ListSeparator() : null;
     }
 
     @Override
-    public PopupStep onChosen(final Artifact selectedValue, boolean finalChoice) {
+    public PopupStep onChosen(final ArtifactPopupItem selectedValue, boolean finalChoice) {
       if (finalChoice) {
         return doFinalStep(new Runnable() {
           @Override

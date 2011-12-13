@@ -22,13 +22,17 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
 * User: anna
 * Date: 11/8/11
 */
 public class StartMarkAction extends BasicUndoableAction {
-  private static StartMarkAction ourCurrentMark;
+  private static final Map<Project, StartMarkAction> ourCurrentMarks = new HashMap<Project, StartMarkAction>();
   private String myCommandName;
   private boolean myGlobal;
   private Document myDocument;
@@ -61,23 +65,34 @@ public class StartMarkAction extends BasicUndoableAction {
     myCommandName = commandName;
   }
 
+  @TestOnly
+  public static void checkCleared() {
+    try {
+      assert ourCurrentMarks.isEmpty() : ourCurrentMarks.values();
+    }
+    finally {
+      ourCurrentMarks.clear();
+    }
+  }
+
   public static StartMarkAction start(Editor editor, Project project, String commandName) throws AlreadyStartedException {
-    if (ourCurrentMark != null) {
-      throw new AlreadyStartedException(ourCurrentMark.myCommandName,
-                                        ourCurrentMark.myDocument,
-                                        ourCurrentMark.getAffectedDocuments());
+    final StartMarkAction existingMark = ourCurrentMarks.get(project);
+    if (existingMark != null) {
+      throw new AlreadyStartedException(existingMark.myCommandName,
+                                        existingMark.myDocument,
+                                        existingMark.getAffectedDocuments());
     }
     final StartMarkAction markAction = new StartMarkAction(editor, commandName);
     UndoManager.getInstance(project).undoableActionPerformed(markAction);
-    ourCurrentMark = markAction;
+    ourCurrentMarks.put(project, markAction);
     return markAction;
   }
 
-  static void markFinished() {
-    if (ourCurrentMark != null) {
-      ourCurrentMark.myDocument = null;
+  static void markFinished(Project project) {
+    final StartMarkAction existingMark = ourCurrentMarks.remove(project);
+    if (existingMark != null) {
+      existingMark.myDocument = null;
     }
-    ourCurrentMark = null;
   }
 
   public static class AlreadyStartedException extends Exception {

@@ -716,7 +716,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       else {
         final PsiClass outerClass = clazz.getContainingClass();
         if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) && !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
-          Annotation annotation = myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("cannot.reference.nonstatic", clazz.getQualifiedName()));
+          Annotation annotation = myHolder.createErrorAnnotation(refElement, GroovyBundle.message("cannot.reference.nonstatic", clazz.getQualifiedName()));
           annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
         }
       }

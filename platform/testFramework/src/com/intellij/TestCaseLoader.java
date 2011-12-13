@@ -71,14 +71,16 @@ public class TestCaseLoader {
     String testGroup = System.getProperty(TARGET_TEST_GROUP);
     myTestGroupName = testGroup == null ? "" : testGroup.trim();
     List<InputStreamReader> inputs = new ArrayList<InputStreamReader>();
-    while (excludedFiles.hasMoreElements()) {
-      URL url = excludedFiles.nextElement();
-      try {
-        InputStream stream = url.openStream();
-        inputs.add(new InputStreamReader(stream));
-      }
-      catch (IOException e) {
-        e.printStackTrace();  
+    if (excludedFiles != null) {
+      while (excludedFiles.hasMoreElements()) {
+        URL url = excludedFiles.nextElement();
+        try {
+          InputStream stream = url.openStream();
+          inputs.add(new InputStreamReader(stream));
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
       }
     }
     if (!inputs.isEmpty()) {

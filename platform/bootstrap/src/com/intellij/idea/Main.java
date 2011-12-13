@@ -39,18 +39,23 @@ public class Main {
   }
 
   public static void main(final String[] args) {
-    if (installPatch()) {
+    /// preload class before installing the patch to prevent class loader problems
+    Restarter.isSupported();
 
+    if (installPatch()) {
       boolean restarted = false;
+      int restartCode = 0;
       try {
         restarted = Restarter.restart();
+        restartCode = Restarter.getRestartCode();
       }
-      catch (Restarter.CannotRestartException e) {
-        // noinspection CallToPrintStackTrace
+      catch (Throwable e) {
+        // can be either CannotRestartException
+        //  or something like class/method not found if they has been changed during update
+
+        //noinspection CallToPrintStackTrace
         e.printStackTrace();
       }
-
-      final int restartCode = Restarter.getRestartCode();
 
       if (!restarted && restartCode == 0) {
         try {
@@ -65,10 +70,11 @@ public class Main {
                                       JOptionPane.INFORMATION_MESSAGE);
       }
 
+      final int finalRestartCode = restartCode;
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          System.exit(restartCode);
+          System.exit(finalRestartCode);
         }
       });
 

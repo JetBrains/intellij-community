@@ -110,7 +110,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     ButtonGroup group = new ButtonGroup();
     group.add(myRbAllThatOverride);
     group.add(myRbFromList);
-    myToStringFilterEditor = new ClassFilterEditor(myProject);
+    myToStringFilterEditor = new ClassFilterEditor(myProject, null, "reference.viewBreakpoints.classFilters.newPattern");
     myCbEnableToString.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         final boolean enabled = myCbEnableToString.isSelected();

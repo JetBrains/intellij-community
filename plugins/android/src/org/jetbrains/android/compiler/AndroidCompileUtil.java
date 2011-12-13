@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
@@ -43,6 +44,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.AndroidProjectComponent;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -226,15 +228,14 @@ public class AndroidCompileUtil {
     }
 
     final Project project = module.getProject();
-    Module genModule = module;
 
-    final AndroidFacet facet = AndroidFacet.getInstance(genModule);
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
 
     if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
       removeGenModule(module);
     }
 
-    if (project.isDisposed() || genModule.isDisposed()) {
+    if (project.isDisposed() || module.isDisposed()) {
       return;
     }
 
@@ -246,7 +247,7 @@ public class AndroidCompileUtil {
       root = LocalFileSystem.getInstance().findFileByIoFile(rootFile);
     }
     if (root != null) {
-      final ModuleRootManager manager = ModuleRootManager.getInstance(genModule);
+      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
       unexcludeRootIfNeccessary(root, manager);
       for (VirtualFile existingRoot : manager.getSourceRoots()) {
         if (existingRoot == root) return;
@@ -282,9 +283,8 @@ public class AndroidCompileUtil {
     if (genModule == null) {
       return;
     }
-    moduleManager.disposeModule(genModule);
-    
     final VirtualFile moduleFile = genModule.getModuleFile();
+    moduleManager.disposeModule(genModule);
     
     if (moduleFile != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -304,26 +304,6 @@ public class AndroidCompileUtil {
         }
       });
     }
-  }
-  
-  private static void removeSourceRoot(@NotNull Module module, @NotNull final VirtualFile root) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final ContentEntry contentEntry = findContentEntryForRoot(model, root);
-
-    if (contentEntry != null) {
-      for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-        if (sourceFolder.getFile() == root) {
-          contentEntry.removeSourceFolder(sourceFolder);
-        }
-      }
-    }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
-    });
   }
 
   public static void addSourceRoot(final ModuleRootManager manager, @NotNull final VirtualFile root) {
@@ -361,19 +341,24 @@ public class AndroidCompileUtil {
     }
   }
 
-  public static void generate(final Module module, GeneratingCompiler compiler) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
-    final CompileContext[] contextWrapper = new CompileContext[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+  public static void generate(final Module module, final GeneratingCompiler compiler) {
+    module.getProject().getComponent(AndroidProjectComponent.class).runIfNotInCompilation(new Runnable() {
+      @Override
       public void run() {
-        Project project = module.getProject();
-        if (project.isDisposed()) return;
-        CompilerTask task = new CompilerTask(project, true, "Android auto-generation", true);
-        CompileScope scope = new ModuleCompileScope(module, false);
-        contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
+        assert !ApplicationManager.getApplication().isDispatchThread();
+        final CompileContext[] contextWrapper = new CompileContext[1];
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            Project project = module.getProject();
+            if (project.isDisposed()) return;
+            CompilerTask task = new CompilerTask(project, true, "Android auto-generation", true);
+            CompileScope scope = new ModuleCompileScope(module, false);
+            contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
+          }
+        });
+        generate(compiler, contextWrapper[0]);
       }
     });
-    generate(compiler, contextWrapper[0]);
   }
 
   public static boolean isModuleAffected(CompileContext context, Module module) {
@@ -643,12 +628,16 @@ public class AndroidCompileUtil {
 
   public static void collectAllResources(@NotNull final AndroidFacet facet, final Set<ResourceEntry> resourceSet) {
     final LocalResourceManager manager = facet.getLocalResourceManager();
+    final Project project = facet.getModule().getProject();
+
     for (final String resType : ResourceType.getNames()) {
       for (final ResourceElement element : manager.getValueResources(resType)) {
+        waitForSmartMode(project);
+
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            if (!element.isValid() || facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
+            if (!element.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
               return;
             }
             final String name = element.getName().getValue();
@@ -662,10 +651,12 @@ public class AndroidCompileUtil {
     }
 
     for (final Resources resources : manager.getResourceElements()) {
+      waitForSmartMode(project);
+
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
-          if (!resources.isValid() || facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
+          if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
             return;
           }
 
@@ -688,13 +679,15 @@ public class AndroidCompileUtil {
       });
     }
 
+    waitForSmartMode(project);
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
-        if (facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
+        if (facet.getModule().isDisposed() || project.isDisposed()) {
           return;
         }
-        
+
         for (String id : manager.getIds()) {
           resourceSet.add(new ResourceEntry(ResourceType.ID.getName(), id));
         }
@@ -709,6 +702,12 @@ public class AndroidCompileUtil {
       for (VirtualFile file : resourceFiles) {
         resourceSet.add(new ResourceEntry(subdir.getName(), file.getName()));
       }
+    }
+  }
+
+  private static void waitForSmartMode(Project project) {
+    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+      DumbService.getInstance(project).waitForSmartMode();
     }
   }
 
@@ -740,8 +739,12 @@ public class AndroidCompileUtil {
     throws IOException {
     
     if (file.isDirectory()) {
-      for (File child : file.listFiles()) {
-        addFileToJar(jar, child, rootDirectory, packRClasses);
+      final File[] children = file.listFiles();
+
+      if (children != null) {
+        for (File child : children) {
+          addFileToJar(jar, child, rootDirectory, packRClasses);
+        }
       }
     }
     else if (file.isFile()) {

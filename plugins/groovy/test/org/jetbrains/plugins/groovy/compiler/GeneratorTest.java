@@ -59,6 +59,7 @@ public class GeneratorTest extends LightGroovyTestCase {
   public void testThrowsCheckedException() throws Throwable { doTest(); }
   public void testSubclassProperty() throws Throwable { doTest(); }
   public void testFinalProperty() throws Throwable { doTest(); }
+  public void testDefaultConstructorArguments() throws Throwable { doTest(); }
 
   public void testParameterReturnType() throws Throwable {
     myFixture.addClass("public interface GwtActionService {\n" +
@@ -99,6 +100,14 @@ public class GeneratorTest extends LightGroovyTestCase {
 
   public void testDelegateAnno() throws Throwable {
     myFixture.addClass("package groovy.lang; public @interface Delegate {}");
+    doTest();
+  }
+  public void testAutoCloneAnno() throws Throwable {
+    myFixture.addClass("package groovy.transform; public @interface AutoClone {}");
+    doTest();
+  }
+  
+  public void testDelegateToMethodWithTypeParams() {
     doTest();
   }
 

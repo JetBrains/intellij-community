@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Medvedev Max
@@ -29,8 +30,9 @@ public class JVMElementFactories extends LanguageExtension<JVMElementFactoryProv
     super("com.intellij.generation.topLevelFactory");
   }
 
+  @Nullable
   public static JVMElementFactory getFactory(Language language, Project project) {
     final JVMElementFactoryProvider provider = INSTANCE.forLanguage(language);
-    return provider.getFactory(project);
+    return provider != null? provider.getFactory(project) : null;
   }
 }

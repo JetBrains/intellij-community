@@ -299,7 +299,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         g2.setColor(UIUtil.getControlColor());
         final int w = getWidth();
         final int h = getHeight();
-        g2.setPaint(new GradientPaint(0,0, new Gray(250, 180), 0, h, new Gray(220, 180)));
+        if (getModel().isArmed() && getModel().isPressed()) {
+          g2.setPaint(new GradientPaint(0,0, new Gray(220, 180), 0, h, new Gray(180, 180)));
+        } else {
+          g2.setPaint(new GradientPaint(0,0, new Gray(250, 180), 0, h, new Gray(220, 180)));
+        }
         g2.fillRect(2, 0, w-2, h);
         if (!myMouseInside) {
           g2.setPaint(new GradientPaint(0,0, Gray._180, 0, h, Gray._150));

@@ -303,12 +303,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
-    final GroovyFileBase file = createDummyFile("def " + qName + " i");
-    LOG.assertTrue(file.getTopStatements().length == 1 && (GrVariableDeclaration)file.getTopStatements()[0] instanceof GrVariableDeclaration, qName);
-    GrVariableDeclaration varDecl = (GrVariableDeclaration) file.getTopStatements()[0];
-    final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
-    LOG.assertTrue(typeElement != null, qName);
-    return typeElement.getReferenceElement();
+    try {
+      final GroovyFileBase file = createDummyFile("def i = new " + qName + "()");
+      final GrStatement[] statements = file.getStatements();
+      final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)statements[0];
+      final GrVariable var = variableDeclaration.getVariables()[0];
+      final GrExpression initializer = var.getInitializerGroovy();
+      return ((GrNewExpression)initializer).getReferenceElement();
+    }
+    catch (RuntimeException e) {
+      throw new IncorrectOperationException("reference text=" + qName, e);
+    }
   }
 
   public GrTypeDefinition createTypeDefinition(String text) throws IncorrectOperationException {

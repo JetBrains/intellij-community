@@ -181,7 +181,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       for (VirtualFile file : enumerateGroovyFiles(module)) {
         if (!paths2Compile.contains(file.getPath())) {
           for (String name : TranslatingCompilerFilesMonitor.getCompiledClassNames(file, myProject)) {
-            class2Src.put(name.replace('$', '.'), file.getPath());
+            class2Src.put(name, file.getPath());
           }
         }
       }
@@ -234,8 +234,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
       StringBuffer unparsedBuffer = processHandler.getStdErr();
       if (unparsedBuffer.length() != 0) {
-        compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
-        hasMessages = true;
+        compileContext.addMessage(CompilerMessageCategory.INFORMATION, unparsedBuffer.toString(), null, -1, -1);
       }
 
       final int exitCode = processHandler.getProcess().exitValue();

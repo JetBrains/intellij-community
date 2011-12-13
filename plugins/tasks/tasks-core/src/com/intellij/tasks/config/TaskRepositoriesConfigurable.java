@@ -10,6 +10,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.tasks.TaskManager;
@@ -49,6 +50,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private JPanel myToolbarPanel;
   private JPanel myRepositoryEditor;
   private JBLabel myServersLabel;
+  private Splitter mySplitter;
 
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final Project myProject;
@@ -150,6 +152,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
           String name = myRepoNames.get(repository);
           assert name != null;
           ((CardLayout)myRepositoryEditor.getLayout()).show(myRepositoryEditor, name);
+          mySplitter.doLayout();
+          mySplitter.repaint();
         }
       }
     });

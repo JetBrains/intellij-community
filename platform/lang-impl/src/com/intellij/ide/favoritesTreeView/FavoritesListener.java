@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.copy;
-
-import com.intellij.psi.*;
-import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
+package com.intellij.ide.favoritesTreeView;
 
 /**
- * @author yole
- */
-public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHandler {
-  @Override
-  public boolean canCopy(PsiElement[] elements) {
-    if (JavaMoveClassesOrPackagesHandler.nonFileSystemOrAllJava(elements)) return false;
-    return super.canCopy(elements);
-  }
-
+* @author Konstantin Bulenkov
+*/
+public interface FavoritesListener {
+  void rootsChanged(String listName);
+  void listAdded(String listName);
+  void listRemoved(String listName);
 }

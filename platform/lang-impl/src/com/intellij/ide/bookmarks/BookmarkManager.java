@@ -16,23 +16,25 @@
 
 package com.intellij.ide.bookmarks;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.*;
@@ -44,7 +46,7 @@ import java.util.List;
     @Storage( file = "$WORKSPACE_FILE$")
   }
 )
-public class BookmarkManager implements PersistentStateComponent<Element> {
+public class BookmarkManager implements PersistentStateComponent<Element>, ProjectComponent {
   
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
 
@@ -55,7 +57,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   private final MessageBus myBus;
 
   public static BookmarkManager getInstance(Project project) {
-    return ServiceManager.getService(project, BookmarkManager.class);
+    return project.getComponent(BookmarkManager.class);
   }
 
   public BookmarkManager(Project project, MessageBus bus) {
@@ -65,8 +67,24 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   public void projectOpened() {
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.addEditorMouseListener(myEditorMouseListener, myProject);
+    EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(myEditorMouseListener, myProject);
+  }
+
+  @Override
+  public void projectClosed() {
+    EditorFactory.getInstance().getEventMulticaster().removeEditorMouseListener(myEditorMouseListener);
+  }
+
+  @Override
+  public void initComponent() {}
+
+  @Override
+  public void disposeComponent() {}
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "BookmarkManager";
   }
 
   public Project getProject() {
@@ -174,15 +192,19 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     return container;
   }
 
-  public void loadState(Element state) {
-    BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
-    for (Bookmark bookmark : myBookmarks) {
-      bookmark.release();
-      publisher.bookmarkRemoved(bookmark);
-    }
-    myBookmarks.clear();
+  public void loadState(final Element state) {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+      public void run() {
+        BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
+        for (Bookmark bookmark : myBookmarks) {
+          bookmark.release();
+          publisher.bookmarkRemoved(bookmark);
+        }
+        myBookmarks.clear();
 
-    readExternal(state);
+        readExternal(state);
+      }
+    });
   }
 
   private void readExternal(Element element) {
@@ -338,7 +360,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     public void mouseClicked(final EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;
       if (e.getMouseEvent().isPopupTrigger()) return;
-      if ((e.getMouseEvent().getModifiers() & InputEvent.CTRL_MASK) == 0) return;
+      if ((e.getMouseEvent().getModifiers() & (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)) == 0) return;
 
       Editor editor = e.getEditor();
       int line = editor.xyToLogicalPosition(new Point(e.getMouseEvent().getX(), e.getMouseEvent().getY())).line;
