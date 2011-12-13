@@ -49,8 +49,13 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     if (library == null || library.isDisposed()) return;
 
     reportInvalidRoots(problemsHolder, library, OrderRootType.CLASSES, "classes", ProjectStructureProblemType.error("library-invalid-classes-path"));
-    reportInvalidRoots(problemsHolder, library, OrderRootType.SOURCES, "sources", ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
-    reportInvalidRoots(problemsHolder, library, JavadocOrderRootType.getInstance(), "javadoc", ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
+    final String libraryName = library.getName();
+    if (libraryName == null || !libraryName.startsWith("Maven: ")) {
+      reportInvalidRoots(problemsHolder, library, OrderRootType.SOURCES, "sources",
+                         ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
+      reportInvalidRoots(problemsHolder, library, JavadocOrderRootType.getInstance(), "javadoc",
+                         ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
+    }
   }
 
   private void reportInvalidRoots(ProjectStructureProblemsHolder problemsHolder, LibraryEx library,
