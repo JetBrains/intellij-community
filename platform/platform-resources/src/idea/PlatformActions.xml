@@ -483,9 +483,11 @@
     </group>
 
     <group id="Internal" text="Internal Actions" internal="true" popup="true">
-      <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
-      <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
-      <action id="DropAnOutOfPermGenMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfPermGenMemoryErrorAction"/>
+      <group id="Internal.Errors" popup="true" text="Exceptions">
+        <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
+        <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
+        <action id="DropAnOutOfPermGenMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfPermGenMemoryErrorAction"/>
+      </group>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="RestartInfo" class="com.intellij.internal.RestartInfoAction" text="Restart Info"/>
