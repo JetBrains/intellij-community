@@ -1079,7 +1079,7 @@ public class FileUtil {
    */
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     final File file = new File(path);
-    if (!file.setExecutable(!executableFlag) && file.canExecute() != executableFlag) {
+    if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
       LOG.warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
     }
   }
