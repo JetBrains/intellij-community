@@ -1000,22 +1000,22 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
-    <action id="ConvertGroovyToJava"
-            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
-            text="Convert to Java"
-            description="Convert Groovy files to Java"
-            internal = "true">
       
-      <add-to-group group-id="Internal" anchor="after" relative-to-action="GetPsiTypeAction"/>
-    </action>
-
-    <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction" text="get PsiType" description="" internal = "true">
-      <add-to-group group-id="Internal" anchor="last"/>
-    </action>
-
-    <action id="DumpGroovyControlFlowAction" class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction" text="dump groovy control flow" description="" internal="true">
-      <add-to-group group-id="Internal" anchor="after" relative-to-action="ConvertGroovyToJava"/>
-    </action>
+    <group id="Internal.Groovy" text="Groovy" popup="true" internal="true">
+      <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction"
+              text="get PsiType" description=""
+              internal = "true"/>
+      <action id="ConvertGroovyToJava"
+              class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
+              text="Convert to Java"
+              description="Convert Groovy files to Java"
+              internal = "true"/>
+      <action id="DumpGroovyControlFlowAction"
+              class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
+              text="dump groovy control flow"
+              description="" internal="true"/>
+      <add-to-group group-id="Internal"/>
+    </group>
 
     <action id="RenameJavaFileToGroovyFileAction"
             class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
