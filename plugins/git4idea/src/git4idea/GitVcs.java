@@ -46,7 +46,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -73,7 +73,9 @@ import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
-import git4idea.vfs.*;
+import git4idea.vfs.GitRootTracker;
+import git4idea.vfs.GitRootsListener;
+import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,10 +262,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return myRevSelector;
   }
 
-  @SuppressWarnings({"deprecation"})
   @Override
   @Nullable
-  public VcsRevisionNumber parseRevisionNumber(String revision, FilePath path) throws VcsException {
+  public VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
     if (revision == null || revision.length() == 0) return null;
     if (revision.length() > 40) {    // date & revision-id encoded string
       String dateString = revision.substring(0, revision.indexOf("["));
@@ -285,10 +286,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   }
 
-  @SuppressWarnings({"deprecation"})
   @Override
   @Nullable
-  public VcsRevisionNumber parseRevisionNumber(String revision) throws VcsException {
+  public VcsRevisionNumber parseRevisionNumber(@Nullable String revision) throws VcsException {
     return parseRevisionNumber(revision, null);
   }
 
@@ -372,7 +372,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public void showErrors(@NotNull List<VcsException> list, @NotNull String action) {
     if (list.size() > 0) {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
       buffer.append(GitBundle.message("error.list.title", action));
       for (final VcsException exception : list) {
@@ -395,11 +395,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void showMessages(@NotNull String message) {
     if (message.length() == 0) return;
     showMessage(message, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
-  }
-
-  @NotNull
-  public GitVcsApplicationSettings getAppSettings() {
-    return myAppSettings;
   }
 
   /**
@@ -481,7 +476,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         final S sParent = in.get(j);
         final VirtualFile parent = convertor.convert(sParent);
         // the method check both that parent is an ancestor of the child and that they share common git root
-        if (VfsUtil.isAncestor(parent, child, false) && VfsUtil.isAncestor(childRoot, parent, false)) {
+        if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
           in.remove(i);
           //noinspection AssignmentToForLoopParameter
           --i;
