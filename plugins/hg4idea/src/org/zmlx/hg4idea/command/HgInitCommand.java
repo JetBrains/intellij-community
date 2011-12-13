@@ -20,11 +20,11 @@ public class HgInitCommand {
 
   private final Project myProject;
 
-  public HgInitCommand(Project project) {
+  public HgInitCommand(@NotNull Project project) {
     myProject = project;
   }
 
-  public void execute(@NotNull VirtualFile repositoryRoot, final Consumer<Boolean> booleanResultHandler) {
+  public void execute(@NotNull VirtualFile repositoryRoot, @NotNull final Consumer<Boolean> booleanResultHandler) {
     final List<String> args = new ArrayList<String>(1);
     args.add(repositoryRoot.getPath());
     final HgCommandExecutor executor = new HgCommandExecutor(myProject);

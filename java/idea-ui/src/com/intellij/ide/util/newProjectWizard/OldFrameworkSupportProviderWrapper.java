@@ -81,7 +81,7 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
   }
 
   public static class FrameworkSupportProviderBasedType extends FrameworkTypeEx {
-    private FrameworkSupportProvider myOldProvider;
+    private final FrameworkSupportProvider myOldProvider;
     private final OldFrameworkSupportProviderWrapper myNewProvider;
 
     private FrameworkSupportProviderBasedType(FrameworkSupportProvider oldProvider,

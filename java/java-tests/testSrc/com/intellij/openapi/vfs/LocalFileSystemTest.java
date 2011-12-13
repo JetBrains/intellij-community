@@ -1,35 +1,49 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vfs;
 
+import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class LocalFileSystemTest extends IdeaTestCase{
-  private static final String KEY = "filesystem.useNative";
-
   public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
     FileOutputStream stream = new FileOutputStream(file);
     if (bom != null) {
       stream.write(bom);
     }
     OutputStreamWriter writer = new OutputStreamWriter(stream, charset);
-    writer.write(content);
-    writer.close();
+    try {
+      writer.write(content);
+    }
+    finally {
+      writer.close();
+    }
   }
 
   public static VirtualFile createTempFile(@NonNls String ext, @Nullable byte[] bom, @NonNls String content, Charset charset) throws IOException {
@@ -37,7 +51,9 @@ public class LocalFileSystemTest extends IdeaTestCase{
     setContentOnDisk(temp, bom, content, charset);
 
     myFilesToDelete.add(temp);
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    assert file != null : temp;
+    return file;
   }
 
   public void testChildrenAccessedButNotCached() throws Exception{
@@ -180,7 +196,7 @@ public class LocalFileSystemTest extends IdeaTestCase{
             final String newName = "dir";
             final VirtualFile dirCopy = dirToCopy.copy(null, toVDir, newName);
             assertEquals(newName, dirCopy.getName());
-            IdeaTestUtil.assertDirectoriesEqual(toVDir, fromVDir, null);
+            PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir, null);
           }
           catch(Exception e){
             LOG.error(e);
@@ -195,7 +211,7 @@ public class LocalFileSystemTest extends IdeaTestCase{
 
     final String name = "te\u00dft123123123.txt";
     final File childFile = new File(dirFile, name);
-    childFile.createNewFile();
+    assert childFile.createNewFile() || childFile.exists() : childFile;
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
@@ -216,33 +232,7 @@ public class LocalFileSystemTest extends IdeaTestCase{
       }
     );
 
-
     assertTrue(childFile.delete());
-  }
-
-  public void _testSymLinks() throws Exception {
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          boolean b = Registry.get(KEY).asBoolean();
-          try{
-            Registry.get(KEY).setValue(false);
-            final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath("C:/Documents and Settings");
-            Win32LocalFileSystem system = Win32LocalFileSystem.getWin32Instance();
-            system.exists(dir);
-            String[] strings = system.list(dir);
-            System.out.println(Arrays.asList(strings));
-          }
-          catch(Exception e){
-            fail(e.getMessage());
-          }
-          finally {
-            Registry.get(KEY).setValue(b);
-          }
-        }
-      }
-    );
   }
 
   public void testFindRoot() {
@@ -268,7 +258,6 @@ public class LocalFileSystemTest extends IdeaTestCase{
   }
 
   public void testFileLength() throws Exception {
-
     File file = FileUtil.createTempFile("test", "txt");
     FileUtil.writeToFile(file, "hello");
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
@@ -282,5 +271,40 @@ public class LocalFileSystemTest extends IdeaTestCase{
     s = VfsUtil.loadText(virtualFile);
     assertEquals("new content", s);
     assertEquals(11, virtualFile.getLength());
+  }
+
+  public void testHardLinks() throws Exception {
+    if (!SystemInfo.isWindows && !SystemInfo.isUnix) return;
+
+    final boolean safeWrite = GeneralSettings.getInstance().isUseSafeWrite();
+    final File dir = FileUtil.createTempDirectory("hardlinks", "");
+    try {
+      GeneralSettings.getInstance().setUseSafeWrite(false);
+
+      final File targetFile = new File(dir, "targetFile");
+      assertTrue(targetFile.createNewFile());
+      final File hardLinkFile = new File(dir, "hardLinkFile");
+
+      if (SystemInfo.isWindows) {
+        assertEquals("target=" + targetFile + " link=" + hardLinkFile,
+                     0, ExecUtil.execAndGetResult("fsutil", "hardlink", "create", hardLinkFile.getPath(), targetFile.getPath()));
+      }
+      else if (SystemInfo.isUnix) {
+        assertEquals("target=" + targetFile + " link=" + hardLinkFile,
+                     0, ExecUtil.execAndGetResult("ln", targetFile.getPath(), hardLinkFile.getPath()));
+      }
+
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+      assertNotNull(file);
+      file.setBinaryContent("hello".getBytes(), 0, 0, new SafeWriteRequestor() {});
+
+      final VirtualFile check = LocalFileSystem.getInstance().findFileByIoFile(hardLinkFile);
+      assertNotNull(check);
+      assertEquals("hello", VfsUtil.loadText(check));
+    }
+    finally {
+      GeneralSettings.getInstance().setUseSafeWrite(safeWrite);
+      FileUtil.delete(dir);
+    }
   }
 }

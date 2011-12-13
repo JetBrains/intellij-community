@@ -114,10 +114,12 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
                              @NotNull final List<LineMarkerInfo> result,
                              @NotNull ProgressIndicator progress) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
       PsiElement element = elements.get(i);
       progress.checkCanceled();
 
+      //noinspection ForLoopReplaceableByForEach
       for (int j = 0, providersSize = providers.size(); j < providersSize; j++) {
         LineMarkerProvider provider = providers.get(j);
         LineMarkerInfo info;

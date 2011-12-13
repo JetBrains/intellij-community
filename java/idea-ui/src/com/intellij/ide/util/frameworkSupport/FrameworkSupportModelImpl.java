@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class FrameworkSupportModelImpl extends FrameworkSupportModelBase {
   private final String myContentRootPath;
 
-  public FrameworkSupportModelImpl(final @NotNull Project project,
+  public FrameworkSupportModelImpl(@NotNull final Project project,
                                    @NotNull String baseDirectoryForLibrariesPath, LibrariesContainer librariesContainer) {
     super(project, null, librariesContainer);
     myContentRootPath = baseDirectoryForLibrariesPath;

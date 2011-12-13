@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,6 @@ import java.util.Locale;
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
 
-  private final boolean myPreventSafeWrite = Boolean.parseBoolean(System.getProperty("idea.no.safe.write"));
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
   @Override
@@ -483,7 +483,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     final File ioFile = convertToIOFileAndCheck(file);
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile, SystemInfo.isUnix) : new FileOutputStream(ioFile);
+    final OutputStream stream = shallUseSafeStream(requestor, file) ? new SafeFileOutputStream(ioFile, SystemInfo.isUnix) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override
       public void close() throws IOException {
@@ -497,8 +497,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     };
   }
 
-  private boolean shallUseSafeStream(final Object requestor, final File file) {
-    return !myPreventSafeWrite && requestor instanceof SafeWriteRequestor && !FileUtil.isSymbolicLink(file);
+  private static boolean shallUseSafeStream(final Object requestor, final VirtualFile file) {
+    return GeneralSettings.getInstance().isUseSafeWrite() && requestor instanceof SafeWriteRequestor && !file.isSymLink();
   }
 
   @Override

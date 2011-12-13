@@ -60,6 +60,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     myProgressManager = progressManager;
 
     myIdleListener = new Runnable() {
+      @Override
       public void run() {
         if (generalSettings.isAutoSaveIfInactive() && canSyncOrSave()) {
           fileDocumentManager.saveAllDocuments();
@@ -74,6 +75,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     );
 
     myGeneralSettingsListener = new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent e) {
         if (GeneralSettings.PROP_INACTIVE_TIMEOUT.equals(e.getPropertyName())) {
           IdeEventQueue eventQueue = IdeEventQueue.getInstance();
@@ -86,12 +88,14 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     generalSettings.addPropertyChangeListener(myGeneralSettingsListener);
 
     frameStateManager.addListener(new FrameStateListener() {
+      @Override
       public void onFrameDeactivated() {
         if (canSyncOrSave()) {
           saveProjectsAndDocuments();
         }
       }
 
+      @Override
       public void onFrameActivated() {
         refreshFiles();
       }
@@ -99,14 +103,17 @@ public class SaveAndSyncHandler implements ApplicationComponent {
 
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "SaveAndSyncHandler";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     GeneralSettings.getInstance().removePropertyChangeListener(myGeneralSettingsListener);
     IdeEventQueue.getInstance().removeIdleListener(myIdleListener);
@@ -166,7 +173,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     }
   }
 
-  public void maybeRefresh(ModalityState modalityState) {
+  public void maybeRefresh(@NotNull ModalityState modalityState) {
     if (myBlockSyncOnFrameActivationCount.get() == 0 && GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("refresh VFS");

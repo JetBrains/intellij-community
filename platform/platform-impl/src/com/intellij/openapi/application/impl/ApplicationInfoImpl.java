@@ -46,6 +46,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myMinorVersion = null;
   private String myBuildNumber = null;
   private String myLogoUrl = null;
+  private String myCompanyName = "JetBrains s.r.o.";
+  private String myCompanyUrl = "http://www.jetbrains.com/";
   private Color myLogoTextColor = new Color(0, 35, 135);  // idea blue
   private Color myProgressColor = null;
   private int myProgressY = 350;
@@ -85,7 +87,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_MAJOR = "major";
   @NonNls private static final String ATTRIBUTE_MINOR = "minor";
   @NonNls private static final String ATTRIBUTE_CODENAME = "codename";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ELEMENT_BUILD = "build";
+  @NonNls private static final String ELEMENT_COMPANY = "company";
   @NonNls private static final String ATTRIBUTE_NUMBER = "number";
   @NonNls private static final String ATTRIBUTE_DATE = "date";
   @NonNls private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
@@ -174,6 +178,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls
   public String getHelpURL() {
     return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
+  }
+
+  @Override
+  public String getCompanyName() {
+    return myCompanyName;
+  }
+
+  @Override
+  public String getCompanyURL() {
+    return myCompanyUrl;
   }
 
   @NonNls
@@ -339,6 +353,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
       myDefaultUpdateChannel = versionElement.getAttributeValue("update-channel");
+    }
+
+    Element companyElement = parentNode.getChild(ELEMENT_COMPANY);
+    if (companyElement != null) {
+      myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
+      myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
     }
 
     Element buildElement = parentNode.getChild(ELEMENT_BUILD);

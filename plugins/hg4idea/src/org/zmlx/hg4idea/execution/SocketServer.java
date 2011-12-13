@@ -67,9 +67,13 @@ public class SocketServer {
   }
 
   public void stop() {
-    myExecutingFuture.cancel(true);
+    if (myExecutingFuture != null) {
+      myExecutingFuture.cancel(true);
+    }
     try {
-      myServerSocket.close();
+      if (myServerSocket != null) {
+        myServerSocket.close();
+      }
     } catch (IOException e) {
       throw new RuntimeException(e); //TODO implement catch clause
     }

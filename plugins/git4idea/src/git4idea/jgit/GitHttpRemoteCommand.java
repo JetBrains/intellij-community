@@ -109,7 +109,7 @@ interface GitHttpRemoteCommand {
         public String fun(RefSpec spec) {
           return spec.toString();
         }
-      }, ",");
+      }, " ");
     }
 
     @Override

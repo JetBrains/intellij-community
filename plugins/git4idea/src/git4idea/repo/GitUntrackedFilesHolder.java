@@ -236,7 +236,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
         continue;
       }
       String path = file.getPath();
-      if (myRepositoryFiles.isIndexFile(path) || myRepositoryFiles.isCommitMessageFile(path)) {
+      if (totalRefreshNeeded(path)) {
         allChanged = true;
       }
       else {
@@ -258,6 +258,23 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
         myPossiblyUntrackedFiles.addAll(filesToRefresh);
       }
     }
+  }
+
+  private boolean totalRefreshNeeded(@NotNull String path) {
+    return indexChanged(path) || externallyCommitted(path) || gitignoreChanged(path);
+  }
+
+  private boolean indexChanged(@NotNull String path) {
+    return myRepositoryFiles.isIndexFile(path);
+  }
+
+  private boolean externallyCommitted(@NotNull String path) {
+    return myRepositoryFiles.isCommitMessageFile(path);
+  }
+
+  private boolean gitignoreChanged(@NotNull String path) {
+    // TODO watch file stored in core.excludesfile
+    return path.endsWith(".gitignore") || myRepositoryFiles.isExclude(path);
   }
 
   @Nullable

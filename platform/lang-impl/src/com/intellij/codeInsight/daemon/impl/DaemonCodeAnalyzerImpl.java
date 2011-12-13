@@ -202,7 +202,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     setUpdateByTimerEnabled(false);
     FileStatusMap fileStatusMap = getFileStatusMap();
     for (int ignoreId : toIgnore) {
-      fileStatusMap.markFileUpToDate(document, file, ignoreId);
+      fileStatusMap.markFileUpToDate(file.getProject(),document, ignoreId);
     }
     fileStatusMap.allowDirt(canChangeDocument);
 

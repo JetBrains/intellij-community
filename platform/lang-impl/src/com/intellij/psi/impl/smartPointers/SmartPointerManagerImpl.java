@@ -179,9 +179,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   private static <E extends PsiElement> SmartPsiElementPointer<E> getCachedPointer(@NotNull E element) {
     Reference<SmartPsiElementPointer> data = element.getUserData(CACHED_SMART_POINTER_KEY);
     SmartPsiElementPointer cachedPointer = data == null ? null : data.get();
-    if (cachedPointer instanceof SmartPointerEx
-        && ((SmartPointerEx)cachedPointer).getElementInfo().restoreElement() != element) {
-      return null;
+    if (cachedPointer instanceof SmartPointerEx) {
+      PsiElement cachedElement = ((SmartPointerEx)cachedPointer).getCachedElement();
+      if (cachedElement != null && cachedElement != element) {
+        return null;
+      }
     }
     return cachedPointer;
   }

@@ -39,7 +39,7 @@ public abstract class FrameworkSupportProvider {
   private final String myId;
   private final String myTitle;
 
-  protected FrameworkSupportProvider(final @NonNls @NotNull String id, final @NotNull String title) {
+  protected FrameworkSupportProvider(@NotNull @NonNls final String id, @NotNull final String title) {
     myId = id;
     myTitle = title;
   }

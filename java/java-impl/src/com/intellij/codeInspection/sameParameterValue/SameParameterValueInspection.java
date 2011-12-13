@@ -176,7 +176,7 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
-      final Runnable runnable = new Runnable() {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
             PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
@@ -195,8 +195,7 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
             LOG.error(e);
           }
         }
-      };
-      ApplicationManager.getApplication().runWriteAction(runnable);
+      });
 
       removeParameter(method, parameter);
     }

@@ -34,7 +34,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   private List<SettingsEditorListener<Settings>> myListeners;
   private UserActivityWatcher myWatcher;
   private boolean myIsInUpdate = false;
-  private Factory<Settings> mySettingsFactory;
+  private final Factory<Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
 
