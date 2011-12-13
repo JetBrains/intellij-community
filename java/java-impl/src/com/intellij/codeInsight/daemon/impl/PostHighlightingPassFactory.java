@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.MainHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -55,7 +56,7 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
     if (textRange == null) {
       Long lastStamp = file.getUserData(LAST_POST_PASS_TIMESTAMP);
       long currentStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
-      if (lastStamp != null && lastStamp == currentStamp) {
+      if (lastStamp != null && lastStamp == currentStamp || !ProblemHighlightFilter.shouldHighlightFile(file)) {
         return null;
       }
     }

@@ -184,7 +184,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Set<HighlightInfo> outsideResult = new THashSet<HighlightInfo>(100);
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    final FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
     HighlightVisitor[] highlightVisitors = getHighlightVisitors();
     final HighlightVisitor[] filteredVisitors = filterVisitors(highlightVisitors, myFile);
     final List<PsiElement> inside = new ArrayList<PsiElement>();
@@ -276,7 +275,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }, outside, progress, filteredVisitors, gotHighlights, forceHighlightParents);
 
       if (myUpdateAll) {
-        fileStatusMap.setErrorFoundFlag(myDocument, myErrorFound);
+        ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().setErrorFoundFlag(myDocument, myErrorFound);
       }
     }
     finally {
