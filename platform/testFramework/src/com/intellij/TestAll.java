@@ -25,6 +25,7 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.*;
@@ -43,7 +44,9 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TestAll implements Test {
@@ -356,8 +359,15 @@ public class TestAll implements Test {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
       return testRoots.split(";");
     }
-    final String[] roots = ExternalClasspathClassLoader.getRoots();
+    String[] roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
+      if (Comparing.equal(System.getProperty(TestCaseLoader.SKIP_COMMUNITY_TESTS), "true")) {
+        System.out.println("Skipping community tests");
+        Set<String> set = new LinkedHashSet<String>(Arrays.asList(roots));
+        set.removeAll(Arrays.asList(ExternalClasspathClassLoader.getExcludeRoots()));
+        roots = set.toArray(new String[set.size()]);
+      }
+      
       System.out.println("Collecting tests from roots specified by classpath.file property: " + Arrays.toString(roots));
       return roots;
     }

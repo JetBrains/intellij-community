@@ -47,6 +47,7 @@ public class TestCaseLoader {
   private static final String TARGET_TEST_PATTERNS = "idea.test.patterns";
 
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
+  public static final String SKIP_COMMUNITY_TESTS = "idea.skip.community.tests";
 
   private final List<Class> myClassList = new ArrayList<Class>();
   private Class myFirstTestClass;
