@@ -81,8 +81,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   /**
    * Creates a HTML description of function definition.
    * @param fun the function
-   * @param deco_name_wrapper puts a tag around decorator name
-   * @param deco_separator is added between decorators
    * @param func_name_wrapper puts a tag around the function name
    * @param escaper sanitizes values that come directly from doc string or code
    * @return chain of strings for further chaining
@@ -117,7 +115,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }
       if (originalElement instanceof PyExpression && originalElement.isValid()) {
-        result.append("\n").append(describeExpressionType((PyExpression)originalElement));        
+        result.append("\n").append(describeExpressionType((PyExpression)originalElement));
       }
       return result.toString();
     }
