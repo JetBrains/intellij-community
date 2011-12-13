@@ -73,12 +73,11 @@ public class GitPull extends GitRepositoryAction {
       public void run(@NotNull ProgressIndicator indicator) {
         GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(dialog.gitRoot());
         assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
-        String remoteName = dialog.getRemote();
-        GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
-        if (remote == null) {
-          return;
-        }
-        String url = remote.getFirstUrl();
+        String remoteOrUrl = dialog.getRemote();
+        
+        
+        GitRemote remote = GitUtil.findRemoteByName(repository, remoteOrUrl);
+        String url = (remote == null) ? remoteOrUrl : remote.getFirstUrl();
         if (url == null) {
           return;
         }

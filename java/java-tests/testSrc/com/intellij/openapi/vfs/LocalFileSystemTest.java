@@ -1,5 +1,6 @@
 package com.intellij.openapi.vfs;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -12,10 +13,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
@@ -282,5 +280,26 @@ public class LocalFileSystemTest extends IdeaTestCase{
     s = VfsUtil.loadText(virtualFile);
     assertEquals("new content", s);
     assertEquals(11, virtualFile.getLength());
+  }
+
+  @Bombed(month = 12, day = 13, user = "roman.shevchenko")
+  public void testHardLinks() throws Exception {
+    if (SystemInfo.isWindows) {
+      File dir = FileUtil.createTempDirectory("hardlinks", "");
+      File oldfile = new File(dir, "oldfile");
+      assertTrue(oldfile.createNewFile());
+      File newfile = new File(dir, "newfile");
+      Process process = Runtime.getRuntime().exec(
+        new String[]{"fsutil", "hardlink", "create", '"' + newfile.getPath() + '"', '"' + oldfile.getPath() + '"'});
+      InputStream stream = process.getInputStream();
+      System.out.println(new String(FileUtil.loadBytes(stream)));
+      process.waitFor();
+      VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(oldfile);
+      assertNotNull(file);
+      file.setBinaryContent("hello".getBytes(), 0, 0, new SafeWriteRequestor() {});
+      VirtualFile check = LocalFileSystem.getInstance().findFileByIoFile(newfile);
+      assertNotNull(check);
+      assertEquals("hello", VfsUtil.loadText(check));
+    }
   }
 }

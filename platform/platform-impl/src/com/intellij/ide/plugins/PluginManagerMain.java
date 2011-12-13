@@ -234,7 +234,7 @@ public abstract class PluginManagerMain implements Disposable {
       public void finished() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
-            if (list != null) {
+            if (list != null && errorMessages.isEmpty()) {
               modifyPluginsList(list);
               propagateUpdates(list);
               setDownloadStatus(false);

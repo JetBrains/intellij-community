@@ -18,6 +18,7 @@ package com.intellij.ui.mac.foundation;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
 import java.awt.*;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
@@ -67,12 +68,12 @@ public class MacUtil {
     return focusedWindow;
   }
   
-  public static synchronized void startModal(JComponent component) {
+  public static synchronized void startModal(JComponent component, String key) {
     try {
       if (SwingUtilities.isEventDispatchThread()) {
         EventQueue theQueue = component.getToolkit().getSystemEventQueue();
 
-        while (component.getClientProperty(MAC_NATIVE_WINDOW_SHOWING) == Boolean.TRUE) {
+        while (component.getClientProperty(key) == Boolean.TRUE) {
           AWTEvent event = theQueue.getNextEvent();
           Object source = event.getSource();
           if (event instanceof ActiveEvent) {
@@ -91,7 +92,7 @@ public class MacUtil {
       }
       else {
         assert false: "Should be called from Event-Dispatch Thread only!";
-        while (component.getClientProperty(MAC_NATIVE_WINDOW_SHOWING) == Boolean.TRUE) {
+        while (component.getClientProperty(key) == Boolean.TRUE) {
           // TODO:
           //wait();
         }
@@ -99,6 +100,10 @@ public class MacUtil {
     }
     catch (InterruptedException ignored) {
     }
+  }
+  
+  public static synchronized void startModal(JComponent component) {
+    startModal(component, MAC_NATIVE_WINDOW_SHOWING);
   }
   
   

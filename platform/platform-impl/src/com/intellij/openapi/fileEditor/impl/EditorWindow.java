@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -702,7 +703,9 @@ public class EditorWindow {
     if (offset <= 0) {
       return;
     }
-    
+
+    final int scrollOffset = editorFrom.getScrollingModel().getVerticalScrollOffset();
+
     for (FileEditor fileEditor : toSync) {
       if (!(fileEditor instanceof TextEditor)) {
         continue;
@@ -710,7 +713,16 @@ public class EditorWindow {
       final Editor editor = ((TextEditor)fileEditor).getEditor();
       if (editorFrom.getDocument() == editor.getDocument()) {
         editor.getCaretModel().moveToOffset(offset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+        final ScrollingModel scrollingModel = editor.getScrollingModel();
+        scrollingModel.scrollVertically(scrollOffset);
+
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (!editor.isDisposed()) {
+              scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
+            }
+          }
+        });
       }
     }
   }

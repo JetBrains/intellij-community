@@ -316,8 +316,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
       return stub.isVarArgs();
     }
 
-    PsiParameter[] parameters = getParameterList().getParameters();
-    return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
+    return PsiImplUtil.isVarArgs(this);
   }
 
   @Override

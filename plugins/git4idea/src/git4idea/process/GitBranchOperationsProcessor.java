@@ -453,7 +453,7 @@ public final class GitBranchOperationsProcessor {
   private void displayCompareDialog(List<GitCommit> headToBranch, List<GitCommit> branchToHead, String branchName) {
     if (headToBranch.isEmpty() && branchToHead.isEmpty()) {
       String currentBranch = GitBranchUiUtil.getBranchNameOrRev(myRepository);
-      Messages.showInfoMessage(myProject, String.format("There are no changes in the Git log between <code>%s</code> and <code>%s</code>",
+      Messages.showInfoMessage(myProject, String.format("<html>There are no changes between <code>%s</code> and <code>%s</code></html>",
                                                         currentBranch, branchName), "No Changes Detected");
     } else {
       new GitCompareBranchesDialog(myRepository, branchName, headToBranch, branchToHead).show();

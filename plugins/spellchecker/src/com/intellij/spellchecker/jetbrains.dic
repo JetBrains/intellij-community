@@ -98,6 +98,7 @@ enqueue
 enum
 enums
 evex
+exif
 expr
 facebook
 filename
@@ -269,6 +270,7 @@ pctversion
 permalink
 petersburg
 pipelined
+plaintext
 playlist
 plist
 plsql
@@ -281,6 +283,7 @@ popup
 popups
 posix
 postfix
+postgres
 postprocessing
 postprocessor
 pragma
@@ -293,6 +296,7 @@ preprocessor
 processlist
 profiler
 progressbar
+proven
 pycharm
 readonly
 readwrite
@@ -400,6 +404,7 @@ undofile
 unhandled
 uninstall
 unpivot
+uploader
 urowid
 username
 utf

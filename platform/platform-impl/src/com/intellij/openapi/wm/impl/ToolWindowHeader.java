@@ -152,7 +152,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
     addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup());
+        toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
     });
     

@@ -29,13 +29,19 @@ import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.jgit.GitHttpAdapter;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -165,25 +171,48 @@ public class GitPullDialog extends DialogWrapper {
     listener.changedUpdate(null);
     myGetBranchesButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), GitCommand.LS_REMOTE);
-        h.addParameters("--heads", myRemote.getSelectedItem().toString());
-        String output = GitHandlerUtil.doSynchronously(h, GitBundle.getString("pull.getting.remote.branches"), h.printableCommandLine());
-        if (output == null) {
-          return;
-        }
         myBranchChooser.removeAllElements();
-        for (String line : output.split("\n")) {
-          if (line.length() == 0) {
-            continue;
-          }
-          int pos = line.lastIndexOf('/');
-          if (pos == -1) {
-            pos = line.lastIndexOf('\t');
-          }
-          myBranchChooser.addElement(line.substring(pos + 1), false);
+        Collection<String> remoteBranches = getRemoteBranches((GitDeprecatedRemote)myRemote.getSelectedItem());
+        for (String branch : remoteBranches) {
+          myBranchChooser.addElement(branch, false);
         }
       }
     });
+  }
+
+  @NotNull
+  private Collection<String> getRemoteBranches(@NotNull GitDeprecatedRemote remote) {
+    if (GitHttpAdapter.isHttpUrlWithoutUserCredentials(remote.fetchUrl())) {
+      GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(gitRoot());
+      if (repository == null) {
+        return Collections.emptyList();
+      }
+      return GitHttpAdapter.lsRemote(repository, remote.name(), remote.fetchUrl());
+    }
+    return lsRemoteNatively(remote);
+  }
+
+  @NotNull
+  private Collection<String> lsRemoteNatively(@NotNull GitDeprecatedRemote remote) {
+    GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), GitCommand.LS_REMOTE);
+    h.addParameters("--heads", remote.toString());
+    String output = GitHandlerUtil.doSynchronously(h, GitBundle.getString("pull.getting.remote.branches"), h.printableCommandLine());
+    if (output == null) {
+      return Collections.emptyList();
+    }
+
+    Collection<String> remoteBranches = new ArrayList<String>();
+    for (String line : output.split("\n")) {
+      if (line.length() == 0) {
+        continue;
+      }
+      int pos = line.lastIndexOf('/');
+      if (pos == -1) {
+        pos = line.lastIndexOf('\t');
+      }
+      remoteBranches.add(line.substring(pos + 1));
+    }
+    return remoteBranches;
   }
 
   /**

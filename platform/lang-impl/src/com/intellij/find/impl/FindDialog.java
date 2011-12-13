@@ -769,7 +769,7 @@ public class FindDialog extends DialogWrapper {
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
-    myDirectoryComboBox = new ComboBox(-1);
+    myDirectoryComboBox = new ComboBox(200);
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
       JTextField field = (JTextField)editorComponent;

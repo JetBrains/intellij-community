@@ -58,6 +58,7 @@ public class SearchResults implements DocumentListener {
   private Set<RangeMarker> myExcluded = new HashSet<RangeMarker>();
 
   private Editor myEditor;
+  private Project myProject;
   private FindModel myFindModel;
 
   private int myMatchesLimit = 100;
@@ -72,8 +73,9 @@ public class SearchResults implements DocumentListener {
 
   private Stack<Pair<FindModel, LiveOccurrence>> myCursorPositions = new Stack<Pair<FindModel, LiveOccurrence>>();
 
-  public SearchResults(Editor editor) {
+  public SearchResults(Editor editor, Project project) {
     myEditor = editor;
+    myProject = project;
     myEditor.getDocument().addDocumentListener(this);
   }
 
@@ -161,7 +163,7 @@ public class SearchResults implements DocumentListener {
 
   @Nullable
   public Project getProject() {
-    return myEditor.getProject();
+    return myProject;
   }
 
   public synchronized void setEditor(Editor editor) {
@@ -328,7 +330,7 @@ public class SearchResults implements DocumentListener {
     int offset = r.getStartOffset();
 
     while (true) {
-      FindManager findManager = FindManager.getInstance(editor.getProject());
+      FindManager findManager = FindManager.getInstance(getProject());
       FindResult result;
       try {
         BombedCharSequence

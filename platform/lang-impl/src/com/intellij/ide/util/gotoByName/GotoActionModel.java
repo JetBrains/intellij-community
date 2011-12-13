@@ -284,7 +284,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
       myPattern = pattern;
     }
     if (myCompiledPattern == null) {
-      boolean allowToLower = true;
       final int eol = pattern.indexOf('\n');
       if (eol != -1) {
         pattern = pattern.substring(0, eol);
@@ -293,70 +292,25 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
         pattern = pattern.substring(0, 80);
       }
 
-      final @NonNls StringBuffer buffer = new StringBuffer();
-
-      if (containsOnlyUppercaseLetters(pattern)) {
-        allowToLower = false;
-      }
-
-      if (allowToLower) {
-        buffer.append(".*");
-      }
-
-      boolean firstIdentifierLetter = true;
+      final @NonNls StringBuffer buffer = new StringBuffer(".*");
+      pattern = pattern.toLowerCase();
       for (int i = 0; i < pattern.length(); i++) {
         final char c = pattern.charAt(i);
         if (Character.isLetterOrDigit(c)) {
-          // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
-          if (Character.isUpperCase(c) || Character.isDigit(c)) {
-            
-            if (!firstIdentifierLetter) {
-              buffer.append("[^A-Z]*");
-            }
-
-            buffer.append("[");
-            buffer.append(c);
-            if (allowToLower || i == 0) {
-              buffer.append('|');
-              buffer.append(Character.toLowerCase(c));
-            }
-            buffer.append("]");
-          }
-          else if (Character.isLowerCase(c)) {
-            buffer.append('[');
-            buffer.append(c);
-            buffer.append('|');
-            buffer.append(Character.toUpperCase(c));
-            buffer.append(']');
-          }
-          else {
+          if (Character.isLowerCase(c)) {
+            buffer.append('[')
+              .append(c)
+              .append('|')
+              .append(Character.toUpperCase(c))
+              .append(']');
+          } else {
             buffer.append(c);
           }
-
-          firstIdentifierLetter = false;
         }
-        else if (c == '*') {
-          buffer.append(".*");
-          firstIdentifierLetter = true;
-        }
-        else if (c == '.') {
-          buffer.append("\\.");
-          firstIdentifierLetter = true;
-        }
-        else if (c == ' ') {
-          buffer.append("[^A-Z]*\\ ");
-          firstIdentifierLetter = true;
-        }
-        else {
-          firstIdentifierLetter = true;
-          // for standard RegExp engine
-          // buffer.append("\\u");
-          // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
-
-          // for OROMATCHER RegExp engine
-          buffer.append("\\x");
-          buffer.append(Integer.toHexString(c + 0x20000).substring(3));
-        }
+        else if (c == '*') buffer.append(".*");
+        else if (c == '.') buffer.append("\\.");
+        else if (c == ' ') buffer.append("[^A-Z]*\\ ");
+        else buffer.append("\\x").append(Integer.toHexString(c + 0x20000).substring(3));
       }
 
       buffer.append(".*");
@@ -365,21 +319,12 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
       try {
         myCompiledPattern = new Perl5Compiler().compile(buffer.toString());
       }
-      catch (MalformedPatternException e) {
-        //do nothing
-      }
+      catch (MalformedPatternException ignore) {}
     }
 
     return myCompiledPattern;
   }
 
-  private static boolean containsOnlyUppercaseLetters(String s) {
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if (c != '*' && c != ' ' && !Character.isUpperCase(c)) return false;
-    }
-    return true;
-  }
 
   @Override
   public boolean willOpenEditor() {
