@@ -119,15 +119,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private GitRootTracker myRootTracker; // The tracker that checks validity of git roots
   private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
-  private final EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
-  private final EventDispatcher<GitReferenceListener> myReferenceListeners = EventDispatcher.create(GitReferenceListener.class);
-  private GitConfigTracker myConfigTracker;
   private final BackgroundTaskQueue myTaskQueue; // The queue that is used to schedule background task from actions
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   private final TreeDiffProvider myTreeDiffProvider;
   private final GitCommitAndPushExecutor myCommitAndPushExecutor;
-  private GitReferenceTracker myReferenceTracker;
-  private boolean isActivated; // If true, the vcs was activated
   private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
@@ -167,19 +162,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
-    myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
     myExecutableValidator = new GitExecutableValidator(myProject, this);
   }
 
-
-  public BackgroundTaskQueue getTaskQueue() {
-    return myTaskQueue;
-  }
-
-  public GitVFSListener getVFSListener() {
-    return myVFSListener;
-  }
 
   public ReadWriteLock getCommandLock() {
     return myCommandLock;
@@ -194,30 +180,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (vcs != null) {
       vcs.myTaskQueue.run(task);
     }
-  }
-
-  public void addGitConfigListener(GitConfigListener listener) {
-    myConfigListeners.addListener(listener);
-  }
-
-  public void removeGitConfigListener(GitConfigListener listener) {
-    myConfigListeners.removeListener(listener);
-  }
-
-  public void addGitReferenceListener(GitReferenceListener listener) {
-    myReferenceListeners.addListener(listener);
-  }
-
-  public void removeGitReferenceListener(GitReferenceListener listener) {
-    myReferenceListeners.removeListener(listener);
-  }
-
-  public void addGitRootsListener(GitRootsListener listener) {
-    myRootListeners.addListener(listener);
-  }
-
-  public void removeGitRootsListener(GitRootsListener listener) {
-    myRootListeners.removeListener(listener);
   }
 
   /**
@@ -345,8 +307,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void activate() {
-    isActivated = true;
-
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       if (myExecutableValidator.checkExecutableAndNotifyIfNeeded()) {
         checkVersion();
@@ -359,10 +319,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myVFSListener == null) {
       myVFSListener = new GitVFSListener(myProject, this);
     }
-    if (myConfigTracker == null) {
-      myConfigTracker = new GitConfigTracker(myProject, this, myConfigListeners.getMulticaster());
-    }
-    myReferenceTracker.activate();
     NewGitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
 
@@ -378,7 +334,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void deactivate() {
-    isActivated = false;
     if (myRootTracker != null) {
       myRootTracker.dispose();
       myRootTracker = null;
@@ -387,11 +342,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
-    if (myConfigTracker != null) {
-      myConfigTracker.dispose();
-      myConfigTracker = null;
-    }
-    myReferenceTracker.deactivate();
     NewGitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
 
@@ -576,10 +526,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public List<CommitExecutor> getCommitExecutors() {
     return Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor);
-  }
-
-  public boolean isActivated() {
-    return isActivated;
   }
 
   @NotNull
