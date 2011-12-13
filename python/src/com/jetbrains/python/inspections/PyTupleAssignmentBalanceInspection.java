@@ -49,6 +49,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       if (assignedValue instanceof PyReferenceExpression && !(type instanceof PyTupleType)) return;
       if (lhsExpression instanceof PyTupleExpression && type != null && !(type instanceof PyReturnTypeReference)){
         int valuesLength = PyUtil.getElementsCount(assignedValue, myTypeEvalContext);
+        if (valuesLength == -1) return;
         PyExpression[] elements = ((PyTupleExpression) lhsExpression).getElements();
 
         boolean containsStarExpression = false;

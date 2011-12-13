@@ -1083,7 +1083,7 @@ public class PyUtil {
    * @return element count
    */
   public static int getElementsCount(PyExpression expression, TypeEvalContext evalContext) {
-    int valuesLength = 1;
+    int valuesLength = -1;
     PyType type = expression.getType(evalContext);
     if (type instanceof PyTupleType)
       valuesLength = ((PyTupleType)type).getElementCount();
