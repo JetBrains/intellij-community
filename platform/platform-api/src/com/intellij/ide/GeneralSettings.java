@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,13 +46,15 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDEA automatically saves files if it is inactive for some seconds
   private int myInactiveTimeout; // Number of seconds of inactivity after which IDEA automatically saves all files
+  private boolean myUseSafeWrite = true;
   private final PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
   private boolean myConfirmExtractFiles = true;
   private String myLastProjectLocation;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
-  private int myConfirmOpenNewProject = -1;
+  private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
+
   @NonNls private static final String ELEMENT_OPTION = "option";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
@@ -64,6 +66,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_AUTO_SYNC_FILES = "autoSyncFiles";
   @NonNls private static final String OPTION_AUTO_SAVE_FILES = "autoSaveFiles";
   @NonNls private static final String OPTION_AUTO_SAVE_IF_INACTIVE = "autoSaveIfInactive";
+  @NonNls private static final String OPTION_USE_SAFE_WRITE = "useSafeWrite";
+
   @Deprecated
   @NonNls private static final String OPTION_CHARSET = "charset";
   @Deprecated
@@ -77,6 +81,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject2";
   @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
   @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
+
   @Deprecated
   private Charset myCharset;
   @Deprecated
@@ -207,6 +212,14 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     );
   }
 
+  public boolean isUseSafeWrite() {
+    return myUseSafeWrite;
+  }
+
+  public void setUseSafeWrite(final boolean useSafeWrite) {
+    myUseSafeWrite = useSafeWrite;
+  }
+
   //todo use DefaultExternalizer
   public void readExternal(Element parentNode) {
     List children = parentNode.getChildren(ELEMENT_OPTION);
@@ -280,6 +293,10 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
         catch (Exception ignored) {
         }
       }
+      if (OPTION_USE_SAFE_WRITE.equals(name) && value != null) {
+        myUseSafeWrite = Boolean.valueOf(value).booleanValue();
+      }
+
       if (OPTION_CHARSET.equals(name)) {
         //for migration
         myCharset = CharsetToolkit.forName(value);
@@ -384,8 +401,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(mySaveOnFrameDeactivation));
     parentNode.addContent(optionElement);
 
-    // AutoSave if inactive
-
     optionElement = new Element(ELEMENT_OPTION);
     optionElement.setAttribute(ATTRIBUTE_NAME,OPTION_AUTO_SAVE_IF_INACTIVE);
     optionElement.setAttribute(ATTRIBUTE_VALUE,(myAutoSaveIfInactive?Boolean.TRUE:Boolean.FALSE).toString());
@@ -396,7 +411,10 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     optionElement.setAttribute(ATTRIBUTE_VALUE,Integer.toString(myInactiveTimeout));
     parentNode.addContent(optionElement);
 
-    //
+    optionElement = new Element(ELEMENT_OPTION);
+    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_USE_SAFE_WRITE);
+    optionElement.setAttribute(ATTRIBUTE_VALUE, (myUseSafeWrite ? Boolean.TRUE : Boolean.FALSE).toString());
+    parentNode.addContent(optionElement);
 
     optionElement = new Element(ELEMENT_OPTION);
     optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_USE_DEFAULT_BROWSER);
