@@ -117,7 +117,12 @@ public class TestRunnerUtil {
           }
           try {
             //noinspection SSBasedInspection
-            test = (Test)suiteMethod.invoke(null, new Class[0]); // static method
+            test = (Test)suiteMethod.invoke(null, new Class[0]); // static method 
+            if (test == null) {
+              return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, 
+                                        MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"), new Object[]{"method " + suiteClassName + ".suite() evaluates to null"}), 
+                                        null);
+            }
             test = new SuiteMethodWrapper(test, suiteClassName);
           }
           catch (final InvocationTargetException e) {
