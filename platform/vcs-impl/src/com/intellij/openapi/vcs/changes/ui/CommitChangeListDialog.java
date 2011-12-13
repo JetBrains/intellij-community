@@ -46,7 +46,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.OnOffListener;
-import com.intellij.util.ui.AdjustComponentWhenShown;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.font.LineMetrics;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -83,7 +81,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
   private final boolean myAllOfDefaultChangeListChangesIncluded;
-  @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
+  @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION_";
   private final Action[] myExecutorActions;
   private final boolean myShowVcsCommit;
   private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = new HashMap<AbstractVcs, JPanel>();
@@ -104,12 +102,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String myHelpId;
   
   private SplitterWithSecondHideable myDetailsSplitter;
-  private static final String DETAILS_SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_OPTION";
-  private static final String DETAILS_SHOW_OPTION = "CommitChangeListDialog.DETAILS_SHOW_OPTION";
+  private static final String DETAILS_SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_OPTION_";
+  private static final String DETAILS_SHOW_OPTION = "CommitChangeListDialog.DETAILS_SHOW_OPTION_";
   private JPanel myDetailsPanel;
-  private final AdjustComponentWhenShown myAdjustWhenShown;
   private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
   private String myOkActionText;
+  private final ZipperUpdater myZipperUpdater;
+  private final Runnable myRefreshDetails;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -275,8 +274,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowserExtender = browser.getExtender();
     }
     myDiffDetails.setParent(myBrowser);
-    final ZipperUpdater zipperUpdater = new ZipperUpdater(30, Alarm.ThreadToUse.SWING_THREAD, getDisposable());
-    final Runnable refreshShortDiffDetails = new Runnable() {
+    myZipperUpdater = new ZipperUpdater(30, Alarm.ThreadToUse.SWING_THREAD, getDisposable());
+    myRefreshDetails = new Runnable() {
       @Override
       public void run() {
         myDiffDetails.refresh();
@@ -285,7 +284,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myListenersForShortDiff = new FileAndDocumentListenersForShortDiff(myDiffDetails) {
       @Override
       protected void updateDetails() {
-        zipperUpdater.queue(refreshShortDiffDetails);
+        myZipperUpdater.queue(myRefreshDetails);
       }
       @Override
       protected boolean updateSynchronously() {
@@ -297,7 +296,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.getViewer().addSelectionListener(new Runnable() {
       @Override
       public void run() {
-        zipperUpdater.queue(refreshShortDiffDetails);
+        myZipperUpdater.queue(myRefreshDetails);
       }
     });
     
@@ -468,21 +467,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       support.installSearch(myCommitMessageArea.getEditorField(), myCommitMessageArea.getEditorField());
     }
 
-    myAdjustWhenShown = new AdjustComponentWhenShown() {
-      @Override
-      protected boolean init() {
-        myDiffDetails.refresh();
-        String value = PropertiesComponent.getInstance().getValue(DETAILS_SHOW_OPTION);
-        if (value != null) {
-          Boolean asBoolean = Boolean.valueOf(value);
-          if (Boolean.TRUE.equals(asBoolean)) {
-            myDetailsSplitter.on();
-          }
-        }
-        return calcSplitterProportion();
+    showDetailsIfSaved();
+  }
+
+  private void showDetailsIfSaved() {
+    String value = PropertiesComponent.getInstance().getValue(DETAILS_SHOW_OPTION);
+    if (value != null) {
+      Boolean asBoolean = Boolean.valueOf(value);
+      if (Boolean.TRUE.equals(asBoolean)) {
+        myDetailsSplitter.initOn();
       }
-    };
-    myAdjustWhenShown.install(myBrowser);
+    }
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myZipperUpdater.queue(myRefreshDetails);
+      }
+    });
   }
 
   private void updateOnListSelection() {
@@ -938,6 +939,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySplitter.setFirstComponent(myBrowser);
     mySplitter.setSecondComponent(myCommitMessageArea);
     mySplitter.setDividerWidth(3);
+    initMainSplitter();
+
     rootPane.add(mySplitter, BorderLayout.CENTER);
 
     JComponent browserHeader = myBrowser.getHeaderPanel();
@@ -968,7 +971,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                       new OnOffListener<Integer>() {
                                                         @Override
                                                         public void on(Integer integer) {
-                                                          if (! myAdjustWhenShown.isAdjusted()) return;
+                                                          if (integer == 0) return;
                                                           final Dimension dialogSize = getSize();
                                                           setSize(dialogSize.width, dialogSize.height + integer);
                                                           repaint();
@@ -976,7 +979,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
                                                         @Override
                                                         public void off(Integer integer) {
-                                                          if (! myAdjustWhenShown.isAdjusted()) return;
+                                                          if (integer == 0) return;
                                                           final Dimension dialogSize = getSize();
                                                           setSize(dialogSize.width, dialogSize.height - integer);
                                                           repaint();
@@ -1000,7 +1003,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           }
         }
         if (value <= 0.05 || value >= 0.95) {
-          return 0.7f;
+          return 0.6f;
         }
         return value;
       }
@@ -1009,30 +1012,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myDetailsSplitter.getComponent();
   }
 
-  private void initDetails() {
-    if (myDetailsPanel == null) {
-      myDetailsPanel = myDiffDetails.getPanel();
-      //myDetailsPanel.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
-    }
-  }
-
-  private boolean calcSplitterProportion() {
+  private void initMainSplitter() {
     final String s = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION_OPTION);
     if (s != null) {
       try {
         mySplitter.setProportion(Float.valueOf(s).floatValue());
-        return true;
       } catch (NumberFormatException e) {
         //
       }
+    } else {
+      mySplitter.setProportion(0.8f);
     }
-    int height = mySplitter.getHeight();
-    if (height == 0) return false;
-    Graphics g = myCommitMessageArea.getEditorField().getGraphics();
-    final LineMetrics lm = g.getFont().getLineMetrics("Wp", g.getFontMetrics().getFontRenderContext());
-    final float commentHeight = 8 * lm.getHeight();
-    mySplitter.setProportion((height - commentHeight)/height);
-    return true;
+  }
+
+  private void initDetails() {
+    if (myDetailsPanel == null) {
+      myDetailsPanel = myDiffDetails.getPanel();
+    }
   }
 
   public Collection<AbstractVcs> getAffectedVcses() {

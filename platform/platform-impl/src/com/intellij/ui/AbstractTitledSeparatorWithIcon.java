@@ -114,6 +114,15 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
     onImpl();
   }
 
+  public void initOn() {
+    initDetails();
+    myOn = true;
+    myLabel.setIcon(myIconOpen);
+    initOnImpl();
+  }
+
+  protected abstract void initOnImpl();
+
   public void off() {
     myOn = false;
     myLabel.setIcon(myIcon);
