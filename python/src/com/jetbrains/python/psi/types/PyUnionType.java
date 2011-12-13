@@ -16,10 +16,10 @@ import java.util.*;
  * @author yole
  */
 public class PyUnionType implements PyType {
-  private final List<PyType> myMembers;
+  private final Set<PyType> myMembers;
 
   private PyUnionType(Collection<PyType> members) {
-    myMembers = new ArrayList<PyType>(members);
+    myMembers = new LinkedHashSet<PyType>(members);
   }
 
   @Nullable
@@ -132,26 +132,11 @@ public class PyUnionType implements PyType {
     return false;
   }
 
-  public List<PyType> getMembers() {
+  public Collection<PyType> getMembers() {
     return myMembers;
   }
-  
-  public List<PyType> getResolvedMembers(TypeEvalContext context) {
-    List<PyType> result = new ArrayList<PyType>();
-    for (PyType member : myMembers) {
-      if (member instanceof PyTypeReference) {
-        final PyType resolved = ((PyTypeReference)member).resolve(null, context);
-        if (resolved != null && !resolved.equals(this)) {
-          result.add(resolved);
-        }
-      }
-      else {
-        result.add(member);
-      }
-    }
-    return result;
-  }
 
+  @Nullable
   public PyType exclude(PyType t, TypeEvalContext context) {
     final List<PyType> members = new ArrayList<PyType>();
     for (PyType m : getMembers()) {
@@ -171,5 +156,19 @@ public class PyUnionType implements PyType {
     else {
       return new PyUnionType(Collections.singletonList(type));
     }
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other instanceof PyUnionType) {
+      final PyUnionType otherType = (PyUnionType)other;
+      return myMembers.equals(otherType.myMembers);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return myMembers.hashCode();
   }
 }

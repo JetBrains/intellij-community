@@ -151,14 +151,21 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   public static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context) {
-    Set<PyType> visited = new HashSet<PyType>();
+    return getTypeName(type, context, new HashSet<PyType>());
+  }
+
+  private static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context, @NotNull final Set<PyType> visited) {
+    if (visited.contains(type)) {
+      return UNKNOWN;
+    }
+    visited.add(type);
     if (type == null) {
       return UNKNOWN;
     }
     if (type instanceof PyTypeReference) {
       final PyType resolved = ((PyTypeReference)type).resolve(null, context);
       if (resolved != null) {
-        return getTypeName(resolved, context);
+        return getTypeName(resolved, context, visited);
       }
       return UNKNOWN;
     }
@@ -166,19 +173,19 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (type instanceof PyCollectionType) {
       final PyType elementType = ((PyCollectionType)type).getElementType(context);
       if (elementType != null) {
-        return String.format("%s of %s", name, getTypeName(elementType, context));
+        return String.format("%s of %s", name, getTypeName(elementType, context, visited));
       }
     }
     if (type instanceof PyUnionType) {
-      return String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getResolvedMembers(context),
+      return String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
                                                           new Function<PyType, String>() {
                                                             @Override
                                                             public String fun(PyType t) {
-                                                              return getTypeName(t, context);
+                                                              return getTypeName(t, context, visited);
     }
                                                           }, ", "));
     }
-    return name;
+    return name != null ? name : UNKNOWN;
   }
 
   static ChainIterable<String> describeDecorators(
