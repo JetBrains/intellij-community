@@ -600,6 +600,9 @@
         <option name="BACKGROUND" value="0F0F0F" />
       </value>
     </option>
+    <option name="HAML_PARENTHS">
+      <value />
+    </option>
     <option name="HAML_RUBY_CODE">
       <value />
     </option>
@@ -609,13 +612,32 @@
         <option name="BACKGROUND" value="0F0F0F" />
       </value>
     </option>
+    <option name="HAML_STRING">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="HAML_STRING_INTERPOLATED">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
     <option name="HAML_TAG">
       <value>
         <option name="FOREGROUND" value="FFFFFF" />
         <option name="BACKGROUND" value="0F0F0F" />
       </value>
     </option>
+    <option name="HAML_TAG_NAME">
+      <value />
+    </option>
     <option name="HAML_TEXT">
+      <value>
+        <option name="FOREGROUND" value="FFFFFF" />
+        <option name="BACKGROUND" value="0F0F0F" />
+      </value>
+    </option>
+    <option name="HAML_WS_REMOVAL">
       <value>
         <option name="FOREGROUND" value="FFFFFF" />
         <option name="BACKGROUND" value="0F0F0F" />
@@ -1445,6 +1467,12 @@
     </option>
     <option name="STATIC_METHOD_ATTRIBUTES">
       <value>
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="TAG_ATTR_KEY">
+      <value>
+        <option name="FOREGROUND" value="99CC99" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>

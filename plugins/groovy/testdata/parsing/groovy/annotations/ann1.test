@@ -11,18 +11,17 @@ Groovy script
         PsiWhiteSpace(' ')
         Annotation arguments
           PsiElement(()('(')
-          Annotation member value pairs
-            Annotation member value pair
-              PsiElement(identifier)('a')
-              PsiWhiteSpace(' ')
-              PsiElement(=)('=')
-              PsiWhiteSpace(' ')
-              Annotation
-                PsiElement(@)('@')
-                Reference element
-                  PsiElement(identifier)('notnull')
-                Annotation arguments
-                  <empty list>
+          Annotation member value pair
+            PsiElement(identifier)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            Annotation
+              PsiElement(@)('@')
+              Reference element
+                PsiElement(identifier)('notnull')
+              Annotation arguments
+                <empty list>
           PsiElement())(')')
       PsiElement(new line)('\n')
       PsiElement(def)('def')

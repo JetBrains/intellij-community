@@ -27,10 +27,6 @@ import junit.framework.TestSuite;
  * To change this template use Options | File Templates.
  */
 public class VersionCompareTest extends TestCase {
-  public static TestSuite suite () {
-    return new TestSuite (VersionCompareTest.class);
-  }
-
   public void testEqual () {
     String v1 = "0.0.1";
     String v2 = "0.0.1";

@@ -93,10 +93,10 @@ public class AnnotationArguments implements GroovyElementTypes {
    */
 
   private static boolean parseAnnotationMemberValuePairs(PsiBuilder builder, GroovyParser parser) {
-    PsiBuilder.Marker annmvps = builder.mark();
+    PsiBuilder.Marker start = builder.mark();
 
     if (!parseAnnotationMemberValueSinglePair(builder, parser)) {
-      annmvps.rollbackTo();
+      start.rollbackTo();
       return false;
     }
 
@@ -104,12 +104,12 @@ public class AnnotationArguments implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
 
       if (!parseAnnotationMemberValueSinglePair(builder, parser)) {
-        annmvps.rollbackTo();
+        start.rollbackTo();
         return false;
       }
     }
+    start.drop();
 
-    annmvps.done(ANNOTATION_MEMBER_VALUE_PAIRS);
     return true;
   }
 

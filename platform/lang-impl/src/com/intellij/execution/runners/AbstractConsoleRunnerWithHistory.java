@@ -308,4 +308,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   public ConsoleExecuteActionHandler getConsoleExecuteActionHandler() {
     return myConsoleExecuteActionHandler;
   }
+
+  protected CommandLineArgumentsProvider getProvider() {
+    return myProvider;
+  }
 }

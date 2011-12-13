@@ -321,10 +321,6 @@ public abstract class GroovyElementVisitor {
     visitElement(nameValuePair);
   }
 
-  public void visitAnnotationNameValuePairs(GrAnnotationNameValuePairs nameValuePair) {
-    visitElement(nameValuePair);
-  }
-
   public void visitAnnotation(GrAnnotation annotation) {
     visitElement(annotation);
   }

@@ -31,6 +31,10 @@ import com.intellij.testFramework.*;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
 import junit.framework.*;
+import org.jetbrains.annotations.Nullable;
+import org.junit.runner.Description;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.NoTestsRemainException;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,8 +66,36 @@ public class TestAll implements Test {
   private static final int FILTER_CLASSES = 16;
 
   public static int ourMode = SAVE_MEMORY_SNAPSHOT /*| START_GUARD | RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
+  private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(TestCaseLoader.PERFORMANCE_TESTS_ONLY_FLAG) != null;
   private int myLastTestTestMethodCount = 0;
   public static final int MAX_FAILURE_TEST_COUNT = 150;
+
+  private static final Filter PERFORMANCE_ONLY = new Filter() {
+    @Override
+    public boolean shouldRun(Description description) {
+      String className = description.getClassName();
+      String methodName = description.getMethodName();
+      return className != null && hasPerformance(className) ||
+             methodName != null && hasPerformance(methodName);
+    }
+
+    @Override
+    public String describe() {
+      return "Performance Tests Only";
+    }
+  };
+
+  private static final Filter NO_PERFORMANCE = new Filter() {
+    @Override
+    public boolean shouldRun(Description description) {
+      return !PERFORMANCE_ONLY.shouldRun(description);
+    }
+
+    @Override
+    public String describe() {
+      return "All Except Performance";
+    }
+  };
 
   @Override
   public int countTestCases() {
@@ -247,16 +279,36 @@ public class TestAll implements Test {
     return realFreeMemory < needed;
   }
 
-  private static Test getTest(Class testCaseClass) {
+  private static boolean isPerformanceTestsRun() {
+    return PERFORMANCE_TESTS_ONLY;
+  }
+
+  @Nullable
+  private static Test getTest(final Class testCaseClass) {
     if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) return null;
 
-    try {
-      Method suiteMethod = testCaseClass.getMethod("suite", ArrayUtil.EMPTY_CLASS_ARRAY);
-      return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_CLASS_ARRAY);
+    Method suiteMethod = safeFindMethod(testCaseClass, "suite");
+    if (suiteMethod != null && !isPerformanceTestsRun()) {
+      try {
+        return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_CLASS_ARRAY);
+      }
+      catch (Exception e) {
+        System.err.println("Failed to execute suite ()");
+        e.printStackTrace();
+      }
     }
-    catch (NoSuchMethodException e) {
+    else {
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
-        return new JUnit4TestAdapter(testCaseClass);
+        JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
+        if (!hasPerformance(testCaseClass.getSimpleName()) || !isPerformanceTestsRun()) {
+          try {
+            adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
+          }
+          catch (NoTestsRemainException e1) {
+            // Ignore
+          }
+        }
+        return adapter;
       }
       return new TestSuite(testCaseClass){
         @Override
@@ -264,6 +316,8 @@ public class TestAll implements Test {
           if (!(test instanceof TestCase))  {
             super.addTest(test);
           } else {
+            if (isPerformanceTestsRun() ^ (hasPerformance(((TestCase)test).getName()) || hasPerformance(testCaseClass.getSimpleName()))) return;
+            
             Method method = findTestMethod((TestCase)test);
             if (method == null || !TestCaseLoader.isBombed(method)) {
               super.addTest(test);
@@ -272,22 +326,28 @@ public class TestAll implements Test {
 
         }
 
+        @Nullable
         private Method findTestMethod(final TestCase testCase) {
-          try {
-            return testCase.getClass().getMethod(testCase.getName());
-          }
-          catch (NoSuchMethodException e1) {
-            return null;
-          }
+          return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
     }
-    catch (Exception e) {
-      System.err.println("Failed to execute suite ()");
-      e.printStackTrace();
-    }
 
     return null;
+  }
+
+  private static boolean hasPerformance(String name) {
+    return name.toLowerCase().contains("performance");
+  }
+
+  @Nullable
+  private static Method safeFindMethod(Class klass, String name) {
+    try {
+      return klass.getMethod(name);
+    }
+    catch (NoSuchMethodException e) {
+      return null;
+    }
   }
 
   public static String[] getClassRoots() {
@@ -325,7 +385,7 @@ public class TestAll implements Test {
     if (Boolean.parseBoolean(System.getProperty("idea.ignore.predefined.groups")) || (ourMode & FILTER_CLASSES) == 0) {
       classFilterName = "";
     }
-    myTestCaseLoader = new TestCaseLoader(classFilterName);
+    myTestCaseLoader = new TestCaseLoader(classFilterName, isPerformanceTestsRun());
     myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
     myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
 
@@ -348,7 +408,6 @@ public class TestAll implements Test {
     }
 
     log("Number of test classes found: " + testCaseLoader.getClasses().size());
-    testCaseLoader.checkClassesExist();
   }
 
   private static void log(String message) {

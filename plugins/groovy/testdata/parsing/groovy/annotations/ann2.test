@@ -10,29 +10,28 @@ Groovy script
         PsiWhiteSpace(' ')
         Annotation arguments
           PsiElement(()('(')
-          Annotation member value pairs
-            Annotation member value pair
-              PsiElement(identifier)('a')
-              PsiWhiteSpace(' ')
-              PsiElement(=)('=')
-              PsiWhiteSpace(' ')
-              Conditional expression
-                Method call
-                  Reference expression
-                    PsiElement(identifier)('isNull')
-                  Arguments
-                    PsiElement(()('(')
-                    PsiElement())(')')
-                PsiWhiteSpace(' ')
-                PsiElement(?)('?')
-                PsiWhiteSpace(' ')
+          Annotation member value pair
+            PsiElement(identifier)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            Conditional expression
+              Method call
                 Reference expression
-                  PsiElement(identifier)('b')
-                PsiWhiteSpace(' ')
-                PsiElement(:)(':')
-                PsiWhiteSpace(' ')
-                Reference expression
-                  PsiElement(identifier)('c')
+                  PsiElement(identifier)('isNull')
+                Arguments
+                  PsiElement(()('(')
+                  PsiElement())(')')
+              PsiWhiteSpace(' ')
+              PsiElement(?)('?')
+              PsiWhiteSpace(' ')
+              Reference expression
+                PsiElement(identifier)('b')
+              PsiWhiteSpace(' ')
+              PsiElement(:)(':')
+              PsiWhiteSpace(' ')
+              Reference expression
+                PsiElement(identifier)('c')
           PsiElement())(')')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')

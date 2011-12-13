@@ -33,6 +33,14 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testMethodTypeParameter() throws Exception {
     doTestMethod();
   }
+  
+  public void testInheritedDocInThrows() throws Exception {
+    doTestMethod();
+  }
+  
+  public void testInheritedDocInThrows1() throws Exception {
+    doTestMethod();
+  }
 
   public void testClassTypeParameter() throws Exception {
     verifyJavaDoc(getTestClass());
