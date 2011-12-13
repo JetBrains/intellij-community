@@ -103,7 +103,7 @@ public class PySkeletonRefresher {
     }
   }
 
-  private static String getExtraSysPath(Sdk sdk, String skeletonsPath) {
+  private static String getExtraSysPath(@NotNull Sdk sdk, @Nullable String skeletonsPath) {
     final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     final StringBuilder builder = new StringBuilder("\"");
     int i = 0;
@@ -113,7 +113,7 @@ public class PySkeletonRefresher {
       }
       if (classDirs[i].isInLocalFileSystem()) {
         final String pathname = classDirs[i].getPath();
-        if (!skeletonsPath.equals(pathname)) {
+        if (pathname != null && !pathname.equals(skeletonsPath)) {
           builder.append(pathname);
         }
       }
