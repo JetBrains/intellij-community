@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.help.HelpManager;
@@ -25,8 +24,9 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
-public class RefactoringMessageDialog extends DialogWrapper{
+public class RefactoringMessageDialog extends DialogWrapper {
   private final String myMessage;
   private final String myHelpTopic;
   private final Icon myIcon;
@@ -37,41 +37,46 @@ public class RefactoringMessageDialog extends DialogWrapper{
     setTitle(title);
     myMessage = message;
     myHelpTopic = helpTopic;
-    myIsCancelButtonVisible =showCancelButton;
-    setButtonsAlignment(SwingUtilities.CENTER);
+    myIsCancelButtonVisible = showCancelButton;
     myIcon = UIManager.getIcon(iconId);
     init();
   }
 
-  protected Action[] createActions(){
-    ArrayList<Action> actions=new ArrayList<Action>();
+  @Override
+  protected Action[] createActions() {
+    List<Action> actions = new ArrayList<Action>();
     actions.add(getOKAction());
-    if(myIsCancelButtonVisible){
+    if (myIsCancelButtonVisible) {
       actions.add(getCancelAction());
     }
-    if(myHelpTopic!=null){
+    if (myHelpTopic != null) {
       actions.add(getHelpAction());
     }
     return actions.toArray(new Action[actions.size()]);
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JLabel label = new JLabel(myMessage);
     label.setUI(new MultiLineLabelUI());
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(label, BorderLayout.CENTER);
+
+    JPanel panel = new JPanel(new BorderLayout(10, 0));
     if (myIcon != null) {
-      label.setIcon(myIcon);
-      label.setIconTextGap(10);
+      panel.add(new JLabel(myIcon), BorderLayout.WEST);
+      panel.add(label, BorderLayout.CENTER);
     }
-    panel.add(Box.createVerticalStrut(7), BorderLayout.SOUTH);
+    else {
+      panel.add(label, BorderLayout.WEST);
+    }
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpTopic);
   }
