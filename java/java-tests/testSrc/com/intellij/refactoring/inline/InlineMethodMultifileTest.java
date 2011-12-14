@@ -16,7 +16,6 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +25,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.MockInlineMethodOptions;
+import com.intellij.refactoring.RefactoringTestCase;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -33,7 +33,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import java.io.File;
 
 
-public class InlineMethodMultifileTest extends CodeInsightTestCase {
+public class InlineMethodMultifileTest extends RefactoringTestCase {
 
   private String getRoot() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inlineMethod/multifile/" + getTestName(true);

@@ -43,6 +43,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class DuplicatesImpl {
 
   private DuplicatesImpl() {}
 
-  public static void invoke(final Project project, Editor editor, final MatchProvider provider) {
+  public static void invoke(@NotNull  final Project project, @NotNull Editor editor, @NotNull MatchProvider provider) {
     final List<Match> duplicates = provider.getDuplicates();
     int idx = 0;
     final Ref<Boolean> showAll = new Ref<Boolean>();
@@ -96,7 +97,7 @@ public class DuplicatesImpl {
     return confirmDuplicatePrompt;
   }
 
-  private static boolean replaceMatch(final Project project, final MatchProvider provider, final Match match, final Editor editor,
+  private static boolean replaceMatch(final Project project, final MatchProvider provider, final Match match, @NotNull final Editor editor,
                                       final int idx, final int size, Ref<Boolean> showAll, final String confirmDuplicatePrompt) {
     final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     highlightMatch(project, editor, match, highlighters);
@@ -172,7 +173,7 @@ public class DuplicatesImpl {
                                                             attributes, true, highlighters);
   }
 
-  public static void processDuplicates(final MatchProvider provider, final Project project, Editor editor) {
+  public static void processDuplicates(@NotNull MatchProvider provider, @NotNull Project project, @NotNull Editor editor) {
     boolean hasDuplicates = provider.hasDuplicates();
     if (hasDuplicates) {
       final int answer = Messages.showYesNoDialog(project,

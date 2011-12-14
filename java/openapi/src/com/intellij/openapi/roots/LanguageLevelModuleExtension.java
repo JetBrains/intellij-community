@@ -57,13 +57,13 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
 
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     LOG.assertTrue(myWritable, "Writable model can be retrieved from writable ModifiableRootModel");
-    if (mySource == null && myModule.isLoaded()) { //do not reload project for non-commited modules: j2me|project imports
+    if (mySource != null && myModule.isLoaded()) { //do not reload project for non-commited modules: j2me|project imports
       if (myLanguageLevel != languageLevel) {
         final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(myModule.getProject());
         final LanguageLevel projectLanguageLevel = languageLevelProjectExtension.getLanguageLevel();
         if (!(languageLevel == null && myLanguageLevel == projectLanguageLevel ||
               myLanguageLevel == null && languageLevel == projectLanguageLevel)) {
-          languageLevelProjectExtension.reloadProjectOnLanguageLevelChange(languageLevel, true);
+          languageLevelProjectExtension.reloadProjectOnLanguageLevelChange(languageLevel == null ? projectLanguageLevel : languageLevel, true);
         }
       }
     }

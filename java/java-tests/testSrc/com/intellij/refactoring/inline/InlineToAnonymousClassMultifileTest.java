@@ -1,7 +1,6 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,6 +8,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.refactoring.RefactoringTestCase;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
@@ -19,7 +19,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class InlineToAnonymousClassMultifileTest extends CodeInsightTestCase {
+public class InlineToAnonymousClassMultifileTest extends RefactoringTestCase {
   public void testProtectedMember() throws Exception {   // IDEADEV-18738
     doTest("p1.SubjectWithSuper");
   }

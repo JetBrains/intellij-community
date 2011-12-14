@@ -54,9 +54,7 @@ public class XVariablesView extends XDebugViewBase {
     XDebuggerTree tree = myDebuggerTreePanel.getTree();
 
     if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
-      if (myTreeRestorer != null) {
-        myTreeRestorer.dispose();
-      }
+      disposeTreeRestorer();
       myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
       myTreeState = XDebuggerTreeState.saveState(tree);
       if (event == SessionEvent.BEFORE_RESUME) {
@@ -70,6 +68,7 @@ public class XVariablesView extends XDebugViewBase {
       tree.setRoot(new XStackFrameNode(tree, stackFrame), false);
       Object newEqualityObject = stackFrame.getEqualityObject();
       if (myFrameEqualityObject != null && newEqualityObject != null && myFrameEqualityObject.equals(newEqualityObject) && myTreeState != null) {
+        disposeTreeRestorer();
         myTreeRestorer = myTreeState.restoreState(tree);
       }
     }
@@ -80,12 +79,20 @@ public class XVariablesView extends XDebugViewBase {
     }
   }
 
+  private void disposeTreeRestorer() {
+    if (myTreeRestorer != null) {
+      myTreeRestorer.dispose();
+      myTreeRestorer = null;
+    }
+  }
+
   public JComponent getPanel() {
     return myDebuggerTreePanel.getMainPanel();
   }
 
   @Override
   public void dispose() {
+    disposeTreeRestorer();
     DnDManager.getInstance().unregisterSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
     super.dispose();
   }

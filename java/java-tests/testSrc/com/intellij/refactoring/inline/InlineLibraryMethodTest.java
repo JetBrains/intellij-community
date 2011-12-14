@@ -16,18 +16,21 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringTestCase;
 import com.intellij.refactoring.util.InlineUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.io.IOException;
 
 /**
  * User: anna
  * Date: 11/4/11
  */
-public class InlineLibraryMethodTest extends CodeInsightTestCase {
+public class InlineLibraryMethodTest extends RefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -43,9 +46,19 @@ public class InlineLibraryMethodTest extends CodeInsightTestCase {
     configureByFile(fileName);
 
     PsiClass fileClass = JavaPsiFacade.getInstance(getProject()).findClass("mycompany.File");
-    assertTrue(fileClass != null);
-    PsiFile file = fileClass.getContainingFile();
-    ((VirtualFileSystemEntry)file.getVirtualFile()).setWritable(false);
+    assertNotNull(fileClass);
+    final PsiFile file = fileClass.getContainingFile();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          ((VirtualFileSystemEntry)file.getVirtualFile()).setWritable(false);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
     PsiElement element = null;
     PsiMethod[] createTempFiles = fileClass.findMethodsByName("createTempFile", false);
     for (PsiMethod createTempFile : createTempFiles) {
@@ -54,7 +67,7 @@ public class InlineLibraryMethodTest extends CodeInsightTestCase {
         break;
       }
     }
-    assertTrue(element != null);
+    assertNotNull(element);
     PsiMethod method = (PsiMethod)element;
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);

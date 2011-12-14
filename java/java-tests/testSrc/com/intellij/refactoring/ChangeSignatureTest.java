@@ -23,7 +23,6 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,7 @@ import java.util.HashSet;
 /**
  * @author dsl
  */
-public class ChangeSignatureTest extends LightCodeInsightTestCase {
+public class ChangeSignatureTest extends LightRefactoringTestCase {
   public void testSimple() throws Exception {
     doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }

@@ -2,13 +2,10 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import org.junit.Assert;
 
@@ -17,7 +14,7 @@ import java.util.HashMap;
 /**
  * @author sashache
  */
-public class RenameCollisionsTest extends LightCodeInsightTestCase {
+public class RenameCollisionsTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/renameCollisions/";
 
   @Override

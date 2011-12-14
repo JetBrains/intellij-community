@@ -1,19 +1,17 @@
 package com.intellij.refactoring.changeClassSignature;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
  */
-public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
+public class ChangeClassSignatureTest extends LightRefactoringTestCase {
   @NonNls private static final String DATA_PATH = "/refactoring/changeClassSignature/";
 
   @Override

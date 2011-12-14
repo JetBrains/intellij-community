@@ -12,12 +12,12 @@ import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.util.ui.UIUtil;
 
 /**
  * @author ven
  */
-public class PullUpTest extends LightCodeInsightTestCase {
+public class PullUpTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/pullUp/";
 
 
@@ -124,13 +124,13 @@ public class PullUpTest extends LightCodeInsightTestCase {
     PsiClass targetClass = sourceClass.getSuperClass();
     if (!targetClass.isWritable()) {
       final PsiClass[] interfaces = sourceClass.getInterfaces();
-      assertTrue(interfaces.length == 1);
+      assertEquals(1, interfaces.length);
       assertTrue(interfaces[0].isWritable());
       targetClass = interfaces[0];
     }
     MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
 
-    final int[] countMoved = new int[]{0};
+    final int[] countMoved = {0};
     final MoveMemberListener listener = new MoveMemberListener() {
       @Override
       public void memberMoved(PsiClass aClass, PsiMember member) {
@@ -141,6 +141,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
     final PullUpHelper helper = new PullUpHelper(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
     helper.run();
+    UIUtil.dispatchAllInvocationEvents();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
     if (checkMemebersMovedCount) {
       assertEquals(countMoved[0], membersToFind.length);

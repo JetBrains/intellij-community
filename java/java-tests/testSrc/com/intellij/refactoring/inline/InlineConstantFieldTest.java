@@ -2,16 +2,14 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.refactoring.LightRefactoringTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public class InlineConstantFieldTest extends LightCodeInsightTestCase {
+public class InlineConstantFieldTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

@@ -1,16 +1,15 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.JavaTestUtil;
 
 /**
  * @author ven
  */
-public class InvertBooleanTest extends LightCodeInsightTestCase {
+public class InvertBooleanTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

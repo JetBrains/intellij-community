@@ -1,7 +1,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -29,7 +28,7 @@ import java.util.Arrays;
 /**
  * @author yole
  */
-public class ExtractSuperClassTest extends CodeInsightTestCase {
+public class ExtractSuperClassTest extends RefactoringTestCase {
   public void testFinalFieldInitialization() throws Exception {   // IDEADEV-19704
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("X", PsiClass.class),
            new RefactoringTestUtil.MemberDescriptor("x", PsiField.class));

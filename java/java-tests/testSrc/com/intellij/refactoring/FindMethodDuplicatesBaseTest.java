@@ -7,12 +7,11 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.util.ui.UIUtil;
 
 public abstract class FindMethodDuplicatesBaseTest extends LightCodeInsightTestCase {
   @Override
@@ -40,9 +39,11 @@ public abstract class FindMethodDuplicatesBaseTest extends LightCodeInsightTestC
       }
       return;
     }
+    UIUtil.dispatchAllInvocationEvents();
     if (shouldSucceed) {
       checkResultByFile(filePath + ".after");
-    } else {
+    }
+    else {
       fail("duplicates found");
     }
   }

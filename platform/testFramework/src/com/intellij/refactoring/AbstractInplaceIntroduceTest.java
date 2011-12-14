@@ -77,4 +77,9 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
   }
 
   protected abstract AbstractInplaceIntroducer invokeRefactoring();
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
+  }
 }

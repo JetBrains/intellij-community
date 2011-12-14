@@ -21,7 +21,6 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData")
-public class IntroduceParameterTest extends LightCodeInsightTestCase {
+public class IntroduceParameterTest extends LightRefactoringTestCase  {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

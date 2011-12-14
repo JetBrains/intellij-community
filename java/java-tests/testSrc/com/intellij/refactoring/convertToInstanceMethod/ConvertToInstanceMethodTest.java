@@ -1,16 +1,16 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.JavaTestUtil;
+import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.util.VisibilityUtil;
 
 /**
  * @author dsl
  */
-public class ConvertToInstanceMethodTest extends LightCodeInsightTestCase {
+public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

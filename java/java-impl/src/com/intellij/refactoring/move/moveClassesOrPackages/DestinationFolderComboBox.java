@@ -33,7 +33,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ComboboxSpeedSearch;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.EditorComboBox;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,6 +49,7 @@ import java.util.*;
  * Date: 9/13/11
  */
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
+  private static final String LEAVE_IN_SAME_SOURCE_ROOT = "Leave in same source root";
   private PsiDirectory myInitialTargetDirectory;
   private VirtualFile[] mySourceRoots;
 
@@ -81,6 +85,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     new ComboboxSpeedSearch(getComboBox()) {
       @Override
       protected String getElementText(Object element) {
+        if (element == null) return LEAVE_IN_SAME_SOURCE_ROOT;
         if (element instanceof DirectoryChooser.ItemWrapper) {
           final VirtualFile virtualFile = ((DirectoryChooser.ItemWrapper)element).getDirectory().getVirtualFile();
           final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
@@ -105,7 +110,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
           setText(getPresentableText(itemWrapper, project));
         }
         else {
-          setText("Leave in same source root");
+          setText(LEAVE_IN_SAME_SOURCE_ROOT);
         }
       }
     });
