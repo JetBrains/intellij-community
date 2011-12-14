@@ -1,1 +1,1 @@
-<warning descr="Assignment can be replaced with augmented assignment">value = value <caret>/ 10**exp</warning> #comment
+<warning descr="Assignment can be replaced with augmented assignment">value = value <caret>/ 10**exp #comment</warning>

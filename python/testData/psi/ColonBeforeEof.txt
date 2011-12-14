@@ -12,5 +12,5 @@ PyFile:ColonBeforeEof.py
         PsiElement(Py:IDENTIFIER)('b')
       PsiElement(Py:COLON)(':')
       PyStatementList
-        PsiErrorElement:statement expected
+        PsiErrorElement:indent expected
           <empty list>
