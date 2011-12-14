@@ -113,7 +113,7 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  private static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
+  public static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
     if (qName == null) return Collections.emptyList();
 
     // TODO: search for entire names, not for first component only!
@@ -158,28 +158,6 @@ public class ResolveImportUtil {
     // in-python resolution failed
     final PsiElement result = resolveForeignImport(import_element, qName, moduleQName);
     return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
-  }
-
-  @NotNull
-  public static List<PsiElement> resolveImportReference(final PyReferenceExpression importRef) {
-    // prerequisites
-    if (importRef == null) return Collections.emptyList();
-    if (!importRef.isValid()) return Collections.emptyList(); // we often catch a reparse while in a process of resolution
-    final String referencedName = importRef.getReferencedName(); // it will be the "foo" in later comments
-    if (referencedName == null) return Collections.emptyList();
-    final PsiFile file = importRef.getContainingFile();
-    if (file == null || !file.isValid()) return Collections.emptyList();
-
-    final PyElement parent = PsiTreeUtil.getParentOfType(importRef, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
-    final PyQualifiedName qname = importRef.asQualifiedName();
-    if (parent instanceof PyImportElement) {
-      PyImportElement import_element = (PyImportElement)parent;
-      return multiResolveImportElement(import_element, qname);
-    }
-    else if (parent instanceof PyFromImportStatement) { // "from foo import"
-      return resolveFromOrForeignImport((PyFromImportStatement)parent, qname);
-    }
-    return Collections.emptyList();
   }
 
   public static List<PsiElement> resolveFromOrForeignImport(PyFromImportStatement fromImportStatement, PyQualifiedName qname) {
