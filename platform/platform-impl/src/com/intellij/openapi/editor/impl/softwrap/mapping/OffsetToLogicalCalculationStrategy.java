@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,7 +195,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   @Nullable
   @Override
-  public LogicalPosition processSoftWrap(EditorPosition position, SoftWrap softWrap) {
+  public LogicalPosition processSoftWrap(@NotNull EditorPosition position, SoftWrap softWrap) {
     position.visualColumn = softWrap.getIndentInColumns();
     position.softWrapColumnDiff += softWrap.getIndentInColumns();
     if (softWrap.getStart() == myTargetOffset) {
@@ -208,7 +208,7 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   @NotNull
   @Override
-  public LogicalPosition build(EditorPosition position) {
+  public LogicalPosition build(@NotNull EditorPosition position) {
     Document document = myEditor.getDocument();
     int logicalLine = document.getLineNumber(myTargetOffset);
     int linesDiff = logicalLine - position.logicalLine;
