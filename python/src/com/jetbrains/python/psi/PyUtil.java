@@ -17,13 +17,11 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -39,9 +37,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -58,9 +53,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
-import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
-import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
+import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 public class PyUtil {
   private PyUtil() {
@@ -443,42 +437,6 @@ public class PyUtil {
     if (!thing) throw new IncorrectOperationException();
   }
 
-  /**
-   * When a function is decorated many decorators, finds the deepest builtin decorator:
-   * <pre>
-   * &#x40;foo
-   * &#x40;classmethod <b># &lt;-- that's it</b>
-   * &#x40;bar
-   * def moo(cls):
-   * &nbsp;&nbsp;pass
-   * </pre>
-   * @param node the allegedly decorated function
-   * @return name of the built-in decorator, or null (even if there are non-built-in decorators).
-   */
-  @Nullable
-  public static String getClassOrStaticMethodDecorator(@NotNull final PyFunction node) {
-    PyDecoratorList decolist = node.getDecoratorList();
-    if (decolist != null) {
-      PyDecorator[] decos = decolist.getDecorators();
-      if (decos.length > 0) {
-        for (int i = decos.length - 1; i >= 0; i -= 1) {
-          PyDecorator deco = decos[i];
-          String deconame = deco.getName();
-          if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
-            return deconame;
-          }
-          for(PyKnownDecoratorProvider provider: KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
-            String name = provider.toKnownDecorator(deconame);
-            if (name != null) {
-              return name;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   public static boolean isInstanceAttribute(PyExpression target) {
     if (!(target instanceof PyTargetExpression)) {
       return false;
@@ -610,80 +568,6 @@ public class PyUtil {
 
     private KnownDecoratorProviderHolder() {
     }
-  }
-
-  /**
-   * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
-   *
-   * @param function what to analyze
-   * @return a set of flags describing what was detected.
-   */
-  @NotNull
-  public static Set<PyFunction.Flag> detectDecorationsAndWrappersOf(PyFunction function) {
-    Set<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
-    String deconame = getClassOrStaticMethodDecorator(function);
-    if (PyNames.CLASSMETHOD.equals(deconame)) {
-      flags.add(CLASSMETHOD);
-    }
-    else if (PyNames.STATICMETHOD.equals(deconame)) flags.add(STATICMETHOD);
-    // implicit staticmethod __new__
-    PyClass cls = function.getContainingClass();
-    if (cls != null && PyNames.NEW.equals(function.getName()) && cls.isNewStyleClass()) flags.add(STATICMETHOD);
-    //
-    if (!flags.contains(CLASSMETHOD) && !flags.contains(STATICMETHOD)) { // not set by decos, look for reassignment
-      final PyFunctionStub stub = function.getStub();
-      if (stub != null) {
-        return getWrappersFromStub(stub);
-      }
-      String func_name = function.getName();
-      if (func_name != null) {
-        PyAssignmentStatement assignment = PsiTreeUtil.getNextSiblingOfType(function, PyAssignmentStatement.class);
-        if (assignment != null) {
-          for (Pair<PyExpression, PyExpression> pair : assignment.getTargetsToValuesMapping()) {
-            PyExpression value = pair.getSecond();
-            if (value instanceof PyCallExpression) {
-              PyExpression target = pair.getFirst();
-              if (target instanceof PyTargetExpression && func_name.equals(target.getName())) {
-                Pair<String, PyFunction> interpreted = interpretAsStaticmethodOrClassmethodWrappingCall((PyCallExpression)value, function);
-                if (interpreted != null) {
-                  PyFunction original = interpreted.getSecond();
-                  if (original == function) {
-                    String wrapper_name = interpreted.getFirst();
-                    if (PyNames.CLASSMETHOD.equals(wrapper_name)) {
-                      flags.add(CLASSMETHOD);
-                    }
-                    else if (PyNames.STATICMETHOD.equals(wrapper_name)) flags.add(STATICMETHOD);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return flags;
-  }
-
-  private static Set<PyFunction.Flag> getWrappersFromStub(PyFunctionStub stub) {
-    final StubElement parentStub = stub.getParentStub();
-    final List childrenStubs = parentStub.getChildrenStubs();
-    int index = childrenStubs.indexOf(stub);
-    if (index >= 0 && index < childrenStubs.size() - 1) {
-      StubElement nextStub = (StubElement) childrenStubs.get(index+1);
-      if (nextStub instanceof PyTargetExpressionStub) {
-        final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)nextStub;
-        if (targetExpressionStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
-          final PyQualifiedName qualifiedName = targetExpressionStub.getInitializer();
-          if (PyQualifiedName.fromComponents(PyNames.CLASSMETHOD).equals(qualifiedName)) {
-            return EnumSet.of(PyFunction.Flag.CLASSMETHOD);
-          }
-          if (PyQualifiedName.fromComponents(PyNames.STATICMETHOD).equals(qualifiedName)) {
-            return EnumSet.of(PyFunction.Flag.STATICMETHOD);
-          }
-        }
-      }
-    }
-    return EnumSet.noneOf(PyFunction.Flag.class);
   }
 
   /**
@@ -999,7 +883,7 @@ public class PyUtil {
     public static MethodFlags of(@NotNull PyFunction node) {
       PyClass cls = node.getContainingClass();
       if (cls != null) {
-        Set<PyFunction.Flag> flags = detectDecorationsAndWrappersOf(node);
+        PyFunction.Modifier modifier = node.getModifier();
         boolean isMetaclassMethod = false;
         PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
         for (PyClass ancestor_cls : cls.iterateAncestorClasses()) {
@@ -1010,7 +894,7 @@ public class PyUtil {
         }
         final String method_name = node.getName();
         boolean isSpecialMetaclassMethod = isMetaclassMethod && method_name != null && among(method_name, PyNames.INIT, "__call__");
-        return new MethodFlags(flags.contains(CLASSMETHOD), flags.contains(STATICMETHOD), isMetaclassMethod, isSpecialMetaclassMethod);
+        return new MethodFlags(modifier == CLASSMETHOD, modifier == STATICMETHOD, isMetaclassMethod, isSpecialMetaclassMethod);
       }
       return null;
     }

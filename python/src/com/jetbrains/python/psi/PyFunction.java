@@ -64,9 +64,17 @@ extends
   String getDeprecationMessage();
 
   /**
+   * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
+   *
+   * @return a flag describing what was detected.
+   */
+  @Nullable
+  Modifier getModifier();
+
+  /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
    */
-  enum Flag {
+  enum Modifier {
     /**
      * Function is decorated with @classmethod, its first param is the class.
      */

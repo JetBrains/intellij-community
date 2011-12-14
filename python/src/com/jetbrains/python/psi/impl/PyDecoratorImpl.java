@@ -119,7 +119,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     if (callee == null) return null;
     if (!hasArgumentList()) {
       // NOTE: that +1 thing looks fishy
-      callee = new PyMarkedCallee(callee.getCallable(), callee.getFlags(), callee.getImplicitOffset() + 1, callee.isImplicitlyResolved());
+      callee = new PyMarkedCallee(callee.getCallable(), callee.getModifier(), callee.getImplicitOffset() + 1, callee.isImplicitlyResolved());
     }
     return callee;
   }

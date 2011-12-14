@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -25,6 +26,7 @@ import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +34,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
 
 /**
  * Implements PyFunction.
@@ -415,5 +421,116 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       return new LocalSearchScope(scopeOwner);
     }
     return super.getUseScope();
+  }
+
+  /**
+   * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
+   *
+   * @return a flag describing what was detected.
+   */
+  @Nullable
+  public Modifier getModifier() {
+    String deconame = getClassOrStaticMethodDecorator();
+    if (PyNames.CLASSMETHOD.equals(deconame)) {
+      return CLASSMETHOD;
+    }
+    else if (PyNames.STATICMETHOD.equals(deconame)) {
+      return STATICMETHOD;
+    }
+    // implicit staticmethod __new__
+    PyClass cls = getContainingClass();
+    if (cls != null && PyNames.NEW.equals(getName()) && cls.isNewStyleClass()) {
+      return STATICMETHOD;
+    }
+    //
+    if (getStub() != null) {
+      return getWrappersFromStub();
+    }
+    String func_name = getName();
+    if (func_name != null) {
+      PyAssignmentStatement assignment = PsiTreeUtil.getNextSiblingOfType(this, PyAssignmentStatement.class);
+      if (assignment != null) {
+        for (Pair<PyExpression, PyExpression> pair : assignment.getTargetsToValuesMapping()) {
+          PyExpression value = pair.getSecond();
+          if (value instanceof PyCallExpression) {
+            PyExpression target = pair.getFirst();
+            if (target instanceof PyTargetExpression && func_name.equals(target.getName())) {
+              Pair<String, PyFunction> interpreted = interpretAsStaticmethodOrClassmethodWrappingCall((PyCallExpression)value, this);
+              if (interpreted != null) {
+                PyFunction original = interpreted.getSecond();
+                if (original == this) {
+                  String wrapper_name = interpreted.getFirst();
+                  if (PyNames.CLASSMETHOD.equals(wrapper_name)) {
+                    return CLASSMETHOD;
+                  }
+                  else if (PyNames.STATICMETHOD.equals(wrapper_name)) {
+                    return STATICMETHOD;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Modifier getWrappersFromStub() {
+    final StubElement parentStub = getStub().getParentStub();
+    final List childrenStubs = parentStub.getChildrenStubs();
+    int index = childrenStubs.indexOf(getStub());
+    if (index >= 0 && index < childrenStubs.size() - 1) {
+      StubElement nextStub = (StubElement) childrenStubs.get(index+1);
+      if (nextStub instanceof PyTargetExpressionStub) {
+        final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)nextStub;
+        if (targetExpressionStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
+          final PyQualifiedName qualifiedName = targetExpressionStub.getInitializer();
+          if (PyQualifiedName.fromComponents(PyNames.CLASSMETHOD).equals(qualifiedName)) {
+            return Modifier.CLASSMETHOD;
+          }
+          if (PyQualifiedName.fromComponents(PyNames.STATICMETHOD).equals(qualifiedName)) {
+            return Modifier.STATICMETHOD;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * When a function is decorated many decorators, finds the deepest builtin decorator:
+   * <pre>
+   * &#x40;foo
+   * &#x40;classmethod <b># &lt;-- that's it</b>
+   * &#x40;bar
+   * def moo(cls):
+   * &nbsp;&nbsp;pass
+   * </pre>
+   * @return name of the built-in decorator, or null (even if there are non-built-in decorators).
+   */
+  @Nullable
+  private String getClassOrStaticMethodDecorator() {
+    PyDecoratorList decolist = getDecoratorList();
+    if (decolist != null) {
+      PyDecorator[] decos = decolist.getDecorators();
+      if (decos.length > 0) {
+        for (int i = decos.length - 1; i >= 0; i -= 1) {
+          PyDecorator deco = decos[i];
+          String deconame = deco.getName();
+          if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
+            return deconame;
+          }
+          for(PyKnownDecoratorProvider provider: PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+            String name = provider.toKnownDecorator(deconame);
+            if (name != null) {
+              return name;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }
