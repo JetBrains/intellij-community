@@ -36,8 +36,8 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyQualifiedReferenceImpl extends PyReferenceImpl {
-  public PyQualifiedReferenceImpl(PyQualifiedExpression element, PyResolveContext context) {
+public class PyQualifiedReference extends PyReferenceImpl {
+  public PyQualifiedReference(PyQualifiedExpression element, PyResolveContext context) {
     super(element, context);
   }
 

@@ -29,10 +29,10 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyImportReferenceImpl extends PyReferenceImpl {
+public class PyImportReference extends PyReferenceImpl {
   private final PyReferenceExpressionImpl myElement;
 
-  public PyImportReferenceImpl(PyReferenceExpressionImpl element, PyResolveContext context) {
+  public PyImportReference(PyReferenceExpressionImpl element, PyResolveContext context) {
     super(element, context);
     myElement = element;
   }

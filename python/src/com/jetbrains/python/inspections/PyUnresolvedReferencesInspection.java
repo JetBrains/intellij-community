@@ -40,7 +40,7 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyImportReferenceImpl;
+import com.jetbrains.python.psi.impl.PyImportReference;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyOperatorReferenceImpl;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
@@ -290,7 +290,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           myAllImports.remove(node.getParent());
         }
       }
-      else if (reference instanceof PyImportReferenceImpl &&
+      else if (reference instanceof PyImportReference &&
                target == reference.getElement().getContainingFile()) {
         final boolean insideFromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class) != null;
         if ((insideFromImport && PyImportStatementNavigator.getImportStatementByElement(node) != null) || !insideFromImport) {

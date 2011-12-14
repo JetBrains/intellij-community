@@ -402,7 +402,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @Override
   public PsiReference getReference() {
     if (getQualifier() != null) {
-      return new PyQualifiedReferenceImpl(this, PyResolveContext.defaultContext());
+      return new PyQualifiedReference(this, PyResolveContext.defaultContext());
     }
     return new PyTargetReference(this, PyResolveContext.defaultContext());
   }
