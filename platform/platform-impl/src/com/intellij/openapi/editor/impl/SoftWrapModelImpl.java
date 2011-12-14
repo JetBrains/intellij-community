@@ -211,7 +211,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public boolean isRespectAdditionalColumns() {
-    return myForceAdditionalColumns || myApplianceManager.hasLinesWithFailedWrap();
+    return myForceAdditionalColumns || !isSoftWrappingEnabled() || myApplianceManager.hasLinesWithFailedWrap();
   }
 
   @Override
