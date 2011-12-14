@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.jetbrains.python.PythonFileType;
@@ -21,6 +22,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Scanner;
 
@@ -63,7 +65,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         processOneLine(line);
       }
     }
-    if (execAnyway && myCurrentIndentSize>0) {
+    if (execAnyway && myCurrentIndentSize > 0) {
       finishExecution();
     }
   }
@@ -142,7 +144,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         flag = true;
       }
       if ((myCurrentIndentSize > 0 && indent > 0) || flag) {
-        myCurrentIndentSize = indent;
+        setCurrentIndentSize(indent);
         indentEditor(currentEditor, indent);
         more(console, currentEditor);
 
@@ -170,13 +172,13 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
               console.setPrompt(PyConsoleUtil.INPUT_PROMPT);
               PyConsoleUtil.scrollDown(currentEditor);
             }
-            myCurrentIndentSize = -1;
+            setCurrentIndentSize(1);
           }
           else if (interpreterResponse.more) {
             more(console, currentEditor);
             if (myCurrentIndentSize == -1) {
               // compute current indentation
-              myCurrentIndentSize = IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false) + getPythonIndent();
+              setCurrentIndentSize(IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false) + getPythonIndent());
               // In this case we can insert indent automatically
               indentEditor(currentEditor, myCurrentIndentSize);
             }
@@ -185,7 +187,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
             if (!myConsoleCommunication.isWaitingForInput()) {
               ordinaryPrompt(console, currentEditor);
             }
-            myCurrentIndentSize = -1;
+            setCurrentIndentSize(-1);
           }
 
           return null;
@@ -250,7 +252,25 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     return myCurrentIndentSize;
   }
 
-  private boolean shouldIndent(String line) {
+  public void setCurrentIndentSize(int currentIndentSize) {
+    myCurrentIndentSize = currentIndentSize;
+    VirtualFile file = getConsoleFile();
+    if (file != null) {
+      PyConsoleUtil.setCurrentIndentSize(file, currentIndentSize);
+    }
+  }
+
+  @Nullable
+  private VirtualFile getConsoleFile() {
+    if (myConsoleView != null && myConsoleView.getConsole().getFile() != null) {
+      return myConsoleView.getConsole().getFile().getVirtualFile();
+    }
+    else {
+      return null;
+    }
+  }
+
+  private static boolean shouldIndent(String line) {
     return line.endsWith(":");
   }
 
