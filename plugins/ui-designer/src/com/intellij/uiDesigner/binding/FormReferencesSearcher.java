@@ -13,28 +13,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author max
@@ -246,31 +239,25 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     manager.startBatchFilesProcessingMode();
 
     try {
-      final List<String> words = StringUtil.getWordsIn(name);
-      if(words.isEmpty()) return true;
-
-      final Set<PsiFile> fileSet = new HashSet<PsiFile>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          PsiFile[] filesWithWord = CacheManager.SERVICE.getInstance(project).getFilesWithWord(words.get(0),
-                                                                                               UsageSearchContext.IN_PLAIN_TEXT, scope,
-                                                                                               true);
-          ContainerUtil.addAll(fileSet, filesWithWord);
-          for (int i = 1; i < words.size(); i++) {
-            ProgressManager.checkCanceled();
-            String word = words.get(i);
-            PsiFile[] filesWithThisWord = CacheManager.SERVICE.getInstance(project).getFilesWithWord(word, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
-            fileSet.retainAll(Arrays.asList(filesWithThisWord));
-            if (fileSet.isEmpty()) break;
-          }
+      CommonProcessors.CollectProcessor<VirtualFile> collector = new CommonProcessors.CollectProcessor<VirtualFile>() {
+        @Override
+        protected boolean accept(VirtualFile virtualFile) {
+          return virtualFile.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
         }
-      });
-      PsiFile[] files = PsiUtilCore.toPsiFileArray(fileSet);
-
-      for (PsiFile file : files) {
+      };
+      ((PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project)).processFilesWithText(
+        scope, UsageSearchContext.IN_PLAIN_TEXT, true, name, collector, null  
+      );
+      
+      for (final VirtualFile vfile:collector.getResults()) {
         ProgressManager.checkCanceled();
 
-        if (file.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
+        PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
+          public PsiFile compute() {
+            return PsiManager.getInstance(project).findFile(vfile);
+          }
+        });
         if (!processReferences(processor, file, name, property, filterScope)) return false;
       }
     }

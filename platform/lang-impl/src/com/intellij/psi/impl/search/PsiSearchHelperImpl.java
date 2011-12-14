@@ -363,7 +363,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  private boolean processFilesWithText(@NotNull final GlobalSearchScope scope,
+  public boolean processFilesWithText(@NotNull final GlobalSearchScope scope,
                                        final short searchContext,
                                        final boolean caseSensitively,
                                        @NotNull String text,

@@ -377,11 +377,11 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       LOG.debug(e);
       String message = e.getPresentableMessage();
       message = message != null ? message : AndroidBundle.message("android.layout.preview.default.error.message");
-      final Throwable cause = e.getCause();
-      errorMessage = cause != null ? new RenderingErrorMessage(message + ' ', "Details", "", new Runnable() {
+      final Throwable[] causes = e.getCauses();
+      errorMessage = causes.length > 0 ? new RenderingErrorMessage(message + ' ', "Details", "", new Runnable() {
         @Override
         public void run() {
-          showStackStace(cause);
+          showStackStace(causes);
         }
       }) : new RenderingErrorMessage(message);
     }
@@ -432,8 +432,16 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     });
   }
 
-  private void showStackStace(@NotNull Throwable t) {
-    final String stackTrace = getStackTrace(t);
+  private void showStackStace(@NotNull Throwable[] throwables) {
+    final StringBuilder messageBuilder = new StringBuilder();
+
+    for (Throwable t : throwables) {
+      if (messageBuilder.length() > 0) {
+        messageBuilder.append("\n\n");
+      }
+      messageBuilder.append(getStackTrace(t));
+    }
+    
     final DialogWrapper wrapper = new DialogWrapper(myProject, false) {
 
       {
@@ -443,7 +451,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       @Override
       protected JComponent createCenterPanel() {
         final JPanel panel = new JPanel(new BorderLayout());
-        final JTextArea textArea = new JTextArea(stackTrace);
+        final JTextArea textArea = new JTextArea(messageBuilder.toString());
         textArea.setEditable(false);
         textArea.setRows(40);
         textArea.setColumns(70);
