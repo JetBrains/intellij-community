@@ -527,7 +527,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       myFileNames = ContainerUtil.map(readOnlyFiles, new Function<VirtualFile, String>() {
         @Override
         public String fun(VirtualFile file) {
-          return file.getPath();
+          return file.getPresentableUrl();
         }
       }, new String[readOnlyFiles.length]);
     }
