@@ -665,6 +665,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDataMapper.release();
       myApplianceManager.reset();
       myStorage.removeAll();
+      myApplianceManager.recalculateIfNecessary();
       try {
         task.run(true);
       }
