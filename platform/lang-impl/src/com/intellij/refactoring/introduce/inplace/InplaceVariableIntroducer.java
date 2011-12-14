@@ -81,6 +81,11 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
   }
 
   @Override
+  protected boolean shouldSelectAll() {
+    return true;
+  }
+
+  @Override
   protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
     return null;
   }

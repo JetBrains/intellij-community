@@ -75,6 +75,11 @@ public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
     editor.getSelectionModel().removeSelection();
     new VariableInplaceRenamer(variable, editor){
       @Override
+      protected boolean shouldSelectAll() {
+        return true;
+      }
+
+      @Override
       protected void moveOffsetAfter(boolean success) {
         super.moveOffsetAfter(success);
         if (success) {

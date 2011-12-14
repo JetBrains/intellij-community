@@ -185,7 +185,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
         if (window != null && window.isAvailable()) {
           final boolean visible = window.isVisible();
-          AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getState().setVisible(visible);
+          AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getGlobalState().setVisible(visible);
 
           if (visible && !myVisible) {
             render();
@@ -244,7 +244,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         }
 
         final AndroidLayoutPreviewToolWindowSettings settings = AndroidLayoutPreviewToolWindowSettings.getInstance(myProject);
-        final boolean hideForNonLayoutFiles = settings.getState().isHideForNonLayoutFiles();
+        final boolean hideForNonLayoutFiles = settings.getGlobalState().isHideForNonLayoutFiles();
 
         if (activeEditor == null) {
           myToolWindowForm.setFile(null);
@@ -266,7 +266,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         }
 
         myToolWindow.setAvailable(true, null);
-        final boolean visible = AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getState().isVisible();
+        final boolean visible = AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getGlobalState().isVisible();
         if (visible) {
           myToolWindow.show(null);
         }
@@ -364,12 +364,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       synchronized (RENDERING_LOCK) {
         final StringBuilder warnBuilder = new StringBuilder();
 
-        if (target != null && theme != null &&
-            RenderUtil.renderLayout(myProject, layoutXmlText, layoutXmlFile, imgPath,
-                                    target, facet, config, xdpi, ydpi, theme, warnBuilder)) {
+          if (target != null && theme != null &&
+              RenderUtil.renderLayout(myProject, layoutXmlText, layoutXmlFile, imgPath,
+                                      target, facet, config, xdpi, ydpi, theme, warnBuilder)) {
           warnMessage = warnBuilder.toString();
-          final File input = new File(imgPath);
-          image = ImageIO.read(input);
+            final File input = new File(imgPath);
+            image = ImageIO.read(input);
         }
       }
     }
