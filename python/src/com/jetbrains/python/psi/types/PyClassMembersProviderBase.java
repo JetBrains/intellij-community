@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -26,9 +27,13 @@ public class PyClassMembersProviderBase implements PyClassMembersProvider {
   public static PsiElement resolveMemberByName(Collection<PyDynamicMember> members,
                                                PyClassType clazz,
                                                String name) {
+    final PyClass pyClass = clazz.getPyClass();
+    if (pyClass == null) {
+      return null;
+    }
     for (PyDynamicMember member : members) {
       if (member.getName().equals(name)) {
-        return member.resolve(clazz.getPyClass());
+        return member.resolve(pyClass);
       }
     }
     return null;

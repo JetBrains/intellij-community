@@ -1,10 +1,7 @@
 package com.jetbrains.python.psi.resolve;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -16,7 +13,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -259,8 +255,9 @@ public class ResolveImportUtil {
 
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull PyQualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
-    final List<PsiElement> candidates = resolveModulesInRoots(moduleQualifiedName, foothold);
-    return candidates.isEmpty() ? null : candidates.get(0);
+    if (foothold == null) return null;
+    ImportResolver visitor = new ImportResolver(moduleQualifiedName, true).fromElement(foothold);
+    return visitor.firstResult();
   }
 
   /**
@@ -272,51 +269,8 @@ public class ResolveImportUtil {
    */
   @NotNull
   public static List<PsiElement> resolveModulesInRoots(@NotNull PyQualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
-    if (foothold == null || !foothold.isValid()) return Collections.emptyList();
-    PsiFile footholdFile = foothold.getContainingFile();
-    if (footholdFile == null || !footholdFile.isValid()) return Collections.emptyList();
-
-    PythonPathCache cache = getPathCache(foothold);
-    if (cache != null) {
-      final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
-      if (cachedResults != null) {
-        return cachedResults;
-      }
-    }
-
-    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
-
-    List<PsiElement> results;
-
-    if (PydevConsoleRunner.isInPydevConsole(foothold)) {
-      results = visitRootsInAllModules(moduleQualifiedName, foothold, footholdFile);
-    }
-    else {
-      results = visitRoots(moduleQualifiedName, foothold.getManager(), module, foothold, true);
-    }
-
-    if (cache != null) {
-      cache.put(moduleQualifiedName, results);
-    }
-    return results;
-  }
-
-  private static List<PsiElement> visitRootsInAllModules(PyQualifiedName moduleQualifiedName, PsiElement foothold, PsiFile footholdFile) {
-    Set<PsiElement> res = Sets.newHashSet();
-    for (Module mod : ModuleManager.getInstance(footholdFile.getProject()).getModules()) {
-      res.addAll(visitRoots(moduleQualifiedName, foothold.getManager(), mod, foothold, true));
-    }
-    return Lists.newArrayList(res);
-  }
-
-  private static List<PsiElement> visitRoots(@NotNull PyQualifiedName moduleQualifiedName,
-                                             @NotNull PsiManager manager,
-                                             @Nullable Module module,
-                                             @Nullable PsiElement foothold,
-                                             boolean checkForPackage) {
-
-    ImportResolver visitor = new ImportResolver(module, foothold, moduleQualifiedName, manager, checkForPackage);
-    visitor.go();
+    if (foothold == null) return Collections.emptyList();
+    ImportResolver visitor = new ImportResolver(moduleQualifiedName, true).fromElement(foothold);
     return visitor.resultsAsList();
   }
 
@@ -337,28 +291,10 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiElement> resolveModulesInRoots(@NotNull Module module, @NotNull PyQualifiedName moduleQualifiedName,
-                                                       boolean checkForPackage) {
-    PythonPathCache cache = PythonModulePathCache.getInstance(module);
-    final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
-    if (cachedResults != null) {
-      return cachedResults;
-    }
-    List<PsiElement> results = visitRoots(moduleQualifiedName, PsiManager.getInstance(module.getProject()), module, null, checkForPackage);
-    cache.put(moduleQualifiedName, results);
-    return results;
-  }
-
-  @NotNull
-  public static List<PsiElement> resolveModulesInRootProvider(@NotNull RootProvider rootProvider,
-                                                              @NotNull Module module,
-                                                              @NotNull PyQualifiedName moduleQualifiedName) {
-    ImportResolver visitor = new ImportResolver(module, null, moduleQualifiedName, PsiManager.getInstance(module.getProject()), true);
-    if (RootVisitorHost.visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) {
-      for (VirtualFile file : rootProvider.getFiles(OrderRootType.CLASSES)) {
-        visitor.visitRoot(file);
-      }
-    }
+  public static List<PsiElement> resolveModulesInSdk(@NotNull Sdk sdk,
+                                                     @NotNull Module module,
+                                                     @NotNull PyQualifiedName moduleQualifiedName) {
+    ImportResolver visitor = new ImportResolver(moduleQualifiedName, true).fromModule(module).withSdk(sdk);
     return visitor.resultsAsList();
   }
 
@@ -651,7 +587,7 @@ public class ResolveImportUtil {
       return name.toString();
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    RootVisitorHost.visitRoots(module, visitor);
+    RootVisitorHost.visitRoots(module, false, visitor);
     final PyQualifiedName result = visitor.getResult();
     cache.putName(vfile, result);
     return result == null ? null : result.toString();

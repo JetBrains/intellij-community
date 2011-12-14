@@ -24,15 +24,19 @@ public class RootVisitorHost {
     // real search
     final Module module = ModuleUtil.findModuleForPsiElement(elt);
     if (module != null) {
-      visitRoots(module, visitor);
+      visitRoots(module, false, visitor);
     }
     else {
       visitSdkRoots(elt, visitor);
     }
   }
 
-  public static void visitRoots(@NotNull Module module, final RootVisitor visitor) {
-    OrderEnumerator.orderEntries(module).recursively().forEach(new Processor<OrderEntry>() {
+  public static void visitRoots(@NotNull Module module, final boolean skipSdk, final RootVisitor visitor) {
+    OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).recursively();
+    if (skipSdk) {
+      enumerator = enumerator.withoutSdk();
+    }
+    enumerator.forEach(new Processor<OrderEntry>() {
       @Override
       public boolean process(OrderEntry orderEntry) {
         if (orderEntry instanceof ModuleSourceOrderEntry) {
@@ -49,7 +53,7 @@ public class RootVisitorHost {
   public static void visitRoots(@NotNull Module module, @NotNull Sdk sdk, RootVisitor visitor) {
     if (!visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) return;
     // else look in SDK roots
-    if (visitSdkRoots(visitor, sdk)) return;
+    if (visitSdkRoots(sdk, visitor)) return;
 
     //look in libraries
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
@@ -79,13 +83,13 @@ public class RootVisitorHost {
       if (orderEntries == null) {
         final Sdk sdk = ProjectRootManager.getInstance(elt.getProject()).getProjectSdk();
         if (sdk != null) {
-          visitSdkRoots(visitor, sdk);
+          visitSdkRoots(sdk, visitor);
         }
       }
     }
   }
 
-  private static boolean visitSdkRoots(@NotNull RootVisitor visitor, @NotNull Sdk sdk) {
+  public static boolean visitSdkRoots(@NotNull Sdk sdk, @NotNull RootVisitor visitor) {
     final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     for (VirtualFile root : roots) {
       if (!visitor.visitRoot(root)) {

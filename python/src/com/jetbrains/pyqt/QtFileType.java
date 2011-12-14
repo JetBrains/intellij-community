@@ -109,7 +109,7 @@ public abstract class QtFileType implements FileType, INativeFileType {
   }
 
   private static String findToolInPackage(String toolName, Module module, Sdk sdk, String name) {
-    List<PsiElement> elements = ResolveImportUtil.resolveModulesInRootProvider(sdk.getRootProvider(), module, PyQualifiedName.fromComponents(name));
+    List<PsiElement> elements = ResolveImportUtil.resolveModulesInSdk(sdk, module, PyQualifiedName.fromComponents(name));
     for (PsiElement psiElement : elements) {
       if (psiElement instanceof PsiDirectory) {
         VirtualFile tool = ((PsiDirectory)psiElement).getVirtualFile().findChild(toolName + ".exe");
