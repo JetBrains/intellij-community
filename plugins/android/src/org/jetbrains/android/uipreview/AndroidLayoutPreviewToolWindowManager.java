@@ -281,7 +281,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
   public void render() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!myToolWindow.isVisible()) {
+    if (myToolWindow == null || !myToolWindow.isVisible()) {
       return;
     }
     
