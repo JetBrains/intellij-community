@@ -261,21 +261,25 @@
       <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction"/>
       <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
       <separator/>
-      <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
-      <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
-      <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
-      <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
+      <group id="IntroduceActionsGroup" popup="true">
+        <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
+        <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
+        <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
+        <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
+        <separator/>
+        <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
+        <separator/>
+        <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>
+        <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
+        <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
+        <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
+        <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
+      </group>
+      
       <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
-      <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
-      <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>
       <separator/>
       <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
       <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
-      <separator/>
-      <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
-      <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
-      <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
-      <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
