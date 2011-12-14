@@ -1,4 +1,4 @@
-<component xmlns:xi="http://www.w3.org/2001/XInclude">
+<component>
   <actions>
     <group id="JavaGenerateGroup1">
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
@@ -59,11 +59,18 @@
 
     <group id="RefactoringMenu2">
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
-      <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction"/>
-      <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
+      
       <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="Inline"/>
     </group>
+
+    <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+    </action>
+
+    <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceParameter"/>
+    </action>
 
     <group id="RefactoringMenu4">
       <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction"/>

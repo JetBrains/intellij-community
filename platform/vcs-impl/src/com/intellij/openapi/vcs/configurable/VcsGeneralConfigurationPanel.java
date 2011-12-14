@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -60,6 +61,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
   private JPanel myAddConfirmationPanel;
   private JCheckBox myCbOfferToMoveChanges;
   private JComboBox myFailedCommitChangelistCombo;
+  private JComboBox myOnPatchCreation;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -91,7 +93,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     }
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
-
+    myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") + SystemInfo.nativeFileManagerName + " after creation:");
   }
 
   public void apply() throws ConfigurationException {
@@ -109,9 +111,24 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
 
     getAddConfirmation().setValue(getSelected(myOnFileAddingGroup));
     getRemoveConfirmation().setValue(getSelected(myOnFileRemovingGroup));
-
+    applyPatchOption(settings);
 
     getReadOnlyStatusHandler().getState().SHOW_DIALOG = myShowReadOnlyStatusDialog.isSelected();
+  }
+
+  private void applyPatchOption(VcsConfiguration settings) {
+    settings.SHOW_PATCH_IN_EXPLORER = getShowPatchValue();
+  }
+  
+  private Boolean getShowPatchValue() {
+    final int index = myOnPatchCreation.getSelectedIndex();
+    if (index == 0) {
+      return null;
+    } else if (index == 1) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private VcsShowConfirmationOption.Value getFailedCommitConfirm() {
@@ -180,6 +197,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
 
     if (getSelected(myOnFileAddingGroup) != getAddConfirmation().getValue()) return true;
     if (getSelected(myOnFileRemovingGroup) != getRemoveConfirmation().getValue()) return true;
+    if (! Comparing.equal(settings.SHOW_PATCH_IN_EXPLORER, getShowPatchValue())) return true;
 
     return false;
   }
@@ -207,6 +225,13 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
 
     selectInGroup(myOnFileAddingGroup, getAddConfirmation());
     selectInGroup(myOnFileRemovingGroup, getRemoveConfirmation());
+    if (settings.SHOW_PATCH_IN_EXPLORER == null) {
+      myOnPatchCreation.setSelectedIndex(0);
+    } else if (Boolean.TRUE.equals(settings.SHOW_PATCH_IN_EXPLORER)) {
+      myOnPatchCreation.setSelectedIndex(1);
+    } else {
+      myOnPatchCreation.setSelectedIndex(2);
+    }
   }
 
   private static void selectInGroup(final JRadioButton[] group, final VcsShowConfirmationOption confirmation) {

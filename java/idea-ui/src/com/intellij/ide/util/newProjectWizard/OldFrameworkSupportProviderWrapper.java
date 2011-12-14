@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -125,6 +126,7 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
     private final FrameworkLibraryVersionFilter myVersionFilter;
 
     public FrameworkSupportConfigurableWrapper(FrameworkSupportConfigurable configurable) {
+      Disposer.register(this, configurable);
       myConfigurable = configurable;
       if (configurable instanceof FrameworkSupportWithLibrary) {
         myVersionFilter = FrameworkLibraryVersionFilter.ALL;

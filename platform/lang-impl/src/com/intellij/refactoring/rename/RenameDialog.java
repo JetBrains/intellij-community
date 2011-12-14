@@ -115,7 +115,12 @@ public class RenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
-    myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor);
+    myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
+      @Override
+      protected boolean shouldSelectAll() {
+        return false;
+      }
+    };
     if (myPsiElement instanceof PsiFile && myEditor == null) {
       myNameSuggestionsField.selectNameWithoutExtension();
     }

@@ -275,8 +275,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         LocalInspectionTool tool = wrapper.getTool();
         if (!checkDumbAwareness || tool instanceof DumbAware) {
           map.putValue(tool, language);
-          for (Language dialect : lang.getDialects()) {
-            map.putValue(tool, dialect.getID());
+          if (wrapper.applyToDialects()) {
+            for (Language dialect : lang.getDialects()) {
+              map.putValue(tool, dialect.getID());
+            }
           }
         }
       }

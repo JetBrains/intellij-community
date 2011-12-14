@@ -388,9 +388,9 @@
     </action>
 
     <group id="Maven.RefactoringGroup" text="Refactoring">
-      <add-to-group group-id="RefactoringMenu" anchor="last"/>
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceParameter"/>
       <separator/>
-      <action id="refactoring.introduce.property" text="Introduce Property"
+      <action id="refactoring.introduce.property" text="Property"
               class="org.jetbrains.idea.maven.dom.refactorings.introduce.IntroducePropertyAction"
               use-shortcut-of="IntroduceVariable"/>
 

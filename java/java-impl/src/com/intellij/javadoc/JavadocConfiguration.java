@@ -83,6 +83,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   private final Project myProject;
   private AnalysisScope myGenerationScope;
   private static final Logger LOGGER = Logger.getInstance("#" + JavadocConfiguration.class.getName());
+  public boolean OPTION_INCLUDE_LIBS = false;
 
   public void setGenerationScope(AnalysisScope generationScope) {
     myGenerationScope = generationScope;
@@ -274,7 +275,11 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
             writer.println(source);
           }
           writer.println("-sourcepath");
-          final PathsList pathsList = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList();
+          OrderEnumerator enumerator = OrderEnumerator.orderEntries(myProject);
+          if (!OPTION_INCLUDE_LIBS) {
+            enumerator = enumerator.withoutSdk().withoutLibraries();
+          }
+          final PathsList pathsList = enumerator.getSourcePathsList();
           final List<VirtualFile> files = pathsList.getRootDirs();
           final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
           final StringBuilder sourcePath = new StringBuilder();

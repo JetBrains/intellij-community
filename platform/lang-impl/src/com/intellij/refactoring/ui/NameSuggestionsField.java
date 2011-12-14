@@ -36,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -104,7 +105,7 @@ public class NameSuggestionsField extends JPanel {
           if (selectionModel.hasSelection() && selected != null && !selected.isEmpty()) {
             myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
           }
-          else {
+          else if (shouldSelectAll()) {
             myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
           }
           break;
@@ -113,6 +114,10 @@ public class NameSuggestionsField extends JPanel {
     });
   }
 
+  protected boolean shouldSelectAll() {
+    return true;
+  }
+  
   public void selectNameWithoutExtension() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {

@@ -313,20 +313,27 @@ public class TestAll implements Test {
         }
         return adapter;
       }
-      return new TestSuite(testCaseClass){
+
+      final int[] testsCount = {0};
+      TestSuite suite = new TestSuite(testCaseClass) {
         @Override
         public void addTest(Test test) {
-          if (!(test instanceof TestCase))  {
+          if (!(test instanceof TestCase)) {
+            testsCount[0]++;
             super.addTest(test);
-          } else {
-            if (isPerformanceTestsRun() ^ (hasPerformance(((TestCase)test).getName()) || hasPerformance(testCaseClass.getSimpleName()))) return;
-            
+          }
+          else {
+            String name = ((TestCase)test).getName();
+            if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
+            if (isPerformanceTestsRun() ^ (hasPerformance(name) || hasPerformance(testCaseClass.getSimpleName())))
+              return;
+
             Method method = findTestMethod((TestCase)test);
             if (method == null || !TestCaseLoader.isBombed(method)) {
+              testsCount[0]++;
               super.addTest(test);
             }
           }
-
         }
 
         @Nullable
@@ -334,6 +341,8 @@ public class TestAll implements Test {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
+
+      return testsCount[0] > 0 ? suite : null;
     }
 
     return null;
@@ -353,6 +362,14 @@ public class TestAll implements Test {
     }
   }
 
+  private static Set<String> normalizePaths(String[] array) {
+    Set<String> answer = new LinkedHashSet<String>(array.length);
+    for (String path : array) {
+      answer.add(path.replace('\\', '/'));
+    }
+    return answer;
+  }
+
   public static String[] getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
@@ -363,8 +380,8 @@ public class TestAll implements Test {
     if (roots != null) {
       if (Comparing.equal(System.getProperty(TestCaseLoader.SKIP_COMMUNITY_TESTS), "true")) {
         System.out.println("Skipping community tests");
-        Set<String> set = new LinkedHashSet<String>(Arrays.asList(roots));
-        set.removeAll(Arrays.asList(ExternalClasspathClassLoader.getExcludeRoots()));
+        Set<String> set = normalizePaths(roots);
+        set.removeAll(normalizePaths(ExternalClasspathClassLoader.getExcludeRoots()));
         roots = set.toArray(new String[set.size()]);
       }
       

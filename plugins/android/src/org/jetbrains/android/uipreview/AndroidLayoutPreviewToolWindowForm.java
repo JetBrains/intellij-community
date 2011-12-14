@@ -2,6 +2,7 @@ package org.jetbrains.android.uipreview;
 
 import com.android.AndroidConstants;
 import com.android.ide.common.resources.ResourceResolver;
+import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.ide.common.resources.configuration.LanguageQualifier;
 import com.android.ide.common.resources.configuration.RegionQualifier;
 import com.android.ide.common.resources.configuration.ScreenSizeQualifier;
@@ -252,12 +253,12 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     optionsGroup.addAction(new CheckboxAction("Hide for non-layout files") {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return mySettings.getState().isHideForNonLayoutFiles();
+        return mySettings.getGlobalState().isHideForNonLayoutFiles();
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        mySettings.getState().setHideForNonLayoutFiles(state);
+        mySettings.getGlobalState().setHideForNonLayoutFiles(state);
       }
     }).setAsSecondary(true);
 
@@ -391,6 +392,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
 
   public void setFile(@Nullable PsiFile file) {
+    final boolean fileChanged = !Comparing.equal(myFile, file);
     myFile = file;
 
     final AndroidPlatform newPlatform = getPlatform(file);
@@ -403,8 +405,15 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
         if (!myResetFlag) {
           reset();
           myResetFlag = true;
+          return;
         }
       }
+    }
+
+    if (file != null && fileChanged) {
+      myResetFlag = false;
+      reset();
+      myResetFlag = true;
     }
   }
   
@@ -427,9 +436,14 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
     return null;
   }
+  
+  @Nullable
+  private VirtualFile getVirtualFile() {
+    return myFile != null ? myFile.getVirtualFile() : null;
+  }
 
   private void saveState() {
-    final AndroidLayoutPreviewToolWindowSettings.State state = mySettings.getState();
+    final AndroidLayoutPreviewToolWindowSettings.GlobalState state = mySettings.getGlobalState();
 
     if (myResetFlag) {
       final LayoutDevice selectedDevice = getSelectedDevice();
@@ -438,8 +452,18 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       }
 
       final LayoutDeviceConfiguration deviceConfig = getSelectedDeviceConfiguration();
-      if (deviceConfig != null) {
-        state.setDeviceConfiguration(deviceConfig.getName());
+      final VirtualFile vFile = getVirtualFile();
+      if (deviceConfig != null && vFile != null) {
+        final LayoutDeviceConfiguration defaultConfig = getDefaultDeviceConfigForFile(vFile);
+        final String defaultConfigName = defaultConfig != null ? defaultConfig.getName() : null;
+        final String deviceConfigName = deviceConfig.getName();
+
+        if (Comparing.equal(deviceConfigName, defaultConfigName)) {
+          mySettings.removeDeviceConfiguration(vFile);
+        }
+        else {
+          mySettings.setDeviceConfiguration(vFile, deviceConfigName);
+        }
       }
 
       final UiMode dockMode = getSelectedDockMode();
@@ -473,7 +497,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
 
   private void reset() {
-    final AndroidLayoutPreviewToolWindowSettings.State state = mySettings.getState();
+    final AndroidLayoutPreviewToolWindowSettings.GlobalState state = mySettings.getGlobalState();
 
     final String savedDeviceName = state.getDevice();
     if (savedDeviceName != null) {
@@ -489,17 +513,28 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       }
     }
 
-    final String savedDeviceConfigName = state.getDeviceConfiguration();
-    if (savedDeviceConfigName != null) {
-      LayoutDeviceConfiguration savedDeviceConfig = null;
-      for (LayoutDeviceConfiguration config : myDeviceConfigurations) {
-        if (savedDeviceConfigName.equals(config.getName())) {
-          savedDeviceConfig = config;
-          break;
+    final VirtualFile vFile = getVirtualFile();
+    if (vFile != null) {
+      final String savedDeviceConfigName = mySettings.getDeviceConfiguration(vFile);
+
+      if (savedDeviceConfigName != null) {
+        LayoutDeviceConfiguration savedDeviceConfig = null;
+        for (LayoutDeviceConfiguration config : myDeviceConfigurations) {
+          if (savedDeviceConfigName.equals(config.getName())) {
+            savedDeviceConfig = config;
+            break;
+          }
+        }
+        if (savedDeviceConfig != null) {
+          myDeviceConfigurationsCombo.setSelectedItem(savedDeviceConfig);
         }
       }
-      if (savedDeviceConfig != null) {
-        myDeviceConfigurationsCombo.setSelectedItem(savedDeviceConfig);
+      else {
+        final LayoutDeviceConfiguration defaultConfig = getDefaultDeviceConfigForFile(vFile);
+        
+        if (defaultConfig != null) {
+          myDeviceConfigurationsCombo.setSelectedItem(defaultConfig);
+        }
       }
     }
 
@@ -556,8 +591,32 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
   }
 
+  @Nullable
+  private LayoutDeviceConfiguration getDefaultDeviceConfigForFile(@NotNull VirtualFile vFile) {
+    final VirtualFile folder = vFile.getParent();
+
+    if (folder == null) {
+      return null;
+    }
+    final String[] folderSegments = folder.getName().split(AndroidConstants.RES_QUALIFIER_SEP);
+
+    if (folderSegments.length == 0) {
+      return null;
+    }
+    final FolderConfiguration config = FolderConfiguration.getConfig(folderSegments);
+
+    if (config != null) {
+      for (LayoutDeviceConfiguration deviceConfig : myDeviceConfigurations) {
+        if (deviceConfig.getConfiguration().isMatchFor(config)) {
+          return deviceConfig;
+        }
+      }
+    }
+    return null;
+  }
+
   private void resetThemes(Collection<Object> themes) {
-    final String savedThemeName = mySettings.getState().getTheme();
+    final String savedThemeName = mySettings.getGlobalState().getTheme();
     if (savedThemeName != null) {
       ThemeData savedTheme = null;
       for (Object o : themes) {
