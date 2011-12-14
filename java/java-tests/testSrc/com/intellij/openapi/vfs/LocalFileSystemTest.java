@@ -282,8 +282,7 @@ public class LocalFileSystemTest extends IdeaTestCase{
     assertEquals(11, virtualFile.getLength());
   }
 
-  @Bombed(month = 12, day = 13, user = "roman.shevchenko")
-  public void testHardLinks() throws Exception {
+  public void _testHardLinks() throws Exception {
     if (SystemInfo.isWindows) {
       File dir = FileUtil.createTempDirectory("hardlinks", "");
       File oldfile = new File(dir, "oldfile");
