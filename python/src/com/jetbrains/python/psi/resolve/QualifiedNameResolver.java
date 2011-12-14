@@ -67,7 +67,7 @@ public class QualifiedNameResolver implements RootVisitor {
     return this;
   }
 
-  private void setModule(Module module) {
+  private void setModule(@Nullable Module module) {
     myModule = module;
     if (module != null && FacetManager.getInstance(module).getFacetByType(DjangoFacetType.ID) != null) {
       myAcceptRootAsTopLevelPackage = true;
@@ -154,7 +154,7 @@ public class QualifiedNameResolver implements RootVisitor {
         dir = ResolveImportUtil.stepBackFrom(myFootholdFile, myRelativeLevel);
         
       }
-      PsiElement module = resolveModuleAt(dir);
+      PsiElement module = resolveModuleAt(dir, null);
       if (module != null) {
         results.add(module);
       }
@@ -245,26 +245,22 @@ public class QualifiedNameResolver implements RootVisitor {
 
   @Nullable
   private PsiElement resolveInRoot(VirtualFile root) {
-    PsiElement module = root.isDirectory() ? myPsiManager.findDirectory(root) : myPsiManager.findFile(root);
-    if (module == null) return null;
-    for (String component : myQualifiedName.getComponents()) {
-      if (component == null) {
-        module = null;
-        break;
-      }
-      module = ResolveImportUtil.resolveChild(module, component, myFootholdFile, root, true, myCheckForPackage); // only files, we want a module
+    if (!root.isDirectory()) {
+      // if we have added a file as a root, it's unlikely that we'll be able to resolve anything under it in 'files only' resolve mode
+      return null;
     }
-    return module;
+    return resolveModuleAt(myPsiManager.findDirectory(root), root);
   }
 
   /**
    * Searches for a module at given directory, unwinding qualifiers and traversing directories as needed.
    *
-   * @param directory     where to start from; top qualifier will be searched for here.
+   * @param directory where to start from; top qualifier will be searched for here.
+   * @param root      an SDK, library or content root from which we're searching, or null if we're searching relatively
    * @return module's file, or null.
    */
   @Nullable
-  private PsiElement resolveModuleAt(@Nullable PsiDirectory directory) {
+  private PsiElement resolveModuleAt(@Nullable PsiDirectory directory, @Nullable VirtualFile root) {
     // prerequisites
     if (directory == null || !directory.isValid()) return null;
 
@@ -273,7 +269,7 @@ public class QualifiedNameResolver implements RootVisitor {
       if (name == null) {
         return null;
       }
-      seeker = ResolveImportUtil.resolveChild(seeker, name, myFootholdFile, null, true, true);
+      seeker = ResolveImportUtil.resolveChild(seeker, name, myFootholdFile, root, true, myCheckForPackage);
     }
     return seeker;
   }
