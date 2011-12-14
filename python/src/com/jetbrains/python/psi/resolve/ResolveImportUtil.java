@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
-import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
@@ -28,7 +26,10 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
@@ -314,30 +315,9 @@ public class ResolveImportUtil {
                                              @Nullable PsiElement foothold,
                                              boolean checkForPackage) {
 
-    PsiFile footholdFile = foothold != null ? foothold.getContainingFile() : null;
-    boolean has_djando_facet = false;
-    if (module != null) {
-      has_djando_facet = FacetManager.getInstance(module).getFacetByType(DjangoFacetType.ID) != null;
-    }
-    ResolveInRootVisitor visitor;
-    // resolve the name considering every source root as a package dir, as if it's a deployed package. django console does so.
-    if (has_djando_facet) {
-      visitor = new ResolveInRootAsTopPackageVisitor(moduleQualifiedName, manager, footholdFile, checkForPackage);
-    }
-    else {
-      visitor = new ResolveInRootVisitor(moduleQualifiedName, manager, footholdFile, checkForPackage);
-    }
-    if (module != null) {
-      RootVisitorHost.visitRoots(module, visitor);
-      return visitor.resultsAsList();
-    }
-    else if (foothold != null) {
-      RootVisitorHost.visitSdkRoots(foothold, visitor);
-      return visitor.resultsAsList();
-    }
-    else {
-      throw new IllegalStateException();
-    }
+    ImportResolver visitor = new ImportResolver(module, foothold, moduleQualifiedName, manager, checkForPackage);
+    visitor.go();
+    return visitor.resultsAsList();
   }
 
   @Nullable
@@ -373,8 +353,7 @@ public class ResolveImportUtil {
   public static List<PsiElement> resolveModulesInRootProvider(@NotNull RootProvider rootProvider,
                                                               @NotNull Module module,
                                                               @NotNull PyQualifiedName moduleQualifiedName) {
-    ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, PsiManager.getInstance(module.getProject()), null,
-                                                            true);
+    ImportResolver visitor = new ImportResolver(module, null, moduleQualifiedName, PsiManager.getInstance(module.getProject()), true);
     if (RootVisitorHost.visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) {
       for (VirtualFile file : rootProvider.getFiles(OrderRootType.CLASSES)) {
         visitor.visitRoot(file);
@@ -440,92 +419,6 @@ public class ResolveImportUtil {
       visitor = new ResolveNameVisitor(PsiManager.getInstance(module.getProject()), name);
     RootVisitorHost.visitRoots(module, pythonSdk, visitor);
     return visitor.isFound();
-  }
-
-  static class ResolveInRootVisitor implements RootVisitor {
-    final PsiFile myFootholdFile;
-    final boolean myCheckForPackage;
-    final @NotNull PyQualifiedName myQualifiedName;
-    final @NotNull PsiManager myPsiManager;
-    final Set<PsiElement> results = Sets.newLinkedHashSet();
-
-    public ResolveInRootVisitor(@NotNull PyQualifiedName qName,
-                                @NotNull PsiManager psiManager,
-                                @Nullable PsiFile foothold_file,
-                                boolean checkForPackage) {
-      myQualifiedName = qName;
-      myPsiManager = psiManager;
-      myFootholdFile = foothold_file;
-      myCheckForPackage = checkForPackage;
-    }
-
-    public boolean visitRoot(final VirtualFile root) {
-      if (!root.isValid()) {
-        return true;
-      }
-      PsiElement module = resolveInRoot(root, myQualifiedName, myPsiManager, myFootholdFile, myCheckForPackage);
-      if (module != null) {
-        results.add(module);
-      }
-
-      return true;
-    }
-
-    @NotNull
-    public List<PsiElement> resultsAsList() {
-      return Lists.newArrayList(results);
-    }
-
-    @Nullable
-    protected static PsiElement resolveInRoot(VirtualFile root,
-                                              PyQualifiedName qualifiedName,
-                                              PsiManager psiManager,
-                                              @Nullable PsiFile foothold_file,
-                                              boolean checkForPackage) {
-      PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
-      if (module == null) return null;
-      for (String component : qualifiedName.getComponents()) {
-        if (component == null) {
-          module = null;
-          break;
-        }
-        module = resolveChild(module, component, foothold_file, root, true, checkForPackage); // only files, we want a module
-      }
-      return module;
-    }
-  }
-
-  /**
-   * Visits roots and detects if qName is a name of top package coincinding with a root:
-   * that is, tha package is not one of root's children, but the root itself.
-   */
-  private static class ResolveInRootAsTopPackageVisitor extends ResolveInRootVisitor {
-    public ResolveInRootAsTopPackageVisitor(@NotNull PyQualifiedName qName,
-                                            @NotNull PsiManager psiManager,
-                                            @Nullable PsiFile foothold_file,
-                                            boolean checkForPackage) {
-      super(qName, psiManager, foothold_file, checkForPackage);
-    }
-
-    @Override
-    public boolean visitRoot(VirtualFile root) {
-      if (!root.isValid()) {
-        return true;
-      }
-      PsiElement module = resolveInRoot(root, myQualifiedName, myPsiManager, myFootholdFile, myCheckForPackage);
-      if (module != null) {
-        results.add(module);
-      }
-
-      if (myQualifiedName.matchesPrefix(PyQualifiedName.fromDottedString(root.getName()))) {
-        module = resolveInRoot(root.getParent(), myQualifiedName, myPsiManager, myFootholdFile, myCheckForPackage);
-        if (module != null) {
-          results.add(module);
-        }
-      }
-
-      return true;
-    }
   }
 
   /**
