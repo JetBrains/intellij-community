@@ -811,15 +811,6 @@
   </project-components>
 
   <actions>
-    <action
-        id="Devmode.DumpPsi"
-        class="com.jetbrains.python.devmode.DumpPsiToClipboardAction"
-        text="Dump PSI to clipboard"
-        internal="true"
-        >
-      <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Macros"/>
-    </action>
-
     <action id="Devmode.AnalyzeReturns" class="com.jetbrains.python.devmode.AnalyzeReturnsAction" text="Analyze return types"
             internal="true">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
