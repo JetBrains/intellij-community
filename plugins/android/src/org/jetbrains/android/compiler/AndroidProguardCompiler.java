@@ -229,16 +229,16 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
 
     if (logDirOutputOsPath != null) {
       commands.add("-dump");
-      commands.add(new File(logDirOutputOsPath, "dump.txt").getAbsolutePath());
+      commands.add(quotePath(new File(logDirOutputOsPath, "dump.txt").getAbsolutePath()));
 
       commands.add("-printseeds");
-      commands.add(new File(logDirOutputOsPath, "seeds.txt").getAbsolutePath());
+      commands.add(quotePath(new File(logDirOutputOsPath, "seeds.txt").getAbsolutePath()));
 
       commands.add("-printusage");
-      commands.add(new File(logDirOutputOsPath, "usage.txt").getAbsolutePath());
+      commands.add(quotePath(new File(logDirOutputOsPath, "usage.txt").getAbsolutePath()));
 
       commands.add("-printmapping");
-      commands.add(new File(logDirOutputOsPath, "mapping.txt").getAbsolutePath());
+      commands.add(quotePath(new File(logDirOutputOsPath, "mapping.txt").getAbsolutePath()));
     }
 
     LOG.info(AndroidUtils.command2string(commands));
