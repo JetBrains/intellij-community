@@ -32,11 +32,15 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -92,8 +96,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
     createTemplateEditor(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
 
     add(createExpandByPanel(), BorderLayout.NORTH);
-    add(createTable(), BorderLayout.CENTER);
-    add(myDetailsPanel, BorderLayout.SOUTH);
+
+    Splitter splitter = new Splitter(true, 0.9f);
+    splitter.setFirstComponent(createTable());
+    splitter.setSecondComponent(myDetailsPanel);
+    add(splitter, BorderLayout.CENTER);
   }
 
   public void dispose() {
