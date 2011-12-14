@@ -515,6 +515,7 @@ def layoutMac(Map args, String target) {
   args["bundleIdentifier"] = "com.jetbrains.pycharm"
   args["platform_prefix"] = "Python"
   args["idea.properties.path"] = "$home/python/build/idea.properties"
+  args["idea.properties"] = ["ide.mac.useNativeClipboard":"false"];
 
   layoutMacApp(target, "$home/community", args)
 
