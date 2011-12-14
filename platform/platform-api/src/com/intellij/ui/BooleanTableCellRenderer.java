@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -32,17 +34,18 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
     setHorizontalAlignment(CENTER);
     setVerticalAlignment(CENTER);
     setBorder(null);
+    setOpaque(true);
+    myPanel.setOpaque(true);
   }
 
-  public Component getTableCellRendererComponent(JTable table, Object value,
-                                                 boolean isSel, boolean hasFocus,
-                                                 int row, int column) {
-    final Color bg = table.getBackground();
+  @Override
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSel, boolean hasFocus, int row, int column) {
+    final Color bg = UIUtil.isUnderNimbusLookAndFeel() && row % 2 == 1 ? UIUtil.TRANSPARENT_COLOR : table.getBackground();
     final Color fg = table.getForeground();
     final Color selBg = table.getSelectionBackground();
     final Color selFg = table.getSelectionForeground();
 
-    if(value == null) {
+    if (value == null) {
       myPanel.setBackground(isSel ? selBg : bg);
       return myPanel;
     }
@@ -52,7 +55,8 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
 
     if (value instanceof String) {
       setSelected(Boolean.parseBoolean((String)value));
-    } else {
+    }
+    else {
       setSelected(((Boolean)value).booleanValue());
     }
     setEnabled(table.isCellEditable(row, column));
