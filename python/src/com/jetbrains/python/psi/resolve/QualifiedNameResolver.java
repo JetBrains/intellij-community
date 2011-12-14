@@ -26,9 +26,11 @@ import java.util.List;
 import java.util.Set;
 
 /**
-* @author yole
-*/
-public class ImportResolver implements RootVisitor {
+ * Resolves the specified qualified name in the specified context (module, all modules or a file) to a file or directory.
+ *
+ * @author yole
+ */
+public class QualifiedNameResolver implements RootVisitor {
   boolean myCheckForPackage = true;
   @Nullable private Module myModule;
   private PsiFile myFootholdFile;
@@ -41,15 +43,15 @@ public class ImportResolver implements RootVisitor {
   private boolean myWithoutRoots;
   private Sdk myWithSdk;
 
-  public ImportResolver(@NotNull String qNameString) {
+  public QualifiedNameResolver(@NotNull String qNameString) {
     myQualifiedName = PyQualifiedName.fromDottedString(qNameString);
   }
 
-  public ImportResolver(@NotNull PyQualifiedName qName) {
+  public QualifiedNameResolver(@NotNull PyQualifiedName qName) {
     myQualifiedName = qName;
   }
 
-  public ImportResolver fromElement(@NotNull PsiElement foothold) {
+  public QualifiedNameResolver fromElement(@NotNull PsiElement foothold) {
     myFootholdFile = foothold.getContainingFile().getOriginalFile();
     myPsiManager = PsiManager.getInstance(foothold.getProject());
     setModule(ModuleUtil.findModuleForPsiElement(myFootholdFile));
@@ -59,7 +61,7 @@ public class ImportResolver implements RootVisitor {
     return this;
   }
 
-  public ImportResolver fromModule(@NotNull Module module) {
+  public QualifiedNameResolver fromModule(@NotNull Module module) {
     setModule(module);
     myPsiManager = PsiManager.getInstance(module.getProject());
     return this;
@@ -72,7 +74,7 @@ public class ImportResolver implements RootVisitor {
     }
   }
 
-  public ImportResolver withAllModules() {
+  public QualifiedNameResolver withAllModules() {
     myVisitAllModules = true;
     return this;
   }
@@ -83,7 +85,7 @@ public class ImportResolver implements RootVisitor {
    * @param sdk the SDK in which the name should be searched.
    * @return this
    */
-  public ImportResolver withSdk(Sdk sdk) {
+  public QualifiedNameResolver withSdk(Sdk sdk) {
     myWithSdk = sdk;
     return this;
   }
@@ -94,7 +96,7 @@ public class ImportResolver implements RootVisitor {
    * @param relativeLevel if >= 0, we try to resolve at the specified number of levels above the current file.
    * @return this
    */
-  public ImportResolver withRelative(int relativeLevel) {
+  public QualifiedNameResolver withRelative(int relativeLevel) {
     myRelativeLevel = relativeLevel;
     return this;
   }
@@ -104,7 +106,7 @@ public class ImportResolver implements RootVisitor {
    *
    * @return this
    */
-  public ImportResolver withoutRoots() {
+  public QualifiedNameResolver withoutRoots() {
     myWithoutRoots = true;
     return this;
   }
@@ -115,7 +117,7 @@ public class ImportResolver implements RootVisitor {
    *
    * @return
    */
-  public ImportResolver withPlainDirectories() {
+  public QualifiedNameResolver withPlainDirectories() {
     myCheckForPackage = false;
     return this;
   }

@@ -202,7 +202,7 @@ public class ResolveImportUtil {
     if (being_imported.contains(marker)) return Collections.emptyList(); // break endless loop in import
     try {
       being_imported.add(marker);
-      ImportResolver visitor = new ImportResolver(qualifiedName).fromElement(source_file);
+      QualifiedNameResolver visitor = new QualifiedNameResolver(qualifiedName).fromElement(source_file);
       if (relativeLevel > 0) {
         // "from ...module import"
         visitor.withRelative(relativeLevel).withoutRoots();
@@ -222,7 +222,7 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull PyQualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
     if (foothold == null) return null;
-    ImportResolver visitor = new ImportResolver(moduleQualifiedName).fromElement(foothold);
+    QualifiedNameResolver visitor = new QualifiedNameResolver(moduleQualifiedName).fromElement(foothold);
     return visitor.firstResult();
   }
 
@@ -566,27 +566,6 @@ public class ResolveImportUtil {
       }
     }
     return null;
-  }
-
-  public static class LibraryRootVisitingPolicy extends RootPolicy<PsiElement> {
-    private final RootVisitor myVisitor;
-
-    public LibraryRootVisitingPolicy(RootVisitor visitor) {
-      myVisitor = visitor;
-    }
-
-    @Nullable
-    public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public PsiElement visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, PsiElement value) {
-      if (value != null) return value;  // for chaining in processOrder()
-      RootVisitorHost.visitOrderEntryRoots(myVisitor, libraryOrderEntry);
-      return null;
-    }
   }
 
   /**

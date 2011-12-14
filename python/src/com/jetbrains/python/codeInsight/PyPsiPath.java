@@ -3,7 +3,7 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.ImportResolver;
+import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ public abstract class PyPsiPath {
     @Nullable
     @Override
     public PsiElement resolve(PsiElement context) {
-      ImportResolver visitor = new ImportResolver(myQualifiedName).fromElement(context);
+      QualifiedNameResolver visitor = new QualifiedNameResolver(myQualifiedName).fromElement(context);
       return visitor.firstResult();
     }
   }

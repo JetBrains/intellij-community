@@ -50,19 +50,6 @@ public class RootVisitorHost {
     });
   }
 
-  /**
-   * Visits module content, sdk roots and libraries
-   */
-  public static void visitRoots(@NotNull Module module, @NotNull Sdk sdk, RootVisitor visitor) {
-    if (!visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) return;
-    // else look in SDK roots
-    if (visitSdkRoots(sdk, visitor)) return;
-
-    //look in libraries
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    rootManager.orderEntries().process(new ResolveImportUtil.LibraryRootVisitingPolicy(visitor), null);
-  }
-
   static void visitSdkRoots(PsiFile file, RootVisitor visitor) {
     // formality
     final VirtualFile elt_vfile = file.getOriginalFile().getVirtualFile();
