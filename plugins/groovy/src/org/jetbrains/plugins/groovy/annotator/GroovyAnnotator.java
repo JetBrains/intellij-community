@@ -890,13 +890,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         }
       }
     }
-
-    if (regex instanceof GrRegex && ((GrRegex)regex).getInjections().length > 0) {
-      if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_8)) {
-        myHolder.createErrorAnnotation(regex, GroovyBundle
-          .message("slashy.strings.with.injections.are.not.allowed.in.groovy.0", config.getSDKVersion(regex)));
-      }
-    }
   }
 
   @Override
