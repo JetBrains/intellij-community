@@ -11,7 +11,7 @@ PyFile:InconsistentDedent.py
     PyStatementList
       PyPassStatement
         PsiElement(Py:PASS_KEYWORD)('pass')
-      PsiErrorElement:unindent does not match any outer indentation level
+      PsiErrorElement:Unindent does not match any outer indentation level
         <empty list>
   PsiWhiteSpace('\n  ')
   PyPrintStatement

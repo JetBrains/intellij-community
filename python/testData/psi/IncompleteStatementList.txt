@@ -15,7 +15,7 @@ PyFile:IncompleteStatementList.py
           PsiWhiteSpace(' ')
           PyReferenceExpression: ba
             PsiElement(Py:IDENTIFIER)('ba')
-          PsiErrorElement:colon expected
+          PsiErrorElement:Colon expected
             <empty list>
           PyStatementList
             <empty list>
