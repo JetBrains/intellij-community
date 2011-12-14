@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -3233,10 +3234,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return logicalToVisualPosition(logicalPos, true);
   }
   
-  // TODO den remove before v.11 is released.
+  // TODO den remove as soon as the problem is fixed.
   private final ThreadLocal<Integer> stackDepth = new ThreadLocal<Integer>();
 
-  // TODO den remove before v.11 is released.
+  // TODO den remove as soon as the problem is fixed.
   @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
@@ -3257,7 +3258,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (offset < getDocument().getTextLength()) {
         offset = outermostCollapsed.getStartOffset();
         LogicalPosition foldStart = offsetToLogicalPosition(offset);
-        // TODO den remove before v.11 is released.
+        // TODO den remove as soon as the problem is fixed.
         Integer depth = stackDepth.get();
         if (depth >= 0) {
           stackDepth.set(depth + 1);
@@ -3269,7 +3270,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             stackDepth.set(-1);
           }
         }
-        // TODO den unwrap before v.11 is released.
+        // TODO den remove as soon as the problem is fixed.
         try {
           return doLogicalToVisualPosition(foldStart, true);
         }
@@ -3507,6 +3508,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (newY > 0 && newY == y) {
         newY = visibleLineToY(getVisibleLogicalLinesCount());
       }
+      if (newY >= y) {
+        LogMessageEx.error(LOG, "cycled moveCaretToScreenPos() detected", String.format("x=%d, y=%d%nstate=%s", x, y, dumpState()));
+      } 
       moveCaretToScreenPos(x, newY);
       return;
     }
