@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.console.parsing.IPythonData;
+import com.jetbrains.python.console.parsing.PythonConsoleData;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,8 @@ public class PyConsoleUtil {
   };
   public static final String DOUBLE_QUOTE_MULTILINE = "\"\"\"";
   public static final String SINGLE_QUOTE_MULTILINE = "'''";
-  static final Key<IPythonData> IPYTHON = Key.create("ipython");
+
+  static final Key<PythonConsoleData> PYTHON_CONSOLE_DATA = Key.create("python-console-data");
 
   private PyConsoleUtil() {
   }
@@ -119,23 +120,28 @@ public class PyConsoleUtil {
   }
 
   public static void markIPython(@NotNull VirtualFile file) {
-    IPythonData data = getOrCreateIPythonData(file);
-    data.setEnabled(true);
+    PythonConsoleData consoleData = getOrCreateIPythonData(file);
+    consoleData.setIPythonEnabled(true);
   }
 
   @NotNull
-  public static IPythonData getOrCreateIPythonData(@NotNull VirtualFile file) {
-    IPythonData data = file.getUserData(IPYTHON);
-    if (data == null) {
-      data = new IPythonData();
-      file.putUserData(IPYTHON, data);
+  public static PythonConsoleData getOrCreateIPythonData(@NotNull VirtualFile file) {
+    PythonConsoleData consoleData = file.getUserData(PYTHON_CONSOLE_DATA);
+    if (consoleData == null) {
+      consoleData = new PythonConsoleData();
+      file.putUserData(PYTHON_CONSOLE_DATA, consoleData);
     }
-    return data;
+    return consoleData;
   }
 
   public static void setIPythonAutomagic(@NotNull VirtualFile file, boolean detected) {
-    IPythonData data = getOrCreateIPythonData(file);
-    data.setAutomagic(detected);
+    PythonConsoleData consoleData = getOrCreateIPythonData(file);
+    consoleData.setIPythonAutomagic(detected);
+  }
+
+  public static void setCurrentIndentSize(@NotNull VirtualFile file, int indentSize) {
+    PythonConsoleData consoleData = getOrCreateIPythonData(file);
+    consoleData.setIndentSize(indentSize);
   }
 }
 
