@@ -41,6 +41,11 @@ public class ImportResolver implements RootVisitor {
   private boolean myWithoutRoots;
   private Sdk myWithSdk;
 
+  public ImportResolver(@NotNull String qNameString, boolean checkForPackage) {
+    myQualifiedName = PyQualifiedName.fromComponents(qNameString);
+    myCheckForPackage = checkForPackage;
+  }
+
   public ImportResolver(@NotNull PyQualifiedName qName, boolean checkForPackage) {
     myQualifiedName = qName;
     myCheckForPackage = checkForPackage;

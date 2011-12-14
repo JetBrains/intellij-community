@@ -277,13 +277,6 @@ public class ResolveImportUtil {
     return null;
   }
 
-  public static boolean findInRoots(Module module, Sdk pythonSdk, String name) {
-    ResolveNameVisitor
-      visitor = new ResolveNameVisitor(PsiManager.getInstance(module.getProject()), name);
-    RootVisitorHost.visitRoots(module, pythonSdk, visitor);
-    return visitor.isFound();
-  }
-
   /**
    * Tries to find referencedName under the parent element. Used to resolve any names that look imported.
    * Parent might happen to be a PyFile(__init__.py), then it is treated <i>both</i> as a file and as ist base dir.
@@ -683,35 +676,5 @@ public class ResolveImportUtil {
       }
     }
     return PointInImport.NONE;
-  }
-
-  public static class ResolveNameVisitor implements RootVisitor {
-    final @NotNull PsiManager myPsiManager;
-    private boolean myFound = false;
-    private final String myName;
-
-
-    public ResolveNameVisitor(@NotNull PsiManager psiManager, String name) {
-      myPsiManager = psiManager;
-      myName = name;
-    }
-
-    public boolean visitRoot(final VirtualFile root) {
-      if (!root.isValid()) {
-        return true;
-      }
-      PsiElement module = root.isDirectory() ? myPsiManager.findDirectory(root) : myPsiManager.findFile(root);
-      module =  resolveChild(module, myName, null, root, false, false);
-      if (module != null) {
-        myFound = true;
-        return false;
-      }
-
-      return true;
-    }
-
-    public boolean isFound() {
-      return myFound;
-    }
   }
 }
