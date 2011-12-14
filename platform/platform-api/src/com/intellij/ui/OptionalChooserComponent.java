@@ -73,6 +73,34 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
     return myList.getSelectedIndex();
   }
 
+  public void setSelectedIndex(final int index) {
+    myList.setSelectedIndex(index);
+  }
+
+  public boolean removeAt(final int index) {
+    getCurrentModel().remove(index);
+    refresh();
+
+    if (index < getCurrentModel().size()) {
+      setSelectedIndex(index);
+      return true;
+    }
+    else if (index > 0) {
+      setSelectedIndex(index - 1);
+      return true;
+    }
+    return false;
+  }
+
+  public boolean removeSelected() {
+    final int selectedIndex = getSelectedIndex();
+    // selected index
+    if (selectedIndex != -1) {
+      return removeAt(selectedIndex);
+    }
+    return false;
+  }
+
   public boolean isModified() {
     return !myWorkingList.equals(myInitialList);
   }
