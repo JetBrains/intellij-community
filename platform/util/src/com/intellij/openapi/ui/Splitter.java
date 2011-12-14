@@ -53,7 +53,7 @@ public class Splitter extends JPanel {
   private final float myMaxProp;
 
 
-  private float myProportion;
+  protected float myProportion;
 
   private final Divider myDivider;
   private JComponent mySecondComponent;

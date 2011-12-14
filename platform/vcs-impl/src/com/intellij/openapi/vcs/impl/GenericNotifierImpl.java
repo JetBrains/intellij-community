@@ -107,17 +107,27 @@ public abstract class GenericNotifierImpl<T, Key> {
     }
   }
 
-  public void ensureNotify(final T obj) {
+  public boolean ensureNotify(final T obj) {
     final MyNotification<T> notification;
     synchronized (myLock) {
       final Key key = getKey(obj);
       if (myState.containsKey(key)) {
-        return;
+        return false;
       }
       notification = new MyNotification<T>(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj, getToString(obj));
       myState.put(key, notification);
     }
+    final boolean state = onFirstNotification(obj);
+    if (state) {
+      removeLazyNotification(obj);
+      return true;
+    }
     Notifications.Bus.notify(notification, myProject);
+    return false;
+  }
+
+  protected boolean onFirstNotification(T obj) {
+    return false;
   }
 
   public void removeLazyNotificationByKey(final Key key) {

@@ -67,12 +67,10 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       final ItemType itemType = expression.getItemType(typeHierarchy);
       final Item evaluate = expression.evaluateItem(myXPathContext);
       return new Value() {
-        @Override
         public Object getValue() {
           return evaluate != null ? evaluate.getStringValue() : null;
         }
 
-        @Override
         public Type getType() {
           return new ObjectType(itemType.toString());
         }

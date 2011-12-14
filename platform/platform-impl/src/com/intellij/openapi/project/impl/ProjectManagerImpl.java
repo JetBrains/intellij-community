@@ -478,7 +478,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     }
   }
-  
+
+  /**
+   * Converts and loads the project at the specified path.
+   *
+   * @param filePath the path to open the project.
+   * @return the project, or null if the user has cancelled opening the project.
+   */
   @Nullable
   public Project convertAndLoadProject(String filePath) throws IOException {
     final String fp = canonicalize(filePath);
@@ -500,6 +506,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return project;
   }
 
+  /**
+   * Opens the project at the specified path.
+   *
+   * @param filePath the path to open the project.
+   * @return the project, or null if the user has cancelled opening the project.
+   */
   @Nullable
   private Project loadProjectWithProgress(final @NotNull String filePath) throws IOException {
 

@@ -144,16 +144,22 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
           return dom.contains(consoleTitle);
         }
       });
-      int max = consoles.size() > 0 ? 1 : 0;
+      int max = 0;
       for (RunContentDescriptor dsc : consoles) {
-        try {
-          int num = Integer.parseInt(dsc.getDisplayName().substring(consoleTitle.length() + 1, dsc.getDisplayName().length() - 1));
-          if (num > max) {
-            max = num;
+        ProcessHandler handler = dsc.getProcessHandler();
+        if (handler != null && !handler.isProcessTerminated()) {
+          if (max == 0) {
+            max = 1;
           }
-        }
-        catch (Exception e) {
-          //skip
+          try {
+            int num = Integer.parseInt(dsc.getDisplayName().substring(consoleTitle.length() + 1, dsc.getDisplayName().length() - 1));
+            if (num > max) {
+              max = num;
+            }
+          }
+          catch (Exception e) {
+            //skip
+          }
         }
       }
       if (max >= 1) {

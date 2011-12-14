@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.Computable;
@@ -46,6 +46,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   private Computable<PsiType> myReturnType;
   private final PsiModifierList myModifierList;
   private PsiParameterList myParameterList;
+  private PsiTypeParameterList myTypeParameterList;
   private PsiReferenceList myThrowsList;
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
@@ -58,9 +59,9 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   public LightMethodBuilder(PsiManager manager, String name) {
-    this(manager, StdLanguages.JAVA, name);
+    this(manager, JavaLanguage.INSTANCE, name);
   }
-  
+
   public LightMethodBuilder(PsiManager manager, Language language, String name) {
     this(manager, language, name, new LightParameterListBuilder(manager, language), new LightModifierList(manager, language));
   }
@@ -70,7 +71,9 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
                             String name,
                             PsiParameterList parameterList,
                             PsiModifierList modifierList) {
-    this(manager, language, name, parameterList, modifierList, new LightReferenceListBuilder(manager, language, PsiReferenceList.Role.THROWS_LIST));
+    this(manager, language, name, parameterList, modifierList,
+         new LightReferenceListBuilder(manager, language, PsiReferenceList.Role.THROWS_LIST),
+         new LightTypeParameterListBuilder(manager, language));
   }
 
   public LightMethodBuilder(PsiManager manager,
@@ -78,12 +81,14 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
                             String name,
                             PsiParameterList parameterList,
                             PsiModifierList modifierList,
-                            PsiReferenceList throwsList) {
+                            PsiReferenceList throwsList,
+                            PsiTypeParameterList typeParameterList) {
     super(manager, language);
     myName = name;
     myParameterList = parameterList;
     myModifierList = modifierList;
     myThrowsList = throwsList;
+    myTypeParameterList = typeParameterList;
   }
 
   @Override
@@ -93,18 +98,18 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
   @Override
   public boolean hasTypeParameters() {
-    return false;
+    return PsiImplUtil.hasTypeParameters(this);
   }
 
   @Override
-  @NotNull public PsiTypeParameter[] getTypeParameters() {
-    return PsiTypeParameter.EMPTY_ARRAY;
+  @NotNull
+  public PsiTypeParameter[] getTypeParameters() {
+    return PsiImplUtil.getTypeParameters(this);
   }
 
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    //todo
-    return null;
+    return myTypeParameterList;
   }
 
   @Override
@@ -115,8 +120,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
   @Override
   public boolean isDeprecated() {
-    //todo
-    return false;
+    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   @Override
@@ -208,16 +212,16 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   public LightMethodBuilder addParameter(@NotNull String name, @NotNull String type) {
     return addParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this));
   }
-  
+
   public LightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
-    return addParameter(new LightParameter(name, type, this, StdLanguages.JAVA));
+    return addParameter(new LightParameter(name, type, this, JavaLanguage.INSTANCE));
   }
 
   public LightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type, boolean isVarArgs) {
     if (isVarArgs && !(type instanceof PsiEllipsisType)) {
       type = new PsiEllipsisType(type);
     }
-    return addParameter(new LightParameter(name, type, this, StdLanguages.JAVA, isVarArgs));
+    return addParameter(new LightParameter(name, type, this, JavaLanguage.INSTANCE, isVarArgs));
   }
 
   public LightMethodBuilder addException(PsiClassType type) {
@@ -254,8 +258,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
   @Override
   public boolean isVarArgs() {
-    //todo
-    return false;
+    return PsiImplUtil.isVarArgs(this);
   }
 
   @Override
@@ -385,6 +388,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   public PsiMethodReceiver getMethodReceiver() {
     return null;
   }
+
   @Override
   @Nullable
   public PsiType getReturnTypeNoResolve() {
@@ -421,5 +425,10 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     result = 31 * result + (myConstructor ? 1 : 0);
     result = 31 * result + myMethodKind.hashCode();
     return result;
+  }
+
+  public LightMethodBuilder addTypeParameter(PsiTypeParameter parameter) {
+    ((LightTypeParameterListBuilder)myTypeParameterList).addParameter(new LightTypeParameter(parameter));
+    return this;
   }
 }

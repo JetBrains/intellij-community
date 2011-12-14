@@ -16,15 +16,15 @@
 
 package com.intellij.ui.classFilter;
 
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ClassFilter implements JDOMExternalizable, Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.classFilter.ClassFilter");
@@ -105,8 +105,8 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
 
   private Matcher getMatcher(final String name) {
     if (myMatcher == null) {
-      // need to quote dots
-      final String regex = getPattern().replaceAll("\\.", "\\\\.").replaceAll("\\*", ".*");
+      // need to quote dots and dollars
+      final String regex = getPattern().replaceAll("\\.", "\\\\.").replaceAll("\\$", "\\\\\\$").replaceAll("\\*", ".*");
       final Pattern pattern = Pattern.compile(regex);
       myMatcher = pattern.matcher("");
     }
