@@ -111,7 +111,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
     PyReferenceExpression reference = sure(state.myImportElement.getImportReference());
     // search for references to us with the right name
     try {
-      String imported_name = PyResolveUtil.toPath(reference, ".");
+      String imported_name = PyResolveUtil.toPath(reference);
       if (state.myAlias != null) {
         // have to remove alias, rename everything to original
         target_name = imported_name;
@@ -150,7 +150,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
           public boolean execute(@NotNull PsiElement element) {
             if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
               PyReferenceExpression ref = (PyReferenceExpression)element;
-              if (remove_name.equals(PyResolveUtil.toPath(ref, "."))) {  // filter out other names that might resolve to our target
+              if (remove_name.equals(PyResolveUtil.toPath(ref))) {  // filter out other names that might resolve to our target
                 PsiElement resolved = ref.getReference().resolve();
                 if (resolved == referee) references.add(ref.getReference());
               }

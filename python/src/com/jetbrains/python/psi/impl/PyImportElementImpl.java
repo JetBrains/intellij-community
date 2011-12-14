@@ -156,7 +156,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
             buf.append("from ");
             PyReferenceExpression imp_src = ((PyFromImportStatement)elt).getImportSource();
             if (imp_src != null) {
-              buf.append(PyResolveUtil.toPath(imp_src, "."));
+              buf.append(PyResolveUtil.toPath(imp_src));
             }
             else {
               buf.append("<?>");

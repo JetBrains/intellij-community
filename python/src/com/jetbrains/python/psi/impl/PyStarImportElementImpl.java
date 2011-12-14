@@ -83,7 +83,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
         if (elt != null) { // always? who knows :)
           PyReferenceExpression imp_src = elt.getImportSource();
           if (imp_src != null) {
-            return PyResolveUtil.toPath(imp_src, ".");
+            return PyResolveUtil.toPath(imp_src);
           }
         }
         return "<?>";
