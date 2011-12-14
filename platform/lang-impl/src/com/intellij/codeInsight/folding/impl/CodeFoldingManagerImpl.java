@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
@@ -102,7 +101,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
           MouseEvent mouseEvent = e.getMouseEvent();
           FoldRegion fold = ((EditorEx)editor).getGutterComponentEx().findFoldingAnchorAt(mouseEvent.getX(), mouseEvent.getY());
 
-          if (fold == null) return;
+          if (fold == null || !fold.isValid()) return;
           if (fold == myCurrentFold && myCurrentHint != null) {
             hint = myCurrentHint;
             return;
@@ -231,7 +230,8 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   public void projectClosed() {
   }
-
+  
+  @Nullable
   public FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     return FoldingUtil.findFoldRegion(editor, startOffset, endOffset);
   }
