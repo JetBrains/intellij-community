@@ -323,11 +323,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private void registerUnresolvedReferenceProblem(final PyElement node, final PsiReference reference, HighlightSeverity severity) {
-      final StringBuilder descriptionBuf = new StringBuilder(""); // TODO: clear descriptionBuf logic. maybe a flag is needed instead.
+      String description = null;
       final String text = reference.getElement().getText();
       final String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
       final PsiElement element = reference.getElement();
-      final boolean ref_is_importable = PythonReferenceImporter.isImportable(element);
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight
       final String refname = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : ref_text;
@@ -342,42 +341,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (refex.getQualifier() != null) {
           final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
           if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
-
         }
         else {
           if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON26)) {
-            if (refname.equals("with")) {
+            if ("with".equals(refname)) {
               actions.add(new UnresolvedRefAddFutureImportQuickFix(refex));
             }
           }
-          PyClass containedClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-          if (containedClass != null) {
-            for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
-              if (Comparing.strEqual(node.getName(), target.getName())) {
-                actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
-              }
-            }
-            for (PyStatement statement : containedClass.getStatementList().getStatements()) {
-              if (statement instanceof PyAssignmentStatement) {
-                if (((PyAssignmentStatement)statement).getLeftHandSideExpression().getText().equals(refex.getText())) {
-                  PyExpression callexpr = ((PyAssignmentStatement)statement).getAssignedValue();
-                  if (callexpr instanceof PyCallExpression) {
-                    PyType type = myTypeEvalContext.getType(callexpr);
-                    if (type != null && type instanceof PyClassType) {
-                      String name = ((PyCallExpression)callexpr).getCallee().getText();
-                      if (name != null && name.equals("property"))
-                        actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
-                    }
-                  }
-                }
-              }
-            }
-            for (PyFunction method : containedClass.getMethods()) {
-              if (refex.getText().equals(method.getName())) {
-                actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
-              }
-            }
-          }
+          if (ref_text.equals("true") || ref_text.equals("false"))
+            actions.add(new UnresolvedRefTrueFalseQuickFix(element));
+          addAddSelfFix(node, refex, actions);
           PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
           if (callExpression != null)
             actions.add(new UnresolvedRefCreateFunctionQuickFix(callExpression, refex));
@@ -392,8 +365,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           ) != null
         )) {
           severity = HighlightSeverity.WEAK_WARNING;
-          String errmsg = PyBundle.message("INSP.module.$0.not.found", ref_text);
-          descriptionBuf.append(errmsg);
+          description = PyBundle.message("INSP.module.$0.not.found", ref_text);
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
         }
       }
@@ -401,11 +373,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (myIgnoredIdentifiers.contains(reference.getCanonicalText()))
           return;
       }
-      if (reference instanceof PsiReferenceEx && descriptionBuf.length() == 0) {
-        final String s = ((PsiReferenceEx)reference).getUnresolvedDescription();
-        if (s != null) descriptionBuf.append(s);
+      if (reference instanceof PsiReferenceEx && description == null) {
+        description = ((PsiReferenceEx)reference).getUnresolvedDescription();
       }
-      if (descriptionBuf.length() == 0) {
+      if (description == null) {
         boolean marked_qualified = false;
         if (element instanceof PyQualifiedExpression) {
           final PyQualifiedExpression qexpr = (PyQualifiedExpression)element;
@@ -416,100 +387,39 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (qualifier != null) {
             PyType qtype = myTypeEvalContext.getType(qualifier);
             if (qtype != null) {
-              if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
-                  (qtype instanceof PyUnionType && ((PyUnionType) qtype).isWeak()) ||
-                  (qtype instanceof PyImportedModuleType)) {
-                // this almost always means that we don't know the type, so don't show an error in this case
+              if (ignoreUnresolvedMemberForType(qtype, reference, ref_text)) {
                 return;
               }
+              addCreateMemberFromUsageFixes(qtype, reference, ref_text, actions);
               if (qtype instanceof PyClassType) {
-                PyClass cls = ((PyClassType)qtype).getPyClass();
-                if (cls != null) {
-                  if (overridesGetAttr(cls)) {
-                    return;
-                  }
-                  if (cls.findProperty(ref_text) != null) {
-                    return; // a property exists but accessor is not found; other inspections handle this
-                  }
-                  if (! PyBuiltinCache.getInstance(node).hasInBuiltins(cls)) {
-                    if (element.getParent() instanceof PyCallExpression) {
-                      actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
-                    }
-                    else if (!(reference instanceof PyOperatorReferenceImpl)) {
-                      actions.add(new AddFieldQuickFix(ref_text, cls, "None"));
-                    }
-                  }
-                }
                 if (reference instanceof PyOperatorReferenceImpl) {
-                  descriptionBuf.append(PyBundle.message("INSP.unresolved.operator.ref",
-                                                          qtype.getName(), refname,
-                                                          ((PyOperatorReferenceImpl)reference).getReadableOperatorName()));
+                  description = PyBundle.message("INSP.unresolved.operator.ref",
+                                                 qtype.getName(), refname,
+                                                 ((PyOperatorReferenceImpl)reference).getReadableOperatorName());
                 }
                 else {
-                  descriptionBuf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
+                  description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName());
                 }
                 marked_qualified = true;
               }
-              else if (qtype instanceof PyModuleType) {
-                PsiFile file = ((PyModuleType)qtype).getModule();
-                if (file instanceof PyFile) {
-                  actions.add(new AddFunctionQuickFix(ref_text, (PyFile)file));
-                }
-              }
-              else if (qtype instanceof CythonBuiltinType ||
-                       (qtype instanceof CythonType && reference instanceof PyOperatorReferenceImpl)) {
-                return;
-              }
               else {
-                descriptionBuf.append(PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName()));
+                description = PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName());
                 marked_qualified = true;
               }
             }
           }
         }
-        if (! marked_qualified) {
-          descriptionBuf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
-          if (ref_text.equals("true") || ref_text.equals("false"))
-            actions.add(new UnresolvedRefTrueFalseQuickFix(element));
+        if (!marked_qualified) {
+          description = PyBundle.message("INSP.unresolved.ref.$0", ref_text);
 
           // look in other imported modules for this whole name
-          if (ref_is_importable) {
-            AutoImportQuickFix importFix = PythonReferenceImporter.proposeImportFix(node, reference, ref_text);
-            if (importFix != null) {
-              // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
-              // as a quickfix but no popup balloon (PY-2312)
-              if ((isCall(node) || !importFix.hasOnlyFunctions()) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
-                final AutoImportHintAction autoImportHintAction = new AutoImportHintAction(importFix);
-                actions.add(autoImportHintAction);
-              }
-              else {
-                actions.add(importFix);
-              }
-            }
+          if (PythonReferenceImporter.isImportable(element)) {
+            addAutoImportFix(node, reference, actions);
           }
 
-          if (ref_text.length() > 2 && Character.isUpperCase(ref_text.charAt(0)) && !Character.isUpperCase(ref_text.charAt(1)) &&
-              PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) == null) {
-            PsiElement anchor = element;
-            if (element instanceof PyQualifiedExpression) {
-              final PyExpression qexpr = ((PyQualifiedExpression)element).getQualifier();
-              if (qexpr != null) {
-                final PyType type = myTypeEvalContext.getType(qexpr);
-                if (type instanceof PyModuleType) {
-                  anchor = ((PyModuleType) type).getModule();
-                }
-                else {
-                  anchor = null;
-                }
-              }
-              if (anchor != null) {
-                actions.add(new CreateClassQuickFix(ref_text, anchor));
-              }
-            }
-          }
+          addCreateClassFix(ref_text, element, actions);
         }
       }
-      String description = descriptionBuf.toString();
       ProblemHighlightType hl_type;
       if (severity == HighlightSeverity.WARNING) {
         hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
@@ -533,6 +443,122 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (point == null) point = node;
       TextRange range = reference.getRangeInElement().shiftRight(-point.getStartOffsetInParent());
       registerProblem(point, description, hl_type, null, range, actions.toArray(new LocalQuickFix[actions.size()]));
+    }
+
+    private static boolean ignoreUnresolvedMemberForType(PyType qtype, PsiReference reference, String refText) {
+      if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
+          (qtype instanceof PyUnionType && ((PyUnionType)qtype).isWeak()) ||
+          (qtype instanceof PyImportedModuleType)) {
+        // this almost always means that we don't know the type, so don't show an error in this case
+        return true;
+      }
+      if (qtype instanceof PyClassType) {
+        PyClass cls = ((PyClassType)qtype).getPyClass();
+        if (cls != null) {
+          if (overridesGetAttr(cls)) {
+            return true;
+          }
+          if (cls.findProperty(refText) != null) {
+            return true;
+          }
+        }
+      }
+      if (qtype instanceof CythonBuiltinType ||
+          (qtype instanceof CythonType && reference instanceof PyOperatorReferenceImpl)) {
+        return true;
+      }
+      return false;
+    }
+    
+    private static void addCreateMemberFromUsageFixes(PyType qtype, PsiReference reference, String refText, List<LocalQuickFix> actions) {
+      PsiElement element = reference.getElement();
+      if (qtype instanceof PyClassType) {
+        PyClass cls = ((PyClassType)qtype).getPyClass();
+        if (cls != null) {
+          if (!PyBuiltinCache.getInstance(element).hasInBuiltins(cls)) {
+            if (element.getParent() instanceof PyCallExpression) {
+              actions.add(new AddMethodQuickFix(refText, (PyClassType)qtype));
+            }
+            else if (!(reference instanceof PyOperatorReferenceImpl)) {
+              actions.add(new AddFieldQuickFix(refText, cls, "None"));
+            }
+          }
+        }
+      }
+      else if (qtype instanceof PyModuleType) {
+        PsiFile file = ((PyModuleType)qtype).getModule();
+        if (file instanceof PyFile) {
+          actions.add(new AddFunctionQuickFix(refText, (PyFile)file));
+        }
+      }
+    }
+
+    private void addAddSelfFix(PyElement node, PyReferenceExpression refex, List<LocalQuickFix> actions) {
+      PyClass containedClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+      if (containedClass != null) {
+        for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
+          if (Comparing.strEqual(node.getName(), target.getName())) {
+            actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+          }
+        }
+        for (PyStatement statement : containedClass.getStatementList().getStatements()) {
+          if (statement instanceof PyAssignmentStatement) {
+            if (((PyAssignmentStatement)statement).getLeftHandSideExpression().getText().equals(refex.getText())) {
+              PyExpression callexpr = ((PyAssignmentStatement)statement).getAssignedValue();
+              if (callexpr instanceof PyCallExpression) {
+                PyType type = myTypeEvalContext.getType(callexpr);
+                if (type != null && type instanceof PyClassType) {
+                  String name = ((PyCallExpression)callexpr).getCallee().getText();
+                  if (name != null && name.equals("property"))
+                    actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+                }
+              }
+            }
+          }
+        }
+        for (PyFunction method : containedClass.getMethods()) {
+          if (refex.getText().equals(method.getName())) {
+            actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+          }
+        }
+      }
+    }
+
+    private static void addAutoImportFix(PyElement node, PsiReference reference, List<LocalQuickFix> actions) {
+      AutoImportQuickFix importFix = PythonReferenceImporter.proposeImportFix(node, reference);
+      if (importFix != null) {
+        // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
+        // as a quickfix but no popup balloon (PY-2312)
+        if ((isCall(node) || !importFix.hasOnlyFunctions()) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
+          final AutoImportHintAction autoImportHintAction = new AutoImportHintAction(importFix);
+          actions.add(autoImportHintAction);
+        }
+        else {
+          actions.add(importFix);
+        }
+      }
+    }
+
+    private void addCreateClassFix(String refText, PsiElement element, List<LocalQuickFix> actions) {
+      if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !Character.isUpperCase(refText.charAt(1)) &&
+          PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) == null) {
+        PsiElement anchor = element;
+        if (element instanceof PyQualifiedExpression) {
+          final PyExpression qexpr = ((PyQualifiedExpression)element).getQualifier();
+          if (qexpr != null) {
+            final PyType type = myTypeEvalContext.getType(qexpr);
+            if (type instanceof PyModuleType) {
+              anchor = ((PyModuleType) type).getModule();
+            }
+            else {
+              anchor = null;
+            }
+          }
+          if (anchor != null) {
+            actions.add(new CreateClassQuickFix(refText, anchor));
+          }
+        }
+      }
     }
 
     private static boolean isCall(PyElement node) {
