@@ -25,15 +25,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.foundation.MacUtil;
-import com.sun.jna.Callback;
 import com.sun.jna.IntegerType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.datatransfer.DataTransferer;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
@@ -182,34 +179,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   private static class MacClipboardHandler extends ClipboardHandler {
-
-    private static final String CLIPBOARD_CONTENTS = "CLIPBOARD_CONTENTS";
-    private static final String MAC_CLIPBOARD_SYNC_ACTIVE = "Mac.Clipboard.Sync.Active";
     private Pair<String,Transferable> myFullTransferable;
-
-    private static Callback myClipboardQueryCallback = new Callback() {
-      public void callback(ID self, String selector, ID params) {
-        JRootPane pane = getRootPane();
-        if (pane != null) {
-          Transferable transferable = getClipboardContentNatively();
-          if (transferable != null) {
-            pane.putClientProperty(CLIPBOARD_CONTENTS, transferable);
-          }
-
-          pane.putClientProperty(MAC_CLIPBOARD_SYNC_ACTIVE, null);
-        }
-      }
-    };
-
-    static {
-      if (SystemInfo.isMac) {
-        final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "ClipboardSynchronizer_");
-        if (!Foundation.addMethod(delegateClass, Foundation.createSelector("run:"), myClipboardQueryCallback, "v*")) {
-          throw new RuntimeException("Unable to add method to objective-c delegate class!");
-        }
-        Foundation.registerObjcClassPair(delegateClass);
-      }
-    }
 
     @Nullable
     private Transferable doGetContents() throws IllegalStateException {
@@ -278,58 +248,20 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     }
     
     @Nullable
-    private static JRootPane getRootPane() {
-      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      if (window == null) return null;
-      return SwingUtilities.getRootPane(window);
-    }
-
-    @Nullable
     public static Transferable getContentsSafe() {
       final Ref<Transferable> result = new Ref<Transferable>();
-        final JRootPane pane = getRootPane();
-        if (pane != null) {
-          try {
-            Runnable run = new Runnable() {
-              @Override
-              public void run() {
-                ID synchronizer_ = Foundation.getClass("ClipboardSynchronizer_");
-                final ID synchronizer = Foundation.invoke(Foundation.invoke(synchronizer_, "alloc"), "init");
-                Foundation
-                  .invoke(synchronizer, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("run:"), null,
-                          false);
-
-                pane.putClientProperty(MAC_CLIPBOARD_SYNC_ACTIVE, Boolean.TRUE);
-                MacUtil.startModal(pane, MAC_CLIPBOARD_SYNC_ACTIVE);
-
-                Foundation.cfRelease(synchronizer);
-
-                Object contents = pane.getClientProperty(CLIPBOARD_CONTENTS);
-                pane.putClientProperty(CLIPBOARD_CONTENTS, null);
-                if (contents != null) {
-                  result.set((Transferable)contents);
-                }
-              }
-            };
-            
-            if (SwingUtilities.isEventDispatchThread()) {
-              run.run();
-            } else {
-              SwingUtilities.invokeAndWait(run);
-            }
-
-            Transferable transferable = result.get();
-            if (transferable != null) return transferable;
-          }
-          catch (InterruptedException e) {
-            // do nothing
-          }
-          catch (InvocationTargetException e) {
-            // do nothing
+      
+      Foundation.executeOnMainThread(new Runnable() {
+        @Override
+        public void run() {
+          Transferable transferable = getClipboardContentNatively();
+          if (transferable != null) {
+            result.set(transferable);
           }
         }
-        
-        return null;
+      }, true, true);
+
+      return result.get();
     }
   }
   

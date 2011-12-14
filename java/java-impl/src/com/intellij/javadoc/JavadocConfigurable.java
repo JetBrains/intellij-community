@@ -50,6 +50,7 @@ public final class JavadocConfigurable implements Configurable {
     configuration.OPTION_DOCUMENT_TAG_VERSION = myPanel.myTagVersion.isSelected();
     configuration.OPTION_DOCUMENT_TAG_DEPRECATED = myPanel.myTagDeprecated.isSelected();
     configuration.OPTION_DEPRECATED_LIST = myPanel.myDeprecatedList.isSelected();
+    configuration.OPTION_INCLUDE_LIBS = myPanel.myIncludeLibraryCb.isSelected();
   }
 
   public void loadFrom(JavadocConfiguration configuration) {
@@ -71,6 +72,8 @@ public final class JavadocConfigurable implements Configurable {
 
     myPanel.mySeparateIndex.setEnabled(myPanel.myIndex.isSelected());
     myPanel.myDeprecatedList.setEnabled(myPanel.myTagDeprecated.isSelected());
+
+    myPanel.myIncludeLibraryCb.setSelected(configuration.OPTION_INCLUDE_LIBS);
   }
 
   public boolean isModified() {
@@ -91,6 +94,7 @@ public final class JavadocConfigurable implements Configurable {
     isModified |= myPanel.myTagVersion.isSelected() != configuration.OPTION_DOCUMENT_TAG_VERSION;
     isModified |= myPanel.myTagDeprecated.isSelected() != configuration.OPTION_DOCUMENT_TAG_DEPRECATED;
     isModified |= myPanel.myDeprecatedList.isSelected() != configuration.OPTION_DEPRECATED_LIST;
+    isModified |= myPanel.myIncludeLibraryCb.isSelected() != configuration.OPTION_INCLUDE_LIBS;
 
     return isModified;
   }
