@@ -67,12 +67,15 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
 
     final String name = variable.getName().getLocalName();
     try {
-      final Value value = new XObjectValue(variable.getValue(myTransformer, myCurrentNode));
+      final Value value = kind == Debugger.Variable.Kind.PARAMETER ?
+                          eval("$" + variable.getName().toNamespacedString()) : // http://youtrack.jetbrains.net/issue/IDEA-78638
+                          new XObjectValue(variable.getValue(myTransformer, myCurrentNode));
 
       variables.add(new VariableImpl(name, value, global, kind, variable.getSystemId(), variable.getLineNumber()));
     } catch (TransformerException e) {
-      // TODO
-      e.printStackTrace();
+      debug(e);
+    } catch (Debugger.EvaluationException e) {
+      debug(e);
     }
   }
 
@@ -85,13 +88,15 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
   }
 
   public List<Debugger.Variable> getVariables() {
+    assert isValid();
+
     return collectVariables();
   }
 
   private List<Debugger.Variable> collectVariables() {
     List<Debugger.Variable> variables = new ArrayList<Debugger.Variable>();
 
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
     final Vector<ElemVariable> globals = myTransformer.getStylesheet().getVariablesAndParamsComposed();
     for (ElemVariable variable : globals) {
       addVariable(variable, true, variables);
@@ -127,6 +132,8 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
   }
 
   public Value eval(String expr) throws Debugger.EvaluationException {
+    assert isValid();
+
     try {
       final DTMIterator context = myTransformer.getContextNodeList();
 
@@ -164,7 +171,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
       final XPath xPath = new XPath(expr, myCurrentElement, prefixResolver, XPath.SELECT, myTransformer.getErrorListener());
       return new XObjectValue(xPath.execute(myContext, myCurrentNode, myCurrentElement));
     } catch (Exception e) {
-      e.printStackTrace();
+      debug(e);
       final String message = e.getMessage();
       throw new Debugger.EvaluationException(message != null ? message : e.getClass().getSimpleName());
     }

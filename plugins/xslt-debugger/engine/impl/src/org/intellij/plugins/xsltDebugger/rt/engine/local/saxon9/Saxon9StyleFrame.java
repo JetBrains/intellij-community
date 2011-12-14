@@ -31,11 +31,13 @@ import net.sf.saxon.type.TypeHierarchy;
 import net.sf.saxon.value.SequenceType;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
+import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableComparator;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -60,6 +62,8 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
   }
 
   public Value eval(String expr) throws Debugger.EvaluationException {
+    assert isValid();
+
     Saxon9TraceListener.MUTED = true;
     try {
       Expression expression =
@@ -83,23 +87,19 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       }
       return new SequenceValue(value, it, itemType);
     } catch (AssertionError e) {
-      assert debug(e);
+      debug(e);
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
     } catch (Exception e) {
-      assert debug(e);
+      debug(e);
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
     } finally {
       Saxon9TraceListener.MUTED = false;
     }
   }
 
-  @SuppressWarnings("CallToPrintStackTrace")
-  private static boolean debug(Throwable e) {
-    e.printStackTrace();
-    return true;
-  }
-
   public List<Debugger.Variable> getVariables() {
+    assert isValid();
+
     final ArrayList<Debugger.Variable> variables = new ArrayList<Debugger.Variable>();
 
     final HashMap<StructuredQName,GlobalVariable> globalVariables =
@@ -176,6 +176,8 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       context = context.getCaller();
       //System.out.println("context = " + context);
     }
+
+    Collections.sort(variables, VariableComparator.INSTANCE);
 
     return variables;
   }
