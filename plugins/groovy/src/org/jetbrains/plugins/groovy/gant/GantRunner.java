@@ -126,7 +126,7 @@ public class GantRunner extends GroovyScriptRunner {
       params.getProgramParametersList().add("--debug");
     }
 
-    params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
+    params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
 }

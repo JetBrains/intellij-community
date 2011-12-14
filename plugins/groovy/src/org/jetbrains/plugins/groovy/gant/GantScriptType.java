@@ -15,16 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
-import com.intellij.compiler.options.CompileStepBeforeRun;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +93,7 @@ public class GantScriptType extends GroovyScriptType {
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
     String target = getTargetName(location);
     if (target != null) {
-      configuration.setProgramParameters(target);
+      configuration.setScriptParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
     final CompileStepBeforeRun.MakeBeforeRunTask runTask =
