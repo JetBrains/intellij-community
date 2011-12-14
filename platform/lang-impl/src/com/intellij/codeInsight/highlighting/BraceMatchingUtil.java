@@ -19,6 +19,10 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,6 +34,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +60,17 @@ public class BraceMatchingUtil {
 
   public static void registerBraceMatcher(FileType fileType, BraceMatcher braceMatcher) {
     BRACE_MATCHERS.put(fileType, braceMatcher);
+  }
+
+  @TestOnly 
+  public static int getMatchedBraceOffset(Editor editor, boolean forward, PsiFile file) {
+    Document document = editor.getDocument();
+    int offset = editor.getCaretModel().getOffset();
+    EditorHighlighter editorHighlighter = ((EditorEx)editor).getHighlighter();
+    HighlighterIterator iterator = editorHighlighter.createIterator(offset);
+    boolean matched = matchBrace(document.getCharsSequence(), file.getFileType(), iterator, forward);
+    assert matched;
+    return iterator.getStart();
   }
 
   private static class MatchBraceContext {
