@@ -135,7 +135,7 @@ public class JavaExecutionUtil {
 
   @Nullable
   public static PsiClass findMainClass(final Module module, final String mainClassName) {
-    return findMainClass(module.getProject(), mainClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    return findMainClass(module.getProject(), mainClassName, module.getModuleRuntimeScope(true));
   }
 
   @Nullable
