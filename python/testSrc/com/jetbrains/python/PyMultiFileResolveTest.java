@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -207,14 +206,6 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   }
 
   public void testDunderAll() {
-    assertResolvesTo(PyTargetExpression.class, "__all__");
-  }
-
-  public void testDunderAllImport() {
-    assertResolvesTo(PyTargetExpression.class, "__all__");
-  }
-
-  public void testDunderAllImportResolve() {
     assertResolvesTo(PyTargetExpression.class, "__all__");
   }
 

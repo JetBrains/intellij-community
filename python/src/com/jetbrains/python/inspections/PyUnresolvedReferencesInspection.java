@@ -323,7 +323,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private void registerUnresolvedReferenceProblem(final PyElement node, final PsiReference reference, HighlightSeverity severity) {
-      final StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
+      final StringBuilder descriptionBuf = new StringBuilder(""); // TODO: clear descriptionBuf logic. maybe a flag is needed instead.
       final String text = reference.getElement().getText();
       final String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
       final PsiElement element = reference.getElement();
@@ -393,7 +393,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         )) {
           severity = HighlightSeverity.WEAK_WARNING;
           String errmsg = PyBundle.message("INSP.module.$0.not.found", ref_text);
-          description_buf.append(errmsg);
+          descriptionBuf.append(errmsg);
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
         }
       }
@@ -401,11 +401,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (myIgnoredIdentifiers.contains(reference.getCanonicalText()))
           return;
       }
-      if (reference instanceof PsiReferenceEx) {
+      if (reference instanceof PsiReferenceEx && descriptionBuf.length() == 0) {
         final String s = ((PsiReferenceEx)reference).getUnresolvedDescription();
-        if (s != null) description_buf.append(s);
+        if (s != null) descriptionBuf.append(s);
       }
-      if (description_buf.length() == 0) {
+      if (descriptionBuf.length() == 0) {
         boolean marked_qualified = false;
         if (element instanceof PyQualifiedExpression) {
           final PyQualifiedExpression qexpr = (PyQualifiedExpression)element;
@@ -441,12 +441,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                   }
                 }
                 if (reference instanceof PyOperatorReferenceImpl) {
-                  description_buf.append(PyBundle.message("INSP.unresolved.operator.ref",
+                  descriptionBuf.append(PyBundle.message("INSP.unresolved.operator.ref",
                                                           qtype.getName(), refname,
                                                           ((PyOperatorReferenceImpl)reference).getReadableOperatorName()));
                 }
                 else {
-                  description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
+                  descriptionBuf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
                 }
                 marked_qualified = true;
               }
@@ -461,14 +461,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 return;
               }
               else {
-                description_buf.append(PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName()));
+                descriptionBuf.append(PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName()));
                 marked_qualified = true;
               }
             }
           }
         }
         if (! marked_qualified) {
-          description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
+          descriptionBuf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
           if (ref_text.equals("true") || ref_text.equals("false"))
             actions.add(new UnresolvedRefTrueFalseQuickFix(element));
 
@@ -509,7 +509,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
       }
-      String description = description_buf.toString();
+      String description = descriptionBuf.toString();
       ProblemHighlightType hl_type;
       if (severity == HighlightSeverity.WARNING) {
         hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;

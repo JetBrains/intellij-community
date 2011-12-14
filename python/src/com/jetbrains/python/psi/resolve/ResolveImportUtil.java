@@ -615,7 +615,7 @@ public class ResolveImportUtil {
           module = null;
           break;
         }
-        module = resolveChild(module, component, foothold_file, root, false, checkForPackage); // only files, we want a module
+        module = resolveChild(module, component, foothold_file, root, true, checkForPackage); // only files, we want a module
       }
       return module;
     }
@@ -685,7 +685,10 @@ public class ResolveImportUtil {
 
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
       // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
-      ret = ((PyFileImpl)parent).getElementNamed(referencedName, false);
+      PsiElement elementNamed = ((PyFileImpl)parent).getElementNamed(referencedName, false);
+      if (!fileOnly || PyUtil.instanceOf(elementNamed, PsiFile.class, PsiDirectory.class)) {
+        ret = elementNamed;
+      }
       if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class) &&
           PsiTreeUtil.getStubOrPsiParentOfType(ret, PyExceptPart.class) == null) {
         return ret;

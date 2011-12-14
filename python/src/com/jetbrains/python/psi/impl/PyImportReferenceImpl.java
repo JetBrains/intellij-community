@@ -37,6 +37,16 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     myElement = element;
   }
 
+
+  @Override
+  public String getUnresolvedDescription() {
+    final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
+    if (importStatement != null) {
+      return "No module named " + myElement.getReferencedName();
+    }
+    return super.getUnresolvedDescription();
+  }
+
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
