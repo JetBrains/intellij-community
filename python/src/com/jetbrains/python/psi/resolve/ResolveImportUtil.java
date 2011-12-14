@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.PyNames;
@@ -329,11 +328,11 @@ public class ResolveImportUtil {
       visitor = new ResolveInRootVisitor(moduleQualifiedName, manager, footholdFile, checkForPackage);
     }
     if (module != null) {
-      visitRoots(module, visitor);
+      RootVisitorHost.visitRoots(module, visitor);
       return visitor.resultsAsList();
     }
     else if (foothold != null) {
-      visitSdkRoots(foothold, visitor);
+      RootVisitorHost.visitSdkRoots(foothold, visitor);
       return visitor.resultsAsList();
     }
     else {
@@ -376,115 +375,12 @@ public class ResolveImportUtil {
                                                               @NotNull PyQualifiedName moduleQualifiedName) {
     ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, PsiManager.getInstance(module.getProject()), null,
                                                             true);
-    if (visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) {
+    if (RootVisitorHost.visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) {
       for (VirtualFile file : rootProvider.getFiles(OrderRootType.CLASSES)) {
         visitor.visitRoot(file);
       }
     }
     return visitor.resultsAsList();
-  }
-
-  public static void visitRoots(@NotNull final PsiElement elt, @NotNull final RootVisitor visitor) {
-    // real search
-    final Module module = ModuleUtil.findModuleForPsiElement(elt);
-    if (module != null) {
-      visitRoots(module, visitor);
-    }
-    else {
-      visitSdkRoots(elt, visitor);
-    }
-  }
-
-  public static void visitRoots(@NotNull Module module, final RootVisitor visitor) {
-    OrderEnumerator.orderEntries(module).recursively().forEach(new Processor<OrderEntry>() {
-      @Override
-      public boolean process(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          return visitModuleContentEntries(((ModuleSourceOrderEntry)orderEntry).getRootModel(), visitor);
-        }
-        return visitOrderEntryRoots(visitor, orderEntry);
-      }
-    });
-  }
-
-  /**
-   * Visits module content, sdk roots and libraries
-   */
-  public static void visitRoots(@NotNull Module module, @NotNull Sdk sdk, RootVisitor visitor) {
-    if (!visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) return;
-    // else look in SDK roots
-    if (visitSdkRoots(visitor, sdk)) return;
-
-    //look in libraries
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    rootManager.orderEntries().process(new LibraryRootVisitingPolicy(visitor), null);
-  }
-
-  private static void visitSdkRoots(PsiElement elt, RootVisitor visitor) {
-    // no module, another way to look in SDK roots
-    final PsiFile elt_psifile = elt.getContainingFile();
-    if (elt_psifile != null) {  // formality
-      final VirtualFile elt_vfile = elt_psifile.getOriginalFile().getVirtualFile();
-      List<OrderEntry> orderEntries = null;
-      if (elt_vfile != null) { // reality
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(elt.getProject()).getFileIndex();
-        orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
-        if (orderEntries.size() > 0) {
-          for (OrderEntry entry : orderEntries) {
-            if (!visitOrderEntryRoots(visitor, entry)) break;
-          }
-        }
-        else {
-          orderEntries = null;
-        }
-      }
-
-      // out-of-project file or non-file(e.g. console) - use roots of SDK assigned to project
-      if (orderEntries == null) {
-        final Sdk sdk = ProjectRootManager.getInstance(elt.getProject()).getProjectSdk();
-        if (sdk != null) {
-          visitSdkRoots(visitor, sdk);
-        }
-      }
-    }
-  }
-
-  private static boolean visitSdkRoots(@NotNull RootVisitor visitor, @NotNull Sdk sdk) {
-    final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    for (VirtualFile root : roots) {
-      if (!visitor.visitRoot(root)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-
-  private static boolean visitModuleContentEntries(ModuleRootModel rootModel, RootVisitor visitor) {
-    // look in module sources
-    Set<VirtualFile> contentRoots = Sets.newHashSet();
-    for (ContentEntry entry : rootModel.getContentEntries()) {
-      VirtualFile rootFile = entry.getFile();
-
-      if (rootFile != null && !visitor.visitRoot(rootFile)) return false;
-      contentRoots.add(rootFile);
-      for (VirtualFile folder : entry.getSourceFolderFiles()) {
-        if (!visitor.visitRoot(folder)) return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
-    Set<VirtualFile> allRoots = new LinkedHashSet<VirtualFile>();
-    Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
-    Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
-    for (VirtualFile root : allRoots) {
-      if (!visitor.visitRoot(root)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Nullable
@@ -542,7 +438,7 @@ public class ResolveImportUtil {
   public static boolean findInRoots(Module module, Sdk pythonSdk, String name) {
     ResolveNameVisitor
       visitor = new ResolveNameVisitor(PsiManager.getInstance(module.getProject()), name);
-    visitRoots(module, pythonSdk, visitor);
+    RootVisitorHost.visitRoots(module, pythonSdk, visitor);
     return visitor.isFound();
   }
 
@@ -846,7 +742,7 @@ public class ResolveImportUtil {
       return name;
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    visitRoots(foothold, visitor);
+    RootVisitorHost.visitRoots(foothold, visitor);
     final PyQualifiedName result = visitor.getResult();
     if (cache != null) {
       cache.putName(vfile, result);
@@ -862,7 +758,7 @@ public class ResolveImportUtil {
       return name.toString();
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    visitRoots(module, visitor);
+    RootVisitorHost.visitRoots(module, visitor);
     final PyQualifiedName result = visitor.getResult();
     cache.putName(vfile, result);
     return result == null ? null : result.toString();
@@ -961,7 +857,7 @@ public class ResolveImportUtil {
     @Override
     public PsiElement visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, PsiElement value) {
       if (value != null) return value;  // for chaining in processOrder()
-      visitOrderEntryRoots(myVisitor, libraryOrderEntry);
+      RootVisitorHost.visitOrderEntryRoots(myVisitor, libraryOrderEntry);
       return null;
     }
   }
