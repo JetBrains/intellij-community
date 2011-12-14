@@ -298,11 +298,6 @@ public class ResolveImportUtil {
     return visitor.resultsAsList();
   }
 
-  @Nullable
-  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final String name) {
-    return resolveInRoots(context, PyQualifiedName.fromDottedString(name));
-  }
-
   /**
    * Looks for a name among element's module's roots; if there's no module, then among project's roots.
    *
