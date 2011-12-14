@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -125,7 +126,12 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();
 
-    pr.performRefactoring(usages);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        pr.performRefactoring(usages);
+      }
+    });
+
 
     String itemName = className + ".items";
     String patternName = getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;

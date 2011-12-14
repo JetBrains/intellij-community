@@ -139,4 +139,8 @@ public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
     doTest(true, "java.lang.Integer");
   }
 
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
+  }
 }
