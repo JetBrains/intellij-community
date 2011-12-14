@@ -349,9 +349,13 @@ public class StatementMover extends LineMover {
     Pair<PyElement, PyElement> statementParts = getStatementParts(info, editor, file, down);
     PyElement statementPart1 = statementParts.first;
     PyElement statementPart2 = statementParts.second;
-    if (statementPart2 instanceof PyStatementPart)
-      myStatementPartToRemovePass = (PyStatementPart)statementParts.second;
-    
+    if (statementPart2 instanceof PyStatementPart) {
+      PyStatementList stList = ((PyStatementPart)statementParts.second).getStatementList();
+      if (stList != null && stList.getStatements().length == 1 && stList.getStatements()[0] instanceof PyPassStatement ||
+        moveToEmptyLine) {
+        myStatementPartToRemovePass = (PyStatementPart)statementParts.second;
+      }
+    }
     if (statementPart2 != null && statementPart1 != null && statementPart1.getParent() == statementPart2.getParent() ||
         statementPart2 == statementPart1) return true;
     return false;
@@ -415,6 +419,9 @@ public class StatementMover extends LineMover {
       CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myStatementListToAddPass);
     }
     if (myStatementToIncreaseIndent != null) {
+      if (!down && myStatementPartToRemovePass != null && myStatementToAddLinebreak == null) {
+        info.toMove2 = new LineRange(info.toMove2.startLine-1, info.toMove2.endLine);
+      }
       increaseIndent(editor);
     }
     if (myStatementToDecreaseIndent != null) {

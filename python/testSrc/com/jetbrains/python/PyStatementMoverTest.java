@@ -29,6 +29,10 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testNestedIfUp() {
+    doTest();
+  }
+
   public void testMoveDownOut() {
     doTest();
   }
