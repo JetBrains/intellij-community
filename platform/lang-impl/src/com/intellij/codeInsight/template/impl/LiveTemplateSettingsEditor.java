@@ -154,7 +154,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     panel.add(createTemplateOptionsPanel(), gb.nextLine().next().next().coverColumn(2).weighty(1));
 
-    panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().fillCellNone().anchor(GridBagConstraints.WEST));
+    panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().weighty(0).fillCellNone().anchor(GridBagConstraints.WEST));
 
     myTemplateEditor.getDocument().addDocumentListener(
       new DocumentAdapter() {
