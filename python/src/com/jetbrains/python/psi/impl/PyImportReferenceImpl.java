@@ -270,7 +270,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
 
     private void addImportedNames(@NotNull PyImportElement[] import_elts) {
       for (PyImportElement ielt : import_elts) {
-        PyReferenceExpression ref = ielt.getImportReference();
+        PyReferenceExpression ref = ielt.getImportReferenceExpression();
         if (ref != null) {
           String s = ref.getReferencedName();
           if (s != null) myNamesAlready.add(s);

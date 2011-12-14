@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyImportElement extends PyElement, NameDefiner, StubBasedPsiElement<PyImportElementStub> {
   @Nullable
-  PyReferenceExpression getImportReference();
+  PyReferenceExpression getImportReferenceExpression();
 
   @Nullable
   PyQualifiedName getImportedQName();

@@ -142,7 +142,7 @@ public class ImportFromToImportIntention implements IntentionAction {
       if (info.myRelativeLevel > 0) {
         // make sure we aren't importing a module from the relative path
         for (PyImportElement import_element : info.myFromImportStatement.getImportElements()) {
-          PyReferenceExpression ref = import_element.getImportReference();
+          PyReferenceExpression ref = import_element.getImportReferenceExpression();
           if (ref != null && ref.isValid()) {
             PsiElement target = ref.getReference().resolve();
             if (target instanceof PyExpression && ((PyExpression)target).getType(TypeEvalContext.fast()) instanceof PyModuleType) return false;
@@ -246,7 +246,7 @@ public class ImportFromToImportIntention implements IntentionAction {
         PyImportElement ielt = entry.getValue();
         if (ielt.getAsNameElement() != null) {
           // we have an alias, replace it with real name
-          PyReferenceExpression refex = ielt.getImportReference();
+          PyReferenceExpression refex = ielt.getImportReferenceExpression();
           assert refex != null; // else we won't resolve to this ielt
           String real_name = refex.getReferencedName();
           ASTNode new_qualifier = generator.createExpressionFromText(real_name).getNode();

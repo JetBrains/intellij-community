@@ -87,12 +87,12 @@ public class PythonReferenceImporter implements ReferenceImporter {
     if (result.size() > 0) {
       for (PsiElement stmt : import_prc.getResult()) {
         for (PyImportElement ielt : ((PyImportStatement)stmt).getImportElements()) {
-          final PyReferenceExpression src = ielt.getImportReference();
+          final PyReferenceExpression src = ielt.getImportReferenceExpression();
           if (src != null) {
             PsiElement dst = src.getReference().resolve();
             if (dst instanceof PyFile) {
               PyFile dst_file = (PyFile)dst;
-              String name = ielt.getImportReference().getReferencedName(); // ref is ok or matching would fail
+              String name = ielt.getImportReferenceExpression().getReferencedName(); // ref is ok or matching would fail
               seen_file_names.add(name);
               PsiElement res = dst_file.findExportedName(refText);
               if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && dst_file.equals(res.getContainingFile())) {
