@@ -202,7 +202,7 @@ public class ResolveImportUtil {
     if (being_imported.contains(marker)) return Collections.emptyList(); // break endless loop in import
     try {
       being_imported.add(marker);
-      ImportResolver visitor = new ImportResolver(qualifiedName, true).fromElement(source_file);
+      ImportResolver visitor = new ImportResolver(qualifiedName).fromElement(source_file);
       if (relativeLevel > 0) {
         // "from ...module import"
         visitor.withRelative(relativeLevel).withoutRoots();
@@ -222,22 +222,8 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull PyQualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
     if (foothold == null) return null;
-    ImportResolver visitor = new ImportResolver(moduleQualifiedName, true).fromElement(foothold);
+    ImportResolver visitor = new ImportResolver(moduleQualifiedName).fromElement(foothold);
     return visitor.firstResult();
-  }
-
-  /**
-   * Returns the list of directories/files under different project roots which match the specified qualified name.
-   *
-   * @param moduleQualifiedName the qualified name to find
-   * @param foothold            the PSI element in the context of which the search is performed
-   * @return the list of matching directories or files, or an empty list if nothing was found
-   */
-  @NotNull
-  public static List<PsiElement> resolveModulesInRoots(@NotNull PyQualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
-    if (foothold == null) return Collections.emptyList();
-    ImportResolver visitor = new ImportResolver(moduleQualifiedName, true).fromElement(foothold);
-    return visitor.resultsAsList();
   }
 
   @Nullable
@@ -254,14 +240,6 @@ public class ResolveImportUtil {
       }
     }
     return cache;
-  }
-
-  @NotNull
-  public static List<PsiElement> resolveModulesInSdk(@NotNull Sdk sdk,
-                                                     @NotNull Module module,
-                                                     @NotNull PyQualifiedName moduleQualifiedName) {
-    ImportResolver visitor = new ImportResolver(moduleQualifiedName, true).fromModule(module).withSdk(sdk);
-    return visitor.resultsAsList();
   }
 
   @Nullable

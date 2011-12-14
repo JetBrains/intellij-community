@@ -24,7 +24,7 @@ public abstract class PyPsiPath {
     @Nullable
     @Override
     public PsiElement resolve(PsiElement context) {
-      ImportResolver visitor = new ImportResolver(myQualifiedName, true).fromElement(context);
+      ImportResolver visitor = new ImportResolver(myQualifiedName).fromElement(context);
       return visitor.firstResult();
     }
   }

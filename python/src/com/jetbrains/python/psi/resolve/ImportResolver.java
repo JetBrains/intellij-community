@@ -29,7 +29,7 @@ import java.util.Set;
 * @author yole
 */
 public class ImportResolver implements RootVisitor {
-  final boolean myCheckForPackage;
+  boolean myCheckForPackage = true;
   @Nullable private Module myModule;
   private PsiFile myFootholdFile;
   private final @NotNull PyQualifiedName myQualifiedName;
@@ -41,14 +41,12 @@ public class ImportResolver implements RootVisitor {
   private boolean myWithoutRoots;
   private Sdk myWithSdk;
 
-  public ImportResolver(@NotNull String qNameString, boolean checkForPackage) {
-    myQualifiedName = PyQualifiedName.fromComponents(qNameString);
-    myCheckForPackage = checkForPackage;
+  public ImportResolver(@NotNull String qNameString) {
+    myQualifiedName = PyQualifiedName.fromDottedString(qNameString);
   }
 
-  public ImportResolver(@NotNull PyQualifiedName qName, boolean checkForPackage) {
+  public ImportResolver(@NotNull PyQualifiedName qName) {
     myQualifiedName = qName;
-    myCheckForPackage = checkForPackage;
   }
 
   public ImportResolver fromElement(@NotNull PsiElement foothold) {
@@ -79,6 +77,12 @@ public class ImportResolver implements RootVisitor {
     return this;
   }
 
+  /**
+   * Specifies that we need to look for the name in the specified SDK (instead of the SDK assigned to the module, if any).
+   *
+   * @param sdk the SDK in which the name should be searched.
+   * @return this
+   */
   public ImportResolver withSdk(Sdk sdk) {
     myWithSdk = sdk;
     return this;
@@ -94,9 +98,25 @@ public class ImportResolver implements RootVisitor {
     myRelativeLevel = relativeLevel;
     return this;
   }
-  
+
+  /**
+   * Specifies that we should only try to resolve relative to the current file, not in roots.
+   *
+   * @return this
+   */
   public ImportResolver withoutRoots() {
     myWithoutRoots = true;
+    return this;
+  }
+
+  /**
+   * Specifies that we're looking for a file in a directory hierarchy, not a module in the Python package hierarchy
+   * (so we don't need to check for existence of __init__.py)
+   *
+   * @return
+   */
+  public ImportResolver withPlainDirectories() {
+    myCheckForPackage = false;
     return this;
   }
   
@@ -180,6 +200,24 @@ public class ImportResolver implements RootVisitor {
   public PsiElement firstResult() {
     final List<PsiElement> results = resultsAsList();
     return results.size() > 0 ? results.get(0) : null;
+  }
+
+  @NotNull
+  public <T extends PsiElement> List<T> resultsOfType(Class<T> clazz) {
+    List<T> result = new ArrayList<T>();
+    for (PsiElement element : resultsAsList()) {
+      if (clazz.isInstance(element)) {
+        //noinspection unchecked
+        result.add((T) element);
+      }
+    }
+    return result;
+  } 
+
+  @Nullable
+  public <T extends PsiElement> T firstResultOfType(Class<T> clazz) {
+    final List<T> list = resultsOfType(clazz);
+    return list.size() > 0 ? list.get(0) : null;
   } 
 
   private boolean withOtherSdk() {

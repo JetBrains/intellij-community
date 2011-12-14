@@ -274,12 +274,9 @@ public class PyImportReference extends PyReferenceImpl {
     }
 
     private void fillFromQName(PyQualifiedName thisQName, InsertHandler<LookupElement> insertHandler) {
-      ImportResolver visitor = new ImportResolver(thisQName, true).fromElement(myCurrentFile);
-      final List<PsiElement> dirs = visitor.resultsAsList();
-      for (PsiElement dir : dirs) {
-        if (dir instanceof PsiDirectory) {
-          fillFromDir((PsiDirectory)dir, insertHandler);
-        }
+      ImportResolver visitor = new ImportResolver(thisQName).fromElement(myCurrentFile);
+      for (PsiDirectory dir : visitor.resultsOfType(PsiDirectory.class)) {
+        fillFromDir(dir, insertHandler);
       }
     }
 
