@@ -1,7 +1,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,7 +22,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class MoveClassToInnerTest extends CodeInsightTestCase {
+public class MoveClassToInnerTest extends RefactoringTestCase {
   public void testContextChange1() throws Exception {
     doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }

@@ -6,15 +6,13 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
-import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 
-public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
+public class ExtractMethodObjectTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -31,26 +29,20 @@ public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
     assertTrue(element instanceof PsiMethod);
     final PsiMethod method = (PsiMethod) element;
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        final ExtractMethodObjectProcessor processor =
-          new ExtractMethodObjectProcessor(getProject(), getEditor(), method.getBody().getStatements(), "InnerClass");
-        final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
-        extractProcessor.setShowErrorDialogs(false);
-        extractProcessor.prepare();
-        extractProcessor.testRun();
-        processor.setCreateInnerClass(createInnerClass);
-        processor.run();
-        processor.runChangeSignature();
-        if (createInnerClass) {
-          processor.moveUsedMethodsToInner();
-        }
-        DuplicatesImpl.processDuplicates(extractProcessor, getProject(), getEditor());
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        processor.getMethod().delete();
+    final ExtractMethodObjectProcessor processor =
+      new ExtractMethodObjectProcessor(getProject(), getEditor(), method.getBody().getStatements(), "InnerClass");
+    final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
+    processor.setCreateInnerClass(createInnerClass);
+    extractProcessor.setShowErrorDialogs(false);
+    extractProcessor.prepare();
+    extractProcessor.testPrepare();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
       }
-    }.execute().throwException();
+    });
+
 
     checkResultByFile("/refactoring/extractMethodObject/" + testName + ".java" + ".after");
   }

@@ -1,7 +1,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-public class MoveClassTest extends CodeInsightTestCase {
+public class MoveClassTest extends RefactoringTestCase {
   public void testContextChange() throws Exception{
     doTest("contextChange1", new String[]{"pack1.Class1"}, "pack2");
     doTest("contextChange2", new String[]{"pack1.Class1"}, "pack2");

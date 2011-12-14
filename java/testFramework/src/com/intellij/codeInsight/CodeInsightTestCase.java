@@ -412,42 +412,46 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return false;
   }
 
-  protected void setupCursorAndSelection(Editor editor) {
-    Document document = editor.getDocument();
-    final String text = document.getText();
+  protected void setupCursorAndSelection(final Editor editor) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        Document document = editor.getDocument();
+        final String text = document.getText();
 
-    int caretIndex = text.indexOf(CARET_MARKER);
-    int selStartIndex = text.indexOf(SELECTION_START_MARKER);
-    int selEndIndex = text.indexOf(SELECTION_END_MARKER);
+        int caretIndex = text.indexOf(CARET_MARKER);
+        int selStartIndex = text.indexOf(SELECTION_START_MARKER);
+        int selEndIndex = text.indexOf(SELECTION_END_MARKER);
 
-    final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-    final RangeMarker selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
-    final RangeMarker selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
+        final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
+        final RangeMarker selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
+        final RangeMarker selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
 
-    if (caretMarker != null) {
-      document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-    }
-    if (selStartMarker != null) {
-      document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-    }
-    if (selEndMarker != null) {
-      document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-    }
+        if (caretMarker != null) {
+          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+        }
+        if (selStartMarker != null) {
+          document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
+        }
+        if (selEndMarker != null) {
+          document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
+        }
 
-    final String newText = document.getText();
+        final String newText = document.getText();
 
-    if (caretMarker != null) {
-      int caretLine = StringUtil.offsetToLineNumber(newText, caretMarker.getStartOffset());
-      int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newText, caretLine, 0);
-      LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
-      editor.getCaretModel().moveToLogicalPosition(pos);
-    }
+        if (caretMarker != null) {
+          int caretLine = StringUtil.offsetToLineNumber(newText, caretMarker.getStartOffset());
+          int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newText, caretLine, 0);
+          LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
+          editor.getCaretModel().moveToLogicalPosition(pos);
+        }
 
-    if (selStartMarker != null) {
-      editor.getSelectionModel().setSelection(selStartMarker.getStartOffset(), selEndMarker.getStartOffset());
-    }
+        if (selStartMarker != null) {
+          editor.getSelectionModel().setSelection(selStartMarker.getStartOffset(), selEndMarker.getStartOffset());
+        }
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      }
+    });
   }
 
   @Override

@@ -13,10 +13,9 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public class RenameFieldTest extends LightCodeInsightTestCase {
+public class RenameFieldTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

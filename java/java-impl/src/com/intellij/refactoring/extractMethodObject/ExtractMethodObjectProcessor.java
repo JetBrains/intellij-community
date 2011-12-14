@@ -193,7 +193,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public void moveUsedMethodsToInner() {
+  void moveUsedMethodsToInner() {
     if (!myUsages.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         for (MethodToMoveUsageInfo usage : myUsages) {
@@ -370,7 +370,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
                                                                    new PsiImmediateClassType(myInnerClass, PsiSubstitutor.EMPTY), infos);
   }
 
-  public void runChangeSignature() {
+  void runChangeSignature() {
     if (myChangeSignatureProcessor != null) {
       myChangeSignatureProcessor.run();
     }

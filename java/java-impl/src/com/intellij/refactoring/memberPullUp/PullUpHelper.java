@@ -30,6 +30,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
@@ -89,6 +90,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     myManager = mySourceClass.getManager();
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new PullUpUsageViewDescriptor();
   }
@@ -119,17 +121,12 @@ public class PullUpHelper extends BaseRefactoringProcessor{
         }
       }
     }
-    final Runnable replaceMethodDuplicatesRunnable = new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         processMethodsDuplicates();
       }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      replaceMethodDuplicatesRunnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(replaceMethodDuplicatesRunnable);
-    }
+    }, ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
   private void processMethodsDuplicates() {

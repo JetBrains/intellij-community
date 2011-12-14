@@ -122,40 +122,23 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final List<PsiMethod> affectedMethods = changeReturnType(myMethod, myReturnType);
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    final SourceMethodSelector returnSelector = new SourceMethodSelector(myMethod);
+    PsiReturnStatement statementToSelect = null;
     if (!PsiType.VOID.equals(myReturnType)) {
-      final ReturnStatementAdder adder = new ReturnStatementAdder(factory, myReturnType, returnSelector);
+      final ReturnStatementAdder adder = new ReturnStatementAdder(factory, myReturnType);
 
       for (PsiMethod affectedMethod : affectedMethods) {
-        adder.addReturnForMethod(file, affectedMethod);
+        PsiReturnStatement statement = adder.addReturnForMethod(file, affectedMethod);
+        if (statement != null && affectedMethod == myMethod) {
+          statementToSelect = statement;
+        }
       }
     }
 
-    final PsiReturnStatement latestReturn = returnSelector.getReturnStatement();
-    if (latestReturn != null) {
-      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, latestReturn.getContainingFile());
+    if (statementToSelect != null) {
+      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, statementToSelect.getContainingFile());
       if (editorForMethod != null) {
-        selectReturnValueInEditor(latestReturn, editorForMethod);
+        selectReturnValueInEditor(statementToSelect, editorForMethod);
       }
-    }
-  }
-
-  private static class SourceMethodSelector {
-    private final PsiMethod mySourceMethod;
-    private PsiReturnStatement myReturnStatement;
-
-    private SourceMethodSelector(final PsiMethod sourceMethod) {
-      mySourceMethod = sourceMethod;
-    }
-
-    public void accept(final PsiReturnStatement statement, final PsiMethod method) {
-      if (mySourceMethod.equals(method) && statement != null) {
-        myReturnStatement = statement;
-      }
-    }
-
-    public PsiReturnStatement getReturnStatement() {
-      return myReturnStatement;
     }
   }
 
@@ -163,19 +146,16 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   private static class ReturnStatementAdder {
     private final PsiElementFactory factory;
     private final PsiType myTargetType;
-    private final SourceMethodSelector mySelector;
 
-    private ReturnStatementAdder(@NotNull final PsiElementFactory factory, @NotNull final PsiType targetType,
-                                 @NotNull final SourceMethodSelector selector) {
+    private ReturnStatementAdder(@NotNull final PsiElementFactory factory, @NotNull final PsiType targetType) {
       this.factory = factory;
       myTargetType = targetType;
-      mySelector = selector;
     }
 
-    public void addReturnForMethod(final PsiFile file, final PsiMethod method) {
+    public PsiReturnStatement addReturnForMethod(final PsiFile file, final PsiMethod method) {
       final PsiModifierList modifiers = method.getModifierList();
       if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT) || method.getBody() == null) {
-        return;
+        return null;
       }
 
       try {
@@ -197,15 +177,16 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
         else {
           returnStatement = visitor.createReturnInLastStatement();
         }
-        mySelector.accept(returnStatement, method);
+        if (method.getContainingFile() != file) {
+          UndoUtil.markPsiFileForUndo(file);
+        }
+        return returnStatement;
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
 
-      if (method.getContainingFile() != file) {
-        UndoUtil.markPsiFileForUndo(file);
-      }
+      return null;
     }
   }
 
@@ -400,5 +381,10 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

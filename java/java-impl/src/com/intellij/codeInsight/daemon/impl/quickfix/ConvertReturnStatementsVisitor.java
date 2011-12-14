@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ReturnStatementsVisitor;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -23,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
+class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
   private final PsiElementFactory myFactory;
   private final PsiMethod myMethod;
   private final DeclarationSearcher mySearcher;
@@ -39,7 +41,11 @@ public class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
 
   @Override
   public void visit(final List<PsiReturnStatement> returnStatements) throws IncorrectOperationException {
-    final PsiReturnStatement statement = replaceReturnStatements(returnStatements);
+    final PsiReturnStatement statement = ApplicationManager.getApplication().runWriteAction(new Computable<PsiReturnStatement>() {
+      public PsiReturnStatement compute() {
+        return replaceReturnStatements(returnStatements);
+      }
+    });
     if (statement != null) {
       myLatestReturn = statement;
     }
@@ -55,10 +61,14 @@ public class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
   }
 
   public PsiReturnStatement createReturnInLastStatement() throws IncorrectOperationException {
-    PsiCodeBlock body = myMethod.getBody();
-    final String value = generateValue(body.getRBrace());
-    PsiReturnStatement returnStatement = (PsiReturnStatement) myFactory.createStatementFromText("return " + value+";", myMethod);
-    return (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
+    return ApplicationManager.getApplication().runWriteAction(new Computable<PsiReturnStatement>() {
+      public PsiReturnStatement compute() {
+        PsiCodeBlock body = myMethod.getBody();
+        final String value = generateValue(body.getRBrace());
+        PsiReturnStatement returnStatement = (PsiReturnStatement) myFactory.createStatementFromText("return " + value+";", myMethod);
+        return (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
+      }
+    });
   }
 
   @Nullable

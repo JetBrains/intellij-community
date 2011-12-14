@@ -544,12 +544,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(final Result result) throws Exception {
-        ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
-      }
-    }.execute().throwException();
+    ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
   }
 
   @Override
@@ -645,14 +640,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                             final String newName,
                             final boolean searchInComments,
                             final boolean searchTextOccurrences) {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Exception {
-        final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
-        if (substitution == null) return;
-        new RenameProcessor(getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
-      }
-    }.execute().throwException();
+    final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
+    if (substitution == null) return;
+    new RenameProcessor(getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
   }
 
   @Override

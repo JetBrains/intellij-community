@@ -2,19 +2,17 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
  */
 
-public class InlineParameterTest extends LightCodeInsightTestCase {
+public class InlineParameterTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

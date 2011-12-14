@@ -63,6 +63,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.method.code.duplicates.title");
   private static final Logger LOG = Logger.getInstance("#" + MethodDuplicatesHandler.class.getName());
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
@@ -98,6 +99,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     dlg.show();
     if (dlg.isOK()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
           invokeOnScope(project, method, dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module));
@@ -144,6 +146,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     replaceDuplicate(project, duplicates, methods);
     if (!silent) {
       final Runnable nothingFoundRunnable = new Runnable() {
+        @Override
         public void run() {
           if (duplicates.isEmpty()) {
             final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
@@ -167,6 +170,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       if (progressIndicator != null && progressIndicator.isCanceled()) return;
 
       final Runnable replaceRunnable = new Runnable() {
+        @Override
         public void run() {
           for (final PsiMethod method : methods) {
             final List<Match> matches = duplicates.get(method);
@@ -174,8 +178,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
             final int duplicatesNo = matches.size();
             WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
             CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+              @Override
               public void run() {
                 PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
+                  @Override
                   public void run() {
                     DuplicatesImpl.invoke(project, new MethodDuplicatesMatchProvider(method, matches));
                   }
@@ -187,12 +193,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
           }
         }
       };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        replaceRunnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(replaceRunnable, ModalityState.NON_MODAL);
-      }
+      ApplicationManager.getApplication().invokeLater(replaceRunnable, ModalityState.NON_MODAL);
     }
     finally {
       a.finish();
@@ -243,6 +244,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.METHOD_DUPLICATES);
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     throw new UnsupportedOperationException();
   }
@@ -256,6 +258,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       myDuplicates = duplicates;
     }
 
+    @Override
     public PsiElement processMatch(Match match) throws IncorrectOperationException {
       match.changeSignature(myMethod);
       final PsiClass containingClass = myMethod.getContainingClass();
@@ -352,14 +355,17 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       return false;
     }
 
+    @Override
     public List<Match> getDuplicates() {
       return myDuplicates;
     }
 
+    @Override
     public boolean hasDuplicates() {
       return myDuplicates.isEmpty();
     }
 
+    @Override
     @Nullable
     public String getConfirmDuplicatePrompt(final Match match) {
       final PsiElement matchStart = match.getMatchStart();

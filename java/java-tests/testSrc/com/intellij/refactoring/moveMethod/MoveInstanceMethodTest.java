@@ -1,19 +1,19 @@
 package com.intellij.refactoring.moveMethod;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
+import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.JavaTestUtil;
 import com.intellij.util.VisibilityUtil;
 
 /**
  * @author ven
  */
-public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
+public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testSimple() throws Exception { doTest(true, 0); }
 

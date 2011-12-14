@@ -6,14 +6,13 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
-import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 
-public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsightTestCase {
+public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -38,22 +37,21 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsi
       elements = CodeInsightUtil.findStatementsInRange(myFile, startOffset, endOffset);
     }
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        final ExtractMethodObjectProcessor processor =
-          new ExtractMethodObjectProcessor(getProject(), getEditor(), elements, "Inner");
-        final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
-        extractProcessor.setShowErrorDialogs(false);
-        extractProcessor.prepare();
-        extractProcessor.testRun();
-        processor.setCreateInnerClass(createInnerClass);
-        processor.run();
-        processor.runChangeSignature();
-        DuplicatesImpl.processDuplicates(extractProcessor, getProject(), getEditor());
-        processor.getMethod().delete();
+    final ExtractMethodObjectProcessor processor =
+      new ExtractMethodObjectProcessor(getProject(), getEditor(), elements, "Inner");
+    final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
+    extractProcessor.setShowErrorDialogs(false);
+    extractProcessor.prepare();
+    extractProcessor.testPrepare();
+    processor.setCreateInnerClass(createInnerClass);
+
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
       }
-    }.execute().throwException();
+    });
+
 
     checkResultByFile("/refactoring/extractMethodObject/multipleExitPoints/" + testName + ".java" + ".after");
   }

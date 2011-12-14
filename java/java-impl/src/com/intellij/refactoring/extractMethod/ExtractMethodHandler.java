@@ -76,7 +76,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     selectAndPass(project, editor, file, callback);
   }
 
-  public static void selectAndPass(final Project project, final Editor editor, final PsiFile file, final Pass<PsiElement[]> callback) {
+  public static void selectAndPass(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final Pass<PsiElement[]> callback) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!editor.getSelectionModel().hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -133,24 +133,28 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
   private static boolean invokeOnElements(final Project project, final Editor editor, @NotNull final ExtractMethodProcessor processor, final boolean directTypes) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, processor.getTargetClass().getContainingFile())) return false;
     if (processor.showDialog(directTypes)) {
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
-            public void run() {
-              try {
-                processor.doRefactoring();
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
-              DuplicatesImpl.processDuplicates(processor, project, editor);
-            }
-          });
-        }
-      }, REFACTORING_NAME, null);
+      run(project, editor, processor);
+      DuplicatesImpl.processDuplicates(processor, project, editor);
       return true;
     }
     return false;
+  }
+
+  public static void run(@NotNull final Project project, final Editor editor, final ExtractMethodProcessor processor) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
+          public void run() {
+            try {
+              processor.doRefactoring();
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+    }, REFACTORING_NAME, null);
   }
 
   @Nullable

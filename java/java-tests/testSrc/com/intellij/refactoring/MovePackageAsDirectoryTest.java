@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2011 JetBrains s.r.o.
  *
@@ -88,14 +87,22 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
       protected void preprocessSrcDir(PsiDirectory srcDirectory) {
         final PsiFile empty = srcDirectory.findFile(EMPTY_TXT);
         assert empty != null;
-        empty.delete();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            empty.delete();
+          }
+        });
       }
 
       @Override
       protected void postProcessTargetDir(PsiDirectory targetDirectory) {
         final PsiDirectory subdirectory = targetDirectory.findSubdirectory(packageName);
         assert subdirectory != null;
-        subdirectory.createFile(EMPTY_TXT);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            subdirectory.createFile(EMPTY_TXT);
+          }
+        });
       }
     });
   }

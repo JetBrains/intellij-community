@@ -21,7 +21,6 @@ package com.intellij.refactoring;
  */
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,7 +34,7 @@ import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
-public class MoveClassAndFileTest extends CodeInsightTestCase {
+public class MoveClassAndFileTest extends RefactoringTestCase {
 
   public void testAllClassesInFile() throws Exception {
     doTest("allClassesInFile", "t", "txt2move.txt", "s.MyClass", "s.MyOneMoreClass");

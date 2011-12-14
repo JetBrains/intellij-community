@@ -6,12 +6,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.refactoring.MockInlineMethodOptions;
 import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public class InlineMethodTest extends LightCodeInsightTestCase {
+public class InlineMethodTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
