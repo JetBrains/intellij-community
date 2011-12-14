@@ -298,40 +298,6 @@ public class ResolveImportUtil {
     return visitor.resultsAsList();
   }
 
-  /**
-   * Looks for a name among element's module's roots; if there's no module, then among project's roots.
-   *
-   * @param context PSI element that defines the module and/or the project.
-   * @param qualifiedName module name to be found among roots.
-   * @return a PsiFile, a child of a root.
-   */
-  @Nullable
-  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final PyQualifiedName qualifiedName) {
-    // NOTE: a quick and dirty temporary fix for "current dir" root path, which is assumed to be present first (but may be not).
-    if (qualifiedName.getComponentCount() == 1) {
-      PsiElement res = resolveInCurrentDir(context, qualifiedName.getLastComponent());
-      if (res != null) {
-        return res;
-      }
-    }
-    return resolveModuleInRoots(qualifiedName, context);
-  }
-
-  @Nullable
-  public static PsiElement resolveInCurrentDir(@NotNull final PsiElement elt, final String refName) {
-    PsiFile pfile = elt.getContainingFile();
-    VirtualFile vfile = pfile.getVirtualFile();
-    if (vfile == null) { // we're probably within a copy, e.g. for completion; get the real thing
-      pfile = pfile.getOriginalFile();
-    }
-    PsiDirectory pdir = pfile.getContainingDirectory();
-    if (pdir != null) {
-      PsiElement child_elt = resolveChild(pdir, refName, pfile, null, true, true);
-      if (child_elt != null) return child_elt;
-    }
-    return null;
-  }
-
   @Nullable
   private static PsiElement resolveForeignImport(@NotNull final PyElement importElement,
                                                  @NotNull final PyQualifiedName importText,
