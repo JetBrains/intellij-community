@@ -35,11 +35,16 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_NONLOCAL = "nonlocal";
   @NonNls protected static final String TOK_EXEC = "exec";
 
+  private static final String EXPRESSION_EXPECTED = "Expression expected";
+  public static final String IDENTIFIER_EXPECTED = "Identifier expected";
+
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
+
   private Phase myFutureImportPhase = Phase.NONE;
   private boolean myExpectAsKeyword = false;
 
   public enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT, PRINT_FUNCTION}
+
   protected Set<FUTURE> myFutureFlags = EnumSet.noneOf(FUTURE.class);
 
   public static class ImportTypes {
@@ -179,7 +184,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         statementType = PyElementTypes.AUG_ASSIGNMENT_STATEMENT;
         builder.advanceLexer();
         if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
-          builder.error("expression expected");          
+          builder.error(EXPRESSION_EXPECTED);
         }
       }
       else if (builder.getTokenType() == PyTokenTypes.EQ) {
@@ -194,7 +199,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           PsiBuilder.Marker maybeExprMarker = builder.mark();
           if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
             maybeExprMarker.drop();
-            builder.error("expression expected");
+            builder.error(EXPRESSION_EXPECTED);
             break;
           }
           if (builder.getTokenType() == PyTokenTypes.EQ) {
@@ -220,10 +225,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
     builder.advanceLexer();
     if (firstToken == PyTokenTypes.INCONSISTENT_DEDENT) {
-      builder.error("unindent does not match any outer indentation level");
+      builder.error("Unindent does not match any outer indentation level");
+    }
+    else if (firstToken == PyTokenTypes.INDENT) {
+      builder.error("Unexpected indent");
     }
     else {
-      builder.error("statement expected, found " + firstToken.toString());
+      builder.error("Statement expected, found " + firstToken.toString());
     }
   }
 
@@ -245,7 +253,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
     }
     else if (!builder.eof()) {
-      builder.error("end of statement expected");
+      builder.error("End of statement expected");
     }
   }
 
@@ -296,13 +304,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker delStatement = myBuilder.mark();
     myBuilder.advanceLexer();
     if (!getExpressionParser().parseSingleExpression(false)) {
-      myBuilder.error("expression expected");
+      myBuilder.error("Expression expected");
     }
     while (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
       myBuilder.advanceLexer();
       if (!getEndOfStatementsTokens().contains(myBuilder.getTokenType())) {
         if (!getExpressionParser().parseSingleExpression(false)) {
-          myBuilder.error("expression expected");
+          myBuilder.error("Expression expected");
         }
       }
     }
@@ -342,12 +350,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
         myBuilder.advanceLexer();
         if (!getExpressionParser().parseSingleExpression(false)) {
-          myContext.getBuilder().error("Expression expected");
+          myContext.getBuilder().error(EXPRESSION_EXPECTED);
         }
       }
       checkEndOfStatement(scope);
     }
-    else myContext.getBuilder().error("Expression expected");
+    else {
+      myContext.getBuilder().error(EXPRESSION_EXPECTED);
+    }
     assertStatement.done(PyElementTypes.ASSERT_STATEMENT);
   }
 
@@ -413,6 +423,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
   /**
    * Parses option dots before imported name.
+   *
    * @return true iff there were dots.
    */
   private boolean parseRelativeImportDots() {
@@ -431,7 +442,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final PsiBuilder.Marker asMarker = builder.mark();
       if (is_module_import) { // import _
         if (!parseDottedNameAsAware(true, false)) {
-          asMarker.drop(); 
+          asMarker.drop();
           break;
         }
       }
@@ -480,7 +491,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return id_text;
     }
     else {
-      myBuilder.error("identifier expected");
+      myBuilder.error(IDENTIFIER_EXPECTED);
       idMarker.drop();
     }
     return null;
@@ -498,7 +509,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   protected boolean parseDottedNameAsAware(boolean expect_as, boolean optional) {
     if (myBuilder.getTokenType() != PyTokenTypes.IDENTIFIER) {
       if (optional) return true;
-      myBuilder.error("identifier expected");
+      myBuilder.error(IDENTIFIER_EXPECTED);
       return false;
     }
     PsiBuilder.Marker marker = myBuilder.mark();
@@ -509,7 +520,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
       myBuilder.advanceLexer();
-      checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
+      checkMatches(PyTokenTypes.IDENTIFIER, IDENTIFIER_EXPECTED);
       marker.done(getReferenceType());
     }
     myExpectAsKeyword = old_expect_AS_kwd;
@@ -569,7 +580,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       parseColonAndSuite(scope);
       elsePart.done(PyElementTypes.ELSE_PART);
     }
-    else elsePart.drop();
+    else {
+      elsePart.drop();
+    }
     ifStatement.done(elementType);
   }
 
@@ -582,7 +595,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
       myBuilder.advanceLexer();
     }
-    marker.error("colon expected");
+    marker.error("Colon expected");
     return false;
   }
 
@@ -596,7 +609,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       parseColonAndSuite(scope);
       elsePart.done(PyElementTypes.ELSE_PART);
     }
-    else elsePart.drop();
+    else {
+      elsePart.drop();
+    }
     statement.done(PyElementTypes.FOR_STATEMENT);
   }
 
@@ -616,7 +631,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker whilePart = myBuilder.mark();
     myBuilder.advanceLexer();
     if (!getExpressionParser().parseSingleExpression(false)) {
-      myBuilder.error("expression expected");
+      myBuilder.error(EXPRESSION_EXPECTED);
     }
     parseColonAndSuite(scope);
     whilePart.done(PyElementTypes.WHILE_PART);
@@ -626,7 +641,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       parseColonAndSuite(scope);
       elsePart.done(PyElementTypes.ELSE_PART);
     }
-    else elsePart.drop();
+    else {
+      elsePart.drop();
+    }
     statement.done(PyElementTypes.WHILE_STATEMENT);
   }
 
@@ -645,13 +662,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         myBuilder.advanceLexer();
         if (myBuilder.getTokenType() != PyTokenTypes.COLON) {
           if (!getExpressionParser().parseSingleExpression(false)) {
-            myBuilder.error("expression expected");
+            myBuilder.error(EXPRESSION_EXPECTED);
           }
           myExpectAsKeyword = true;
           if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
             myBuilder.advanceLexer();
             if (!getExpressionParser().parseSingleExpression(true)) {
-              myBuilder.error("expression expected");
+              myBuilder.error(EXPRESSION_EXPECTED);
             }
           }
         }
@@ -664,7 +681,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         parseColonAndSuite(scope);
         elsePart.done(PyElementTypes.ELSE_PART);
       }
-      else elsePart.drop();
+      else {
+        elsePart.drop();
+      }
     }
     final PsiBuilder.Marker finallyPart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.FINALLY_KEYWORD) {
@@ -697,7 +716,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertCurrentToken(PyTokenTypes.WITH_KEYWORD);
     final PsiBuilder.Marker statement = myBuilder.mark();
     myBuilder.advanceLexer();
-    while(true) {
+    while (true) {
       PsiBuilder.Marker withItem = myBuilder.mark();
       getExpressionParser().parseExpression();
       myExpectAsKeyword = true;
@@ -722,7 +741,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   public void parseClassDeclaration(PsiBuilder.Marker classMarker, ParsingScope scope) {
     assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     myBuilder.advanceLexer();
-    checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
+    checkMatches(PyTokenTypes.IDENTIFIER, IDENTIFIER_EXPECTED);
     if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
       getExpressionParser().parseArgumentList();
     }
@@ -744,12 +763,12 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
       final PsiBuilder.Marker marker = myBuilder.mark();
       if (myBuilder.getTokenType() != PyTokenTypes.INDENT) {
-        myBuilder.error("indent expected");
+        myBuilder.error("Indent expected");
       }
       else {
         myBuilder.advanceLexer();
         if (myBuilder.eof()) {
-          myBuilder.error("indented block expected");
+          myBuilder.error("Indented block expected");
         }
         else {
           while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
@@ -764,7 +783,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         endMarker.done(elType);
       }
       if (!myBuilder.eof()) {
-        checkMatches(PyTokenTypes.DEDENT, "dedent expected");
+        checkMatches(PyTokenTypes.DEDENT, "Dedent expected");
       }
       // NOTE: the following line advances the PsiBuilder lexer and thus
       // ensures that the whitespace following the statement list is included
@@ -774,13 +793,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     else {
       final PsiBuilder.Marker marker = myBuilder.mark();
       if (myBuilder.eof()) {
-        myBuilder.error("statement expected");
+        myBuilder.error("Statement expected");
       }
       else {
         parseSimpleStatement(scope.withSuite(true));
         while (matchToken(PyTokenTypes.SEMICOLON)) {
-          if (matchToken(PyTokenTypes.STATEMENT_BREAK))
+          if (matchToken(PyTokenTypes.STATEMENT_BREAK)) {
             break;
+          }
           parseSimpleStatement(scope.withSuite(true));
         }
       }
@@ -795,22 +815,22 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     if (
       (myExpectAsKeyword || myContext.getLanguageLevel().hasWithStatement()) &&
       source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_AS)
-    ) {
+      ) {
       return PyTokenTypes.AS_KEYWORD;
     }
     else if ( // filter
-        (myFutureImportPhase == Phase.FROM) &&
-        source == PyTokenTypes.IDENTIFIER &&
-        isWordAtPosition(text, start, end, TOK_FUTURE_IMPORT)
-    ) {
+      (myFutureImportPhase == Phase.FROM) &&
+      source == PyTokenTypes.IDENTIFIER &&
+      isWordAtPosition(text, start, end, TOK_FUTURE_IMPORT)
+      ) {
       myFutureImportPhase = Phase.FUTURE;
       return source;
     }
     else if (
-        hasWithStatement() &&
-        source == PyTokenTypes.IDENTIFIER &&
-        isWordAtPosition(text, start, end, TOK_WITH)
-    ) {
+      hasWithStatement() &&
+      source == PyTokenTypes.IDENTIFIER &&
+      isWordAtPosition(text, start, end, TOK_WITH)
+      ) {
       return PyTokenTypes.WITH_KEYWORD;
     }
     else if (hasPrintStatement() && source == PyTokenTypes.IDENTIFIER &&
