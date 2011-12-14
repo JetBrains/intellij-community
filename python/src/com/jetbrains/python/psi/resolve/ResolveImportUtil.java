@@ -189,68 +189,34 @@ public class ResolveImportUtil {
    *
    * @param qualifiedName      qualified name of the module reference to resolve
    * @param source_file        where that reference resides; serves as PSI foothold to determine module, project, etc.
-   * @param import_is_absolute if false, try old python 2.x's "relative first, absolute next" approach.
-   * @param relative_level     if > 0, step back from source_file and resolve from there (even if import_is_absolute is false!).
+   * @param importIsAbsolute if false, try old python 2.x's "relative first, absolute next" approach.
+   * @param relativeLevel     if > 0, step back from source_file and resolve from there (even if importIsAbsolute is false!).
    * @return list of possible candidates
    */
   @NotNull
   public static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
-                                               boolean import_is_absolute, int relative_level) {
+                                               boolean importIsAbsolute, int relativeLevel) {
     if (qualifiedName == null) return Collections.emptyList();
-    String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relative_level);
+    String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relativeLevel);
     Set<String> being_imported = ourBeingImported.get();
     if (being_imported.contains(marker)) return Collections.emptyList(); // break endless loop in import
     try {
       being_imported.add(marker);
-      if (relative_level > 0) {
+      ImportResolver visitor = new ImportResolver(qualifiedName, true).fromElement(source_file);
+      if (relativeLevel > 0) {
         // "from ...module import"
-        final PsiElement module = resolveModuleAt(stepBackFrom(source_file, relative_level), source_file, qualifiedName);
-        return module != null ? Collections.singletonList(module) : Collections.<PsiElement>emptyList();
+        visitor.withRelative(relativeLevel).withoutRoots();
       }
       else { // "from module import"
-        if (import_is_absolute) {
-          return resolveModulesInRoots(qualifiedName, source_file);
-        }
-        else {
-          final PsiDirectory dir = source_file.getOriginalFile().getContainingDirectory();
-          PsiElement module = resolveModuleAt(dir, source_file, qualifiedName);
-          if (module != null) {
-            return Collections.singletonList(module);
-          }
-          List<PsiElement> found_in_roots = resolveModulesInRoots(qualifiedName, source_file);
-          if (found_in_roots.size() > 0) return found_in_roots;
-
-          return Collections.emptyList();
+        if (!importIsAbsolute) {
+          visitor.withRelative(0);
         }
       }
+      return visitor.resultsAsList();
     }
     finally {
       being_imported.remove(marker);
     }
-  }
-
-  /**
-   * Searches for a module at given directory, unwinding qualifiers and traversing directories as needed.
-   *
-   * @param directory     where to start from; top qualifier will be searched for here.
-   * @param sourceFile    the file containing the import statement being resolved
-   * @param qualifiedName the qualified name of the module to search
-   * @return module's file, or null.
-   */
-  @Nullable
-  private static PsiElement resolveModuleAt(PsiDirectory directory, PsiFile sourceFile, PyQualifiedName qualifiedName) {
-    // prerequisites
-    if (directory == null || !directory.isValid()) return null;
-    if (sourceFile == null || !sourceFile.isValid()) return null;
-
-    PsiElement seeker = directory;
-    for (String name : qualifiedName.getComponents()) {
-      if (name == null) {
-        return null;
-      }
-      seeker = resolveChild(seeker, name, sourceFile, null, true, true);
-    }
-    return seeker;
   }
 
   @Nullable

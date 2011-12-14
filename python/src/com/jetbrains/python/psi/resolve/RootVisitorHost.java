@@ -27,7 +27,10 @@ public class RootVisitorHost {
       visitRoots(module, false, visitor);
     }
     else {
-      visitSdkRoots(elt, visitor);
+      final PsiFile containingFile = elt.getContainingFile();
+      if (containingFile != null) {
+        visitSdkRoots(containingFile, visitor);
+      }
     }
   }
 
@@ -60,31 +63,28 @@ public class RootVisitorHost {
     rootManager.orderEntries().process(new ResolveImportUtil.LibraryRootVisitingPolicy(visitor), null);
   }
 
-  static void visitSdkRoots(PsiElement elt, RootVisitor visitor) {
-    // no module, another way to look in SDK roots
-    final PsiFile elt_psifile = elt.getContainingFile();
-    if (elt_psifile != null) {  // formality
-      final VirtualFile elt_vfile = elt_psifile.getOriginalFile().getVirtualFile();
-      List<OrderEntry> orderEntries = null;
-      if (elt_vfile != null) { // reality
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(elt.getProject()).getFileIndex();
-        orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
-        if (orderEntries.size() > 0) {
-          for (OrderEntry entry : orderEntries) {
-            if (!visitOrderEntryRoots(visitor, entry)) break;
-          }
-        }
-        else {
-          orderEntries = null;
+  static void visitSdkRoots(PsiFile file, RootVisitor visitor) {
+    // formality
+    final VirtualFile elt_vfile = file.getOriginalFile().getVirtualFile();
+    List<OrderEntry> orderEntries = null;
+    if (elt_vfile != null) { // reality
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
+      orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
+      if (orderEntries.size() > 0) {
+        for (OrderEntry entry : orderEntries) {
+          if (!visitOrderEntryRoots(visitor, entry)) break;
         }
       }
+      else {
+        orderEntries = null;
+      }
+    }
 
-      // out-of-project file or non-file(e.g. console) - use roots of SDK assigned to project
-      if (orderEntries == null) {
-        final Sdk sdk = ProjectRootManager.getInstance(elt.getProject()).getProjectSdk();
-        if (sdk != null) {
-          visitSdkRoots(sdk, visitor);
-        }
+    // out-of-project file or non-file(e.g. console) - use roots of SDK assigned to project
+    if (orderEntries == null) {
+      final Sdk sdk = ProjectRootManager.getInstance(file.getProject()).getProjectSdk();
+      if (sdk != null) {
+        visitSdkRoots(sdk, visitor);
       }
     }
   }

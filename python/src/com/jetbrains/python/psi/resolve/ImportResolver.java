@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -30,13 +31,14 @@ import java.util.Set;
 public class ImportResolver implements RootVisitor {
   final boolean myCheckForPackage;
   @Nullable private Module myModule;
-  private PsiElement myFoothold;
   private PsiFile myFootholdFile;
   private final @NotNull PyQualifiedName myQualifiedName;
   @NotNull PsiManager myPsiManager;
   final Set<PsiElement> results = Sets.newLinkedHashSet();
   private boolean myAcceptRootAsTopLevelPackage;
   private boolean myVisitAllModules = false;
+  private int myRelativeLevel = -1;
+  private boolean myWithoutRoots;
   private Sdk myWithSdk;
 
   public ImportResolver(@NotNull PyQualifiedName qName, boolean checkForPackage) {
@@ -45,10 +47,9 @@ public class ImportResolver implements RootVisitor {
   }
 
   public ImportResolver fromElement(@NotNull PsiElement foothold) {
-    myFoothold = foothold;
-    myFootholdFile = foothold.getContainingFile();
+    myFootholdFile = foothold.getContainingFile().getOriginalFile();
     myPsiManager = PsiManager.getInstance(foothold.getProject());
-    setModule(ModuleUtil.findModuleForPsiElement(myFoothold));
+    setModule(ModuleUtil.findModuleForPsiElement(myFootholdFile));
     if (PydevConsoleRunner.isInPydevConsole(foothold)) {
       withAllModules();
     }
@@ -77,6 +78,22 @@ public class ImportResolver implements RootVisitor {
     myWithSdk = sdk;
     return this;
   }
+
+  /**
+   * Specifies whether we should attempt to resolve imports relative to the current file.
+   * 
+   * @param relativeLevel if >= 0, we try to resolve at the specified number of levels above the current file.
+   * @return this
+   */
+  public ImportResolver withRelative(int relativeLevel) {
+    myRelativeLevel = relativeLevel;
+    return this;
+  }
+  
+  public ImportResolver withoutRoots() {
+    myWithoutRoots = true;
+    return this;
+  }
   
   public boolean visitRoot(final VirtualFile root) {
     if (!root.isValid()) {
@@ -99,42 +116,59 @@ public class ImportResolver implements RootVisitor {
 
   @NotNull
   public List<PsiElement> resultsAsList() {
-    if (myFoothold != null && !myFoothold.isValid()) {
+    if (myFootholdFile != null && !myFootholdFile.isValid()) {
       return Collections.emptyList();
     }
 
-    PythonPathCache cache = findMyCache();
-    if (cache != null) {
-      final List<PsiElement> cachedResults = cache.get(myQualifiedName);
-      if (cachedResults != null) {
-        return cachedResults;
+    if (myRelativeLevel >= 0) {
+      assert myFootholdFile != null;
+      PsiDirectory dir = myFootholdFile.getContainingDirectory();
+      if (myRelativeLevel > 0) {
+        dir = ResolveImportUtil.stepBackFrom(myFootholdFile, myRelativeLevel);
+        
+      }
+      PsiElement module = resolveModuleAt(dir);
+      if (module != null) {
+        results.add(module);
       }
     }
 
-    if (myVisitAllModules) {
-      for (Module mod : ModuleManager.getInstance(myPsiManager.getProject()).getModules()) {
-        RootVisitorHost.visitRoots(mod, false, this);
+    if (!myWithoutRoots) {
+      PythonPathCache cache = findMyCache();
+      if (cache != null) {
+        final List<PsiElement> cachedResults = cache.get(myQualifiedName);
+        if (cachedResults != null) {
+          return cachedResults;
+        }
       }
-    }
-    else if (myModule != null) {
-      final boolean otherSdk = withOtherSdk();
-      RootVisitorHost.visitRoots(myModule, otherSdk, this);
-      if (otherSdk) {
-        RootVisitorHost.visitSdkRoots(myWithSdk, this);
+
+      if (myVisitAllModules) {
+        for (Module mod : ModuleManager.getInstance(myPsiManager.getProject()).getModules()) {
+          RootVisitorHost.visitRoots(mod, false, this);
+        }
       }
-    }
-    else if (myFoothold != null) {
-      RootVisitorHost.visitSdkRoots(myFoothold, this);
-    }
-    else {
-      throw new IllegalStateException();
+      else if (myModule != null) {
+        final boolean otherSdk = withOtherSdk();
+        RootVisitorHost.visitRoots(myModule, otherSdk, this);
+        if (otherSdk) {
+          RootVisitorHost.visitSdkRoots(myWithSdk, this);
+        }
+      }
+      else if (myFootholdFile != null) {
+        RootVisitorHost.visitSdkRoots(myFootholdFile, this);
+      }
+      else {
+        throw new IllegalStateException();
+      }
+
+      final ArrayList<PsiElement> resultList = Lists.newArrayList(results);
+      if (cache != null) {
+        cache.put(myQualifiedName, resultList);
+      }
+      return resultList;
     }
 
-    final ArrayList<PsiElement> resultList = Lists.newArrayList(results);
-    if (cache != null) {
-      cache.put(myQualifiedName, resultList);
-    }
-    return resultList;
+    return Lists.newArrayList(results);
   }
   
   @Nullable
@@ -177,4 +211,26 @@ public class ImportResolver implements RootVisitor {
     }
     return module;
   }
+
+  /**
+   * Searches for a module at given directory, unwinding qualifiers and traversing directories as needed.
+   *
+   * @param directory     where to start from; top qualifier will be searched for here.
+   * @return module's file, or null.
+   */
+  @Nullable
+  private PsiElement resolveModuleAt(@Nullable PsiDirectory directory) {
+    // prerequisites
+    if (directory == null || !directory.isValid()) return null;
+
+    PsiElement seeker = directory;
+    for (String name : myQualifiedName.getComponents()) {
+      if (name == null) {
+        return null;
+      }
+      seeker = ResolveImportUtil.resolveChild(seeker, name, myFootholdFile, null, true, true);
+    }
+    return seeker;
+  }
+
 }
