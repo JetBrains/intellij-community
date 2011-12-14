@@ -65,6 +65,8 @@ public class GradleApiFacadeManager {
 
   private final AtomicReference<Pair<GradleApiFacade, RemoteGradleProcessSettings>> myFacade
     = new AtomicReference<Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
+  private final AtomicReference<RemoteGradleProgressNotificationManager> myExportedProgressManager
+    = new AtomicReference<RemoteGradleProgressNotificationManager>();
 
   private final GradleLibraryManager                    myGradleLibraryManager;
   private final RemoteGradleProgressNotificationManager myProgressManager;
@@ -110,7 +112,7 @@ public class GradleApiFacadeManager {
         Collection<File> gradleLibraries = myGradleLibraryManager.getAllLibraries(null);
         GradleLog.LOG.assertTrue(gradleLibraries != null, GradleBundle.message("gradle.generic.text.error.sdk.undefined"));
         if (gradleLibraries == null) {
-          return null;
+          throw new ExecutionException("Can't find gradle libraries");
         } 
 
         final SimpleJavaParameters params = new SimpleJavaParameters();
@@ -230,7 +232,16 @@ public class GradleApiFacadeManager {
       return myFacade.get().first;
     }
     result.applySettings(getRemoteSettings());
-    RemoteGradleProgressNotificationManager exported = (RemoteGradleProgressNotificationManager)UnicastRemoteObject.exportObject(myProgressManager, 0);
+    RemoteGradleProgressNotificationManager exported = myExportedProgressManager.get();
+    if (exported == null) {
+      try {
+        exported = (RemoteGradleProgressNotificationManager)UnicastRemoteObject.exportObject(myProgressManager, 0);
+        myExportedProgressManager.set(exported);
+      }
+      catch (RemoteException e) {
+        exported = myExportedProgressManager.get();
+      }
+    }
     if (exported == null) {
       GradleLog.LOG.warn("Can't export progress manager"); 
     }
@@ -252,7 +263,15 @@ public class GradleApiFacadeManager {
     // Check that significant settings are not changed
     RemoteGradleProcessSettings oldSettings = pair.second;
     RemoteGradleProcessSettings currentSettings = getRemoteSettings();
-    return StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome());
+    if (!StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome())) {
+      try {
+        pair.first.applySettings(currentSettings);
+      }
+      catch (RemoteException e) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull
