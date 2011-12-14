@@ -120,7 +120,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
 
           final DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
 
-          final AnActionEvent event = updateActionBeforShow(anAction, dataContext);
+          final AnActionEvent event = updateActionBeforeShow(anAction, dataContext);
           final Presentation presentation = event.getPresentation();
 
           final Color fg = defaultActionForeground(isSelected, presentation);
@@ -164,7 +164,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     return actionLabel;
   }
 
-  protected AnActionEvent updateActionBeforShow(AnAction anAction, DataContext dataContext) {
+  protected static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
     final AnActionEvent event = new AnActionEvent(null, dataContext,
                                                   ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
                                                   0);
@@ -173,7 +173,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     return event;
   }
 
-  protected Color defaultActionForeground(boolean isSelected, Presentation presentation) {
+  protected static Color defaultActionForeground(boolean isSelected, Presentation presentation) {
     return isSelected ? UIUtil.getListSelectionForeground()
                       : presentation.isEnabled() && presentation.isVisible()
                         ? UIUtil.getListForeground()
@@ -294,7 +294,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
         pattern = pattern.substring(0, 80);
       }
 
-      final @NonNls StringBuffer buffer = new StringBuffer(".*");
+      final @NonNls StringBuilder buffer = new StringBuilder(".*");
       pattern = pattern.toLowerCase();
       for (int i = 0; i < pattern.length(); i++) {
         final char c = pattern.charAt(i);
