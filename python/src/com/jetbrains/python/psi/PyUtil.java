@@ -1095,6 +1095,8 @@ public class PyUtil {
       valuesLength = ((PyDictLiteralExpression)expression).getElements().length;
     else if (expression instanceof PyStringLiteralExpression)
       valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
+    else if (expression instanceof PyNumericLiteralExpression)
+      valuesLength = 1;
     else if (expression instanceof PyCallExpression) {
       PyCallExpression call = (PyCallExpression)expression;
       if (call.isCalleeText("dict"))
