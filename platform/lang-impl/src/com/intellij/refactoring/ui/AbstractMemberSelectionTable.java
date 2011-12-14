@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoChangeListener;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.ui.*;
-import com.intellij.util.containers.Convertor;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,22 +44,23 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
-public abstract class AbstractMemberSelectionTable<T extends PsiElement, M extends MemberInfoBase<T>> extends Table implements TypeSafeDataProvider {
+public abstract class AbstractMemberSelectionTable<T extends PsiElement, M extends MemberInfoBase<T>> extends JBTable implements TypeSafeDataProvider {
   protected static final int CHECKED_COLUMN = 0;
   protected static final int DISPLAY_NAME_COLUMN = 1;
   protected static final int ABSTRACT_COLUMN = 2;
   protected static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/general/overridingMethod.png");
   protected static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/general/implementingMethod.png");
   protected static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.ICON_16;
-  protected final String myAbstractColumnHeader;
   protected static final String DISPLAY_NAME_COLUMN_HEADER = RefactoringBundle.message("member.column");
+  protected static final int OVERRIDE_ICON_POSITION = 2;
+  protected static final int VISIBILITY_ICON_POSITION = 1;
+  protected static final int MEMBER_ICON_POSITION = 0;
+
+  protected final String myAbstractColumnHeader;
   protected List<M> myMemberInfos;
   protected final boolean myAbstractEnabled;
   protected MemberInfoModel<T, M> myMemberInfoModel;
   protected MyTableModel<T, M> myTableModel;
-  protected static final int OVERRIDE_ICON_POSITION = 2;
-  protected static final int VISIBILITY_ICON_POSITION = 1;
-  protected static final int MEMBER_ICON_POSITION = 0;
 
   public AbstractMemberSelectionTable(Collection<M> memberInfos, MemberInfoModel<T, M> memberInfoModel, String abstractColumnHeader) {
     myAbstractEnabled = abstractColumnHeader != null;
@@ -83,11 +83,8 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     final int checkBoxWidth = new JCheckBox().getPreferredSize().width;
     model.getColumn(CHECKED_COLUMN).setMaxWidth(checkBoxWidth);
     model.getColumn(CHECKED_COLUMN).setMinWidth(checkBoxWidth);
-
     if (myAbstractEnabled) {
-      int width =
-        (int)(1.3 * getFontMetrics(getFont()).charsWidth(myAbstractColumnHeader.toCharArray(), 0,
-                                                             myAbstractColumnHeader.length()));
+      int width = (int)(1.3 * getFontMetrics(getFont()).charsWidth(myAbstractColumnHeader.toCharArray(), 0, myAbstractColumnHeader.length()));
       model.getColumn(ABSTRACT_COLUMN).setMaxWidth(width);
       model.getColumn(ABSTRACT_COLUMN).setPreferredWidth(width);
       model.getColumn(ABSTRACT_COLUMN).setCellRenderer(new MyBooleanRenderer<T, M>(this));
@@ -143,10 +140,11 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected void fireMemberInfoChange(Collection<M> changedMembers) {
     Object[] list = listenerList.getListenerList();
 
-    MemberInfoChange event = new MemberInfoChange<T, M>(changedMembers);
+    MemberInfoChange<T, M> event = new MemberInfoChange<T, M>(changedMembers);
     for (Object element : list) {
       if (element instanceof MemberInfoChangeListener) {
-        ((MemberInfoChangeListener<T, M>)element).memberInfoChanged(event);
+        @SuppressWarnings("unchecked") final MemberInfoChangeListener<T, M> changeListener = (MemberInfoChangeListener<T, M>)element;
+        changeListener.memberInfoChanged(event);
       }
     }
   }
@@ -389,18 +387,14 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       myTable = table;
     }
 
-    public Component getTableCellRendererComponent(JTable table, Object value,
-                                                   boolean isSelected, boolean hasFocus,
-                                                   int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (component instanceof JComponent) {
-        JComponent jComponent = (JComponent)component;
+      if (component instanceof JCheckBox) {
         int modelColumn = myTable.convertColumnIndexToModel(column);
-        final M memberInfo = myTable.myMemberInfos.get(row);
-
-        jComponent.setEnabled(
-          (modelColumn == CHECKED_COLUMN && myTable.myMemberInfoModel.isMemberEnabled(memberInfo)
-           || (modelColumn == ABSTRACT_COLUMN && memberInfo.isChecked() && myTable.isAbstractColumnEditable(row)))
+        M memberInfo = myTable.myMemberInfos.get(row);
+        component.setEnabled(
+          (modelColumn == CHECKED_COLUMN && myTable.myMemberInfoModel.isMemberEnabled(memberInfo)) ||
+          (modelColumn == ABSTRACT_COLUMN && memberInfo.isChecked() && myTable.isAbstractColumnEditable(row))
         );
       }
       return component;
