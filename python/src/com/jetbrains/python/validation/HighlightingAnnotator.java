@@ -6,8 +6,6 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 
-import java.util.Set;
-
 /**
  * @author yole
  */
@@ -39,8 +37,8 @@ public class HighlightingAnnotator extends PyAnnotator {
     boolean isSelf = false;
     final int index = ArrayUtil.find(function.getParameterList().getParameters(), node);
     if (function.getContainingClass() != null && index == 0) {
-      final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(function);
-      if (!flags.contains(PyFunction.Flag.CLASSMETHOD) && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
+      final PyFunction.Modifier modifier = function.getModifier();
+      if (modifier != PyFunction.Modifier.CLASSMETHOD && modifier != PyFunction.Modifier.STATICMETHOD) {
         isSelf = true;
       }
     }

@@ -7,8 +7,6 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 
-import java.util.EnumSet;
-
 /**
  * Tests callee resolution in PyCallExpressionImpl.
  * User: dcheryasov
@@ -31,7 +29,7 @@ public class PyResolveCalleeTest extends PyTestCase {
   public void testClassCall() {
     PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
-    assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));
+    assertEquals(null, resolved.getModifier());
   }
 
   public void testDecoCall() {
@@ -43,13 +41,13 @@ public class PyResolveCalleeTest extends PyTestCase {
   public void testDecoParamCall() {
     PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
-    assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));
+    assertNull(resolved.getModifier());
   }
   
   public void testWrappedStaticMethod() {
     PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertEquals(0, resolved.getImplicitOffset());
-    assertEquals(resolved.getFlags(), EnumSet.of(PyFunction.Flag.STATICMETHOD));
+    assertEquals(resolved.getModifier(), PyFunction.Modifier.STATICMETHOD);
   }
 }

@@ -52,7 +52,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
         if (refExpr.getQualifier() == null) {
           final PsiPolyVariantReference reference = refExpr.getReference();
           if (reference.resolve() == null) {
-            AutoImportQuickFix fix = proposeImportFix(refExpr, reference, refExpr.getText());
+            AutoImportQuickFix fix = proposeImportFix(refExpr, reference);
             if (fix != null && fix.getCandidatesCount() == 1) {
               fix.invoke(file);
             }
@@ -67,14 +67,17 @@ public class PythonReferenceImporter implements ReferenceImporter {
   private static TokenSet IS_IMPORT_STATEMENT = TokenSet.create(PyElementTypes.IMPORT_STATEMENT);
 
   @Nullable
-  public static AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference, String ref_text) {
+  public static AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference) {
+    final String text = reference.getElement().getText();
+    final String refText = reference.getRangeInElement().substring(text); // text of the part we're working with
+
     // don't propose meaningless auto imports if no interpreter is configured
     final Module module = ModuleUtil.findModuleForPsiElement(node);
     if (module != null && PythonSdkType.findPythonSdk(module) == null) {
       return null;
     }
     PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
-    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, refText, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seen_file_names = new HashSet<String>(); // true import names
     // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
     // walk up collecting all such statements and analyzing
@@ -84,14 +87,14 @@ public class PythonReferenceImporter implements ReferenceImporter {
     if (result.size() > 0) {
       for (PsiElement stmt : import_prc.getResult()) {
         for (PyImportElement ielt : ((PyImportStatement)stmt).getImportElements()) {
-          final PyReferenceExpression src = ielt.getImportReference();
+          final PyReferenceExpression src = ielt.getImportReferenceExpression();
           if (src != null) {
             PsiElement dst = src.getReference().resolve();
             if (dst instanceof PyFile) {
               PyFile dst_file = (PyFile)dst;
-              String name = ielt.getImportReference().getReferencedName(); // ref is ok or matching would fail
+              String name = ielt.getImportReferenceExpression().getReferencedName(); // ref is ok or matching would fail
               seen_file_names.add(name);
-              PsiElement res = dst_file.findExportedName(ref_text);
+              PsiElement res = dst_file.findExportedName(refText);
               if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && dst_file.equals(res.getContainingFile())) {
                 existing_import_file = dst_file;
                 fix.addImport(res, dst_file, ielt);
@@ -107,14 +110,14 @@ public class PythonReferenceImporter implements ReferenceImporter {
     // NOTE: current indices have limitations, only finding direct definitions of classes and functions.
     Project project = node.getProject();
     List<PsiElement> symbols = new ArrayList<PsiElement>();
-    symbols.addAll(PyClassNameIndex.find(ref_text, project, true));
+    symbols.addAll(PyClassNameIndex.find(refText, project, true));
     GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
     if (!isQualifier(node)) {
-      symbols.addAll(PyFunctionNameIndex.find(ref_text, project, scope));
+      symbols.addAll(PyFunctionNameIndex.find(refText, project, scope));
     }
-    symbols.addAll(PyVariableNameIndex.find(ref_text, project, scope));
+    symbols.addAll(PyVariableNameIndex.find(refText, project, scope));
     if (!isCall(node)) {
-      symbols.addAll(findImportableModules(node.getContainingFile(), ref_text, project, scope));
+      symbols.addAll(findImportableModules(node.getContainingFile(), refText, project, scope));
     }
     if (symbols.size() > 0) {
       for (PsiElement symbol : symbols) {
@@ -125,7 +128,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
             PyQualifiedName import_path = ResolveImportUtil.findCanonicalImportPath(srcfile, node);
             if (import_path != null && !seen_file_names.contains(import_path.toString())) {
               // a new, valid hit
-              fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), ref_text, import_path));
+              fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), refText, import_path));
               seen_file_names.add(import_path.toString()); // just in case, again
             }
           }
@@ -133,7 +136,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
       }
     }
     for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
-      provider.addImportCandidates(reference, ref_text, fix);
+      provider.addImportCandidates(reference, refText, fix);
     }
     if (fix.getCandidatesCount() > 0) {
       fix.sortCandidates();

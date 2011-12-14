@@ -29,12 +29,22 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyImportReferenceImpl extends PyReferenceImpl {
+public class PyImportReference extends PyReferenceImpl {
   private final PyReferenceExpressionImpl myElement;
 
-  public PyImportReferenceImpl(PyReferenceExpressionImpl element, PyResolveContext context) {
+  public PyImportReference(PyReferenceExpressionImpl element, PyResolveContext context) {
     super(element, context);
     myElement = element;
+  }
+
+
+  @Override
+  public String getUnresolvedDescription() {
+    final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
+    if (importStatement != null) {
+      return "No module named " + myElement.getReferencedName();
+    }
+    return super.getUnresolvedDescription();
   }
 
   @NotNull
@@ -44,21 +54,37 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
-    int default_submodule_rate = RatedResolveResult.RATE_HIGH;
+    int defaultSubmoduleRate = RatedResolveResult.RATE_HIGH;
 
     // names inside module take precedence over submodules
     final PyImportElement import_elt = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
     if (import_elt != null) {
       if (ret.poke(ResolveImportUtil.findImportedNameInsideModule(import_elt, referencedName), RatedResolveResult.RATE_HIGH)) {
-        default_submodule_rate = RatedResolveResult.RATE_NORMAL;
+        defaultSubmoduleRate = RatedResolveResult.RATE_NORMAL;
       }
     }
 
-    List<PsiElement> targets = ResolveImportUtil.resolveImportReference(myElement);
+    final PyElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
+    List<PsiElement> targets;
+    final PyQualifiedName qname = myElement.asQualifiedName();
+    if (parent instanceof PyImportElement) {
+      targets = ResolveImportUtil.multiResolveImportElement((PyImportElement)parent, qname);
+    }
+    else if (parent instanceof PyFromImportStatement) { // "from foo import"
+      targets = ResolveImportUtil.resolveFromOrForeignImport((PyFromImportStatement)parent, qname);
+    }
+    else {
+      return ret;
+    }
+    addRatedResults(ret, defaultSubmoduleRate, targets);
+    return ret;
+  }
+
+  private static void addRatedResults(ResolveResultList ret, int defaultSubmoduleRate, List<PsiElement> targets) {
     for (PsiElement target : targets) {
       target = PyUtil.turnDirIntoInit(target);
       if (target != null) {   // ignore dirs without __init__.py, worthless
-        int rate = default_submodule_rate;
+        int rate = defaultSubmoduleRate;
         if (target instanceof PyFile) {
           VirtualFile vFile = ((PyFile)target).getVirtualFile();
           if (vFile != null && vFile.getLength() == 0) {
@@ -68,8 +94,6 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         ret.poke(target, rate);
       }
     }
-
-    return ret;
   }
 
   @NotNull
@@ -250,17 +274,15 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     }
 
     private void fillFromQName(PyQualifiedName thisQName, InsertHandler<LookupElement> insertHandler) {
-      final List<PsiElement> dirs = ResolveImportUtil.resolveModulesInRoots(thisQName, myCurrentFile);
-      for (PsiElement dir : dirs) {
-        if (dir instanceof PsiDirectory) {
-          fillFromDir((PsiDirectory)dir, insertHandler);
-        }
+      QualifiedNameResolver visitor = new QualifiedNameResolver(thisQName).fromElement(myCurrentFile);
+      for (PsiDirectory dir : visitor.resultsOfType(PsiDirectory.class)) {
+        fillFromDir(dir, insertHandler);
       }
     }
 
     private void addImportedNames(@NotNull PyImportElement[] import_elts) {
       for (PyImportElement ielt : import_elts) {
-        PyReferenceExpression ref = ielt.getImportReference();
+        PyReferenceExpression ref = ielt.getImportReferenceExpression();
         if (ref != null) {
           String s = ref.getReferencedName();
           if (s != null) myNamesAlready.add(s);

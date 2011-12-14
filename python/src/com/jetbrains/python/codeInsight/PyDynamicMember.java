@@ -108,7 +108,7 @@ public class PyDynamicMember {
   }
 
   @Nullable
-  public PsiElement resolve(PsiElement context) {
+  public PsiElement resolve(@NotNull PsiElement context) {
     if (myTarget != null) {
       return myTarget;
     }
@@ -124,7 +124,7 @@ public class PyDynamicMember {
   }
 
   @Nullable
-  private PsiElement findResolveTarget(PsiElement context) {
+  private PsiElement findResolveTarget(@NotNull PsiElement context) {
     if (myPsiPath != null) {
       return myPsiPath.resolve(context);
     }

@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyImportReferenceImpl;
+import com.jetbrains.python.psi.impl.PyImportReference;
 import com.jetbrains.python.sdk.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.PySkeletonRefresher;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -92,7 +92,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   }
 
   public static boolean isApplicable(PsiReference ref) {
-    if (!(ref instanceof PyImportReferenceImpl)) {
+    if (!(ref instanceof PyImportReference)) {
       return false;
     }
     final Sdk sdk = getPythonSdk(ref);

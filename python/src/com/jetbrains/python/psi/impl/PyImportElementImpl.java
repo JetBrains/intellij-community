@@ -42,7 +42,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   @Nullable
-  public PyReferenceExpression getImportReference() {
+  public PyReferenceExpression getImportReferenceExpression() {
     final ASTNode node = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
     return node == null ? null : (PyReferenceExpression) node.getPsi();
   }
@@ -52,7 +52,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     if (stub != null) {
       return stub.getImportedQName();
     }
-    final PyReferenceExpression importReference = getImportReference();
+    final PyReferenceExpression importReference = getImportReferenceExpression();
     return importReference != null ? importReference.asQualifiedName() : null;
   }
 
@@ -120,7 +120,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     if (place.getContainingFile() != getContainingFile()) {
       return true;
     }
-    final PyReferenceExpression importRef = getImportReference();
+    final PyReferenceExpression importRef = getImportReferenceExpression();
     if (importRef != null) {
       final PsiElement element = importRef.getReference().resolve();
       if (element != null) {
@@ -136,7 +136,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
       @NotNull
       private String getRefName(String default_name) {
-        PyReferenceExpression ref = getImportReference();
+        PyReferenceExpression ref = getImportReferenceExpression();
         if (ref != null) {
           String refname = ref.getName();
           if (refname != null) return refname;
@@ -156,7 +156,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
             buf.append("from ");
             PyReferenceExpression imp_src = ((PyFromImportStatement)elt).getImportSource();
             if (imp_src != null) {
-              buf.append(PyResolveUtil.toPath(imp_src, "."));
+              buf.append(PyResolveUtil.toPath(imp_src));
             }
             else {
               buf.append("<?>");
@@ -189,7 +189,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   public Iterable<PyElement> iterateNames() {
     PyElement ret = getAsNameElement();
     if (ret == null) {
-      List<PyExpression> unwound_path = PyResolveUtil.unwindQualifiers(getImportReference());
+      List<PyExpression> unwound_path = PyResolveUtil.unwindQualifiers(getImportReferenceExpression());
       if ((unwound_path != null) && (unwound_path.size() > 0)) ret = unwound_path.get(0);
     }
     if (ret == null) {

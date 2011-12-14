@@ -19,10 +19,7 @@ import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.resolve.RootVisitor;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -498,7 +495,7 @@ class DocumentationBuilder {
     }
     else {
       RootFinder finder = new RootFinder(path);
-      ResolveImportUtil.visitRoots(followed, finder);
+      RootVisitorHost.visitRoots(followed, finder);
       final String root_path = finder.getResult();
       if (root_path != null) {
         String after_part = path.substring(root_path.length());

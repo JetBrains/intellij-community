@@ -245,7 +245,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (PsiTreeUtil.getParentOfType(element, PyClass.class) != null) {
             // When function is inside a class, first parameter may be either self or cls which is always 'used'.
             final PyFunction method = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-            if (method != null && ! PyNames.STATICMETHOD.equals(PyUtil.getClassOrStaticMethodDecorator(method))) {
+            if (method != null && method.getModifier() != PyFunction.Modifier.STATICMETHOD) {
               final PsiElement parent = namedParameter.getParent();
               if (parent instanceof PyParameterList && ((PyParameterList)parent).getParameters()[0] == namedParameter) {
                 continue;

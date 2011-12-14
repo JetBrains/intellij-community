@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Reports assignment to 'self' or 'cls'.
@@ -64,8 +63,8 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
       final String first_param_name = first_parm.getName();
       if (first_param_name == null || first_param_name.length() < 1) return null; // ignore cases of incorrect code
       // is it a static method?
-      Set<PyFunction.Flag> flagSet = PyUtil.detectDecorationsAndWrappersOf(method);      
-      if (flagSet.contains(PyFunction.Flag.STATICMETHOD)) return null; // these may do whatever they please
+      PyFunction.Modifier modifier = method.getModifier();
+      if (modifier == PyFunction.Modifier.STATICMETHOD) return null; // these may do whatever they please
       return first_param_name;
     }
 

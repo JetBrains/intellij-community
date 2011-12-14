@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,7 @@ public class PyImportStatementNavigator {
       return null;
     }
     for (PyImportElement importElement : statement.getImportElements()) {
-      if (element == importElement || element == importElement.getImportReference()){
+      if (element == importElement || element == importElement.getImportReferenceExpression()){
         return statement;
       }
     }

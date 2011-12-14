@@ -72,7 +72,7 @@ public class ImportFromToImportIntention implements IntentionAction {
         ret.myModuleReference = ret.myFromImportStatement.getImportSource();
       }
       if (ret.myModuleReference != null) {
-        ret.myModuleName = PyResolveUtil.toPath(ret.myModuleReference, ".");
+        ret.myModuleName = PyResolveUtil.toPath(ret.myModuleReference);
       }
       return ret;
     }
@@ -106,7 +106,7 @@ public class ImportFromToImportIntention implements IntentionAction {
     if (info.myModuleReference != null) {
       PyExpression remaining_module = info.myModuleReference.getQualifier();
       if (remaining_module instanceof PyQualifiedExpression) {
-        remaining_name = PyResolveUtil.toPath((PyQualifiedExpression)remaining_module, ".");
+        remaining_name = PyResolveUtil.toPath((PyQualifiedExpression)remaining_module);
       }
       else remaining_name = ""; // unqualified name: "...module"
       separated_name = info.myModuleReference.getReferencedName();
@@ -142,7 +142,7 @@ public class ImportFromToImportIntention implements IntentionAction {
       if (info.myRelativeLevel > 0) {
         // make sure we aren't importing a module from the relative path
         for (PyImportElement import_element : info.myFromImportStatement.getImportElements()) {
-          PyReferenceExpression ref = import_element.getImportReference();
+          PyReferenceExpression ref = import_element.getImportReferenceExpression();
           if (ref != null && ref.isValid()) {
             PsiElement target = ref.getReference().resolve();
             if (target instanceof PyExpression && ((PyExpression)target).getType(TypeEvalContext.fast()) instanceof PyModuleType) return false;
@@ -152,7 +152,7 @@ public class ImportFromToImportIntention implements IntentionAction {
       }
     }
     if (info.myModuleReference != null) {
-      info.myModuleName = PyResolveUtil.toPath(info.myModuleReference, ".");
+      info.myModuleName = PyResolveUtil.toPath(info.myModuleReference);
     }
     if (info.myModuleReference != null && info.myModuleName != null && info.myFromImportStatement != null) {
       myText = info.getText();
@@ -246,7 +246,7 @@ public class ImportFromToImportIntention implements IntentionAction {
         PyImportElement ielt = entry.getValue();
         if (ielt.getAsNameElement() != null) {
           // we have an alias, replace it with real name
-          PyReferenceExpression refex = ielt.getImportReference();
+          PyReferenceExpression refex = ielt.getImportReferenceExpression();
           assert refex != null; // else we won't resolve to this ielt
           String real_name = refex.getReferencedName();
           ASTNode new_qualifier = generator.createExpressionFromText(real_name).getNode();

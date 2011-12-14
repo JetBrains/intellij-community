@@ -122,8 +122,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
           final PyFunction function = (PyFunction)myScope;
           final PyParameter[] parameters = function.getParameterList().getParameters();
           if (parameters.length > 0 && result == parameters[0]) {
-            final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(function);
-            if (!(flags.contains(PyFunction.Flag.STATICMETHOD))) {
+            final PyFunction.Modifier modifier = function.getModifier();
+            if (modifier != PyFunction.Modifier.STATICMETHOD) {
               // 'self' is not a local scope dependency
               return;
             }
@@ -247,8 +247,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   private static boolean isInStaticMethod(PsiElement element) {
     PyFunction containingMethod = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
     if (containingMethod != null) {
-      final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(containingMethod);
-      return flags.contains(PyFunction.Flag.STATICMETHOD);
+      final PyFunction.Modifier modifier = containingMethod.getModifier();
+      return modifier == PyFunction.Modifier.STATICMETHOD;
     }
     return false;
   }

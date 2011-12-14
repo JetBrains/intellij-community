@@ -1,11 +1,7 @@
 package com.jetbrains.python.psi.resolve;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -15,11 +11,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
-import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -29,7 +22,10 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
@@ -113,7 +109,7 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  private static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
+  public static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
     if (qName == null) return Collections.emptyList();
 
     // TODO: search for entire names, not for first component only!
@@ -160,28 +156,6 @@ public class ResolveImportUtil {
     return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
   }
 
-  @NotNull
-  public static List<PsiElement> resolveImportReference(final PyReferenceExpression importRef) {
-    // prerequisites
-    if (importRef == null) return Collections.emptyList();
-    if (!importRef.isValid()) return Collections.emptyList(); // we often catch a reparse while in a process of resolution
-    final String referencedName = importRef.getReferencedName(); // it will be the "foo" in later comments
-    if (referencedName == null) return Collections.emptyList();
-    final PsiFile file = importRef.getContainingFile();
-    if (file == null || !file.isValid()) return Collections.emptyList();
-
-    final PyElement parent = PsiTreeUtil.getParentOfType(importRef, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
-    final PyQualifiedName qname = importRef.asQualifiedName();
-    if (parent instanceof PyImportElement) {
-      PyImportElement import_element = (PyImportElement)parent;
-      return multiResolveImportElement(import_element, qname);
-    }
-    else if (parent instanceof PyFromImportStatement) { // "from foo import"
-      return resolveFromOrForeignImport((PyFromImportStatement)parent, qname);
-    }
-    return Collections.emptyList();
-  }
-
   public static List<PsiElement> resolveFromOrForeignImport(PyFromImportStatement fromImportStatement, PyQualifiedName qname) {
     final List<PsiElement> results = resolveFromImportStatementSource(fromImportStatement, qname);
     if (results.isEmpty() && qname != null && qname.getComponentCount() > 0) {
@@ -215,152 +189,41 @@ public class ResolveImportUtil {
    *
    * @param qualifiedName      qualified name of the module reference to resolve
    * @param source_file        where that reference resides; serves as PSI foothold to determine module, project, etc.
-   * @param import_is_absolute if false, try old python 2.x's "relative first, absolute next" approach.
-   * @param relative_level     if > 0, step back from source_file and resolve from there (even if import_is_absolute is false!).
+   * @param importIsAbsolute if false, try old python 2.x's "relative first, absolute next" approach.
+   * @param relativeLevel     if > 0, step back from source_file and resolve from there (even if importIsAbsolute is false!).
    * @return list of possible candidates
    */
   @NotNull
   public static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
-                                               boolean import_is_absolute, int relative_level) {
+                                               boolean importIsAbsolute, int relativeLevel) {
     if (qualifiedName == null) return Collections.emptyList();
-    String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relative_level);
+    String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relativeLevel);
     Set<String> being_imported = ourBeingImported.get();
     if (being_imported.contains(marker)) return Collections.emptyList(); // break endless loop in import
     try {
       being_imported.add(marker);
-      if (relative_level > 0) {
+      QualifiedNameResolver visitor = new QualifiedNameResolver(qualifiedName).fromElement(source_file);
+      if (relativeLevel > 0) {
         // "from ...module import"
-        final PsiElement module = resolveModuleAt(stepBackFrom(source_file, relative_level), source_file, qualifiedName);
-        return module != null ? Collections.singletonList(module) : Collections.<PsiElement>emptyList();
+        visitor.withRelative(relativeLevel).withoutRoots();
       }
       else { // "from module import"
-        if (import_is_absolute) {
-          return resolveModulesInRoots(qualifiedName, source_file);
-        }
-        else {
-          final PsiDirectory dir = source_file.getOriginalFile().getContainingDirectory();
-          PsiElement module = resolveModuleAt(dir, source_file, qualifiedName);
-          if (module != null) {
-            return Collections.singletonList(module);
-          }
-          List<PsiElement> found_in_roots = resolveModulesInRoots(qualifiedName, source_file);
-          if (found_in_roots.size() > 0) return found_in_roots;
-
-          return Collections.emptyList();
+        if (!importIsAbsolute) {
+          visitor.withRelative(0);
         }
       }
+      return visitor.resultsAsList();
     }
     finally {
       being_imported.remove(marker);
     }
   }
 
-  /**
-   * Searches for a module at given directory, unwinding qualifiers and traversing directories as needed.
-   *
-   * @param directory     where to start from; top qualifier will be searched for here.
-   * @param sourceFile    the file containing the import statement being resolved
-   * @param qualifiedName the qualified name of the module to search
-   * @return module's file, or null.
-   */
-  @Nullable
-  private static PsiElement resolveModuleAt(PsiDirectory directory, PsiFile sourceFile, PyQualifiedName qualifiedName) {
-    // prerequisites
-    if (directory == null || !directory.isValid()) return null;
-    if (sourceFile == null || !sourceFile.isValid()) return null;
-
-    PsiElement seeker = directory;
-    for (String name : qualifiedName.getComponents()) {
-      if (name == null) {
-        return null;
-      }
-      seeker = resolveChild(seeker, name, sourceFile, null, true, true);
-    }
-    return seeker;
-  }
-
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull PyQualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
-    final List<PsiElement> candidates = resolveModulesInRoots(moduleQualifiedName, foothold);
-    return candidates.isEmpty() ? null : candidates.get(0);
-  }
-
-  /**
-   * Returns the list of directories/files under different project roots which match the specified qualified name.
-   *
-   * @param moduleQualifiedName the qualified name to find
-   * @param foothold            the PSI element in the context of which the search is performed
-   * @return the list of matching directories or files, or an empty list if nothing was found
-   */
-  @NotNull
-  public static List<PsiElement> resolveModulesInRoots(@NotNull PyQualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
-    if (foothold == null || !foothold.isValid()) return Collections.emptyList();
-    PsiFile footholdFile = foothold.getContainingFile();
-    if (footholdFile == null || !footholdFile.isValid()) return Collections.emptyList();
-
-    PythonPathCache cache = getPathCache(foothold);
-    if (cache != null) {
-      final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
-      if (cachedResults != null) {
-        return cachedResults;
-      }
-    }
-
-    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
-
-    List<PsiElement> results;
-
-    if (PydevConsoleRunner.isInPydevConsole(foothold)) {
-      results = visitRootsInAllModules(moduleQualifiedName, foothold, footholdFile);
-    }
-    else {
-      results = visitRoots(moduleQualifiedName, foothold.getManager(), module, foothold, true);
-    }
-
-    if (cache != null) {
-      cache.put(moduleQualifiedName, results);
-    }
-    return results;
-  }
-
-  private static List<PsiElement> visitRootsInAllModules(PyQualifiedName moduleQualifiedName, PsiElement foothold, PsiFile footholdFile) {
-    Set<PsiElement> res = Sets.newHashSet();
-    for (Module mod : ModuleManager.getInstance(footholdFile.getProject()).getModules()) {
-      res.addAll(visitRoots(moduleQualifiedName, foothold.getManager(), mod, foothold, true));
-    }
-    return Lists.newArrayList(res);
-  }
-
-  private static List<PsiElement> visitRoots(@NotNull PyQualifiedName moduleQualifiedName,
-                                             @NotNull PsiManager manager,
-                                             @Nullable Module module,
-                                             @Nullable PsiElement foothold,
-                                             boolean checkForPackage) {
-
-    PsiFile footholdFile = foothold != null ? foothold.getContainingFile() : null;
-    boolean has_djando_facet = false;
-    if (module != null) {
-      has_djando_facet = FacetManager.getInstance(module).getFacetByType(DjangoFacetType.ID) != null;
-    }
-    ResolveInRootVisitor visitor;
-    // resolve the name considering every source root as a package dir, as if it's a deployed package. django console does so.
-    if (has_djando_facet) {
-      visitor = new ResolveInRootAsTopPackageVisitor(moduleQualifiedName, manager, footholdFile, checkForPackage);
-    }
-    else {
-      visitor = new ResolveInRootVisitor(moduleQualifiedName, manager, footholdFile, checkForPackage);
-    }
-    if (module != null) {
-      visitRoots(module, visitor);
-      return visitor.resultsAsList();
-    }
-    else if (foothold != null) {
-      visitSdkRoots(foothold, visitor);
-      return visitor.resultsAsList();
-    }
-    else {
-      throw new IllegalStateException();
-    }
+    if (foothold == null) return null;
+    QualifiedNameResolver visitor = new QualifiedNameResolver(moduleQualifiedName).fromElement(foothold);
+    return visitor.firstResult();
   }
 
   @Nullable
@@ -379,175 +242,6 @@ public class ResolveImportUtil {
     return cache;
   }
 
-  @NotNull
-  public static List<PsiElement> resolveModulesInRoots(@NotNull Module module, @NotNull PyQualifiedName moduleQualifiedName,
-                                                       boolean checkForPackage) {
-    PythonPathCache cache = PythonModulePathCache.getInstance(module);
-    final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
-    if (cachedResults != null) {
-      return cachedResults;
-    }
-    List<PsiElement> results = visitRoots(moduleQualifiedName, PsiManager.getInstance(module.getProject()), module, null, checkForPackage);
-    cache.put(moduleQualifiedName, results);
-    return results;
-  }
-
-  @NotNull
-  public static List<PsiElement> resolveModulesInRootProvider(@NotNull RootProvider rootProvider,
-                                                              @NotNull Module module,
-                                                              @NotNull PyQualifiedName moduleQualifiedName) {
-    ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, PsiManager.getInstance(module.getProject()), null,
-                                                            true);
-    if (visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) {
-      for (VirtualFile file : rootProvider.getFiles(OrderRootType.CLASSES)) {
-        visitor.visitRoot(file);
-      }
-    }
-    return visitor.resultsAsList();
-  }
-
-  public static void visitRoots(@NotNull final PsiElement elt, @NotNull final RootVisitor visitor) {
-    // real search
-    final Module module = ModuleUtil.findModuleForPsiElement(elt);
-    if (module != null) {
-      visitRoots(module, visitor);
-    }
-    else {
-      visitSdkRoots(elt, visitor);
-    }
-  }
-
-  public static void visitRoots(@NotNull Module module, final RootVisitor visitor) {
-    OrderEnumerator.orderEntries(module).recursively().forEach(new Processor<OrderEntry>() {
-      @Override
-      public boolean process(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          return visitModuleContentEntries(((ModuleSourceOrderEntry)orderEntry).getRootModel(), visitor);
-        }
-        return visitOrderEntryRoots(visitor, orderEntry);
-      }
-    });
-  }
-
-  /**
-   * Visits module content, sdk roots and libraries
-   */
-  public static void visitRoots(@NotNull Module module, @NotNull Sdk sdk, RootVisitor visitor) {
-    if (!visitModuleContentEntries(ModuleRootManager.getInstance(module), visitor)) return;
-    // else look in SDK roots
-    if (visitSdkRoots(visitor, sdk)) return;
-
-    //look in libraries
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    rootManager.orderEntries().process(new LibraryRootVisitingPolicy(visitor), null);
-  }
-
-  private static void visitSdkRoots(PsiElement elt, RootVisitor visitor) {
-    // no module, another way to look in SDK roots
-    final PsiFile elt_psifile = elt.getContainingFile();
-    if (elt_psifile != null) {  // formality
-      final VirtualFile elt_vfile = elt_psifile.getOriginalFile().getVirtualFile();
-      List<OrderEntry> orderEntries = null;
-      if (elt_vfile != null) { // reality
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(elt.getProject()).getFileIndex();
-        orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
-        if (orderEntries.size() > 0) {
-          for (OrderEntry entry : orderEntries) {
-            if (!visitOrderEntryRoots(visitor, entry)) break;
-          }
-        }
-        else {
-          orderEntries = null;
-        }
-      }
-
-      // out-of-project file or non-file(e.g. console) - use roots of SDK assigned to project
-      if (orderEntries == null) {
-        final Sdk sdk = ProjectRootManager.getInstance(elt.getProject()).getProjectSdk();
-        if (sdk != null) {
-          visitSdkRoots(visitor, sdk);
-        }
-      }
-    }
-  }
-
-  private static boolean visitSdkRoots(@NotNull RootVisitor visitor, @NotNull Sdk sdk) {
-    final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    for (VirtualFile root : roots) {
-      if (!visitor.visitRoot(root)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-
-  private static boolean visitModuleContentEntries(ModuleRootModel rootModel, RootVisitor visitor) {
-    // look in module sources
-    Set<VirtualFile> contentRoots = Sets.newHashSet();
-    for (ContentEntry entry : rootModel.getContentEntries()) {
-      VirtualFile rootFile = entry.getFile();
-
-      if (rootFile != null && !visitor.visitRoot(rootFile)) return false;
-      contentRoots.add(rootFile);
-      for (VirtualFile folder : entry.getSourceFolderFiles()) {
-        if (!visitor.visitRoot(folder)) return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
-    Set<VirtualFile> allRoots = new LinkedHashSet<VirtualFile>();
-    Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
-    Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
-    for (VirtualFile root : allRoots) {
-      if (!visitor.visitRoot(root)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Nullable
-  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final String name) {
-    return resolveInRoots(context, PyQualifiedName.fromDottedString(name));
-  }
-
-  /**
-   * Looks for a name among element's module's roots; if there's no module, then among project's roots.
-   *
-   * @param context PSI element that defines the module and/or the project.
-   * @param qualifiedName module name to be found among roots.
-   * @return a PsiFile, a child of a root.
-   */
-  @Nullable
-  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final PyQualifiedName qualifiedName) {
-    // NOTE: a quick and dirty temporary fix for "current dir" root path, which is assumed to be present first (but may be not).
-    if (qualifiedName.getComponentCount() == 1) {
-      PsiElement res = resolveInCurrentDir(context, qualifiedName.getLastComponent());
-      if (res != null) {
-        return res;
-      }
-    }
-    return resolveModuleInRoots(qualifiedName, context);
-  }
-
-  @Nullable
-  public static PsiElement resolveInCurrentDir(@NotNull final PsiElement elt, final String refName) {
-    PsiFile pfile = elt.getContainingFile();
-    VirtualFile vfile = pfile.getVirtualFile();
-    if (vfile == null) { // we're probably within a copy, e.g. for completion; get the real thing
-      pfile = pfile.getOriginalFile();
-    }
-    PsiDirectory pdir = pfile.getContainingDirectory();
-    if (pdir != null) {
-      PsiElement child_elt = resolveChild(pdir, refName, pfile, null, true, true);
-      if (child_elt != null) return child_elt;
-    }
-    return null;
-  }
-
   @Nullable
   private static PsiElement resolveForeignImport(@NotNull final PyElement importElement,
                                                  @NotNull final PyQualifiedName importText,
@@ -559,99 +253,6 @@ public class ResolveImportUtil {
       }
     }
     return null;
-  }
-
-  public static boolean findInRoots(Module module, Sdk pythonSdk, String name) {
-    ResolveNameVisitor
-      visitor = new ResolveNameVisitor(PsiManager.getInstance(module.getProject()), name);
-    visitRoots(module, pythonSdk, visitor);
-    return visitor.isFound();
-  }
-
-  static class ResolveInRootVisitor implements RootVisitor {
-    final PsiFile myFootholdFile;
-    final boolean myCheckForPackage;
-    final @NotNull PyQualifiedName myQualifiedName;
-    final @NotNull PsiManager myPsiManager;
-    final Set<PsiElement> results = Sets.newLinkedHashSet();
-
-    public ResolveInRootVisitor(@NotNull PyQualifiedName qName,
-                                @NotNull PsiManager psiManager,
-                                @Nullable PsiFile foothold_file,
-                                boolean checkForPackage) {
-      myQualifiedName = qName;
-      myPsiManager = psiManager;
-      myFootholdFile = foothold_file;
-      myCheckForPackage = checkForPackage;
-    }
-
-    public boolean visitRoot(final VirtualFile root) {
-      if (!root.isValid()) {
-        return true;
-      }
-      PsiElement module = resolveInRoot(root, myQualifiedName, myPsiManager, myFootholdFile, myCheckForPackage);
-      if (module != null) {
-        results.add(module);
-      }
-
-      return true;
-    }
-
-    @NotNull
-    public List<PsiElement> resultsAsList() {
-      return Lists.newArrayList(results);
-    }
-
-    @Nullable
-    protected static PsiElement resolveInRoot(VirtualFile root,
-                                              PyQualifiedName qualifiedName,
-                                              PsiManager psiManager,
-                                              @Nullable PsiFile foothold_file,
-                                              boolean checkForPackage) {
-      PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
-      if (module == null) return null;
-      for (String component : qualifiedName.getComponents()) {
-        if (component == null) {
-          module = null;
-          break;
-        }
-        module = resolveChild(module, component, foothold_file, root, false, checkForPackage); // only files, we want a module
-      }
-      return module;
-    }
-  }
-
-  /**
-   * Visits roots and detects if qName is a name of top package coincinding with a root:
-   * that is, tha package is not one of root's children, but the root itself.
-   */
-  private static class ResolveInRootAsTopPackageVisitor extends ResolveInRootVisitor {
-    public ResolveInRootAsTopPackageVisitor(@NotNull PyQualifiedName qName,
-                                            @NotNull PsiManager psiManager,
-                                            @Nullable PsiFile foothold_file,
-                                            boolean checkForPackage) {
-      super(qName, psiManager, foothold_file, checkForPackage);
-    }
-
-    @Override
-    public boolean visitRoot(VirtualFile root) {
-      if (!root.isValid()) {
-        return true;
-      }
-      PsiElement module = resolveInRoot(root, myQualifiedName, myPsiManager, myFootholdFile, myCheckForPackage);
-      if (module != null) {
-        results.add(module);
-      }
-
-      if (myQualifiedName.matchesPrefix(PyQualifiedName.fromDottedString(root.getName()))) {
-        module = resolveInRoot(root.getParent(), myQualifiedName, myPsiManager, myFootholdFile, myCheckForPackage);
-        if (module != null) {
-          results.add(module);
-        }
-      }
-
-      return true;
-    }
   }
 
   /**
@@ -685,7 +286,10 @@ public class ResolveImportUtil {
 
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
       // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
-      ret = ((PyFileImpl)parent).getElementNamed(referencedName, false);
+      PsiElement elementNamed = ((PyFileImpl)parent).getElementNamed(referencedName, false);
+      if (!fileOnly || PyUtil.instanceOf(elementNamed, PsiFile.class, PsiDirectory.class)) {
+        ret = elementNamed;
+      }
       if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class) &&
           PsiTreeUtil.getStubOrPsiParentOfType(ret, PyExceptPart.class) == null) {
         return ret;
@@ -865,7 +469,7 @@ public class ResolveImportUtil {
       return name;
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    visitRoots(foothold, visitor);
+    RootVisitorHost.visitRoots(foothold, visitor);
     final PyQualifiedName result = visitor.getResult();
     if (cache != null) {
       cache.putName(vfile, result);
@@ -881,7 +485,7 @@ public class ResolveImportUtil {
       return name.toString();
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    visitRoots(module, visitor);
+    RootVisitorHost.visitRoots(module, false, visitor);
     final PyQualifiedName result = visitor.getResult();
     cache.putName(vfile, result);
     return result == null ? null : result.toString();
@@ -964,27 +568,6 @@ public class ResolveImportUtil {
     return null;
   }
 
-  public static class LibraryRootVisitingPolicy extends RootPolicy<PsiElement> {
-    private final RootVisitor myVisitor;
-
-    public LibraryRootVisitingPolicy(RootVisitor visitor) {
-      myVisitor = visitor;
-    }
-
-    @Nullable
-    public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public PsiElement visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, PsiElement value) {
-      if (value != null) return value;  // for chaining in processOrder()
-      visitOrderEntryRoots(myVisitor, libraryOrderEntry);
-      return null;
-    }
-  }
-
   /**
    * When a name is imported from a module, tries to find the definition of that name inside the module,
    * as opposed to looking for submodules.
@@ -1050,35 +633,5 @@ public class ResolveImportUtil {
       }
     }
     return PointInImport.NONE;
-  }
-
-  public static class ResolveNameVisitor implements RootVisitor {
-    final @NotNull PsiManager myPsiManager;
-    private boolean myFound = false;
-    private final String myName;
-
-
-    public ResolveNameVisitor(@NotNull PsiManager psiManager, String name) {
-      myPsiManager = psiManager;
-      myName = name;
-    }
-
-    public boolean visitRoot(final VirtualFile root) {
-      if (!root.isValid()) {
-        return true;
-      }
-      PsiElement module = root.isDirectory() ? myPsiManager.findDirectory(root) : myPsiManager.findFile(root);
-      module =  resolveChild(module, myName, null, root, false, false);
-      if (module != null) {
-        myFound = true;
-        return false;
-      }
-
-      return true;
-    }
-
-    public boolean isFound() {
-      return myFound;
-    }
   }
 }

@@ -32,7 +32,7 @@ public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
     PsiElement importStatement = descriptor.getPsiElement();
     if (importStatement instanceof PyImportStatement) {
       for (PyImportElement importElement : ((PyImportStatement)importStatement).getImportElements()) {
-        PyReferenceExpression importReference = importElement.getImportReference();
+        PyReferenceExpression importReference = importElement.getImportReferenceExpression();
         if (importReference != null) {
           if ("__builtin__".equals(importReference.getName())) {
             importReference.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, "builtins"));

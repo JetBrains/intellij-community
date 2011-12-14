@@ -139,7 +139,7 @@ public class PyCallExpressionHelper {
 
   @Nullable
   public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, PyResolveContext resolveContext, int implicitOffset) {
-    PyFunction.Flag wrappedFlag = null;
+    PyFunction.Modifier wrappedModifier = null;
     boolean isConstructorCall = false;
 
     PyExpression callee = us.getCallee();
@@ -167,17 +167,17 @@ public class PyCallExpressionHelper {
         resolved = wrapperInfo.getSecond();
         String wrapper_name = wrapperInfo.getFirst();
         if (PyNames.CLASSMETHOD.equals(wrapper_name)) {
-          wrappedFlag = PyFunction.Flag.CLASSMETHOD;
+          wrappedModifier = PyFunction.Modifier.CLASSMETHOD;
         }
-        else if (PyNames.STATICMETHOD.equals(wrapper_name)) wrappedFlag = PyFunction.Flag.STATICMETHOD;
+        else if (PyNames.STATICMETHOD.equals(wrapper_name)) wrappedModifier = PyFunction.Modifier.STATICMETHOD;
       }
     }
     if (resolved instanceof Callable) {
-      Set<PyFunction.Flag> flags = resolved instanceof PyFunction
-                                   ? PyUtil.detectDecorationsAndWrappersOf((PyFunction) resolved)
-                                   : EnumSet.noneOf(PyFunction.Flag.class);
-      if (wrappedFlag != null) {
-        flags.add(wrappedFlag);
+      PyFunction.Modifier modifier = resolved instanceof PyFunction
+                                   ? ((PyFunction)resolved).getModifier()
+                                   : null;
+      if (modifier == null && wrappedModifier != null) {
+        modifier = wrappedModifier;
       }
       List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();
       boolean isByInstance = isConstructorCall ||
@@ -187,16 +187,16 @@ public class PyCallExpressionHelper {
       boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, resolveContext.getTypeEvalContext());
       final Callable callable = (Callable)resolved;
 
-      implicitOffset += getImplicitArgumentCount(callable, flags, isConstructorCall, isByInstance, isByClass);
+      implicitOffset += getImplicitArgumentCount(callable, modifier, isConstructorCall, isByInstance, isByClass);
       implicitOffset = implicitOffset < 0? 0: implicitOffset; // wrong source can trigger strange behaviour
-      return new PyCallExpression.PyMarkedCallee(callable, flags, implicitOffset,
+      return new PyCallExpression.PyMarkedCallee(callable, modifier, implicitOffset,
                                                  resolveResult != null ? resolveResult.isImplicit() : false);
     }
     return null;
   }
 
   /**
-   * Calls the {@link #getImplicitArgumentCount(PyExpression, Callable, PyFunction.Flag, EnumSet<PyFunction.Flag>, boolean) full version}
+   * Calls the {@link #getImplicitArgumentCount(PyExpression, Callable, com.jetbrains.python.psi.PyFunction.Modifier, EnumSet< com.jetbrains.python.psi.PyFunction.Modifier >, boolean) full version}
    * with null flags and with isByInstance inferred directly from call site (won't work with reassigned bound methods).
    *
    * @param callReference       the call site, where arguments are given.
@@ -215,7 +215,7 @@ public class PyCallExpressionHelper {
     QualifiedResolveResult followed = callReference.followAssignmentsChain(resolveContext);
     boolean isByInstance = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), resolveContext.getTypeEvalContext());
     boolean isByClass = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), resolveContext.getTypeEvalContext());
-    return getImplicitArgumentCount(functionBeingCalled, PyUtil.detectDecorationsAndWrappersOf(functionBeingCalled), false, isByInstance, isByClass);
+    return getImplicitArgumentCount(functionBeingCalled, functionBeingCalled.getModifier(), false, isByInstance, isByClass);
   }
 
   /**
@@ -229,7 +229,7 @@ public class PyCallExpressionHelper {
    */
   private static int getImplicitArgumentCount(
     Callable callable,
-    Set<PyFunction.Flag> flags,
+    PyFunction.Modifier modifier,
     boolean isConstructorCall,
     boolean isByInstance,
     boolean isByClass
@@ -247,10 +247,10 @@ public class PyCallExpressionHelper {
     }
 
     // decorators?
-    if (flags.contains(PyFunction.Flag.STATICMETHOD)) {
+    if (modifier == PyFunction.Modifier.STATICMETHOD) {
       if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
     }
-    else if (flags.contains(PyFunction.Flag.CLASSMETHOD)) {
+    else if (modifier == PyFunction.Modifier.CLASSMETHOD) {
       if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
     }
     return implicit_offset;

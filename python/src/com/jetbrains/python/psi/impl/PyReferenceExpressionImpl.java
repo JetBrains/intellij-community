@@ -59,7 +59,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
     if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
-      return new PyImportReferenceImpl(this, context);
+      return new PyImportReference(this, context);
     }
 
     if (file != null) {
@@ -74,7 +74,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     if (qualifier != null) {
-      return new PyQualifiedReferenceImpl(this, context);
+      return new PyQualifiedReference(this, context);
     }
 
     return new PyReferenceImpl(this, context);
