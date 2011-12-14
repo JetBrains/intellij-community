@@ -15,19 +15,14 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.util.SmartList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
-
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public abstract class IncludeAwareMatcher extends BaseMatcher {
     protected final XmlDocument myDocument;
@@ -53,14 +48,6 @@ public abstract class IncludeAwareMatcher extends BaseMatcher {
 
                 final PsiFile file = ResolveUtil.resolveFile(href, f);
                 if (file instanceof XmlFile) {
-
-                  final List<PsiElement> data = myDocument.getContainingFile().getUserData(ResolveUtil.DEPENDENCIES);
-                  if (data == null) {
-                    myDocument.getContainingFile().putUserData(ResolveUtil.DEPENDENCIES, new SmartList<PsiElement>(file));
-                  } else if (!data.contains(file)) {
-                    data.add(file);
-                  }
-
                   return Result.create(changeDocument(((XmlFile)file).getDocument()));
                 }
             }

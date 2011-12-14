@@ -218,7 +218,7 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
               list.add(new Node(new URI(id.replaceAll(" ", "%20")).normalize().toASCIIString(), node.getLineNumber(), path,
                                 node.getStringValue()));
             } catch (URISyntaxException e) {
-              e.printStackTrace();
+              debug(e);
               list.add(new Node(id, node.getLineNumber(), path, node.getStringValue()));
             }
           } else {

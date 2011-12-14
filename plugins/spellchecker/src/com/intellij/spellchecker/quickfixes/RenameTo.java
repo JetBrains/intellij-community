@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -106,6 +107,10 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
         
         DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
         AnAction action = new RenameElementAction();
+        final TextRange range = psiElement.getTextRange();
+        if (range != null) {
+          editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+        }
         AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
         action.actionPerformed(event);
         if (provider != null) {

@@ -78,13 +78,23 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     final JTableHeader header = getTableHeader();
     final TableCellRenderer defaultRenderer = header == null? null : header.getDefaultRenderer();
 
+    final RowSorter<? extends TableModel> sorter = getRowSorter();
+    final List<? extends RowSorter.SortKey> current = sorter == null ? null : sorter.getSortKeys();
     ColumnInfo[] columns = getListTableModel().getColumnInfos();
     for (int i = 0; i < columns.length; i++) {
       final ColumnInfo columnInfo = columns[i];
       final TableColumn column = getColumnModel().getColumn(i);
+      // hack to get sort arrow included into the renderer component
+      if (sorter != null && columnInfo.isSortable()) {
+        sorter.setSortKeys(Collections.singletonList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+      }
 
       final Component headerComponent = defaultRenderer == null? null :
         defaultRenderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, 0);
+      
+      if (sorter != null && columnInfo.isSortable()) {
+        sorter.setSortKeys(current);
+      }
       final Dimension headerSize = headerComponent == null? new Dimension(0, 0) : headerComponent.getPreferredSize();
       final String maxStringValue;
       final String preferredValue;
