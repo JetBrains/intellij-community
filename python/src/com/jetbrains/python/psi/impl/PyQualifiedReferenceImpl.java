@@ -344,9 +344,9 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
-    List<String> qualifier_path = PyResolveUtil.unwindQualifiersAsStrList(qualifier);
-    if (qualifier_path != null) {
-      AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifier_path);
+    PyQualifiedName qualifierPath = PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(qualifier));
+    if (qualifierPath != null) {
+      AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifierPath);
       PyResolveUtil.treeCrawlUp(proc, qualifier);
       return proc.getResult();
     }

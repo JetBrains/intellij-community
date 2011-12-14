@@ -7,6 +7,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -16,9 +17,9 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
    * Collects all assignments in context above given element, if they match given naming pattern.
    * Used to track creation of attributes by assignment (e.g in constructor).
    */
-  List<String> my_qualifier;
-  List<PyExpression> my_result;
-  Set<String> my_seen_names;
+  private final PyQualifiedName myQualifier;
+  private final List<PyExpression> myResult;
+  private final Set<String> mySeenNames;
 
   /**
    * Creates an instance to collect assignments of attributes to the object identified by 'qualifier'.
@@ -28,11 +29,11 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
    *
    * @param qualifier qualifying names, outermost first; must not be empty.
    */
-  public AssignmentCollectProcessor(@NotNull List<String> qualifier) {
-    assert qualifier.size() > 0;
-    my_qualifier = qualifier;
-    my_result = new ArrayList<PyExpression>();
-    my_seen_names = new HashSet<String>();
+  public AssignmentCollectProcessor(@NotNull PyQualifiedName qualifier) {
+    assert qualifier.getComponentCount() > 0;
+    myQualifier = qualifier;
+    myResult = new ArrayList<PyExpression>();
+    mySeenNames = new HashSet<String>();
   }
 
   public boolean execute(final PsiElement element, final ResolveState state) {
@@ -41,19 +42,19 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
       for (PyExpression ex : assignment.getTargets()) {
         if (ex instanceof PyTargetExpression) {
           final PyTargetExpression target = (PyTargetExpression)ex;
-          List<String> quals = PyResolveUtil.unwindQualifiersAsStrList(target);
           List<PyExpression> qualsExpr = PyResolveUtil.unwindQualifiers(target);
-          if (quals != null) {
-            if (quals.size() == my_qualifier.size() + 1 && PyResolveUtil.pathsMatchStr(quals, my_qualifier)) {
+          PyQualifiedName qualifiedName = PyQualifiedName.fromReferenceChain(qualsExpr);
+          if (qualifiedName != null) {
+            if (qualifiedName.getComponentCount() == myQualifier.getComponentCount() + 1 && qualifiedName.matchesPrefix(myQualifier)) {
               // a new attribute follows last qualifier; collect it.
               PyExpression last_elt = qualsExpr.get(qualsExpr.size() - 1); // last item is the outermost, new, attribute.
               String last_elt_name = last_elt.getName();
-              if (!my_seen_names.contains(last_elt_name)) { // no dupes, only remember the latest
-                my_result.add(last_elt);
-                my_seen_names.add(last_elt_name);
+              if (!mySeenNames.contains(last_elt_name)) { // no dupes, only remember the latest
+                myResult.add(last_elt);
+                mySeenNames.add(last_elt_name);
               }
             }
-            else if (quals.size() < my_qualifier.size() + 1 && PyResolveUtil.pathsMatchStr(my_qualifier, quals)) {
+            else if (qualifiedName.getComponentCount() < myQualifier.getComponentCount() + 1 && myQualifier.matchesPrefix(qualifiedName)) {
               // qualifier(s) get redefined; collect no more.
               return false;
             }
@@ -66,12 +67,12 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
   }
 
   /**
-   * @return a collection of exressions (parts of assignment expressions) where new attributes were defined. E.g. for "a.b.c = 1",
+   * @return a collection of expressions (parts of assignment expressions) where new attributes were defined. E.g. for "a.b.c = 1",
    *         the expression for 'c' is in the result.
    */
   @NotNull
   public Collection<PyExpression> getResult() {
-    return my_result;
+    return myResult;
   }
 
   public <T> T getHint(final Key<T> hintKey) {

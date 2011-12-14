@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -231,24 +230,6 @@ public class PyResolveUtil {
   @Nullable
   public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
     return treeCrawlUp(processor, false, elt);
-  }
-
-
-  public static boolean pathsMatchStr(List<String> source_path, List<String> target_path) {
-    // turn qualifiers into lists
-    if ((source_path == null) || (target_path == null)) return false;
-    // compare until target is exhausted
-    Iterator<String> source_iter = source_path.iterator();
-    for (final String target_elt : target_path) {
-      if (source_iter.hasNext()) {
-        String source_elt = source_iter.next();
-        if (!target_elt.equals(source_elt)) return false;
-      }
-      else {
-        return false;
-      } // source exhausted before target
-    }
-    return true;
   }
 
   /**
