@@ -38,14 +38,14 @@ import java.beans.PropertyChangeListener;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public class ImageEditorImpl implements ImageEditor {
+class ImageEditorImpl implements ImageEditor {
   private final PropertyChangeListener optionsChangeListener = new OptionsChangeListener();
   private final Project project;
   private final ImageContentProvider contentProvider;
   private final ImageEditorUI editorUI;
   private boolean disposed;
 
-  public ImageEditorImpl(@NotNull Project project, @NotNull final ImageContentProvider contentProvider) {
+  ImageEditorImpl(@NotNull Project project, @NotNull final ImageContentProvider contentProvider) {
     this.project = project;
     this.contentProvider = contentProvider;
 

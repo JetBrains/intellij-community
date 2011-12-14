@@ -53,8 +53,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     final Module module = getModule();
     final GlobalSearchScope scope;
     if (module != null) {
-      scope = myClassesInLibraries ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
-              : GlobalSearchScope.moduleWithDependenciesScope(module);
+      scope = myClassesInLibraries ? module.getModuleRuntimeScope(true) : GlobalSearchScope.moduleWithDependenciesScope(module);
     }
     else {
       scope = myClassesInLibraries ? GlobalSearchScope.allScope(getProject()) : GlobalSearchScope.projectScope(getProject());

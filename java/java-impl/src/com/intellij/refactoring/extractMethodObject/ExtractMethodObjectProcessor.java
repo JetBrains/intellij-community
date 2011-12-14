@@ -80,7 +80,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   private PsiMethod myInnerMethod;
   private boolean myMadeStatic = false;
-  private final Set<MethodToMoveUsageInfo> myUsages = new HashSet<MethodToMoveUsageInfo>();
+  private final Set<MethodToMoveUsageInfo> myUsages = new LinkedHashSet<MethodToMoveUsageInfo>();
   private PsiClass myInnerClass;
   private ChangeSignatureProcessor myChangeSignatureProcessor;
   private Runnable myCopyMethodToInner;
@@ -109,7 +109,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
     if (isCreateInnerClass()) {
-      final Set<PsiMethod> usedMethods = new HashSet<PsiMethod>();
+      final Set<PsiMethod> usedMethods = new LinkedHashSet<PsiMethod>();
       getMethod().accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -224,13 +224,16 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       };
       dlg.show();
       if (dlg.isOK()) {
-        for (MemberInfoBase<PsiMember> memberInfo : panel.getTable().getSelectedMemberInfos()) {
-          if (memberInfo.isChecked()) {
-            myInnerClass.add(memberInfo.getMember().copy());
-            memberInfo.getMember().delete();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            for (MemberInfoBase<PsiMember> memberInfo : panel.getTable().getSelectedMemberInfos()) {
+              if (memberInfo.isChecked()) {
+                myInnerClass.add(memberInfo.getMember().copy());
+                memberInfo.getMember().delete();
+              }
+            }
           }
-
-        }
+        });
       }
     }
   }

@@ -49,7 +49,7 @@
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">
-      <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="ExtractInclude" />
+      <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
   </actions>
 </idea-plugin>

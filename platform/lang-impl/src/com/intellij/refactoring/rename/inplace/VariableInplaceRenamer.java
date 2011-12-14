@@ -404,6 +404,8 @@ public class VariableInplaceRenamer {
                 myEditor.getCaretModel().moveToOffset(rangeMarker.isValid() ? rangeMarker.getStartOffset() : offset);
                 if (selectedRange != null){
                   myEditor.getSelectionModel().setSelection(selectedRange.getStartOffset(), selectedRange.getEndOffset());
+                } else if (!shouldSelectAll()){
+                  myEditor.getSelectionModel().removeSelection();
                 }
               }
             };
@@ -442,6 +444,10 @@ public class VariableInplaceRenamer {
       }
     }, RENAME_TITLE, null);
     return true;
+  }
+
+  protected boolean shouldSelectAll() {
+    return false;
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {

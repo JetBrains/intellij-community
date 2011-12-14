@@ -313,20 +313,27 @@ public class TestAll implements Test {
         }
         return adapter;
       }
-      return new TestSuite(testCaseClass){
+
+      final int[] testsCount = {0};
+      TestSuite suite = new TestSuite(testCaseClass) {
         @Override
         public void addTest(Test test) {
-          if (!(test instanceof TestCase))  {
+          if (!(test instanceof TestCase)) {
+            testsCount[0]++;
             super.addTest(test);
-          } else {
-            if (isPerformanceTestsRun() ^ (hasPerformance(((TestCase)test).getName()) || hasPerformance(testCaseClass.getSimpleName()))) return;
-            
+          }
+          else {
+            String name = ((TestCase)test).getName();
+            if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
+            if (isPerformanceTestsRun() ^ (hasPerformance(name) || hasPerformance(testCaseClass.getSimpleName())))
+              return;
+
             Method method = findTestMethod((TestCase)test);
             if (method == null || !TestCaseLoader.isBombed(method)) {
+              testsCount[0]++;
               super.addTest(test);
             }
           }
-
         }
 
         @Nullable
@@ -334,6 +341,8 @@ public class TestAll implements Test {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
+
+      return testsCount[0] > 0 ? suite : null;
     }
 
     return null;

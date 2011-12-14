@@ -64,9 +64,6 @@ public final class ReflectedProject {
           iterator.remove();
         }
         else {
-          if (pair.first != null && pair.first.getProject() == null) {
-            iterator.remove();
-          }
           if (pair.second == classLoader) {
             return pair.first;
           }
@@ -76,35 +73,35 @@ public final class ReflectedProject {
     finally {
       ourProjectsLock.unlock();
     }
-    final ReflectedProject project = new ReflectedProject(classLoader);
-    if (project.getProject() != null) { // do not cache partially-loaded stuff
+    final ReflectedProject reflectedProj = new ReflectedProject(classLoader);
+    if (reflectedProj.getProject() != null) { // do not cache partially-loaded stuff
       ourProjectsLock.lock();
       try {
         ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
-          new Pair<ReflectedProject, ClassLoader>(project, classLoader)
+          new Pair<ReflectedProject, ClassLoader>(reflectedProj, classLoader)
         ));
       }
       finally {
         ourProjectsLock.unlock();
       }
     }
-    return project;
+    return reflectedProj;
   }
 
   ReflectedProject(final ClassLoader classLoader) {
-    Object myProject = null;
+    Object project = null;
     try {
       final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");
       if (projectClass != null) {
-        myProject = projectClass.newInstance();
+        project = projectClass.newInstance();
         Method method = projectClass.getMethod(INIT_METHOD_NAME);
-        method.invoke(myProject);
+        method.invoke(project);
         method = getMethod(projectClass, GET_TASK_DEFINITIONS_METHOD_NAME);
-        myTaskDefinitions = (Hashtable)method.invoke(myProject);
+        myTaskDefinitions = (Hashtable)method.invoke(project);
         method = getMethod(projectClass, GET_DATA_TYPE_DEFINITIONS_METHOD_NAME);
-        myDataTypeDefinitions = (Hashtable)method.invoke(myProject);
+        myDataTypeDefinitions = (Hashtable)method.invoke(project);
         method = getMethod(projectClass, GET_PROPERTIES_METHOD_NAME);
-        myProperties = (Hashtable)method.invoke(myProject);
+        myProperties = (Hashtable)method.invoke(project);
         myTargetClass = classLoader.loadClass("org.apache.tools.ant.Target");
       }
     }
@@ -118,7 +115,7 @@ public final class ReflectedProject {
       }
       else {
         LOG.info(e);
-        myProject = null;
+        project = null;
       }
     }
     catch (InvocationTargetException e) {
@@ -128,14 +125,14 @@ public final class ReflectedProject {
       }
       else {
         LOG.info(e);
-        myProject = null;
+        project = null;
       }
     }
     catch (Throwable e) {
       LOG.info(e);
-      myProject = null;
+      project = null;
     }
-    this.myProject = myProject;
+    myProject = project;
   }
 
   private static Method getMethod(final Class introspectionHelperClass, final String name) throws NoSuchMethodException {
