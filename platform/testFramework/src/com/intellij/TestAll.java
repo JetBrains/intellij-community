@@ -353,6 +353,14 @@ public class TestAll implements Test {
     }
   }
 
+  private static Set<String> normalizePaths(String[] array) {
+    Set<String> answer = new LinkedHashSet<String>(array.length);
+    for (String path : array) {
+      answer.add(path.replace('\\', '/'));
+    }
+    return answer;
+  }
+
   public static String[] getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
@@ -363,8 +371,8 @@ public class TestAll implements Test {
     if (roots != null) {
       if (Comparing.equal(System.getProperty(TestCaseLoader.SKIP_COMMUNITY_TESTS), "true")) {
         System.out.println("Skipping community tests");
-        Set<String> set = new LinkedHashSet<String>(Arrays.asList(roots));
-        set.removeAll(Arrays.asList(ExternalClasspathClassLoader.getExcludeRoots()));
+        Set<String> set = normalizePaths(roots);
+        set.removeAll(normalizePaths(ExternalClasspathClassLoader.getExcludeRoots()));
         roots = set.toArray(new String[set.size()]);
       }
       
