@@ -45,7 +45,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   @NonNls
   private static final String ELEMENT_FORM_DEFAULT = "elementFormDefault";
 
-  public XmlElementDescriptorImpl(@NotNull XmlTag descriptorTag) {
+  public XmlElementDescriptorImpl(@Nullable XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
   }
 
