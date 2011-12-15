@@ -377,6 +377,12 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     final String displayName = VcsBundle.message("vcs.console.toolwindow.display.name");
     Content content = contentManager.findContent(displayName);
     if (content == null) {
+      if (myEditorAdapter != null) {
+        final Editor editor = myEditorAdapter.getEditor();
+        if (! editor.isDisposed()) {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
+      }
       final EditorFactory editorFactory = EditorFactory.getInstance();
       final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""), myProject);
       EditorSettings editorSettings = editor.getSettings();
