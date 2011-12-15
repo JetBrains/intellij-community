@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.psi.CythonCImportElement;
@@ -160,31 +159,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Nullable
   public PyQualifiedName asQualifiedName() {
     return PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
-  }
-
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    // in statements, process only the section in which the original expression was located
-    PsiElement parent = getParent();
-    if (parent instanceof PyStatement && lastParent == null && PsiTreeUtil.isAncestor(parent, place, true)) {
-      return true;
-    }
-
-    // never resolve to references within the same assignment statement
-    if (getParent() instanceof PyAssignmentStatement) {
-      PsiElement placeParent = place.getParent();
-      while (placeParent != null && placeParent instanceof PyExpression) {
-        placeParent = placeParent.getParent();
-      }
-      if (placeParent == getParent()) {
-        return true;
-      }
-    }
-
-    if (this == place) return true;
-    return processor.execute(this, substitutor);
   }
 
   @Override

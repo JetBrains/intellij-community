@@ -336,22 +336,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     pyVisitor.visitPyFunction(this);
   }
 
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    /*
-    if (lastParent != null && lastParent.getParent() == this) {
-      final PyNamedParameter[] params = getParameterList().getParameters();
-      for (PyNamedParameter param : params) {
-        if (!processor.execute(param, substitutor)) return false;
-      }
-    }
-    */
-    return processor.execute(this, substitutor);
-  }
-
   public int getTextOffset() {
     final ASTNode name = getNameNode();
     return name != null ? name.getStartOffset() : super.getTextOffset();

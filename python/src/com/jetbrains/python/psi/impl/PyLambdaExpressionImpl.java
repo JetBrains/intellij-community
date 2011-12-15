@@ -1,9 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -49,34 +46,9 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     return null; // we're never a method
   }
 
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
-                                     final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
-    // TODO: move it to PyParamList
-    PyParameter[] parameters = getParameterList().getParameters();
-    return processParamLayer(parameters, processor, state, lastParent);
-  }
-
   @Override
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);
-  }
-
-  private boolean processParamLayer(@NotNull final PyParameter[] parameters,
-                                    @NotNull final PsiScopeProcessor processor,
-                                    @NotNull final ResolveState state,
-                                    final PsiElement lastParent) {
-    for (PyParameter param : parameters) {
-      if (param == lastParent) continue;
-      PyTupleParameter t_param = param.getAsTuple();
-      if (t_param != null) {
-        PyParameter[] nested_params = t_param.getContents();
-        if (!processParamLayer(nested_params, processor, state, lastParent)) return false;
-      }
-      else if (!processor.execute(param, state)) return false;
-    }
-    return true;
   }
 }
