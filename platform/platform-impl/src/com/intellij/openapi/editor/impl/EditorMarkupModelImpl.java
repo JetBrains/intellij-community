@@ -854,14 +854,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     int endY;
+    int endLineNumber = offsetToLine(end, document);
     if (end == -1 || start == -1) {
       endY = Math.min(myEditorSourceHeight, myEditorTargetHeight);
     }
-    else if (start == end || document.getLineNumber(start) == document.getLineNumber(end)) {
+    else if (start == end || offsetToLine(start,document) == endLineNumber) {
       endY = startY; // both offsets are on the same line, no need to recalc Y position
     }
     else {
-      int endLineNumber = offsetToLine(end, document);
       if (myEditorSourceHeight < myEditorTargetHeight) {
         endY = myEditorScrollbarTop + endLineNumber * myEditor.getLineHeight();
       }
