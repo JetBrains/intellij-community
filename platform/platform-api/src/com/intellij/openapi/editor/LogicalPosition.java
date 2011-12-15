@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,10 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   public String toString() {
     return "LogicalPosition: (" + line + ", " + column + ")"
            + (visualPositionAware ? "; vp aware" : "")
-           + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine == 0 ? "" : "; soft wrap: lines=" + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine) + " (before=" + softWrapLinesBeforeCurrentLogicalLine + "; current=" + softWrapLinesOnCurrentLogicalLine + ")")
+           + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine == 0
+              ? ""
+              : "; soft wrap: lines=" + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine)
+                + " (before=" + softWrapLinesBeforeCurrentLogicalLine + "; current=" + softWrapLinesOnCurrentLogicalLine + ")")
            + (softWrapColumnDiff == 0 ? "" : "columns diff=" + softWrapColumnDiff + ";" )
            + (foldedLines == 0? "" : " folding: lines = " + foldedLines + ";")
            + (foldingColumnDiff == 0 ? "" : " columns diff=" + foldingColumnDiff);
