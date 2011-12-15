@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyImportReference;
+import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.sdk.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.PySkeletonRefresher;
 import com.jetbrains.python.sdk.PythonSdkFlavor;

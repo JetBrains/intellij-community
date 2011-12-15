@@ -40,9 +40,9 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyImportReference;
+import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
-import com.jetbrains.python.psi.impl.PyOperatorReferenceImpl;
+import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -392,10 +392,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               }
               addCreateMemberFromUsageFixes(qtype, reference, ref_text, actions);
               if (qtype instanceof PyClassType) {
-                if (reference instanceof PyOperatorReferenceImpl) {
+                if (reference instanceof PyOperatorReference) {
                   description = PyBundle.message("INSP.unresolved.operator.ref",
                                                  qtype.getName(), refname,
-                                                 ((PyOperatorReferenceImpl)reference).getReadableOperatorName());
+                                                 ((PyOperatorReference)reference).getReadableOperatorName());
                 }
                 else {
                   description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName());
@@ -464,7 +464,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       if (qtype instanceof CythonBuiltinType ||
-          (qtype instanceof CythonType && reference instanceof PyOperatorReferenceImpl)) {
+          (qtype instanceof CythonType && reference instanceof PyOperatorReference)) {
         return true;
       }
       return false;
@@ -479,7 +479,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             if (element.getParent() instanceof PyCallExpression) {
               actions.add(new AddMethodQuickFix(refText, (PyClassType)qtype));
             }
-            else if (!(reference instanceof PyOperatorReferenceImpl)) {
+            else if (!(reference instanceof PyOperatorReference)) {
               actions.add(new AddFieldQuickFix(refText, cls, "None"));
             }
           }
