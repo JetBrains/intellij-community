@@ -222,6 +222,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
 
   //todo use DefaultExternalizer
   public void readExternal(Element parentNode) {
+    boolean safeWriteSettingRead = false;
+
     List children = parentNode.getChildren(ELEMENT_OPTION);
     for (final Object aChildren : children) {
       Element element = (Element)aChildren;
@@ -295,6 +297,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
       }
       if (OPTION_USE_SAFE_WRITE.equals(name) && value != null) {
         myUseSafeWrite = Boolean.valueOf(value).booleanValue();
+        safeWriteSettingRead = true;
       }
 
       if (OPTION_CHARSET.equals(name)) {
@@ -360,6 +363,10 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
           myLastProjectLocation = null;
         }
       }
+    }
+
+    if (!safeWriteSettingRead && "true".equals(System.getProperty("idea.no.safe.write"))) {
+      myUseSafeWrite = false;
     }
   }
 
