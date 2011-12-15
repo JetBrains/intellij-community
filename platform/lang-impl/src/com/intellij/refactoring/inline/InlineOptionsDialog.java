@@ -16,11 +16,15 @@
 
 package com.intellij.refactoring.inline;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -117,4 +121,15 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   public JComponent getPreferredFocusedComponent() {
     return myRbInlineThisOnly.isSelected() ? myRbInlineThisOnly : myRbInlineAll;
   }
+
+  protected static int initOccurrencesNumber(PsiNameIdentifierOwner nameIdentifierOwner) {
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(nameIdentifierOwner.getProject());
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(nameIdentifierOwner.getProject());
+    final String name = nameIdentifierOwner.getName();
+    final boolean isCheapToSearch =
+     name != null && searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+    return isCheapToSearch ? ReferencesSearch.search(nameIdentifierOwner).findAll().size() : - 1;
+  }
+
 }

@@ -17,18 +17,14 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineMethodDialog extends InlineOptionsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
@@ -50,19 +46,8 @@ public class InlineMethodDialog extends InlineOptionsDialog {
     myInvokedOnReference = ref != null;
 
     setTitle(REFACTORING_NAME);
-    initOccurrencesNumber(method);
+    myOccurrencesNumber = initOccurrencesNumber(method);
     init();
-  }
-
-  private void initOccurrencesNumber(PsiMethod method) {
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
-    final GlobalSearchScope scope = GlobalSearchScope.projectScope(method.getProject());
-    final boolean isCheapToSearch =
-      searchHelper.isCheapEnoughToSearch(method.getName(), scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
-    if (isCheapToSearch) {
-      myOccurrencesNumber = ReferencesSearch.search(method).findAll().size();
-    }
   }
 
   protected String getNameLabelText() {

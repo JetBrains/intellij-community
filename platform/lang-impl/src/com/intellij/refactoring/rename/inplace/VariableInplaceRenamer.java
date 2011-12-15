@@ -116,6 +116,7 @@ public class VariableInplaceRenamer {
   private RangeMarker myRenameOffset;
   private String myInitialName;
   protected final String myOldName;
+  protected RangeMarker myBeforeRevert = null;
 
   public void setAdvertisementText(String advertisementText) {
     myAdvertisementText = advertisementText;
@@ -347,6 +348,10 @@ public class VariableInplaceRenamer {
                     });
                   }
                 }
+                myBeforeRevert = myRenameOffset != null ? myEditor.getDocument().createRangeMarker(myRenameOffset.getStartOffset(), myEditor.getCaretModel().getOffset()) : null;
+                if (myBeforeRevert != null) {
+                  myBeforeRevert.setGreedyToRight(true);
+                }
                 restoreStateBeforeTemplateIsFinished();
               }
 
@@ -361,6 +366,9 @@ public class VariableInplaceRenamer {
                     final Runnable runnable = new Runnable() {
                       public void run() {
                         performRefactoringRename(myNewName, context, markAction);
+                        if (myBeforeRevert != null) {
+                          myBeforeRevert.dispose();
+                        }
                       }
                     };
                     if (ApplicationManager.getApplication().isUnitTestMode()){
