@@ -25,6 +25,10 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testTryExcept() {
+    doTest();
+  }
+
   public void testInnerIf() {
     doTest();
   }

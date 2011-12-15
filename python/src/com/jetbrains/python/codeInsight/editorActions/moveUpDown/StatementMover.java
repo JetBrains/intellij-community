@@ -356,7 +356,7 @@ public class StatementMover extends LineMover {
         myStatementPartToRemovePass = (PyStatementPart)statementParts.second;
       }
     }
-    if (statementPart2 != null && statementPart1 != null && statementPart1.getParent() == statementPart2.getParent() ||
+    if (!(statementPart1 instanceof PyExceptPart) && statementPart2 != null && statementPart1 != null && statementPart1.getParent() == statementPart2.getParent() ||
         statementPart2 == statementPart1) return true;
     return false;
   }
