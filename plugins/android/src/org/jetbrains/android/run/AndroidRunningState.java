@@ -312,7 +312,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       return EMPTY_DEVICE_ARRAY;
     }
     IDevice[] devices = bridge.getDevices();
-    
+
     boolean showChooserDialog = false;
     IDevice targetDevice = null;
     for (IDevice device : devices) {
@@ -335,7 +335,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           devicesWrapper[0] = chooseDevicesManually(new Condition<IDevice>() {
             @Override
             public boolean value(IDevice device) {
-              return device.isEmulator() && isCompatibleDevice(device) != Boolean.FALSE;
+              return isCompatibleDevice(device) != Boolean.FALSE;
             }
           });
         }
