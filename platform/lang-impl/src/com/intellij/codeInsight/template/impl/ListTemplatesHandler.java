@@ -29,6 +29,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -40,7 +41,9 @@ import java.util.Map;
 
 public class ListTemplatesHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (!file.isWritable()) return;
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+      return;
+    }
     EditorUtil.fillVirtualSpaceUntilCaret(editor);
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
