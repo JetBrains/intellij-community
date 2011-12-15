@@ -61,7 +61,7 @@ public class PyImportReference extends PyReferenceImpl {
 
     final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final PyQualifiedName qname = myElement.asQualifiedName();
-    List<PsiElement> targets = ResolveImportUtil.multiResolveImportElement(parent, qname);
+    List<PsiElement> targets = ResolveImportUtil.resolveNameInImportStatement(parent, qname);
     return rateResults(targets);
   }
 
