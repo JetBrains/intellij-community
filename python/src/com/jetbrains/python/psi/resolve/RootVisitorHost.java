@@ -79,34 +79,36 @@ public class RootVisitorHost {
   public static boolean visitSdkRoots(@NotNull Sdk sdk, @NotNull RootVisitor visitor) {
     final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     for (VirtualFile root : roots) {
-      if (!visitor.visitRoot(root)) {
+      if (!visitor.visitRoot(root, null, sdk)) {
         return true;
       }
     }
     return false;
   }
 
-  static boolean visitModuleContentEntries(ModuleRootModel rootModel, RootVisitor visitor) {
+  private static boolean visitModuleContentEntries(ModuleRootModel rootModel, RootVisitor visitor) {
     // look in module sources
     Set<VirtualFile> contentRoots = Sets.newHashSet();
     for (ContentEntry entry : rootModel.getContentEntries()) {
       VirtualFile rootFile = entry.getFile();
 
-      if (rootFile != null && !visitor.visitRoot(rootFile)) return false;
+      if (rootFile != null && !visitor.visitRoot(rootFile, null, null)) return false;
       contentRoots.add(rootFile);
       for (VirtualFile folder : entry.getSourceFolderFiles()) {
-        if (!visitor.visitRoot(folder)) return false;
+        if (!visitor.visitRoot(folder, rootModel.getModule(), null)) return false;
       }
     }
     return true;
   }
 
-  static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
+  private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
     Set<VirtualFile> allRoots = new LinkedHashSet<VirtualFile>();
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
+    Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry) entry).getModule() : null;
+    Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry) entry).getJdk() : null;
     for (VirtualFile root : allRoots) {
-      if (!visitor.visitRoot(root)) {
+      if (!visitor.visitRoot(root, module, sdk)) {
         return false;
       }
     }

@@ -3,6 +3,7 @@ package com.jetbrains.python.documentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -513,7 +514,7 @@ class DocumentationBuilder {
       myPath = path;
     }
 
-    public boolean visitRoot(VirtualFile root) {
+    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk) {
       String vpath = VfsUtil.urlToPath(root.getUrl());
       if (myPath.startsWith(vpath)) {
         myResult = vpath;

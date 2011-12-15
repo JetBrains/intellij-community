@@ -122,19 +122,19 @@ public class QualifiedNameResolver implements RootVisitor {
     return this;
   }
   
-  public boolean visitRoot(final VirtualFile root) {
+  public boolean visitRoot(final VirtualFile root, @Nullable Module module, @Nullable Sdk sdk) {
     if (!root.isValid()) {
       return true;
     }
-    PsiElement module = resolveInRoot(root);
-    if (module != null) {
-      results.add(module);
+    PsiElement resolveResult = resolveInRoot(root, sdk);
+    if (resolveResult != null) {
+      results.add(resolveResult);
     }
 
     if (myAcceptRootAsTopLevelPackage && myQualifiedName.matchesPrefix(PyQualifiedName.fromDottedString(root.getName()))) {
-      module = resolveInRoot(root.getParent());
+      resolveResult = resolveInRoot(root.getParent(), sdk);
       if (module != null) {
-        results.add(module);
+        results.add(resolveResult);
       }
     }
 
@@ -152,9 +152,10 @@ public class QualifiedNameResolver implements RootVisitor {
       PsiDirectory dir = myFootholdFile.getContainingDirectory();
       if (myRelativeLevel > 0) {
         dir = ResolveImportUtil.stepBackFrom(myFootholdFile, myRelativeLevel);
-        
       }
-      PsiElement module = resolveModuleAt(dir, null);
+
+      PsiElement module = resolveModuleAt(dir, null,
+                                          myModule != null ? null : PyBuiltinCache.findSdkForNonModuleFile(myFootholdFile));
       if (module != null) {
         results.add(module);
       }
@@ -235,7 +236,7 @@ public class QualifiedNameResolver implements RootVisitor {
       return withOtherSdk() ? null : PythonModulePathCache.getInstance(myModule);
     }
     if (myFootholdFile != null) {
-      final Sdk sdk = PyBuiltinCache.findSdkForFile(myFootholdFile);
+      final Sdk sdk = PyBuiltinCache.findSdkForNonModuleFile(myFootholdFile);
       if (sdk != null) {
         return PythonSdkPathCache.getInstance(myPsiManager.getProject(), sdk);
       }
@@ -244,23 +245,24 @@ public class QualifiedNameResolver implements RootVisitor {
   }
 
   @Nullable
-  private PsiElement resolveInRoot(VirtualFile root) {
+  private PsiElement resolveInRoot(VirtualFile root, Sdk sdk) {
     if (!root.isDirectory()) {
       // if we have added a file as a root, it's unlikely that we'll be able to resolve anything under it in 'files only' resolve mode
       return null;
     }
-    return resolveModuleAt(myPsiManager.findDirectory(root), root);
+    return resolveModuleAt(myPsiManager.findDirectory(root), root, sdk);
   }
 
   /**
    * Searches for a module at given directory, unwinding qualifiers and traversing directories as needed.
    *
+   *
    * @param directory where to start from; top qualifier will be searched for here.
    * @param root      an SDK, library or content root from which we're searching, or null if we're searching relatively
-   * @return module's file, or null.
+   * @param sdk @return module's file, or null.
    */
   @Nullable
-  private PsiElement resolveModuleAt(@Nullable PsiDirectory directory, @Nullable VirtualFile root) {
+  private PsiElement resolveModuleAt(@Nullable PsiDirectory directory, @Nullable VirtualFile root, Sdk sdk) {
     // prerequisites
     if (directory == null || !directory.isValid()) return null;
 
@@ -269,7 +271,7 @@ public class QualifiedNameResolver implements RootVisitor {
       if (name == null) {
         return null;
       }
-      seeker = ResolveImportUtil.resolveChild(seeker, name, myFootholdFile, root, true, myCheckForPackage);
+      seeker = ResolveImportUtil.resolveChild(seeker, name, myFootholdFile, root, sdk, true, myCheckForPackage);
     }
     return seeker;
   }

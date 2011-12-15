@@ -4,7 +4,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -125,9 +124,10 @@ public class ResolveImportUtil {
       PyFromImportStatement from_import_statement = (PyFromImportStatement)importStatement;
       moduleQName = from_import_statement.getImportSourceQName();
       final int relative_level = from_import_statement.getRelativeLevel();
+      Sdk sdk = ModuleUtil.findModuleForPsiElement(import_element) != null ? null : PyBuiltinCache.findSdkForNonModuleFile(file);
 
       if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
-        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), first_component, file, null, false, true);
+        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), first_component, file, null, sdk, false, true);
         return element != null ? Collections.singletonList(element) : Collections.<PsiElement>emptyList();
       }
 
@@ -135,7 +135,7 @@ public class ResolveImportUtil {
         final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
         List<PsiElement> resultList = new ArrayList<PsiElement>();
         for (PsiElement candidate : candidates) {
-          PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), first_component, file, null, false, true);
+          PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), first_component, file, null, sdk, false, true);
           if (result != null) {
             resultList.add(result);
           }
@@ -263,6 +263,7 @@ public class ResolveImportUtil {
    * @param referencedName  which name to look for.
    * @param containingFile  where we're in.
    * @param root            the root from which we started descending the directory tree (if any)
+   * @param sdk             the SDK to which the root belongs, if any                     
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
    * @return the element the referencedName resolves to, or null.
@@ -272,6 +273,7 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
                                         @Nullable final PsiFile containingFile, @Nullable VirtualFile root,
+                                        @Nullable Sdk sdk,
                                         boolean fileOnly, boolean checkForPackage) {
     PsiDirectory dir = null;
     PsiElement ret = null;
@@ -281,7 +283,7 @@ public class ResolveImportUtil {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
-        possible_ret = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly, checkForPackage);
+        possible_ret = resolveInDirectory(referencedName, containingFile, dir, root, sdk, fileOnly, checkForPackage);
       }
 
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
@@ -303,13 +305,13 @@ public class ResolveImportUtil {
     else if (parent instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
       for (PsiDirectory childDir : container.getDirectories()) {
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, root, fileOnly, checkForPackage);
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, root, sdk, fileOnly, checkForPackage);
         //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
         if (result != null) return result;
       }
     }
     if (dir != null) {
-      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly, checkForPackage);
+      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, sdk, fileOnly, checkForPackage);
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       if (result != null) {
         return result;
@@ -320,8 +322,9 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiElement resolveInDirectory(final String referencedName, @Nullable final PsiFile containingFile,
-                                               final PsiDirectory dir, @Nullable VirtualFile root, boolean isFileOnly,
-                                               boolean checkForPackage) {
+                                               final PsiDirectory dir, @Nullable VirtualFile root,
+                                               @Nullable Sdk sdk,
+                                               boolean isFileOnly, boolean checkForPackage) {
     if (referencedName == null) return null;
 
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
@@ -332,7 +335,6 @@ public class ResolveImportUtil {
     final PsiElement module = findPyFileInDir(dir, referencedName);
     if (module != null) return module;
 
-    final Sdk sdk = sdkForDir(dir);
     if (sdk != null) {
       PsiDirectory skeletonDir = findSkeletonDir(dir, root, sdk);
       if (skeletonDir != null) {
@@ -360,18 +362,6 @@ public class ResolveImportUtil {
     // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
     if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
       return file;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Sdk sdkForDir(PsiDirectory dir) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
-    final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(dir.getVirtualFile());
-    for (OrderEntry entry : entries) {
-      if (entry instanceof JdkOrderEntry) {
-        return ((JdkOrderEntry) entry).getJdk();
-      }
     }
     return null;
   }
@@ -416,7 +406,7 @@ public class ResolveImportUtil {
       }
     }
 
-    public boolean visitRoot(VirtualFile root) {
+    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk) {
       final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
       if (relativePath != null) {
         List<String> result = StringUtil.split(relativePath, "/");

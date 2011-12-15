@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +15,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -55,8 +58,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
 
-    //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
-    final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, myModule, null, false, true);
+    Sdk sdk = ModuleUtil.findModuleForPsiElement(myModule) != null ? null : PyBuiltinCache.findSdkForNonModuleFile(myModule);
+    final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, myModule, null, sdk, false, true);
     if (result != null) return ResolveResultList.to(result);
     return Collections.emptyList();
   }
