@@ -189,4 +189,14 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     PyPsiUtils.deleteAdjacentComma(this, child, getImportElements());
     super.deleteChildInternal(child);
   }
+
+  @Nullable
+  public PsiElement resolveImportSource() {
+    final PyQualifiedName qName = getImportSourceQName();
+    if (qName == null) {
+      return null;
+    }
+    final List<PsiElement> source = ResolveImportUtil.resolveFromImportStatementSource(this, qName);
+    return source.isEmpty() ? null : source.get(0);
+  }
 }

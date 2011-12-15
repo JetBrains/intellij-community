@@ -167,18 +167,8 @@ public class ResolveImportUtil {
     return results;
   }
 
-  @Nullable
-  public static PsiElement resolveFromImportStatementSource(PyFromImportStatement from_import_statement) {
-    final PyQualifiedName qName = from_import_statement.getImportSourceQName();
-    if (qName == null) {
-      return null;
-    }
-    final List<PsiElement> source = resolveFromImportStatementSource(from_import_statement, qName);
-    return source.isEmpty() ? null : source.get(0);
-  }
-
   @NotNull
-  private static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+  public static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
     return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());

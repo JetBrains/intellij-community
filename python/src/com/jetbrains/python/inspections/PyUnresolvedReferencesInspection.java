@@ -650,7 +650,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
           else {
             assert importStatement instanceof PyFromImportStatement;
-            if (ResolveImportUtil.resolveFromImportStatementSource((PyFromImportStatement)importStatement) == null) {
+            if (((PyFromImportStatement)importStatement).resolveImportSource() == null) {
               continue;
             }
           }

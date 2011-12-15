@@ -51,4 +51,13 @@ public interface PyFromImportStatement extends PyImportStatementBase, StubBasedP
    */
   @Nullable
   PsiElement getRightParen();
+
+  /**
+   * Resolves the import source qualified name to a file or directory. Note: performs a Python only resolve,
+   * doesn't handle extension points such as import from Java classes.
+   *
+   * @return the resolved import source, or null if the import is unresolved.
+   */
+  @Nullable
+  PsiElement resolveImportSource();
 }

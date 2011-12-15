@@ -252,7 +252,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (PyUtil.isClassPrivateName(name)) {
         return null;
       }
-      PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
+      PsiElement starImportSource = statement.resolveImportSource();
       if (starImportSource != null) {
         starImportSource = PyUtil.turnDirIntoInit(starImportSource);
         if (starImportSource instanceof PyFileImpl) {
@@ -277,7 +277,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (PyNames.INIT_DOT_PY.equals(getName())) {
       final PyQualifiedName qName = statement.getImportSourceQName();
       if (qName != null && qName.endsWith(name)) {
-        final PsiElement element = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveFromImportStatementSource(statement));
+        final PsiElement element = PyUtil.turnInitIntoDir(statement.resolveImportSource());
         if (element != null && element.getParent() == getContainingDirectory()) {
           return element;
         }
