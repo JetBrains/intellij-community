@@ -19,21 +19,21 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.ui.components.Magnificator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
-import java.awt.event.FocusEvent;
 import java.awt.event.InputMethodEvent;
-import java.awt.im.InputContext;
 import java.awt.im.InputMethodRequests;
 import java.util.Map;
 
@@ -46,6 +46,19 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     enableInputMethods(true);
     setFocusCycleRoot(true);
     setOpaque(true);
+
+    putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
+      @Override
+      public Point magnify(double scale, Point at) {
+        VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
+
+        double currentSize = myEditor.getColorsScheme().getEditorFontSize();
+        int defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
+        myEditor.setFontSize((int)(double)(int)(Math.max(currentSize * scale, defaultFontSize)));
+
+        return myEditor.visualPositionToXY(magnificationPosition);
+      }
+    });
   }
 
   public EditorImpl getEditor() {
