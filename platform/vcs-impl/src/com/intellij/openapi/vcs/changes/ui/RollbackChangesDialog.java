@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -100,6 +101,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, myListChangeListener, myListChangeListener);
     myBrowser.setToggleActionTitle("Include in rollback");
 
+    setCancelButtonText(CommonBundle.getCloseButtonText());
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
     setTitle(VcsBundle.message("changes.action.rollback.title"));
 
