@@ -166,6 +166,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (isPerformanceTest() || ApplicationManager.getApplication() == null || ApplicationManager.getApplication() instanceof MockApplication) {
       return;
     }
+    CompositeException result = new CompositeException();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     try {
       Element newS = new Element("temp");
@@ -177,7 +178,7 @@ public abstract class UsefulTestCase extends TestCase {
       Element temp = new Element("temp");
       clean.writeExternal(temp);
       settings.loadState(temp);
-      throw error;
+      result.add(error);
     }
 
     CodeStyleSettings codeStyleSettings = getCurrentCodeStyleSettings();
@@ -185,13 +186,28 @@ public abstract class UsefulTestCase extends TestCase {
     try {
       checkSettingsEqual(myOldCodeStyleSettings, codeStyleSettings, "Code style settings damaged");
     }
+    catch (AssertionError e) {
+      result.add(e);
+    }
     finally {
       codeStyleSettings.clearCodeStyleSettings();
     }
     myOldCodeStyleSettings = null;
 
-    VariableInplaceRenamer.checkCleared();
-    StartMarkAction.checkCleared();
+    try {
+      VariableInplaceRenamer.checkCleared();
+    }
+    catch (AssertionError e) {
+      result.add(e);
+    }
+    try {
+      StartMarkAction.checkCleared();
+    }
+    catch (AssertionError e) {
+      result.add(e);
+    }
+
+    if (!result.isEmpty()) throw result;
   }
 
   protected void storeSettings() {
