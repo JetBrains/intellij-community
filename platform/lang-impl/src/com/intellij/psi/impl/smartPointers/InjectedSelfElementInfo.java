@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,22 +66,39 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     final Ref<PsiElement> result = new Ref<PsiElement>();
 
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
-    InjectedLanguageUtil.enumerate(hostContext, hostContext.getContainingFile(), true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        @Override
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          if (result.get() != null) return;
-          TextRange hostRange = manager.injectedToHost(injectedPsi, new TextRange(0, injectedPsi.getTextLength()));
-          Document document = PsiDocumentManager.getInstance(getProject()).getDocument(injectedPsi);
-          if (hostRange.contains(rangeInHostFile) && document instanceof DocumentWindow) {
-            int start = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getStartOffset());
-            int end = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getEndOffset());
-            PsiElement element = findElementInside(injectedPsi, start, end, anchorClass, anchorLanguage);
-            result.set(element);
-          }
-        }
-      });
+    PsiFile hostFile = hostContext.getContainingFile();
 
-      return result.get();
+    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
+      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+        if (result.get() != null) return;
+        TextRange hostRange = manager.injectedToHost(injectedPsi, new TextRange(0, injectedPsi.getTextLength()));
+        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(injectedPsi);
+        if (hostRange.contains(rangeInHostFile) && document instanceof DocumentWindow) {
+          int start = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getStartOffset());
+          int end = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getEndOffset());
+          PsiElement element = findElementInside(injectedPsi, start, end, anchorClass, anchorLanguage);
+          result.set(element);
+        }
+      }
+    };
+
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(hostFile.getProject());
+    Document document = documentManager.getDocument(hostFile);
+    if (document != null && documentManager.isUncommited(document)) {
+      List<DocumentWindow> documents = InjectedLanguageUtil.getCachedInjectedDocuments(hostFile);
+      for (DocumentWindow documentWindow : documents) {
+        PsiFile injected = documentManager.getPsiFile(documentWindow);
+        if (injected != null) {
+          visitor.visit(injected, Collections.<PsiLanguageInjectionHost.Shred>emptyList());
+        }
+      }
+    }
+    else {
+      InjectedLanguageUtil.enumerate(hostContext, hostFile, true, visitor);
+    }
+
+    return result.get();
   }
 
   @Override
