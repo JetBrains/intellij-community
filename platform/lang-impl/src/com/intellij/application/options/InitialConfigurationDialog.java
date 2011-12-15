@@ -97,7 +97,6 @@ public class InitialConfigurationDialog extends DialogWrapper {
           setText(keymap.getPresentableName());
         }
       }
-
     });
     preselectKeyMap(keymaps);
 
@@ -136,9 +135,10 @@ public class InitialConfigurationDialog extends DialogWrapper {
   }
 
   private void preselectKeyMap(ArrayList<Keymap> keymaps) {
-    if (SystemInfo.isMac) {
+    final Keymap defaultKeymap = KeymapManager.getInstance().getActiveKeymap();
+    if (defaultKeymap != null) {
       for (Keymap keymap : keymaps) {
-        if (keymap.getName().equals("Default for Mac OS X")) {
+        if (keymap.equals(defaultKeymap)) {
           myKeymapComboBox.setSelectedItem(keymap);
           break;
         }
@@ -261,15 +261,15 @@ public class InitialConfigurationDialog extends DialogWrapper {
   }
 
   private static boolean matchesPlatform(Keymap keymap) {
-    if (keymap.getName().equals(KeymapManager.DEFAULT_IDEA_KEYMAP)) {
-      return !SystemInfo.isMac;
+    final String name = keymap.getName();
+    if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
+      return !SystemInfo.isMac && !SystemInfo.isLinux;
     }
-    else if (keymap.getName().equals(KeymapManager.MAC_OS_X_KEYMAP)) {
+    else if (KeymapManager.MAC_OS_X_KEYMAP.equals(name) || "Mac OS X 10.5+".equals(name)) {
       return SystemInfo.isMac;
     }
-    else if (keymap.getName().equals("Default for GNOME") || keymap.getName().equals("Default for KDE") ||
-             keymap.getName().equals("Default for XWin")) {
-      return SystemInfo.isLinux;
+    else if (KeymapManager.X_WINDOW_KEYMAP.equals(name) || "Default for GNOME".equals(name) || "Default for KDE".equals(name)) {
+      return SystemInfo.isUnix && !SystemInfo.isMac;
     }
     return true;
   }

@@ -308,7 +308,7 @@ public class Messages {
                                          doNotAskOption);
     }
     
-    return showDialog(project, message, title, new String[]{okText, cancelText}, 0, icon);
+    return showDialog(project, message, title, new String[]{okText, cancelText}, 0, icon, doNotAskOption);
   }
 
   public static int showOkCancelDialog(Project project, String message, String title, String okText, String cancelText, Icon icon) {

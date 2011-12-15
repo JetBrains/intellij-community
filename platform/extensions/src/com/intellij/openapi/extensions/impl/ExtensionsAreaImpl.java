@@ -356,7 +356,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
                                               final List<Element> extensions) {
     final String areaClass = getAreaClass();
     if (extensionsPoints != null) {
-      for (Element element : extensionsPoints) {
+      for (int i = 0, size = extensionsPoints.size(); i < size; ++i) {
+        Element element = extensionsPoints.get(i);
         if (equal(areaClass, element.getAttributeValue(ATTRIBUTE_AREA))) {
           registerExtensionPoint(pluginDescriptor, element);
         }
@@ -364,7 +365,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
 
     if (extensions != null) {
-      for (Element element : extensions) {
+      for (int i = 0, size = extensions.size(); i < size; ++i) {
+        Element element = extensions.get(i);
         if (hasExtensionPoint(extractEPName(element))) {
           registerExtension(pluginDescriptor, element);
         }

@@ -142,7 +142,7 @@ public class GradleLibraryManager {
     }
 
     final File home = getGradleHome(project);
-    return LocalFileSystem.getInstance().findFileByIoFile(home);
+    return home == null ? null : LocalFileSystem.getInstance().findFileByIoFile(home);
   }
   
   /**

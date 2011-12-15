@@ -59,4 +59,14 @@ public abstract class AbstractFrame<F extends Frame> implements Frame<F> {
   public boolean isValid() {
     return myValid;
   }
+
+  protected static void debug(Throwable e) {
+    assert _debug(e);
+  }
+
+  @SuppressWarnings("CallToPrintStackTrace")
+  private static boolean _debug(Throwable e) {
+    e.printStackTrace();
+    return true;
+  }
 }

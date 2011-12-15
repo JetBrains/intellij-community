@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,6 +69,25 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private boolean myIsInUpdate;
   private RangeMarker savedBeforeBulkCaretMarker;
   private boolean ignoreWrongMoves = false;
+
+  /**
+   * We check that caret is located at the target offset at the end of {@link #moveToOffset(int, boolean)} method. However,
+   * it's possible that the following situation occurs:
+   * <p/>
+   * <pre>
+   * <ol>
+   *   <li>Some client subscribes to caret change events;</li>
+   *   <li>{@link #moveToLogicalPosition(LogicalPosition)} is called;</li>
+   *   <li>Caret position is changed during {@link #moveToLogicalPosition(LogicalPosition)} processing;</li>
+   *   <li>The client receives caret position change event and adjusts the position;</li>
+   *   <li>{@link #moveToLogicalPosition(LogicalPosition)} processing is finished;</li>
+   *   <li>{@link #moveToLogicalPosition(LogicalPosition)} reports an error because the caret is not located at the target offset;</li>
+   * </ol>
+   * </pre>
+   * <p/>
+   * This field serves as a flag that reports unexpected caret position change requests nested from {@link #moveToOffset(int, boolean)}.
+   */
+  private boolean myReportCaretMoves;
 
   /**
    * There is a possible case that user defined non-monospaced font for editor. That means that various symbols have different
@@ -116,6 +136,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void moveToVisualPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     validateCallContext();
+    if (myReportCaretMoves) {
+      LogMessageEx.error(LOG, "Unexpected caret move request");
+    }
     myDesiredX = -1;
     int column = pos.column;
     int line = pos.line;
@@ -218,6 +241,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
                                   boolean scrollToCaret)
   {
     assertIsDispatchThread();
+    if (myReportCaretMoves) {
+      LogMessageEx.error(LOG, "Unexpected caret move request");
+    }
     SelectionModel selectionModel = myEditor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
@@ -366,6 +392,19 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   private void moveToLogicalPosition(@NotNull LogicalPosition pos, boolean locateBeforeSoftWrap, @Nullable StringBuilder debugBuffer) {
+    if (myReportCaretMoves) {
+      LogMessageEx.error(LOG, "Unexpected caret move request");
+    }
+    myReportCaretMoves = true;
+    try {
+      doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer);
+    }
+    finally {
+      myReportCaretMoves = false;
+    }
+  }
+  
+  private void doMoveToLogicalPosition(@NotNull LogicalPosition pos, boolean locateBeforeSoftWrap, @Nullable StringBuilder debugBuffer) {
     assertIsDispatchThread();
     if (debugBuffer != null) {
       debugBuffer.append(String.format(

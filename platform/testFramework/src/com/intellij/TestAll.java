@@ -323,7 +323,9 @@ public class TestAll implements Test {
             super.addTest(test);
           }
           else {
-            if (isPerformanceTestsRun() ^ (hasPerformance(((TestCase)test).getName()) || hasPerformance(testCaseClass.getSimpleName())))
+            String name = ((TestCase)test).getName();
+            if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
+            if (isPerformanceTestsRun() ^ (hasPerformance(name) || hasPerformance(testCaseClass.getSimpleName())))
               return;
 
             Method method = findTestMethod((TestCase)test);

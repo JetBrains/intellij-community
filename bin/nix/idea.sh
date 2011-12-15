@@ -124,7 +124,7 @@ fi
 
 # if VM options file exists - use it
 if [ -r "$VM_OPTIONS_FILE" ]; then
-  JVM_ARGS=`tr '\n' ' ' < "$VM_OPTIONS_FILE"`
+  JVM_ARGS=`cat "$VM_OPTIONS_FILE" | grep -ve "^#.*" | tr '\n' ' '`
   JVM_ARGS="$JVM_ARGS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
   # only extract properties (not VM options) from Info.plist
   INFO_PLIST_PARSER_OPTIONS=""

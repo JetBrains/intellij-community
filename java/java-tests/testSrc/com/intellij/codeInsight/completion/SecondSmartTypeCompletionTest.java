@@ -4,7 +4,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 
 @SuppressWarnings({"ALL"})
@@ -75,10 +76,16 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   public void testNewStaticProblem() throws Throwable { doTest(); }
 
   public void testChainingPerformance() throws Throwable {
-    long time = System.currentTimeMillis();
-    configure();
-    IdeaTestUtil.assertTiming("", 3000, System.currentTimeMillis() - time);
-    assertNotNull(myItems);
+    configureByFileNoComplete(BASE_PATH + "/" + getTestName(false) + ".java");
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 1000, new ThrowableRunnable() {
+      @Override
+      public void run() throws Exception {
+        configure();
+        assertNotNull(myItems);
+        LookupManager.getInstance(getProject()).hideActiveLookup();
+      }
+    }).cpuBound().assertTiming();
+
   }
 
   public void testArrayMemberAccess() throws Throwable { doTest(); }

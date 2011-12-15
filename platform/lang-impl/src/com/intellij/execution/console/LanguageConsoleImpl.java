@@ -681,7 +681,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       // deal with width
       final int width = Math.max(editorSize.width, historySize.width);
       newEditorSize.width = width + editor.getScrollPane().getHorizontalScrollBar().getHeight();
-      editor.getSoftWrapModel().forceAdditionalColumnsUsage();
+      history.getSoftWrapModel().forceAdditionalColumnsUsage();
       editor.getSettings().setAdditionalColumnsCount(2 + (width - editorSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, editor));
       history.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, history));
 

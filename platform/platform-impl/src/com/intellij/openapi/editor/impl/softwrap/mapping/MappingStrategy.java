@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ interface MappingStrategy<T> {
    *                  and given offset if any; <code>null</code> otherwise
    */
   @Nullable
-  T advance(EditorPosition position, int offset);
+  T advance(@NotNull EditorPosition position, int offset);
 
   /**
    * Notifies current strategy that soft wrap is encountered during the processing. There are two ways to continue the processing then:
@@ -74,7 +74,7 @@ interface MappingStrategy<T> {
    * @return            target document dimension if it's located within the bounds of the given soft wrap; <code>null</code> otherwise
    */
   @Nullable
-  T processSoftWrap(EditorPosition position, SoftWrap softWrap);
+  T processSoftWrap(@NotNull EditorPosition position, SoftWrap softWrap);
 
   /**
    * Notifies current strategy that collapsed fold region is encountered during the processing. There are two ways to
@@ -92,7 +92,7 @@ interface MappingStrategy<T> {
    *                      <code>null</code> otherwise
    */
   @Nullable
-  T processFoldRegion(EditorPosition position, @NotNull FoldRegion foldRegion);
+  T processFoldRegion(@NotNull EditorPosition position, @NotNull FoldRegion foldRegion);
 
   /**
    * Notifies current strategy that tabulation symbols is encountered during the processing. Tabulation symbols
@@ -111,7 +111,7 @@ interface MappingStrategy<T> {
    *                      <code>null</code> otherwise
    */
   @Nullable
-  T processTabulation(EditorPosition position, TabData tabData);
+  T processTabulation(@NotNull EditorPosition position, TabData tabData);
 
   /**
    * This method is assumed to be called when there are no special symbols between the document position identified by the
@@ -122,5 +122,5 @@ interface MappingStrategy<T> {
    * @return           resulting dimension that is built on the basis of the given position and target anchor dimension
    */
   @NotNull
-  T build(EditorPosition position);
+  T build(@NotNull EditorPosition position);
 }

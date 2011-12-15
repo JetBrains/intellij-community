@@ -401,7 +401,7 @@ public class VariableInplaceRenamer {
             //move to old offset
             Runnable runnable = new Runnable() {
               public void run() {
-                myEditor.getCaretModel().moveToOffset(rangeMarker.isValid() ? rangeMarker.getStartOffset() : offset);
+                myEditor.getCaretModel().moveToOffset(getOffsetForCaret(rangeMarker, offset));
                 if (selectedRange != null){
                   myEditor.getSelectionModel().setSelection(selectedRange.getStartOffset(), selectedRange.getEndOffset());
                 } else if (!shouldSelectAll()){
@@ -411,7 +411,7 @@ public class VariableInplaceRenamer {
             };
 
             final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-            if (lookup != null && lookup.getLookupStart() <= (rangeMarker.isValid() ? rangeMarker.getStartOffset() : offset)) {
+            if (lookup != null && lookup.getLookupStart() <= (getOffsetForCaret(rangeMarker, offset))) {
               lookup.setFocused(false);
               lookup.performGuardedChange(runnable);
             } else {
@@ -444,6 +444,10 @@ public class VariableInplaceRenamer {
       }
     }, RENAME_TITLE, null);
     return true;
+  }
+
+  protected int getOffsetForCaret(RangeMarker rangeMarker, int offset) {
+    return offset;
   }
 
   protected boolean shouldSelectAll() {

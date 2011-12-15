@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
@@ -32,9 +31,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
-
 public class CheckboxTreeBase extends Tree {
-
   private final CheckPolicy myCheckPolicy;
   private static final CheckPolicy DEFAULT_POLICY = new CheckPolicy(true, true, false, true);
 
@@ -297,14 +294,7 @@ public class CheckboxTreeBase extends Tree {
       myUsePartialStatusForParentNodes = usePartialStatusForParentNodes;
       myCheckbox = new JCheckBox();
       myTextRenderer = new ColoredTreeCellRenderer() {
-        public void customizeCellRenderer(JTree tree,
-                                          Object value,
-                                          boolean selected,
-                                          boolean expanded,
-                                          boolean leaf,
-                                          int row,
-                                          boolean hasFocus) {
-        }
+        public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) { }
       };
       myTextRenderer.setOpaque(opaque);
       add(myCheckbox, BorderLayout.WEST);
@@ -315,13 +305,7 @@ public class CheckboxTreeBase extends Tree {
       this(true);
     }
 
-    public final Component getTreeCellRendererComponent(JTree tree,
-                                                        Object value,
-                                                        boolean selected,
-                                                        boolean expanded,
-                                                        boolean leaf,
-                                                        int row,
-                                                        boolean hasFocus) {
+    public final Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       invalidate();
       if (value instanceof CheckedTreeNode) {
         CheckedTreeNode node = (CheckedTreeNode)value;
@@ -338,14 +322,16 @@ public class CheckboxTreeBase extends Tree {
         myCheckbox.setVisible(false);
       }
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-      // Fix GTK background
+
       if (UIUtil.isUnderGTKLookAndFeel()) {
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);
       }
+      else if (UIUtil.isUnderNimbusLookAndFeel()) {
+        UIUtil.changeBackGround(this, UIUtil.TRANSPARENT_COLOR);
+      }
       customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
-
 
       return this;
     }
