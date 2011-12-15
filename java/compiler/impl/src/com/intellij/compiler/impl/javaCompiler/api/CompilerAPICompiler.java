@@ -141,13 +141,27 @@ public class CompilerAPICompiler implements BackendCompiler {
     private final ModuleChunk myChunk;
     private final String myOutputDir;
     private final CompileContext myCompileContext;
-    private final CompAPIDriver myCompAPIDriver = new CompAPIDriver();
+    private final CompAPIDriver myCompAPIDriver;
 
     private MyProcess(List<String> commandLine, ModuleChunk chunk, String outputDir, CompileContext compileContext) {
       myCommandLine = commandLine;
       myChunk = chunk;
       myOutputDir = outputDir;
       myCompileContext = compileContext;
+      myCompAPIDriver = new CompAPIDriver(findEncodingValue(commandLine));
+    }
+
+    private static String findEncodingValue(List<String> commandLine) {
+      boolean found = false;
+      for (String param : commandLine) {
+        if (found) {
+          return param;
+        }
+        if ("-encoding".equalsIgnoreCase(param)) {
+          found = true;
+        }
+      }
+      return null;
     }
 
     public OutputStream getOutputStream() {
