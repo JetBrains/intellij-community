@@ -167,7 +167,7 @@ public class PyBuiltinCache {
   @Nullable
   public PsiElement getByName(@NonNls String name) {
     if (myBuiltinsFile != null) {
-      return myBuiltinsFile.findExportedName(name);
+      return myBuiltinsFile.getElementNamed(name);
     }
     return null;
   }

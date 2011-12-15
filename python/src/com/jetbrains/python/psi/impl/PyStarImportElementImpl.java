@@ -44,8 +44,8 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
   }
 
   @Nullable
-  public PsiElement getElementNamed(final String the_name) {
-    if (PyUtil.isClassPrivateName(the_name)) {
+  public PsiElement getElementNamed(final String name) {
+    if (PyUtil.isClassPrivateName(name)) {
       return null;
     }
     if (getParent() instanceof PyFromImportStatement) {
@@ -56,10 +56,10 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
           PyFile sourceFile = (PyFile)source;
-          final PsiElement exportedName = sourceFile.findExportedName(the_name);
+          final PsiElement exportedName = sourceFile.getElementNamed(name);
           if (exportedName != null) {
             final List<String> all = sourceFile.getDunderAll();
-            if (all != null && !all.contains(the_name)) {
+            if (all != null && !all.contains(name)) {
               continue;
             }
             return exportedName;

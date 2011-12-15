@@ -311,7 +311,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         result.add(pyClass);
       }
       else {
-        final PsiElement exportedClass = ((PyFile)containingFile).findExportedName(pyClass.getName());
+        final PsiElement exportedClass = ((PyFile)containingFile).getElementNamed(pyClass.getName());
         if (exportedClass == pyClass) {
           result.add(pyClass);
         }

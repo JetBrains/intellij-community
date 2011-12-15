@@ -504,7 +504,7 @@ public class ResolveImportUtil {
         if (initPy == null) {
           break;
         }
-        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).findExportedName(((PsiNamedElement)toplevel).getName()))) {
+        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).getElementNamed(((PsiNamedElement)toplevel).getName()))) {
           virtualFile = dir.getVirtualFile();
         }
         dir = dir.getParentDirectory();
