@@ -33,7 +33,6 @@ import java.util.*;
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
   private ThreadLocal<List<String>> myFindExportedNameStack = new ArrayListThreadLocal();
-  private ThreadLocal<List<String>> myGetElementNamedStack = new ArrayListThreadLocal();
 
   private final CachedValue<List<PyImportElement>> myImportTargetsTransitive;
   //private volatile Boolean myAbsoluteImportEnabled;
@@ -255,8 +254,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       PsiElement starImportSource = statement.resolveImportSource();
       if (starImportSource != null) {
         starImportSource = PyUtil.turnDirIntoInit(starImportSource);
-        if (starImportSource instanceof PyFileImpl) {
-          final PsiElement result = ((PyFileImpl)starImportSource).getElementNamed(name, false);
+        if (starImportSource instanceof PyFile) {
+          final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
           if (result != null) {
             return result;
           }
@@ -307,31 +306,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Nullable
   public PsiElement getElementNamed(String name) {
-    return getElementNamed(name, true);
-  }
-
-  public PsiElement getElementNamed(String name, boolean withBuiltins) {
-    final List<String> stack = myGetElementNamedStack.get();
-    if (stack.contains(name)) {
-      return null;
+    PsiElement exportedName = findExportedName(name);
+    if (exportedName instanceof PyImportElement) {
+      return ((PyImportElement) exportedName).getElementNamed(name);
     }
-    stack.add(name);
-    try {
-      PsiElement exportedName = findExportedName(name);
-      if (exportedName == null && withBuiltins) {
-        final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
-        if (builtins != null && builtins != this) {
-          exportedName = builtins.findExportedName(name);
-        }
-      }
-      if (exportedName instanceof PyImportElement) {
-        return ((PyImportElement) exportedName).getElementNamed(name);
-      }
-      return exportedName;
-    }
-    finally {
-      stack.remove(name);
-    }
+    return exportedName;
   }
 
   @NotNull

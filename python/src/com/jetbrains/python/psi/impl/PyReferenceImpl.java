@@ -193,7 +193,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       // ...as a builtin symbol
       PyFile bfile = builtins_cache.getBuiltinsFile();
       if (bfile != null) {
-        uexpr = ((PyFileImpl) bfile).getElementNamed(referencedName, false);
+        uexpr = bfile.getElementNamed(referencedName);
         if (uexpr == null && "__builtins__".equals(referencedName)) {
           uexpr = bfile; // resolve __builtins__ reference
         }
