@@ -19,8 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
@@ -51,51 +50,58 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     }
     final VirtualFile root = h.workingDirectoryFile();
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
-    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root, h);
-    GitRebaseLineListener resultListener = new GitRebaseLineListener();
+    final GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root, h);
+    final GitRebaseLineListener resultListener = new GitRebaseLineListener();
     h.addLineListener(resultListener);
     configureEditor(editor);
     affectedRoots.add(root);
-    try {
-      service.configureHandler(h, editor.getHandlerNo());
-      GitHandlerUtil.doSynchronously(h, GitBundle.getString("rebasing.title"), h.printableCommandLine(), false);
-    }
-    finally {
-      editor.close();
-      GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
-      final GitRebaseLineListener.Result result = resultListener.getResult();
-      String messageId;
-      boolean isError = true;
-      switch (result.status) {
-        case CONFLICT:
-          messageId = "rebase.result.conflict";
-          break;
-        case ERROR:
-          messageId = "rebase.result.error";
-          break;
-        case CANCELLED:
-          isError = false;
-          messageId = "rebase.result.cancelled";
-          // we do not need to show a message if editing was cancelled.
-          exceptions.clear();
-          break;
-        case EDIT:
-          isError = false;
-          messageId = "rebase.result.amend";
-          break;
-        case FINISHED:
-        default:
-          messageId = null;
+
+    service.configureHandler(h, editor.getHandlerNo());
+    GitTask task = new GitTask(project, h, GitBundle.getString("rebasing.title"));
+    task.executeInBackground(false, new GitTaskResultHandlerAdapter() {
+      @Override
+      protected void run(GitTaskResult taskResult) {
+        editor.close();
+        GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
+        notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
       }
-      if (messageId != null) {
-        String message = GitBundle.message(messageId, result.current, result.total);
-        String title = GitBundle.message(messageId + ".title");
-        if (isError) {
-          Messages.showErrorDialog(project, message, title);
-        }
-        else {
-          Messages.showInfoMessage(project, message, title);
-        }
+    });
+  }
+
+  private static void notifyAboutErrorResult(GitTaskResult taskResult, GitRebaseLineListener resultListener, List<VcsException> exceptions, Project project) {
+    if (taskResult == GitTaskResult.CANCELLED) {
+      return;
+    }
+    final GitRebaseLineListener.Result result = resultListener.getResult();
+    String messageId;
+    boolean isError = true;
+    switch (result.status) {
+      case CONFLICT:
+        messageId = "rebase.result.conflict";
+        break;
+      case ERROR:
+        messageId = "rebase.result.error";
+        break;
+      case CANCELLED:
+        // we do not need to show a message if editing was cancelled.
+        exceptions.clear();
+        return;
+      case EDIT:
+        isError = false;
+        messageId = "rebase.result.amend";
+        break;
+      case FINISHED:
+      default:
+        messageId = null;
+    }
+    if (messageId != null) {
+      String message = GitBundle.message(messageId, result.current, result.total);
+      String title = GitBundle.message(messageId + ".title");
+      if (isError) {
+        Messages.showErrorDialog(project, message, title);
+      }
+      else {
+        Messages.showInfoMessage(project, message, title);
       }
     }
   }
