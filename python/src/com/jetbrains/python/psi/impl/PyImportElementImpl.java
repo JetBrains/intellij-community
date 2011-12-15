@@ -112,25 +112,6 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
-                                     final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
-    // import is per-file
-    if (place.getContainingFile() != getContainingFile()) {
-      return true;
-    }
-    final PyReferenceExpression importRef = getImportReferenceExpression();
-    if (importRef != null) {
-      final PsiElement element = importRef.getReference().resolve();
-      if (element != null) {
-        return processor.execute(element, state);
-      }
-    }
-    return true;
-  }
-
-  @Override
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
 
