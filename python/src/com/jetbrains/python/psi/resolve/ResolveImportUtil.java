@@ -339,8 +339,8 @@ public class ResolveImportUtil {
       // not a subdir, not a file; could be a name in parent/__init__.py
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
-      if (initPy instanceof PyFile) {
-        return ((PyFile)initPy).getElementNamed(referencedName);
+      if (initPy instanceof PyFileImpl) {
+        return ((PyFileImpl)initPy).getElementNamed(referencedName, false);
       }
     }
     return null;
