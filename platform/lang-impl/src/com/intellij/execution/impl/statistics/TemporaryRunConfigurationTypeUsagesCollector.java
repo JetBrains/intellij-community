@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TemporaryRunConfigurationTypeUsagesCollector extends AbstractRunConfigurationTypeUsagesCollector {
 
-  private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("run-configuration-type-temporary");
+  private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("run-configuration-type-temp");
 
   @NotNull
   @Override
