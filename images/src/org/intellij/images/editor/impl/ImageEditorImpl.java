@@ -17,15 +17,16 @@ package org.intellij.images.editor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
+import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.ui.ImageComponent;
+import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,69 +39,58 @@ import java.beans.PropertyChangeListener;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorImpl implements ImageEditor {
-  private final PropertyChangeListener optionsChangeListener = new OptionsChangeListener();
-  private final Project project;
-  private final ImageContentProvider contentProvider;
-  private final ImageEditorUI editorUI;
-  private boolean disposed;
+final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
+    private final PropertyChangeListener optionsChangeListener = new OptionsChangeListener();
+    private final Project project;
+    private final VirtualFile file;
+    private final ImageEditorUI editorUI;
+    private boolean disposed;
 
-  ImageEditorImpl(@NotNull Project project, @NotNull final ImageContentProvider contentProvider) {
-    this.project = project;
-    this.contentProvider = contentProvider;
+    ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
+        this.project = project;
+        this.file = file;
 
-    // Options
-    Options options = OptionsManager.getInstance().getOptions();
-    editorUI = new ImageEditorUI(this, options.getEditorOptions());
-    options.addPropertyChangeListener(optionsChangeListener);
-
-    contentProvider.addContentChangeListener(new ImageContentProvider.ContentChangeListener() {
-      public void contentChanged() {
-        setValue(contentProvider.getContent());
-      }
-    });
-    setValue(contentProvider.getContent());
-  }
-
-  private void setValue(ImageContentProvider.ImageContent content) {
-    ImageDocument document = editorUI.getImageComponent().getDocument();
-    BufferedImage image = content.getImage();
-    String format = content.getFormat();
-    if (image != null && format != null) {
-      BufferedImage previousImage = document.getValue();
-      document.setFormat(format);
-      document.setValue(image);
-      ImageZoomModel zoomModel = getZoomModel();
-      if (previousImage == null || !zoomModel.isZoomLevelChanged()) {
-        // Set smart zooming behaviour on open
+        // Options
         Options options = OptionsManager.getInstance().getOptions();
-        ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
-        // Open as actual size
-        zoomModel.setZoomFactor(1.0d);
+        editorUI = new ImageEditorUI(this, options.getEditorOptions());
+        options.addPropertyChangeListener(optionsChangeListener);
 
-        if (zoomOptions.isSmartZooming()) {
-          Dimension prefferedSize = zoomOptions.getPrefferedSize();
-          if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
-            // Resize to preferred size
-            // Calculate zoom factor
+        VirtualFileManager.getInstance().addVirtualFileListener(this);
+
+        setValue(file);
+    }
+
+    private void setValue(VirtualFile file) {
+        ImageDocument document = editorUI.getImageComponent().getDocument();
+        try {
+            BufferedImage previousImage = document.getValue();
+            BufferedImage image = IfsUtil.getImage(file);
+            document.setValue(image);
+            document.setFormat(IfsUtil.getFormat(file));
+            ImageZoomModel zoomModel = getZoomModel();
+            if (image != null && (previousImage == null || !zoomModel.isZoomLevelChanged())) {
+                // Set smart zooming behaviour on open
+                Options options = OptionsManager.getInstance().getOptions();
+                ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+                // Open as actual size
+                zoomModel.setZoomFactor(1.0d);
+
+                if (zoomOptions.isSmartZooming()) {
+                    Dimension prefferedSize = zoomOptions.getPrefferedSize();
+                    if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
+                        // Resize to preffered size
+                        // Calculate zoom factor
 
                         double factor = (prefferedSize.getWidth() / (double) image.getWidth() + prefferedSize.getHeight() / (double) image.getHeight()) / 2.0d;
-            zoomModel.setZoomFactor(Math.ceil(factor));
-          }
+                        zoomModel.setZoomFactor(Math.ceil(factor));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Error loading image file
+            document.setValue(null);
         }
-      }
     }
-    else {
-      document.setValue(null);
-      document.setFormat(null);
-      // Close editor
-      VirtualFile file = contentProvider.getVirtualFile();
-      if (file != null) {
-        FileEditorManager editorManager = FileEditorManager.getInstance(project);
-        editorManager.closeFile(file);
-      }
-    }
-  }
 
     public boolean isValid() {
         ImageDocument document = editorUI.getImageComponent().getDocument();
@@ -115,14 +105,10 @@ final class ImageEditorImpl implements ImageEditor {
         return editorUI.getImageComponent();
     }
 
-  @Nullable
-  public VirtualFile getFile() {
-    return contentProvider.getVirtualFile();
-  }
-
-  public long getFileLength() {
-    return contentProvider.getFileLength();
-  }
+    @NotNull
+    public VirtualFile getFile() {
+        return file;
+    }
 
     @NotNull
     public Project getProject() {
@@ -168,9 +154,40 @@ final class ImageEditorImpl implements ImageEditor {
         Options options = OptionsManager.getInstance().getOptions();
         options.removePropertyChangeListener(optionsChangeListener);
         editorUI.dispose();
+        VirtualFileManager.getInstance().removeVirtualFileListener(this);
         disposed = true;
     }
 
+    public void propertyChanged(VirtualFilePropertyEvent event) {
+        super.propertyChanged(event);
+        if (file.equals(event.getFile())) {
+            // Change document
+            file.refresh(true, false, new Runnable() {
+                public void run() {
+                    if (ImageFileTypeManager.getInstance().isImage(file)) {
+                        setValue(file);
+                    } else {
+                        setValue(null);
+                        // Close editor
+                        FileEditorManager editorManager = FileEditorManager.getInstance(project);
+                        editorManager.closeFile(file);
+                    }
+                }
+            });
+        }
+    }
+
+    public void contentsChanged(VirtualFileEvent event) {
+        super.contentsChanged(event);
+        if (file.equals(event.getFile())) {
+            // Change document
+            file.refresh(true, false, new Runnable() {
+                public void run() {
+                    setValue(file);
+                }
+            });
+        }
+    }
 
     private class OptionsChangeListener implements PropertyChangeListener {
         public void propertyChange(PropertyChangeEvent evt) {

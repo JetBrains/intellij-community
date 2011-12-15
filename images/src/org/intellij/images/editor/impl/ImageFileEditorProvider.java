@@ -45,10 +45,7 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
 
     @NotNull
     public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-      ImageContentProvider contentProvider = new VirtualFileImageContentProvider(file);
-      ImageFileEditorImpl editor = new ImageFileEditorImpl(project, contentProvider);
-      Disposer.register(editor, contentProvider);
-      return editor;
+        return new ImageFileEditorImpl(project, file);
     }
 
     public void disposeEditor(@NotNull FileEditor editor) {
