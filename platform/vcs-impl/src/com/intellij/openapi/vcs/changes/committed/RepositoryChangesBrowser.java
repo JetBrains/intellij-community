@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.table.TableView;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -114,6 +115,8 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
       if ((! ModalityState.NON_MODAL.equals(ModalityState.current())) ||
           CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(event.getDataContext()))) {
         event.getPresentation().setEnabled(false);
+      } else {
+        event.getPresentation().setEnabled(true);
       }
     }
 
