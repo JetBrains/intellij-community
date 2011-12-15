@@ -151,7 +151,10 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     }
     MyParser parser = new MyParser(tokens, callback, generator);
     ZenCodingNode node = parser.parse();
-    return parser.myIndex == tokens.size() ? node : null;
+    if (parser.myIndex != tokens.size() || node instanceof TextNode) {
+      return null;
+    }
+    return node;
   }
   
   private static boolean validate(@NotNull List<ZenCodingToken> tokens, @NotNull ZenCodingGenerator generator) {
