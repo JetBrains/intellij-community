@@ -1,4 +1,6 @@
 from pydevd_file_utils import GetFileNameAndBaseFromFile
+import pydev_log
+import traceback
 
 def read_file(filename):
     f = open(filename, "r")
@@ -47,18 +49,30 @@ def get_line(text, linenno):
 
 def get_source(frame):
     try:
-        return frame.f_locals['self'].source
+        node =  frame.f_locals['self']
+        if hasattr(node, 'source'):
+            return node.source
+        else:
+            pydev_log.error_once("WARNING: Template path is not available. Please set TEMPLATE_DEBUG=True in your settings.py to make django template breakpoints working")
+            return None
+
     except:
+        pydev_log.debug(traceback.format_exc())
         return None
 
 
 def get_template_file_name(frame):
     try:
         source = get_source(frame)
+        if source is None:
+            pydev_log.debug("Source is None\n")
+            return None
         fname = source[0].name
+        pydev_log.debug("Source name is %s\n" % fname)
         filename, base = GetFileNameAndBaseFromFile(fname)
         return filename
     except:
+        pydev_log.debug(traceback.format_exc())
         return None
 
 
