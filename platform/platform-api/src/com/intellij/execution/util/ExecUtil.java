@@ -48,7 +48,7 @@ public class ExecUtil {
   public static String loadTemplate(@NotNull final ClassLoader loader,
                                     @NotNull final String templateName,
                                     @Nullable final Map<String, String> variables) throws IOException {
-    final InputStream stream = loader.getResourceAsStream(templateName);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final InputStream stream = loader.getResourceAsStream(templateName);
     if (stream == null) {
       throw new IOException("Template '" + templateName + "' not found by " + loader);
     }
@@ -91,13 +91,6 @@ public class ExecUtil {
   public static int sudoAndGetResult(@NotNull final String scriptPath,
                                      @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
     if (SystemInfo.isMac) {
-      /*
-      final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
-      if (engine == null) {
-        throw new ExecutionException("Could not find AppleScript engine");
-      }
-      engine.eval("do shell script \"" + scriptPath + "\" with administrator privileges");
-      */
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
       Runtime runtime = Runtime.getRuntime();
       String[] args = {getOsascriptPath(), "-e", script};
