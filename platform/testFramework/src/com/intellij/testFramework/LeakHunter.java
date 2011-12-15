@@ -199,7 +199,7 @@ public class LeakHunter {
               try {
                 valueStr = String.valueOf(backLink.value);
               }
-              catch (Exception e) {
+              catch (Throwable e) {
                 valueStr = "("+e.getMessage()+" while computing .toString())";
               }
               System.out.println("-->"+backLink.field+"; Value: "+ valueStr +"; "+backLink.aClass);

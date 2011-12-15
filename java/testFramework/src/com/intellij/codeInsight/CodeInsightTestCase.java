@@ -570,7 +570,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
                        myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
         }
         else {
-          assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());
+          assertTrue("should has no selection, but was: ("+myEditor.getSelectionModel().getSelectionStart()+", "+myEditor.getSelectionModel().getSelectionEnd()+")",
+                     !myEditor.getSelectionModel().hasSelection());
         }
       }
     });

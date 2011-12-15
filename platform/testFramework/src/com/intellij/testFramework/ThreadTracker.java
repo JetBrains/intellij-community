@@ -74,7 +74,7 @@ public class ThreadTracker {
 
     add("Change List Updater");
   }};
-  public void checkLeak() {
+  public void checkLeak() throws AssertionError {
     try {
       if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
 
