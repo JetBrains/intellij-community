@@ -18,6 +18,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -25,9 +27,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
 
 public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix");
@@ -76,6 +84,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
+    if (changeMethodSignatureIfNeeded(myVariable)) return;
     if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
     try {
       myVariable.normalizeDeclaration();
@@ -86,6 +95,42 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  private boolean changeMethodSignatureIfNeeded(PsiVariable myVariable) {
+    if (myVariable instanceof PsiParameter) {
+      final PsiElement scope = ((PsiParameter)myVariable).getDeclarationScope();
+      if (scope instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)scope;
+        final PsiMethod psiMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+        if (psiMethod == null) return true;
+        final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)myVariable);
+        if (!CodeInsightUtilBase.prepareFileForWrite(psiMethod.getContainingFile())) return true;
+        final ArrayList<ParameterInfoImpl> infos = new ArrayList<ParameterInfoImpl>();
+        int i = 0;
+        for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
+          final boolean changeType = i == parameterIndex;
+          infos.add(new ParameterInfoImpl(i++, parameter.getName(), changeType ? getReturnType() : parameter.getType()));
+        }
+
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          final JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(psiMethod.getProject(), psiMethod, false, myVariable);
+          dialog.setParameterInfos(infos);
+          dialog.show();
+        }
+        else {
+          ChangeSignatureProcessor processor = new ChangeSignatureProcessor(psiMethod.getProject(),
+                                                                            psiMethod,
+                                                                            false, null,
+                                                                            psiMethod.getName(),
+                                                                            psiMethod.getReturnType(),
+                                                                            infos.toArray(new ParameterInfoImpl[infos.size()]));
+          processor.run();
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   protected PsiType getReturnType() {
