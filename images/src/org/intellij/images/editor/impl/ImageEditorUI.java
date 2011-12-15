@@ -152,10 +152,11 @@ final class ImageEditorUI extends JPanel implements DataProvider {
             } else {
                 format = format.toUpperCase();
             }
+            VirtualFile file = editor.getFile();
             infoLabel.setText(
                     ImagesBundle.message("image.info",
                             image.getWidth(), image.getHeight(), format,
-                            colorModel.getPixelSize(), StringUtil.formatFileSize(editor.getFileLength())));
+                            colorModel.getPixelSize(), file != null ? StringUtil.formatFileSize(file.getLength()) : ""));
         } else {
             infoLabel.setText(null);
         }
@@ -347,8 +348,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         } else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
             return editor.getFile();
         } else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-          final VirtualFile file = editor.getFile();
-          return file != null ? new VirtualFile[]{file} : null;
+            return new VirtualFile[]{editor.getFile()};
         } else if (LangDataKeys.PSI_FILE.is(dataId)) {
             return getData(LangDataKeys.PSI_ELEMENT.getName());
         } else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {

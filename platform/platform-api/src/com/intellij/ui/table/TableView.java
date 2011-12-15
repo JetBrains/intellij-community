@@ -86,7 +86,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       final TableColumn column = getColumnModel().getColumn(i);
       // hack to get sort arrow included into the renderer component
       if (sorter != null && columnInfo.isSortable()) {
-        sorter.setSortKeys(Collections.singletonList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+        sorter.setSortKeys(Collections.singletonList(new RowSorter.SortKey(i, SortOrder.ASCENDING)));
       }
 
       final Component headerComponent = defaultRenderer == null? null :

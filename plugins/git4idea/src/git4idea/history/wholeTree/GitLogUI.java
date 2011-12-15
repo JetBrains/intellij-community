@@ -13,6 +13,7 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -21,14 +22,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -892,6 +891,7 @@ public class GitLogUI implements Disposable {
     myMyGotoCommitAction = new MyGotoCommitAction();
     group.add(myMyGotoCommitAction);
     group.add(myRefreshAction);
+    group.add(new ContextHelpAction("reference.changesToolWindow.log"));
 
     //group.add(new TestIndexAction());
     myMoreAction = new MoreAction() {

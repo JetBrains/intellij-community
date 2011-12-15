@@ -187,10 +187,14 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void revalidateTree() {
-    myTree.invalidate();
-    myTree.setRowHeight(myTree.getRowHeight() == -1 ? -2 : -1);
-    myTree.revalidate();
-    myTree.repaint();
+    revalidateTree(myTree);
+  }
+
+  public static void revalidateTree(Tree tree) {
+    tree.invalidate();
+    tree.setRowHeight(tree.getRowHeight() == -1 ? -2 : -1);
+    tree.revalidate();
+    tree.repaint();
   }
 
 

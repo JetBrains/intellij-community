@@ -140,7 +140,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     for (GenerationItem item : generationItems) {
       final MyGenerationItem genItem = (MyGenerationItem)item;
       final File genDir = new File(genItem.myGenRootPath);
-      CompilerUtil.refreshIOFile(genDir);
+      CompilerUtil.refreshIODirectories(Arrays.asList(genDir));
       final VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(genDir);
       if (generatedVFile != null) {
         AndroidUtils.collectFiles(generatedVFile, visited, generatedVFiles);

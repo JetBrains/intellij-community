@@ -84,6 +84,11 @@ public class RelaxedHtmlFromRngElementDescriptor implements XmlElementDescriptor
     return myDelegate.getContentType();
   }
 
+  @Override
+  public String getDefaultValue() {
+    return null;
+  }
+
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
     final XmlAttributeDescriptor descriptor = myDelegate.getAttributeDescriptor(attributeName.toLowerCase(), context);
     if (descriptor != null) return descriptor;

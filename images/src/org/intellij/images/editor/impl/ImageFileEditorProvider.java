@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
+final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
     @NonNls private static final String EDITOR_TYPE_ID = "images";
 
     private final ImageFileTypeManager typeManager;
@@ -45,14 +45,7 @@ public final class ImageFileEditorProvider implements FileEditorProvider, DumbAw
 
     @NotNull
     public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-        return createImageEditor(project, new VirtualFileImageContentProvider(file));
-    }
-
-    @NotNull
-    public static FileEditor createImageEditor(@NotNull Project project, @NotNull ImageContentProvider contentProvider) {
-      ImageFileEditorImpl editor = new ImageFileEditorImpl(project, contentProvider);
-      Disposer.register(editor, contentProvider);
-      return editor;
+        return new ImageFileEditorImpl(project, file);
     }
 
     public void disposeEditor(@NotNull FileEditor editor) {
