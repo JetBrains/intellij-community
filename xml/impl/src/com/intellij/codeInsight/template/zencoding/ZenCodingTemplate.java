@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter;
+import com.intellij.codeInsight.template.zencoding.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.nodes.*;
 import com.intellij.codeInsight.template.zencoding.tokens.*;
@@ -145,9 +146,21 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     if (tokens == null) {
       return null;
     }
+    if (generator != null && !validate(tokens, generator)) {
+      return null;
+    }
     MyParser parser = new MyParser(tokens, callback, generator);
     ZenCodingNode node = parser.parse();
     return parser.myIndex == tokens.size() ? node : null;
+  }
+  
+  private static boolean validate(@NotNull List<ZenCodingToken> tokens, @NotNull ZenCodingGenerator generator) {
+    for (ZenCodingToken token : tokens) {
+      if (token instanceof TextToken && !(generator instanceof XmlZenCodingGenerator)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable
