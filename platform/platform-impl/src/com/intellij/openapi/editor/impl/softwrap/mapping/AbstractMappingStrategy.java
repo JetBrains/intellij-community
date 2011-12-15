@@ -42,8 +42,6 @@ import java.util.List;
 abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   
   private static final Logger LOG = Logger.getInstance("#" + AbstractMappingStrategy.class.getName());
-  
-  protected static final CacheEntry SEARCH_KEY = new CacheEntry(0, null, null, null);
 
   protected final Editor myEditor;
   protected final EditorTextRepresentationHelper myRepresentationHelper;

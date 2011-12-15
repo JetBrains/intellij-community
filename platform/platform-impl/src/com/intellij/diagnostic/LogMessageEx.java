@@ -18,6 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +138,8 @@ public class LogMessageEx extends LogMessage {
     if (details.length > 0 && detailsBuffer.length() > 0) {
       detailsBuffer.setLength(detailsBuffer.length() - 1);
     }
-    logger.error(createEvent(message, detailsBuffer.toString(), null, null, (Attachment)null));
+    Attachment attachment = detailsBuffer.length() > 0 ? new Attachment("current context", detailsBuffer.toString()) : null;
+    logger.error(createEvent(message, ExceptionUtil.getThrowableText(new Throwable()), null, null, attachment));
   }
   
   /**
