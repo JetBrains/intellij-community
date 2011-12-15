@@ -25,6 +25,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -511,7 +512,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           return false;
         }
 
-        if (item.isValid()) {
+        if (item.isValid() && !(item instanceof LiveTemplateLookupElement)) {
           final LookupElementPresentation presentation = new LookupElementPresentation();
           item.renderElement(presentation);
           if (StringUtil.isNotEmpty(presentation.getTailText())) {
