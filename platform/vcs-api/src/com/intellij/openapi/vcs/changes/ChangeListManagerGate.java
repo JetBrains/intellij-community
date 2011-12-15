@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,4 +41,5 @@ public interface ChangeListManagerGate {
   void moveChanges(final String toList, final Collection<Change> changes);
   void setListsToDisappear(final Collection<String> names);
   FileStatus getStatus(final VirtualFile file);
+  FileStatus getStatus(final File file);
 }

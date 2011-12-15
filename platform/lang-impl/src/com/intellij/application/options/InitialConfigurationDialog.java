@@ -160,6 +160,11 @@ public class InitialConfigurationDialog extends DialogWrapper {
       }
 
       @Override
+      protected void initOnImpl() {
+        //
+      }
+
+      @Override
       protected void onImpl() {
         myWrapper.setVisible(true);
         setText("Click to hide preview");

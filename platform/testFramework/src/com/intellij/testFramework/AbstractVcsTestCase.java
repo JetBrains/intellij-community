@@ -337,7 +337,11 @@ public abstract class AbstractVcsTestCase {
       @Override
       protected void run() throws Throwable {
         try {
-          file.setBinaryContent(newContent.getBytes());
+          final long newModTs = Math.max(System.currentTimeMillis(), file.getModificationStamp() + 1100);
+          final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
+          file.setBinaryContent(newContent.getBytes(), newModTs, newTs);
+          final File file1 = new File(file.getPath());
+          file1.setLastModified(newModTs);
         }
         catch(IOException ex) {
           throw new RuntimeException(ex);

@@ -26,7 +26,9 @@ import com.sun.tools.javac.util.ListBuffer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -40,12 +42,14 @@ class MyFileManager implements StandardJavaFileManager {
 
   private final String myOutputDir;
   private final StandardJavaFileManager myStandardFileManager;
+  private final String myEncoding;
   private final CompAPIDriver myCompAPIDriver;
 
-  MyFileManager(CompAPIDriver compAPIDriver, String outputDir, StandardJavaFileManager standardFileManager) {
+  MyFileManager(CompAPIDriver compAPIDriver, String outputDir, StandardJavaFileManager standardFileManager, String encoding) {
     myCompAPIDriver = compAPIDriver;
     myOutputDir = outputDir;
     myStandardFileManager = standardFileManager;
+    myEncoding = encoding;
   }
 
   @Override
@@ -54,7 +58,7 @@ class MyFileManager implements StandardJavaFileManager {
     List<JavaFileObject> result = new ArrayList<JavaFileObject>(size);
 
     for (File file : files) {
-      JavaFileObject fileObject = new JavaIoFile(file, JavaFileObject.Kind.SOURCE);
+      JavaFileObject fileObject = new JavaIoFile(file, JavaFileObject.Kind.SOURCE, myEncoding);
       result.add(fileObject);
     }
 
@@ -119,7 +123,7 @@ class MyFileManager implements StandardJavaFileManager {
           if (kind == JavaFileObject.Kind.SOURCE && child.getFileSystem() instanceof JarFileSystem) continue;  //for some reasdon javac looks for java files inside jar
 
           // use VFS to read content inside .jar
-          JavaFileObject fileObject = !child.getPath().contains("!/") ? new JavaIoFile(new File(child.getPath()), kind) : new JavaVirtualFile(child, kind);
+          JavaFileObject fileObject = !child.getPath().contains("!/") ? new JavaIoFile(new File(child.getPath()), kind, myEncoding) : new JavaVirtualFile(child, kind);
           results.add(fileObject);
         }
       }

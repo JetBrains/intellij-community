@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,6 @@ import java.util.Locale;
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
 
-  private final boolean myPreventSafeWrite = Boolean.parseBoolean(System.getProperty("idea.no.safe.write"));
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
   @Override
@@ -497,8 +497,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     };
   }
 
-  private boolean shallUseSafeStream(final Object requestor, final VirtualFile file) {
-    return !myPreventSafeWrite && requestor instanceof SafeWriteRequestor && !file.isSymLink();
+  private static boolean shallUseSafeStream(final Object requestor, final VirtualFile file) {
+    return requestor instanceof SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite() && !file.isSymLink();
   }
 
   @Override

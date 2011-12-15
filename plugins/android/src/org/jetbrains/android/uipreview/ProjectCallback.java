@@ -49,7 +49,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   public static final String FRAGMENT_TAG_NAME = "fragment";
 
   private final Set<String> myMissingClasses = new TreeSet<String>();
-  private final Set<String> myBrokenClasses = new TreeSet<String>();
+  private final Map<String, Throwable> myBrokenClasses = new HashMap<String, Throwable>();
 
   private final Map<String, Class<?>> myLoadedClasses = new HashMap<String, Class<?>>();
 
@@ -103,6 +103,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     return myProjectResources.getResourceId(type, name);
   }
 
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   @Nullable
   public Object loadView(String className, Class[] constructorSignature, Object[] constructorArgs)
     throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, InstantiationException {
@@ -123,23 +124,23 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
     catch (ClassNotFoundException e) {
       LOG.info(e);
-      myBrokenClasses.add(className);
+      myBrokenClasses.put(className, e.getCause());
     }
     catch (InvocationTargetException e) {
       LOG.info(e);
-      myBrokenClasses.add(className);
+      myBrokenClasses.put(className, e.getCause());
     }
     catch (IllegalAccessException e) {
       LOG.info(e);
-      myBrokenClasses.add(className);
+      myBrokenClasses.put(className, e.getCause());
     }
     catch (InstantiationException e) {
       LOG.info(e);
-      myBrokenClasses.add(className);
+      myBrokenClasses.put(className, e.getCause());
     }
     catch (NoSuchMethodException e) {
       LOG.info(e);
-      myBrokenClasses.add(className);
+      myBrokenClasses.put(className, e.getCause());
     }
 
     try {
@@ -326,7 +327,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   }
 
   @NotNull
-  public Set<String> getBrokenClasses() {
+  public Map<String, Throwable> getBrokenClasses() {
     return myBrokenClasses;
   }
 
