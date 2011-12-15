@@ -42,7 +42,7 @@ import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
-import com.jetbrains.python.console.parsing.IPythonData;
+import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
@@ -419,15 +419,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return file.getName().contains("Python Console");
   }
 
-  public static boolean isIPythonConsole(@Nullable final FileElement element) {
-    //noinspection ConstantConditions
-    IPythonData data = getIPythonData(element);
-
-    return data != null && data.isEnabled();
+  public static boolean isPythonConsole(@Nullable final FileElement element) {
+    return getPythonConsoleData(element) != null;
   }
 
   @Nullable
-  public static IPythonData getIPythonData(@Nullable FileElement element) {
+  public static PythonConsoleData getPythonConsoleData(@Nullable FileElement element) {
     if (element == null || element.getPsi() == null || element.getPsi().getContainingFile() == null) {
       return null;
     }
@@ -437,7 +434,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     if (file == null) {
       return null;
     }
-    return file.getUserData(PyConsoleUtil.IPYTHON);
+    return file.getUserData(PyConsoleUtil.PYTHON_CONSOLE_DATA);
   }
 
   private static VirtualFile getConsoleFile(PsiFile psiFile) {

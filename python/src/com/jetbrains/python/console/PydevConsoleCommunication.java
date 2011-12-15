@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.django.util.VirtualFileUtil;
-import com.jetbrains.python.console.parsing.IPythonData;
+import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PydevXmlUtils;
 import org.apache.xmlrpc.WebServer;
@@ -159,9 +159,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     boolean isAutoMagic = (Boolean)params.get(1);
 
     if (getConsoleFile() != null) {
-      IPythonData data = PyConsoleUtil.getOrCreateIPythonData(getConsoleFile());
-      data.setAutomagic(isAutoMagic);
-      data.setMagicCommands(commands);
+      PythonConsoleData consoleData = PyConsoleUtil.getOrCreateIPythonData(getConsoleFile());
+      consoleData.setIPythonAutomagic(isAutoMagic);
+      consoleData.setIPythonMagicCommands(commands);
     }
 
     return "";

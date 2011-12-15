@@ -1299,19 +1299,19 @@ if __name__ == '__main__':
 
     port = setup['port']
     if setup['multiproc']:
-        pydev_log.debug("Started in multiproc mode")
+        pydev_log.debug("Started in multiproc mode\n")
         dispatcher = Dispatcher()
         dispatcher.connect(setup)
         if dispatcher.port is not None:
             port = dispatcher.port
-            pydev_log.debug("Received port %d" %port)
+            pydev_log.debug("Received port %d\n" %port)
             pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
 
             import pydev_monkey
             try:
                 pydev_monkey.patch_new_process_functions()
             except:
-                logger.error("Error patching process functions")
+                logger.error("Error patching process functions\n")
         else:
             pydev_log.error("pydev debugger: couldn't get port for new debug process\n")
     else:

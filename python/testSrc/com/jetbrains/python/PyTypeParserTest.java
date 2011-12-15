@@ -3,7 +3,10 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.types.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -44,10 +47,12 @@ public class PyTypeParserTest extends PyTestCase {
   public void testUnionType() {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject or str");
-    final List<PyType> members = type.getMembers();
+    assertNotNull(type);
+    final Collection<PyType> members = type.getMembers();
     assertEquals(2, members.size());
-    assertClassType(members.get(0), "MyObject");
-    assertClassType(members.get(1), "str");
+    final List<PyType> list = new ArrayList<PyType>(members);
+    assertClassType(list.get(0), "MyObject");
+    assertClassType(list.get(1), "str");
   }
 
   public void testTypeSubparts() {

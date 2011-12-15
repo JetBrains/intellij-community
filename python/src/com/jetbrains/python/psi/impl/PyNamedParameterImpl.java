@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Set;
 
 /**
  * @author yole
@@ -157,12 +156,12 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       final PyParameter[] params = parameterList.getParameters();
       PyFunction func = parameterList.getContainingFunction();
       if (func != null) {
-        final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(func);
-        if (params [0] == this && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
+        final PyFunction.Modifier modifier = func.getModifier();
+        if (params [0] == this && modifier != PyFunction.Modifier.STATICMETHOD) {
           // must be 'self' or 'cls'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
-            return new PyClassType(containingClass, flags.contains(PyFunction.Flag.CLASSMETHOD));
+            return new PyClassType(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
           }
         }
         if (isKeywordContainer()) {

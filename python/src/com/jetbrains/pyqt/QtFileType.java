@@ -10,11 +10,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -108,14 +107,14 @@ public abstract class QtFileType implements FileType, INativeFileType {
     return null;
   }
 
+  @Nullable
   private static String findToolInPackage(String toolName, Module module, Sdk sdk, String name) {
-    List<PsiElement> elements = ResolveImportUtil.resolveModulesInRootProvider(sdk.getRootProvider(), module, PyQualifiedName.fromComponents(name));
-    for (PsiElement psiElement : elements) {
-      if (psiElement instanceof PsiDirectory) {
-        VirtualFile tool = ((PsiDirectory)psiElement).getVirtualFile().findChild(toolName + ".exe");
-        if (tool != null) {
-          return tool.getPath();
-        }
+    QualifiedNameResolver visitor = new QualifiedNameResolver(name).fromModule(module).withSdk(sdk);
+    List<PsiDirectory> elements = visitor.resultsOfType(PsiDirectory.class);
+    for (PsiDirectory directory : elements) {
+      VirtualFile tool = directory.getVirtualFile().findChild(toolName + ".exe");
+      if (tool != null) {
+        return tool.getPath();
       }
     }
     return null;

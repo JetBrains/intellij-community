@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
-import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 /**
  * Checks for for calls like <code>X.method(y,...)</code>, where y is not an instance of X.
@@ -77,7 +77,7 @@ public class PyCallByClassInspection extends PyInspection {
                 if (arglist != null) {
                   CallArgumentsMapping analysis = arglist.analyzeCall(resolveWithoutImplicits());
                   final PyCallExpression.PyMarkedCallee markedCallee = analysis.getMarkedCallee();
-                  if (markedCallee != null  && !markedCallee.getFlags().contains(STATICMETHOD)) {
+                  if (markedCallee != null  && markedCallee.getModifier() != STATICMETHOD) {
                     PyParameter[] params = markedCallee.getCallable().getParameterList().getParameters();
                     if (params.length > 0 && params[0] instanceof PyNamedParameter) {
                       PyNamedParameter first_param = (PyNamedParameter)params[0];
@@ -89,7 +89,7 @@ public class PyCallByClassInspection extends PyInspection {
                           PyType first_arg_type = myTypeEvalContext.getType(first_arg);
                           if (first_arg_type instanceof PyClassType) {
                             final PyClassType first_arg_class_type = (PyClassType)first_arg_type;
-                            if (first_arg_class_type.isDefinition() && !markedCallee.getFlags().contains(CLASSMETHOD)) {
+                            if (first_arg_class_type.isDefinition() && markedCallee.getModifier() != CLASSMETHOD) {
                               registerProblem(
                                 first_arg,
                                 PyBundle.message("INSP.instance.of.$0.excpected", qual_class.getQualifiedName())

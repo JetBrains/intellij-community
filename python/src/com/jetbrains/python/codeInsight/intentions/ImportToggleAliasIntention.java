@@ -64,7 +64,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
           return false;
         }
       }
-      final PyReferenceExpression referenceExpression = myImportElement.getImportReference();
+      final PyReferenceExpression referenceExpression = myImportElement.getImportReferenceExpression();
       if (referenceExpression == null || referenceExpression.getReference().resolve() == null) {
         return false;
       }
@@ -74,7 +74,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
     public String getText() {
       String add_name = "Add alias";
       if (myImportElement != null) {
-        PyReferenceExpression refex = myImportElement.getImportReference();
+        PyReferenceExpression refex = myImportElement.getImportReferenceExpression();
         if (refex != null) {
           add_name = PyBundle.message("INTN.add.alias.for.import.$0", refex.getText());
         }
@@ -108,10 +108,10 @@ public class ImportToggleAliasIntention implements IntentionAction {
     //
     final String target_name; // we set in in the source
     final String remove_name; // we replace it in the source
-    PyReferenceExpression reference = sure(state.myImportElement.getImportReference());
+    PyReferenceExpression reference = sure(state.myImportElement.getImportReferenceExpression());
     // search for references to us with the right name
     try {
-      String imported_name = PyResolveUtil.toPath(reference, ".");
+      String imported_name = PyResolveUtil.toPath(reference);
       if (state.myAlias != null) {
         // have to remove alias, rename everything to original
         target_name = imported_name;
@@ -150,7 +150,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
           public boolean execute(@NotNull PsiElement element) {
             if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
               PyReferenceExpression ref = (PyReferenceExpression)element;
-              if (remove_name.equals(PyResolveUtil.toPath(ref, "."))) {  // filter out other names that might resolve to our target
+              if (remove_name.equals(PyResolveUtil.toPath(ref))) {  // filter out other names that might resolve to our target
                 PsiElement resolved = ref.getReference().resolve();
                 if (resolved == referee) references.add(ref.getReference());
               }

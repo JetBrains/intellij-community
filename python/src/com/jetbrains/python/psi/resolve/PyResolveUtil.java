@@ -15,11 +15,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -232,57 +232,13 @@ public class PyResolveUtil {
     return treeCrawlUp(processor, false, elt);
   }
 
-
-  /**
-   * Tries to match two [qualified] reference expression paths by names; target must be a 'sublist' of source to match.
-   * E.g., 'a.b.c.d' and 'a.b.c' would match, while 'a.b.c' and 'a.b.c.d' would not. Eqaully, 'a.b.c' and 'a.b.d' would not match.
-   * If either source or target is null, false is returned.
-   *
-   * @param source_path expression path to match (the longer list of qualifiers).
-   * @param target_path expression path to match against (hopeful sublist of qualifiers of source).
-   * @return true if source matches target.
-   * @see #unwindQualifiers(PyQualifiedExpression) .
-   */
-  public static <S extends PyExpression, T extends PyExpression> boolean pathsMatch(List<S> source_path, List<T> target_path) {
-    // turn qualifiers into lists
-    if ((source_path == null) || (target_path == null)) return false;
-    // compare until target is exhausted
-    Iterator<S> source_iter = source_path.iterator();
-    for (final T target_elt : target_path) {
-      if (source_iter.hasNext()) {
-        S source_elt = source_iter.next();
-        if (!target_elt.getText().equals(source_elt.getText())) return false;
-      }
-      else {
-        return false;
-      } // source exhausted before target
-    }
-    return true;
-  }
-
-  public static boolean pathsMatchStr(List<String> source_path, List<String> target_path) {
-    // turn qualifiers into lists
-    if ((source_path == null) || (target_path == null)) return false;
-    // compare until target is exhausted
-    Iterator<String> source_iter = source_path.iterator();
-    for (final String target_elt : target_path) {
-      if (source_iter.hasNext()) {
-        String source_elt = source_iter.next();
-        if (!target_elt.equals(source_elt)) return false;
-      }
-      else {
-        return false;
-      } // source exhausted before target
-    }
-    return true;
-  }
-
   /**
    * Unwinds a multi-level qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
    *
-   * @param expr an experssion to unwind.
+   * @param expr an expression to unwind.
    * @return path as a list of ref expressions.
    */
+  @NotNull
   public static List<PyExpression> unwindQualifiers(final PyQualifiedExpression expr) {
     final List<PyExpression> path = new LinkedList<PyExpression>();
     PyQualifiedExpression e = expr;
@@ -305,27 +261,18 @@ public class PyResolveUtil {
     return path;
   }
 
-  public static String toPath(PyQualifiedExpression expr, String separator) {
+  public static String toPath(PyQualifiedExpression expr) {
     if (expr == null) return "";
     List<PyExpression> path = unwindQualifiers(expr);
-    if (path != null) {
-      StringBuilder buf = new StringBuilder();
-      boolean is_not_first = false;
-      for (PyExpression ex : path) {
-        if (is_not_first) {
-          buf.append(separator);
-        }
-        else {
-          is_not_first = true;
-        }
-        buf.append(ex.getName());
-      }
-      return buf.toString();
+    final PyQualifiedName qName = PyQualifiedName.fromReferenceChain(path);
+    if (qName != null) {
+      return qName.toString();
     }
-    else {
-      String s = expr.getName();
-      return s != null ? s : "";
+    String name = expr.getName();
+    if (name != null) {
+      return name;
     }
+    return "";
   }
 
   /**

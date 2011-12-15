@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
@@ -29,9 +28,9 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
   @NotNull
   public Iterable<PyElement> iterateNames() {
     if (getParent() instanceof PyFromImportStatement) {
-      PyFromImportStatement import_from_stmt = (PyFromImportStatement)getParent();
-      PyReferenceExpression from_src = import_from_stmt.getImportSource();
-      final List<PsiElement> importedFiles = ResolveImportUtil.resolveImportReference(from_src);
+      PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
+      final List<PsiElement> importedFiles = ResolveImportUtil.resolveFromOrForeignImport(fromImportStatement,
+                                                                                          fromImportStatement.getImportSourceQName());
       ChainIterable<PyElement> chain = new ChainIterable<PyElement>();
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
@@ -50,9 +49,9 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       return null;
     }
     if (getParent() instanceof PyFromImportStatement) {
-      PyFromImportStatement import_from_stmt = (PyFromImportStatement)getParent();
-      PyReferenceExpression from_src = import_from_stmt.getImportSource();
-      final List<PsiElement> importedFiles = ResolveImportUtil.resolveImportReference(from_src);
+      PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
+      final List<PsiElement> importedFiles = ResolveImportUtil.resolveFromOrForeignImport(fromImportStatement,
+                                                                                          fromImportStatement.getImportSourceQName());
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
@@ -80,11 +79,11 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
     return new ItemPresentation() {
 
       private String getName() {
-        PyElement elt = PsiTreeUtil.getParentOfType(PyStarImportElementImpl.this, PyFromImportStatement.class);
-        if (elt instanceof PyFromImportStatement) { // always? who knows :)
-          PyReferenceExpression imp_src = ((PyFromImportStatement)elt).getImportSource();
+        PyFromImportStatement elt = PsiTreeUtil.getParentOfType(PyStarImportElementImpl.this, PyFromImportStatement.class);
+        if (elt != null) { // always? who knows :)
+          PyReferenceExpression imp_src = elt.getImportSource();
           if (imp_src != null) {
-            return PyResolveUtil.toPath(imp_src, ".");
+            return PyResolveUtil.toPath(imp_src);
           }
         }
         return "<?>";
@@ -95,7 +94,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       }
 
       public String getLocationString() {
-        StringBuffer buf = new StringBuffer("| ");
+        StringBuilder buf = new StringBuilder("| ");
         buf.append("from ").append(getName()).append(" import *");
         return buf.toString();
       }

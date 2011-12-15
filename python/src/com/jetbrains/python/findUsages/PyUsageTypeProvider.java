@@ -14,8 +14,6 @@ import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
 /**
  * @author yole
  */
@@ -79,8 +77,8 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
       final PsiElement element = ((PsiElementUsageTarget)targets[0]).getElement();
       if (element instanceof PyFunction) {
         PyFunction function = (PyFunction) element;
-        final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(function);
-        PyCallExpression.PyMarkedCallee callee = new PyCallExpression.PyMarkedCallee(function, flags, 1, true);
+        final PyFunction.Modifier modifier = function.getModifier();
+        PyCallExpression.PyMarkedCallee callee = new PyCallExpression.PyMarkedCallee(function, modifier, 1, true);
         CallArgumentsMappingImpl mapping = new CallArgumentsMappingImpl(call.getArgumentList());
         mapping.mapArguments(callee, null);
         if (mapping.hasProblems()) {

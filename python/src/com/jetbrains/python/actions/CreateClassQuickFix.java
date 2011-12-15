@@ -41,6 +41,9 @@ public class CreateClassQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement anchor = myAnchor;
+    if (!anchor.isValid()) {
+      return;
+    }
     if (!(anchor instanceof PyFile)) {
       while(!(anchor.getParent() instanceof PyFile)) {
         anchor = anchor.getParent();

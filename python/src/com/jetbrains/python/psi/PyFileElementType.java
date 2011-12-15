@@ -12,7 +12,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
-import com.jetbrains.python.console.parsing.IPythonData;
+import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.parsing.PyConsoleParser;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.parsing.PythonConsoleLexer;
@@ -52,45 +52,67 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   public ASTNode parseContents(ASTNode chameleon) {
     final FileElement node = (FileElement)chameleon;
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
-    if (PydevConsoleRunner.isIPythonConsole(node)) {
-      return parseConsoleCode(node, PydevConsoleRunner.getIPythonData(node));
+    if (PydevConsoleRunner.isPythonConsole(node)) {
+      return parseConsoleCode(node, PydevConsoleRunner.getPythonConsoleData(node));
     }
-    final PsiElement psi = node.getPsi();
-    if (psi != null) {
-      final Project project = psi.getProject();
-      final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-      final Language language = getLanguage();
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      if (parserDefinition == null) {
-        return null;
-      }
-      final Lexer lexer = parserDefinition.createLexer(project);
-      final PsiParser parser = parserDefinition.createParser(project);
-      final PsiBuilder builder = factory.createBuilder(project, node, lexer, language, node.getChars());
-      if (parser instanceof PyParser) {
-        final PyParser pythonParser = (PyParser)parser;
-        pythonParser.setLanguageLevel(languageLevel);
-        if (languageLevel == LanguageLevel.PYTHON26 && psi.getContainingFile().getName().equals("__builtin__.py")) {
-          pythonParser.setFutureFlag(StatementParsing.FUTURE.PRINT_FUNCTION);
+    else {
+      final PsiElement psi = node.getPsi();
+      if (psi != null) {
+        final Project project = psi.getProject();
+        final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+        final Language language = getLanguage();
+        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+        if (parserDefinition == null) {
+          return null;
         }
+        final Lexer lexer = parserDefinition.createLexer(project);
+        final PsiParser parser = parserDefinition.createParser(project);
+        final PsiBuilder builder = factory.createBuilder(project, node, lexer, language, node.getChars());
+        if (parser instanceof PyParser) {
+          final PyParser pythonParser = (PyParser)parser;
+          pythonParser.setLanguageLevel(languageLevel);
+          if (languageLevel == LanguageLevel.PYTHON26 && psi.getContainingFile().getName().equals("__builtin__.py")) {
+            pythonParser.setFutureFlag(StatementParsing.FUTURE.PRINT_FUNCTION);
+          }
+        }
+        return parser.parse(this, builder).getFirstChildNode();
       }
-      return parser.parse(this, builder).getFirstChildNode();
+      return null;
     }
-    return null;
   }
 
-  private ASTNode parseConsoleCode(@NotNull FileElement node, IPythonData data) {
-    final Lexer lexer = new PythonConsoleLexer();
+  @Nullable
+  private ASTNode parseConsoleCode(@NotNull FileElement node, PythonConsoleData consoleData) {
+    final Lexer lexer = createConsoleLexer(node, consoleData);
     final PsiElement psi = node.getPsi();
     if (psi != null) {
       final Project project = psi.getProject();
       final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
       final PsiBuilder builder = factory.createBuilder(project, node, lexer, getLanguage(), node.getChars());
-      final PyParser parser = new PyConsoleParser(data);
+      final PyParser parser = new PyConsoleParser(consoleData);
 
       return parser.parse(this, builder).getFirstChildNode();
     }
     return null;
+  }
+
+  @Nullable
+  private Lexer createConsoleLexer(FileElement node, PythonConsoleData consoleData) {
+    if (consoleData.isIPythonEnabled()) {
+      return new PythonConsoleLexer();
+    }
+    else {
+      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
+      if (parserDefinition == null) {
+        return null;
+      }
+      final PsiElement psi = node.getPsi();
+      if (psi == null) {
+        return null;
+      }
+      final Project project = psi.getProject();
+      return parserDefinition.createLexer(project);
+    }
   }
 
   private static LanguageLevel getLanguageLevel(PsiElement psi) {

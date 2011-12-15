@@ -13,6 +13,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +57,7 @@ public class PyMethodParametersInspection extends PyInspection {
       synchronized (this) { // other threads would wait as long in resolveInRoots() anyway
         if (myPossibleZopeRef == null) {
           myPossibleZopeRef = new Ref<PsiElement>();
-          ret = ResolveImportUtil.resolveInRoots(foothold, "zope.interface.Interface");
+          ret = ResolveImportUtil.resolveModuleInRoots(PyQualifiedName.fromComponents("zope.interface.Interface"), foothold);
           myPossibleZopeRef.set(ret); // null is OK
         }
         else ret = myPossibleZopeRef.get();

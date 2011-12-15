@@ -3,11 +3,9 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author yole
@@ -26,8 +24,8 @@ public abstract class PyPsiPath {
     @Nullable
     @Override
     public PsiElement resolve(PsiElement context) {
-      final List<PsiElement> elements = ResolveImportUtil.resolveModulesInRoots(myQualifiedName, context);
-      return elements.size() > 0 ? elements.get(0) : null;
+      QualifiedNameResolver visitor = new QualifiedNameResolver(myQualifiedName).fromElement(context);
+      return visitor.firstResult();
     }
   }
 
