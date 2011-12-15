@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -541,7 +542,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   public boolean checkUltimate() {
-    if (!ApplicationInfo.getInstance().getVersionName().contains("Community")) return true;
+    if (!PlatformUtils.isCommunity()) return true;
     printIgnoredMessage("Ultimate edition is required");
     return false;
   }
