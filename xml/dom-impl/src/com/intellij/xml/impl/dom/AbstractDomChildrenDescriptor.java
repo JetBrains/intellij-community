@@ -212,6 +212,11 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     return CONTENT_TYPE_UNKNOWN;
   }
 
+  @Override
+  public String getDefaultValue() {
+    return null;
+  }
+
   public void init(final PsiElement element) {
     throw new UnsupportedOperationException("Method init not implemented in " + getClass());
   }

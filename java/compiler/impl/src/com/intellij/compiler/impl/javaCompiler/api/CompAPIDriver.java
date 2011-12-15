@@ -16,9 +16,12 @@
 package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.compiler.OutputParser;
-import com.sun.source.util.*;
+import com.sun.source.util.JavacTask;
+import com.sun.source.util.TaskEvent;
+import com.sun.source.util.TaskListener;
 import com.sun.tools.javac.api.JavacTool;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.tools.*;
 import java.io.File;
@@ -49,8 +52,11 @@ class CompAPIDriver {
 
   private volatile boolean compiling;
   private static final PrintWriter COMPILER_ERRORS = new PrintWriter(System.err);
+  @Nullable
+  private final String mySourcesEncoding;
 
-  CompAPIDriver() {
+  CompAPIDriver(@Nullable String sourcesEncoding) {
+    mySourcesEncoding = sourcesEncoding;
   }
 
   public void compile(List<String> commandLine, List<File> paths, final String outputDir) {
@@ -60,7 +66,7 @@ class CompAPIDriver {
     assert myCompilationResults.isEmpty();
     JavaCompiler compiler = JavacTool.create(); //use current classloader
     StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(null, null, null);
-    MyFileManager manager = new MyFileManager(this, outputDir, standardFileManager);
+    MyFileManager manager = new MyFileManager(this, outputDir, standardFileManager, mySourcesEncoding);
 
     Iterable<? extends JavaFileObject> input = manager.getJavaFileObjectsFromFiles(paths);
 

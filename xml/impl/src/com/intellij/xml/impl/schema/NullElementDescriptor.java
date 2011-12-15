@@ -80,6 +80,11 @@ public class NullElementDescriptor implements XmlElementDescriptor {
     return 0;
   }
 
+  @Override
+  public String getDefaultValue() {
+    return null;
+  }
+
   public PsiElement getDeclaration() {
     return null;
   }

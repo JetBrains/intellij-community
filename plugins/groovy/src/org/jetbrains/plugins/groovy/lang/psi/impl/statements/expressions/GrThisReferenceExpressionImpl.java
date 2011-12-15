@@ -85,12 +85,24 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
   }
 
   private PsiType createType(PsiClass context) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    if (PsiUtil.isInStaticContext(this)) {
-      return elementFactory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + context.getName() + ">", this);
-      //in case of anonymous class this code don't matter because anonymous classes can't have static methods
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
+    PsiElementFactory elementFactory = facade.getElementFactory();
+
+    if (!PsiUtil.isInStaticContext(this)) return elementFactory.createType(context);
+
+    //create instance of java.lang.Class<CurrentClass>
+    if (context instanceof PsiAnonymousClass) {
+      final PsiClassType type = ((PsiAnonymousClass)context).getBaseClassType();
+      final PsiClass aClass =
+        facade.findClass(CommonClassNames.JAVA_LANG_CLASS, context.getResolveScope());
+      if (aClass != null) {
+        return elementFactory.createType(aClass, type);
+      }
+      else {
+        return elementFactory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + type.getCanonicalText() + ">", this);
+      }
     }
-    return elementFactory.createType(context);
+    return elementFactory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + context.getName() + ">", this);
   }
 
   @NotNull

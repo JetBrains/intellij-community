@@ -18,6 +18,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -163,15 +164,9 @@ public class CopyAction extends BasicAction {
       }
     };
 
-    final Task.Backgroundable task =
-      new Task.Backgroundable(project, "Checking target folder", false, BackgroundFromStartOption.getInstance()) {
-        
-        public void run(@NotNull ProgressIndicator indicator) {
-          taskImpl.run();
-        }
-      };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().run(task);
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(taskImpl, "Checking target folder", true, project);
     } else {
       taskImpl.run();
     }

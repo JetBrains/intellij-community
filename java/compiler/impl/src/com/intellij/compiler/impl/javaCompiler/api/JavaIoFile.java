@@ -16,8 +16,10 @@
 package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
 import java.io.*;
 
 /**
@@ -26,15 +28,18 @@ import java.io.*;
 @SuppressWarnings({"Since15"})
 class JavaIoFile extends SimpleJavaFileObject {
   private final File myFile;
+  @Nullable
+  private final String myEncoding;
 
-  JavaIoFile(File file, Kind kind) {
+  JavaIoFile(File file, Kind kind, @Nullable String encoding) {
     super(file.toURI(), kind);
     myFile = file;
+    myEncoding = encoding;
   }
 
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
-    return FileUtil.loadFile(myFile);
+    return FileUtil.loadFile(myFile, myEncoding);
   }
 
   @Override

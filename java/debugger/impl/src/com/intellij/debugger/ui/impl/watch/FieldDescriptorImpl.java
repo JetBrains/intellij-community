@@ -158,7 +158,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       buf.append(getName());
       if (classRenderer.SHOW_DECLARED_TYPE) {
         buf.append(": ");
-        buf.append(myField.typeName());
+        buf.append(classRenderer.renderTypeName(myField.typeName()));
       }
       return buf.toString();
     }

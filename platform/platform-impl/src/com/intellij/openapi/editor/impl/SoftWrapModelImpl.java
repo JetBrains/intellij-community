@@ -619,6 +619,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDirty = true;
     }
   }
+  
+  @NotNull
+  public CachingSoftWrapDataMapper getDataMapper() {
+    return myDataMapper;
+  }
 
   @Override
   public void release() {

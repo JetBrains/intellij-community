@@ -84,6 +84,7 @@ public abstract class ProjectLevelVcsManager {
    * @param name the name of the VCS to find.
    * @return the VCS instance, or null if none is found.
    */
+  @Nullable
   public abstract AbstractVcs findVcsByName(@NonNls String name);
 
   @Nullable

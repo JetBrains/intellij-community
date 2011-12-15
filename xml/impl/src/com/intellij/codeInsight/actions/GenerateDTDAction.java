@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -30,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,15 +44,14 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.GenerateDTDAction");
   protected CodeInsightActionHandler getHandler(){
     return new CodeInsightActionHandler(){
-      public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file){
-        if(file instanceof XmlFile && file.getVirtualFile() != null && file.getVirtualFile().isWritable()){
+      public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+        final XmlDocument document = findSuitableXmlDocument(file);
+        if (document != null) {
           final @NonNls StringBuffer buffer = new StringBuffer();
-          final XmlDocument document = ((XmlFile) file).getDocument();
-          if (document != null && document.getRootTag() != null){
-            buffer.append("<!DOCTYPE " + document.getRootTag().getName() + " [\n");
-            buffer.append(XmlUtil.generateDocumentDTD(document, true));
-            buffer.append("]>\n");
-            XmlFile tempFile;
+          buffer.append("<!DOCTYPE " + document.getRootTag().getName() + " [\n");
+          buffer.append(XmlUtil.generateDocumentDTD(document, true));
+          buffer.append("]>\n");
+          XmlFile tempFile;
             try{
               final XmlProlog prolog = document.getProlog();
               final PsiElement childOfType = PsiTreeUtil.getChildOfType(prolog, XmlProcessingInstruction.class);
@@ -65,9 +66,8 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
               tempFile = (XmlFile)PsiFileFactory.getInstance(file.getProject()).createFileFromText("dummy.xml", buffer.toString());
               prolog.replace(tempFile.getDocument().getProlog());
             }
-            catch(IncorrectOperationException e){
-              LOG.error(e);
-            }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
           }
         }
       }
@@ -76,6 +76,20 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
         return true;
       }
     };
+  }
+
+  @Nullable
+  private static XmlDocument findSuitableXmlDocument(@Nullable PsiFile psiFile) {
+    if (psiFile instanceof XmlFile) {
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && virtualFile.isWritable()) {
+        final XmlDocument document = ((XmlFile)psiFile).getDocument();
+        if (document != null && document.getRootTag() != null) {
+          return document;
+        }
+      }
+    }
+    return null;
   }
 
   public void update(AnActionEvent event) {
@@ -89,7 +103,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
     final boolean enabled;
     if (editor != null && project != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      enabled = file instanceof XmlFile;
+      enabled = findSuitableXmlDocument(file) != null;
     }
     else {
       enabled = false;

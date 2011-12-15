@@ -852,7 +852,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final GroovyConfigUtils config = GroovyConfigUtils.getInstance();
 
     if ("$/".equals(quote)) {
-      if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_9)) {
+      if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_8)) {
         myHolder
           .createErrorAnnotation(regex, GroovyBundle.message("dollar.slash.strings.are.not.allowed.in.0", config.getSDKVersion(regex)));
       }

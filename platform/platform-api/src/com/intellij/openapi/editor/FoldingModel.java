@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ public interface FoldingModel {
    */
   boolean isOffsetCollapsed(int offset);
 
+  @Nullable
   FoldRegion getCollapsedRegionAtOffset(int offset);
 
   /**
@@ -73,6 +74,16 @@ public interface FoldingModel {
    * @param operation the operation to execute.
    */
   void runBatchFoldingOperation(@NotNull Runnable operation);
+
+  /**
+   * Runs an operation which is allowed to modify fold regions in the editor by calling
+   * {@link #addFoldRegion(int, int, String)} and {@link #removeFoldRegion(FoldRegion)}.
+   *
+   * @param operation                    the operation to execute.
+   * @param moveCaretFromCollapsedRegion flag that identifies whether caret position should be changed if it's located inside
+   *                                     collapsed fold region after the operation
+   */
+  void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion);
 
   void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation);
 }

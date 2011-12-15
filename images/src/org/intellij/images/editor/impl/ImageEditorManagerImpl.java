@@ -37,8 +37,8 @@ final class ImageEditorManagerImpl {
    * @return Image editor for file
    */
   @NotNull
-  public static ImageEditor createImageEditor(@NotNull Project project, @NotNull ImageContentProvider contentProvider) {
-    return new ImageEditorImpl(project, contentProvider);
+  public static ImageEditor createImageEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    return new ImageEditorImpl(project, file);
   }
 
   /**
