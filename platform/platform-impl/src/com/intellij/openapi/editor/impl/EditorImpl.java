@@ -3292,7 +3292,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int foldedLinesCountBefore = myFoldingModel.getFoldedLinesCountBefore(offset);
     line -= foldedLinesCountBefore;
     if (line < 0) {
-      LOG.error(String.format(
+      LogMessageEx.error(
+        LOG, "Invalid LogicalPosition -> VisualPosition processing", String.format(
         "Given logical position: %s; matched line: %d; fold lines before: %d, state: %s",
         logicalPos, line, foldedLinesCountBefore, dumpState()
       ));
@@ -3300,7 +3301,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     FoldRegion[] topLevel = myFoldingModel.fetchTopLevel();
     LogicalPosition anchorFoldingPosition = logicalPos;
-    for (int idx = myFoldingModel.getLastTopLevelIndexBefore(offset); idx >= 0; idx--) {
+    for (int idx = myFoldingModel.getLastTopLevelIndexBefore(offset); idx >= 0 && topLevel != null; idx--) {
       FoldRegion region = topLevel[idx];
       if (region.isValid()) {
         if (region.getDocument().getLineNumber(region.getEndOffset()) == anchorFoldingPosition.line && region.getEndOffset() <= offset) {
