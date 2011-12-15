@@ -218,6 +218,27 @@ class SomeBean {
 }
 """, file.text
   }
+  
+  void testRenameClassWithConstructorWithOptionalParams() {
+    myFixture.configureByText('a.groovy', '''\
+class Test {
+  def Test(def abc = null){}
+}
+
+print new Test()
+print new Test(1)
+''')
+    def clazz = myFixture.findClass('Test')
+    myFixture.renameElement clazz, 'Foo'
+    myFixture.checkResult '''\
+class Foo {
+  def Foo(def abc = null){}
+}
+
+print new Foo()
+print new Foo(1)
+'''
+  }
 
   public void doTest() {
     final String testFile = getTestName(true).replace('$', '/') + ".test";

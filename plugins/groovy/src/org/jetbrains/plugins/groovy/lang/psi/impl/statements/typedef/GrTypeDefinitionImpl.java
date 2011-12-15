@@ -607,8 +607,11 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     final String oldName = getName();
     PsiImplUtil.setName(name, getNameIdentifierGroovy());
 
-    for (PsiMethod method : getMethods()) {
-      if (method.isConstructor() && method.getName().equals(oldName)) method.setName(name);
+    final GrTypeDefinitionBody body = getBody();
+    if (body != null) {
+      for (PsiMethod method : body.getMethods()) {
+        if (method.isConstructor() && method.getName().equals(oldName)) method.setName(name);
+      }
     }
 
     if (renameFile) {
