@@ -145,7 +145,7 @@ public class OutputLineSplitterTest extends UsefulTestCase {
             if (i % 10 == 0) {
               written.release();
               try {
-                if (!read.tryAcquire(1, TimeUnit.SECONDS)) throw new TimeoutException();
+                if (!read.tryAcquire(10, TimeUnit.SECONDS)) throw new TimeoutException();
               }
               catch (Exception e) {
                 throw new RuntimeException(e);
@@ -179,10 +179,15 @@ public class OutputLineSplitterTest extends UsefulTestCase {
       assertTrue(hadOutput);
     }
     finally {
-      isFinished.set(true);
+      try {
+        isFinished.set(true);
 
-      for (Future<?> each : futures) {
-        each.get(1, TimeUnit.SECONDS);
+        for (Future<?> each : futures) {
+          each.get(10, TimeUnit.SECONDS);
+        }
+      }
+      catch (Exception e) {
+        e.printStackTrace();
       }
     }
   }
