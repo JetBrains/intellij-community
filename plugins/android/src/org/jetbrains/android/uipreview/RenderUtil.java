@@ -7,6 +7,7 @@ import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.ide.common.resources.configuration.VersionQualifier;
 import com.android.io.*;
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -30,10 +31,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import javax.imageio.ImageIO;
 import java.io.*;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -115,23 +113,6 @@ class RenderUtil {
       return false;
     }
 
-    final Result result = session.getResult();
-    if (!result.isSuccess()) {
-      final Throwable exception = result.getException();
-      if (exception != null) {
-        throw new RenderingException(exception);
-      }
-      final String message = result.getErrorMessage();
-      if (message != null) {
-        LOG.info(message);
-        throw new RenderingException();
-      }
-      return false;
-    }
-
-    final String format = FileUtil.getExtension(imgPath);
-    ImageIO.write(session.getImage(), format, new File(imgPath));
-
     if (missingRClass && callback.hasLoadedClasses()) {
       warningBuilder.append(missingRClassMessage != null && missingRClassMessage.length() > 0
                             ? ("Class not found error: " + missingRClassMessage + ".")
@@ -152,16 +133,16 @@ class RenderUtil {
       }
     }
 
-    final Set<String> brokenClasses = callback.getBrokenClasses();
+    final Map<String, Throwable> brokenClasses = callback.getBrokenClasses();
     if (brokenClasses.size() > 0) {
       if (brokenClasses.size() > 1) {
         warningBuilder.append("Unable to initialize:\n");
-        for (String brokenClass : brokenClasses) {
+        for (String brokenClass : brokenClasses.keySet()) {
           warningBuilder.append("    ").append(brokenClass).append('\n');
         }
       }
       else {
-        warningBuilder.append("Unable to initialize ").append(brokenClasses.iterator().next());
+        warningBuilder.append("Unable to initialize ").append(brokenClasses.keySet().iterator().next());
       }
     }
 
@@ -169,7 +150,46 @@ class RenderUtil {
       warningBuilder.deleteCharAt(warningBuilder.length() - 1);
     }
 
+    final Result result = session.getResult();
+    if (!result.isSuccess()) {
+      final Throwable exception = result.getException();
+
+      if (exception != null) {
+        final List<Throwable> exceptionsFromWarnings = getNonNullValues(brokenClasses);
+
+        if (exceptionsFromWarnings.size() > 0 &&
+            exception instanceof ClassCastException &&
+            (SdkConstants.CLASS_MOCK_VIEW + " cannot be cast to " + SdkConstants.CLASS_VIEWGROUP)
+              .equalsIgnoreCase(exception.getMessage())) {
+          throw new RenderingException(exceptionsFromWarnings.toArray(new Throwable[exceptionsFromWarnings.size()]));
+        }
+        throw new RenderingException(exception);
+      }
+      final String message = result.getErrorMessage();
+      if (message != null) {
+        LOG.info(message);
+        throw new RenderingException();
+      }
+      return false;
+    }
+
+    final String format = FileUtil.getExtension(imgPath);
+    ImageIO.write(session.getImage(), format, new File(imgPath));
+
     return true;
+  }
+
+  @NotNull
+  private static <T> List<T> getNonNullValues(@NotNull Map<?, T> map) {
+    final List<T> result = new ArrayList<T>();
+
+    for (Map.Entry<?, T> entry : map.entrySet()) {
+      final T value = entry.getValue();
+      if (value != null) {
+        result.add(value);
+      }
+    }
+    return result;
   }
 
   private static String getAppLabelToShow(final AndroidFacet facet) {

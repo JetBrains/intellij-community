@@ -40,7 +40,9 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -117,15 +119,16 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   public void dispose() {
   }
 
-  public boolean startRunInjectors(@NotNull Document hostDocument, final boolean synchronously) {
-    if (myProject.isDisposed()) return true;
+  public void startRunInjectors(@NotNull final Document hostDocument, final boolean synchronously) {
+    if (myProject.isDisposed()) return;
     assert synchronously || !ApplicationManager.getApplication().isWriteAccessAllowed();
     // use cached to avoid recreate PSI in alien project
-    final PsiFile hostPsiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(hostDocument);
-    if (hostPsiFile == null) return true;
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    final PsiFile hostPsiFile = documentManager.getCachedPsiFile(hostDocument);
+    if (hostPsiFile == null) return;
 
     final List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
-    if (injected.isEmpty()) return true;
+    if (injected.isEmpty()) return;
 
     if (myProgress.isCanceled()) {
       myProgress = new DaemonProgressIndicator();
@@ -135,6 +138,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       @Override
       public boolean process(DocumentWindow documentWindow) {
         ProgressManager.checkCanceled();
+        if (documentManager.isUncommited(hostDocument)) return false; // will be committed later
+
         RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
         PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
         if (element == null) {
@@ -161,36 +166,30 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         return true;
       }
     };
-    final Computable<Boolean> commitRunnable = new Computable<Boolean>() {
+    final Runnable commitInjectionsRunnable = new Runnable() {
       @Override
-      public Boolean compute() {
-        return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, commitProcessor);
+      public void run() {
+        JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, commitProcessor);
       }
     };
 
     if (synchronously) {
       if (Thread.holdsLock(PsiLock.LOCK)) {
-        // hack for the case when docCommit was called from within PSI modification, e.g. in formatter
+        // hack for the case when docCommit was called from within PSI modification, e.g. in formatter.
         // we can't spawn threads to do injections there or deadlock is imminent
-        return ContainerUtil.process(injected, commitProcessor);
+        ContainerUtil.process(injected, commitProcessor);
       }
       else {
-        return commitRunnable.compute();
+        commitInjectionsRunnable.run();
       }
     }
     else {
       JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
         @Override
         public void run() {
-          ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
-            @Override
-            public void run() {
-              commitRunnable.compute();
-            }
-          });
+          ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable);
         }
       });
-      return true;
     }
   }
 

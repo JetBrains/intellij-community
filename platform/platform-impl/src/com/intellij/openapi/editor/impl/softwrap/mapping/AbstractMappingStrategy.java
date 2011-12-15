@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +40,9 @@ import java.util.List;
  * @param <T>     resulting document dimension type
  */
 abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
-
+  
+  private static final Logger LOG = Logger.getInstance("#" + AbstractMappingStrategy.class.getName());
+  
   protected static final CacheEntry SEARCH_KEY = new CacheEntry(0, null, null, null);
 
   protected final Editor myEditor;
@@ -121,7 +126,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   }
 
   @Override
-  public T advance(EditorPosition position, int offset) {
+  public T advance(@NotNull EditorPosition position, int offset) {
     Document document = myEditor.getDocument();
     if (offset >= myLastEntryOffset || offset >= document.getTextLength()) {
       return build(position);
@@ -155,7 +160,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   protected abstract T buildIfExceeds(EditorPosition position, int offset);
 
   @Override
-  public T processFoldRegion(EditorPosition position, @NotNull FoldRegion foldRegion) {
+  public T processFoldRegion(@NotNull EditorPosition position, @NotNull FoldRegion foldRegion) {
     T result = buildIfExceeds(position, foldRegion);
     if (result != null) {
       return result;
@@ -171,7 +176,11 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
         collapsedSymbolsWidthInColumns = foldingData.getCollapsedSymbolsWidthInColumns();
       }
       else {
-        assert false : String.format("Problem fold region: %s. Soft wraps cache: %s", foldRegion, myCache);
+        String details = "";
+        if (myEditor instanceof EditorImpl) {
+          details = ((EditorImpl)myEditor).dumpState();
+        }
+        LogMessageEx.error(LOG, "Unexpected fold region is found: " + foldRegion, details);
       }
     }
     else {
@@ -195,7 +204,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   protected abstract T buildIfExceeds(@NotNull EditorPosition context, @NotNull FoldRegion foldRegion);
 
   @Override
-  public T processTabulation(EditorPosition position, TabData tabData) {
+  public T processTabulation(@NotNull EditorPosition position, TabData tabData) {
     T result = buildIfExceeds(position, tabData);
     if (result != null) {
       return result;

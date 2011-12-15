@@ -37,7 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
   private final Project myProject;
@@ -51,11 +54,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
 
   private Pattern myCompiledPattern;
   private final PatternMatcher myMatcher = new Perl5Matcher();
+  
+  private Map<AnAction, String> myActionsMap = new HashMap<AnAction, String>();
 
 
   public GotoActionModel(Project project, final Component component) {
     myProject = project;
     myContextComponent = component;
+    final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
+    collectActions(myActionsMap, mainMenu, mainMenu.getTemplatePresentation().getText());
   }
 
   public String getPromptText() {
@@ -113,7 +120,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
 
           final DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
 
-          final AnActionEvent event = updateActionBeforShow(anAction, dataContext);
+          final AnActionEvent event = updateActionBeforeShow(anAction, dataContext);
           final Presentation presentation = event.getPresentation();
 
           final Color fg = defaultActionForeground(isSelected, presentation);
@@ -157,7 +164,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     return actionLabel;
   }
 
-  protected AnActionEvent updateActionBeforShow(AnAction anAction, DataContext dataContext) {
+  protected static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
     final AnActionEvent event = new AnActionEvent(null, dataContext,
                                                   ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
                                                   0);
@@ -166,7 +173,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     return event;
   }
 
-  protected Color defaultActionForeground(boolean isSelected, Presentation presentation) {
+  protected static Color defaultActionForeground(boolean isSelected, Presentation presentation) {
     return isSelected ? UIUtil.getListSelectionForeground()
                       : presentation.isEnabled() && presentation.isVisible()
                         ? UIUtil.getListForeground()
@@ -175,7 +182,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
 
   public String[] getNames(boolean checkBoxState) {
     final ArrayList<String> result = new ArrayList<String>();
-    collectActionIds(result, (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU));
+    for (AnAction action : myActionsMap.keySet()) {
+      if (action instanceof ActionGroup) continue;
+      result.add(getActionId(action));
+    }
     if (checkBoxState) {
       final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
       for (String id : ids) {
@@ -188,22 +198,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     return ArrayUtil.toStringArray(result);
   }
 
-  private void collectActionIds(Collection<String> result, ActionGroup group){
-    final AnAction[] actions = group.getChildren(null);
-    for (AnAction action : actions) {
-      if (action instanceof ActionGroup) {
-        collectActionIds(result, (ActionGroup)action);
-      }
-      else if (action != null) {
-        result.add(getActionId(action));
-      }
-    }
-  }
-
   public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
     final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
-    final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    collectActions(id, map, mainMenu, mainMenu.getTemplatePresentation().getText());
+    final AnAction act = myActionManager.getAction(id);
+    map.put(act, myActionsMap.get(act));
     if (checkBoxState) {
       final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
       for (AnAction action : map.keySet()) { //do not add already included actions
@@ -219,15 +217,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     return map.entrySet().toArray(new Map.Entry[map.size()]);
   }
 
-  private void collectActions(String id, Map<AnAction, String> result, ActionGroup group, final String containingGroupName){
+  private static void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName){
     final AnAction[] actions = group.getChildren(null);
     for (AnAction action : actions) {
       if (action != null) {
         if (action instanceof ActionGroup) {
           final ActionGroup actionGroup = (ActionGroup)action;
           final String groupName = actionGroup.getTemplatePresentation().getText();
-          collectActions(id, result, actionGroup, groupName != null ? groupName : containingGroupName);
-        } else if (getActionId(action) == id) {
+          collectActions(result, actionGroup, groupName != null ? groupName : containingGroupName);
+        } else {
           final String groupName = group.getTemplatePresentation().getText();
           result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
         }
@@ -265,6 +263,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
           (description != null && myMatcher.matches(description, compiledPattern))) {
         return true;
       }
+      final String groupName = myActionsMap.get(anAction);
+      if (groupName != null && text != null && myMatcher.matches(groupName + " " + text, compiledPattern)) {
+        return true;
+      }
     }
     return false;
   }
@@ -292,7 +294,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
         pattern = pattern.substring(0, 80);
       }
 
-      final @NonNls StringBuffer buffer = new StringBuffer(".*");
+      final @NonNls StringBuilder buffer = new StringBuilder(".*");
       pattern = pattern.toLowerCase();
       for (int i = 0; i < pattern.length(); i++) {
         final char c = pattern.charAt(i);

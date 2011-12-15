@@ -68,7 +68,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       intervals = new SmartList<Getter<E>>(createGetter(key));
     }
 
-
     @Override
     public IntervalNode<E> getLeft() {
       return (IntervalNode<E>)left;
@@ -158,6 +157,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     private static class WeakReferencedGetter<T> extends WeakReference<T> implements Getter<T> {
       public WeakReferencedGetter(T referent, ReferenceQueue<? super T> q) {
         super(referent, q);
+      }
+
+      @NonNls
+      @Override
+      public String toString() {
+        return "Ref: " + get();
       }
     }
 
@@ -305,6 +310,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       t.deltaUpToRoot = (int)(value >> 33);
       t.modCount = (int)value;
       t.allDeltasUpAreNull = ((value >> 32) & 1) != 0;
+    }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "Node: " + intervals;
     }
   }
 
@@ -575,7 +586,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
       // next node in in-order traversal
       private IntervalNode<T> nextNode(@NotNull IntervalNode<T> root) {
-        assert root.isValid();
+        assert root.isValid() : root;
         int delta = deltaUpToRootExclusive + root.delta;
         int myMaxEnd = maxEndOf(root, deltaUpToRootExclusive);
         if (startOffset > myMaxEnd) return null; // tree changed

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,8 @@ public class DefaultKeymap {
   }
 
   private void loadKeymapsFromElement(final Element element) throws InvalidDataException {
-    for (Element child : (List<Element>)element.getChildren()) {
+    @SuppressWarnings("unchecked") final List<Element> children = (List<Element>)element.getChildren();
+    for (Element child : children) {
       if (KEY_MAP.equals(child.getName())) {
         String keymapName = child.getAttributeValue(NAME_ATTRIBUTE);
         DefaultKeymapImpl keymap = keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP) ? new MacOSDefaultKeymap() : new DefaultKeymapImpl();
@@ -84,7 +85,15 @@ public class DefaultKeymap {
   }
 
   public String getDefaultKeymapName() {
-    return SystemInfo.isMac ? KeymapManager.MAC_OS_X_KEYMAP : KeymapManager.DEFAULT_IDEA_KEYMAP;
+    if (SystemInfo.isMac) {
+      return KeymapManager.MAC_OS_X_KEYMAP;
+    }
+    else if (SystemInfo.isLinux) {
+      return KeymapManager.X_WINDOW_KEYMAP;
+    }
+    else {
+      return KeymapManager.DEFAULT_IDEA_KEYMAP;
+    }
   }
 
   public String getKeymapPresentableName(KeymapImpl keymap) {

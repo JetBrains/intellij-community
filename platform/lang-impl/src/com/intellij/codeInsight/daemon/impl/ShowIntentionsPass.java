@@ -218,18 +218,18 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    final Document document = hostEditor.getDocument();
-    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, true);
+    final Document hostDocument = hostEditor.getDocument();
+    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);
     if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
       intentions.errorFixesToShow.addAll(actions);
     }
     else {
       intentions.inspectionFixesToShow.addAll(actions);
     }
-    final int line = document.getLineNumber(offset);
-    DaemonCodeAnalyzerImpl.processHighlights(document, project, null,
-                                             document.getLineStartOffset(line),
-                                             document.getLineEndOffset(line), new Processor<HighlightInfo>() {
+    final int line = hostDocument.getLineNumber(offset);
+    DaemonCodeAnalyzerImpl.processHighlights(hostDocument, project, null,
+                                             hostDocument.getLineStartOffset(line),
+                                             hostDocument.getLineEndOffset(line), new Processor<HighlightInfo>() {
         @Override
         public boolean process(HighlightInfo info) {
           final GutterIconRenderer renderer = info.getGutterIconRenderer();

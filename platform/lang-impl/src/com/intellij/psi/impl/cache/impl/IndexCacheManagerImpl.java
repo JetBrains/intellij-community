@@ -43,7 +43,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -99,12 +98,12 @@ public class IndexCacheManagerImpl implements CacheManager{
             public boolean process(final VirtualFile file, final Integer value) {
               ProgressManager.checkCanceled();
               final int mask = value.intValue();
-              if ((mask & occurrenceMask) != 0 && scope.contains(file) && shouldBeFound(scope, file, index)) {
+              if ((mask & occurrenceMask) != 0 && shouldBeFound(scope, file, index)) {
                 if (!fileProcessor.process(file)) return false;
               }
               return true;
             }
-          }, GlobalSearchScope.allScope(myProject).union(scope));
+          }, scope);
         }
       });
     }

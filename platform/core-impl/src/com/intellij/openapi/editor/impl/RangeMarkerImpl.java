@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +59,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   protected boolean unregisterInTree() {
+    if (!isValid()) return false;
     IntervalTreeImpl tree = myNode.getTree();
     tree.checkMax(true);
     boolean b = myDocument.removeRangeMarker(this);
@@ -74,9 +74,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public void dispose() {
-    if(isValid()) {
-      unregisterInTree();
-    }
+    unregisterInTree();
   }
 
   @Override
@@ -257,8 +255,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     RangeMarkerTree.RMNode node = myNode;
     return node != null && node.isValid();
   }
-
-  private static final Key<Boolean> TRACK_INVALIDATION_KEY = new Key<Boolean>("TRACK_INVALIDATION_KEY");
 
   @Override
   public boolean setValid(boolean value) {

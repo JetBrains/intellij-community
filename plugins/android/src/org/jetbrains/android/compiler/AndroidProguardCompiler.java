@@ -12,7 +12,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -37,6 +39,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidProguardCompiler");
   @NonNls private static final String DIRECTORY_FOR_LOGS_NAME = "proguard_logs";
   @NonNls static final String PROGUARD_OUTPUT_JAR_NAME = "obfuscated_sources.jar";
+  public static Key<String> PROGUARD_CFG_PATH_KEY = Key.create("ANDROID_PROGUARD_CFG_PATH");
 
   @NotNull
   @Override
@@ -58,9 +61,15 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
             continue;
           }
 
-          final VirtualFile proguardConfigFile = AndroidCompileUtil.getProguardConfigFile(facet);
-          if (proguardConfigFile == null) {
+          final String proguardCfgPath = context.getCompileScope().getUserData(PROGUARD_CFG_PATH_KEY);
+          if (proguardCfgPath == null) {
             continue;
+          }
+
+          final VirtualFile proguardConfigFile =
+            LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(proguardCfgPath));
+          if (proguardConfigFile == null) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Cannot find file " + proguardCfgPath, null, -1, -1);
           }
 
           final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);

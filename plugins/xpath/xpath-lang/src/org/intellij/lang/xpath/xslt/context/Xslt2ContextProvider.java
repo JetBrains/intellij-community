@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.context;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -27,7 +26,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import org.apache.commons.collections.map.CompositeMap;
 import org.intellij.lang.xpath.context.ContextType;
 import org.intellij.lang.xpath.context.XPathVersion;
@@ -45,8 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Xslt2ContextProvider extends XsltContextProviderBase {
@@ -170,14 +168,15 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
         candidates.put(Pair.create(function.getQName(), function.getParameters().length), function);
       }
 
-      List<PsiElement> data = param.getUserData(ResolveUtil.DEPENDENCIES);
-      if (data == null) {
-        data = new SmartList<PsiElement>(param);
+      final Collection<XmlFile> data = ResolveUtil.getDependencies(param);
+      final Object[] dependencies;
+      if (data == null || data.size() == 0) {
+        dependencies = new Object[]{ param };
       } else {
         data.add(param);
-        param.putUserData(ResolveUtil.DEPENDENCIES, null);
+        dependencies = ArrayUtil.toObjectArray(data);
       }
-      return CachedValueProvider.Result.create(candidates, ArrayUtil.toObjectArray(data));
+      return CachedValueProvider.Result.create(candidates, dependencies);
     }
   }
 }

@@ -541,6 +541,7 @@ public final class IterationState {
     }
 
     public void pushBack(T element) {
+      assert myPushedBack == null : "Pushed already: " + myPushedBack;
       myPushedBack = element;
     }
   }
