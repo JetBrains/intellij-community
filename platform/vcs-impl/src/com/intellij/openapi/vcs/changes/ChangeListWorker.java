@@ -505,6 +505,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myIdx.getStatus(file);
   }
 
+  public FileStatus getStatus(final File file) {
+    return myIdx.getStatus(file);
+  }
+
   public DeletedFilesHolder getLocallyDeleted() {
     return myLocallyDeleted.copy();
   }
@@ -769,6 +773,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     @Override
     public FileStatus getStatus(VirtualFile file) {
+      return myWorker.getStatus(file);
+    }
+
+    @Override
+    public FileStatus getStatus(final File file) {
       return myWorker.getStatus(file);
     }
   }

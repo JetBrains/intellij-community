@@ -56,6 +56,10 @@ public class ChangeListsIndexes {
     return myFileToStatus.get(new File(file.getPath()).getAbsolutePath());
   }
 
+  public FileStatus getStatus(final File file) {
+    return myFileToStatus.get(file.getAbsolutePath());
+  }
+
   public void changeAdded(final Change change, final VcsKey key) {
     addChangeToIdx(change, key);
   }
