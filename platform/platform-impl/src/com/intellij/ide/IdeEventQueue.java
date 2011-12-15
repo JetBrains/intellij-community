@@ -596,7 +596,7 @@ public class IdeEventQueue extends EventQueue {
         boolean mouseEventsAhead = isMouseEventAhead(e);
         boolean focusTransferred = IdeFocusManager.getGlobalInstance().isFocusBeingTransferred();
 
-        boolean okToFixFocus = !mouseEventsAhead && (!focusTransferred || !Registry.is("actionSystem.fixLostTyping"));
+        boolean okToFixFocus = !mouseEventsAhead && focusTransferred;
 
         if (okToFixFocus) {
           Window showingWindow = mgr.getActiveWindow();

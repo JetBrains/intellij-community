@@ -63,7 +63,11 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
             return consumer.process(psiClass);
           }
           final PsiClass superClass = psiClass.getSuperClass();
-          if (superClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+          if (superClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            public String compute() {
+              return superClass.getQualifiedName();
+            }
+          }))) {
             return consumer.process(psiClass);
           }
           return true;
@@ -182,9 +186,6 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       }
     }
 
-    if (!sameJarClassFound) {
-      return ContainerUtil.process(sameNamedClasses, consumer);
-    }
-    return true;
+    return sameJarClassFound || ContainerUtil.process(sameNamedClasses, consumer);
   }
 }

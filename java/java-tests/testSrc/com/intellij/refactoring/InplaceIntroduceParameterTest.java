@@ -105,4 +105,8 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
       return super.invokeImpl(project, localVariable, editor);
     }
   }
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
+  }
 }

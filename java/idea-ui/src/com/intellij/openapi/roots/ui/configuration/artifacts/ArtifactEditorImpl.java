@@ -243,6 +243,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActionGroup(), true);
     leftPanel.add(toolbar.getComponent(), BorderLayout.NORTH);
+    toolbar.updateActionsImmediately();
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbar.getComponent().getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);

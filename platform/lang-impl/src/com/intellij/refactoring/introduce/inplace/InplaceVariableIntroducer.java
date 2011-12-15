@@ -81,6 +81,16 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
   }
 
   @Override
+  protected boolean shouldSelectAll() {
+    return true;
+  }
+
+  @Override
+  protected int getOffsetForCaret(RangeMarker rangeMarker, int offset) {
+    return rangeMarker.isValid() ? rangeMarker.getStartOffset() : offset;
+  }
+
+  @Override
   protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
     return null;
   }

@@ -356,12 +356,22 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   private void releaseEditor() {
-    if (myEditor != null) {
-      // Theoretically this condition is always true but under some Linux VMs it seems removeNotify is called twice
-      // or called for components addNotify haven't been called for.
-      releaseEditor(myEditor);
-      myEditor = null;
-    }
+    if (myEditor == null) return;
+    
+    final Editor editor = myEditor;
+    myEditor = null;
+    
+    // releasing an editor implies removing it from a component hierarchy
+    // invokeLater in required because releaseEditor() may be called from
+    // removeNotify(), so we need to let swing complete its removeNotify() chain
+    // and only then execute another removal from the hierarchy. Otherwise
+    // swing goes nuts because of nested removals and indices get corrupted
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        releaseEditor(editor);
+      }
+    });
   }
 
   public void setFont(Font font) {
@@ -673,7 +683,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
 
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.isConsumed() || !myEditor.processKeyTyped(e)) {
+    if (e.isConsumed() || (myEditor != null && !myEditor.processKeyTyped(e))) {
       return super.processKeyBinding(ks, e, condition, pressed);
     }
     return true;

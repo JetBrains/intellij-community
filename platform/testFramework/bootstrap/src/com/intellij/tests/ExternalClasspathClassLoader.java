@@ -60,6 +60,16 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
     final String classPathFilePath = System.getProperty("classpath.file");
     return classPathFilePath != null ? parseUrls(classPathFilePath) : null;
   }
+  
+  public static String[] getExcludeRoots() {
+    try {
+      final String classPathFilePath = System.getProperty("exclude.tests.roots.file");
+      return classPathFilePath != null ? parseUrls(classPathFilePath) : null;
+    }
+    catch (Exception e) {
+      return new String[0];
+    }
+  }
 
   public static void install() {
     try {

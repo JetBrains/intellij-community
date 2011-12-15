@@ -16,6 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,15 +46,20 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
     String path = getTestDataPath() + getTestRoot() + testName;
 
     String pathBefore = path + "/before";
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, pathBefore, myFilesToDelete, false);
+    final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, pathBefore, myFilesToDelete, false);
     prepareProject(rootDir);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     String pathAfter = path + "/after";
-    VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(pathAfter.replace(File.separatorChar, '/'));
+    final VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(pathAfter.replace(File.separatorChar, '/'));
 
     performAction.performAction(rootDir, rootAfter);
-    myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+      }
+    });
+
     FileDocumentManager.getInstance().saveAllDocuments();
 
     if (myDoCompare) {
@@ -71,5 +77,10 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
 
   protected interface PerformAction {
     void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception;
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }

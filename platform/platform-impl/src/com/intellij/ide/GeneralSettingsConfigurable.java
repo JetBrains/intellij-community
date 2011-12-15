@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     else if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
       settings.setConfirmOpenNewProject(GeneralSettings.OPEN_PROJECT_NEW_WINDOW);
     }
-    // AutoSave in inactive
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
     try {
       int newInactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
@@ -67,10 +66,8 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
         settings.setInactiveTimeout(newInactiveTimeout);
       }
     }
-    catch (NumberFormatException ignored) {
-    }
-
-
+    catch (NumberFormatException ignored) { }
+    settings.setUseSafeWrite(myComponent.myChkUseSafeWrite.isSelected());
   }
 
   public boolean isModified() {
@@ -92,16 +89,15 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     try {
       inactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
     }
-    catch (NumberFormatException ignored) {
-    }
-
+    catch (NumberFormatException ignored) { }
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
+
+    isModified |= settings.isUseSafeWrite() != myComponent.myChkUseSafeWrite.isSelected();
 
     return isModified;
   }
 
   public JComponent createComponent() {
-//    optionGroup.add(getDiffOptions().getPanel());
     if (myComponent == null) {
       myComponent = new MyComponent();
     }
@@ -137,10 +133,10 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
     myComponent.myChkSaveOnFrameDeactivation.setSelected(settings.isSaveOnFrameDeactivation());
-
     myComponent.myChkAutoSaveIfInactive.setSelected(settings.isAutoSaveIfInactive());
     myComponent.myTfInactiveTimeout.setText(Integer.toString(settings.getInactiveTimeout()));
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
+    myComponent.myChkUseSafeWrite.setSelected(settings.isUseSafeWrite());
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
     myComponent.myConfirmFrameToOpenCheckBox.setSelected(settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK);
   }
@@ -155,23 +151,19 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     return "preferences.general";
   }
 
-
-
   private static class MyComponent {
-    JPanel myPanel;
-
+    private JPanel myPanel;
     private JCheckBox myChkReopenLastProject;
     private JCheckBox myChkSyncOnFrameActivation;
     private JCheckBox myChkSaveOnFrameDeactivation;
     private JCheckBox myChkAutoSaveIfInactive;
     private JTextField myTfInactiveTimeout;
-    public JCheckBox myConfirmExit;
+    private JCheckBox myChkUseSafeWrite;
+    private JCheckBox myConfirmExit;
     private JPanel myPluginOptionsPanel;
     private JCheckBox myConfirmFrameToOpenCheckBox;
 
-
-    public MyComponent() {
-    }
+    public MyComponent() { }
   }
 
   @NotNull

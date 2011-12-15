@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  public VisualPosition processSoftWrap(EditorPosition position, SoftWrap softWrap) {
+  public VisualPosition processSoftWrap(@NotNull EditorPosition position, SoftWrap softWrap) {
     position.visualColumn = softWrap.getIndentInColumns();
     position.softWrapColumnDiff += softWrap.getIndentInColumns();
 
@@ -170,7 +170,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
 
   @NotNull
   @Override
-  public VisualPosition build(EditorPosition position) {
+  public VisualPosition build(@NotNull EditorPosition position) {
     int diff = myTargetLogical.column - position.logicalColumn;
     position.logicalColumn += diff;
     position.visualColumn += diff;

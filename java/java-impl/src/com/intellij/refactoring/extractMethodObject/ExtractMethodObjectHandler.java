@@ -22,18 +22,17 @@ package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -41,7 +40,6 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
-import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodObjectHandler implements RefactoringActionHandler {
@@ -55,7 +53,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
     });
   }
 
-  private void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
+  private void invokeOnElements(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull PsiElement[] elements) {
     if (elements.length == 0) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
@@ -75,41 +73,50 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
     }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, extractProcessor.getTargetClass().getContainingFile())) return;
+    if (extractProcessor.showDialog()) {
+      run(project, editor, processor, extractProcessor);
+    }
+  }
+
+  public static void run(@NotNull final Project project,
+                  @NotNull final Editor editor,
+                  @NotNull final ExtractMethodObjectProcessor processor,
+                  @NotNull final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor) {
     final int offset = editor.getCaretModel().getOffset();
     final RangeMarker marker = editor.getDocument().createRangeMarker(new TextRange(offset, offset));
-    if (extractProcessor.showDialog()) {
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              extractProcessor.doRefactoring();
-            }
-          });
-
-          processor.run();
-          processor.runChangeSignature();
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          if (processor.isCreateInnerClass()) {
-            processor.moveUsedMethodsToInner();
-            DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            extractProcessor.doRefactoring();
           }
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              if (processor.isCreateInnerClass()) {
-                processor.changeInstanceAccess(project);
-              }
-              final PsiElement method = processor.getMethod();
-              LOG.assertTrue(method != null);
-              method.delete();
-            }
-          });
+        });
+
+        processor.run();
+        processor.runChangeSignature();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        if (processor.isCreateInnerClass()) {
+          processor.moveUsedMethodsToInner();
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+          DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
         }
-      }, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
-      editor.getCaretModel().moveToOffset(marker.getStartOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            if (processor.isCreateInnerClass()) {
+              processor.changeInstanceAccess(project);
+            }
+            final PsiElement method = processor.getMethod();
+            LOG.assertTrue(method != null);
+            method.delete();
+          }
+        });
+      }
+    }, ExtractMethodObjectProcessor.REFACTORING_NAME, ExtractMethodObjectProcessor.REFACTORING_NAME);
+    editor.getCaretModel().moveToOffset(marker.getStartOffset());
+    marker.dispose();
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {

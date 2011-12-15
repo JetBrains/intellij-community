@@ -27,7 +27,6 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Comparing;
@@ -43,7 +42,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
-import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -288,25 +286,17 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     if (handler == null) return;
     try {
-      System.getProperties().put(RenameProcessor.FORCE_RENAME_PROCESSOR_TO_THROW_EXCEPTION_ON_BAD_RENAMEABILITY, "");
       invokeRename(context, handler);
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       if (!e.getMessage().startsWith("Cannot perform refactoring.")) {
         throw e;
       }
-    } finally {
-      System.getProperties().remove(RenameProcessor.FORCE_RENAME_PROCESSOR_TO_THROW_EXCEPTION_ON_BAD_RENAMEABILITY);
     }
   }
 
   private void invokeRename(final MapDataContext context, final RenameHandler renameHandler) {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        renameHandler.invoke(myProject, PsiElement.EMPTY_ARRAY, context);
-      }
-    }.execute();
+    renameHandler.invoke(myProject, PsiElement.EMPTY_ARRAY, context);
   }
 
   private MapDataContext createDataContext(VirtualFile f) throws IOException {

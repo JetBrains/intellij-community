@@ -52,8 +52,7 @@ public class GrAnnotationArgumentListImpl extends GroovyPsiElementImpl implement
 
   @NotNull
   public GrAnnotationNameValuePair[] getAttributes() {
-    final GrAnnotationNameValuePairsImpl pairs = findChildByClass(GrAnnotationNameValuePairsImpl.class);
-    return pairs == null ? findChildrenByClass(GrAnnotationNameValuePair.class) : pairs.getAttributes();
+    return findChildrenByClass(GrAnnotationNameValuePair.class);
   }
 
   @Override

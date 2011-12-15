@@ -491,6 +491,15 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
       else if (key.equals(PlatformDataKeys.TREE_EXPANDER)) {
         sink.put(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
+      } else {
+        final String name = key.getName();
+        if (VcsDataKeys.SELECTED_CHANGES.is(name) || VcsDataKeys.CHANGES.is(name)
+          || VcsDataKeys.CHANGE_LEAD_SELECTION.is(name) || CommittedChangesBrowserUseCase.DATA_KEY.is(name)) {
+          final Object data = myDetailsView.getData(name);
+          if (data != null) {
+            sink.put(key, data);
+          }
+        }
       }
     }
   }

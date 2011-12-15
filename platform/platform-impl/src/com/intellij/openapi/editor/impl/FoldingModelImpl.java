@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,10 +188,15 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation) {
-    runBatchFoldingOperation(operation, false);
+    runBatchFoldingOperation(operation, false, true);
   }
 
-  private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret) {
+  @Override
+  public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaret) {
+    runBatchFoldingOperation(operation, false, moveCaret);
+  }
+
+  private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
     assertIsDispatchThread();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
@@ -207,7 +212,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     if (!oldBatchFlag) {
       if (myFoldRegionsProcessed) {
-        notifyBatchFoldingProcessingDone();
+        notifyBatchFoldingProcessingDone(moveCaret);
         myFoldRegionsProcessed = false;
       }
       myIsBatchFoldingProcessing = false;
@@ -217,7 +222,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   @Override
   public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull final Runnable operation) {
-    runBatchFoldingOperation(operation, true);
+    runBatchFoldingOperation(operation, true, true);
   }
 
   public void flushCaretShift() {
@@ -337,11 +342,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     notifyListenersOnFoldRegionStateChange(region);
   }
 
-  private void notifyBatchFoldingProcessingDone() {
-    doNotifyBatchFoldingProcessingDone();
-  }
-
-  private void doNotifyBatchFoldingProcessingDone() {
+  private void notifyBatchFoldingProcessingDone(final boolean moveCaretFromCollapsedRegion) {
     myFoldTree.rebuild();
 
     for (FoldingListener listener : myListeners) {
@@ -390,14 +391,16 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     boolean oldCaretPositionSaved = myCaretPositionSaved;
 
-    if (offsetToUse >= 0) {
-      myEditor.getCaretModel().moveToOffset(offsetToUse);
-    }
-    else if (column != -1) {
-      myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
-    }
-    else {
-      myEditor.getCaretModel().moveToLogicalPosition(caretPosition);
+    if (moveCaretFromCollapsedRegion) {
+      if (offsetToUse >= 0) {
+        myEditor.getCaretModel().moveToOffset(offsetToUse);
+      }
+      else if (column != -1) {
+        myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
+      }
+      else {
+        myEditor.getCaretModel().moveToLogicalPosition(caretPosition);
+      }
     }
 
     myCaretPositionSaved = oldCaretPositionSaved;

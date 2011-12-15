@@ -59,8 +59,6 @@ import java.util.*;
 
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
-  @NonNls public static final String FORCE_RENAME_PROCESSOR_TO_THROW_EXCEPTION_ON_BAD_RENAMEABILITY =
-    "force.rename.processor.to.throw.exception.on.bad.renameability";
 
   protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
 
@@ -197,7 +195,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
 
     prepareSuccessful();
-    return true;
+    return PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement);
   }
 
   protected static void assertNonCompileElement(PsiElement element) {
@@ -435,21 +433,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
     return result;
-  }
-
-  protected void prepareTestRun() {
-    String s = PsiElementRenameHandler.renameabilityStatus(myProject, myPrimaryElement);
-    if (!StringUtil.isEmpty(s)) {
-      if (inTestsProduceExceptionOnBadRenameabilityStatus()) {
-        PsiElementRenameHandler.showErrorMessage(myProject, null, s);
-      }
-      return;
-    }
-    prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
-  }
-
-  protected boolean inTestsProduceExceptionOnBadRenameabilityStatus() {
-    return System.getProperty(FORCE_RENAME_PROCESSOR_TO_THROW_EXCEPTION_ON_BAD_RENAMEABILITY) != null;
   }
 
   public Collection<String> getNewNames() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,7 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class HyperlinkLabel extends HighlightableComponent {
-  private static final TextAttributes BOLD_ATTRIBUTES =
-    new TextAttributes(UIUtil.getLabelTextForeground(), UIUtil.getLabelBackground(), null, null, Font.BOLD);
+  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(UIUtil.getLabelTextForeground(), null, null, null, Font.BOLD);
 
   private static final Logger LOG = Logger.getInstance(HyperlinkLabel.class.getName());
 

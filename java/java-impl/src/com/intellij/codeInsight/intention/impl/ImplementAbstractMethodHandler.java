@@ -65,28 +65,36 @@ public class ImplementAbstractMethodHandler {
 
     final PsiElement[][] result = new PsiElement[1][];
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
-        final PsiClass psiClass = myMethod.getContainingClass();
-        if (!psiClass.isValid()) return;
-        if (!psiClass.isEnum()) {
-          result[0] = getClassImplementations(psiClass);
-        } else {
-          final List<PsiElement> enumConstants = new ArrayList<PsiElement>();
-          for (PsiField field : psiClass.getFields()) {
-            if (field instanceof PsiEnumConstant) {
-              final PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)field).getInitializingClass();
-              if (initializingClass != null) {
-                PsiMethod method = initializingClass.findMethodBySignature(myMethod, true);
-                if (method == null || !method.getContainingClass().equals(initializingClass)) {
-                  enumConstants.add(initializingClass);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            final PsiClass psiClass = myMethod.getContainingClass();
+            if (!psiClass.isValid()) return;
+            if (!psiClass.isEnum()) {
+              result[0] = getClassImplementations(psiClass);
+            }
+            else {
+              final List<PsiElement> enumConstants = new ArrayList<PsiElement>();
+              for (PsiField field : psiClass.getFields()) {
+                if (field instanceof PsiEnumConstant) {
+                  final PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)field).getInitializingClass();
+                  if (initializingClass != null) {
+                    PsiMethod method = initializingClass.findMethodBySignature(myMethod, true);
+                    if (method == null || !method.getContainingClass().equals(initializingClass)) {
+                      enumConstants.add(initializingClass);
+                    }
+                  }
+                  else {
+                    enumConstants.add(field);
+                  }
                 }
-              } else {
-                enumConstants.add(field);
               }
+              result[0] = PsiUtilBase.toPsiElementArray(enumConstants);
             }
           }
-          result[0] = PsiUtilBase.toPsiElementArray(enumConstants);
-        }
+        });
       }
     }, CodeInsightBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"), true, myProject);
 
@@ -108,6 +116,7 @@ public class ImplementAbstractMethodHandler {
     myList = new JBList(result[0]);
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     final Runnable runnable = new Runnable(){
+      @Override
       public void run() {
         int index = myList.getSelectedIndex();
         if (index < 0) return;
@@ -131,6 +140,7 @@ public class ImplementAbstractMethodHandler {
       if (!((PsiElement)o).isValid()) return;
     }
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         final LinkedHashSet<PsiClass> classes = new LinkedHashSet<PsiClass>();
         for (Object o : selection) {
@@ -143,6 +153,7 @@ public class ImplementAbstractMethodHandler {
         }
         if (!CodeInsightUtilBase.preparePsiElementsForWrite(classes)) return;
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             for (PsiClass psiClass : classes) {
               try {

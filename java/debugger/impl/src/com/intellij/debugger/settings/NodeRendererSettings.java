@@ -30,6 +30,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
@@ -348,9 +349,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   private ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText, @NonNls String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
-    childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText));
+    childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", StdFileTypes.JAVA));
     if (childrenExpandableText != null) {
-      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText));
+      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText, "", StdFileTypes.JAVA));
     }
     return childrenRenderer;
   }
@@ -360,7 +361,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     if (expressions != null && expressions.length > 0) {
       final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<Pair<String, TextWithImports>>(expressions.length);
       for (final String[] expression : expressions) {
-        childrenList.add(new Pair<String, TextWithImports>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1])));
+        childrenList.add(new Pair<String, TextWithImports>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
       }
       childrenRenderer.setChildren(childrenList);
     }
@@ -383,7 +384,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         return evaluated + postfix;
       }
     };
-    labelRenderer.setLabelExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText));
+    labelRenderer.setLabelExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", StdFileTypes.JAVA));
     return labelRenderer;
   }
 
@@ -399,8 +400,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     private MapEntryLabelRenderer() {
       super("java.util.Map$Entry");
-      myKeyExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()"));
-      myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()"));
+      myKeyExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()", "", StdFileTypes.JAVA));
+      myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()", "", StdFileTypes.JAVA));
     }
 
     public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {

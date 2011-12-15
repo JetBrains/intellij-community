@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.refactoring;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation;
+import com.intellij.codeInsight.CodeInsightTestCase;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-
-/**
- * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
- */
-public interface GrAnnotationNameValuePairs extends GroovyPsiElement {
+public abstract class RefactoringTestCase extends CodeInsightTestCase {
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
+  }
 }

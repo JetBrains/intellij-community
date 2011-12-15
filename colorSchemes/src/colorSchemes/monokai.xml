@@ -588,16 +588,37 @@
     <option name="HAML_LINE_CONTINUATION">
       <value />
     </option>
+    <option name="HAML_PARENTHS">
+      <value />
+    </option>
     <option name="HAML_RUBY_CODE">
       <value />
     </option>
     <option name="HAML_RUBY_START">
       <value />
     </option>
+    <option name="HAML_STRING">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="HAML_STRING_INTERPOLATED">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
     <option name="HAML_TAG">
       <value />
     </option>
+    <option name="HAML_TAG_NAME">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
     <option name="HAML_TEXT">
+      <value />
+    </option>
+    <option name="HAML_WS_REMOVAL">
       <value />
     </option>
     <option name="HAML_XHTML">
@@ -1428,6 +1449,11 @@
     <option name="STATIC_METHOD_ATTRIBUTES">
       <value>
         <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="TAG_ATTR_KEY">
+      <value>
+        <option name="FOREGROUND" value="A6E22E" />
       </value>
     </option>
     <option name="TEXT">

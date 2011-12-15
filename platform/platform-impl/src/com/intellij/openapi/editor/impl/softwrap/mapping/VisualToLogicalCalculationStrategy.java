@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,22 @@ import java.util.List;
 */
 class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<LogicalPosition> {
 
+  private final CacheEntry mySearchKey;
   private VisualPosition myTargetVisual;
 
   VisualToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache, 
                                      @NotNull EditorTextRepresentationHelper representationHelper) 
   {
     super(editor, storage, cache, representationHelper);
+    mySearchKey = new CacheEntry(0, editor, representationHelper);
   }
 
   public void init(@NotNull final VisualPosition targetVisual, @NotNull final List<CacheEntry> cache) {
     reset();
 
     myTargetVisual = targetVisual;
-    SEARCH_KEY.visualLine = targetVisual.line;
-    int i = Collections.binarySearch(cache, SEARCH_KEY);
+    mySearchKey.visualLine = targetVisual.line;
+    int i = Collections.binarySearch(cache, mySearchKey);
     if (i >= 0) {
       CacheEntry cacheEntry = cache.get(i);
       if (cacheEntry.visualLine == targetVisual.line) {
@@ -139,7 +141,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   @Nullable
   @Override
-  public LogicalPosition processSoftWrap(EditorPosition position, SoftWrap softWrap) {
+  public LogicalPosition processSoftWrap(@NotNull EditorPosition position, SoftWrap softWrap) {
     // There is a possible case that current visual line starts with soft wrap and target visual position points to its
     // virtual space.
     CacheEntry targetEntry = getTargetEntry();
@@ -157,14 +159,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
       }
     }
     
-    //TODO den implement
     return null;
-    //// We assume that target visual position points to soft wrap-introduced virtual space if this method is called (we expect
-    //// to iterate only a single visual line and also expect soft wrap to have line feed symbol at the first position).
-    //EditorPosition targetContext = getAnchorCacheEntry().buildEndLineContext();
-    //targetContext.softWrapColumnDiff += myTargetVisual.column - targetContext.visualColumn;
-    //targetContext.visualColumn = myTargetVisual.column;
-    //return targetContext.buildLogicalPosition();
   }
 
   @Override
@@ -193,7 +188,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   @NotNull
   @Override
-  public LogicalPosition build(EditorPosition position) {
+  public LogicalPosition build(@NotNull EditorPosition position) {
     int linesDiff = myTargetVisual.line - position.visualLine;
     if (linesDiff <= 0) {
       int columnsDiff = myTargetVisual.column - position.visualColumn;

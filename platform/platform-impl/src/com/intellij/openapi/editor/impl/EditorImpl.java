@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -320,8 +321,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
         int textLength = myDocument.getTextLength();
 
-        int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength - 1);
-        int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength - 1);
+        int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
+        int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
 
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
@@ -884,7 +885,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setHighlighter(@NotNull EditorHighlighter highlighter) {
     assertIsDispatchThread();
     final Document document = getDocument();
-    if (myHighlighter != null) {
+    if (myHighlighter != null && !isDisposed()) {
       document.removeDocumentListener(myHighlighter);
     }
 
@@ -989,14 +990,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     CharSequence text = myDocument.getCharsNoThreadCheck();
 
-    LogicalPosition endLogicalPosition = visualToLogicalPosition(new VisualPosition(line+1, 0));
+    LogicalPosition endLogicalPosition = visualToLogicalPosition(new VisualPosition(line + 1, 0));
     int endOffset = logicalPositionToOffset(endLogicalPosition);
 
     if (offset > endOffset) {
-      LOG.error(String.format(
-        "Detected invalid (x;y)->VisualPosition processing. Given point: %s, mapped to visual line %d. Visual(%d; %d) is mapped to "
-        + "logical position '%s' which is mapped to offset %d (start offset). Visual(%d; %d) is mapped to logical '%s' which is mapped "
-        + "to offset %d (end offset). State: %s",
+      LogMessageEx.error(LOG, "Detected invalid (x; y)->VisualPosition processing", String.format(
+        "Given point: %s, mapped to visual line %d. Visual(%d; %d) is mapped to "
+       + "logical position '%s' which is mapped to offset %d (start offset). Visual(%d; %d) is mapped to logical '%s' which is mapped "
+       + "to offset %d (end offset). State: %s",
         p, line, line, 0, logicalPosition, offset, line + 1, 0, endLogicalPosition, endOffset, dumpState()
       ));
       return new VisualPosition(line, EditorUtil.columnsNumber(p.x, EditorUtil.getSpaceWidth(Font.PLAIN, this)));
@@ -3233,10 +3234,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return logicalToVisualPosition(logicalPos, true);
   }
   
-  // TODO den remove before v.11 is released.
+  // TODO den remove as soon as the problem is fixed.
   private final ThreadLocal<Integer> stackDepth = new ThreadLocal<Integer>();
 
-  // TODO den remove before v.11 is released.
+  // TODO den remove as soon as the problem is fixed.
   @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
@@ -3257,7 +3258,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (offset < getDocument().getTextLength()) {
         offset = outermostCollapsed.getStartOffset();
         LogicalPosition foldStart = offsetToLogicalPosition(offset);
-        // TODO den remove before v.11 is released.
+        // TODO den remove as soon as the problem is fixed.
         Integer depth = stackDepth.get();
         if (depth >= 0) {
           stackDepth.set(depth + 1);
@@ -3269,7 +3270,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             stackDepth.set(-1);
           }
         }
-        // TODO den unwrap before v.11 is released.
+        // TODO den remove as soon as the problem is fixed.
         try {
           return doLogicalToVisualPosition(foldStart, true);
         }
@@ -3291,7 +3292,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int foldedLinesCountBefore = myFoldingModel.getFoldedLinesCountBefore(offset);
     line -= foldedLinesCountBefore;
     if (line < 0) {
-      LOG.error(String.format(
+      LogMessageEx.error(
+        LOG, "Invalid LogicalPosition -> VisualPosition processing", String.format(
         "Given logical position: %s; matched line: %d; fold lines before: %d, state: %s",
         logicalPos, line, foldedLinesCountBefore, dumpState()
       ));
@@ -3299,7 +3301,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     FoldRegion[] topLevel = myFoldingModel.fetchTopLevel();
     LogicalPosition anchorFoldingPosition = logicalPos;
-    for (int idx = myFoldingModel.getLastTopLevelIndexBefore(offset); idx >= 0; idx--) {
+    for (int idx = myFoldingModel.getLastTopLevelIndexBefore(offset); idx >= 0 && topLevel != null; idx--) {
       FoldRegion region = topLevel[idx];
       if (region.isValid()) {
         if (region.getDocument().getLineNumber(region.getEndOffset()) == anchorFoldingPosition.line && region.getEndOffset() <= offset) {
@@ -3507,6 +3509,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (newY > 0 && newY == y) {
         newY = visibleLineToY(getVisibleLogicalLinesCount());
       }
+      if (newY >= y) {
+        LogMessageEx.error(LOG, "cycled moveCaretToScreenPos() detected", String.format("x=%d, y=%d%nstate=%s", x, y, dumpState()));
+      } 
       moveCaretToScreenPos(x, newY);
       return;
     }

@@ -13,16 +13,14 @@ import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 
-import java.util.Collections;
 import java.util.HashSet;
 
 /**
  * @author ven
  */
-public class RenameLocalTest extends LightCodeInsightTestCase {
+public class RenameLocalTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/renameLocal/";
 
   @Override

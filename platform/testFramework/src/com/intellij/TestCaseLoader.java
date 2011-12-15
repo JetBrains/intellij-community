@@ -25,8 +25,6 @@
 package com.intellij;
 
 import com.intellij.idea.Bombed;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
@@ -39,7 +37,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
 
   /** Holds name of JVM property that is assumed to define target test group name. */
@@ -48,28 +46,32 @@ public class TestCaseLoader {
   /** Holds name of JVM property that is assumed to define filtering rules for test classes. */
   private static final String TARGET_TEST_PATTERNS = "idea.test.patterns";
 
-  /** Holds name of JVM property that is assumed to determine if only 'fast' tests should be executed. */
-  private static final String FAST_TESTS_ONLY_FLAG = "idea.fast.only";
+  public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
+  public static final String SKIP_COMMUNITY_TESTS = "idea.skip.community.tests";
 
   private final List<Class> myClassList = new ArrayList<Class>();
   private Class myFirstTestClass;
   private Class myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
-  private final String myTestGroupName;
-  private final Set<String> blockedTests = new HashSet<String>();
-  private final String[] slowTestNames;
+  private boolean myIsPerformanceTestsRun;
 
   public TestCaseLoader(String classFilterName) {
+    this(classFilterName, false);
+  }
+
+  public TestCaseLoader(String classFilterName, boolean isPerformanceTestsRun) {
+    myIsPerformanceTestsRun = isPerformanceTestsRun;
     InputStream excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResourceAsStream(classFilterName);
     String preconfiguredGroup = System.getProperty(TARGET_TEST_GROUP);
-    if (preconfiguredGroup == null || "".equals(preconfiguredGroup.trim())) {
-      myTestGroupName = "";
+    String testGroupName;
+    if (preconfiguredGroup == null || preconfiguredGroup.trim().isEmpty()) {
+      testGroupName = "";
     } else {
-      myTestGroupName = preconfiguredGroup.trim();
+      testGroupName = preconfiguredGroup.trim();
     }
     if (excludedStream != null) {
       try {
-        myTestClassesFilter = GroupBasedTestClassFilter.createOn(new InputStreamReader(excludedStream), myTestGroupName);
+        myTestClassesFilter = GroupBasedTestClassFilter.createOn(new InputStreamReader(excludedStream), testGroupName);
       }
       finally {
         try {
@@ -90,40 +92,7 @@ public class TestCaseLoader {
       }
     }
 
-    String[] names;
-    try {
-      InputStream stream = getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt");
-      names = FileUtil.loadTextAndClose(new InputStreamReader(stream)).split("\\s");
-    }
-    catch (Exception e) {
-      // no luck
-      names = new String[0];
-    }
-    slowTestNames = names;
-    if (Comparing.equal(System.getProperty(FAST_TESTS_ONLY_FLAG), "true")) {
-      blockedTests.addAll(Arrays.asList(slowTestNames));
-    }
-    else {
-      checkClassesExist();
-    }
-    System.out.println("Using test group: [" + myTestGroupName +"]");
-  }
-
-  void checkClassesExist() {
-    String s = "";
-    for (String slowTestName : slowTestNames) {
-      if (slowTestName.trim().length() == 0) continue;
-      if (blockedTests.contains(slowTestName)) continue;
-      try {
-        Class.forName(slowTestName);
-      }
-      catch (ClassNotFoundException e) {
-        s += "\n" + slowTestName;
-      }
-    }
-    if (s.length() != 0) {
-      throw new RuntimeException("Tests in slowTests.txt which cannot be instantiated: "+s);
-    }
+    System.out.println("Using test group: [" + testGroupName +"]");
   }
 
   /*
@@ -165,7 +134,10 @@ public class TestCaseLoader {
         //System.out.println("testCaseClass = " + testCaseClass);
         return true;
       }
-    } catch (NoSuchMethodException e) { }
+    }
+    catch (NoSuchMethodException e) {
+      // can't be
+    }
 
     return TestRunnerUtil.isJUnit4TestClass(testCaseClass);
   }
@@ -174,8 +146,10 @@ public class TestCaseLoader {
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
-    return !myTestClassesFilter.matches(testCaseClass.getName()) || isBombed(testCaseClass)
-              || blockedTests.contains(testCaseClass.getName());
+    String className = testCaseClass.getName();
+    if (className.toLowerCase().contains("performance") && !myIsPerformanceTestsRun) return true;
+    
+    return !myTestClassesFilter.matches(className) || isBombed(testCaseClass);
   }
 
   public static boolean isBombed(final Method method) {

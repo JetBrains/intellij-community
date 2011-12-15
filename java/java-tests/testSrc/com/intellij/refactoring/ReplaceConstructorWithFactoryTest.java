@@ -4,13 +4,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
  */
-public class ReplaceConstructorWithFactoryTest extends LightCodeInsightTestCase {
+public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

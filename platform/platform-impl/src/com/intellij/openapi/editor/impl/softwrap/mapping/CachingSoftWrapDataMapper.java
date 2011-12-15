@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,12 +55,10 @@ import java.util.List;
  */
 public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAwareDocumentParsingListener {
 
-  private static final Logger LOG = Logger.getInstance("#" + CachingSoftWrapDataMapper.class.getName());
   private static final boolean DEBUG_SOFT_WRAP_PROCESSING = false;
   
   /** Caches information for the document visual line starts sorted in ascending order. */
   private final List<CacheEntry>               myCache                               = new ArrayList<CacheEntry>();
-  private final CacheEntry                     mySearchKey                           = new CacheEntry(0, null, null, null);
   private final List<CacheEntry>               myAffectedByUpdateCacheEntries        = new ArrayList<CacheEntry>();
   private final List<CacheEntry>               myNotAffectedByUpdateTailCacheEntries = new ArrayList<CacheEntry>();
   private final CacheState                     myBeforeChangeState                   = new CacheState();
@@ -72,6 +69,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   private final EditorEx                           myEditor;
   private final SoftWrapsStorage                   myStorage;
   private final EditorTextRepresentationHelper     myRepresentationHelper;
+  private final CacheEntry                         mySearchKey;
 
   public CachingSoftWrapDataMapper(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage,
                                    @NotNull EditorTextRepresentationHelper representationHelper)
@@ -79,6 +77,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     myEditor = editor;
     myStorage = storage;
     myRepresentationHelper = representationHelper;
+    mySearchKey = new CacheEntry(0, editor, representationHelper);
 
     myOffsetToLogicalStrategy = new OffsetToLogicalCalculationStrategy(editor, storage, myCache, representationHelper);
     myVisualToLogicalStrategy = new VisualToLogicalCalculationStrategy(editor, storage, myCache, representationHelper);
@@ -316,7 +315,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
         return lastEntry;
       }
       else if (lastEntry.visualLine < visualLine && createIfNecessary) {
-        CacheEntry result = new CacheEntry(visualLine, myEditor, myRepresentationHelper, myCache);
+        CacheEntry result = new CacheEntry(visualLine, myEditor, myRepresentationHelper);
         myCache.add(result);
         return result;
       }
@@ -347,7 +346,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     if (cacheEntryIndex < 0) {
       cacheEntryIndex = start;
       if (createIfNecessary) {
-        myCache.add(cacheEntryIndex, result = new CacheEntry(visualLine, myEditor, myRepresentationHelper, myCache));
+        myCache.add(cacheEntryIndex, result = new CacheEntry(visualLine, myEditor, myRepresentationHelper));
       }
     }
     else {
@@ -446,30 +445,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       myCache.addAll(myNotAffectedByUpdateTailCacheEntries);
     }
     applyStateChange(exactOffsetsDiff);
-    
-    // TODO den remove before v.11 release
-    if (myCache.size() > 1) {
-      CacheEntry beforeLast = myCache.get(myCache.size() - 2);
-      CacheEntry last = myCache.get(myCache.size() - 1);
-      if (beforeLast.visualLine == last.visualLine
-          || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1)
-          || last.startOffset > myEditor.getDocument().getTextLength())
-      {
-        CharSequence editorState = "";
-        if (myEditor instanceof EditorImpl) {
-          editorState = ((EditorImpl)myEditor).dumpState();
-        }
-        LOG.error(
-          "Detected invalid soft wraps cache update",
-          String.format(
-            "Event: %s, normal: %b.%n%nTail cache entries: %s%n%nAffected by change cache entries: %s%n%nBefore change state: %s%n%n"
-            + "After change state: %s%n%nEditor state: %s",
-            event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries, 
-            myBeforeChangeState, myAfterChangeState, editorState
-          )
-        );
-      }
-    }
     
     myAffectedByUpdateCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.clear();
@@ -620,6 +595,40 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     return myCache.toString();
   }
 
+  /**
+   * Allows to register new entry with the given data at the soft wraps cache.
+   * <p/>
+   * One entry is expected to contain information about single visual lines (what logical lines are mapped to it, what fold
+   * regions and tabulations are located there etc).
+   * 
+   * @param visualLine   target entry's visual line
+   * @param startOffset  target entry's start offset
+   * @param endOffset    target entry's end offset
+   * @param foldRegions  target entry's fold regions
+   * @param tabData      target entry's tab data
+   */
+  public void rawAdd(int visualLine,
+                     int startOffset,
+                     int endOffset,
+                     @NotNull List<Trinity<Integer, Integer, FoldRegion>> foldRegions,
+                     @NotNull List<Pair<Integer, Integer>> tabData)
+  {
+    final CacheEntry entry = new CacheEntry(visualLine, myEditor, myRepresentationHelper);
+    entry.startOffset = startOffset;
+    entry.endOffset = endOffset;
+    entry.startLogicalLine = myEditor.getDocument().getLineNumber(startOffset);
+    entry.endLogicalLine = myEditor.getDocument().getLineNumber(endOffset);
+    for (Trinity<Integer, Integer, FoldRegion> region : foldRegions) {
+      final FoldingData foldData = new FoldingData(region.third, region.second, myRepresentationHelper, myEditor);
+      foldData.widthInColumns = region.first;
+      entry.store(foldData, region.third.getStartOffset());
+    }
+    for (Pair<Integer, Integer> pair : tabData) {
+      entry.storeTabData(new TabData(pair.second, pair.first));
+    }
+    myCache.add(entry);
+  }
+  
   @SuppressWarnings({"UnusedDeclaration"})
   public static void log(Object o) {
     //try {

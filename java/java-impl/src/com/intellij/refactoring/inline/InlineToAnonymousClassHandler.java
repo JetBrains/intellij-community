@@ -17,6 +17,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,11 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
       @Override
       public void run() {
-        inheritors.addAll(ClassInheritorsSearch.search(element).findAll());
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            inheritors.addAll(ClassInheritorsSearch.search(element).findAll());
+          }
+        });
       }
     }, "Searching for class \"" + element.getQualifiedName() + "\" inheritors ...", true, element.getProject())) return false;
     return inheritors.size() == 0;

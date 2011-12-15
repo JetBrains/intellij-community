@@ -41,6 +41,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -67,6 +68,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.Processor;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
 import com.intellij.util.ui.UIUtil;
@@ -361,13 +363,23 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   protected void tearDown() throws Exception {
+    CompositeException result = new CompositeException();
     if (myProject != null) {
-      LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
+      try {
+        LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
+      }
+      catch (Throwable e) {
+        result.add(e);
+      }
     }
 
     try {
       checkForSettingsDamage();
-
+    }
+    catch (Throwable e) {
+      result.add(e);
+    }
+    try {
       InjectedLanguageManagerImpl injectedLanguageManager = null;
       if (myProject != null) {
         injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
@@ -375,32 +387,56 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
       try {
         disposeProject();
+      }
+      catch (Throwable e) {
+        result.add(e);
+      }
 
-        if (injectedLanguageManager != null) {
+      if (injectedLanguageManager != null) {
+        try {
           injectedLanguageManager.checkInjectorsAreDisposed();
         }
-        for (final File fileToDelete : myFilesToDelete) {
-          delete(fileToDelete);
-        }
-        LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
-
-        if (!myAssertionsInTestDetected) {
-          if (IdeaLogger.ourErrorsOccurred != null) {
-            throw IdeaLogger.ourErrorsOccurred;
-          }
-          assertNull("Logger errors occurred in " + getFullName(), IdeaLogger.ourErrorsOccurred);
+        catch (AssertionError e) {
+          result.add(e);
         }
       }
-      finally {
-        ourTestCase = null;
+      for (final File fileToDelete : myFilesToDelete) {
+        delete(fileToDelete);
+      }
+      LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+
+      if (!myAssertionsInTestDetected) {
+        if (IdeaLogger.ourErrorsOccurred != null) {
+          result.add(IdeaLogger.ourErrorsOccurred);
+        }
       }
 
-      super.tearDown();
+      try {
+        super.tearDown();
+      }
+      catch (Throwable e) {
+        result.add(e);
+      }
 
       //cleanTheWorld();
-      myEditorListenerTracker.checkListenersLeak();
-      myThreadTracker.checkLeak();
-      LightPlatformTestCase.checkEditorsReleased();
+      try {
+        myEditorListenerTracker.checkListenersLeak();
+      }
+      catch (AssertionError error) {
+        result.add(error);
+      }
+      try {
+        myThreadTracker.checkLeak();
+      }
+      catch (AssertionError error) {
+        result.add(error);
+      }
+      try {
+        LightPlatformTestCase.checkEditorsReleased();
+      }
+      catch (AssertionError error) {
+        result.add(error);
+      }
     }
     finally {
       myProjectManager = null;
@@ -409,7 +445,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       myFilesToDelete.clear();
       myEditorListenerTracker = null;
       myThreadTracker = null;
+      ourTestCase = null;
     }
+    if (!result.isEmpty()) throw result;
   }
 
   private void disposeProject() {
@@ -572,7 +610,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (IdeaLogger.ourErrorsOccurred != null) {
       throw IdeaLogger.ourErrorsOccurred;
     }
+
+    if (++LEAK_WALKS % 1000 == 0) {
+      LeakHunter.checkLeak(ApplicationManager.getApplication(), ProjectImpl.class, new Processor<ProjectImpl>() {
+        @Override
+        public boolean process(ProjectImpl project) {
+          return !project.isDefault() && !LightPlatformTestCase.isLight(project);
+        }
+      });
+    }
   }
+  private static int LEAK_WALKS;
 
   private static void waitForAllLaters() throws InterruptedException, InvocationTargetException {
     for (int i = 0; i < 3; i++) {

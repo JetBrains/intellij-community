@@ -50,6 +50,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -66,6 +67,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.FilenameIndex;
@@ -91,6 +93,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -715,6 +718,29 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   @Override
+  protected Action[] createActions() {
+    AbstractAction copyPsi = new AbstractAction("Co&py PSI") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        PsiElement element = parseText(myEditor.getDocument().getText());
+        List<PsiElement> allToParse = new ArrayList<PsiElement>();
+        if (element instanceof PsiFile) {
+          allToParse.addAll(((PsiFile)element).getViewProvider().getAllFiles());
+        }
+        else if (element != null) {
+          allToParse.add(element);
+        }
+        String data = "";
+        for (PsiElement psiElement : allToParse) {
+          data += DebugUtil.psiToString(psiElement, !myShowWhiteSpacesBox.isSelected(), true);
+        }
+        CopyPasteManager.getInstance().setContents(new StringSelection(data));
+      }
+    };
+    return ArrayUtil.mergeArrays(new Action[]{copyPsi}, super.createActions());
+  }
+
+  @Override
   protected void doOKAction() {
     if (myBlockTreeBuilder != null) {
       Disposer.dispose(myBlockTreeBuilder);
@@ -725,35 +751,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myLastParsedText = text;
     myLastParsedTextHashCode = text.hashCode();
     myNewDocumentHashCode = myLastParsedTextHashCode;
-    PsiElement rootElement = null;
-
-    final Object source = getSource();
-    try {
-      if (source instanceof PsiViewerExtension) {
-        final PsiViewerExtension ext = (PsiViewerExtension)source;
-        rootElement = ext.createElement(myProject, text);
-      }
-      else if (source instanceof FileType) {
-        final FileType type = (FileType)source;
-        String ext = type.getDefaultExtension();
-        if (myExtensionComboBox.isVisible()) {
-          ext = myExtensionComboBox.getSelectedItem().toString().toLowerCase();
-        }
-        if (type instanceof LanguageFileType) {
-          final Language language = ((LanguageFileType)type).getLanguage();
-          final Language dialect = (Language)myDialectComboBox.getSelectedItem();
-          rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + ext, dialect == null ? language : dialect, text);
-        }
-        else {
-          rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + ext, text);
-        }
-      }
-      focusTree();
-    }
-    catch (IncorrectOperationException e) {
-      rootElement = null;
-      Messages.showMessageDialog(myProject, e.getMessage(), "Error", Messages.getErrorIcon());
-    }
+    PsiElement rootElement = parseText(text);
+    focusTree();
     ViewerTreeStructure structure = (ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure();
     structure.setRootPsiElement(rootElement);
 
@@ -794,6 +793,32 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myBlockTree.setRootVisible(true);
     myBlockTree.expandRow(0);
     myBlockTreeBuilder.queueUpdate();
+  }
+
+  private PsiElement parseText(String text) {
+    final Object source = getSource();
+    try {
+      if (source instanceof PsiViewerExtension) {
+        return ((PsiViewerExtension)source).createElement(myProject, text);
+      }
+      if (source instanceof FileType) {
+        final FileType type = (FileType)source;
+        String ext = type.getDefaultExtension();
+        if (myExtensionComboBox.isVisible()) {
+          ext = myExtensionComboBox.getSelectedItem().toString().toLowerCase();
+        }
+        if (type instanceof LanguageFileType) {
+          final Language language = ((LanguageFileType)type).getLanguage();
+          final Language dialect = (Language)myDialectComboBox.getSelectedItem();
+          return PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + ext, dialect == null ? language : dialect, text);
+        }
+        return PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + ext, text);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      Messages.showMessageDialog(myProject, e.getMessage(), "Error", Messages.getErrorIcon());
+    }
+    return null;
   }
 
   @Nullable

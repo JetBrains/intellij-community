@@ -69,7 +69,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @Override
   protected void runTest() throws Throwable {
     final Throwable[] throwable = {null};
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    Runnable action = new Runnable() {
       @Override
       public void run() {
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
@@ -78,13 +78,20 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
             try {
               doRunTest();
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
               throwable[0] = t;
             }
           }
         }, "", null);
       }
-    });
+    };
+    if (isRunInWriteAction()) {
+      ApplicationManager.getApplication().runWriteAction(action);
+    }
+    else {
+      action.run();
+    }
 
     if (throwable[0] != null) {
       throw throwable[0];
@@ -93,6 +100,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   protected void doRunTest() throws Throwable {
     LightPlatformCodeInsightTestCase.super.runTest();
+  }
+
+  protected boolean isRunInWriteAction() {
+    return true;
   }
 
   /**

@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -27,19 +28,21 @@ import javax.swing.*;
  * @author Gregory.Shrago
  */
 public class LanguageConsoleViewImpl extends ConsoleViewImpl {
+  @NotNull
   protected LanguageConsoleImpl myConsole;
 
   public LanguageConsoleViewImpl(final Project project, String title, final Language language) {
     this(project, new LanguageConsoleImpl(project, title, language));
   }
 
-  protected LanguageConsoleViewImpl(final Project project, final LanguageConsoleImpl console) {
+  protected LanguageConsoleViewImpl(final Project project, @NotNull final LanguageConsoleImpl console) {
     super(project, true);
     myConsole = console;
     Disposer.register(this, myConsole);
     Disposer.register(project, this);
   }
 
+  @NotNull
   public LanguageConsoleImpl getConsole() {
     return myConsole;
   }

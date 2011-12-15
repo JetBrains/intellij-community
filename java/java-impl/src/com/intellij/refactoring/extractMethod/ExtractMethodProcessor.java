@@ -77,6 +77,7 @@ import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -495,15 +496,21 @@ public class ExtractMethodProcessor implements MatchProvider {
     return showDialog(true);
   }
 
+  @TestOnly
   public void testRun() throws IncorrectOperationException {
+    testPrepare();
+
+    ExtractMethodHandler.run(myProject, myEditor, this);
+  }
+
+  @TestOnly
+  public void testPrepare() {
     myInputVariables.setFoldingAvailable(myInputVariables.isFoldingSelectedByDefault());
     myMethodName = myInitialMethodName;
     myVariableDatum = new ParameterTablePanel.VariableData[myInputVariables.getInputVariables().size()];
     for (int i = 0; i < myInputVariables.getInputVariables().size(); i++) {
       myVariableDatum[i] = myInputVariables.getInputVariables().get(i);
     }
-
-    doRefactoring();
   }
 
   /**
@@ -544,7 +551,13 @@ public class ExtractMethodProcessor implements MatchProvider {
     final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap = new HashMap<PsiMethodCallExpression, PsiMethod>();
     final Runnable collectOverloads = new Runnable() {
       public void run() {
-        overloadsResolveMap.putAll(ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember));
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            Map<PsiMethodCallExpression, PsiMethod> overloads =
+              ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
+            overloadsResolveMap.putAll(overloads);
+          }
+        });
       }
     };
     final Runnable extract = new Runnable() {

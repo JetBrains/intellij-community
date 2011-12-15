@@ -2,13 +2,11 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -18,7 +16,7 @@ import java.util.Iterator;
 /**
  * @author yole
  */
-public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
+public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

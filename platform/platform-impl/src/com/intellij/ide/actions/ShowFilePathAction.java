@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
@@ -28,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -234,10 +236,46 @@ public class ShowFilePathAction extends AnAction {
     return PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
   }
 
-  public static void showDialog(Project project, String message, String title, File file) {
+  public static Boolean showDialog(Project project, String message, String title, File file) {
+    final Boolean[] ref = new Boolean[1];
+    final DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return true;
+      }
+
+      @Override
+      public void setToBeShown(boolean value, int exitCode) {
+        if (!value) {
+          if (exitCode == 0) {
+            // yes
+            ref[0] = true;
+          }
+          else {
+            ref[0] = false;
+          }
+        }
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return true;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return true;
+      }
+
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.ask");
+      }
+    };
     if (Messages.showOkCancelDialog(project, message, title, RevealFileAction.getActionName(),
-                                    IdeBundle.message("action.close"), Messages.getInformationIcon()) == 0) {
+                                    IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == 0) {
       open(file, file);
     }
+    return ref[0];
   }
 }

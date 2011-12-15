@@ -1297,8 +1297,8 @@ public class JavaDocInfoGenerator {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void generateThrowsSection(StringBuilder buffer, PsiMethod method, final PsiDocComment comment) {
-    PsiDocTag[] localTags = getThrowsTags(comment);
+  private void generateThrowsSection(StringBuilder buffer, final PsiMethod method, final PsiDocComment comment) {
+    final PsiDocTag[] localTags = getThrowsTags(comment);
 
     LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags =
       new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
@@ -1317,7 +1317,18 @@ public class JavaDocInfoGenerator {
           }
         }
 
-        collectedTags.addFirst(new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(localTags[i], ourEmptyProvider));
+        final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag = findInheritDocTag(method, exceptionLocator(valueElement.getText()));
+        collectedTags.addFirst(new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(localTags[i], new InheritDocProvider<PsiDocTag>() {
+          @Override
+          public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
+            return tag;
+          }
+
+          @Override
+          public PsiClass getElement() {
+            return method.getContainingClass();
+          }
+        }));
       }
     }
 

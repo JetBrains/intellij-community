@@ -4,21 +4,20 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.JavaTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PushDownTest extends LightCodeInsightTestCase {
+public class PushDownTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

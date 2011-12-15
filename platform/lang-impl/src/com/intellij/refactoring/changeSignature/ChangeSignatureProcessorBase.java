@@ -16,24 +16,21 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.ide.actions.CopyReferenceAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -113,18 +110,19 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    final RefactoringElementListener elementListener = getTransaction().getElementListener(myChangeInfo.getMethod());
+    RefactoringTransaction transaction = getTransaction();
+    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(myChangeInfo.getMethod());
     final String fqn = CopyReferenceAction.elementToFqn(myChangeInfo.getMethod());
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
-        public void undo() throws UnexpectedUndoException {
+        public void undo() {
           if (elementListener instanceof UndoRefactoringElementListener) {
             ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(myChangeInfo.getMethod(), fqn);
           }
         }
 
         @Override
-        public void redo() throws UnexpectedUndoException {
+        public void redo() {
         }
       };
       UndoManager.getInstance(myProject).undoableActionPerformed(action);
@@ -151,7 +149,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
       final PsiElement method = myChangeInfo.getMethod();
       LOG.assertTrue(method.isValid());
-      if (myChangeInfo.isNameChanged()) {
+      if (elementListener != null && myChangeInfo.isNameChanged()) {
         elementListener.elementRenamed(method);
       }
     }

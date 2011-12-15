@@ -31,6 +31,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -84,11 +85,11 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
                             String newName,
                             final UsageInfo[] usages,
                             final RefactoringElementListener listener) throws IncorrectOperationException {
-    Map<PsiElement, String> renames = new HashMap<PsiElement, String>();
-    renames.put(psiElement, newName);
-
     final GrField field = (GrField)psiElement;
     String fieldName = field.getName();
+    Map<PsiElement, String> renames = new HashMap<PsiElement, String>();
+    renames.put(field, newName);
+
     for (GrAccessorMethod getter : field.getGetters()) {
       renames.put(getter, RenamePropertyUtil.getGetterNameByOldName(newName, getter.getName()));
     }
@@ -97,8 +98,18 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
       renames.put(setter, GroovyPropertyUtils.getSetterName(newName));
     }
 
-    MultiMap<PsiNamedElement, UsageInfo> propertyUsages = new MultiMap<PsiNamedElement, UsageInfo>();
-    MultiMap<PsiNamedElement, UsageInfo> simpleUsages = new MultiMap<PsiNamedElement, UsageInfo>();
+    MultiMap<PsiNamedElement, UsageInfo> propertyUsages = new MultiMap<PsiNamedElement, UsageInfo>() {
+      @Override
+      protected Map<PsiNamedElement, Collection<UsageInfo>> createMap() {
+        return new LinkedHashMap<PsiNamedElement, Collection<UsageInfo>>();
+      }
+    };
+    MultiMap<PsiNamedElement, UsageInfo> simpleUsages = new MultiMap<PsiNamedElement, UsageInfo>() {
+      @Override
+      protected Map<PsiNamedElement, Collection<UsageInfo>> createMap() {
+        return new LinkedHashMap<PsiNamedElement, Collection<UsageInfo>>();
+      }
+    };
 
     List<PsiReference> unknownUsages = new ArrayList<PsiReference>();
 
@@ -153,9 +164,6 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
         rename(element, info, newName, true, manager);
       }
     }
-    simpleUsages.clear();
-    propertyUsages.clear();
-    renames.clear();
     listener.elementRenamed(field);
   }
 

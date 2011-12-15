@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -25,23 +24,39 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Nullable;
-
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class ResolveUtil {
-    public static final Key<List<PsiElement>> DEPENDENCIES = Key.create("XSLT_DEPENDENCIES");
 
-    @SuppressWarnings({"unchecked"})
+  @SuppressWarnings({"unchecked"})
     private final THashSet<PsiElement> myHistory = new THashSet<PsiElement>(TObjectHashingStrategy.IDENTITY);
 
     private ResolveUtil() {
+    }
+
+    @Nullable
+    public static Collection<XmlFile> getDependencies(XmlFile element) {
+      final CommonProcessors.CollectUniquesProcessor<XmlFile> processor = new CommonProcessors.CollectUniquesProcessor<XmlFile>() {
+        @Override
+        public boolean process(XmlFile file) {
+          if (!getResults().contains(file)) {
+            XsltIncludeIndex.processForwardDependencies(file, this);
+          }
+          return super.process(file);
+        }
+      };
+      XsltIncludeIndex.processForwardDependencies(element, processor);
+      return processor.getResults();
     }
 
     @Nullable

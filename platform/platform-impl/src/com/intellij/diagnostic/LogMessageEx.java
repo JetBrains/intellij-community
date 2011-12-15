@@ -1,8 +1,26 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
@@ -112,6 +130,18 @@ public class LogMessageEx extends LogMessage {
     };
   }
 
+  public static void error(@NotNull Logger logger, @NotNull String message, @NotNull String... details) {
+    StringBuilder detailsBuffer = new StringBuilder();
+    for (String detail : details) {
+      detailsBuffer.append(detail).append(",");
+    }
+    if (details.length > 0 && detailsBuffer.length() > 0) {
+      detailsBuffer.setLength(detailsBuffer.length() - 1);
+    }
+    Attachment attachment = detailsBuffer.length() > 0 ? new Attachment("current-context.txt", detailsBuffer.toString()) : null;
+    logger.error(createEvent(message, ExceptionUtil.getThrowableText(new Throwable()), null, null, attachment));
+  }
+  
   /**
    * @param userMessage      user-friendly message description (short, single line if possible)
    * @param details          technical details (exception stack trace etc.)

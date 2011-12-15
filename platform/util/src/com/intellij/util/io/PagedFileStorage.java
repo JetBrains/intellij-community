@@ -44,7 +44,7 @@ public class PagedFileStorage implements Forceable {
 
   private final static int LOWER_LIMIT;
   private final static int UPPER_LIMIT;
-  private final static int BUFFER_SIZE;
+  public final static int BUFFER_SIZE;
   private static final int UNKNOWN_PAGE = -1;
 
   static {

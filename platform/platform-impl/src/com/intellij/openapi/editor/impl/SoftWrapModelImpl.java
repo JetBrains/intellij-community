@@ -211,7 +211,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public boolean isRespectAdditionalColumns() {
-    return myForceAdditionalColumns || myApplianceManager.hasLinesWithFailedWrap();
+    return myForceAdditionalColumns || !isSoftWrappingEnabled() || myApplianceManager.hasLinesWithFailedWrap();
   }
 
   @Override
@@ -619,6 +619,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDirty = true;
     }
   }
+  
+  @NotNull
+  public CachingSoftWrapDataMapper getDataMapper() {
+    return myDataMapper;
+  }
 
   @Override
   public void release() {
@@ -665,6 +670,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDataMapper.release();
       myApplianceManager.reset();
       myStorage.removeAll();
+      myApplianceManager.recalculateIfNecessary();
       try {
         task.run(true);
       }

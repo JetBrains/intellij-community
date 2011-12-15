@@ -16,12 +16,10 @@
 
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -33,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 
 @State(
@@ -147,32 +142,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
     catch (XmlSerializationException e) {
       LOG.info(e);
-    }
-    
-    // TODO den remove when IJ v.11 is released.
-    // 1. Old default value for 'reformat on paste' setting was 'indent block';
-    // 2. 'Indent block' processing was corrected and it requires copied text to include first line indent in order for correct processing;
-    // 3. Many of our users don't include first line's indent to the copied text. That's why 'indent each line' was set as default;
-    // 4. We had a problem that code insight settings with default values were stored to a hdd. So, new default value will not
-    //    be automatically applied;
-    // 5. That's why we explicitly set 'indent block's value to 'indent each line' if detect that this is the first line of IJ v.11;
-    if (Boolean.getBoolean(ConfigImportHelper.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)) {
-      REFORMAT_ON_PASTE = INDENT_EACH_LINE;
-    }
-    
-    // TODO den remove this at 2012 (if we're still alive)
-    // There was a problem that 'exclude package' settings were written multiple times. The code below removes the duplicates.
-    // The problem is not included to the release version, so, we can have that filtering logic for a time that is enough for
-    // removing the duplicate across IJ team machines. It may be safely removed after that.
-    List<String> result = new ArrayList<String>();
-    Set<String> buffer = new HashSet<String>();
-    for (String s : EXCLUDED_PACKAGES) {
-      if (buffer.add(s)) {
-        result.add(s);
-      }
-    }
-    if (result.size() < EXCLUDED_PACKAGES.length) {
-      EXCLUDED_PACKAGES = result.toArray(new String[result.size()]);
     }
   }
 
