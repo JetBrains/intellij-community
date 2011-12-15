@@ -64,6 +64,7 @@ public interface FoldingModel {
    */
   boolean isOffsetCollapsed(int offset);
 
+  @Nullable
   FoldRegion getCollapsedRegionAtOffset(int offset);
 
   /**
