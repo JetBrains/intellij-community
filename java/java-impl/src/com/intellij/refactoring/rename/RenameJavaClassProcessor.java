@@ -127,6 +127,13 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
     final PsiMethod[] constructors = ((PsiClass) element).getConstructors();
     for (PsiMethod constructor : constructors) {
+      if (constructor instanceof PsiMirrorElement) {
+        final PsiElement prototype = ((PsiMirrorElement)constructor).getPrototype();
+        if (prototype instanceof PsiNamedElement) {
+          allRenames.put(prototype, newName);
+          continue;
+        }
+      }
       allRenames.put(constructor, newName);
     }
   }
