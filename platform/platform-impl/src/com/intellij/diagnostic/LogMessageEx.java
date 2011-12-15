@@ -138,7 +138,7 @@ public class LogMessageEx extends LogMessage {
     if (details.length > 0 && detailsBuffer.length() > 0) {
       detailsBuffer.setLength(detailsBuffer.length() - 1);
     }
-    Attachment attachment = detailsBuffer.length() > 0 ? new Attachment("current context", detailsBuffer.toString()) : null;
+    Attachment attachment = detailsBuffer.length() > 0 ? new Attachment("current-context.txt", detailsBuffer.toString()) : null;
     logger.error(createEvent(message, ExceptionUtil.getThrowableText(new Throwable()), null, null, attachment));
   }
   

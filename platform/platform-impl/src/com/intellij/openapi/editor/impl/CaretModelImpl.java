@@ -513,7 +513,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         }
       };
 
-      myEditor.getFoldingModel().runBatchFoldingOperation(runnable);
+      myEditor.getFoldingModel().runBatchFoldingOperation(runnable, false);
     }
 
     myEditor.setLastColumnNumber(myLogicalCaret.column);
