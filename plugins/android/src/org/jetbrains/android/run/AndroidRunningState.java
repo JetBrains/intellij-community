@@ -79,7 +79,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
   private static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
 
-  public static final int WAITING_TIME = 10;
+  public static final int WAITING_TIME = 20;
 
   private static final Pattern FAILURE = Pattern.compile("Failure\\s+\\[(.*)\\]");
   private static final Pattern TYPED_ERROR = Pattern.compile("Error\\s+[Tt]ype\\s+(\\d+).*");

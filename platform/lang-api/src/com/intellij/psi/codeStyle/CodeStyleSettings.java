@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.lang.reflect.Field;
 import java.util.*;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
@@ -926,7 +925,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
 
   @TestOnly
-  public void clearCodeStyleSettings() throws Exception {
+  public void clearCodeStyleSettings() {
     CodeStyleSettings cleanSettings = new CodeStyleSettings();
     copyFrom(cleanSettings);
     myAdditionalIndentOptions.clear(); //hack

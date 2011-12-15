@@ -40,7 +40,7 @@ public class EditorListenerTracker {
     myDefaultProjectInitialized = ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized();
   }
 
-  public void checkListenersLeak() {
+  public void checkListenersLeak() throws AssertionError {
     try {
       // listeners may hang on default project
       if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;

@@ -30,20 +30,22 @@ import java.util.List;
 */
 class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<LogicalPosition> {
 
+  private final CacheEntry mySearchKey;
   private VisualPosition myTargetVisual;
 
   VisualToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache, 
                                      @NotNull EditorTextRepresentationHelper representationHelper) 
   {
     super(editor, storage, cache, representationHelper);
+    mySearchKey = new CacheEntry(0, editor, representationHelper);
   }
 
   public void init(@NotNull final VisualPosition targetVisual, @NotNull final List<CacheEntry> cache) {
     reset();
 
     myTargetVisual = targetVisual;
-    SEARCH_KEY.visualLine = targetVisual.line;
-    int i = Collections.binarySearch(cache, SEARCH_KEY);
+    mySearchKey.visualLine = targetVisual.line;
+    int i = Collections.binarySearch(cache, mySearchKey);
     if (i >= 0) {
       CacheEntry cacheEntry = cache.get(i);
       if (cacheEntry.visualLine == targetVisual.line) {

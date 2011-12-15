@@ -990,14 +990,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     CharSequence text = myDocument.getCharsNoThreadCheck();
 
-    LogicalPosition endLogicalPosition = visualToLogicalPosition(new VisualPosition(line+1, 0));
+    LogicalPosition endLogicalPosition = visualToLogicalPosition(new VisualPosition(line + 1, 0));
     int endOffset = logicalPositionToOffset(endLogicalPosition);
 
     if (offset > endOffset) {
-      LOG.error(String.format(
-        "Detected invalid (x;y)->VisualPosition processing. Given point: %s, mapped to visual line %d. Visual(%d; %d) is mapped to "
-        + "logical position '%s' which is mapped to offset %d (start offset). Visual(%d; %d) is mapped to logical '%s' which is mapped "
-        + "to offset %d (end offset). State: %s",
+      LogMessageEx.error(LOG, "Detected invalid (x; y)->VisualPosition processing", String.format(
+        "Given point: %s, mapped to visual line %d. Visual(%d; %d) is mapped to "
+       + "logical position '%s' which is mapped to offset %d (start offset). Visual(%d; %d) is mapped to logical '%s' which is mapped "
+       + "to offset %d (end offset). State: %s",
         p, line, line, 0, logicalPosition, offset, line + 1, 0, endLogicalPosition, endOffset, dumpState()
       ));
       return new VisualPosition(line, EditorUtil.columnsNumber(p.x, EditorUtil.getSpaceWidth(Font.PLAIN, this)));

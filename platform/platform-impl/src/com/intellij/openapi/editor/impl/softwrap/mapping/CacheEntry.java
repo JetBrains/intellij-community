@@ -61,7 +61,6 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
 
   public boolean locked;
 
-  private final List<CacheEntry> myCache;
   private final Editor myEditor;
   private final EditorTextRepresentationHelper myRepresentationHelper;
 
@@ -71,11 +70,10 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   /** Holds information about single line fold regions representation data. */
   private TIntObjectHashMap<FoldingData> myFoldingData = DUMMY;
 
-  CacheEntry(int visualLine, Editor editor, EditorTextRepresentationHelper representationHelper, List<CacheEntry> cache) {
+  CacheEntry(int visualLine, @NotNull Editor editor, @NotNull EditorTextRepresentationHelper representationHelper) {
     this.visualLine = visualLine;
     myEditor = editor;
     myRepresentationHelper = representationHelper;
-    myCache = cache;
   }
 
   public void setLineStartPosition(@NotNull EditorPosition context) {
@@ -228,13 +226,17 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
 
   @Override
   public String toString() {
-    return System.identityHashCode(this) + "=visual line: " + visualLine + ", offsets: " + startOffset + "-" + endOffset
-           + ", fold regions: " + Arrays.toString(myFoldingData.getValues()) + ", tab data: " + myTabPositions;
+    return String.format(
+      "%d - visual line: %d, offsets: %d-%d, logical lines: %d-%d, logical columns: %d-%d, end visual column: %d, "
+      + "fold regions: %s, tab data: %s",
+      System.identityHashCode(this), visualLine, startOffset, endOffset, startLogicalLine, endLogicalLine, startLogicalColumn,
+      endLogicalColumn, endVisualColumn, Arrays.toString(myFoldingData.getValues()), myTabPositions
+    );
   }
 
   @Override
   protected CacheEntry clone() {
-    final CacheEntry result = new CacheEntry(visualLine, myEditor, myRepresentationHelper, myCache);
+    final CacheEntry result = new CacheEntry(visualLine, myEditor, myRepresentationHelper);
 
     result.startLogicalLine = startLogicalLine;
     result.startLogicalColumn = startLogicalColumn;
