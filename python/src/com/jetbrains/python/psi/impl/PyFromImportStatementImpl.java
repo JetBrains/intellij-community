@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -191,12 +192,12 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Nullable
-  public PsiElement resolveImportSource() {
+  public PsiFileSystemItem resolveImportSource() {
     final PyQualifiedName qName = getImportSourceQName();
     if (qName == null) {
       return null;
     }
-    final List<PsiElement> source = ResolveImportUtil.resolveFromImportStatementSource(this, qName);
+    final List<PsiFileSystemItem> source = ResolveImportUtil.resolveFromImportStatementSource(this, qName);
     return source.isEmpty() ? null : source.get(0);
   }
 }
