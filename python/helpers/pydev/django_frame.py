@@ -28,25 +28,6 @@ def offset_to_line_number(text, offset):
     return curLine
 
 
-def get_line(text, linenno):
-    curLine = 1
-    curOffset = 0
-    while curOffset < offset:
-        if curOffset == len(text):
-            return None
-        c = text[curOffset]
-        if c == '\n':
-            curLine += 1
-        elif c == '\r':
-            curLine += 1
-            if curOffset < len(text) and text[curOffset + 1] == '\n':
-                curOffset += 1
-
-        curOffset += 1
-
-    return curLine
-
-
 def get_source(frame):
     try:
         node =  frame.f_locals['self']
