@@ -157,7 +157,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                                                                         preprocessedManifestFile.getPath(),
                                                                                         item.myResourceDirPaths,
                                                                                         item.myAssetsDirPath,
-                                                                                        outputPath, null, false, 0);
+                                                                                        outputPath, null, !releasePackage, 0);
       AndroidCompileUtil.addMessages(context, messages, presentableFilesMap);
     }
     catch (final IOException e) {

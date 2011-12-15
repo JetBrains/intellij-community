@@ -634,6 +634,12 @@ public interface Test {
     assert !lookup
   }
 
+  public void testNoSingleTemplateLookup() {
+    myFixture.configureByText 'a.java', 'class Foo {{ ite<caret> }}'
+    type 'r'
+    assert !lookup
+  }
+
   public void testTemplateSelectionByComma() {
     myFixture.configureByText("a.java", """
 class Foo {

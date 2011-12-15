@@ -185,7 +185,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
         if (window != null && window.isAvailable()) {
           final boolean visible = window.isVisible();
-          AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getState().setVisible(visible);
+          AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getGlobalState().setVisible(visible);
 
           if (visible && !myVisible) {
             render();
@@ -244,7 +244,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         }
 
         final AndroidLayoutPreviewToolWindowSettings settings = AndroidLayoutPreviewToolWindowSettings.getInstance(myProject);
-        final boolean hideForNonLayoutFiles = settings.getState().isHideForNonLayoutFiles();
+        final boolean hideForNonLayoutFiles = settings.getGlobalState().isHideForNonLayoutFiles();
 
         if (activeEditor == null) {
           myToolWindowForm.setFile(null);
@@ -266,7 +266,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         }
 
         myToolWindow.setAvailable(true, null);
-        final boolean visible = AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getState().isVisible();
+        final boolean visible = AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getGlobalState().isVisible();
         if (visible) {
           myToolWindow.show(null);
         }
@@ -281,7 +281,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
   public void render() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!myToolWindow.isVisible()) {
+    if (myToolWindow == null || !myToolWindow.isVisible()) {
       return;
     }
     
@@ -364,12 +364,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       synchronized (RENDERING_LOCK) {
         final StringBuilder warnBuilder = new StringBuilder();
 
-        if (target != null && theme != null &&
-            RenderUtil.renderLayout(myProject, layoutXmlText, layoutXmlFile, imgPath,
-                                    target, facet, config, xdpi, ydpi, theme, warnBuilder)) {
+          if (target != null && theme != null &&
+              RenderUtil.renderLayout(myProject, layoutXmlText, layoutXmlFile, imgPath,
+                                      target, facet, config, xdpi, ydpi, theme, warnBuilder)) {
           warnMessage = warnBuilder.toString();
-          final File input = new File(imgPath);
-          image = ImageIO.read(input);
+            final File input = new File(imgPath);
+            image = ImageIO.read(input);
         }
       }
     }
@@ -377,11 +377,11 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       LOG.debug(e);
       String message = e.getPresentableMessage();
       message = message != null ? message : AndroidBundle.message("android.layout.preview.default.error.message");
-      final Throwable cause = e.getCause();
-      errorMessage = cause != null ? new RenderingErrorMessage(message + ' ', "Details", "", new Runnable() {
+      final Throwable[] causes = e.getCauses();
+      errorMessage = causes.length > 0 ? new RenderingErrorMessage(message + ' ', "Details", "", new Runnable() {
         @Override
         public void run() {
-          showStackStace(cause);
+          showStackStace(causes);
         }
       }) : new RenderingErrorMessage(message);
     }
@@ -432,8 +432,16 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     });
   }
 
-  private void showStackStace(@NotNull Throwable t) {
-    final String stackTrace = getStackTrace(t);
+  private void showStackStace(@NotNull Throwable[] throwables) {
+    final StringBuilder messageBuilder = new StringBuilder();
+
+    for (Throwable t : throwables) {
+      if (messageBuilder.length() > 0) {
+        messageBuilder.append("\n\n");
+      }
+      messageBuilder.append(getStackTrace(t));
+    }
+    
     final DialogWrapper wrapper = new DialogWrapper(myProject, false) {
 
       {
@@ -443,7 +451,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       @Override
       protected JComponent createCenterPanel() {
         final JPanel panel = new JPanel(new BorderLayout());
-        final JTextArea textArea = new JTextArea(stackTrace);
+        final JTextArea textArea = new JTextArea(messageBuilder.toString());
         textArea.setEditable(false);
         textArea.setRows(40);
         textArea.setColumns(70);

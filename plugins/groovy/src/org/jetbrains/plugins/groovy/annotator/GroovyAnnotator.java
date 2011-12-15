@@ -82,7 +82,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -893,13 +892,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    if (literal instanceof GrRegex) {
-      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(literal, GroovyConfigUtils.GROOVY1_8)) {
-        myHolder.createErrorAnnotation(literal, GroovyBundle.message("slashy.strings.with.injections.are.not.allowed.in.groovy.0",
-                                                                     GroovyConfigUtils.getInstance().getSDKVersion(literal)));
-        return;
-      }
-    }
   }
 
   @Override
