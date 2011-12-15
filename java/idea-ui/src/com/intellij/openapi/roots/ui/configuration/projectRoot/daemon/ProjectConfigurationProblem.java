@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.ConfigurationError;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,7 @@ class ProjectConfigurationProblem extends ConfigurationError {
   private final Project myProject;
 
   public ProjectConfigurationProblem(ProjectStructureProblemDescription description, Project project) {
-    super(description.getMessage(true), computeDescription(description),
+    super(StringUtil.unescapeXml(description.getMessage(true)), computeDescription(description),
           getSettings(project, description.getProblemLevel()).isIgnored(description));
     myDescription = description;
     myProject = project;
