@@ -487,4 +487,8 @@ public class PythonCompletionTest extends PyTestCase {
   public void testAssignedNearby() {
     doTest();
   }
+  
+  public void testDunderAll() {
+    doMultiFileTest();
+  }
 }

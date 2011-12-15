@@ -122,7 +122,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         }
       }, new PyUtil.UnderscoreFilter(0));
       processor.setPlainNamesOnly(point  == ResolveImportUtil.PointInImport.AS_NAME); // no parens after imported function names
-      myModule.processDeclarations(processor, ResolveState.initial(), null, location);
+      for(PyElement element: myModule.iterateNames()) {
+        processor.execute(element, ResolveState.initial());
+      }
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {
           String name = le.getLookupString();
