@@ -45,7 +45,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   @NonNls
   private static final String ELEMENT_FORM_DEFAULT = "elementFormDefault";
 
-  public XmlElementDescriptorImpl(XmlTag descriptorTag) {
+  public XmlElementDescriptorImpl(@NotNull XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
   }
 
@@ -356,6 +356,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     }
 
     return CONTENT_TYPE_MIXED;
+  }
+
+  @Override
+  public String getDefaultValue() {
+    return myDescriptorTag.getAttributeValue("default");
   }
 
   @Nullable

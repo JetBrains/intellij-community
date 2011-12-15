@@ -209,6 +209,11 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
   }
 
+  @Override
+  public String getDefaultValue() {
+    return null;
+  }
+
   public PsiElement getDeclaration() {
     if (myDeclaration != null) {
       final PsiElement element = myDeclaration.getElement();

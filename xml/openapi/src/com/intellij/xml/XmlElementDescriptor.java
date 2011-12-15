@@ -68,4 +68,7 @@ public interface XmlElementDescriptor extends PsiMetaData {
   int CONTENT_TYPE_ANY = 1;
   int CONTENT_TYPE_CHILDREN = 2;
   int CONTENT_TYPE_MIXED = 3;
+
+  @Nullable
+  String getDefaultValue();
 }
