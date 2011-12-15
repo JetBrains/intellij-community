@@ -73,6 +73,16 @@ public class EditConfigurationDialog extends DialogWrapper {
         myConfigurationTextPane.setText("Configuration: " + getConfiguration().toDisplayString());
         setOKActionEnabled(true);
       }
+
+      @Override
+      protected void createDefaultConfig(FolderConfiguration config) {
+        super.createDefaultConfig(config);
+        config.setLanguageQualifier(null);
+        config.setVersionQualifier(null);
+        config.setNightModeQualifier(null);
+        config.setUiModeQualifier(null);
+        config.setRegionQualifier(null);
+      }
     };
     myDeviceConfiguratorPanelWrapper.add(myDeviceConfiguratorPanel, BorderLayout.CENTER);
 
