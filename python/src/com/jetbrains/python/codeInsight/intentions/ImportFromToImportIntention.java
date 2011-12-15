@@ -171,7 +171,6 @@ public class ImportFromToImportIntention implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     InfoHolder info = InfoHolder.collect(getElementFromEditor(editor, file));
-    if (info == null) info = InfoHolder.collect(getElementFromEditor(editor, file));
     try {
       String qualifier; // we don't always qualify with module name
       sure(info.myModuleReference); sure(info.myModuleName);
