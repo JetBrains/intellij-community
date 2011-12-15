@@ -126,10 +126,33 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Key<Set<PyFile>> PROCESSED_FILES = Key.create("PyFileImpl.processDeclarations.processedFiles");
 
   @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
                                      @NotNull ResolveState resolveState,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    final List<String> dunderAll = getDunderAll();
+    final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
+    PsiScopeProcessor wrapper = new PsiScopeProcessor() {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (!processor.execute(element, state)) return false;
+        if (remainingDunderAll != null && element instanceof PyElement) {
+          remainingDunderAll.remove(((PyElement) element).getName());
+        }
+        return true;
+      }
+
+      @Override
+      public <T> T getHint(Key<T> hintKey) {
+        return processor.getHint(hintKey);
+      }
+
+      @Override
+      public void handleEvent(Event event, @Nullable Object associated) {
+        processor.handleEvent(event, associated);
+      }
+    };
+
     Set<PyFile> pyFiles = resolveState.get(PROCESSED_FILES);
     if (pyFiles == null) {
       pyFiles = new HashSet<PyFile>();
@@ -139,27 +162,32 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     pyFiles.add(this);
     for(PyClass c: getTopLevelClasses()) {
       if (c == lastParent) continue;
-      if (!processor.execute(c, resolveState)) return false;
+      if (!wrapper.execute(c, resolveState)) return false;
     }
     for(PyFunction f: getTopLevelFunctions()) {
       if (f == lastParent) continue;
-      if (!processor.execute(f, resolveState)) return false;
+      if (!wrapper.execute(f, resolveState)) return false;
     }
     for(PyTargetExpression e: getTopLevelAttributes()) {
       if (e == lastParent) continue;
-      if (!processor.execute(e, resolveState)) return false;
+      if (!wrapper.execute(e, resolveState)) return false;
     }
 
     for(PyImportElement e: getImportTargets()) {
       if (e == lastParent) continue;
-      if (!processor.execute(e, resolveState)) return false;
+      if (!wrapper.execute(e, resolveState)) return false;
     }
 
     for(PyFromImportStatement e: getFromImports()) {
       if (e == lastParent) continue;
-      if (!e.processDeclarations(processor, resolveState, null, this)) return false;
+      if (!e.processDeclarations(wrapper, resolveState, null, this)) return false;
     }
 
+    if (remainingDunderAll != null) {
+      for (String s: remainingDunderAll) {
+        if (!processor.execute(new LightNamedElement(myManager, PythonLanguage.getInstance(), s), resolveState)) return false;
+      }
+    }
     return true;
   }
 
@@ -315,8 +343,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    final List<String> dunderAll = getDunderAll();
-    final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
     final List<PyElement> result = new ArrayList<PyElement>();
     VariantsProcessor processor = new VariantsProcessor(this) {
       @Override
@@ -324,19 +350,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         element = PyUtil.turnDirIntoInit(element);
         if (element instanceof PyElement) {
           result.add((PyElement) element);
-          if (remainingDunderAll != null) {
-            remainingDunderAll.remove(name);
-          }
         }
       }
     };
-    processor.setAllowedNames(dunderAll);
+    processor.setAllowedNames(getDunderAll());
     processDeclarations(processor, ResolveState.initial(), null, this);
-    if (remainingDunderAll != null) {
-      for (String s: remainingDunderAll) {
-        result.add(new LightNamedElement(myManager, PythonLanguage.getInstance(), s));
-      }
-    }
     return result;
   }
 
