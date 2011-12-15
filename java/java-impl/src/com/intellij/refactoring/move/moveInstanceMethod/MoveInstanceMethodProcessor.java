@@ -248,7 +248,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       if (!methodExpression.isReferenceTo(myMethod)) return;
       final PsiExpression oldQualifier = methodExpression.getQualifierExpression();
       PsiExpression newQualifier = null;
-
+      final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(methodExpression);
       if (myTargetVariable instanceof PsiParameter) {
         final int index = myMethod.getParameterList().getParameterIndex((PsiParameter)myTargetVariable);
         final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
@@ -264,7 +264,6 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
       PsiExpression newArgument = null;
 
-      final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(methodExpression);
       if (classReferencedByThis != null) {
         @NonNls String thisArgumentText = null;
         if (manager.areElementsEquivalent(myMethod.getContainingClass(), classReferencedByThis)) {
