@@ -548,32 +548,6 @@ public class ResolveImportUtil {
     return null;
   }
 
-  /**
-   * When a name is imported from a module, tries to find the definition of that name inside the module,
-   * as opposed to looking for submodules.
-   *
-   * @param where an element related to the name, presumably inside import
-   * @param name  the name to find
-   * @return found element, or null.
-   */
-  @Nullable
-  public static PsiElement findImportedNameInsideModule(@NotNull PyImportElement where, String name) {
-    PyStatement stmt = where.getContainingImportStatement();
-    if (stmt instanceof PyFromImportStatement) {
-      final PyFromImportStatement from_import = (PyFromImportStatement)stmt;
-      if (from_import.getImportSourceQName() != null) { // have qname -> have source stub and importing a name, not a module
-        final PyReferenceExpression source = from_import.getImportSource();
-        if (source != null) {
-          PsiElement resolved = source.getReference().resolve();
-          if (resolved instanceof PyFile) {
-            return ((PyFile)resolved).findExportedName(name);
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   public static enum PointInImport {
     /**
      * The reference is not inside an import statement.

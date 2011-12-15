@@ -54,16 +54,6 @@ public class PyImportReference extends PyReferenceImpl {
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
-    int defaultSubmoduleRate = RatedResolveResult.RATE_HIGH;
-
-    // names inside module take precedence over submodules
-    final PyImportElement import_elt = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
-    if (import_elt != null) {
-      if (ret.poke(ResolveImportUtil.findImportedNameInsideModule(import_elt, referencedName), RatedResolveResult.RATE_HIGH)) {
-        defaultSubmoduleRate = RatedResolveResult.RATE_NORMAL;
-      }
-    }
-
     final PyElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
     List<PsiElement> targets;
     final PyQualifiedName qname = myElement.asQualifiedName();
@@ -76,15 +66,15 @@ public class PyImportReference extends PyReferenceImpl {
     else {
       return ret;
     }
-    addRatedResults(ret, defaultSubmoduleRate, targets);
+    addRatedResults(ret, targets);
     return ret;
   }
 
-  private static void addRatedResults(ResolveResultList ret, int defaultSubmoduleRate, List<PsiElement> targets) {
+  private static void addRatedResults(ResolveResultList ret, List<PsiElement> targets) {
     for (PsiElement target : targets) {
       target = PyUtil.turnDirIntoInit(target);
       if (target != null) {   // ignore dirs without __init__.py, worthless
-        int rate = defaultSubmoduleRate;
+        int rate = RatedResolveResult.RATE_HIGH;
         if (target instanceof PyFile) {
           VirtualFile vFile = ((PyFile)target).getVirtualFile();
           if (vFile != null && vFile.getLength() == 0) {
