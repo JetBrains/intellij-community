@@ -885,7 +885,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setHighlighter(@NotNull EditorHighlighter highlighter) {
     assertIsDispatchThread();
     final Document document = getDocument();
-    if (myHighlighter != null) {
+    if (myHighlighter != null && !isDisposed()) {
       document.removeDocumentListener(myHighlighter);
     }
 
