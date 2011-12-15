@@ -125,6 +125,9 @@ public class ModuleUtil {
         if (orderEntries.isEmpty()) {
           return null;
         }
+        if (orderEntries.size() == 1) {
+          return orderEntries.get(0).getOwnerModule();
+        }
         Set<Module> modules = new HashSet<Module>();
         for (OrderEntry orderEntry : orderEntries) {
           modules.add(orderEntry.getOwnerModule());
