@@ -111,48 +111,46 @@ public class ResolveImportUtil {
   public static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
     if (qName == null) return Collections.emptyList();
 
-    // TODO: search for entire names, not for first component only!
-    final String first_component = qName.getComponents().get(0);
-
-    final PsiFile file = import_element.getContainingFile().getOriginalFile();
     final PyStatement importStatement = import_element.getContainingImportStatement();
 
-    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(import_element);
-    PyQualifiedName moduleQName = null;
-
     if (importStatement instanceof PyFromImportStatement) {
-      PyFromImportStatement from_import_statement = (PyFromImportStatement)importStatement;
-      moduleQName = from_import_statement.getImportSourceQName();
-      final int relative_level = from_import_statement.getRelativeLevel();
-      Sdk sdk = ModuleUtil.findModuleForPsiElement(import_element) != null ? null : PyBuiltinCache.findSdkForNonModuleFile(file);
-
-      if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
-        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), first_component, file, null, sdk, false, true);
-        return element != null ? Collections.singletonList(element) : Collections.<PsiElement>emptyList();
+      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)importStatement;
+      return resolveNameInFromImport(import_element, qName, fromImportStatement);
+    }
+    else { // "import foo"
+      final PsiFile file = import_element.getContainingFile().getOriginalFile();
+      boolean absolute_import_enabled = isAbsoluteImportEnabledFor(import_element);
+      final List<PsiFileSystemItem> modules = resolveModule(qName, file, absolute_import_enabled, 0);
+      if (modules.size() > 0) {
+        return new ArrayList<PsiElement>(modules);
       }
+      // in-python resolution failed
+      final PsiElement result = resolveForeignImport(import_element, qName, null);
+      return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
+    }
+  }
 
-      if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
-        final List<PsiFileSystemItem> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
-        List<PsiElement> resultList = new ArrayList<PsiElement>();
-        for (PsiElement candidate : candidates) {
-          PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), first_component, file, null, sdk, false, true);
-          if (result != null) {
-            resultList.add(result);
-          }
-        }
-        if (!resultList.isEmpty()) {
-          return resultList;
-        }
+  public static List<PsiElement> resolveNameInFromImport(PyImportElement importElement, PyQualifiedName qName,
+                                                         PyFromImportStatement importStatement) {
+    if (qName == null) {
+      return Collections.emptyList();
+    }
+    PsiFile file = importElement.getContainingFile().getOriginalFile();
+    Sdk sdk = ModuleUtil.findModuleForPsiElement(importElement) != null ? null : PyBuiltinCache.findSdkForNonModuleFile(file);
+    String name = qName.getComponents().get(0);
+
+    final List<PsiFileSystemItem> candidates = importStatement.resolveImportSourceCandidates();
+    List<PsiElement> resultList = new ArrayList<PsiElement>();
+    for (PsiElement candidate : candidates) {
+      PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), name, file, null, sdk, false, true);
+      if (result != null) {
+        resultList.add(result);
       }
     }
-    else if (importStatement instanceof PyImportStatement) { // "import foo"
-      final List<PsiFileSystemItem> result = resolveModule(qName, file, absolute_import_enabled, 0);
-      if (result.size() > 0) {
-        return new ArrayList<PsiElement>(result);
-      }
+    if (!resultList.isEmpty()) {
+      return resultList;
     }
-    // in-python resolution failed
-    final PsiElement result = resolveForeignImport(import_element, qName, moduleQName);
+    final PsiElement result = resolveForeignImport(importElement, qName, importStatement.getImportSourceQName());
     return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
   }
 

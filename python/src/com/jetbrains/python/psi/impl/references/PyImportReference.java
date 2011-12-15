@@ -29,8 +29,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Reference in an import statement:<br/>
+ * <code>import <u>foo.name</u></code>
+ *
+ * @author yole
+ */
 public class PyImportReference extends PyReferenceImpl {
-  private final PyReferenceExpressionImpl myElement;
+  protected final PyReferenceExpressionImpl myElement;
 
   public PyImportReference(PyReferenceExpressionImpl element, PyResolveContext context) {
     super(element, context);
@@ -50,27 +56,17 @@ public class PyImportReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    ResolveResultList ret = new ResolveResultList();
     final String referencedName = myElement.getReferencedName();
-    if (referencedName == null) return ret;
+    if (referencedName == null) return Collections.emptyList();
 
-    final PyElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
-    List<PsiElement> targets;
+    final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final PyQualifiedName qname = myElement.asQualifiedName();
-    if (parent instanceof PyImportElement) {
-      targets = ResolveImportUtil.multiResolveImportElement((PyImportElement)parent, qname);
-    }
-    else if (parent instanceof PyFromImportStatement) { // "from foo import"
-      targets = ResolveImportUtil.resolveFromOrForeignImport((PyFromImportStatement)parent, qname);
-    }
-    else {
-      return ret;
-    }
-    addRatedResults(ret, targets);
-    return ret;
+    List<PsiElement> targets = ResolveImportUtil.multiResolveImportElement(parent, qname);
+    return rateResults(targets);
   }
 
-  private static void addRatedResults(ResolveResultList ret, List<PsiElement> targets) {
+  protected static ResolveResultList rateResults(List<PsiElement> targets) {
+    ResolveResultList ret = new ResolveResultList();
     for (PsiElement target : targets) {
       target = PyUtil.turnDirIntoInit(target);
       if (target != null) {   // ignore dirs without __init__.py, worthless
@@ -84,6 +80,7 @@ public class PyImportReference extends PyReferenceImpl {
         ret.poke(target, rate);
       }
     }
+    return ret;
   }
 
   @NotNull

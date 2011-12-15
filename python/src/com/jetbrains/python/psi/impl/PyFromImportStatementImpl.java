@@ -1,10 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -19,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -192,11 +190,21 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   @Nullable
   public PsiFileSystemItem resolveImportSource() {
+    final List<PsiFileSystemItem> candidates = resolveImportSourceCandidates();
+    return candidates.size() > 0 ? candidates.get(0) : null;
+  }
+
+  @NotNull
+  @Override
+  public List<PsiFileSystemItem> resolveImportSourceCandidates() {
     final PyQualifiedName qName = getImportSourceQName();
     if (qName == null) {
-      return null;
+      final int level = getRelativeLevel();
+      if (level > 0) {
+        final PsiDirectory upper = ResolveImportUtil.stepBackFrom(getContainingFile().getOriginalFile(), level);
+        return upper == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.<PsiFileSystemItem>singletonList(upper);
+      }
     }
-    final List<PsiFileSystemItem> source = ResolveImportUtil.resolveFromImportStatementSource(this, qName);
-    return source.isEmpty() ? null : source.get(0);
+    return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
   }
 }

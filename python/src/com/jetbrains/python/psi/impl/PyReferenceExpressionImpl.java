@@ -19,9 +19,7 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.completion.PydevConsoleReference;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.references.PyImportReference;
-import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
-import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
+import com.jetbrains.python.psi.impl.references.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -60,8 +58,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return new CythonImportReference(this, context);
       }
     }
-    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
-      return new PyImportReference(this, context);
+    final PsiElement importParent = PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class);
+    if (importParent != null) {
+      if (importParent instanceof PyImportElement) {
+        final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(importParent, PyImportStatementBase.class);
+        if (importStatement instanceof PyFromImportStatement) {
+          return new PyFromImportNameReference(this, context);
+        }
+        return new PyImportReference(this, context);
+      }
+      return new PyFromImportSourceReference(this, context);
     }
 
     if (file != null) {
