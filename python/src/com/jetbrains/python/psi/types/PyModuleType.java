@@ -118,7 +118,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
         @Override
         public boolean value(PsiElement psiElement) {
-          return !(psiElement instanceof PyImportElement);
+          return !(psiElement instanceof PyImportElement) || 
+                 PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
         }
       }, new PyUtil.UnderscoreFilter(0));
       processor.setPlainNamesOnly(point  == ResolveImportUtil.PointInImport.AS_NAME); // no parens after imported function names

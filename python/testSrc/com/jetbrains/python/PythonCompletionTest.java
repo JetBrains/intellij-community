@@ -491,4 +491,8 @@ public class PythonCompletionTest extends PyTestCase {
   public void testDunderAll() {
     doMultiFileTest();
   }
+  
+  public void testAsName() {
+    doMultiFileTest();
+  }
 }
