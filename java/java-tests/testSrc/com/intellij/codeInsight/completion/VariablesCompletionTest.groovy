@@ -70,6 +70,12 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     doTest("LocalReserved.java", "LocalReserved_after.java");
   }
 
+  public void testLocalReserved2() throws Exception {
+    configureByFile(FILE_PREFIX + "locals/" + "LocalReserved2.java")
+    checkResultByFile(FILE_PREFIX + "locals/" + "LocalReserved2.java");
+    assert !myFixture.lookupElementStrings
+  }
+
   public void testUniqueNameInFor() throws Exception {
     doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
   }
