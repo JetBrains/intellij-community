@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -824,7 +826,21 @@ public class VariableInplaceRenamer {
       myLookupItems = new LookupElement[names.size()];
       final Iterator<String> iterator = names.iterator();
       for (int i = 0; i < myLookupItems.length; i++) {
-        myLookupItems[i] = LookupElementBuilder.create(iterator.next());
+        final String suggestion = iterator.next();
+        myLookupItems[i] = LookupElementBuilder.create(suggestion).setInsertHandler(new InsertHandler<LookupElement>() {
+          @Override
+          public void handleInsert(InsertionContext context, LookupElement item) {
+            if (shouldSelectAll()) return;
+            final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+            final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
+            if (templateState != null) {
+              final TextRange range = templateState.getCurrentVariableRange();
+              if (range != null) {
+                myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), suggestion);
+              }
+            }
+          }
+        });
       }
     }
 
