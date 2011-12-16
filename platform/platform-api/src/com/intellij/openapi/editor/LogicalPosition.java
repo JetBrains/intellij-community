@@ -87,12 +87,12 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    */
   public final int foldingColumnDiff;
 
-  public LogicalPosition(int line, int column) {
+  public LogicalPosition(int line, int column) throws IllegalArgumentException {
     this(line, column, 0, 0, 0, 0, 0, false);
   }
 
   public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
-                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff)
+                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff) throws IllegalArgumentException
   {
     this(
       line, column, softWrapLinesBeforeCurrentLogicalLine, softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines,
@@ -102,7 +102,16 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
 
   private LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
                           int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean visualPositionAware)
-  {
+    throws IllegalArgumentException {
+    if (column + softWrapColumnDiff + foldingColumnDiff < 0) {
+      throw new IllegalArgumentException(String.format(
+        "Attempt to create %s with invalid arguments - resulting column is negative (%d). Given arguments: line=%d, column=%d, "
+        + "soft wrap lines before: %d, soft wrap lines current: %d, soft wrap column diff: %d, folded lines: %d, folding column "
+        + "diff: %d, visual position aware: %b",
+        getClass().getName(), column + softWrapColumnDiff + foldingColumnDiff, line, column, softWrapLinesBeforeCurrentLogicalLine,
+        softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines, foldingColumnDiff, visualPositionAware
+      ));
+    }
     this.line = line;
     this.column = column;
     this.softWrapLinesBeforeCurrentLogicalLine = softWrapLinesBeforeCurrentLogicalLine;
@@ -147,9 +156,9 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
               ? ""
               : "; soft wrap: lines=" + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine)
                 + " (before=" + softWrapLinesBeforeCurrentLogicalLine + "; current=" + softWrapLinesOnCurrentLogicalLine + ")")
-           + (softWrapColumnDiff == 0 ? "" : "columns diff=" + softWrapColumnDiff + ";" )
-           + (foldedLines == 0? "" : " folding: lines = " + foldedLines + ";")
-           + (foldingColumnDiff == 0 ? "" : " columns diff=" + foldingColumnDiff);
+           + (softWrapColumnDiff == 0 ? "" : "; columns diff=" + softWrapColumnDiff + ";" )
+           + (foldedLines == 0? "" : "; folding: lines = " + foldedLines + ";")
+           + (foldingColumnDiff == 0 ? "" : "; columns diff=" + foldingColumnDiff);
   }
 
   public int compareTo(LogicalPosition position) {

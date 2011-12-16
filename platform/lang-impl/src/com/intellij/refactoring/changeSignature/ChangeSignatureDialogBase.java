@@ -65,10 +65,8 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -370,16 +368,30 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected JPanel createParametersPanel(boolean hasTabsInDialog) {
     myParametersTable = new TableView<ParameterTableModelItemBase<P>>(myParametersTableModel) {
+
+      public void removeEditor() {
+        clearEditorListeners();
+        super.removeEditor();
+      }
+
       @Override
       public void editingStopped(ChangeEvent e) {
         super.editingStopped(e);
         repaint(); // to update disabled cells background
       }
 
-      @Nullable
-      @Override
-      public TableCellEditor getCellEditor(final int row, final int column) {
-        final TableCellEditor editor = super.getCellEditor(row, column);
+      private void clearEditorListeners() {
+        final TableCellEditor editor = getCellEditor();
+        if (editor instanceof StringTableCellEditor) {
+          final StringTableCellEditor ed = (StringTableCellEditor)editor;
+          ed.clearListeners();
+        }
+        else if (editor instanceof CodeFragmentTableCellEditorBase) {
+          ((CodeFragmentTableCellEditorBase)editor).clearListeners();
+        }
+      }
+
+      public Component prepareEditor(final TableCellEditor editor, final int row, final int column) {
         final DocumentAdapter listener = new DocumentAdapter() {
           @Override
           public void documentChanged(DocumentEvent e) {
@@ -400,7 +412,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         else if (editor instanceof CodeFragmentTableCellEditorBase) {
           ((CodeFragmentTableCellEditorBase)editor).addDocumentListener(listener);
         }
-        return editor;
+        return super.prepareEditor(editor, row, column);
       }
     };
 

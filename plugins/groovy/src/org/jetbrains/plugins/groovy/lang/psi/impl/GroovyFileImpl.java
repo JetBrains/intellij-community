@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.ElementBase;
-import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
@@ -55,12 +54,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
+import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -222,12 +223,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
 
-  private List<String> getImplicitlyImportedPackages() {
-    final ArrayList<String> result = new ArrayList<String>();
+  private LinkedHashSet<String> getImplicitlyImportedPackages() {
+    final LinkedHashSet<String> result = new LinkedHashSet<String>();
     ContainerUtil.addAll(result, IMPLICITLY_IMPORTED_PACKAGES);
-    if (isScript()) {
-      result.addAll(GroovyScriptTypeDetector.getScriptType(this).appendImplicitImports(this));
+
+    for (DefaultImportContributor contributor : DefaultImportContributor.EP_NAME.getExtensions()) {
+      result.addAll(contributor.appendImplicitlyImportedPackages(this));
     }
+
     return result;
   }
 

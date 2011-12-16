@@ -94,39 +94,7 @@ public class TestPackage extends TestObject {
       @Override
       public void startNotified(ProcessEvent event) {
         super.startNotified(event);
-        final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-        final TestClassFilter filter;
-        try {
-          filter = getClassFilter(data);
-        }
-        catch (CantRunException e) {
-          //should not happen
-          return;
-        }
-        tasks[0] = findTestsWithProgress(new FindCallback() {
-          public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
-            try {
-              addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
-                @Nullable
-                public String fun(PsiElement element) {
-                  if (element instanceof PsiClass) {
-                    return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
-                  }
-                  else if (element instanceof PsiMethod) {
-                    PsiMethod method = (PsiMethod)element;
-                    return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
-                  }
-                  else {
-                    return null;
-                  }
-                }
-              }, getPackage(data).getQualifiedName(), false, isJunit4);
-            }
-            catch (CantRunException e) {
-              //can't be here
-            }
-          }
-        }, filter);
+        tasks[0] = (MySearchForTestsTask)findTests();
       }
 
       @Override
@@ -140,6 +108,43 @@ public class TestPackage extends TestObject {
       }
     });
     return handler;
+  }
+
+  public Task findTests() {
+    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+    final TestClassFilter filter;
+    try {
+      filter = getClassFilter(data);
+    }
+    catch (CantRunException e) {
+      //should not happen
+      return null;
+    }
+
+    return findTestsWithProgress(new FindCallback() {
+      public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
+        try {
+          addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
+            @Nullable
+            public String fun(PsiElement element) {
+              if (element instanceof PsiClass) {
+                return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+              }
+              else if (element instanceof PsiMethod) {
+                PsiMethod method = (PsiMethod)element;
+                return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
+              }
+              else {
+                return null;
+              }
+            }
+          }, getPackage(data).getQualifiedName(), false, isJunit4);
+        }
+        catch (CantRunException e) {
+          //can't be here
+        }
+      }
+    }, filter);
   }
 
   protected void initialize() throws ExecutionException {
