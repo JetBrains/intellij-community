@@ -85,7 +85,7 @@ public class AddImportHelper {
     if (relativeTo instanceof PyFromImportStatement) {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)relativeTo;
       relativeToName = fromImportStatement.getImportSourceQName();
-      source = ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement);
+      source = fromImportStatement.resolveImportSource();
     }
     else {
       final PyImportElement[] importElements = relativeTo.getImportElements();

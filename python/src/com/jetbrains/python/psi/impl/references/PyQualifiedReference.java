@@ -1,4 +1,4 @@
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -22,6 +22,11 @@ import com.jetbrains.cython.types.CythonStructType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
@@ -69,13 +74,17 @@ public class PyQualifiedReference extends PyReferenceImpl {
         return ret; // qualifier is positive that such name cannot exist in it
       }
       ret.addAll(membersOfQualifier);
+    }
 
-      // enrich the type info with any fields assigned nearby
-      if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
-        if (addAssignedAttributes(ret, referencedName, (PyQualifiedExpression)qualifier)) return ret;
+    // look for assignment of this attribute in containing function
+    if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
+      if (addAssignedAttributes(ret, referencedName, (PyQualifiedExpression)qualifier)) {
+        return ret;
       }
     }
-    else if (myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
+
+    if ((qualifierType == null || qualifierType instanceof PyTypeReference) &&
+        myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
       addImplicitResolveResults(referencedName, ret);
     }
 
@@ -196,13 +205,10 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   private static boolean addAssignedAttributes(ResolveResultList ret, String referencedName, PyQualifiedExpression qualifier) {
-    List<PyExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
-    if (qualifier_path != null) {
-      for (PyExpression ex : collectAssignedAttributes(qualifier)) {
-        if (referencedName.equals(ex.getName())) {
-          ret.poke(ex, RatedResolveResult.RATE_NORMAL);
-          return true;
-        }
+    for (PyExpression ex : collectAssignedAttributes(qualifier)) {
+      if (referencedName.equals(ex.getName())) {
+        ret.poke(ex, RatedResolveResult.RATE_NORMAL);
+        return true;
       }
     }
     return false;
@@ -310,7 +316,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         result.add(pyClass);
       }
       else {
-        final PsiElement exportedClass = ((PyFile)containingFile).findExportedName(pyClass.getName());
+        final PsiElement exportedClass = ((PyFile)containingFile).getElementNamed(pyClass.getName());
         if (exportedClass == pyClass) {
           result.add(pyClass);
         }

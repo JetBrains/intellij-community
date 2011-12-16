@@ -1,9 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -18,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -150,8 +149,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     else {
       PyImportElement[] importElements = getImportElements();
       for(PyImportElement element: importElements) {
-        final PsiElement resolved = ResolveImportUtil.resolveImportElement(element);
-        if (resolved != null && !processor.execute(resolved, state)) {
+        if (!processor.execute(element, state)) {
           return false;
         }
       }
@@ -188,5 +186,25 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   public void deleteChildInternal(@NotNull ASTNode child) {
     PyPsiUtils.deleteAdjacentComma(this, child, getImportElements());
     super.deleteChildInternal(child);
+  }
+
+  @Nullable
+  public PsiFileSystemItem resolveImportSource() {
+    final List<PsiFileSystemItem> candidates = resolveImportSourceCandidates();
+    return candidates.size() > 0 ? candidates.get(0) : null;
+  }
+
+  @NotNull
+  @Override
+  public List<PsiFileSystemItem> resolveImportSourceCandidates() {
+    final PyQualifiedName qName = getImportSourceQName();
+    if (qName == null) {
+      final int level = getRelativeLevel();
+      if (level > 0) {
+        final PsiDirectory upper = ResolveImportUtil.stepBackFrom(getContainingFile().getOriginalFile(), level);
+        return upper == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.<PsiFileSystemItem>singletonList(upper);
+      }
+    }
+    return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
   }
 }

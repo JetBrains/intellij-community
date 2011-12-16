@@ -93,6 +93,13 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
+  public void testFromPackageImportBuiltin() {
+    myFixture.copyDirectoryToProject("inspections/PyUnresolvedReferencesInspection/fromPackageImportBuiltin", "");
+    myFixture.configureFromTempProjectFile("fromPackageImportBuiltin.py");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.checkHighlighting(true, false, false);
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

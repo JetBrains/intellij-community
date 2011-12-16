@@ -18,17 +18,6 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   List<PyTargetExpression> getTopLevelAttributes();
 
   /**
-   * Looks for a name exported by this file, preferably in an efficient way.
-   * TODO[yole] this behaves differently in stub-based and AST-based mode: in stub-based mode, it returns the import element for
-   * an imported name, in AST-based - the actual element referenced by the import
-   *
-   * @param name what to find
-   * @return found element, or null.
-   */
-  @Nullable
-  PsiElement findExportedName(String name);
-
-  /**
   @return an URL of file, maybe bogus if virtual file is not present.
   */
   @NotNull

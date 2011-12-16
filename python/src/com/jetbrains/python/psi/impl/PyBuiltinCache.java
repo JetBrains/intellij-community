@@ -67,26 +67,29 @@ public class PyBuiltinCache {
     if (psifile == null) {
       return null;
     }
-    Project project = psifile.getProject();
     Module module = ModuleUtil.findModuleForPsiElement(psifile);
-    Sdk sdk = null;
     if (module != null) {
-      sdk = PythonSdkType.findPythonSdk(module);
+      return PythonSdkType.findPythonSdk(module);
     }
-    else {
-      final VirtualFile vfile = psifile instanceof PsiFile ? ((PsiFile) psifile).getOriginalFile().getVirtualFile() : psifile.getVirtualFile();
-      if (vfile != null) { // reality
-        final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-        sdk = projectRootManager.getProjectSdk();
-        if (sdk == null) {
-          final List<OrderEntry> orderEntries = projectRootManager.getFileIndex().getOrderEntriesForFile(vfile);
-          for (OrderEntry orderEntry : orderEntries) {
-            if (orderEntry instanceof JdkOrderEntry) {
-              sdk = ((JdkOrderEntry)orderEntry).getJdk();
-            }
-            else if (orderEntry instanceof ModuleLibraryOrderEntryImpl) {
-              sdk = PythonSdkType.findPythonSdk(orderEntry.getOwnerModule());
-            }
+    return findSdkForNonModuleFile(psifile);
+  }
+
+  @Nullable
+  public static Sdk findSdkForNonModuleFile(PsiFileSystemItem psiFile) {
+    Project project = psiFile.getProject();
+    Sdk sdk = null;
+    final VirtualFile vfile = psiFile instanceof PsiFile ? ((PsiFile) psiFile).getOriginalFile().getVirtualFile() : psiFile.getVirtualFile();
+    if (vfile != null) { // reality
+      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+      sdk = projectRootManager.getProjectSdk();
+      if (sdk == null) {
+        final List<OrderEntry> orderEntries = projectRootManager.getFileIndex().getOrderEntriesForFile(vfile);
+        for (OrderEntry orderEntry : orderEntries) {
+          if (orderEntry instanceof JdkOrderEntry) {
+            sdk = ((JdkOrderEntry)orderEntry).getJdk();
+          }
+          else if (orderEntry instanceof ModuleLibraryOrderEntryImpl) {
+            sdk = PythonSdkType.findPythonSdk(orderEntry.getOwnerModule());
           }
         }
       }
@@ -164,7 +167,7 @@ public class PyBuiltinCache {
   @Nullable
   public PsiElement getByName(@NonNls String name) {
     if (myBuiltinsFile != null) {
-      return myBuiltinsFile.findExportedName(name);
+      return myBuiltinsFile.getElementNamed(name);
     }
     return null;
   }

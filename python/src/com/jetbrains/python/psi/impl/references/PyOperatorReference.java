@@ -1,4 +1,4 @@
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -19,8 +19,8 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyOperatorReferenceImpl extends PyReferenceImpl {
-  public PyOperatorReferenceImpl(PyQualifiedExpression element, @NotNull PyResolveContext context) {
+public class PyOperatorReference extends PyReferenceImpl {
+  public PyOperatorReference(PyQualifiedExpression element, @NotNull PyResolveContext context) {
     super(element, context);
   }
 
@@ -75,7 +75,7 @@ public class PyOperatorReferenceImpl extends PyReferenceImpl {
 
   @Override
   public String toString() {
-    return "PyOperatorReferenceImpl(" + myElement + "," + myContext + ")";
+    return "PyOperatorReference(" + myElement + "," + myContext + ")";
   }
 
   public String getReadableOperatorName() {

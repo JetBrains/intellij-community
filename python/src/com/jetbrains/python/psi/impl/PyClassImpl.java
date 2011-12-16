@@ -947,7 +947,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private static boolean hasNewStyleMetaClass(PyClass pyClass) {
     final PsiFile containingFile = pyClass.getContainingFile();
     if (containingFile instanceof PyFile) {
-      final PsiElement element = ((PyFile)containingFile).findExportedName(PyNames.METACLASS);
+      final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.METACLASS);
       if (element instanceof PyTargetExpression) {
         final PyQualifiedName qName = ((PyTargetExpression)element).getAssignedQName();
         if (qName != null && qName.matches("type")) {

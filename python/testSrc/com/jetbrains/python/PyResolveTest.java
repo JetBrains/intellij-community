@@ -432,4 +432,8 @@ public class PyResolveTest extends PyResolveTestCase {
     final PsiElement psiElement = resolveResults[0].getElement();
     assertTrue(psiElement instanceof PyTargetExpression && "xyzzy".equals(((PyTargetExpression)psiElement).getName()));
   }
+  
+  public void testAttributeAssignedNearby() {
+    assertResolvesTo(PyTargetExpression.class, "xyzzy");
+  }
 }

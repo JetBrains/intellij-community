@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.psi.CythonCImportElement;
@@ -20,6 +19,7 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.completion.PydevConsoleReference;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.references.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -58,8 +58,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return new CythonImportReference(this, context);
       }
     }
-    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
-      return new PyImportReference(this, context);
+    final PsiElement importParent = PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class);
+    if (importParent != null) {
+      if (importParent instanceof PyImportElement) {
+        final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(importParent, PyImportStatementBase.class);
+        if (importStatement instanceof PyFromImportStatement) {
+          return new PyFromImportNameReference(this, context);
+        }
+        return new PyImportReference(this, context);
+      }
+      return new PyFromImportSourceReference(this, context);
     }
 
     if (file != null) {
@@ -160,31 +168,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Nullable
   public PyQualifiedName asQualifiedName() {
     return PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
-  }
-
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    // in statements, process only the section in which the original expression was located
-    PsiElement parent = getParent();
-    if (parent instanceof PyStatement && lastParent == null && PsiTreeUtil.isAncestor(parent, place, true)) {
-      return true;
-    }
-
-    // never resolve to references within the same assignment statement
-    if (getParent() instanceof PyAssignmentStatement) {
-      PsiElement placeParent = place.getParent();
-      while (placeParent != null && placeParent instanceof PyExpression) {
-        placeParent = placeParent.getParent();
-      }
-      if (placeParent == getParent()) {
-        return true;
-      }
-    }
-
-    if (this == place) return true;
-    return processor.execute(this, substitutor);
   }
 
   @Override

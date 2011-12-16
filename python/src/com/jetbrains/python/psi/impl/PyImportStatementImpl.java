@@ -1,9 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
@@ -28,22 +25,6 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
 
   public PyImportStatementImpl(PyImportStatementStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
-  }
-
-  @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
-                                     final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
-    // import is per-file
-    if (place.getContainingFile() != getContainingFile()) {
-      return true;
-    }
-    for (PyImportElement element : getImportElements()) {
-      if (element == lastParent) continue;
-      if (!element.processDeclarations(processor, state, null, place)) return false;
-    }
-    return true;
   }
 
   @NotNull
