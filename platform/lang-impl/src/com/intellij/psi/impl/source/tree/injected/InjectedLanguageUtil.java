@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -31,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -108,7 +106,7 @@ public class InjectedLanguageUtil {
   public static Place getShreds(@NotNull FileViewProvider viewProvider) {
     if (!(viewProvider instanceof InjectedFileViewProvider)) return null;
     InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)viewProvider;
-    return myFileViewProvider.getShreds();
+    return ((DocumentWindowImpl)myFileViewProvider.getDocument()).getShreds();
   }
 
   public static void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
@@ -328,44 +326,6 @@ public class InjectedLanguageUtil {
   }
   public static void clearCachedInjectedFragmentsForFile(@NotNull PsiFile file) {
     file.putUserData(INJECTED_DOCS_KEY, null);
-  }
-
-  public static void commitAllInjectedDocuments(Document hostDocument, Project project) {
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    PsiFile hostPsiFile = documentManager.getPsiFile(hostDocument);
-    if (hostPsiFile == null) return;
-
-    List<DocumentWindow> injected = getCachedInjectedDocuments(hostPsiFile);
-    if (injected.isEmpty()) return;
-
-    for (int i = injected.size() - 1; i >= 0; i--) {
-      DocumentWindow documentWindow = injected.get(i);
-      ProgressManager.checkCanceled();
-      RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
-      PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
-      if (element == null) {
-        injected.remove(i);
-        continue;
-      }
-      final DocumentWindow[] stillInjectedDocument = {null};
-      // it is here where the reparse happens and old file contents replaced
-      enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        @Override
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
-          PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
-        }
-      });
-      if (stillInjectedDocument[0] == null) {
-        injected.remove(i);
-      }
-      else if (stillInjectedDocument[0] != documentWindow) {
-        injected.set(i,stillInjectedDocument[0]);
-      }
-    }
-    EditorWindow.disposeInvalidEditors();  // in write action
-
-    PsiDocumentManagerImpl.checkConsistency(hostPsiFile, hostDocument);
   }
 
   public static void clearCaches(@NotNull PsiFile injected, @NotNull DocumentWindowImpl documentWindow) {

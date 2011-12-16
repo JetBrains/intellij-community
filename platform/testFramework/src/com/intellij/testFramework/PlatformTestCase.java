@@ -385,12 +385,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
       }
 
-      try {
-        disposeProject();
-      }
-      catch (Throwable e) {
-        result.add(e);
-      }
+      disposeProject(result);
 
       if (injectedLanguageManager != null) {
         try {
@@ -450,20 +445,30 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (!result.isEmpty()) throw result;
   }
 
-  private void disposeProject() {
-    UIUtil.dispatchAllInvocationEvents();
-    if (myProject != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          Disposer.dispose(myProject);
-          ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-          if (projectManager != null) {
-            projectManager.setCurrentTestProject(null);
+  private void disposeProject(@NotNull CompositeException result) /* throws nothing */ {
+    try {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    catch (Exception e) {
+      result.add(e);
+    }
+    try {
+      if (myProject != null) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            Disposer.dispose(myProject);
+            ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+            if (projectManager != null) {
+              projectManager.setCurrentTestProject(null);
+            }
           }
-        }
-      });
+        });
 
-      myProject = null;
+        myProject = null;
+      }
+    }
+    catch (Exception e) {
+      result.add(e);
     }
   }
 
@@ -569,8 +574,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
             setUp();
           }
           catch (Throwable e) {
-            disposeProject();
-            throw e;
+            CompositeException result = new CompositeException(e);
+            disposeProject(result);
+            throw result;
           }
           try {
             myAssertionsInTestDetected = true;

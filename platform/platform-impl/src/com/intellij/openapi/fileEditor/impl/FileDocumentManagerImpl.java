@@ -217,7 +217,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return document;
   }
 
-  public static void registerDocument(final Document document, VirtualFile virtualFile) {
+  public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
     synchronized (lock) {
       virtualFile.putUserData(DOCUMENT_KEY, new SoftReference<Document>(document) {
         public Document get() {

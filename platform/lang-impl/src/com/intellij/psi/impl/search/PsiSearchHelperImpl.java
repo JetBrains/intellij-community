@@ -319,7 +319,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               }
             });
           }
-          if (progress != null) {
+          if (progress != null && progress.isRunning()) {
             double fraction = (double)counter.incrementAndGet() / size;
             progress.setFraction(fraction);
           }

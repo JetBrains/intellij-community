@@ -640,6 +640,21 @@ public interface Test {
     assert !lookup
   }
 
+  public void testTemplatesWithNonImportedClasses() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.addClass("package foo.bar; public class LayoutStore {}")
+    try {
+      myFixture.configureByText 'a.java', 'class Foo {{ foo(<caret>) }}'
+      type 'lst'
+      assert lookup
+      assert 'lst' in myFixture.lookupElementStrings
+      assert 'LayoutStore' in myFixture.lookupElementStrings
+    }
+    finally {
+      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    }
+  }
+
   public void testTemplateSelectionByComma() {
     myFixture.configureByText("a.java", """
 class Foo {
