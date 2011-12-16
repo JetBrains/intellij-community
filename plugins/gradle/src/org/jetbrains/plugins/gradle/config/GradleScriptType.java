@@ -57,9 +57,7 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -279,33 +277,4 @@ public class GradleScriptType extends GroovyScriptType {
     return result;
   }
 
-
-  @Override
-  public List<String> appendImplicitImports(@NotNull GroovyFile file) {
-    return Arrays.asList(
-      "org.gradle",
-      "org.gradle.util",
-      "org.gradle.api",
-      "org.gradle.api.artifacts",
-      "org.gradle.api.artifacts.dsl",
-      "org.gradle.api.artifacts.specs",
-      "org.gradle.api.dependencies",
-      "org.gradle.api.execution",
-      "org.gradle.api.file",
-      "org.gradle.api.logging",
-      "org.gradle.api.initialization",
-      "org.gradle.api.invocation",
-      "org.gradle.api.plugins",
-      "org.gradle.api.plugins.quality",
-      "org.gradle.api.specs",
-      "org.gradle.api.tasks",
-      "org.gradle.api.tasks.bundling",
-      "org.gradle.api.tasks.compile",
-      "org.gradle.api.tasks.javadoc",
-      "org.gradle.api.tasks.testing",
-      "org.gradle.api.tasks.util",
-      "org.gradle.api.tasks.wrapper"
-
-    );
-  }
 }
