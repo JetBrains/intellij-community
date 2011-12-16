@@ -63,24 +63,28 @@ public class PyByteLiteralInspection extends PyInspection {
           default_bytes = false;
       } catch (UnsupportedCharsetException exception) {}
 
-      boolean hasProblem = false;
-      char first_char = Character.toLowerCase(node.getText().charAt(0));
-      if (first_char == 'b' || (default_bytes && first_char != 'u')) {
-        String value = node.getStringValue();
-        int length = value.length();
-        for (int i = 0; i < length; ++i) {
-          char c = value.charAt(i);
-          if (((int) c) > 255) {
-            hasProblem = true;
-            break;
-          }
+      boolean hasNonAscii = false;
+
+      String value = node.getStringValue();
+      int length = value.length();
+      char c = 0;
+      for (int i = 0; i < length; ++i) {
+        c = value.charAt(i);
+        if (((int) c) > 255) {
+          hasNonAscii = true;
+          break;
         }
       }
-      if (hasProblem) {
-        if (charsetString != null)
+
+      char first_char = Character.toLowerCase(node.getText().charAt(0));
+      boolean isByte = first_char == 'b' || (default_bytes && first_char != 'u');
+
+      if (hasNonAscii) {
+        if (charsetString == null)
+          registerProblem(node, "Non-ASCII character "+ c + " in file, but no encoding declared", new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
+        else if (isByte) {
           registerProblem(node, "Byte literal contains characters > 255");
-        else
-          registerProblem(node, "Byte literal contains characters > 255", new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
+        }
       }
     }
   }
