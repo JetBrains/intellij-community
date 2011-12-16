@@ -287,6 +287,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
     builder.setFillColor(NotificationsUtil.getBackground(notification)).setCloseButtonEnabled(true).setShowCallout(showCallout)
       .setHideOnClickOutside(hideOnClickOutside)
+      .setHideOnAction(hideOnClickOutside)
       .setHideOnKeyOutside(hideOnClickOutside).setHideOnFrameResize(false);
 
     if (fadeOut) {
