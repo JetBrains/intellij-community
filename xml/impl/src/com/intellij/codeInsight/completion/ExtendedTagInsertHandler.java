@@ -57,9 +57,9 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
   public void handleInsert(final InsertionContext context, final LookupElement item) {
 
-    final XmlFile contextfile = (XmlFile)context.getFile();
-    final XmlExtension extension = XmlExtension.getExtension(contextfile);
-    final XmlFile file = extension.getContainingFile(contextfile);
+    final XmlFile contextFile = (XmlFile)context.getFile();
+    final XmlExtension extension = XmlExtension.getExtension(contextFile);
+    final XmlFile file = extension.getContainingFile(contextFile);
     final Project project = context.getProject();
 
     assert file != null;
