@@ -348,7 +348,10 @@ public class VariableInplaceRenamer {
                     });
                   }
                 }
-                myBeforeRevert = myRenameOffset != null ? myEditor.getDocument().createRangeMarker(myRenameOffset.getStartOffset(), myEditor.getCaretModel().getOffset()) : null;
+                final int currentOffset = myEditor.getCaretModel().getOffset();
+                myBeforeRevert = myRenameOffset != null && myRenameOffset.getEndOffset() >= currentOffset && myRenameOffset.getStartOffset() <= currentOffset 
+                                 ? myEditor.getDocument().createRangeMarker(myRenameOffset.getStartOffset(), currentOffset) 
+                                 : null;
                 if (myBeforeRevert != null) {
                   myBeforeRevert.setGreedyToRight(true);
                 }
@@ -381,6 +384,9 @@ public class VariableInplaceRenamer {
                 finally {
                   if (!bind) {
                     FinishMarkAction.finish(myProject, myEditor, markAction);
+                    if (myBeforeRevert != null) {
+                      myBeforeRevert.dispose();
+                    }
                   }
                 }
               }
