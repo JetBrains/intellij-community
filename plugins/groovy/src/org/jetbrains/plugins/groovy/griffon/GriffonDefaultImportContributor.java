@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class GriffonDefaultImportContributor extends DefaultImportContributor {
 
-  private Pair<List<String>, List<String>> getDefaultImports(@NotNull final Module module) {
+  private static Pair<List<String>, List<String>> getDefaultImports(@NotNull final Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<Pair<List<String>, List<String>>>() {
       @Override
       public Result<Pair<List<String>, List<String>>> compute() {
