@@ -34,6 +34,8 @@ public final class CvsRootParser {
   @NonNls private static final String PATTERN_STR = "^((.*?{0,1}(:.*?){0,1})@){0,1}([a-zA-Z0-9\\._-]+)(:(\\d*){0,1}){0,1}(.+)$";
   private static final Pattern ourPattern = Pattern.compile(PATTERN_STR);
 
+  private static final String LOCAL = ":local:";
+
   private static final int GROUP_USER_NAME_AND_PWD = 2;
   private static final int GROUP_HOST = 4;
   private static final int GROUP_PORT = 5;
@@ -56,30 +58,26 @@ public final class CvsRootParser {
   @NonNls private static final String PORT_FIELD_NAME = "port";
 
 
-  @NotNull public static CvsRootParser valueOf(String str, boolean check) {
-
-    CvsRootParser result = new CvsRootParser();
-
-    if (!StringUtil.startsWithChar(str, ':')) {
+  @NotNull public static CvsRootParser valueOf(String rootString, boolean check) {
+    final CvsRootParser result = new CvsRootParser();
+    if (rootString.isEmpty()) {
       if (check) {
-        throw new CvsRootException(CvsBundle.message("message.error.invalid.cvs.root", str));
-      } else {
-        result.METHOD = CvsMethod.LOCAL_METHOD;
-        result.REPOSITORY = str;
-        return result;
+        throw new CvsRootException(CvsBundle.message("message.error.empty.cvs.root"));
       }
-    }
-
-    @NonNls String local2 = ":local:";
-
-    if (str.startsWith(local2)){
-      result.METHOD = CvsMethod.LOCAL_METHOD;
-      result.REPOSITORY = str.substring(local2.length());
+      result.METHOD = CvsMethod.PSERVER_METHOD;
       return result;
     }
-
-    String suffix = result.extractMethod(str, result, check);
-
+    else if (!StringUtil.startsWithChar(rootString, ':')) {
+      result.METHOD = CvsMethod.LOCAL_METHOD;
+      result.REPOSITORY = rootString;
+      return result;
+    }
+    if (rootString.startsWith(LOCAL)){
+      result.METHOD = CvsMethod.LOCAL_METHOD;
+      result.REPOSITORY = rootString.substring(LOCAL.length());
+      return result;
+    }
+    final String suffix = result.extractMethod(rootString, result, check);
     if (CvsMethod.LOCAL_METHOD.equals(result.METHOD)) {
       result.REPOSITORY = suffix;
       skipTrailingRepositorySlash(result);
@@ -89,8 +87,7 @@ public final class CvsRootParser {
         result.REPOSITORY = suffix.trim();
       }
       else if (suffix.contains("@") || suffix.contains(":")){
-        Matcher matcher = ourPattern.matcher(suffix);
-
+        final Matcher matcher = ourPattern.matcher(suffix);
         if (matcher.matches()) {
           extractUserNameAndPassword(matcher, result);
           extractHostAndPort(matcher, result);
@@ -98,7 +95,7 @@ public final class CvsRootParser {
         }
         else {
           if (check) {
-            throw new IllegalArgumentException(CvsBundle.message("error.message.wrong.remote.repository", str));
+            throw new CvsRootException(CvsBundle.message("error.message.wrong.remote.repository", rootString));
           }
           else {
             result.REPOSITORY = suffix;
@@ -108,14 +105,12 @@ public final class CvsRootParser {
         result.REPOSITORY = suffix;
       }
     }
-
     return result;
   }
 
   private static void extractRepository(Matcher matcher, CvsRootParser cvsRoot) {
     cvsRoot.REPOSITORY = matcher.group(GROUP_REPOSITORY);
     skipTrailingRepositorySlash(cvsRoot);
-
   }
 
   private static void skipTrailingRepositorySlash(CvsRootParser cvsRoot) {
@@ -127,8 +122,7 @@ public final class CvsRootParser {
 
   private static void extractHostAndPort(Matcher matcher, CvsRootParser cvsRoot) {
     String host = matcher.group(GROUP_HOST);
-    String port = matcher.group(GROUP_PORT);
-
+    final String port = matcher.group(GROUP_PORT);
     if (port != null) {
       cvsRoot.HOST = host + port;
     }
@@ -138,40 +132,36 @@ public final class CvsRootParser {
       }
       cvsRoot.HOST = host;
     }
-
   }
 
   private static void extractUserNameAndPassword(Matcher matcher, CvsRootParser cvsRoot) {
-    String userNameAndPwd = matcher.group(GROUP_USER_NAME_AND_PWD);
+    final String userNameAndPwd = matcher.group(GROUP_USER_NAME_AND_PWD);
     if (userNameAndPwd != null && cvsRoot.USER_NAME.length() == 0) {
       cvsRoot.USER_NAME = userNameAndPwd;
     }
   }
 
   private String tryToCutMethod(CvsMethod method, String cvsRoot) {
-    String methodentry = methodEntry(method.getName());
-    if (cvsRoot.startsWith(methodentry)) {
-      return cvsRoot.substring(methodentry.length());
+    final String methodEntry = methodEntry(method.getName());
+    if (cvsRoot.startsWith(methodEntry)) {
+      return cvsRoot.substring(methodEntry.length());
     }
     if (!method.supportsProxyConnection()) {
       return null;
     }
 
-    String proxyBegin = ":" + method.getName() + ";";
-
+    final String proxyBegin = ":" + method.getName() + ";";
     if (!cvsRoot.startsWith(proxyBegin)) {
       return null;
     }
 
-    String tail = cvsRoot.substring(proxyBegin.length() - 1);
-
-    int endOfProxySettings = tail.indexOf(':');
+    final String tail = cvsRoot.substring(proxyBegin.length() - 1);
+    final int endOfProxySettings = tail.indexOf(':');
     if (endOfProxySettings == -1){
       return null;
     }
 
-    String proxySettings = tail.substring(0, endOfProxySettings);
-
+    final String proxySettings = tail.substring(0, endOfProxySettings);
     final String[] paramValueStrings = proxySettings.split(";");
 
     for (String paramValueString : paramValueStrings) {
@@ -180,7 +170,6 @@ public final class CvsRootParser {
         setValue(paramValueString.substring(0, eqIndex), paramValueString.substring(eqIndex + 1));
       }
     }
-
     return tail.substring(endOfProxySettings + 1);
   }
 
@@ -212,23 +201,24 @@ public final class CvsRootParser {
     return ":" + method + ":";
   }
 
-
-  private String extractMethod(String str, CvsRootParser cvsRoot, boolean check) {
+  private String extractMethod(String rootString, CvsRootParser cvsRoot, boolean check) {
     for (CvsMethod cvsMethod : CvsMethod.AVAILABLE_METHODS) {
-      String tail = tryToCutMethod(cvsMethod, str);
+      final String tail = tryToCutMethod(cvsMethod, rootString);
       if (tail != null) {
         cvsRoot.METHOD = cvsMethod;
         return tail;
       }
     }
     if (check) {
-      throw new CvsRootException(CvsBundle.message("message.error.invalid.cvs.root", str));
+      throw new CvsRootException(CvsBundle.message("message.error.invalid.cvs.root", rootString));
     }
     cvsRoot.METHOD = CvsMethod.AVAILABLE_METHODS[0];
-    if (!StringUtil.startsWithChar(str, ':')) return str;
-    int nextSep = str.indexOf(":", 1);
-    if (nextSep < 0) return str;
-    return str.substring(nextSep + 1);
+    if (!StringUtil.startsWithChar(rootString, ':')) return rootString;
+    final int nextSep = rootString.indexOf(":", 1);
+    if (nextSep < 0) {
+      return rootString;
+    }
+    return rootString.substring(nextSep + 1);
   }
 
   private CvsRootParser() {
@@ -239,5 +229,4 @@ public final class CvsRootParser {
     PORT = null;
     PASSWORD = null;
   }
-
 }

@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -52,9 +53,6 @@ import java.util.*;
 
 public class UndoManagerImpl extends UndoManager implements ProjectComponent, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
-
-  public static final int GLOBAL_UNDO_LIMIT = 10;
-  public static final int LOCAL_UNDO_LIMIT = 100;
 
   private static final int COMMANDS_TO_KEEP_LIVE_QUEUES = 100;
   private static final int COMMAND_TO_RUN_COMPACT = 20;
@@ -82,6 +80,14 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private static final int UNDO = 1;
   private static final int REDO = 2;
   private int myCurrentOperationState = NONE;
+
+  public static int getGlobalUndoLimit() {
+    return Registry.intValue("undo.globalUndoLimit", 10);
+  }
+
+  public static int getDocumentUndoLimit() {
+    return Registry.intValue("undo.documentUndoLimit", 100);
+  }
 
   public UndoManagerImpl(Application application, CommandProcessor commandProcessor) {
     this(application, null, commandProcessor, null);

@@ -37,7 +37,7 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.List;
 
-public class MavenRehighlighter extends SimpleProjectComponent {
+public class MavenRehighlighter extends MavenSimpleProjectComponent {
   private MergingUpdateQueue myQueue;
 
   protected MavenRehighlighter(Project project) {

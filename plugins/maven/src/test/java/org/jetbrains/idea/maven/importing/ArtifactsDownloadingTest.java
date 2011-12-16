@@ -17,27 +17,16 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public class ArtifactsDownloadingTest extends MavenImportingTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins", "local1");
-    helper.copy("plugins", "local1");
-    setRepositoryPath(helper.getTestDataPath("local1"));
-  }
-
+public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
   public void testJavadocsAndSources() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -261,69 +250,6 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     for (File each : files2) {
       assertFalse(each.toString(), each.exists());
     }
-  }
-
-  public void testCustomDocsAndSources() throws Exception {
-    if (!checkUltimate()) return;
-
-    String remoteRepo = FileUtil.toSystemIndependentName(myDir.getPath() + "/repo");
-    updateSettingsXmlFully("<settings>" +
-                           "<mirrors>" +
-                           "  <mirror>" +
-                           "    <id>Nexus</id>" +
-                           "    <url>" + VfsUtil.pathToUrl(remoteRepo) + "</url>" +
-                           "    <mirrorOf>*</mirrorOf>" +
-                           "  </mirror>" +
-                           "</mirrors>" +
-                           "</settings>");
-
-    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-sources.jar");
-    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-asdoc.zip");
-    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-javadoc.jar");
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>swf</packaging>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>xxx</groupId>" +
-                  "    <artifactId>yyy</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <type>swc</type>" +
-                  "  </dependency>" +
-                  "</dependencies>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.sonatype.flexmojos</groupId>" +
-                  "      <artifactId>flexmojos-maven-plugin</artifactId>" +
-                  "      <version>3.5.0</version>" +
-                  "      <extensions>true</extensions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    File sources = new File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-sources.jar");
-    File asdoc = new File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-asdoc.zip");
-    File javadoc = new File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-javadoc.jar");
-
-    assertFalse(sources.exists());
-    assertFalse(asdoc.exists());
-    assertFalse(javadoc.exists());
-
-    downloadArtifacts();
-
-    assertTrue(sources.exists());
-    assertTrue(asdoc.exists());
-    assertFalse(javadoc.exists());
-  }
-
-  private void createDummyArtifact(String remoteRepo, String name) throws IOException {
-    FileUtil.writeToFile(new File(remoteRepo, name), "111".getBytes());
-    FileUtil.writeToFile(new File(remoteRepo, name + ".sha1"), ("6216f8a75fd5bb3d5f22b6f9958cdede3fc086c2  " + name).getBytes());
   }
 
   public void testDownloadingPlugins() throws Exception {

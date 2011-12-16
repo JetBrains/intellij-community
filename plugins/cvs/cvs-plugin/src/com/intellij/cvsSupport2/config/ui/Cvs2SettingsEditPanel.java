@@ -18,10 +18,7 @@ package com.intellij.cvsSupport2.config.ui;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.connections.CvsMethod;
-import com.intellij.cvsSupport2.connections.CvsRootData;
-import com.intellij.cvsSupport2.connections.CvsRootDataBuilder;
+import com.intellij.cvsSupport2.connections.*;
 import com.intellij.cvsSupport2.connections.ext.ui.ExtConnectionDualPanel;
 import com.intellij.cvsSupport2.connections.local.ui.LocalConnectionSettingsPanel;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
@@ -271,10 +268,9 @@ public class Cvs2SettingsEditPanel {
         myProxySettingsNonEmptyPanel.enablePanel();
       }
     }
-    catch (Throwable ignored) {
+    catch (CvsRootException ignored) {
       ((CardLayout)myConnectionSettingsPanel.getLayout()).show(myConnectionSettingsPanel, EMPTY);
       ((CardLayout)myProxySettingsPanel.getLayout()).show(myProxySettingsPanel, EMPTY);
-
     }
   }
 

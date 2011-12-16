@@ -177,17 +177,17 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
           pathToOpen = projectFilePath;
         }
         int result = Messages.showYesNoCancelDialog(projectToClose,
-                                         IdeBundle.message("project.import.open.existing",
-                                                           existingName,
-                                                           projectFile.getParent(),
-                                                           virtualFile.getName()),
-                                         IdeBundle.message("title.open.project"),
-                                           IdeBundle.message("project.import.open.existing.reimport"),
-                                           IdeBundle.message("project.import.open.existing.openExisting"),
-                                           CommonBundle.message("button.cancel"),
-                                         Messages.getQuestionIcon());
+                                                    IdeBundle.message("project.import.open.existing",
+                                                                      existingName,
+                                                                      projectFile.getParent(),
+                                                                      virtualFile.getName()),
+                                                    IdeBundle.message("title.open.project"),
+                                                    IdeBundle.message("project.import.open.existing.openExisting"),
+                                                    IdeBundle.message("project.import.open.existing.reimport"),
+                                                    CommonBundle.message("button.cancel"),
+                                                    Messages.getQuestionIcon());
         if (result == 2) return null;
-        shouldOpenExisting = result == 1;
+        shouldOpenExisting = result == 0;
       }
 
       final Project projectToOpen;

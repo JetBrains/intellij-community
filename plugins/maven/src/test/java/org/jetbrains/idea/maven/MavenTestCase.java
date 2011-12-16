@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -37,7 +36,6 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -539,12 +537,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected boolean ignore() {
     printIgnoredMessage(null);
     return true;
-  }
-
-  public boolean checkUltimate() {
-    if (!PlatformUtils.isCommunity()) return true;
-    printIgnoredMessage("Ultimate edition is required");
-    return false;
   }
 
   protected boolean hasMavenInstallation() {
