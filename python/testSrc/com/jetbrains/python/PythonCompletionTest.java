@@ -379,6 +379,10 @@ public class PythonCompletionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  public void testHasAttr() {  // PY-4423
+    doTest();
+  }
+
   public void testEpydocParamTag() {
     doTest();
   }
