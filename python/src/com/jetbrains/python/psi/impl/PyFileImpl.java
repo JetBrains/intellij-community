@@ -33,7 +33,6 @@ import java.util.*;
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
   private ThreadLocal<List<String>> myFindExportedNameStack = new ArrayListThreadLocal();
-  private ThreadLocal<List<String>> myGetElementNamedStack = new ArrayListThreadLocal();
 
   private final CachedValue<List<PyImportElement>> myImportTargetsTransitive;
   //private volatile Boolean myAbsoluteImportEnabled;
@@ -127,10 +126,33 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Key<Set<PyFile>> PROCESSED_FILES = Key.create("PyFileImpl.processDeclarations.processedFiles");
 
   @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
                                      @NotNull ResolveState resolveState,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    final List<String> dunderAll = getDunderAll();
+    final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
+    PsiScopeProcessor wrapper = new PsiScopeProcessor() {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        if (!processor.execute(element, state)) return false;
+        if (remainingDunderAll != null && element instanceof PyElement) {
+          remainingDunderAll.remove(((PyElement) element).getName());
+        }
+        return true;
+      }
+
+      @Override
+      public <T> T getHint(Key<T> hintKey) {
+        return processor.getHint(hintKey);
+      }
+
+      @Override
+      public void handleEvent(Event event, @Nullable Object associated) {
+        processor.handleEvent(event, associated);
+      }
+    };
+
     Set<PyFile> pyFiles = resolveState.get(PROCESSED_FILES);
     if (pyFiles == null) {
       pyFiles = new HashSet<PyFile>();
@@ -140,27 +162,32 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     pyFiles.add(this);
     for(PyClass c: getTopLevelClasses()) {
       if (c == lastParent) continue;
-      if (!processor.execute(c, resolveState)) return false;
+      if (!wrapper.execute(c, resolveState)) return false;
     }
     for(PyFunction f: getTopLevelFunctions()) {
       if (f == lastParent) continue;
-      if (!processor.execute(f, resolveState)) return false;
+      if (!wrapper.execute(f, resolveState)) return false;
     }
     for(PyTargetExpression e: getTopLevelAttributes()) {
       if (e == lastParent) continue;
-      if (!processor.execute(e, resolveState)) return false;
+      if (!wrapper.execute(e, resolveState)) return false;
     }
 
     for(PyImportElement e: getImportTargets()) {
       if (e == lastParent) continue;
-      if (!processor.execute(e, resolveState)) return false;
+      if (!wrapper.execute(e, resolveState)) return false;
     }
 
     for(PyFromImportStatement e: getFromImports()) {
       if (e == lastParent) continue;
-      if (!e.processDeclarations(processor, resolveState, null, this)) return false;
+      if (!e.processDeclarations(wrapper, resolveState, null, this)) return false;
     }
 
+    if (remainingDunderAll != null) {
+      for (String s: remainingDunderAll) {
+        if (!processor.execute(new LightNamedElement(myManager, PythonLanguage.getInstance(), s), resolveState)) return false;
+      }
+    }
     return true;
   }
 
@@ -252,11 +279,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (PyUtil.isClassPrivateName(name)) {
         return null;
       }
-      PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
+      PsiElement starImportSource = statement.resolveImportSource();
       if (starImportSource != null) {
         starImportSource = PyUtil.turnDirIntoInit(starImportSource);
-        if (starImportSource instanceof PyFileImpl) {
-          final PsiElement result = ((PyFileImpl)starImportSource).getElementNamed(name, false);
+        if (starImportSource instanceof PyFile) {
+          final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
           if (result != null) {
             return result;
           }
@@ -277,7 +304,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (PyNames.INIT_DOT_PY.equals(getName())) {
       final PyQualifiedName qName = statement.getImportSourceQName();
       if (qName != null && qName.endsWith(name)) {
-        final PsiElement element = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveFromImportStatementSource(statement));
+        final PsiElement element = PyUtil.turnInitIntoDir(statement.resolveImportSource());
         if (element != null && element.getParent() == getContainingDirectory()) {
           return element;
         }
@@ -296,9 +323,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       final PyQualifiedName qName = importElement.getImportedQName();
       // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
       if (qName != null && qName.getComponentCount() > 1 && name.equals(qName.getLastComponent()) && PyNames.INIT_DOT_PY.equals(getName())) {
-        final PsiElement element = ResolveImportUtil.resolveImportElement(importElement, qName.removeLastComponent());
-        if (PyUtil.turnDirIntoInit(element) == this) {
-          return importElement;
+        final List<PsiElement> elements = ResolveImportUtil.resolveNameInImportStatement(importElement, qName.removeLastComponent());
+        for (PsiElement element : elements) {
+          if (PyUtil.turnDirIntoInit(element) == this) {
+            return importElement;
+          }
         }
       }
     }
@@ -307,37 +336,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Nullable
   public PsiElement getElementNamed(String name) {
-    return getElementNamed(name, true);
-  }
-
-  public PsiElement getElementNamed(String name, boolean withBuiltins) {
-    final List<String> stack = myGetElementNamedStack.get();
-    if (stack.contains(name)) {
-      return null;
+    PsiElement exportedName = findExportedName(name);
+    if (exportedName instanceof PyImportElement) {
+      return ((PyImportElement) exportedName).getElementNamed(name);
     }
-    stack.add(name);
-    try {
-      PsiElement exportedName = findExportedName(name);
-      if (exportedName == null && withBuiltins) {
-        final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
-        if (builtins != null && builtins != this) {
-          exportedName = builtins.findExportedName(name);
-        }
-      }
-      if (exportedName instanceof PyImportElement) {
-        return ((PyImportElement) exportedName).getElementNamed(name);
-      }
-      return exportedName;
-    }
-    finally {
-      stack.remove(name);
-    }
+    return exportedName;
   }
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    final List<String> dunderAll = getDunderAll();
-    final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
     final List<PyElement> result = new ArrayList<PyElement>();
     VariantsProcessor processor = new VariantsProcessor(this) {
       @Override
@@ -345,19 +352,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         element = PyUtil.turnDirIntoInit(element);
         if (element instanceof PyElement) {
           result.add((PyElement) element);
-          if (remainingDunderAll != null) {
-            remainingDunderAll.remove(name);
-          }
         }
       }
     };
-    processor.setAllowedNames(dunderAll);
+    processor.setAllowedNames(getDunderAll());
     processDeclarations(processor, ResolveState.initial(), null, this);
-    if (remainingDunderAll != null) {
-      for (String s: remainingDunderAll) {
-        result.add(new LightNamedElement(myManager, PythonLanguage.getInstance(), s));
-      }
-    }
     return result;
   }
 

@@ -23,6 +23,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -90,14 +91,14 @@ public class PythonReferenceImporter implements ReferenceImporter {
           final PyReferenceExpression src = ielt.getImportReferenceExpression();
           if (src != null) {
             PsiElement dst = src.getReference().resolve();
-            if (dst instanceof PyFile) {
-              PyFile dst_file = (PyFile)dst;
+            if (dst instanceof PyFileImpl) {
+              PyFileImpl dstFile = (PyFileImpl)dst;
               String name = ielt.getImportReferenceExpression().getReferencedName(); // ref is ok or matching would fail
               seen_file_names.add(name);
-              PsiElement res = dst_file.findExportedName(refText);
-              if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && dst_file.equals(res.getContainingFile())) {
-                existing_import_file = dst_file;
-                fix.addImport(res, dst_file, ielt);
+              PsiElement res = dstFile.findExportedName(refText);
+              if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && dstFile.equals(res.getContainingFile())) {
+                existing_import_file = dstFile;
+                fix.addImport(res, dstFile, ielt);
               }
             }
           }

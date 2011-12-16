@@ -6,8 +6,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.EmptyIterable;
@@ -109,25 +107,6 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       parent = getParent();
     }
     return parent instanceof PyStatement ? (PyStatement)parent : null;
-  }
-
-  @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
-                                     final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
-    // import is per-file
-    if (place.getContainingFile() != getContainingFile()) {
-      return true;
-    }
-    final PyReferenceExpression importRef = getImportReferenceExpression();
-    if (importRef != null) {
-      final PsiElement element = importRef.getReference().resolve();
-      if (element != null) {
-        return processor.execute(element, state);
-      }
-    }
-    return true;
   }
 
   @Override

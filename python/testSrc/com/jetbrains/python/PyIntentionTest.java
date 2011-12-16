@@ -200,6 +200,10 @@ public class PyIntentionTest extends PyTestCase {
   public void testTransformConditionalExpression() { //PY-3094
     doTest(PyBundle.message("INTN.transform.into.if.else.statement"));
   }
+  
+  public void testImportFromToImport() {
+    doTest("Convert to 'import sys'");
+  }
 
   public void testDocStub() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();

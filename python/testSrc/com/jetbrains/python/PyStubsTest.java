@@ -277,7 +277,7 @@ public class PyStubsTest extends PyTestCase {
 
   public void testInitPyExportsSubpackageImport() {
     myFixture.copyDirectoryToProject("../resolve/multiFile/importPackageIntoSelf", "");
-    final PyFile initPy = (PyFile) myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("mygame/__init__.py"));
+    final PyFileImpl initPy = (PyFileImpl) myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("mygame/__init__.py"));
     final PsiElement element = initPy.findExportedName("display");
     assertTrue(element instanceof PyImportElement);
     assertNotParsed(initPy);
@@ -285,7 +285,7 @@ public class PyStubsTest extends PyTestCase {
 
   public void testInitPyExportsSubpackageFromImport() {
     myFixture.copyDirectoryToProject("../resolve/multiFile/fromImportPackageIntoSelf", "");
-    final PyFile initPy = (PyFile) myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("mygame/__init__.py"));
+    final PyFileImpl initPy = (PyFileImpl) myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("mygame/__init__.py"));
     final PsiElement element = initPy.findExportedName("display");
     assertTrue(element instanceof PyFile);
     assertNotParsed(initPy);

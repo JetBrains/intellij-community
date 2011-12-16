@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -104,7 +105,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PyElementType t = getOperator();
     if (t != null && t.getSpecialMethodName() != null) {
-      return new PyOperatorReferenceImpl(this, context);
+      return new PyOperatorReference(this, context);
     }
     return null;
   }

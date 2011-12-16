@@ -9,6 +9,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -57,7 +58,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PyElementType t = getOperator();
     if (t.getSpecialMethodName() != null) {
-      return new PyOperatorReferenceImpl(this, context);
+      return new PyOperatorReference(this, context);
     }
     return null;
   }

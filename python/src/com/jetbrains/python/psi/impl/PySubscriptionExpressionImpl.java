@@ -4,11 +4,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Override
   public PsiPolyVariantReference getReference(PyResolveContext context) {
-    return new PyOperatorReferenceImpl(this, context);
+    return new PyOperatorReference(this, context);
   }
 
   @Override

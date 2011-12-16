@@ -1,10 +1,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -89,8 +86,7 @@ public class ImportFromToImportIntention implements IntentionAction {
     Document doc = editor.getDocument();
     PsiFile a_file = file;
     if (a_file == null) {
-      DataContext ctx = DataManager.getInstance().getDataContext();
-      Project project = PlatformDataKeys.PROJECT.getData(ctx);
+      Project project = editor.getProject();
       if (project != null) a_file = PsiDocumentManager.getInstance(project).getPsiFile(doc);
     }
     if (a_file != null) element = a_file.findElementAt(editor.getCaretModel().getOffset());
@@ -175,7 +171,6 @@ public class ImportFromToImportIntention implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     InfoHolder info = InfoHolder.collect(getElementFromEditor(editor, file));
-    if (info == null) info = InfoHolder.collect(getElementFromEditor(editor, file));
     try {
       String qualifier; // we don't always qualify with module name
       sure(info.myModuleReference); sure(info.myModuleName);

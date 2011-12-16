@@ -1,4 +1,4 @@
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;

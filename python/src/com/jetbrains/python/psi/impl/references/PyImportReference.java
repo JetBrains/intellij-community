@@ -1,4 +1,4 @@
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -17,6 +17,9 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -27,10 +30,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
+ * Reference in an import statement:<br/>
+ * <code>import <u>foo.name</u></code>
+ *
  * @author yole
  */
 public class PyImportReference extends PyReferenceImpl {
-  private final PyReferenceExpressionImpl myElement;
+  protected final PyReferenceExpressionImpl myElement;
 
   public PyImportReference(PyReferenceExpressionImpl element, PyResolveContext context) {
     super(element, context);
@@ -50,41 +56,21 @@ public class PyImportReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    ResolveResultList ret = new ResolveResultList();
     final String referencedName = myElement.getReferencedName();
-    if (referencedName == null) return ret;
+    if (referencedName == null) return Collections.emptyList();
 
-    int defaultSubmoduleRate = RatedResolveResult.RATE_HIGH;
-
-    // names inside module take precedence over submodules
-    final PyImportElement import_elt = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
-    if (import_elt != null) {
-      if (ret.poke(ResolveImportUtil.findImportedNameInsideModule(import_elt, referencedName), RatedResolveResult.RATE_HIGH)) {
-        defaultSubmoduleRate = RatedResolveResult.RATE_NORMAL;
-      }
-    }
-
-    final PyElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
-    List<PsiElement> targets;
+    final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final PyQualifiedName qname = myElement.asQualifiedName();
-    if (parent instanceof PyImportElement) {
-      targets = ResolveImportUtil.multiResolveImportElement((PyImportElement)parent, qname);
-    }
-    else if (parent instanceof PyFromImportStatement) { // "from foo import"
-      targets = ResolveImportUtil.resolveFromOrForeignImport((PyFromImportStatement)parent, qname);
-    }
-    else {
-      return ret;
-    }
-    addRatedResults(ret, defaultSubmoduleRate, targets);
-    return ret;
+    List<PsiElement> targets = ResolveImportUtil.resolveNameInImportStatement(parent, qname);
+    return rateResults(targets);
   }
 
-  private static void addRatedResults(ResolveResultList ret, int defaultSubmoduleRate, List<PsiElement> targets) {
+  protected static ResolveResultList rateResults(List<PsiElement> targets) {
+    ResolveResultList ret = new ResolveResultList();
     for (PsiElement target : targets) {
       target = PyUtil.turnDirIntoInit(target);
       if (target != null) {   // ignore dirs without __init__.py, worthless
-        int rate = defaultSubmoduleRate;
+        int rate = RatedResolveResult.RATE_HIGH;
         if (target instanceof PyFile) {
           VirtualFile vFile = ((PyFile)target).getVirtualFile();
           if (vFile != null && vFile.getLength() == 0) {
@@ -94,6 +80,7 @@ public class PyImportReference extends PyReferenceImpl {
         ret.poke(target, rate);
       }
     }
+    return ret;
   }
 
   @NotNull

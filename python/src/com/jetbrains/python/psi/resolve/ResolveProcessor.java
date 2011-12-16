@@ -126,7 +126,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
       final PyQualifiedName qName = fromImportStatement.getImportSourceQName();
       if (qName != null && qName.endsWith(myName)) {
-        final PsiElement source = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement));
+        final PsiElement source = PyUtil.turnInitIntoDir(fromImportStatement.resolveImportSource());
         if (source != null && source.getParent() == element.getContainingFile().getContainingDirectory()) {
           myResult = source;
           addNameDefiner(fromImportStatement);

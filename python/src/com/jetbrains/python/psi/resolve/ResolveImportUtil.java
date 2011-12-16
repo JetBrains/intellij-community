@@ -4,7 +4,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -93,6 +92,11 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
     final List<PsiElement> psiElements = multiResolveImportElement(import_element, qName);
+    return findPreferredElement(psiElements);
+  }
+
+  @Nullable
+  public static PsiElement findPreferredElement(List<PsiElement> psiElements) {
     if (psiElements.size() > 1) {
       // prefer the directory which has a non-empty __init__.py
       for (PsiElement element : psiElements) {
@@ -109,76 +113,70 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiElement> multiResolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
-    if (qName == null) return Collections.emptyList();
-
-    // TODO: search for entire names, not for first component only!
-    final String first_component = qName.getComponents().get(0);
-
-    final PsiFile file = import_element.getContainingFile().getOriginalFile();
-    final PyStatement importStatement = import_element.getContainingImportStatement();
-
-    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(import_element);
-    PyQualifiedName moduleQName = null;
-
+  public static List<PsiElement> multiResolveImportElement(PyImportElement importElement, final PyQualifiedName qName) {
+    final PyStatement importStatement = importElement.getContainingImportStatement();
     if (importStatement instanceof PyFromImportStatement) {
-      PyFromImportStatement from_import_statement = (PyFromImportStatement)importStatement;
-      moduleQName = from_import_statement.getImportSourceQName();
-      final int relative_level = from_import_statement.getRelativeLevel();
-
-      if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
-        final PsiElement element = resolveChild(stepBackFrom(file, relative_level), first_component, file, null, false, true);
-        return element != null ? Collections.singletonList(element) : Collections.<PsiElement>emptyList();
-      }
-
-      if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
-        final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
-        List<PsiElement> resultList = new ArrayList<PsiElement>();
-        for (PsiElement candidate : candidates) {
-          PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), first_component, file, null, false, true);
-          if (result != null) {
-            resultList.add(result);
-          }
-        }
-        if (!resultList.isEmpty()) {
-          return resultList;
-        }
-      }
+      return resolveNameInFromImport(importElement, qName, (PyFromImportStatement)importStatement);
     }
-    else if (importStatement instanceof PyImportStatement) { // "import foo"
-      final List<PsiElement> result = resolveModule(qName, file, absolute_import_enabled, 0);
-      if (result.size() > 0) {
-        return result;
-      }
+    else { // "import foo"
+      return resolveNameInImportStatement(importElement, qName);
     }
+  }
+
+  public static List<PsiElement> resolveNameInImportStatement(PyImportElement importElement, PyQualifiedName qName) {
+    if (qName == null) {
+      return Collections.emptyList();
+    }
+    final PsiFile file = importElement.getContainingFile().getOriginalFile();
+    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(importElement);
+    final List<PsiFileSystemItem> modules = resolveModule(qName, file, absolute_import_enabled, 0);
+    if (modules.size() > 0) {
+      return new ArrayList<PsiElement>(modules);
+    }
+
     // in-python resolution failed
-    final PsiElement result = resolveForeignImport(import_element, qName, moduleQName);
+    final PsiElement result = resolveForeignImport(importElement, qName, null);
+    return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
+  }
+
+  public static List<PsiElement> resolveNameInFromImport(PyImportElement importElement, PyQualifiedName qName,
+                                                         PyFromImportStatement importStatement) {
+    if (qName == null) {
+      return Collections.emptyList();
+    }
+    PsiFile file = importElement.getContainingFile().getOriginalFile();
+    Sdk sdk = ModuleUtil.findModuleForPsiElement(importElement) != null ? null : PyBuiltinCache.findSdkForNonModuleFile(file);
+    String name = qName.getComponents().get(0);
+
+    final List<PsiFileSystemItem> candidates = importStatement.resolveImportSourceCandidates();
+    List<PsiElement> resultList = new ArrayList<PsiElement>();
+    for (PsiElement candidate : candidates) {
+      PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), name, file, null, sdk, false, true);
+      if (result != null) {
+        resultList.add(result);
+      }
+    }
+    if (!resultList.isEmpty()) {
+      return resultList;
+
+    }
+    final PsiElement result = resolveForeignImport(importElement, qName, importStatement.getImportSourceQName());
     return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
   }
 
   public static List<PsiElement> resolveFromOrForeignImport(PyFromImportStatement fromImportStatement, PyQualifiedName qname) {
-    final List<PsiElement> results = resolveFromImportStatementSource(fromImportStatement, qname);
+    final List<PsiFileSystemItem> results = resolveFromImportStatementSource(fromImportStatement, qname);
     if (results.isEmpty() && qname != null && qname.getComponentCount() > 0) {
       final PyQualifiedName importedQName = PyQualifiedName.fromComponents(qname.getLastComponent());
       final PyQualifiedName containingQName = qname.removeLastComponent();
       final PsiElement result = resolveForeignImport(fromImportStatement, importedQName, containingQName);
       return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
     }
-    return results;
-  }
-
-  @Nullable
-  public static PsiElement resolveFromImportStatementSource(PyFromImportStatement from_import_statement) {
-    final PyQualifiedName qName = from_import_statement.getImportSourceQName();
-    if (qName == null) {
-      return null;
-    }
-    final List<PsiElement> source = resolveFromImportStatementSource(from_import_statement, qName);
-    return source.isEmpty() ? null : source.get(0);
+    return new ArrayList<PsiElement>(results);
   }
 
   @NotNull
-  private static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+  public static List<PsiFileSystemItem> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
     return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
@@ -194,8 +192,8 @@ public class ResolveImportUtil {
    * @return list of possible candidates
    */
   @NotNull
-  public static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
-                                               boolean importIsAbsolute, int relativeLevel) {
+  public static List<PsiFileSystemItem> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
+                                                      boolean importIsAbsolute, int relativeLevel) {
     if (qualifiedName == null) return Collections.emptyList();
     String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relativeLevel);
     Set<String> being_imported = ourBeingImported.get();
@@ -263,6 +261,7 @@ public class ResolveImportUtil {
    * @param referencedName  which name to look for.
    * @param containingFile  where we're in.
    * @param root            the root from which we started descending the directory tree (if any)
+   * @param sdk             the SDK to which the root belongs, if any                     
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
    * @return the element the referencedName resolves to, or null.
@@ -272,6 +271,7 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
                                         @Nullable final PsiFile containingFile, @Nullable VirtualFile root,
+                                        @Nullable Sdk sdk,
                                         boolean fileOnly, boolean checkForPackage) {
     PsiDirectory dir = null;
     PsiElement ret = null;
@@ -281,12 +281,12 @@ public class ResolveImportUtil {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
-        possible_ret = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly, checkForPackage);
+        possible_ret = resolveInDirectory(referencedName, containingFile, dir, root, sdk, fileOnly, checkForPackage);
       }
 
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
       // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
-      PsiElement elementNamed = ((PyFileImpl)parent).getElementNamed(referencedName, false);
+      PsiElement elementNamed = ((PyFile)parent).getElementNamed(referencedName);
       if (!fileOnly || PyUtil.instanceOf(elementNamed, PsiFile.class, PsiDirectory.class)) {
         ret = elementNamed;
       }
@@ -303,13 +303,13 @@ public class ResolveImportUtil {
     else if (parent instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
       for (PsiDirectory childDir : container.getDirectories()) {
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, root, fileOnly, checkForPackage);
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, root, sdk, fileOnly, checkForPackage);
         //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
         if (result != null) return result;
       }
     }
     if (dir != null) {
-      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly, checkForPackage);
+      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, sdk, fileOnly, checkForPackage);
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       if (result != null) {
         return result;
@@ -320,8 +320,9 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiElement resolveInDirectory(final String referencedName, @Nullable final PsiFile containingFile,
-                                               final PsiDirectory dir, @Nullable VirtualFile root, boolean isFileOnly,
-                                               boolean checkForPackage) {
+                                               final PsiDirectory dir, @Nullable VirtualFile root,
+                                               @Nullable Sdk sdk,
+                                               boolean isFileOnly, boolean checkForPackage) {
     if (referencedName == null) return null;
 
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
@@ -329,10 +330,9 @@ public class ResolveImportUtil {
       return subdir;
     }
 
-    final PsiElement module = findPyFileInDir(dir, referencedName);
+    final PsiFile module = findPyFileInDir(dir, referencedName);
     if (module != null) return module;
 
-    final Sdk sdk = sdkForDir(dir);
     if (sdk != null) {
       PsiDirectory skeletonDir = findSkeletonDir(dir, root, sdk);
       if (skeletonDir != null) {
@@ -360,18 +360,6 @@ public class ResolveImportUtil {
     // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
     if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
       return file;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Sdk sdkForDir(PsiDirectory dir) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
-    final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(dir.getVirtualFile());
-    for (OrderEntry entry : entries) {
-      if (entry instanceof JdkOrderEntry) {
-        return ((JdkOrderEntry) entry).getJdk();
-      }
     }
     return null;
   }
@@ -416,7 +404,7 @@ public class ResolveImportUtil {
       }
     }
 
-    public boolean visitRoot(VirtualFile root) {
+    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk) {
       final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
       if (relativePath != null) {
         List<String> result = StringUtil.split(relativePath, "/");
@@ -524,7 +512,7 @@ public class ResolveImportUtil {
         if (initPy == null) {
           break;
         }
-        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).findExportedName(((PsiNamedElement)toplevel).getName()))) {
+        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).getElementNamed(((PsiNamedElement)toplevel).getName()))) {
           virtualFile = dir.getVirtualFile();
         }
         dir = dir.getParentDirectory();
@@ -563,32 +551,6 @@ public class ResolveImportUtil {
         components.set(0, "path");
         result.addAll(components);
         return PyQualifiedName.fromComponents(result);
-      }
-    }
-    return null;
-  }
-
-  /**
-   * When a name is imported from a module, tries to find the definition of that name inside the module,
-   * as opposed to looking for submodules.
-   *
-   * @param where an element related to the name, presumably inside import
-   * @param name  the name to find
-   * @return found element, or null.
-   */
-  @Nullable
-  public static PsiElement findImportedNameInsideModule(@NotNull PyImportElement where, String name) {
-    PyStatement stmt = where.getContainingImportStatement();
-    if (stmt instanceof PyFromImportStatement) {
-      final PyFromImportStatement from_import = (PyFromImportStatement)stmt;
-      if (from_import.getImportSourceQName() != null) { // have qname -> have source stub and importing a name, not a module
-        final PyReferenceExpression source = from_import.getImportSource();
-        if (source != null) {
-          PsiElement resolved = source.getReference().resolve();
-          if (resolved instanceof PyFile) {
-            return ((PyFile)resolved).findExportedName(name);
-          }
-        }
       }
     }
     return null;

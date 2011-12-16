@@ -23,8 +23,8 @@ import java.util.*;
  * @author oleg
  */
 public class ScopeImpl implements Scope {
-  private final Instruction[] myFlow;
-  private List<DFAMap<ScopeVariable>> myCachedScopeVariables;
+  private volatile Instruction[] myFlow;
+  private volatile List<DFAMap<ScopeVariable>> myCachedScopeVariables;
   private Set<String> myGlobals;
   private Set<String> myNonlocals;
   private final ScopeOwner myFlowOwner;
@@ -33,7 +33,12 @@ public class ScopeImpl implements Scope {
 
   public ScopeImpl(final ScopeOwner flowOwner) {
     myFlowOwner = flowOwner;
-    myFlow = ControlFlowCache.getControlFlow(flowOwner).getInstructions();
+  }
+
+  private synchronized void computeFlow() {
+    if (myFlow == null) {
+      myFlow = ControlFlowCache.getControlFlow(myFlowOwner).getInstructions();
+    }
   }
 
   @NotNull
@@ -62,7 +67,8 @@ public class ScopeImpl implements Scope {
     return null;
   }
 
-  public List<DFAMap<ScopeVariable>> computeScopeVariables() throws DFALimitExceededException {
+  private synchronized List<DFAMap<ScopeVariable>> computeScopeVariables() throws DFALimitExceededException {
+    computeFlow();
     if (myCachedScopeVariables == null) {
       final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
       final PyReachingDefsSemilattice semilattice = new PyReachingDefsSemilattice();
@@ -104,6 +110,7 @@ public class ScopeImpl implements Scope {
   }
 
   private Set<String> computeAllNames() {
+    computeFlow();
     final Set<String> names = new HashSet<String>();
     for (Instruction instruction : myFlow) {
       if (instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess()){
