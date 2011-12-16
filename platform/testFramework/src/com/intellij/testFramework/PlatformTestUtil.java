@@ -330,17 +330,6 @@ public class PlatformTestUtil {
                              Comparator comparator,
                              int maxRowCount,
                              int currentLine,
-                             char paddingChar) {
-    return doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, currentLine, paddingChar, null);
-  }
-
-  private static int doPrint(StringBuffer buffer,
-                             int currentLevel,
-                             Object node,
-                             AbstractTreeStructure structure,
-                             Comparator comparator,
-                             int maxRowCount,
-                             int currentLine,
                              char paddingChar,
                              Queryable.PrintInfo printInfo) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
@@ -740,4 +729,29 @@ public class PlatformTestUtil {
     }
     return homePath;
   }
+
+  public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
+    return new Comparator<AbstractTreeNode>() {
+      @Override
+      public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
+        String displayText1 = o1.toTestString(printInfo);
+        String displayText2 = o2.toTestString(printInfo);
+        return displayText1.compareTo(displayText2);
+      }
+    };
+  }
+
+  /**
+   * Use {@link #createComparator(com.intellij.openapi.ui.Queryable.PrintInfo)} instead.
+   */
+  @Deprecated
+  public static final Comparator<AbstractTreeNode> DEFAULT_COMPARATOR = new Comparator<AbstractTreeNode>() {
+    @Override
+    public int compare(AbstractTreeNode o1, AbstractTreeNode o2) {
+      String displayText1 = o1.getTestPresentation();
+      String displayText2 = o2.getTestPresentation();
+      return displayText1.compareTo(displayText2);
+    }
+  };
+
 }

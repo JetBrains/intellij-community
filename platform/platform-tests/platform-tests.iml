@@ -14,6 +14,11 @@
     <orderEntry type="library" name="EasyMock" level="project" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module" module-name="platform-resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
   </component>
 </module>
 
