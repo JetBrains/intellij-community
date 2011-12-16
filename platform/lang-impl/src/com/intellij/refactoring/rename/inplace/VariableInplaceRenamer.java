@@ -72,10 +72,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.AutomaticRenamingDialog;
-import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -465,7 +462,8 @@ public class VariableInplaceRenamer {
   }
 
   protected boolean shouldSelectAll() {
-    return false;
+    final Boolean selectAll = myEditor.getUserData(RenameHandlerRegistry.SELECT_ALL);
+    return selectAll != null && selectAll.booleanValue();
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
