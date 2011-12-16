@@ -107,6 +107,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
         
         DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
         AnAction action = new RenameElementAction();
+        final boolean hadSelection = editor.getSelectionModel().hasSelection();
         final TextRange range = psiElement.getTextRange();
         if (range != null) {
           editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
@@ -115,6 +116,9 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
         action.actionPerformed(event);
         if (provider != null) {
           provider.setActive(false);
+        }
+        if (!hadSelection) {
+          editor.getSelectionModel().removeSelection();
         }
       }
     };
