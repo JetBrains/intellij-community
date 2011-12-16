@@ -206,14 +206,18 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void releaseEditor(@NotNull Editor editor) {
-    ((EditorImpl)editor).release();
-    editor.putUserData(EDITOR_CREATOR, null);
-    myEditors.remove(editor);
-    myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
+    try {
+      ((EditorImpl)editor).release();
+    }
+    finally {
+      editor.putUserData(EDITOR_CREATOR, null);
+      myEditors.remove(editor);
+      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("number of Editor's:" + myEditors.size());
-      //Thread.dumpStack();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("number of Editor's:" + myEditors.size());
+        //Thread.dumpStack();
+      }
     }
   }
 
