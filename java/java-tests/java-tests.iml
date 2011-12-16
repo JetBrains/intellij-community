@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="IntentionPowerPackPlugin" />
     <orderEntry type="module" module-name="InspectionGadgetsPlugin" />
+    <orderEntry type="module" module-name="platform-tests" scope="TEST" />
   </component>
 </module>
 
