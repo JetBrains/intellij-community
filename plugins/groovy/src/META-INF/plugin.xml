@@ -917,6 +917,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.RemoveUnnecessarySemicolonsIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.ImportStaticIntention</className>
     </intentionAction>
     <intentionAction>

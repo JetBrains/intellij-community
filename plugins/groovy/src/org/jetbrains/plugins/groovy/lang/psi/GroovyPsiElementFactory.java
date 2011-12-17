@@ -188,7 +188,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrAnnotation createAnnotationFromText(String annoText);
 
-  public abstract GroovyFile createGroovyFile(String text, boolean isPhysical, PsiElement context);
+  public abstract GroovyFile createGroovyFile(String text, boolean isPhysical, @Nullable PsiElement context);
 
   public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, PsiElement context);
 
