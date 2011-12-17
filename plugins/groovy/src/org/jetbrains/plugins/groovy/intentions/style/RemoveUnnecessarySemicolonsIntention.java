@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 
@@ -159,22 +160,8 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
     final GrStatement[] statements = file.getStatements();
     if (statements.length != 2) return false;
 
-    return checkEquality(prev, statements[0]) && checkEquality(next, statements[1]);
-  }
-
-  private static boolean checkEquality(PsiElement l, PsiElement r) {
-    if (!l.getText().equals(r.getText())) return false;
-    if (l.getNode().getElementType() != r.getNode().getElementType()) return false;
-
-    final PsiElement[] lChildren = l.getChildren();
-    final PsiElement[] rChildren = r.getChildren();
-
-    if (lChildren.length != rChildren.length) return false;
-
-    for (int i = 0; i < rChildren.length; i++) {
-      if (!checkEquality(lChildren[i], rChildren[i])) return false;
-    }
-    return true;
+    return GroovyRefactoringUtil.checkPsiElementsAreEqual(prev, statements[0]) &&
+           GroovyRefactoringUtil.checkPsiElementsAreEqual(next, statements[1]);
   }
 
   @Nullable

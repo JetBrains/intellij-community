@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.NonNls;
@@ -17,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -313,7 +313,7 @@ public class GrStringUtil {
     final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(injected.getProject());
     final GrExpression gString;
     try {
-      gString = elementFactory.createExpressionFromText("\"$" + injected.getText() + nextChar + '"');
+      gString = elementFactory.createExpressionFromText("\"$" + injected.getText() + next.getText() + '"');
     }
     catch (Exception e) {
       return false;
@@ -327,7 +327,7 @@ public class GrStringUtil {
     if (!(refExprCopy instanceof GrReferenceExpression)) return false;
 
     final GrReferenceExpression refExpr = (GrReferenceExpression)injected;
-    return Comparing.equal(refExpr.getName(), ((GrReferenceExpression)refExprCopy).getName());
+    return GroovyRefactoringUtil.checkPsiElementsAreEqual(refExpr, refExprCopy);
   }
 
   public static void removeUnnecessaryBracesInGString(GrString grString) {
