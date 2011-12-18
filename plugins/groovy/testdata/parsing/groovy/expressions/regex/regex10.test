@@ -1,4 +1,4 @@
-'bugaga' ==~ /abc \${do "def ${a+b}} fgh$st ${frg./sdf/(5)} /
+'bugaga' ==~ /abc \${do "def ${a+b}"} fgh$st ${frg./sdf/(5)} /
 -----
 Groovy script
   Logical expression
@@ -9,21 +9,36 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound regular expression
       PsiElement(regex begin)('/')
-      PsiElement(regex content)('abc \${do "def ')
+      PsiElement(regex content)('abc \')
       GString injection
         PsiElement($)('$')
         Closable block
           PsiElement({)('{')
           Parameter list
             <empty list>
-          Additive expression
-            Reference expression
-              PsiElement(identifier)('a')
-            PsiElement(+)('+')
-            Reference expression
-              PsiElement(identifier)('b')
+          PsiErrorElement:Wrong statement
+            <empty list>
+          PsiElement(do)('do')
+          PsiWhiteSpace(' ')
+          Compound Gstring
+            PsiElement(Gstring begin)('"')
+            PsiElement(Gstring content)('def ')
+            GString injection
+              PsiElement($)('$')
+              Closable block
+                PsiElement({)('{')
+                Parameter list
+                  <empty list>
+                Additive expression
+                  Reference expression
+                    PsiElement(identifier)('a')
+                  PsiElement(+)('+')
+                  Reference expression
+                    PsiElement(identifier)('b')
+                PsiElement(})('}')
+            PsiElement(Gstring end)('"')
           PsiElement(})('}')
-      PsiElement(regex content)('} fgh')
+      PsiElement(regex content)(' fgh')
       GString injection
         PsiElement($)('$')
         Reference expression
