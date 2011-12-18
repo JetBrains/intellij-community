@@ -4,10 +4,13 @@ import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.ide.plugins.InstalledPluginsTableModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
@@ -23,6 +26,7 @@ public class AttachmentsTabForm {
   private JPanel myContentPane;
   private TableView<Attachment> myTable;
   private LabeledTextComponent myFileTextArea;
+  private final EventDispatcher<ChangeListener> myInclusionEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
   private final ColumnInfo<Attachment, Boolean> ENABLED_COLUMN =
     new ColumnInfo<Attachment, Boolean>(DiagnosticBundle.message("error.dialog.attachment.include.column.title")) {
@@ -49,6 +53,7 @@ public class AttachmentsTabForm {
       @Override
       public void setValue(Attachment attachment, Boolean value) {
         attachment.setIncluded(value);
+        myInclusionEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(attachment));
       }
     };
 
@@ -109,5 +114,19 @@ public class AttachmentsTabForm {
 
   public JPanel getContentPane() {
     return myContentPane;
+  }
+
+  public void addInclusionListener(ChangeListener listener) {
+    myInclusionEventDispatcher.addListener(listener);
+  }
+
+  public void selectFirstIncludedAttachment() {
+    final List items = ((ListTableModel)myTable.getModel()).getItems();
+    for (Object item : items) {
+      if (((Attachment)item).isIncluded()) {
+        myTable.setSelection(Collections.singleton((Attachment)item));
+        break;
+      }
+    }
   }
 }
