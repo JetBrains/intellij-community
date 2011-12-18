@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfo;
 
 public class PasteAction extends AnAction implements DumbAware {
 
@@ -27,7 +26,7 @@ public class PasteAction extends AnAction implements DumbAware {
     DataContext dataContext = event.getDataContext();
 
     PasteProvider provider = PlatformDataKeys.PASTE_PROVIDER.getData(dataContext);
-    presentation.setEnabled(provider != null && (SystemInfo.isMac || provider.isPastePossible(dataContext)));
+    presentation.setEnabled(provider != null && provider.isPastePossible(dataContext));
   }
 
   public void actionPerformed(AnActionEvent e) {
