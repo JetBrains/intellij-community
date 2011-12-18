@@ -59,7 +59,7 @@ import java.util.List;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
-  public static final boolean INTERNAL_MODE = false; //ApplicationManagerEx.getApplicationEx().isInternal();
+  public static final boolean INTERNAL_MODE = ApplicationManagerEx.getApplicationEx().isInternal();
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
   public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
   public static final int COMPONENTS_WIDTH = 670;
