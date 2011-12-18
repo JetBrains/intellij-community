@@ -36,7 +36,10 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.FocusCommand;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.KeyEventProcessor;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -45,6 +48,9 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.popup.StackingPopupDispatcherImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -679,6 +685,25 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
             IdeFocusManager.findInstanceByComponent(this).requestFocus(new MyFocusCommand(dialogWrapper), true);
           }
         }
+      }
+
+      if (SystemInfo.isMacOSLion) {
+        final WindowAdapter macFullScreenPatchListener = new WindowAdapter() {
+          @Override
+          public void windowOpened(WindowEvent e) {
+            Window window = e.getWindow();
+            if (window instanceof Dialog) {
+              ID _native = MacUtil.findWindowForTitle(((Dialog)window).getTitle());
+              if (_native != null && _native.intValue() > 0) {
+                // see MacMainFrameDecorator
+                // NSCollectionBehaviorFullScreenAuxiliary = 1 << 8
+                Foundation.invoke(_native, "setCollectionBehavior:", 1 << 8);
+              }
+            }
+          }
+        };
+        
+        addWindowListener(macFullScreenPatchListener);
       }
 
       super.show();
