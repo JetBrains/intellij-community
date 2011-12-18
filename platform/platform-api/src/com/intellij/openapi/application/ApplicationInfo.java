@@ -36,6 +36,8 @@ public abstract class ApplicationInfo {
   public abstract String getMinorVersion();
   public abstract String getVersionName();
   public abstract String getHelpURL();
+  public abstract String getCompanyName();
+  public abstract String getCompanyURL();
   public abstract String getDefaultUpdateChannel();
   public abstract boolean hasContextHelp();
 
