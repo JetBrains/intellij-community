@@ -676,7 +676,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   public Object getData(String dataId) {
-    return new TestDataProvider(myProject).getData(dataId);
+    return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
   public static File createTempDir(@NonNls final String prefix) throws IOException {
