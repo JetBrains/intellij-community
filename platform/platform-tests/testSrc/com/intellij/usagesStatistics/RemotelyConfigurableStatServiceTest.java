@@ -52,7 +52,7 @@ public class RemotelyConfigurableStatServiceTest extends TestCase {
                                                                                                 }
                                                                                               });
     final StatisticsResult result = service.send();
-    Assert.assertEquals(StatisticsResult.ResultCode.SEND_WITH_ERRORS, result.getCode());
+    Assert.assertEquals(StatisticsResult.ResultCode.SENT_WITH_ERRORS, result.getCode());
   }
 
   public void testRemotelyDisabledTransmission() {
