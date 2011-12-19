@@ -391,14 +391,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           myUpdateException = null;
           myAdditionalInfo.clear();
         }
-        debugLogging("refresh procedure started, everything = " + wasEverythingDirty + " dirty scope: " +
-                     StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
-                       @Override
-                       public String fun(VcsDirtyScope scope) {
-                         return scope.toString();
-                       }
-                     }, "->\n"));
       }
+      final String scopeInString = (! LOG.isDebugEnabled()) ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
+        @Override
+        public String fun(VcsDirtyScope scope) {
+          return scope.toString();
+        }
+      }, "->\n");
+      debugLogging("refresh procedure started, everything = " + wasEverythingDirty + " dirty scope: " + scopeInString);
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
