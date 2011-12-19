@@ -38,6 +38,7 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -74,6 +75,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private JPanel myCredentialsPanel;
   private HyperlinkLabel myCredentialsLabel;
   private JPanel myForeignPluginWarningPanel;
+  private JPanel myAttachmentWarningPanel;
+  private HyperlinkLabel myAttachmentWarningLabel;
 
   private int myIndex = 0;
   private final List<ArrayList<AbstractMessage>> myMergedMessages = new ArrayList<ArrayList<AbstractMessage>>();
@@ -246,6 +249,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myTabs.addTab(DiagnosticBundle.message("error.details.tab.title"), myDetailsTabForm.getContentPane());
 
     myAttachmentsTabForm = new AttachmentsTabForm();
+    myAttachmentsTabForm.addInclusionListener(new ChangeListener() {
+      public void stateChanged(final ChangeEvent e) {
+        updateAttachmentWarning(getSelectedMessage());
+      }
+    });
 
     int activeTabIndex = Integer.parseInt(PropertiesComponent.getInstance().getValue(ACTIVE_TAB_OPTION, "0"));
     if (activeTabIndex >= myTabs.getTabCount() || activeTabIndex < 0) {
@@ -282,6 +290,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           new JetBrainsAccountDialog(getRootPane()).show();
           updateCredentialsPane(getSelectedMessage());
+        }
+      }
+    });
+
+    myAttachmentWarningLabel.setIcon(UIUtil.getBalloonWarningIcon());
+    myAttachmentWarningLabel.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(final HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          myTabs.setSelectedIndex(myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()));
+          myAttachmentsTabForm.selectFirstIncludedAttachment();
         }
       }
     });
@@ -359,6 +377,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final AbstractMessage message = getSelectedMessage();
     updateInfoLabel(message);
     updateCredentialsPane(message);
+    updateAttachmentWarning(message);
     myDisableLink.setVisible(canDisablePlugin(message));
     updateForeignPluginLabel(message != null ? message : null);
     updateTabs();
@@ -367,6 +386,29 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myBlameAction.update();
     if (myAnalyzeAction != null) {
       myAnalyzeAction.update();
+    }
+  }
+
+  private void updateAttachmentWarning(final AbstractMessage message) {
+    final List<Attachment> includedAttachments;
+    if (message instanceof LogMessageEx &&
+        !(includedAttachments = ContainerUtil.filter(((LogMessageEx)message).getAttachments(), new Condition<Attachment>() {
+          public boolean value(final Attachment attachment) {
+            return attachment.isIncluded();
+          }
+        })).isEmpty()) {
+      myAttachmentWarningPanel.setVisible(true);
+      if (includedAttachments.size() == 1) {
+        myAttachmentWarningLabel.setHtmlText(
+          DiagnosticBundle.message("diagnostic.error.report.include.attachment.warning", includedAttachments.get(0).getName()));
+      }
+      else {
+        myAttachmentWarningLabel.setHtmlText(
+          DiagnosticBundle.message("diagnostic.error.report.include.attachments.warning", includedAttachments.size()));
+      }
+    }
+    else {
+      myAttachmentWarningPanel.setVisible(false);
     }
   }
 

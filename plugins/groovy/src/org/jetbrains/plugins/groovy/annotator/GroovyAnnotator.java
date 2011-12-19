@@ -856,8 +856,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         myHolder
           .createErrorAnnotation(regex, GroovyBundle.message("dollar.slash.strings.are.not.allowed.in.0", config.getSDKVersion(regex)));
       }
-      if (regex.getParent() instanceof GrCommandArgumentList &&
-          ((GrCommandArgumentList)regex.getParent()).getAllArguments()[0] == regex) {
+      if (regex instanceof GrRegex &&
+          regex.getParent() instanceof GrCommandArgumentList &&
+          ((GrCommandArgumentList)regex.getParent()).getAllArguments()[0] == regex ||
+
+          !(regex instanceof GrRegex) &&
+          regex.getParent().getParent() instanceof GrCommandArgumentList &&
+          ((GrCommandArgumentList)regex.getParent().getParent()).getAllArguments()[0] == regex.getParent()
+        ) {
         final Annotation annotation =
           myHolder.createErrorAnnotation(regex, GroovyBundle.message("regex.cannot.be.first.argument.of.command.method.call"));
         annotation.registerFix(new AddParenthesesFix());

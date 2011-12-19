@@ -62,4 +62,8 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
   public void addDocumentListener(DocumentListener listener) {
     myListeners.add(listener);
   }
+
+  public void clearListeners() {
+    myListeners.clear();
+  }
 }

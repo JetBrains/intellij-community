@@ -90,17 +90,37 @@
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="3eb3d" binding="myCredentialsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+          <grid id="16a45" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints border-constraint="South"/>
             <properties/>
-            <border type="empty">
-              <size top="5" left="0" bottom="0" right="0"/>
-            </border>
+            <border type="none"/>
             <children>
-              <component id="64a8b" class="com.intellij.ui.HyperlinkLabel" binding="myCredentialsLabel">
-                <constraints border-constraint="East"/>
+              <grid id="3eb3d" binding="myCredentialsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="North"/>
                 <properties/>
-              </component>
+                <border type="empty">
+                  <size top="5" left="0" bottom="0" right="0"/>
+                </border>
+                <children>
+                  <component id="64a8b" class="com.intellij.ui.HyperlinkLabel" binding="myCredentialsLabel">
+                    <constraints border-constraint="East"/>
+                    <properties/>
+                  </component>
+                </children>
+              </grid>
+              <grid id="4f91d" binding="myAttachmentWarningPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="South"/>
+                <properties/>
+                <border type="empty">
+                  <size top="5" left="0" bottom="0" right="0"/>
+                </border>
+                <children>
+                  <component id="23d84" class="com.intellij.ui.HyperlinkLabel" binding="myAttachmentWarningLabel">
+                    <constraints border-constraint="East"/>
+                    <properties/>
+                  </component>
+                </children>
+              </grid>
             </children>
           </grid>
         </children>

@@ -3054,6 +3054,8 @@ public class AbstractTreeUi {
   }
 
   private void adjustSelectionOnChildRemove(DefaultMutableTreeNode parentNode, int selectedIndex, Object disposedElement) {
+    if (selectedIndex >= 0 && getSelectedElements().size() > 0) return;
+
     DefaultMutableTreeNode node = getNodeForElement(disposedElement, false);
     if (node != null && isValidForSelectionAdjusting(node)) {
       Object newElement = getElementFor(node);

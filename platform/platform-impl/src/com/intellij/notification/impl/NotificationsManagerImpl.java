@@ -136,11 +136,20 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
 
     final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(notification.getGroupId());
-    if (settings.isShouldLog() && settings.getDisplayType() != NotificationDisplayType.NONE) {
+    boolean shouldLog = settings.isShouldLog();
+    boolean displayable = settings.getDisplayType() != NotificationDisplayType.NONE;
+    if (shouldLog && displayable) {
       myModel.add(notification, project);
     }
 
-    showWhenVisible(notification, project);
+    boolean willBeShown = displayable && NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS;
+    if (!shouldLog && !willBeShown) {
+      notification.expire();
+    }
+
+    if (NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS) {
+      showWhenVisible(notification, project);
+    }
   }
 
   private static void showWhenVisible(final Notification notification, final Project project) {
@@ -187,8 +196,18 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       case STICKY_BALLOON:
       case BALLOON:
       default:
-        if (NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS) {
-          notifyByBalloon(notification, type, project);
+        Balloon balloon = notifyByBalloon(notification, type, project);
+        if (!settings.isShouldLog()) {
+          if (balloon == null) {
+            notification.expire();
+          } else {
+            balloon.addListener(new JBPopupAdapter() {
+              @Override
+              public void onClosed(LightweightWindowEvent event) {
+                notification.expire();
+              }
+            });
+          }
         }
         break;
       case TOOL_WINDOW:
@@ -216,10 +235,11 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
   }
 
-  private static void notifyByBalloon(final Notification notification,
+  @Nullable
+  private static Balloon notifyByBalloon(final Notification notification,
                                       final NotificationDisplayType displayType,
                                       @Nullable final Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
 
     Window window = findWindowForBalloon(project);
     if (window instanceof IdeFrameImpl) {
@@ -240,7 +260,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
           }
         });
       }
+      return balloon;
     }
+    return null;
   }
 
   @Nullable

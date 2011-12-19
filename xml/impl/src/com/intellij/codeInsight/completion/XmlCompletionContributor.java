@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -82,7 +83,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   public XmlCompletionContributor() {
     extend(CompletionType.BASIC,
-           XmlPatterns.psiElement().inside(XmlPatterns.xmlAttributeValue()),
+           PlatformPatterns.psiElement().inside(XmlPatterns.xmlAttributeValue()),
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -118,10 +119,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   public static boolean isXmlNameCompletion(final CompletionParameters parameters) {
     final ASTNode node = parameters.getPosition().getNode();
-    if (node == null || node.getElementType() != XmlTokenType.XML_NAME) {
-      return false;
-    }
-    return true;
+    return node != null && node.getElementType() == XmlTokenType.XML_NAME;
   }
 
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
@@ -133,43 +131,48 @@ public class XmlCompletionContributor extends CompletionContributor {
     final PsiElement element = parameters.getPosition();
 
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME) {
-      if (!isXmlNameCompletion(parameters)) return;
-      result.stopHere();
-      if (!(element.getParent() instanceof XmlTag)) {
-        return;
-      }
-      final XmlTag parent = (XmlTag)element.getParent();
-      final String namespace = parent.getNamespace();
-      final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
-      final String prefix = result.getPrefixMatcher().getPrefix();
-      final int pos = prefix.indexOf(':');
-      final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
-
-      final PsiReference reference = parent.getReference();
-      if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
-        final Set<LookupElement> set = new HashSet<LookupElement>();
-        new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
-        for (final LookupElement item : set) {
-          result.addElement(item);
-        }
-      }
-      else {
-
-        final CompletionResultSet newResult = result.withPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
-
-        final XmlFile file = (XmlFile)parameters.getOriginalFile();
-        final List<Pair<String,String>> names = XmlExtension.getExtension(file).getAvailableTagNames(file, parent);
-        for (Pair<String, String> pair : names) {
-          final String name = pair.getFirst();
-          final String ns = pair.getSecond();
-          final LookupElement item = createLookupElement(name, ns, ns, namespacePrefix);
-          newResult.addElement(item);
-        }
-      }
+      completeTagName(parameters, result);
     }
 
     else if (parameters.getCompletionType() == CompletionType.SMART) {
       new XmlSmartCompletionProvider().complete(parameters, result, element);
+    }
+  }
+
+  static void completeTagName(CompletionParameters parameters, CompletionResultSet result) {
+    PsiElement element = parameters.getPosition();
+    if (!isXmlNameCompletion(parameters)) return;
+    result.stopHere();
+    if (!(element.getParent() instanceof XmlTag) || !(parameters.getOriginalFile() instanceof XmlFile)) {
+      return;
+    }
+    final XmlTag parent = (XmlTag)element.getParent();
+    final String namespace = parent.getNamespace();
+    final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
+    final String prefix = result.getPrefixMatcher().getPrefix();
+    final int pos = prefix.indexOf(':');
+    final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
+
+    final PsiReference reference = parent.getReference();
+    if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
+      final Set<LookupElement> set = new HashSet<LookupElement>();
+      new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
+      for (final LookupElement item : set) {
+        result.addElement(item);
+      }
+    }
+    else {
+
+      final CompletionResultSet newResult = result.withPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
+
+      final XmlFile file = (XmlFile)parameters.getOriginalFile();
+      final List<Pair<String,String>> names = XmlExtension.getExtension(file).getAvailableTagNames(file, parent);
+      for (Pair<String, String> pair : names) {
+        final String name = pair.getFirst();
+        final String ns = pair.getSecond();
+        final LookupElement item = createLookupElement(name, ns, ns, namespacePrefix);
+        newResult.addElement(item);
+      }
     }
   }
 

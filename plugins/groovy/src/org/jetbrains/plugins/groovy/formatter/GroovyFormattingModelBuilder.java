@@ -16,10 +16,7 @@
 
 package org.jetbrains.plugins.groovy.formatter;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.formatting.Indent;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -32,6 +29,7 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -52,7 +50,9 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     assert astNode != null;
     CommonCodeStyleSettings groovySettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
     GroovyCodeStyleSettings customSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
-    final GroovyBlock block = new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, groovySettings, customSettings);
+    final GroovyBlock block = new GroovySimpleBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, groovySettings, customSettings,
+                                                    CollectionFactory.<PsiElement, Alignment>hashMap(),
+                                                    CollectionFactory.<PsiElement, GroovyBlock>hashMap());
     return new GroovyFormattingModel(containingFile, block, FormattingDocumentModelImpl.createOn(containingFile));
   }
 

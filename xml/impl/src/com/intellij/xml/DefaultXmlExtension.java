@@ -52,8 +52,8 @@ public class DefaultXmlExtension extends XmlExtension {
   public List<Pair<String,String>> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
     final Set<String> namespaces = new HashSet<String>(Arrays.asList(context.knownNamespaces()));
-    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
-    if (provider != null) {
+    final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
+    for (XmlSchemaProvider provider : providers) {
       namespaces.addAll(provider.getAvailableNamespaces(file, null));
     }
     final ArrayList<String> nsInfo = new ArrayList<String>();
@@ -70,11 +70,13 @@ public class DefaultXmlExtension extends XmlExtension {
 
   @NotNull
   public Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context) {
-    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(context);
-    if (provider == null) {
-      return Collections.emptySet();
+    final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(context);
+
+    HashSet<String> set = new HashSet<String>();
+    for (XmlSchemaProvider provider : providers) {
+      set.addAll(provider.getAvailableNamespaces(context, tagName));
     }
-    return provider.getAvailableNamespaces(context, tagName);
+    return set;
   }
 
   public static Set<String> filterNamespaces(final Set<String> namespaces, final String tagName, final XmlFile context) {
@@ -181,10 +183,17 @@ public class DefaultXmlExtension extends XmlExtension {
       }
     }
     
-    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
+    final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
+    XmlSchemaProvider prefixProvider = null;
     String prefix = nsPrefix;
-    if (prefix == null && provider != null) {
-      prefix = provider.getDefaultPrefix(namespace, file);
+    if (prefix == null) {
+      for (XmlSchemaProvider provider : providers) {
+        prefix = provider.getDefaultPrefix(namespace, file);
+        if (prefix != null) {
+          prefixProvider = provider;
+          break;
+        }
+      }
     }
     if (prefix == null) {
       prefix = "";
@@ -201,8 +210,8 @@ public class DefaultXmlExtension extends XmlExtension {
 
     String location = null;
     if (namespace.length() > 0) {
-      if (provider != null) {
-        final Set<String> strings = provider.getLocations(namespace, file);
+      if (prefixProvider != null) {
+        final Set<String> strings = prefixProvider.getLocations(namespace, file);
         if (strings != null && strings.size() > 0) {
           location = strings.iterator().next();
         }

@@ -79,6 +79,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-main/platform-main.iml" filepath="$PROJECT_DIR$/platform/platform-main/platform-main.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources/platform-resources.iml" filepath="$PROJECT_DIR$/platform/platform-resources/platform-resources.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources-en/platform-resources-en.iml" filepath="$PROJECT_DIR$/platform/platform-resources-en/platform-resources-en.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/platform-tests.iml" filepath="$PROJECT_DIR$/platform/platform-tests/platform-tests.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties.iml" filepath="$PROJECT_DIR$/plugins/properties/properties.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/xml/relaxng/relaxng.iml" filepath="$PROJECT_DIR$/xml/relaxng/relaxng.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/resources/resources.iml" filepath="$PROJECT_DIR$/resources/resources.iml" />

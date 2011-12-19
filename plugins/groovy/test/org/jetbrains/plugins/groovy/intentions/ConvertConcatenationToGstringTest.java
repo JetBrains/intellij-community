@@ -32,6 +32,9 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  * @author Maxim.Medvedev
  */
 public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
+
+  private static final String CONVERT_TO_GSTRING = "Convert to GString";
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -52,22 +55,26 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   }
 
   public void testSimpleCase() throws Exception {
-    doTest("Convert to GString", true);
+    doTest(CONVERT_TO_GSTRING, true);
   }
 
   public void testVeryComplicatedCase() throws Exception {
-    doTest("Convert to GString", true);
+    doTest(CONVERT_TO_GSTRING, true);
   }
 
   public void testQuotes() throws Exception {
-    doTest("Convert to GString", true);
+    doTest(CONVERT_TO_GSTRING, true);
   }
 
   public void testQuotes2() throws Exception {
-    doTest("Convert to GString", true);
+    doTest(CONVERT_TO_GSTRING, true);
   }
 
   public void testQuotesInMultilineString() throws Exception {
-    doTest("Convert to GString", true);
+    doTest(CONVERT_TO_GSTRING, true);
+  }
+  
+  public void testDot() {
+    doTest(CONVERT_TO_GSTRING, true);
   }
 }

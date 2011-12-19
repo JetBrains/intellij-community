@@ -130,13 +130,13 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     }
   }
 
-  public void gotEntry(FileObject fileObject, Entry entry) {
-
-  }
+  public void gotEntry(FileObject fileObject, Entry entry) {}
 
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     myListener.addMessage(new MessageEvent(message, error, tagged));
-    if (message.length() == 0) return;
+    if (message.isEmpty()) {
+      return;
+    }
 
     if (isFileMessage(message)) {
       lastMessage = MessageType.FILE_MESSAGE;
@@ -159,6 +159,7 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
           myListener.addError(s, null, myCvsFileSystem, myCvsRoot, false);
         }
         myPreviousErrorMessages.clear();
+        return;
       }
       final String relativeFileName = errorMessagePattern.getRelativeFileName(message);
       lastMessage = MessageType.ERROR;
@@ -200,7 +201,9 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
   @Nullable
   private static CvsMessagePattern getErrorMessagePattern(String message, CvsMessagePattern[] patterns) {
     for (CvsMessagePattern pattern : patterns) {
-      if (pattern.matches(message)) return pattern;
+      if (pattern.matches(message)) {
+        return pattern;
+      }
     }
     return null;
   }
@@ -211,7 +214,9 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
   }
 
   public void operationCompleted() {
-    if (!CvsEntriesManager.getInstance().isActive()) return;
+    if (!CvsEntriesManager.getInstance().isActive()) {
+      return;
+    }
     for (File file : myFileToInfoMap.keySet()) {
       addFileMessage(myFileToInfoMap.get(file), file);
     }

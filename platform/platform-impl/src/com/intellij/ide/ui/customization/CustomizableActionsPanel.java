@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -522,13 +523,19 @@ public class CustomizableActionsPanel {
                     node.getUserObject() instanceof Pair ? ((Pair)node.getUserObject()).first : null);
   }
 
-  protected void doSetIcon(DefaultMutableTreeNode node, String path) {
+  protected boolean doSetIcon(DefaultMutableTreeNode node, @Nullable String path, Component component) {
+    if (StringUtil.isNotEmpty(path) && !new File(path).isFile()) {
+      Messages
+        .showErrorDialog(component, IdeBundle.message("error.file.not.found.message", path), IdeBundle.message("title.choose.action.icon"));
+      return false;
+    }
+
     String actionId = getActionId(node);
-    if (actionId == null) return;
+    if (actionId == null) return false;
 
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action != null && action.getTemplatePresentation() != null) {
-      if (path != null && path.length() > 0) {
+      if (StringUtil.isNotEmpty(path)) {
         Image image = null;
         try {
           image = ImageLoader.loadFromStream(VfsUtil.convertToURL(VfsUtil.pathToUrl(path.replace(File.separatorChar,
@@ -540,8 +547,8 @@ public class CustomizableActionsPanel {
         Icon icon = new File(path).exists() ? IconLoader.getIcon(image) : null;
         if (icon != null) {
           if (icon.getIconWidth() >  EMPTY_ICON.getIconWidth() || icon.getIconHeight() > EMPTY_ICON.getIconHeight()) {
-            Messages.showErrorDialog(myActionsTree, IdeBundle.message("custom.icon.validation.message"), IdeBundle.message("custom.icon.validation.title"));
-            return;
+            Messages.showErrorDialog(component, IdeBundle.message("custom.icon.validation.message"), IdeBundle.message("title.choose.action.icon"));
+            return false;
           }
           node.setUserObject(Pair.create(actionId, icon));
           mySelectedSchema.addIconCustomization(actionId, path);
@@ -556,13 +563,15 @@ public class CustomizableActionsPanel {
           node.setUserObject(nodeOnToolbar.getUserObject());
         }
       }
+      return true;
     }
+    return false;
   }
 
   private static TextFieldWithBrowseButton createBrowseField(){
     TextFieldWithBrowseButton textField = new TextFieldWithBrowseButton();
-    textField.setPreferredSize(new Dimension(150, textField.getPreferredSize().height));
-    textField.setMinimumSize(new Dimension(150, textField.getPreferredSize().height));
+    textField.setPreferredSize(new Dimension(200, textField.getPreferredSize().height));
+    textField.setMinimumSize(new Dimension(200, textField.getPreferredSize().height));
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       public boolean isFileSelectable(VirtualFile file) {
         //noinspection HardCodedStringLiteral
@@ -581,13 +590,23 @@ public class CustomizableActionsPanel {
 
     protected EditIconDialog(DefaultMutableTreeNode node) {
       super(false);
-      setTitle(IdeBundle.message("title.choose.action.icon.path"));
+      setTitle(IdeBundle.message("title.choose.action.icon"));
       init();
       myNode = node;
       final String actionId = getActionId(node);
       if (actionId != null) {
-        myTextField.setText(mySelectedSchema.getIconPath(actionId));
+        final String iconPath = mySelectedSchema.getIconPath(actionId);
+        myTextField.setText(FileUtil.toSystemDependentName(iconPath));
       }
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myTextField.getChildComponent();
+    }
+
+    protected String getDimensionServiceKey() {
+      return getClass().getName();
     }
 
     protected JComponent createCenterPanel() {
@@ -599,11 +618,9 @@ public class CustomizableActionsPanel {
 
     protected void doOKAction() {
       if (myNode != null) {
-        if (myTextField.getText().length() > 0 && !new File(myTextField.getText()).exists()){
-          Messages.showErrorDialog(myPanel, IdeBundle.message("error.file.not.found.message", myTextField.getText()));
+        if (!doSetIcon(myNode, myTextField.getText(), getContentPane())) {
           return;
         }
-        doSetIcon(myNode, myTextField.getText());
         final Object userObject = myNode.getUserObject();
         if (userObject instanceof Pair) {
           String actionId = (String)((Pair)userObject).first;
@@ -659,7 +676,7 @@ public class CustomizableActionsPanel {
         public void actionPerformed(ActionEvent e) {
           final TreePath selectionPath = myTree.getSelectionPath();
           if (selectionPath != null) {
-            doSetIcon((DefaultMutableTreeNode)selectionPath.getLastPathComponent(), myTextField.getText());
+            doSetIcon((DefaultMutableTreeNode)selectionPath.getLastPathComponent(), myTextField.getText(), getContentPane());
             myTree.repaint();
           }
         }
@@ -672,7 +689,9 @@ public class CustomizableActionsPanel {
       });
       JPanel northPanel = new JPanel(new BorderLayout());
       northPanel.add(myTextField, BorderLayout.CENTER);
-      northPanel.add(new JLabel(IdeBundle.message("label.icon.path")), BorderLayout.WEST);
+      final JLabel label = new JLabel(IdeBundle.message("label.icon.path"));
+      label.setLabelFor(myTextField.getChildComponent());
+      northPanel.add(label, BorderLayout.WEST);
       northPanel.add(mySetIconButton, BorderLayout.EAST);
       northPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
       JPanel panel = new JPanel(new BorderLayout());
@@ -687,7 +706,8 @@ public class CustomizableActionsPanel {
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
             final String actionId = getActionId(node);
             if (actionId != null) {
-              myTextField.setText(mySelectedSchema.getIconPath(actionId));
+              final String iconPath = mySelectedSchema.getIconPath(actionId);
+              myTextField.setText(FileUtil.toSystemDependentName(iconPath));
             }
           }
         }

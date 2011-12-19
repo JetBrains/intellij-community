@@ -60,6 +60,7 @@ public class GeneratorTest extends LightGroovyTestCase {
   public void testSubclassProperty() throws Throwable { doTest(); }
   public void testFinalProperty() throws Throwable { doTest(); }
   public void testDefaultConstructorArguments() throws Throwable { doTest(); }
+  public void testDelegateWithStaticMethod() throws Throwable { doTest(); }
 
   public void testParameterReturnType() throws Throwable {
     myFixture.addClass("public interface GwtActionService {\n" +
