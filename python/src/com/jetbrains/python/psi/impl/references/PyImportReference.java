@@ -43,6 +43,16 @@ public class PyImportReference extends PyReferenceImpl {
     myElement = element;
   }
 
+  public static PyImportReference forElement(PyReferenceExpressionImpl expression, PsiElement importParent, PyResolveContext context) {
+    if (importParent instanceof PyImportElement) {
+      final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(importParent, PyImportStatementBase.class);
+      if (importStatement instanceof PyFromImportStatement) {
+        return new PyFromImportNameReference(expression, context);
+      }
+      return new PyImportReference(expression, context);
+    }
+    return new PyFromImportSourceReference(expression, context);
+  }
 
   @Override
   public String getUnresolvedDescription() {
@@ -161,7 +171,6 @@ public class PyImportReference extends PyReferenceImpl {
     }
     return false;
   }
-
 
   class ImportVariantCollector {
     private final PsiFile myCurrentFile;
