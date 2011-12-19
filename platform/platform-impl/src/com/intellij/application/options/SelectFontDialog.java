@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.HashMap;
@@ -52,6 +53,7 @@ public class SelectFontDialog extends DialogWrapper {
     final boolean useOnlyMonospacedFonts = EditorColorsManager.getInstance().isUseOnlyMonospacedFonts();
     myShowMonospacedCheckbox.setSelected(useOnlyMonospacedFonts);
     myFontList = new JBList();
+    new ListSpeedSearch(myFontList);
     myFontList.setModel(new DefaultListModel());
     fillList(useOnlyMonospacedFonts);
 
