@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
@@ -58,11 +58,16 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @NotNull
-  protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly)
-    throws IncorrectOperationException
-  {
-    final ImportOptimizer optimizer = LanguageImportStatements.INSTANCE.forFile(file);
-    Runnable runnable = optimizer != null ? optimizer.processFile(file) : EmptyRunnable.getInstance();
+  protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
+    final List<Runnable> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
+    Runnable runnable = optimizers.isEmpty() ? EmptyRunnable.getInstance() : new Runnable() {
+      @Override
+      public void run() {
+        for (Runnable optimizer : optimizers) {
+          optimizer.run();
+        }
+      }
+    };
     return new FutureTask<Boolean>(runnable, true);
   }
 }

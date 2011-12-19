@@ -103,7 +103,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     myCbIncludeSubdirs.setEnabled(myRbDirectory.isSelected());
     myCbOptimizeImports.setEnabled(
       !myRbSelectedText.isSelected() &&
-      !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile) == null && myRbFile.isSelected()));
+      !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty() && myRbFile.isSelected()));
 
     final boolean canTargetVcsChanges = canTargetVcsRegions();
     myCbOnlyVcsChangedRegions.setEnabled(canTargetVcsChanges);
