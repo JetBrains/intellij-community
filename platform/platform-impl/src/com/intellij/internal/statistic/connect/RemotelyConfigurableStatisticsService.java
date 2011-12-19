@@ -42,7 +42,7 @@ public class RemotelyConfigurableStatisticsService implements StatisticsService 
       return new StatisticsResult(StatisticsResult.ResultCode.SEND, content);
     }
     catch (Exception e) {
-      return new StatisticsResult(StatisticsResult.ResultCode.SEND_WITH_ERRORS, e.getMessage() != null ? e.getMessage() : "NPE");
+      return new StatisticsResult(StatisticsResult.ResultCode.SENT_WITH_ERRORS, e.getMessage() != null ? e.getMessage() : "NPE");
     }
   }
 }

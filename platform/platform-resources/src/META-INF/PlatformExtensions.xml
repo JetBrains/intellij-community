@@ -228,7 +228,8 @@
   <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
   <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 
-  <statistics.usagesCollector  implementation="com.intellij.ide.plugins.PluginsUsagesCollector"/>
+  <statistics.usagesCollector  implementation="com.intellij.ide.plugins.DisabledPluginsUsagesCollector"/>
+  <statistics.usagesCollector  implementation="com.intellij.ide.plugins.NonBundledPluginsUsagesCollector"/>
   <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
   <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
 

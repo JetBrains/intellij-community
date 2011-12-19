@@ -15,11 +15,11 @@ public abstract class ApplicationStatisticsPersistence {
   public ApplicationStatisticsPersistence() {
   }
 
-  public void persistFrameworks(@NotNull GroupDescriptor groupDescriptor, @NotNull Project project, @NotNull Set<UsageDescriptor> frameworks) {
+  public void persistUsages(@NotNull GroupDescriptor groupDescriptor, @NotNull Project project, @NotNull Set<UsageDescriptor> usageDescriptors) {
       if (!myApplicationData.containsKey(groupDescriptor)) {
           myApplicationData.put(groupDescriptor, new HashMap<String, Set<UsageDescriptor>>());
       }
-      myApplicationData.get(groupDescriptor).put(project.getName(), frameworks);
+      myApplicationData.get(groupDescriptor).put(project.getName(), usageDescriptors);
   }
 
   @NotNull
