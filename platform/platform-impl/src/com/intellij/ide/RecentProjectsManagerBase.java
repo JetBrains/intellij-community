@@ -158,6 +158,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     final List<String> paths = new ArrayList<String>();
     synchronized (myState) {
       outer: for (String recentPath : myState.recentPaths) {
+        if (recentPath == null) {
+          continue;
+        }
 
         for (Project openProject : openProjects) {
           final String path = getProjectPath(openProject);
@@ -269,7 +272,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
   }
 
-  @Nullable
+  @NotNull
   private static String getProjectName(String path) {
     final File file = new File(path);
     if (file.isDirectory()) {
@@ -294,14 +297,12 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
             }
           }
         }
-      } else {
-        return file.getName();
       }
-    } else {
+      return file.getName();
+    }
+    else {
       return FileUtil.getNameWithoutExtension(file.getName());
     }
-
-    return null;
   }
 
   private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
