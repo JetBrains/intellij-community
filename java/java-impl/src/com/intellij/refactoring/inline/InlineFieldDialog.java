@@ -22,14 +22,15 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineFieldDialog extends InlineOptionsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
   private final PsiReferenceExpression myReferenceExpression;
 
   private final PsiField myField;
+  protected final int myOccurrencesNumber;
 
   public InlineFieldDialog(Project project, PsiField field, PsiReferenceExpression ref) {
     super(project, true, field);
@@ -38,7 +39,7 @@ public class InlineFieldDialog extends InlineOptionsDialog {
     myInvokedOnReference = myReferenceExpression != null;
 
     setTitle(REFACTORING_NAME);
-
+    myOccurrencesNumber = initOccurrencesNumber(myField);
     init();
   }
 
@@ -56,7 +57,8 @@ public class InlineFieldDialog extends InlineOptionsDialog {
   }
 
   protected String getInlineAllText() {
-    return RefactoringBundle.message("all.references.and.remove.the.field");
+    final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
+    return RefactoringBundle.message("all.references.and.remove.the.field") + occurrencesString;
   }
 
   protected boolean isInlineThis() {

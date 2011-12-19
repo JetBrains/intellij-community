@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -72,10 +74,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.AutomaticRenamingDialog;
-import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -116,6 +115,7 @@ public class VariableInplaceRenamer {
   private RangeMarker myRenameOffset;
   private String myInitialName;
   protected final String myOldName;
+  protected RangeMarker myBeforeRevert = null;
 
   public void setAdvertisementText(String advertisementText) {
     myAdvertisementText = advertisementText;
@@ -347,6 +347,13 @@ public class VariableInplaceRenamer {
                     });
                   }
                 }
+                final int currentOffset = myEditor.getCaretModel().getOffset();
+                myBeforeRevert = myRenameOffset != null && myRenameOffset.getEndOffset() >= currentOffset && myRenameOffset.getStartOffset() <= currentOffset 
+                                 ? myEditor.getDocument().createRangeMarker(myRenameOffset.getStartOffset(), currentOffset) 
+                                 : null;
+                if (myBeforeRevert != null) {
+                  myBeforeRevert.setGreedyToRight(true);
+                }
                 restoreStateBeforeTemplateIsFinished();
               }
 
@@ -361,6 +368,9 @@ public class VariableInplaceRenamer {
                     final Runnable runnable = new Runnable() {
                       public void run() {
                         performRefactoringRename(myNewName, context, markAction);
+                        if (myBeforeRevert != null) {
+                          myBeforeRevert.dispose();
+                        }
                       }
                     };
                     if (ApplicationManager.getApplication().isUnitTestMode()){
@@ -373,6 +383,9 @@ public class VariableInplaceRenamer {
                 finally {
                   if (!bind) {
                     FinishMarkAction.finish(myProject, myEditor, markAction);
+                    if (myBeforeRevert != null) {
+                      myBeforeRevert.dispose();
+                    }
                   }
                 }
               }
@@ -451,7 +464,8 @@ public class VariableInplaceRenamer {
   }
 
   protected boolean shouldSelectAll() {
-    return false;
+    final Boolean selectAll = myEditor.getUserData(RenameHandlerRegistry.SELECT_ALL);
+    return selectAll != null && selectAll.booleanValue();
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
@@ -812,7 +826,21 @@ public class VariableInplaceRenamer {
       myLookupItems = new LookupElement[names.size()];
       final Iterator<String> iterator = names.iterator();
       for (int i = 0; i < myLookupItems.length; i++) {
-        myLookupItems[i] = LookupElementBuilder.create(iterator.next());
+        final String suggestion = iterator.next();
+        myLookupItems[i] = LookupElementBuilder.create(suggestion).setInsertHandler(new InsertHandler<LookupElement>() {
+          @Override
+          public void handleInsert(InsertionContext context, LookupElement item) {
+            if (shouldSelectAll()) return;
+            final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+            final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
+            if (templateState != null) {
+              final TextRange range = templateState.getCurrentVariableRange();
+              if (range != null) {
+                topLevelEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), suggestion);
+              }
+            }
+          }
+        });
       }
     }
 

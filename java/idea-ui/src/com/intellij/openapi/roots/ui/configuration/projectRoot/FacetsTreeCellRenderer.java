@@ -56,8 +56,8 @@ public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree impleme
         final Icon icon = configurable.getIcon(expanded);
         final boolean showSeparator = configurable instanceof FrameworkDetectionConfigurable;
         int width = -1;
-        if (showSeparator) {
-          final int treeWidth = tree.getSize().width;
+        if (showSeparator && tree.isVisible()) {
+          final int treeWidth = tree.getVisibleRect().width - 4;
           if (treeWidth > 0) {
             width = treeWidth;
           }

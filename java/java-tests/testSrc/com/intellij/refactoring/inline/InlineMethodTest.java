@@ -170,6 +170,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testSuperMethodInAnonymousClass() throws Exception {
     doTest();
   }
+  
+  public void testInlineAnonymousClassWithPrivateMethodInside() throws Exception {
+    doTest();
+  }
 
   private void doTest() throws Exception {
     String name = getTestName(false);

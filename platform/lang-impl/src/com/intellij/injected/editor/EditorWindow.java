@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -109,7 +110,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     Iterator<EditorWindow> iterator = allEditors.iterator();
     while (iterator.hasNext()) {
       EditorWindow editorWindow = iterator.next();
-      if (!editorWindow.isValid()/* || myDocumentWindow.intersects(editorWindow.myDocumentWindow)*/) {
+      if (!editorWindow.isValid()) {
         editorWindow.dispose();
 
         InjectedLanguageUtil.clearCaches(editorWindow.myInjectedFile, editorWindow.getDocument());
@@ -185,6 +186,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     myEditorMouseMotionListeners.clear();
 
     myDisposed = true;
+    Disposer.dispose(myDocumentWindow);
   }
 
   @Override

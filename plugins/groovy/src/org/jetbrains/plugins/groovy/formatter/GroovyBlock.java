@@ -25,7 +25,6 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
@@ -56,27 +55,17 @@ import java.util.Map;
  *
  * @author ilyas
  */
-public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
-
+public abstract class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   final protected ASTNode myNode;
-  final protected Alignment myAlignment;
+  protected Alignment myAlignment;
   final protected Indent myIndent;
   final protected Wrap myWrap;
   final protected CommonCodeStyleSettings mySettings;
   final protected GroovyCodeStyleSettings myGroovySettings;
   final protected Map<PsiElement, Alignment> myInnerAlignments;
+  final protected Map<PsiElement, GroovyBlock> myBlocks;
 
   protected List<Block> mySubBlocks = null;
-
-  public GroovyBlock(@NotNull final ASTNode node,
-                     @Nullable final Alignment alignment,
-                     @NotNull final Indent indent,
-                     @Nullable final Wrap wrap,
-                     final CommonCodeStyleSettings settings,
-                     GroovyCodeStyleSettings groovySettings
-                    ) {
-    this(node, alignment, indent, wrap, settings, groovySettings, CollectionFactory.<PsiElement, Alignment>hashMap());
-  }
 
   public GroovyBlock(@NotNull final ASTNode node,
                      @Nullable Alignment alignment,
@@ -84,20 +73,20 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
                      @Nullable final Wrap wrap,
                      final CommonCodeStyleSettings settings,
                      GroovyCodeStyleSettings groovySettings,
-                     @NotNull Map<PsiElement, Alignment> innerAlignments) {
+                     @NotNull Map<PsiElement, Alignment> innerAlignments, Map<PsiElement, GroovyBlock> blocks) {
     myNode = node;
-    if (groovySettings.USE_FLYING_GEESE_BRACES && isLeaf()) {
+    myBlocks = blocks;
+    if (groovySettings.USE_FLYING_GEESE_BRACES) {
       PsiElement psi = myNode.getPsi();
-      if (alignment == null) alignment = innerAlignments.get(psi);
-      if (alignment == null) alignment = Alignment.createAlignment(true);
-
-      myAlignment = alignment;
-      innerAlignments.put(psi, myAlignment);
+      myBlocks.put(psi, this);
+      if (alignment == null) {
+        alignment = innerAlignments.get(psi);
+      }
+      else {
+        innerAlignments.put(psi, alignment);
+      }
     }
-    else {
-      myAlignment = alignment;
-    }
-
+    myAlignment = alignment;
 
     myIndent = indent;
     myWrap = wrap;
@@ -131,9 +120,6 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
 
   @NotNull
   public List<Block> getSubBlocks() {
-    if (mySubBlocks == null) {
-      mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
-    }
     return mySubBlocks;
   }
 
@@ -205,9 +191,9 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     if (BLOCK_SET.contains(astNode.getElementType()) ||
         SWITCH_STATEMENT.equals(astNode.getElementType())) {
 //      PsiElement psi = ((GroovyBlock)getSubBlocks().get(newChildIndex)).getNode().getPsi();
- //     if (GeeseUtil.isClosureRBrace(psi)) {
-   //     return new ChildAttributes(Indent.getNoneIndent(), GeeseUtil.calculateRBraceAlignment(psi, myInnerAlignments));
-    //  }
+      //     if (GeeseUtil.isClosureRBrace(psi)) {
+      //     return new ChildAttributes(Indent.getNoneIndent(), GeeseUtil.calculateRBraceAlignment(psi, myInnerAlignments));
+      //  }
 
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
@@ -242,6 +228,10 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     return isIncomplete(myNode);
   }
 
+  public void setAlignment(Alignment alignment) {
+    myAlignment = alignment;
+  }
+
   /**
    * @param node Tree node
    * @return true if node is incomplete
@@ -250,8 +240,8 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
     if (node.getElementType() instanceof ILazyParseableElementType) return false;
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&
-        !(lastChild.getElementType() instanceof ILazyParseableElementType) &&
-        (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
+           !(lastChild.getElementType() instanceof ILazyParseableElementType) &&
+           (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
       lastChild = lastChild.getTreePrev();
     }
     return lastChild != null && (lastChild.getPsi() instanceof PsiErrorElement || isIncomplete(lastChild));

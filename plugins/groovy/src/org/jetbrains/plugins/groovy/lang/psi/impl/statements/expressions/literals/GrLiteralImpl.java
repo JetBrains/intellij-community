@@ -17,10 +17,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -42,8 +44,9 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  * @author ilyas
  */
 public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLanguageInjectionHost {
+  private static final Logger LOG = Logger.getInstance(GrLiteralImpl.class);
 
-  private static final Function<GrLiteralImpl,PsiType> TYPE_CALCULATOR = new NullableFunction<GrLiteralImpl, PsiType>() {
+  private static final Function<GrLiteralImpl, PsiType> TYPE_CALCULATOR = new NullableFunction<GrLiteralImpl, PsiType>() {
     @Override
     public PsiType fun(GrLiteralImpl grLiteral) {
       IElementType elemType = getLiteralType(grLiteral);
@@ -182,11 +185,13 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
   public boolean isValidHost() {
     return getValue() instanceof String;
   }
-  
-  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+
+  public GrLiteralImpl updateText(@NotNull final String text) {
+    final GrExpression newExpr = GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(text);
+    LOG.assertTrue(newExpr instanceof GrLiteral);
+    LOG.assertTrue(newExpr.getFirstChild() != null);
     final ASTNode valueNode = getNode().getFirstChildNode();
-    assert valueNode instanceof LeafElement;
-    ((LeafElement)valueNode).replaceWithText(text);
+    getNode().replaceChild(valueNode, newExpr.getFirstChild().getNode());
     return this;
   }
 

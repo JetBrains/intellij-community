@@ -7,9 +7,17 @@ Groovy script
     PsiWhiteSpace(' ')
     Arguments
       PsiElement(()('(')
-      Literal
-        GroovyASTPsiElementImpl(regex literal)
-          PsiElement(regex begin)('/')
-          PsiElement(regex content)('a\${2}')
-          PsiElement(regex end)('/')
+      Compound regular expression
+        PsiElement(regex begin)('/')
+        PsiElement(regex content)('a\')
+        GString injection
+          PsiElement($)('$')
+          Closable block
+            PsiElement({)('{')
+            Parameter list
+              <empty list>
+            Literal
+              PsiElement(Integer)('2')
+            PsiElement(})('}')
+        PsiElement(regex end)('/')
       PsiElement())(')')

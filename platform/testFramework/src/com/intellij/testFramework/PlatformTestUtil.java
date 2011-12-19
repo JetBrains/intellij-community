@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -330,17 +330,6 @@ public class PlatformTestUtil {
                              Comparator comparator,
                              int maxRowCount,
                              int currentLine,
-                             char paddingChar) {
-    return doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, currentLine, paddingChar, null);
-  }
-
-  private static int doPrint(StringBuffer buffer,
-                             int currentLevel,
-                             Object node,
-                             AbstractTreeStructure structure,
-                             Comparator comparator,
-                             int maxRowCount,
-                             int currentLine,
                              char paddingChar,
                              Queryable.PrintInfo printInfo) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
@@ -590,7 +579,7 @@ public class PlatformTestUtil {
     }
   }
 
-  private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, VirtualFileFilter filter) {
+  private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
     HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
@@ -599,7 +588,7 @@ public class PlatformTestUtil {
     return map;
   }
 
-  public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, VirtualFileFilter fileFilter) throws IOException {
+  public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
     VirtualFile[] childrenAfter = dirAfter.getChildren();
     if (dirAfter.isInLocalFileSystem()) {
@@ -740,4 +729,29 @@ public class PlatformTestUtil {
     }
     return homePath;
   }
+
+  public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
+    return new Comparator<AbstractTreeNode>() {
+      @Override
+      public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
+        String displayText1 = o1.toTestString(printInfo);
+        String displayText2 = o2.toTestString(printInfo);
+        return displayText1.compareTo(displayText2);
+      }
+    };
+  }
+
+  /**
+   * Use {@link #createComparator(com.intellij.openapi.ui.Queryable.PrintInfo)} instead.
+   */
+  @Deprecated
+  public static final Comparator<AbstractTreeNode> DEFAULT_COMPARATOR = new Comparator<AbstractTreeNode>() {
+    @Override
+    public int compare(AbstractTreeNode o1, AbstractTreeNode o2) {
+      String displayText1 = o1.getTestPresentation();
+      String displayText2 = o2.getTestPresentation();
+      return displayText1.compareTo(displayText2);
+    }
+  };
+
 }

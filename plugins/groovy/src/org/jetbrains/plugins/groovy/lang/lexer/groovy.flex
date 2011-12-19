@@ -134,7 +134,7 @@ mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
 
 mSTRING_NL = {mONE_NL}
 mSTRING_ESC = \\ [^] | \\ ({WHITE_SPACE})+ (\n|\r)
-mREGEX_ESC = \\ "$"
+mREGEX_ESC = \\ "/"
 | "\\""u"{mHEX_DIGIT}{4}
 | "\\" [0..3] ([0..7] ([0..7])?)?
 | "\\" [4..7] ([0..7])?
@@ -142,10 +142,9 @@ mREGEX_ESC = \\ "$"
 
 /// Regexes ////////////////////////////////////////////////////////////////
 
-ESCAPED_REGEX_SEP = \\ "/"
-mREGEX_CONTENT = ({mREGEX_ESC} | {ESCAPED_REGEX_SEP} | [^"/""$"])+
+mREGEX_CONTENT = ({mREGEX_ESC} | [^"/""$"])+
 
-mDOLLAR_SLASH_REGEX_CONTENT = ([^\/\$] | \/[^\$] )+
+mDOLLAR_SLASH_REGEX_CONTENT = ([^\/\$] | \/[^\/\$] )+
 
 ////////////////////////////////////////////////////////////////////////////
 

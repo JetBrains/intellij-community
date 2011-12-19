@@ -18,7 +18,10 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -71,6 +74,11 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
   @Override
   protected PsiElement checkLocalScope() {
     return myParentClass;
+  }
+
+  @Override
+  protected SearchScope getReferencesSearchScope(VirtualFile file) {
+    return new LocalSearchScope(myParentClass);
   }
 
   protected PsiElement getAnchorElement() {

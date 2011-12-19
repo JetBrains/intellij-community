@@ -101,4 +101,9 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
   public int getContentType() {
     return CONTENT_TYPE_UNKNOWN;
   }
+
+  @Override
+  public String getDefaultValue() {
+    return null;
+  }
 }

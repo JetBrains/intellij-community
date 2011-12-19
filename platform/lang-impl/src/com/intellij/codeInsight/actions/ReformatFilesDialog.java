@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,33 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class ReformatFilesDialog extends DialogWrapper {
   private JPanel myPanel;
   private JCheckBox myOptimizeImports;
+  private JCheckBox myOnlyChangedText;
+  private final VirtualFile[] myFiles;
 
-  public ReformatFilesDialog(Project project) {
+  public ReformatFilesDialog(@NotNull Project project, @NotNull VirtualFile[] files) {
     super(project, true);
+    myFiles = files;
     setTitle(CodeInsightBundle.message("dialog.reformat.files.title"));
+    myOptimizeImports.setSelected(isOptmizeImportsOptionOn());
+    boolean canTargetVcsChanges = false;
+    for (VirtualFile file : files) {
+      if (FormatChangedTextUtil.hasChanges(file, project)) {
+        canTargetVcsChanges = true;
+        break;
+      }
+    }
+    myOnlyChangedText.setEnabled(canTargetVcsChanges);
+    myOnlyChangedText.setSelected(
+      canTargetVcsChanges && PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false)
+    ); 
     myOptimizeImports.setSelected(isOptmizeImportsOptionOn());
     init();
   }
@@ -42,13 +59,19 @@ public class ReformatFilesDialog extends DialogWrapper {
     return myOptimizeImports.isSelected();
   }
 
+  public boolean isProcessOnlyChangedText() {
+    return myOnlyChangedText.isEnabled() && myOnlyChangedText.isSelected();
+  }
+
   protected void doOKAction() {
-    PropertiesComponent.getInstance().setValue(LayoutCodeDialog.OPTIMIZE_IMPORTS_KEY, Boolean.toString(myOptimizeImports.isSelected()));
     super.doOKAction();
+    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(myOptimizeImports.isSelected()));
+    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY,
+                                               Boolean.toString(myOnlyChangedText.isSelected()));
   }
 
   static boolean isOptmizeImportsOptionOn() {
-    return Boolean.valueOf(PropertiesComponent.getInstance().getValue(LayoutCodeDialog.OPTIMIZE_IMPORTS_KEY));
+    return PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false);
   }
 
 }

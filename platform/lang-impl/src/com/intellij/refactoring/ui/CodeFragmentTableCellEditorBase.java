@@ -86,4 +86,8 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
   public void addDocumentListener(DocumentListener listener) {
     myListeners.add(listener);
   }
+
+  public void clearListeners() {
+    myListeners.clear();
+  }
 }

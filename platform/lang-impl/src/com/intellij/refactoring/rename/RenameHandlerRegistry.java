@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -44,6 +45,7 @@ import java.util.TreeMap;
  * @author dsl
  */
 public class RenameHandlerRegistry {
+  public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final Set<RenameHandler> myHandlers  = new HashSet<RenameHandler>();
   private static final RenameHandlerRegistry INSTANCE = new RenameHandlerRegistry();
   private final PsiElementRenameHandler myDefaultElementRenameHandler;

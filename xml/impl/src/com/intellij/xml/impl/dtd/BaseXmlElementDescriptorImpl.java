@@ -41,6 +41,11 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
     return null;
   }
 
+  @Override
+  public String getDefaultValue() {
+    return null;
+  }
+
   // Read-only action
   protected abstract XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context);
 

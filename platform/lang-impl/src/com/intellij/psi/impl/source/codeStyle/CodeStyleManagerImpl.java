@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CodeStyleManagerImpl extends CodeStyleManager {
@@ -137,6 +141,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   @Override
   public void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException {
+    reformatText(file, Collections.singleton(new TextRange(startOffset, endOffset)));
+  }
+
+  @Override
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+    if (ranges.isEmpty()) {
+      return;
+    }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -150,17 +162,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings());
     LOG.assertTrue(file.isValid());
-    final PsiElement start = findElementInTreeWithFormatterEnabled(file, startOffset);
-    final PsiElement end = findElementInTreeWithFormatterEnabled(file, endOffset);
-    if (start != null && !start.isValid()) {
-      LOG.error("start=" + start + "; file=" + file);
-    }
-    if (end != null && !end.isValid()) {
-      LOG.error("end=" + start + "; end=" + file);
-    }
 
     Editor editor = PsiUtilBase.findEditor(file);
-    
+
     // There is a possible case that cursor is located at the end of the line that contains only white spaces. For example:
     //     public void foo() {
     //         <caret>
@@ -168,7 +172,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     // Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
     // So, we check if it should be preserved and restore it after formatting if necessary
     int visualColumnToRestore = -1;
-    
+
     if (editor != null) {
       Document document = editor.getDocument();
       int caretOffset = editor.getCaretModel().getOffset();
@@ -189,23 +193,40 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
         visualColumnToRestore = editor.getCaretModel().getVisualPosition().column;
       }
     }
-    
-
-    boolean formatFromStart = startOffset == 0;
-    boolean formatToEnd = endOffset == file.getTextLength();
 
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
-    final SmartPsiElementPointer startPointer = start == null ? null : smartPointerManager.createSmartPsiElementPointer(start);
-
-    final SmartPsiElementPointer endPointer = end == null ? null : smartPointerManager.createSmartPsiElementPointer(end);
-
-    codeFormatter.processText(file, new FormatTextRanges(new TextRange(startOffset, endOffset), true), true);
-    final PsiElement startElement = startPointer == null ? null : startPointer.getElement();
-    final PsiElement endElement = endPointer == null ? null : endPointer.getElement();
-
-    if ((startElement != null || formatFromStart) && (endElement != null || formatToEnd)) {
-      postProcessText(file, new TextRange(formatFromStart ? 0 : startElement.getTextRange().getStartOffset(),
-                                          formatToEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
+    List<RangeFormatInfo> infos = new ArrayList<RangeFormatInfo>();
+    for (TextRange range : ranges) {
+      final PsiElement start = findElementInTreeWithFormatterEnabled(file, range.getStartOffset());
+      final PsiElement end = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
+      if (start != null && !start.isValid()) {
+        LOG.error("start=" + start + "; file=" + file);
+      }
+      if (end != null && !end.isValid()) {
+        LOG.error("end=" + start + "; end=" + file);
+      }
+      boolean formatFromStart = range.getStartOffset() == 0;
+      boolean formatToEnd = range.getEndOffset() == file.getTextLength();
+      infos.add(new RangeFormatInfo(
+        start == null ? null : smartPointerManager.createSmartPsiElementPointer(start),
+        end == null ? null : smartPointerManager.createSmartPsiElementPointer(end),
+        formatFromStart,
+        formatToEnd
+      ));
+    }
+    
+    FormatTextRanges formatRanges = new FormatTextRanges();
+    for (TextRange range : ranges) {
+      formatRanges.add(range, true);
+    }
+    codeFormatter.processText(file, formatRanges, true);
+    for (RangeFormatInfo info : infos) {
+      final PsiElement startElement = info.startPointer == null ? null : info.startPointer.getElement();
+      final PsiElement endElement = info.endPointer == null ? null : info.endPointer.getElement();
+      if ((startElement != null || info.fromStart) && (endElement != null || info.toEnd)) {
+        postProcessText(file, new TextRange(info.fromStart ? 0 : startElement.getTextRange().getStartOffset(),
+                                            info.toEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
+      }
     }
 
     if (visualColumnToRestore < 0) {
@@ -758,5 +779,23 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       }
     });
   }
+  
+  private static class RangeFormatInfo{
 
+    public final SmartPsiElementPointer startPointer;
+    public final SmartPsiElementPointer endPointer;
+    public final boolean                fromStart;
+    public final boolean                toEnd;
+
+    RangeFormatInfo(@Nullable SmartPsiElementPointer startPointer,
+                    @Nullable SmartPsiElementPointer endPointer,
+                    boolean fromStart,
+                    boolean toEnd)
+    {
+      this.startPointer = startPointer;
+      this.endPointer = endPointer;
+      this.fromStart = fromStart;
+      this.toEnd = toEnd;
+    }
+  }
 }

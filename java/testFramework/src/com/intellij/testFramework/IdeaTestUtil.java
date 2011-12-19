@@ -15,40 +15,12 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.ui.Queryable;
 import com.intellij.pom.java.LanguageLevel;
 
-import java.util.Comparator;
-
 public class IdeaTestUtil extends PlatformTestUtil {
-  public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
-    return new Comparator<AbstractTreeNode>() {
-      @Override
-      public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
-        String displayText1 = o1.toTestString(printInfo);
-        String displayText2 = o2.toTestString(printInfo);
-        return displayText1.compareTo(displayText2);
-      }
-    };
-  }
-
-  /**
-   * Use {@link #createComparator(com.intellij.openapi.ui.Queryable.PrintInfo)} instead.
-   */
-  @Deprecated
-  public static final Comparator<AbstractTreeNode> DEFAULT_COMPARATOR = new Comparator<AbstractTreeNode>() {
-    @Override
-    public int compare(AbstractTreeNode o1, AbstractTreeNode o2) {
-      String displayText1 = o1.getTestPresentation();
-      String displayText2 = o2.getTestPresentation();
-      return displayText1.compareTo(displayText2);
-    }
-  };
-
   public static void main(String[] args) {
     printDetectedPerformanceTimings();
   }

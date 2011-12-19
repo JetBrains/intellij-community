@@ -220,7 +220,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       }
       FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
 
-      InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, place, documentWindow, myLanguage);
+      InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, documentWindow, myLanguage);
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
       assert parserDefinition != null : "Parser definition for language "+myLanguage+" is null";
       PsiFile psiFile = parserDefinition.createFile(viewProvider);
@@ -295,11 +295,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     }
   }
 
-  private static void cacheEverything(Place place,
-                                      DocumentWindowImpl documentWindow,
-                                      InjectedFileViewProvider viewProvider,
-                                      PsiFile psiFile,
-                                      SmartPsiElementPointer<PsiLanguageInjectionHost> pointer) {
+  private static void cacheEverything(@NotNull Place place,
+                                      @NotNull DocumentWindowImpl documentWindow,
+                                      @NotNull InjectedFileViewProvider viewProvider,
+                                      @NotNull PsiFile psiFile,
+                                      @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer) {
     FileDocumentManagerImpl.registerDocument(documentWindow, viewProvider.getVirtualFile());
 
     viewProvider.forceCachedPsi(psiFile);
@@ -357,6 +357,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     result.add(Pair.create(place, psiFile));
   }
 
+  @NotNull
   private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(@NotNull T host, @NotNull PsiFile hostPsiFile) {
     return hostPsiFile.isPhysical()
            ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host, hostPsiFile)

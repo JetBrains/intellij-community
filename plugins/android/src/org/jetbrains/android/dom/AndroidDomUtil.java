@@ -185,10 +185,15 @@ public class AndroidDomUtil {
     Set<AttributeFormat> formats = attr.getFormats();
     CompositeConverter composite = new CompositeConverter();
     String[] values = attr.getValues();
+    boolean containsUnsupportedFormats = false;
+
     for (AttributeFormat format : formats) {
       ResolvingConverter<String> converter = getStringConverter(format, values);
       if (converter != null) {
         composite.addConverter(converter);
+      }
+      else {
+        containsUnsupportedFormats = true;
       }
     }
     ResourceReferenceConverter resConverter = getResourceReferenceConverter(attr);
@@ -200,7 +205,7 @@ public class AndroidDomUtil {
     }
     ResolvingConverter<String> stringConverter = simplify(composite);
     if (resConverter != null) {
-      resConverter.setAdditionalConverter(simplify(composite));
+      resConverter.setAdditionalConverter(simplify(composite), containsUnsupportedFormats);
       return resConverter;
     }
     return stringConverter;

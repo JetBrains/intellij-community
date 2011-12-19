@@ -1,0 +1,67 @@
+class Foo {
+  @Delegate Bar bar
+}
+
+class Bar {
+  static void bar() {}
+}
+-----
+public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public Bar getBar() {
+return null;
+}
+
+public void setBar(Bar bar) {
+return ;
+}
+
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+private Bar bar = null;
+}
+---
+public class Bar extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public static void bar() {
+return ;
+}
+
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+}
+---

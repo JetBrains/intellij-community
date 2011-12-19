@@ -17,54 +17,38 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 
 /**
  * @author peter
  */
-public class JavaNoVariantsDelegator extends CompletionContributor {
+public class JavaNoVariantsDelegator extends NoVariantsDelegator {
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final Ref<Boolean> empty = Ref.create(true);
-    Consumer<CompletionResult> passResult = new Consumer<CompletionResult>() {
-      public void consume(final CompletionResult lookupElement) {
-        empty.set(false);
-        result.passResult(lookupElement);
-      }
-    };
-    result.runRemainingContributors(parameters, passResult);
+  protected void delegate(CompletionParameters parameters, CompletionResultSet result, Consumer<CompletionResult> passResult) {
+    if (parameters.getCompletionType() == CompletionType.BASIC &&
+        parameters.getInvocationCount() <= 1 &&
+        JavaCompletionContributor.mayStartClassName(result, false) &&
+        JavaCompletionContributor.isClassNamePossible(parameters.getPosition())) {
+      final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
 
-    if (!empty.get() && parameters.getInvocationCount() == 0) {
-      result.restartCompletionWhenNothingMatches();
-    }
-
-    if (empty.get()) {
-      if (parameters.getCompletionType() == CompletionType.BASIC &&
-          parameters.getInvocationCount() <= 1 &&
-          JavaCompletionContributor.mayStartClassName(result, false) &&
-          JavaCompletionContributor.isClassNamePossible(parameters.getPosition())) {
-        final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
-        
-        JavaClassNameCompletionContributor.addAllClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result),
-                                                         true, new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement element) {
-            JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-            if (classElement != null) {
-              classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-            }
-            
-            merger.consume(classElement);
+      JavaClassNameCompletionContributor.addAllClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result),
+                                                       true, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+          if (classElement != null) {
+            classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
           }
-        });
 
-        merger.finishedClassProcessing();
+          merger.consume(classElement);
+        }
+      });
 
-      } else if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 2) {
-        result.runRemainingContributors(parameters.withInvocationCount(3), passResult);
-      }
+      merger.finishedClassProcessing();
+
+    } else if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 2) {
+      result.runRemainingContributors(parameters.withInvocationCount(3), passResult);
     }
   }
 }

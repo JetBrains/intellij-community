@@ -27,7 +27,9 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
@@ -57,8 +59,10 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     try {
       buffer.append(getName());
       buffer.append(": ");
-      if(getValue() != null) {
-        buffer.append(getValue().type().name());
+      final Value value = getValue();
+      if(value != null) {
+        final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+        buffer.append(classRenderer.renderTypeName(value.type().name()));
       }
 
       return buffer.toString();

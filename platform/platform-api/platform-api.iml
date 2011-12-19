@@ -4,7 +4,6 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -19,7 +18,6 @@
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="icons" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -29,7 +27,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

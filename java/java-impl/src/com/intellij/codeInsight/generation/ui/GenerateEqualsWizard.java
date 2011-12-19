@@ -176,7 +176,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
       equalsFieldsSelected();
     }
     else if (getCurrentStep() == myHashcodeStepCode && myHashCodePanel != null) {
-      Collection<MemberInfo> selectedMemberInfos = myHashCodePanel.getTable().getSelectedMemberInfos();
+      Collection<MemberInfo> selectedMemberInfos = myEqualsPanel != null ? myEqualsPanel.getTable().getSelectedMemberInfos() 
+                                                                         : myHashCodePanel.getTable().getSelectedMemberInfos();
       updateNonNullMemberInfos(selectedMemberInfos);
     }
 

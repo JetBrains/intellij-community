@@ -535,6 +535,8 @@ class Bar {{
   void testConstructorTypeArgs(){doTest()}
 
   void testIncorrectEscaping() {doTest()}
+  
+  void testRegexInCommandArg() {doTest()}
   void testOctalInspection() {
     doTest(new GroovyOctalIntegerInspection())
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.OptionsDialog;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,23 +37,23 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public class LayoutCodeDialog extends DialogWrapper {
-  private final PsiFile myFile;
+  private final           PsiFile      myFile;
   @Nullable private final PsiDirectory myDirectory;
-  private final Boolean myTextSelected;
+  private final           Boolean      myTextSelected;
 
   private JRadioButton myRbFile;
   private JRadioButton myRbSelectedText;
   private JRadioButton myRbDirectory;
-  private JCheckBox myCbIncludeSubdirs;
-  private JCheckBox myCbOptimizeImports;
-  private JCheckBox myDoNotAskMeCheckBox;
+  private JCheckBox    myCbIncludeSubdirs;
+  private JCheckBox    myCbOptimizeImports;
+  private JCheckBox    myCbOnlyVcsChangedRegions;
+  private JCheckBox    myDoNotAskMeCheckBox;
 
-  public static final @NonNls String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
   private final String myHelpId;
 
-  public LayoutCodeDialog(Project project,
-                          String title,
-                          PsiFile file,
+  public LayoutCodeDialog(@NotNull Project project,
+                          @NotNull String title,
+                          @Nullable PsiFile file,
                           @Nullable PsiDirectory directory,
                           Boolean isTextSelected,
                           final String helpId) {
@@ -84,7 +84,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     }
 
     myCbIncludeSubdirs.setSelected(true);
-    myCbOptimizeImports.setSelected(isOptmizeImportsOptionOn());
+    myCbOptimizeImports.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false));
 
     ItemListener listener = new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
@@ -99,18 +99,17 @@ public class LayoutCodeDialog extends DialogWrapper {
     updateState();
   }
 
-  private static boolean isOptmizeImportsOptionOn() {
-    return Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(OPTIMIZE_IMPORTS_KEY));
-  }
-
-  private static void setOptimizeImportsOption(boolean state) {
-    PropertiesComponent.getInstance().setValue(OPTIMIZE_IMPORTS_KEY, Boolean.toString(state));
-  }
-
   private void updateState() {
     myCbIncludeSubdirs.setEnabled(myRbDirectory.isSelected());
     myCbOptimizeImports.setEnabled(
-      !myRbSelectedText.isSelected() && !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile) == null && myRbFile.isSelected()));
+      !myRbSelectedText.isSelected() &&
+      !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty() && myRbFile.isSelected()));
+
+    final boolean canTargetVcsChanges = canTargetVcsRegions();
+    myCbOnlyVcsChangedRegions.setEnabled(canTargetVcsChanges);
+    myCbOnlyVcsChangedRegions.setSelected(
+      canTargetVcsChanges && PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false)
+    );
 
     myDoNotAskMeCheckBox.setEnabled(!myRbDirectory.isSelected());
     myRbDirectory.setEnabled(!myDoNotAskMeCheckBox.isSelected());
@@ -163,6 +162,10 @@ public class LayoutCodeDialog extends DialogWrapper {
       panel.add(myCbOptimizeImports, gbConstraints);
     }
 
+    myCbOnlyVcsChangedRegions = new JCheckBox(CodeInsightBundle.message("reformat.option.vcs.changed.region"));
+    gbConstraints.gridy++;
+    panel.add(myCbOnlyVcsChangedRegions, gbConstraints);
+
     ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(myRbFile);
     buttonGroup.add(myRbSelectedText);
@@ -201,7 +204,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   public boolean isProcessWholeFile() {
     return myRbFile.isSelected();
   }
-  
+
   public boolean isProcessDirectory() {
     return myRbDirectory.isSelected();
   }
@@ -214,12 +217,35 @@ public class LayoutCodeDialog extends DialogWrapper {
     return myCbOptimizeImports.isSelected();
   }
 
+  public boolean isProcessOnlyChangedText() {
+    return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected();
+  }
+
   boolean isDoNotAskMe() {
-    return myDoNotAskMeCheckBox.isSelected(); 
+    return myDoNotAskMeCheckBox.isSelected();
   }
 
   protected void doOKAction() {
     super.doOKAction();
-    setOptimizeImportsOption(isOptimizeImports());
+    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));
+    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(isProcessOnlyChangedText()));
+  }
+
+  private boolean canTargetVcsRegions() {
+    if (isProcessSelectedText()) {
+      return false;
+    }
+
+    if (isProcessWholeFile()) {
+      return FormatChangedTextUtil.hasChanges(myFile);
+    }
+
+    if (isProcessDirectory()) {
+      if (myDirectory == null) {
+        return false;
+      }
+      return FormatChangedTextUtil.hasChanges(myDirectory);
+    }
+    return false;
   }
 }

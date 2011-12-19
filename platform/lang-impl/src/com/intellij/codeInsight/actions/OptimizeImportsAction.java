@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class OptimizeImportsAction extends AnAction {
       if (file == null) return;
       dir = file.getContainingDirectory();
     }
-    else if (ReformatCodeAction.areFiles(files)) {
+    else if (files != null && ReformatCodeAction.areFiles(files)) {
       final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
       if (!operationStatus.hasReadonlyFiles()) {
         new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
@@ -73,7 +73,8 @@ public class OptimizeImportsAction extends AnAction {
         else {
           text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
         }
-        LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), text, false);
+        LayoutProjectCodeDialog dialog
+          = new LayoutProjectCodeDialog(project, null, CodeInsightBundle.message("process.optimize.imports"), text, false);
         dialog.show();
         if (!dialog.isOK()) return;
         if (moduleContext != null) {
@@ -192,6 +193,6 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   private static boolean isOptimizeImportsAvailable(final PsiFile file) {
-    return LanguageImportStatements.INSTANCE.forFile(file) != null;
+    return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
 }

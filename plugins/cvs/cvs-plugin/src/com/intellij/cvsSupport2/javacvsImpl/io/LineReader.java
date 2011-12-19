@@ -76,6 +76,10 @@ public class LineReader {
   @Nullable
   public byte[] readLine() throws IOException {
     if (myBytesBuffered == -1) {
+      if (myLastEol != 0) {
+        myLastEol = 0;
+        return getLineArray();
+      }
       return null;
     } else if (myPosition >= myBytesBuffered) {
       fillBuffer();
