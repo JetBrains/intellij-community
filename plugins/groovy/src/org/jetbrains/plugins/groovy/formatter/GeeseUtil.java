@@ -82,7 +82,7 @@ public class GeeseUtil {
   }
 
   @Nullable
-  static Alignment calculateRBraceAlignment(PsiElement rBrace, Map<PsiElement, Alignment> alignments) {
+  static Alignment calculateRBraceAlignment(PsiElement rBrace, Map<PsiElement, Alignment> alignments, Map<PsiElement, GroovyBlock> blocks) {
     int leadingBraceCount = 0;
     PsiElement next;
 
@@ -121,21 +121,36 @@ public class GeeseUtil {
     cur = PsiTreeUtil.getDeepestFirst(cur);
     while (!PsiUtil.isNewLine(next = PsiTreeUtil.prevLeaf(cur, true))) {
       if (next == null) break;
-      if (next.getNode().getElementType() == TokenType.WHITE_SPACE && PsiTreeUtil.prevLeaf(next) == null) break; //if cur is first word in the text, whitespace could be before it
+      if (next.getNode().getElementType() == TokenType.WHITE_SPACE && PsiTreeUtil.prevLeaf(next) == null) {
+        break; //if cur is first word in the text, whitespace could be before it
+      }
       cur = next;
     }
 
     int startOffset = cur.getTextRange().getStartOffset();
-    int endOffset=rBrace.getTextRange().getStartOffset();
+    int endOffset = rBrace.getTextRange().getStartOffset();
 
     if (rBrace.getContainingFile().getText().substring(startOffset, endOffset).indexOf('\n') < 0) {
       return null;
     }
 
-    //PsiElement statement = PsiUtil.findEnclosingStatement(parent);
+    while (true) {
+      final PsiElement p = cur.getParent();
+      if (p != null && p.getTextOffset() == cur.getTextOffset()) {
+        cur = p;
+      }
+      else {
+        break;
+      }
+    }
+
     Alignment alignment = alignments.get(cur);
     if (alignment == null) {
+      final GroovyBlock block = blocks.get(cur);
       alignment = Alignment.createAlignment(true);
+      if (block != null) {
+        block.setAlignment(alignment);
+      }
       alignments.put(cur, alignment);
     }
     return alignment;
