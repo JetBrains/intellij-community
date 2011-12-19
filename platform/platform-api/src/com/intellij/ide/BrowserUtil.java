@@ -105,7 +105,8 @@ public class BrowserUtil {
         else {
           commandLine = new String[command.length + 1];
           System.arraycopy(command, 0, commandLine, 0, command.length);
-          commandLine[commandLine.length - 1] = escapeUrl(urlString);
+          commandLine[commandLine.length - 1] = SystemInfo.isMac && isUseDefaultBrowser() ? escapeUrl(redirectUrl(url, urlString))
+                                                                                          : escapeUrl(urlString);
         }
         Runtime.getRuntime().exec(commandLine);
         if (LOG.isDebugEnabled()) {
