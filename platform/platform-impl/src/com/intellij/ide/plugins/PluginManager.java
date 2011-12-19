@@ -766,7 +766,16 @@ public class PluginManager {
         message.append("not loaded plugins");
       }
       message.append("</a>");
-      message.append("<br>").append("<a href=\"" + ENABLE + "\">Enable ").append(faultyDescriptors.size() == 1 ? disabledPluginNames.get(faultyDescriptors.iterator().next()) : " all necessary plugins").append("</a>");
+      boolean possibleToEnable = true;
+      for (String descriptor : faultyDescriptors) {
+        if (disabledPluginNames.get(descriptor) == null) {
+          possibleToEnable = false;
+          break;
+        }
+      }
+      if (possibleToEnable) {
+        message.append("<br>").append("<a href=\"" + ENABLE + "\">Enable ").append(faultyDescriptors.size() == 1 ? disabledPluginNames.get(faultyDescriptors.iterator().next()) : " all necessary plugins").append("</a>");
+      }
       message.append("<br>").append("<a href=\"" + EDIT + "\">Open plugin manager</a>");
     }
     if (pluginsWithoutIdFound) {
