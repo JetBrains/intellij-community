@@ -28,6 +28,9 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import java.util.Arrays;
 
 public class StartUseVcsAction extends AnAction implements DumbAware {
+  public StartUseVcsAction() {
+    super(VcsBundle.message("action.enable.version.control.integration.text"));
+  }
 
   @Override
   public void update(final AnActionEvent e) {
