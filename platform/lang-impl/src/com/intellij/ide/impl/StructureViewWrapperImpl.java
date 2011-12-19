@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewWrapper;
+import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -43,6 +44,9 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -59,13 +63,14 @@ import java.awt.event.HierarchyListener;
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   private final Project myProject;
+  private final ToolWindow myToolWindow;
 
   private VirtualFile myFile;
 
   private StructureView myStructureView;
   private ModuleStructureComponent myModuleStructureComponent;
 
-  private final JPanel myPanel;
+  private JPanel[] myPanels = new JPanel[0];
   private final MergingUpdateQueue myUpdateQueue;
   private final String myKey = new String("DATA_SELECTOR");
 
@@ -75,17 +80,16 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private Runnable myPendingSelection;
 
-  public StructureViewWrapperImpl(Project project) {
+  public StructureViewWrapperImpl(Project project, ToolWindow toolWindow) {
     myProject = project;
-    myPanel = new ContentPanel();
-    myPanel.setBackground(UIUtil.getTreeTextBackground());
-
-    myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myPanel, this, myPanel, true);
+    myToolWindow = toolWindow;
+    
+    myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     ActionManager.getInstance().addTimerListener(500, new TimerListener() {
       public ModalityState getModalityState() {
-        return ModalityState.stateForComponent(myPanel);
+        return ModalityState.stateForComponent(myToolWindow.getComponent());
       }
 
       public void run() {
@@ -93,20 +97,21 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
     });
 
-    getComponent().addHierarchyListener(new HierarchyListener() {
+    myToolWindow.getComponent().addHierarchyListener(new HierarchyListener() {
       public void hierarchyChanged(HierarchyEvent e) {
         if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
           scheduleRebuild();
         }
       }
     });
+    Disposer.register(myToolWindow.getContentManager(), this);
   }
 
   private void checkUpdate() {
     if (myProject.isDisposed()) return;
 
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (SwingUtilities.isDescendingFrom(myPanel, owner) || JBPopupFactory.getInstance().isPopupActive()) return;
+    if (SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner) || JBPopupFactory.getInstance().isPopupActive()) return;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
     if (dataContext.getData(myKey) == this) return;
@@ -132,10 +137,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   // -------------------------------------------------------------------------
   // StructureView interface implementation
   // -------------------------------------------------------------------------
-
-  public JComponent getComponent() {
-    return myPanel;
-  }
 
   public void dispose() {
     rebuild();
@@ -202,8 +203,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       myModuleStructureComponent = null;
     }
 
-    myPanel.removeAll();
-
+    final ContentManager contentManager = myToolWindow.getContentManager();
+    contentManager.removeAllContents(true);
     if (!isStructureViewShowing()) {
       return;
     }
@@ -216,19 +217,16 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
     }
 
+    String[] names = new String[] {""};
+    JComponent focusedComponent = null;
     if (file != null && file.isValid()) {
       if (file.isDirectory()) {
         if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
           Module module = ModuleUtil.findModuleForFile(file, myProject);
           if (module != null) {
             myModuleStructureComponent = new ModuleStructureComponent(module);
-            myPanel.add(myModuleStructureComponent, BorderLayout.CENTER);
-            if (hadFocus) {
-              JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myModuleStructureComponent);
-              if (focusedComponent != null) {
-                IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
-              }
-            }
+            focusedComponent = hadFocus ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myModuleStructureComponent) : null;
+            createSinglePanel(myModuleStructureComponent.getComponent());
           }
         }
       }
@@ -246,13 +244,22 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
             if (myStructureView instanceof StructureView.Scrollable) {
               ((StructureView.Scrollable)myStructureView).setReferenceSizeWhileInitializing(referenceSize);
             }
-            myPanel.add(myStructureView.getComponent(), BorderLayout.CENTER);
-            if (hadFocus) {
-              JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent());
-              if (focusedComponent != null) {
-                IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
+
+            final StructureViewComposite.StructureViewDescriptor[] views;
+
+            if (myStructureView instanceof StructureViewComposite) {
+              final StructureViewComposite composite = (StructureViewComposite)myStructureView;
+              views = composite.getStructureViews();
+              myPanels = new JPanel[views.length];
+              names = new String[views.length];
+              for (int i = 0; i < myPanels.length; i++) {
+                myPanels[i] = createContentPanel(views[i].structureView.getComponent());
+                names[i] = views[i].title;
               }
+            } else {
+              createSinglePanel(myStructureView.getComponent());
             }
+            focusedComponent = hadFocus ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent()) : null;
             myStructureView.restoreState();
             myStructureView.centerSelectedRow();
           }
@@ -264,17 +271,37 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     if (myModuleStructureComponent == null && myStructureView == null) {
-      myPanel.add(new JLabel(IdeBundle.message("message.nothing.to.show.in.structure.view"), SwingConstants.CENTER), BorderLayout.CENTER);
+      createSinglePanel(new JLabel(IdeBundle.message("message.nothing.to.show.in.structure.view"), SwingConstants.CENTER));
     }
 
-    myPanel.validate();
-    myPanel.repaint();
+    for (int i = 0; i < myPanels.length; i++) {
+      final Content content = ContentFactory.SERVICE.getInstance().createContent(myPanels[i], names[i], false);
+      contentManager.addContent(content);
+      if (i == 0 && myStructureView != null) {
+        Disposer.register(content, myStructureView);
+      }
+    }
+    if (hadFocus && focusedComponent != null) {
+      IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
+    }
 
     if (myPendingSelection != null) {
       Runnable selection = myPendingSelection;
       myPendingSelection = null;
       selection.run();
     }
+  }
+
+  private void createSinglePanel(final JComponent component) {
+    myPanels = new JPanel[1];
+    myPanels[0] = createContentPanel(component);
+  }
+
+  private ContentPanel createContentPanel(JComponent component) {
+    final ContentPanel panel = new ContentPanel();
+    panel.setBackground(UIUtil.getTreeTextBackground());
+    panel.add(component, BorderLayout.CENTER);
+    return panel;
   }
 
   @Nullable

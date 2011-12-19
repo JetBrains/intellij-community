@@ -20,7 +20,11 @@
 package com.intellij.lang;
 
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class LanguageImportStatements extends LanguageExtension<ImportOptimizer> {
   public static final LanguageImportStatements INSTANCE = new LanguageImportStatements();
@@ -29,9 +33,15 @@ public class LanguageImportStatements extends LanguageExtension<ImportOptimizer>
     super("com.intellij.lang.importOptimizer");
   }
 
-  @Nullable
-  public ImportOptimizer forFile(PsiFile file) {
-    ImportOptimizer optimizer = forLanguage(file.getLanguage());
-    return optimizer != null && optimizer.supports(file) ? optimizer : null;
+  public List<Runnable> forFile(PsiFile file) {
+    List<Runnable> runnables = new ArrayList<Runnable>();
+    Set<ImportOptimizer> optimizers = new HashSet<ImportOptimizer>();
+    for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
+      ImportOptimizer optimizer = forLanguage(psiFile.getLanguage());
+      if (optimizer != null && optimizer.supports(psiFile) && optimizers.add(optimizer)) {
+        runnables.add(optimizer.processFile(psiFile));
+      }
+    }
+    return runnables;
   }
 }

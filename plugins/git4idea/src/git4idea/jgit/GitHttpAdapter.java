@@ -29,6 +29,7 @@ import git4idea.remote.GitRememberedInputs;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitFetchResult;
+import git4idea.util.NetrcData;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ProxySelector;
 import java.net.URISyntaxException;
@@ -65,8 +67,26 @@ public final class GitHttpAdapter {
 
   public static boolean isHttpUrlWithoutUserCredentials(@NotNull String url) {
     // if username & password are specified in the url, give it to the native Git
-    return url.startsWith("http") && !HTTP_URL_WITH_USERNAME_AND_PASSWORD.matcher(url).matches();
+    if (!url.startsWith("http")) {
+      return false;
+    }
+    if (HTTP_URL_WITH_USERNAME_AND_PASSWORD.matcher(url).matches()) {
+      return false;
+    }
+
+    try {
+      NetrcData netrcData = NetrcData.parse();
+      return !netrcData.hasAuthDataForUrl(url);
+    }
+    catch (FileNotFoundException e) {
+      return false;
+    }
+    catch (IOException e) {
+      LOG.warn("Couldn't read netrc file", e);
+      return false;
+    }
   }
+
 
   private enum GeneralResult {
     SUCCESS,

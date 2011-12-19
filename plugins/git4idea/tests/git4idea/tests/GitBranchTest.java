@@ -18,6 +18,7 @@ package git4idea.tests;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
+import git4idea.test.GitTestUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
