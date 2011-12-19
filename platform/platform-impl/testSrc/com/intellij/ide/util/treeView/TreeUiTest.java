@@ -2059,6 +2059,50 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public void testSelectionOnDeleteButKeepRef() throws Exception {
     doTestSelectionOnDelete(true);
   }
+  
+  public void testMultipleSelectionOnDelete() throws Exception {
+    buildStructure(myRoot);
+    select(new NodeElement("fabrique"), false);
+    select(new NodeElement("openapi"), true);
+    select(new NodeElement("runner"), true);
+    select(new NodeElement("eclipse"), true);
+
+    assertTree("-/\n" +
+                  " -com\n" +
+                  "  -intellij\n" +
+                  "   [openapi]\n" +
+                  " -jetbrains\n" +
+                  "  +[fabrique]\n" +
+                  " -org\n" +
+                  "  +[eclipse]\n" +
+                  " -xunit\n" +
+                  "  [runner]\n");
+
+    myStructure.getNodeFor(new NodeElement("runner")).delete();
+    myStructure.getNodeFor(new NodeElement("eclipse")).delete();
+    myStructure.getNodeFor(new NodeElement("openapi")).delete();
+
+    updateFromRoot();
+
+    assertTree("-/\n" +
+                  " -com\n" +
+                  "  intellij\n" +
+                  " -jetbrains\n" +
+                  "  +[fabrique]\n" +
+                  " org\n" +
+                  " xunit\n");
+
+    myStructure.getNodeFor(new NodeElement("fabrique")).delete();
+
+    updateFromRoot();
+    assertTree("-/\n" +
+                      " -com\n" +
+                      "  intellij\n" +
+                      " [jetbrains]\n" +
+                      " org\n" +
+                      " xunit\n");
+  }
+
 
   public void testRevalidateStructure() throws Exception {
     final NodeElement com = new NodeElement("com");
