@@ -15,7 +15,7 @@ package org.zmlx.hg4idea.execution;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,8 +44,12 @@ public final class ShellCommand {
     if (myRunViaBash) {
       // run via bash -cl <hg command> => need to escape bash special symbols
       // '-l' makes bash execute as a login shell thus reading .bash_profile
-      String hgCommand = StringUtil.join(commandLine, " ");
-      hgCommand = escapeBashControlCharacters(hgCommand);
+      StringBuilder hgCommandBuilder = new StringBuilder();
+      for (String command : commandLine) {
+        hgCommandBuilder.append(escapeSpacesIfNeeded(command));
+        hgCommandBuilder.append(" ");
+      }
+      String hgCommand = escapeBashControlCharacters(hgCommandBuilder.toString());
       commandLine = new ArrayList<String>(3);
       commandLine.add("bash");
       commandLine.add("-cl");
@@ -98,6 +102,11 @@ public final class ShellCommand {
       }
     }
     return sb.toString();
+  }
+
+  @NotNull
+  private String escapeSpacesIfNeeded(@NotNull String s) {
+    return myRunViaBash ? s.replace(" ", "\\ ") : s;
   }
 
 }
