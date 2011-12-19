@@ -2698,12 +2698,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     @Override
     protected int getChildrenLoadingDelay() {
-      return 300;
+      return 100;
     }
 
     @Override
     protected int getNodeDescriptorUpdateDelay() {
-      return 300;
+      return 100;
     }
 
     @Override
@@ -2786,9 +2786,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     suite.addTestSuite(Passthrough.class);
     suite.addTestSuite(SyncUpdate.class);
     suite.addTestSuite(YieldingUpdate.class);
-    suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
-    suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
     suite.addTestSuite(BgLoadingSyncUpdate.class);
+
+    //to run on suspecting of race conditions in background loading
+    //suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
+    //suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
     return suite;
   }
 
