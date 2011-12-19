@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -83,7 +84,23 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     super.initTree();
     if (!myTreeWasInitialized) {
       myTreeWasInitialized = true;
-      myTree.setCellRenderer(new FacetsTreeCellRenderer());
+      final FacetsTreeCellRenderer separatorRenderer = new FacetsTreeCellRenderer();
+      final TreeCellRenderer oldRenderer = myTree.getCellRenderer();
+      myTree.setCellRenderer(new TreeCellRenderer() {
+        @Override
+        public Component getTreeCellRendererComponent(JTree tree,
+                                                      Object value,
+                                                      boolean selected,
+                                                      boolean expanded,
+                                                      boolean leaf,
+                                                      int row,
+                                                      boolean hasFocus) {
+          if (value instanceof MyNode && ((MyNode)value).getConfigurable() instanceof FrameworkDetectionConfigurable) {
+            return separatorRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+          }
+          return oldRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        }
+      });
       myTree.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {

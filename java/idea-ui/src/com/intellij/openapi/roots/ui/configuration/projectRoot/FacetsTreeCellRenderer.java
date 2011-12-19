@@ -57,14 +57,15 @@ public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree impleme
         final boolean showSeparator = configurable instanceof FrameworkDetectionConfigurable;
         int width = -1;
         if (showSeparator && tree.isVisible()) {
-          final int treeWidth = tree.getVisibleRect().width - 4;
+          final int treeWidth = tree.getVisibleRect().width;
           if (treeWidth > 0) {
             width = treeWidth;
           }
         }
         final JComponent component = configureComponent(node.getDisplayName(), null, icon, icon, selected, showSeparator, null,
                                                         width);
-        myTextLabel.setOpaque(true);
+
+        myTextLabel.setOpaque(selected);
         return component;
       }
     }
