@@ -87,7 +87,6 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
   /**
    * finds subscriptions of keyword container, adds them to mySubscriptions
    * @param function
-   * @param elements
    */
   private static List<PySubscriptionExpression> fillSubscriptions(PyFunction function) {
     List<PySubscriptionExpression> subscriptions = new ArrayList<PySubscriptionExpression>();
@@ -159,19 +158,21 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
       PySubscriptionExpression subscriptionExpression = subscriptions.get(i);
       PyExpression indexExpression = subscriptionExpression.getIndexExpression();
       if (indexExpression instanceof PyStringLiteralExpression) {
-        PyExpression p = elementGenerator.createExpressionFromText(((PyStringLiteralExpression)indexExpression).getStringValue());
+        PyExpression p = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), 
+                                                                   ((PyStringLiteralExpression)indexExpression).getStringValue());
         ASTNode comma = elementGenerator.createComma();
         PyClass containingClass = function.getContainingClass();
-
-        if (containingClass == null) {
-          function.getParameterList().addBefore(p, function.getParameterList().getParameters()[0]);
-          function.getParameterList().addBefore((PsiElement)comma, function.getParameterList().getParameters()[0]);
+        if (p != null) {
+          if (containingClass == null) {
+            function.getParameterList().addBefore(p, function.getParameterList().getParameters()[0]);
+            function.getParameterList().addBefore((PsiElement)comma, function.getParameterList().getParameters()[0]);
+          }
+          else {
+            function.getParameterList().addBefore(p, function.getParameterList().getParameters()[1]);
+            function.getParameterList().addBefore((PsiElement)comma, function.getParameterList().getParameters()[1]);
+          }
+          subscriptionExpression.replace(p);
         }
-        else {
-          function.getParameterList().addBefore(p, function.getParameterList().getParameters()[1]);
-          function.getParameterList().addBefore((PsiElement)comma, function.getParameterList().getParameters()[1]);
-        }
-        subscriptionExpression.replace(p);
       }
     }
   }
@@ -198,19 +199,22 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
             defaultValue = elementGenerator.createParameter(((PyStringLiteralExpression)indexExpression).getStringValue() + "=None");
           }
         }
-        PyExpression p = elementGenerator.createExpressionFromText(((PyStringLiteralExpression)indexExpression).getStringValue());
+        PyExpression p = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function),
+                                                                   ((PyStringLiteralExpression)indexExpression).getStringValue());
         ASTNode comma = elementGenerator.createComma();
 
         PyParameter keywordContainer = getKeywordContainer(function);
 
-        if (defaultValue != null)
-          function.getParameterList().addBefore(defaultValue, keywordContainer);
-        else
-          function.getParameterList().addBefore(p, keywordContainer);
+        if (p != null) {
+          if (defaultValue != null)
+            function.getParameterList().addBefore(defaultValue, keywordContainer);
+          else
+            function.getParameterList().addBefore(p, keywordContainer);
 
-        function.getParameterList().addBefore((PsiElement)comma, keywordContainer);
+          function.getParameterList().addBefore((PsiElement)comma, keywordContainer);
 
-        callExpression.replace(p);
+          callExpression.replace(p);
+        }
       }
     }
   }
