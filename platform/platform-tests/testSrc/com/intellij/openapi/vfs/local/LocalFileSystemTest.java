@@ -13,25 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs;
+package com.intellij.openapi.vfs.local;
 
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-public class LocalFileSystemTest extends IdeaTestCase{
+public class LocalFileSystemTest extends PlatformLangTestCase {
   public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
     FileOutputStream stream = new FileOutputStream(file);
     if (bom != null) {
@@ -161,11 +168,11 @@ public class LocalFileSystemTest extends IdeaTestCase{
             VirtualFile toVDir = LocalFileSystem.getInstance().findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
             assertNotNull(fromVDir);
             assertNotNull(toVDir);
-            final VirtualFile fileToCopy = fromVDir.createChildData(null, "temp_file");
+            final VirtualFile fileToCopy = fromVDir.createChildData(this, "temp_file");
             final byte[] byteContent = {0, 1, 2, 3};
             fileToCopy.setBinaryContent(byteContent);
             final String newName = "new_temp_file";
-            final VirtualFile copy = fileToCopy.copy(null, toVDir, newName);
+            final VirtualFile copy = fileToCopy.copy(this, toVDir, newName);
             assertEquals(newName, copy.getName());
             assertTrue(Arrays.equals(byteContent, copy.contentsToByteArray()));
           }
@@ -190,11 +197,11 @@ public class LocalFileSystemTest extends IdeaTestCase{
             VirtualFile toVDir = LocalFileSystem.getInstance().findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
             assertNotNull(fromVDir);
             assertNotNull(toVDir);
-            final VirtualFile dirToCopy = fromVDir.createChildDirectory(null, "dir");
-            final VirtualFile file = dirToCopy.createChildData(null, "temp_file");
+            final VirtualFile dirToCopy = fromVDir.createChildDirectory(this, "dir");
+            final VirtualFile file = dirToCopy.createChildData(this, "temp_file");
             file.setBinaryContent(new byte[]{0, 1, 2, 3});
             final String newName = "dir";
-            final VirtualFile dirCopy = dirToCopy.copy(null, toVDir, newName);
+            final VirtualFile dirCopy = dirToCopy.copy(this, toVDir, newName);
             assertEquals(newName, dirCopy.getName());
             PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir, null);
           }
