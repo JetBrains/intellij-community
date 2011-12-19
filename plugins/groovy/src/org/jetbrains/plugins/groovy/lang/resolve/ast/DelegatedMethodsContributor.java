@@ -55,8 +55,8 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       final PsiMethod[] methods = getMethodsFromClassWithoutAST(psiClass);
 
       for (PsiMethod method : methods) {
-        if (method.isConstructor()) continue;
-        if (!deprecated && PsiImplUtil.getAnnotation(method, "java.lang.Deprecated") != null) continue;
+        if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) continue;
+        if (!deprecated && PsiImplUtil.getAnnotation(method, CommonClassNames.JAVA_LANG_DEPRECATED) != null) continue;
         if (clazz.findCodeMethodsBySignature(method, false).length > 0) continue;
         collector.add(generateDelegateMethod(method, clazz, resolveResult.getSubstitutor()));
       }
