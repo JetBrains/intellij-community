@@ -118,6 +118,10 @@ public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
   public void testWithPrivateMethodUsed() throws Exception {
     doTest();
   }
+  
+  public void testWithPrivateMethodUsed1() throws Exception {
+    doTest();
+  }
 
   public void testWithPrivateMethodWhichCantBeMoved() throws Exception {
     doTest();
