@@ -174,24 +174,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         final String qualifier = qualifierElement != null ? qualifierElement.getText() : "";
         final String qualifiedName = StringUtil.getQualifiedName(qualifier, text);
         if (newExpressionQualifier != null) {
-          final String newExpressionQualifierText = newExpressionQualifier.getText();
-          if (newExpressionQualifier instanceof PsiReferenceExpression) {
-            final PsiVariable variable = resolveHelper.resolveReferencedVariable(newExpressionQualifierText, newExpression);
-            if (variable != null) {
-              final PsiClass aClass = PsiUtil.resolveClassInType(variable.getType());
-              if (aClass != null) {
-                return aClass.findInnerClassByName(qualifiedName, false);
-              }
-            }
-          } else if (newExpressionQualifier instanceof PsiCallExpression) {
-            final JavaResolveResult resolveResult = ((PsiCallExpression)newExpressionQualifier).resolveMethodGenerics();
-            final PsiElement method = resolveResult.getElement();
-            if (method instanceof PsiMethod) {
-              final PsiClass aClass = PsiUtil.resolveClassInType(resolveResult.getSubstitutor().substitute(((PsiMethod)method).getReturnType()));
-              if (aClass != null) {
-                return aClass.findInnerClassByName(qualifiedName, false);
-              }
-            }
+          final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(newExpressionQualifier.getType());
+          if (aClass != null) {
+            return aClass.findInnerClassByName(qualifiedName, false);
           }
         }
         return resolveHelper.resolveReferencedClass(qualifiedName, newExpression);

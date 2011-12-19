@@ -15,6 +15,7 @@
  */
 package com.intellij.core;
 
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
@@ -22,6 +23,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.CollectionQuery;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +37,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CoreJavaFileManager implements JavaFileManager {
+public class CoreJavaFileManager extends PackageIndex implements JavaFileManager {
   private final CoreLocalFileSystem myLocalFileSystem;
   private final CoreJarFileSystem myJarFileSystem;
   private final List<File> myClasspath = new ArrayList<File>();
@@ -48,14 +51,23 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   @Override
   public PsiPackage findPackage(@NotNull String packageName) {
+    final List<VirtualFile> files = findDirectoriesByPackageName(packageName);
+    if (files.size() > 0) {
+      return new PsiPackageImpl(myPsiManager, packageName);
+    }
+    return null;
+  }
+
+  private List<VirtualFile> findDirectoriesByPackageName(String packageName) {
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
     String dirName = packageName.replace(".", "/");
     for (File file : myClasspath) {
       VirtualFile classDir = findUnderClasspathEntry(file, dirName);
       if (classDir != null) {
-        return new PsiPackageImpl(myPsiManager, packageName);
+        result.add(classDir);
       }
     }
-    return null;
+    return result;
   }
 
   @Nullable
@@ -66,6 +78,16 @@ public class CoreJavaFileManager implements JavaFileManager {
     else {
       return myLocalFileSystem.findFileByPath(new File(classpathEntry, relativeName).getPath());
     }
+  }
+
+  @Override
+  public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
+  }
+
+  @Override
+  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    return new CollectionQuery<VirtualFile>(findDirectoriesByPackageName(packageName));
   }
 
   @Override

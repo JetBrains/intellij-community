@@ -16,9 +16,15 @@
 package com.intellij.core;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.LanguageASTFactory;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
@@ -28,7 +34,9 @@ import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory;
+import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
+import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 
 import java.io.File;
@@ -45,6 +53,10 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     registerFileType(JavaClassFileType.INSTANCE, "class");
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
+    
+    registerFileType(JavaFileType.INSTANCE, "java");
+    addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new CoreJavaASTFactory());
+    addExplicitExtension(LanguageParserDefinitions.INSTANCE, JavaLanguage.INSTANCE, new JavaParserDefinition());
 
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
     registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
@@ -60,6 +72,8 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
+    myProject.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
+    myProject.registerService(PackageIndex.class, myFileManager);
 
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
   }

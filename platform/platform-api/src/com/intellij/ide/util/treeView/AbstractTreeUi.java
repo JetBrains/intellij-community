@@ -178,6 +178,7 @@ public class AbstractTreeUi {
 
   private final AtomicBoolean myCancelRequest = new AtomicBoolean();
   private final Lock myStateLock = new ReentrantLock();
+  private final AtomicBoolean myLockWasAcquired = new AtomicBoolean();
 
   private final AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
@@ -1919,6 +1920,8 @@ public class AbstractTreeUi {
 
   @Nullable
   public Boolean _isReady(boolean attempt) {
+    if (attempt && myLockWasAcquired.get()) return false;
+
     Boolean ready = checkValue(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
@@ -2408,15 +2411,18 @@ public class AbstractTreeUi {
   }
 
   private boolean attemptLock() throws InterruptedException {
-    return myStateLock.tryLock(Registry.intValue("ide.tree.uiLockAttempt"), TimeUnit.MILLISECONDS);
+    myLockWasAcquired.set(myStateLock.tryLock(Registry.intValue("ide.tree.uiLockAttempt"), TimeUnit.MILLISECONDS));
+    return myLockWasAcquired.get();
   }
 
   private void acquireLock() {
     myStateLock.lock();
+    myLockWasAcquired.set(true);
   }
 
   private void releaseLock() {
     myStateLock.unlock();
+    myLockWasAcquired.set(false);
   }
 
 
@@ -2468,13 +2474,14 @@ public class AbstractTreeUi {
   }
 
   public boolean isCancelProcessed() {
-    Boolean processed = checkValue(new Computable<Boolean>() {
+    Computable<Boolean> computable = new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         return Boolean.valueOf(myCancelRequest.get() || myResettingToReadyNow.get());
       }
-    }, true, null);
-
+    };
+    //Boolean processed = checkValue(computable, true, null);
+    Boolean processed = computable.compute();
     return processed != null && processed.booleanValue();
   }
 
