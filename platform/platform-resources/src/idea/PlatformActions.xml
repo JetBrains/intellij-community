@@ -484,6 +484,7 @@
 
     <group id="Internal" text="Internal Actions" internal="true" popup="true">
       <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
+      <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"/>
       <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
       <action id="DropAnOutOfPermGenMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfPermGenMemoryErrorAction"/>
       <separator/>
