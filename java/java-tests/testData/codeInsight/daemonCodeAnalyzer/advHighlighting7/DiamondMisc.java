@@ -187,6 +187,10 @@ class Outer {
 }
 class Outer1 {}
 
+class Outer2<K> {
+    class Inner2<T> {}
+}
+
 class Another {
     public static void main(String[] args) {
         Outer o = new Outer();
@@ -197,6 +201,8 @@ class Another {
         Outer.Inner<String> i3 = m2().new <error descr="Cannot resolve symbol 'Inner'">Inner</error><>();
 
         System.out.println(i);
+
+        <error descr="Incompatible types. Found: 'Outer2.Inner2<java.lang.String>', required: 'Outer2.Inner2<java.lang.String>'">Outer2<Integer>.Inner2<String> i5 = new Outer2<>().new Inner2<>();</error>
     }
 
   static Outer m() {return null;}
