@@ -25,14 +25,11 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,11 +93,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   public void initToolWindow(ToolWindow toolWindow) {
-    myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject);
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(myStructureViewWrapperImpl.getComponent(), "", false);
-    Disposer.register(content, myStructureViewWrapperImpl);
-    toolWindow.getContentManager().addContent(content);
-
+    myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject, toolWindow);
     if (myRunWhenInitialized != null) {
       myRunWhenInitialized.run();
       myRunWhenInitialized = null;
