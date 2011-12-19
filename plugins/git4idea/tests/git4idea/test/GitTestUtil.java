@@ -13,21 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.tests;
+package git4idea.test;
 
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.tests.GitTestRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 
 /**
@@ -169,6 +176,47 @@ public class GitTestUtil {
       }
     }
     return false;
+  }
+
+  public static Object[][] loadConfigData(@NotNull File dataFolder) throws IOException {
+    File[] tests = dataFolder.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return !name.startsWith(".");
+      }
+    });
+    Object[][] data = new Object[tests.length][];
+    for (int i = 0; i < tests.length; i++) {
+      File testDir = tests[i];
+      File descriptionFile = null;
+      File configFile = null;
+      File resultFile = null;
+      for (File file : testDir.listFiles()) {
+        if (file.getName().endsWith("_desc.txt")) {
+          descriptionFile = file;
+        }
+        else if (file.getName().endsWith("_config.txt")) {
+          configFile = file;
+        }
+        else if (file.getName().endsWith("_result.txt")) {
+          resultFile = file;
+        }
+      }
+      assertNotNull(descriptionFile, String.format("description file not found in %s among %s", testDir, Arrays.toString(testDir.list())));
+      assertNotNull(configFile, String.format("config file file not found in %s among %s", testDir, Arrays.toString(testDir.list())));
+      assertNotNull(resultFile, String.format("result file file not found in %s among %s", testDir, Arrays.toString(testDir.list())));
+
+      String testName = FileUtil.loadFile(descriptionFile).split("\n")[0]; // description is in the first line of the desc-file
+      data[i] = new Object[]{
+        testName, configFile, resultFile
+      };
+    }
+    return data;
+  }
+
+  public static File getTestDataFolder() {
+    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
+    return new File(pluginRoot, "testData");
   }
 
   public interface EqualityChecker<T, E> {
