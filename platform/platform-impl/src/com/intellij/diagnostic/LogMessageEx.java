@@ -130,12 +130,12 @@ public class LogMessageEx extends LogMessage {
     };
   }
 
-  public static void error(@NotNull Logger logger, @NotNull String message, @NotNull String... details) {
+  public static void error(@NotNull Logger logger, @NotNull String message, @NotNull String... attachmentText) {
     StringBuilder detailsBuffer = new StringBuilder();
-    for (String detail : details) {
+    for (String detail : attachmentText) {
       detailsBuffer.append(detail).append(",");
     }
-    if (details.length > 0 && detailsBuffer.length() > 0) {
+    if (attachmentText.length > 0 && detailsBuffer.length() > 0) {
       detailsBuffer.setLength(detailsBuffer.length() - 1);
     }
     Attachment attachment = detailsBuffer.length() > 0 ? new Attachment("current-context.txt", detailsBuffer.toString()) : null;
