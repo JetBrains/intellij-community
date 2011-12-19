@@ -1,0 +1,12 @@
+print $/abc/$
+-----
+Groovy script
+  Reference expression
+    PsiElement(identifier)('print')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:';' or new line expected
+    PsiElement($)('$')
+    PsiElement(/)('/')
+    PsiElement(identifier)('abc')
+    PsiElement(/)('/')
+    PsiElement(identifier)('$')

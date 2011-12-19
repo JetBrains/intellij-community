@@ -279,9 +279,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private void checkStringNameIdentifier(GrReferenceExpression ref) {
     final PsiElement nameElement = ref.getReferenceNameElement();
     if (nameElement == null) return;
-    if (!GroovyTokenTypes.mSTRING_LITERAL.equals(nameElement.getNode().getElementType())) return;
-    final String text = nameElement.getText();
-    checkStringLiteral(nameElement, text);
+
+    final IElementType elementType = nameElement.getNode().getElementType();
+    if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
+      checkStringLiteral(nameElement, nameElement.getText());
+    }
+    else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
+      checkRegexLiteral(nameElement);
+    }
   }
 
   /*
@@ -855,19 +860,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_8)) {
         myHolder
           .createErrorAnnotation(regex, GroovyBundle.message("dollar.slash.strings.are.not.allowed.in.0", config.getSDKVersion(regex)));
-      }
-      if (regex instanceof GrRegex &&
-          regex.getParent() instanceof GrCommandArgumentList &&
-          ((GrCommandArgumentList)regex.getParent()).getAllArguments()[0] == regex ||
-
-          !(regex instanceof GrRegex) &&
-          regex.getParent().getParent() instanceof GrCommandArgumentList &&
-          ((GrCommandArgumentList)regex.getParent().getParent()).getAllArguments()[0] == regex.getParent()
-        ) {
-        final Annotation annotation =
-          myHolder.createErrorAnnotation(regex, GroovyBundle.message("regex.cannot.be.first.argument.of.command.method.call"));
-        annotation.registerFix(new AddParenthesesFix());
-        return;
       }
     }
 

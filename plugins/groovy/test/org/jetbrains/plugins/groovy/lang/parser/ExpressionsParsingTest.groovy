@@ -179,6 +179,10 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testregex$dollarSlashy3() throws Throwable { doTest(); }
   public void testregex$dollarSlashy4() throws Throwable { doTest(); }
   public void testregex$dollarSlashy5() throws Throwable { doTest(); }
+  public void testregex$dollarSlashy6() throws Throwable { doTest(); }
+  public void testregex$dollarSlashy7() throws Throwable { doTest(); }
+  public void testregex$dollarSlashy8() throws Throwable { doTest(); }
+  public void testregex$dollarSlashy9() throws Throwable { doTest(); }
   public void testregex$dollarSlashyCode() throws Throwable { doTest(); }
   public void testregex$dollarSlashyCodeUnfinished() throws Throwable { doTest(); }
   public void testregex$dollarSlashyEof() throws Throwable { doTest(); }
