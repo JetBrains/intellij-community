@@ -57,16 +57,6 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
 
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     LOG.assertTrue(myWritable, "Writable model can be retrieved from writable ModifiableRootModel");
-    if (mySource == null && myModule.isLoaded()) { //do not reload project for non-commited modules: j2me|project imports
-      if (myLanguageLevel != languageLevel) {
-        final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(myModule.getProject());
-        final LanguageLevel projectLanguageLevel = languageLevelProjectExtension.getLanguageLevel();
-        if (!(languageLevel == null && myLanguageLevel == projectLanguageLevel ||
-              myLanguageLevel == null && languageLevel == projectLanguageLevel)) {
-          languageLevelProjectExtension.reloadProjectOnLanguageLevelChange(languageLevel, true);
-        }
-      }
-    }
     myLanguageLevel = languageLevel;
   }
 
@@ -103,6 +93,19 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
   @Override
   public void commit() {
     if (mySource != null && mySource.myLanguageLevel != myLanguageLevel) {
+      if (myModule.isLoaded()) { //do not reload project for non-committed modules: j2me|project imports
+        if (mySource.myLanguageLevel != myLanguageLevel) {
+          final LanguageLevelProjectExtension languageLevelProjectExtension =
+            LanguageLevelProjectExtension.getInstance(myModule.getProject());
+          final LanguageLevel projectLanguageLevel = languageLevelProjectExtension.getLanguageLevel();
+          final boolean explicit2ImplicitProjectLevel = myLanguageLevel == null && mySource.myLanguageLevel == projectLanguageLevel;
+          final boolean implicit2ExplicitProjectLevel = mySource.myLanguageLevel == null && myLanguageLevel == projectLanguageLevel;
+          if (!(explicit2ImplicitProjectLevel || implicit2ExplicitProjectLevel)) {
+            languageLevelProjectExtension
+              .reloadProjectOnLanguageLevelChange(myLanguageLevel == null ? projectLanguageLevel : myLanguageLevel, true);
+          }
+        }
+      }
       mySource.myLanguageLevel = myLanguageLevel;
     }
   }
