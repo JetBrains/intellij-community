@@ -836,7 +836,7 @@ public class VariableInplaceRenamer {
             if (templateState != null) {
               final TextRange range = templateState.getCurrentVariableRange();
               if (range != null) {
-                myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), suggestion);
+                topLevelEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), suggestion);
               }
             }
           }
