@@ -181,3 +181,26 @@ class PredefinedErrorsOverRaw<T> {
     PredefinedErrorsOverRaw mc = new <Boolean>PredefinedErrorsOverRaw<<error descr="Cannot use diamonds with explicit type parameters for constructor"></error>>("");
   }
 }
+
+class Outer {
+    class Inner<T> {}
+}
+class Outer1 {}
+
+class Another {
+    public static void main(String[] args) {
+        Outer o = new Outer();
+        Outer.Inner<String> i = o.new Inner<>();
+        Outer.Inner<String> i1 = m().new Inner<>();
+        Outer.Inner<String> i2 = m1().new Inner<>();
+
+        Outer.Inner<String> i3 = m2().new <error descr="Cannot resolve symbol 'Inner'">Inner</error><>();
+
+        System.out.println(i);
+    }
+
+  static Outer m() {return null;}
+  static <T extends Outer> T m1() {return null;}
+  static <T> T m2() {return null;}
+  
+}

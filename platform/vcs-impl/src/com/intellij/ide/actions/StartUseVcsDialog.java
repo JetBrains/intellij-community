@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -29,13 +28,14 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-public class StartUseVcsDialog extends DialogWrapper {
+class StartUseVcsDialog extends DialogWrapper {
   private final VcsDataWrapper myData;
   private VcsCombo myVcsCombo;
   private String mySelected;
 
-  public StartUseVcsDialog(final VcsDataWrapper data) {
+  StartUseVcsDialog(final VcsDataWrapper data) {
     super(data.getProject(), true);
     myData = data;
     setTitle(VcsBundle.message("dialog.enable.version.control.integration.title"));
@@ -93,13 +93,8 @@ public class StartUseVcsDialog extends DialogWrapper {
   }
 
   @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.version.control.enable.version.control.integration");
+  protected String getHelpId() {
+    return "reference.version.control.enable.version.control.integration";
   }
 
   @Override
@@ -110,15 +105,19 @@ public class StartUseVcsDialog extends DialogWrapper {
 
   private Object[] prepareComboData() {
     final Collection<String> displayNames = myData.getVcses().keySet();
-    final java.util.List<String> keys = new ArrayList<String>(displayNames.size() + 1);
+    final List<String> keys = new ArrayList<String>(displayNames.size() + 1);
     keys.add("");
     keys.addAll(displayNames);
     Collections.sort(keys);
     return ArrayUtil.toObjectArray(keys);
   }
 
+  String getVcs() {
+    return myData.getVcses().get(mySelected);
+  }
+
   private static class VcsCombo extends JComboBox {
-    private VcsCombo(final Object items[]) {
+    private VcsCombo(final Object[] items) {
       super(items);
       setSelectedIndex(0);
       setEditable(false);
@@ -130,7 +129,4 @@ public class StartUseVcsDialog extends DialogWrapper {
     }
   }
 
-  public String getVcs() {
-    return myData.getVcses().get(mySelected);
-  }
 }

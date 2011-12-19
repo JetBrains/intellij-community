@@ -776,6 +776,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public final void setInBulkUpdate(boolean value) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myDoingBulkUpdate = value;
     myText.setDeferredChangeMode(value);
     if (value) {

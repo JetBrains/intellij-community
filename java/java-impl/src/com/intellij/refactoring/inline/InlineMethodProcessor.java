@@ -195,7 +195,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                     final ReferencedElementsCollector collector,
                                                     final MultiMap<PsiElement, String> conflicts) {
     element.accept(collector);
-    final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages);
+    final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages, element);
 
     final Set<PsiMember> containers = containersToReferenced.keySet();
     for (PsiMember container : containers) {
@@ -216,12 +216,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
    *
    * @param referencedElements
    * @param usages
+   * @param elementToInline
    */
-  private static Map<PsiMember, Set<PsiMember>> getInaccessible(HashSet<PsiMember> referencedElements, UsageInfo[] usages) {
+  private static Map<PsiMember, Set<PsiMember>> getInaccessible(HashSet<PsiMember> referencedElements,
+                                                                UsageInfo[] usages,
+                                                                PsiElement elementToInline) {
     Map<PsiMember, Set<PsiMember>> result = new HashMap<PsiMember, Set<PsiMember>>();
 
     for (UsageInfo usage : usages) {
-      final PsiElement container = ConflictsUtil.getContainer(usage.getElement());
+      final PsiElement usageElement = usage.getElement();
+      if (usageElement == null) continue;
+      final PsiElement container = ConflictsUtil.getContainer(usageElement);
       if (!(container instanceof PsiMember)) continue;    // usage in import statement
       PsiMember memberContainer = (PsiMember)container;
       Set<PsiMember> inaccessibleReferenced = result.get(memberContainer);
@@ -229,7 +234,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         inaccessibleReferenced = new HashSet<PsiMember>();
         result.put(memberContainer, inaccessibleReferenced);
         for (PsiMember member : referencedElements) {
-          if (!PsiUtil.isAccessible(member, usage.getElement(), null)) {
+          if (PsiTreeUtil.isAncestor(elementToInline, member, false)) continue;
+          if (!PsiUtil.isAccessible(member, usageElement, null)) {
             inaccessibleReferenced.add(member);
           }
         }

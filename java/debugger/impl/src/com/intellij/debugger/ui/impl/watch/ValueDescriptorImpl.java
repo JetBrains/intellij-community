@@ -378,7 +378,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       if (showConcreteType || classRenderer.SHOW_OBJECT_ID) {
         buf.append('{');
         if (showConcreteType) {
-          buf.append(objRef.type().name());
+          buf.append(classRenderer.renderTypeName(objRef.type().name()));
         }
         if (classRenderer.SHOW_OBJECT_ID) {
           buf.append('@');

@@ -322,16 +322,26 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
-    final PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return null;
 
     List<PsiElementClassMember> result = new ArrayList<PsiElementClassMember>();
 
+    while (aClass != null) {
+      collectTargetsInClass(element, aClass, result);
+      if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
+      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+    }
+
+    return result.toArray(new PsiElementClassMember[result.size()]);
+  }
+
+  private static void collectTargetsInClass(PsiElement element, final PsiClass aClass, List<PsiElementClassMember> result) {
     final PsiField[] fields = aClass.getAllFields();
     PsiResolveHelper helper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (PsiField field : fields) {
       final PsiType type = field.getType();
-      if (helper.isAccessible(field, aClass, aClass) && type instanceof PsiClassType) {
+      if (helper.isAccessible(field, aClass, aClass) && type instanceof PsiClassType && !PsiTreeUtil.isAncestor(field, element, false)) {
         result.add(new PsiFieldMember(field));
       }
     }
@@ -341,7 +351,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName())) continue;
       final PsiType returnType = method.getReturnType();
       if (returnType != null && PropertyUtil.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) &&
-          returnType instanceof PsiClassType) {
+          returnType instanceof PsiClassType && !PsiTreeUtil.isAncestor(method, element, false)) {
         result.add(new PsiMethodMember(method));
       }
     }
@@ -373,8 +383,5 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
         }
       }
     }
-
-    return result.toArray(new PsiElementClassMember[result.size()]);
   }
-
 }

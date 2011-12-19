@@ -718,4 +718,19 @@ public abstract class GroovyRefactoringUtil {
     GrTypeArgumentList typeArgumentList = referenceElement.getTypeArgumentList();
     return typeArgumentList != null && typeArgumentList.isDiamond();
   }
+
+  public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {
+    if (!l.getText().equals(r.getText())) return false;
+    if (l.getNode().getElementType() != r.getNode().getElementType()) return false;
+
+    final PsiElement[] lChildren = l.getChildren();
+    final PsiElement[] rChildren = r.getChildren();
+
+    if (lChildren.length != rChildren.length) return false;
+
+    for (int i = 0; i < rChildren.length; i++) {
+      if (!checkPsiElementsAreEqual(lChildren[i], rChildren[i])) return false;
+    }
+    return true;
+  }
 }

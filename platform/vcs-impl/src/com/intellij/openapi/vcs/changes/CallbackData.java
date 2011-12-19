@@ -44,8 +44,8 @@ class CallbackData {
     return myWrapperStarter;
   }
 
-  public static CallbackData create(final Runnable afterUpdate, final String title, final ModalityState state,
-                                    final InvokeAfterUpdateMode mode, final Project project) {
+  public static CallbackData create(@NotNull final Runnable afterUpdate, final String title, final ModalityState state,
+                                    final InvokeAfterUpdateMode mode, @NotNull final Project project) {
     if (mode.isSilently()) {
       return new CallbackData(new Runnable() {
         public void run() {
@@ -58,15 +58,22 @@ class CallbackData {
                 ChangesViewManager.getInstance(project).scheduleRefresh();
               }
             });
-          } else {
-            ApplicationManager.getApplication().executeOnPooledThread(afterUpdate);
+          }
+          else {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                if (!project.isDisposed()) afterUpdate.run();
+              }
+            });
           }
         }
       }, null);
-    } else {
+    }
+    else {
       if (mode.isSynchronous()) {
         final Waiter waiter = new Waiter(project, afterUpdate, state,
-                                         VcsBundle.message("change.list.manager.wait.lists.synchronization", title),  mode.isCancellable());
+                                         VcsBundle.message("change.list.manager.wait.lists.synchronization", title), mode.isCancellable());
         return new CallbackData(
           new Runnable() {
             public void run() {
@@ -74,13 +81,15 @@ class CallbackData {
               waiter.done();
             }
           }, new Runnable() {
-            public void run() {
-              ProgressManager.getInstance().run(waiter);
-            }
+          public void run() {
+            ProgressManager.getInstance().run(waiter);
           }
+        }
         );
-      } else {
-        final FictiveBackgroundable fictiveBackgroundable = new FictiveBackgroundable(project, afterUpdate, mode.isCancellable(), title, state);
+      }
+      else {
+        final FictiveBackgroundable fictiveBackgroundable =
+          new FictiveBackgroundable(project, afterUpdate, mode.isCancellable(), title, state);
         return new CallbackData(
           new Runnable() {
             public void run() {
@@ -88,10 +97,11 @@ class CallbackData {
               fictiveBackgroundable.done();
             }
           }, new Runnable() {
-            public void run() {
-              ProgressManager.getInstance().run(fictiveBackgroundable);
-            }
-          });
+          public void run() {
+            ProgressManager.getInstance().run(fictiveBackgroundable);
+          }
+        }
+        );
       }
     }
   }

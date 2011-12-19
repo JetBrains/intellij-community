@@ -18,14 +18,16 @@ package com.intellij.ui.components;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 
-public class JBViewport extends JViewport {
+public class JBViewport extends JViewport implements ZoomableViewport {
   private StatusText myEmptyText;
+  private ZoomingDelegate myZoomer;
 
   public JBViewport() {
     addContainerListener(new ContainerListener() {
@@ -50,16 +52,40 @@ public class JBViewport extends JViewport {
   }
 
   @Override
-  public Dimension getPreferredSize() {
-    return super.getPreferredSize();    //To change body of overridden methods use File | Settings | File Templates.
+  public void paint(Graphics g) {
+    if (myZoomer != null && myZoomer.isActive()) {
+      myZoomer.paint(g);
+    }
+    else {
+      super.paint(g);
+
+      if (myEmptyText != null) {
+        myEmptyText.paint(this, g);
+      }
+    }
+  }
+
+  @Nullable
+  @Override
+  public Magnificator getMagnificator() {
+    JComponent view = (JComponent)getView();
+    return view != null ? (Magnificator)view.getClientProperty(Magnificator.CLIENT_PROPERTY_KEY) : null;
   }
 
   @Override
-  public void paint(Graphics g) {
-    super.paint(g);
+  public void magnificationStarted(Point at) {
+    myZoomer = new ZoomingDelegate((JComponent)getView(), this);
+    myZoomer.magnificationStarted(at);
+  }
 
-    if (myEmptyText != null) {
-      myEmptyText.paint(this, g);
-    }
+  @Override
+  public void magnificationFinished(double magnification) {
+    myZoomer.magnificationFinished(magnification);
+    myZoomer = null;
+  }
+
+  @Override
+  public void magnify(double magnification) {
+    myZoomer.magnify(magnification);
   }
 }

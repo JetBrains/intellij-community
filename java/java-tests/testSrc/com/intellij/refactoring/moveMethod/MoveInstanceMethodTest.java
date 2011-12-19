@@ -51,6 +51,8 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testThisInAnonymous() throws Exception { doTest(true, 0); }
 
+  public void testOverloadingMethods() throws Exception { doTest(true, 0); }
+
   public void testEscalateVisibility() throws Exception {
     doTest(true, 0, VisibilityUtil.ESCALATE_VISIBILITY);
   }

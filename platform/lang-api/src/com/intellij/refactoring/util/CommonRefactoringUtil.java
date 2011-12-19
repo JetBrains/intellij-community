@@ -59,7 +59,7 @@ public class CommonRefactoringUtil {
     }
   }
 
-  public static void showErrorHint(Project project, @Nullable Editor editor, String message, String title, String helpId) {
+  public static void showErrorHint(Project project, @Nullable Editor editor, String message, String title, @Nullable @NonNls String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 
     if (editor == null) {

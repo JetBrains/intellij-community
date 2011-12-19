@@ -25,12 +25,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
+import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -104,17 +104,20 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
             )
           );
         }
-        
-        DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
-        AnAction action = new RenameElementAction();
-        final TextRange range = psiElement.getTextRange();
-        if (range != null) {
-          editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+
+        final Boolean selectAll = editor.getUserData(RenameHandlerRegistry.SELECT_ALL);
+        try {
+          editor.putUserData(RenameHandlerRegistry.SELECT_ALL, true);
+          DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
+          AnAction action = new RenameElementAction();
+          AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+          action.actionPerformed(event);
+          if (provider != null) {
+            provider.setActive(false);
+          }
         }
-        AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
-        action.actionPerformed(event);
-        if (provider != null) {
-          provider.setActive(false);
+        finally {
+          editor.putUserData(RenameHandlerRegistry.SELECT_ALL, selectAll);
         }
       }
     };

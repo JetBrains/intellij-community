@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +26,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -43,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 @SomeQueue
 public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
-  private final static String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
+  private static final String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
   private final Project myProject;
   private final ScheduledExecutorService myExecutor;
   private final Runnable myDelegate;
@@ -57,9 +55,8 @@ public class UpdateRequestsQueue {
   private final ProjectLevelVcsManager myPlVcsManager;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
-  @NonNls public static final String LOCAL_CHANGES_UPDATE = "Local changes update";
   private final boolean myTrackHeavyLatch;
-  private Getter<Boolean> myIsStoppedGetter;
+  private final Getter<Boolean> myIsStoppedGetter;
 
   public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final Runnable delegate) {
     myProject = project;
@@ -165,15 +162,16 @@ public class UpdateRequestsQueue {
       LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          afterUpdate.run();
+          if (!myProject.isDisposed()) {
+            afterUpdate.run();
+          }
         }
       });
       return;
-    } else {
-      // invoke progress if needed
-      if (data.getWrapperStarter() != null) {
-        data.getWrapperStarter().run();
-      }
+    }
+    // invoke progress if needed
+    if (data.getWrapperStarter() != null) {
+      data.getWrapperStarter().run();
     }
     LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
   }
@@ -186,7 +184,7 @@ public class UpdateRequestsQueue {
 
   // true = do not execute
   private boolean checkLifeCycle() {
-    return (! myStarted) || (! ((StartupManagerImpl) myStartupManager).startupActivityPassed());
+    return !myStarted || !((StartupManagerImpl)myStartupManager).startupActivityPassed();
   }
 
   private class MyRunnable implements Runnable {
@@ -223,7 +221,7 @@ public class UpdateRequestsQueue {
             myWaitingUpdateCompletionQueue.removeAll(copy);
           }
 
-          if ((! myWaitingUpdateCompletionQueue.isEmpty()) && (! myRequestSubmitted)) {
+          if (! myWaitingUpdateCompletionQueue.isEmpty() && ! myRequestSubmitted) {
             LOG.error("No update task to handle request(s)");
           }
         }

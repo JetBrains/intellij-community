@@ -73,11 +73,22 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   public static void copyAsFiles(PsiElement[] elements, PsiDirectory defaultTargetDirectory, Project project) {
-    CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
-    dialog.show();
-    if (dialog.isOK()) {
-      final String newName = elements.length == 1 ? dialog.getNewName() : null;
-      final PsiDirectory targetDirectory = dialog.getTargetDirectory();
+    PsiDirectory targetDirectory = null;
+    String newName = null;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      targetDirectory = defaultTargetDirectory;
+    }
+    else {
+      CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
+      dialog.show();
+      if (dialog.isOK()) {
+        newName = elements.length == 1 ? dialog.getNewName() : null;
+        targetDirectory = dialog.getTargetDirectory();
+      }
+    }
+
+    if (targetDirectory != null) {
       try {
         for (PsiElement element : elements) {
           PsiFileSystemItem psiElement = (PsiFileSystemItem)element;
@@ -155,7 +166,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
    * @param newName can be not null only if elements.length == 1
    * @param targetDirectory
    */
-  private static void copyImpl(final PsiElement[] elements, final String newName, final PsiDirectory targetDirectory, final boolean doClone) {
+  private static void copyImpl(@NotNull final PsiElement[] elements,
+                               @Nullable final String newName,
+                               @NotNull final PsiDirectory targetDirectory,
+                               final boolean doClone) {
     if (doClone && elements.length != 1) {
       throw new IllegalArgumentException("invalid number of elements to clone:" + elements.length);
     }

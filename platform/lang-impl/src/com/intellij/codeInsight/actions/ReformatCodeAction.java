@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,20 +75,22 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     else if (areFiles(files)) {
       final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
       if (!operationStatus.hasReadonlyFiles()) {
-        final ReformatFilesDialog reformatFilesDialog = new ReformatFilesDialog(project);
+        final ReformatFilesDialog reformatFilesDialog = new ReformatFilesDialog(project, files);
         reformatFilesDialog.show();
         if (!reformatFilesDialog.isOK()) return;
         if (reformatFilesDialog.optimizeImports() && !DumbService.getInstance(project).isDumb()) {
-          new ReformatAndOptimizeImportsProcessor(project, convertToPsiFiles(files, project)).run();
+          new ReformatAndOptimizeImportsProcessor(
+            project, convertToPsiFiles(files, project), reformatFilesDialog.isProcessOnlyChangedText()
+          ).run();
         }
         else {
-          new ReformatCodeProcessor(project, convertToPsiFiles(files, project), null).run();
+          new ReformatCodeProcessor(project, convertToPsiFiles(files, project), null, reformatFilesDialog.isProcessOnlyChangedText()).run();
         }
       }
 
       return;
     }
-    else{
+    else {
       Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
@@ -98,26 +100,27 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
           text = CodeInsightBundle.message("process.scope.module", moduleContext.getModuleFilePath());
         }
         else {
-          text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
+          text = CodeInsightBundle.message("process.scope.project", project.getPresentableUrl());
         }
 
-        LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, true);
+        LayoutProjectCodeDialog dialog
+          = new LayoutProjectCodeDialog(project, moduleContext, CodeInsightBundle.message("process.reformat.code"), text, true);
         dialog.show();
         if (!dialog.isOK()) return;
         if (dialog.isOptimizeImports() && !DumbService.getInstance(project).isDumb()) {
           if (moduleContext != null) {
-            new ReformatAndOptimizeImportsProcessor(project, moduleContext).run();
+            new ReformatAndOptimizeImportsProcessor(project, moduleContext, dialog.isProcessOnlyChangedText()).run();
           }
           else {
-            new ReformatAndOptimizeImportsProcessor(projectContext).run();
+            new ReformatAndOptimizeImportsProcessor(project, dialog.isProcessOnlyChangedText()).run();
           }
         }
         else {
           if (moduleContext != null) {
-            new ReformatCodeProcessor(project, moduleContext).run();
+            new ReformatCodeProcessor(project, moduleContext, dialog.isProcessOnlyChangedText()).run();
           }
           else {
-            new ReformatCodeProcessor(projectContext).run();
+            new ReformatCodeProcessor(project, dialog.isProcessOnlyChangedText()).run();
           }
         }
         return;
@@ -140,6 +143,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
     boolean processWholeFile = false;
+    boolean processChangedTextOnly = false;
     if (EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG || (file == null && dir != null)) {
       final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
                                                            hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
@@ -149,12 +153,14 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
       optimizeImports = dialog.isOptimizeImports();
       processWholeFile = dialog.isProcessWholeFile();
+      processChangedTextOnly = dialog.isProcessOnlyChangedText();
+      
       if (dialog.isProcessDirectory()){
         if (optimizeImports) {
-          new ReformatAndOptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
+          new ReformatAndOptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories(), processChangedTextOnly).run();
         }
         else {
-          new ReformatCodeProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
+          new ReformatCodeProcessor(project, dir, dialog.isIncludeSubdirectories(), processChangedTextOnly).run();
         }
         return;
       }
@@ -170,14 +176,14 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     if (optimizeImports && range == null) {
       if (file != null || dir == null) {
-        new ReformatAndOptimizeImportsProcessor(project, file).run();
+        new ReformatAndOptimizeImportsProcessor(project, file, processChangedTextOnly).run();
       }
       else {
-        new ReformatAndOptimizeImportsProcessor(project, dir, true).run();
+        new ReformatAndOptimizeImportsProcessor(project, dir, true, processChangedTextOnly).run();
       }
     }
     else {
-      new ReformatCodeProcessor(project, file, range).run();
+      new ReformatCodeProcessor(project, file, range, processChangedTextOnly).run();
     }
   }
 

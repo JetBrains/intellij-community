@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.*;
 import java.util.List;
 
@@ -55,6 +58,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<FacetType<?,?>, FacetTypeEditor>();
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;
   @NonNls private static final String NO_FRAMEWORKS_NODE = "No facets are configured";
+  private boolean myTreeWasInitialized;
 
   public FacetStructureConfigurable(final Project project, ModuleManager moduleManager) {
     super(project);
@@ -77,7 +81,30 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected void initTree() {
     super.initTree();
-    myTree.setCellRenderer(new FacetsTreeCellRenderer());
+    if (!myTreeWasInitialized) {
+      myTreeWasInitialized = true;
+      myTree.setCellRenderer(new FacetsTreeCellRenderer());
+      myTree.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          revalidateTree();
+        }
+
+        @Override
+        public void componentMoved(ComponentEvent e) {
+          revalidateTree();
+        }
+
+        @Override
+        public void componentShown(ComponentEvent e) {
+          revalidateTree();
+        }
+      });
+    }
+  }
+
+  private void revalidateTree() {
+    FilteringTreeBuilder.revalidateTree(myTree);
   }
 
   protected void loadTree() {

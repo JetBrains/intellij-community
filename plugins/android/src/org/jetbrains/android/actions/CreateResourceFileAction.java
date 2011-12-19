@@ -108,7 +108,7 @@ public class CreateResourceFileAction extends CreateElementActionBase {
         return CreateResourceFileAction.this.createValidator(project, directory, subdirName);
       }
     };
-    dialog.setTitle(getCommandName());
+    dialog.setTitle(AndroidBundle.message("new.resource.dialog.title"));
     dialog.show();
     InputValidator validator = dialog.getValidator();
     if (validator == null) {

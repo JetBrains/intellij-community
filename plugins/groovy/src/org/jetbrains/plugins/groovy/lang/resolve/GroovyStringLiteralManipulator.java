@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -28,13 +29,19 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteral> {
   public GrLiteral handleContentChange(GrLiteral expr, TextRange range, String newContent) throws IncorrectOperationException {
     if (!(expr.getValue() instanceof String)) throw new IncorrectOperationException("cannot handle content change");
+
     String oldText = expr.getText();
     if (oldText.startsWith("'")) {
       newContent = GrStringUtil.escapeSymbolsForString(newContent, !oldText.startsWith("'''"), true);
     }
-    else {
+    else if (oldText.startsWith("\"")) {
       newContent = GrStringUtil.escapeSymbolsForGString(newContent, !oldText.startsWith("\"\"\""), true);
     }
+    else if (oldText.startsWith("/")) {
+      newContent = StringUtil.escapeSlashes(newContent);
+    }
+    //if there is $/-string we don't need to escape something
+
     String newText;
     if (range.getStartOffset() == 1 && (newContent.indexOf('\n') >= 0 || newContent.indexOf('\r') >= 0)) {
       String corner = oldText.substring(0, 1) + oldText.substring(0, 1) + oldText.substring(0, 1);
@@ -68,12 +75,22 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
     int fin = text.length();
 
     String begin = text.substring(0, 1);
+    if (text.startsWith("$/")) {
+      start = 2;
+      if (text.endsWith("/$")) {
+        return new TextRange(start, Math.max(1, fin - 2));
+      }
+      else {
+        return new TextRange(start, fin);
+      }
+    }
+
     if (text.startsWith("\"\"\"") || text.startsWith("'''")) {
       start += 2;
       begin = text.substring(0, 3);
     }
 
-    if (text.length() >= begin.length()*2 && text.endsWith(begin)) {
+    if (text.length() >= begin.length() * 2 && text.endsWith(begin)) {
       fin -= begin.length();
     }
     return new TextRange(start, Math.max(1, fin));

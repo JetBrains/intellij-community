@@ -542,8 +542,26 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
             "Adjusting caret position by moving it before soft wrap. Moving to visual position %s%n", visualPosition
           ));
         }
-        moveToVisualPosition(visualPosition);
-        return;
+        final LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(visualPosition);
+        final int tmpOffset = myEditor.logicalPositionToOffset(logicalPosition);
+        if (tmpOffset == myOffset) {
+          boolean restore = myReportCaretMoves;
+          myReportCaretMoves = false;
+          try {
+            moveToVisualPosition(visualPosition);
+            return;
+          }
+          finally {
+            myReportCaretMoves = restore;
+          }
+        }
+        else {
+          LogMessageEx.error(LOG, "Invalid editor dimension mapping", String.format(
+            "Expected to map visual position '%s' to offset %d but got the following: -> logical position '%s'; -> offset %d. "
+            + "State: %s", visualPosition, myOffset, logicalPosition, tmpOffset, myEditor.dumpState()
+          ));
+        }
+        
       }
     }
 

@@ -273,6 +273,21 @@ def c = { a ->
 } }
 '''
   }
+  
+  void testGeese3() {
+    myTempSettings.getCustomSettings(GroovyCodeStyleSettings).USE_FLYING_GEESE_BRACES = true
+    doTest '''\
+foo {
+  [1].bar {<caret>}
+}
+''', '''\
+foo {
+  [1].bar {
+    <caret>
+} }
+'''
+
+  }
 
 }
 

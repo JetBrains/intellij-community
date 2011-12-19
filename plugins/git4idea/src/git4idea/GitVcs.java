@@ -46,7 +46,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -73,7 +73,9 @@ import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
-import git4idea.vfs.*;
+import git4idea.vfs.GitRootTracker;
+import git4idea.vfs.GitRootsListener;
+import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,15 +121,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private GitRootTracker myRootTracker; // The tracker that checks validity of git roots
   private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
-  private final EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
-  private final EventDispatcher<GitReferenceListener> myReferenceListeners = EventDispatcher.create(GitReferenceListener.class);
-  private GitConfigTracker myConfigTracker;
   private final BackgroundTaskQueue myTaskQueue; // The queue that is used to schedule background task from actions
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   private final TreeDiffProvider myTreeDiffProvider;
   private final GitCommitAndPushExecutor myCommitAndPushExecutor;
-  private GitReferenceTracker myReferenceTracker;
-  private boolean isActivated; // If true, the vcs was activated
   private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
@@ -167,19 +164,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
-    myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
     myExecutableValidator = new GitExecutableValidator(myProject, this);
   }
 
-
-  public BackgroundTaskQueue getTaskQueue() {
-    return myTaskQueue;
-  }
-
-  public GitVFSListener getVFSListener() {
-    return myVFSListener;
-  }
 
   public ReadWriteLock getCommandLock() {
     return myCommandLock;
@@ -194,30 +182,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (vcs != null) {
       vcs.myTaskQueue.run(task);
     }
-  }
-
-  public void addGitConfigListener(GitConfigListener listener) {
-    myConfigListeners.addListener(listener);
-  }
-
-  public void removeGitConfigListener(GitConfigListener listener) {
-    myConfigListeners.removeListener(listener);
-  }
-
-  public void addGitReferenceListener(GitReferenceListener listener) {
-    myReferenceListeners.addListener(listener);
-  }
-
-  public void removeGitReferenceListener(GitReferenceListener listener) {
-    myReferenceListeners.removeListener(listener);
-  }
-
-  public void addGitRootsListener(GitRootsListener listener) {
-    myRootListeners.addListener(listener);
-  }
-
-  public void removeGitRootsListener(GitRootsListener listener) {
-    myRootListeners.removeListener(listener);
   }
 
   /**
@@ -298,10 +262,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return myRevSelector;
   }
 
-  @SuppressWarnings({"deprecation"})
   @Override
   @Nullable
-  public VcsRevisionNumber parseRevisionNumber(String revision, FilePath path) throws VcsException {
+  public VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
     if (revision == null || revision.length() == 0) return null;
     if (revision.length() > 40) {    // date & revision-id encoded string
       String dateString = revision.substring(0, revision.indexOf("["));
@@ -323,10 +286,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   }
 
-  @SuppressWarnings({"deprecation"})
   @Override
   @Nullable
-  public VcsRevisionNumber parseRevisionNumber(String revision) throws VcsException {
+  public VcsRevisionNumber parseRevisionNumber(@Nullable String revision) throws VcsException {
     return parseRevisionNumber(revision, null);
   }
 
@@ -345,8 +307,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void activate() {
-    isActivated = true;
-
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       if (myExecutableValidator.checkExecutableAndNotifyIfNeeded()) {
         checkVersion();
@@ -359,10 +319,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myVFSListener == null) {
       myVFSListener = new GitVFSListener(myProject, this);
     }
-    if (myConfigTracker == null) {
-      myConfigTracker = new GitConfigTracker(myProject, this, myConfigListeners.getMulticaster());
-    }
-    myReferenceTracker.activate();
     NewGitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
 
@@ -378,7 +334,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void deactivate() {
-    isActivated = false;
     if (myRootTracker != null) {
       myRootTracker.dispose();
       myRootTracker = null;
@@ -387,11 +342,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
-    if (myConfigTracker != null) {
-      myConfigTracker.dispose();
-      myConfigTracker = null;
-    }
-    myReferenceTracker.deactivate();
     NewGitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
 
@@ -422,7 +372,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public void showErrors(@NotNull List<VcsException> list, @NotNull String action) {
     if (list.size() > 0) {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
       buffer.append(GitBundle.message("error.list.title", action));
       for (final VcsException exception : list) {
@@ -445,11 +395,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void showMessages(@NotNull String message) {
     if (message.length() == 0) return;
     showMessage(message, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
-  }
-
-  @NotNull
-  public GitVcsApplicationSettings getAppSettings() {
-    return myAppSettings;
   }
 
   /**
@@ -531,7 +476,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         final S sParent = in.get(j);
         final VirtualFile parent = convertor.convert(sParent);
         // the method check both that parent is an ancestor of the child and that they share common git root
-        if (VfsUtil.isAncestor(parent, child, false) && VfsUtil.isAncestor(childRoot, parent, false)) {
+        if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
           in.remove(i);
           //noinspection AssignmentToForLoopParameter
           --i;
@@ -576,10 +521,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public List<CommitExecutor> getCommitExecutors() {
     return Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor);
-  }
-
-  public boolean isActivated() {
-    return isActivated;
   }
 
   @NotNull

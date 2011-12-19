@@ -297,7 +297,8 @@ public class DocumentationManager {
         }
       }, keyboardShortcut != null ? keyboardShortcut.getFirstKeyStroke() : null)); // Null keyStroke is ok here
 
-      final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+    boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
+    final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
           .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
           .setProject(project)
           .addListener(updateProcessor)
@@ -308,6 +309,7 @@ public class DocumentationManager {
           .setResizable(true)
           .setMovable(true)
           .setRequestFocus(requestFocus)
+          .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
           .setTitle(getTitle(element, false))
           .setCouldPin(pinCallback)
           .setCancelCallback(new Computable<Boolean>() {

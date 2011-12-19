@@ -38,4 +38,10 @@ public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
     }
     return true;
   }
+
+  public void dispose() {
+    for (PsiLanguageInjectionHost.Shred shred : this) {
+      shred.getHostRangeMarker().dispose();
+    }
+  }
 }

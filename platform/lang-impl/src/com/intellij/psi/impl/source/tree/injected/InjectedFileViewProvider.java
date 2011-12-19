@@ -38,10 +38,9 @@ import java.util.List;
  * @author cdr
 */
 public class InjectedFileViewProvider extends SingleRootFileViewProvider implements FreeThreadedFileViewProvider {
-  private Place myShreds;
   private Project myProject;
   private final Object myLock = new Object();
-  private final DocumentWindow myDocumentWindow;
+  private final DocumentWindowImpl myDocumentWindow;
   private static final ThreadLocal<Boolean> disabledTemporarily = new ThreadLocal<Boolean>(){
     @Override
     protected Boolean initialValue() {
@@ -52,15 +51,11 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
 
   InjectedFileViewProvider(@NotNull PsiManager psiManager,
                            @NotNull VirtualFileWindow virtualFile,
-                           @NotNull Place shreds,
-                           @NotNull DocumentWindow documentWindow,
+                           @NotNull DocumentWindowImpl documentWindow,
                            @NotNull Language language) {
     super(psiManager, (VirtualFile)virtualFile, true, language);
     myDocumentWindow = documentWindow;
-    synchronized (myLock) {
-      myShreds = shreds;
-      myProject = myShreds.get(0).host.getProject();
-    }
+    myProject = documentWindow.getShreds().get(0).host.getProject();
   }
 
   @Override
@@ -69,11 +64,8 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     if (!isPhysical()) return; // injected PSI change happened inside reparse; ignore
     if (myPatchingLeaves) return;
 
-    List<PsiLanguageInjectionHost.Shred> shreds;
-    synchronized (myLock) {
-      shreds = myShreds;
-    }
-    DocumentWindowImpl documentWindow = (DocumentWindowImpl)myDocumentWindow;
+    DocumentWindowImpl documentWindow = myDocumentWindow;
+    List<PsiLanguageInjectionHost.Shred> shreds = documentWindow.getShreds();
     assert documentWindow.getHostRanges().length == shreds.size();
     String[] changes = documentWindow.calculateMinEditSequence(psiFile.getNode().getText());
     assert changes.length == shreds.size();
@@ -122,11 +114,10 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     return file;
   }
 
-  void setShreds(Place shreds) {
+  void setShreds(@NotNull Place shreds) {
     synchronized (myLock) {
-      myShreds = new Place(shreds);
       myProject = shreds.get(0).host.getProject();
-      ((DocumentWindowImpl)myDocumentWindow).setShreds(myShreds);
+      myDocumentWindow.setShreds(shreds);
     }
   }
 
@@ -141,12 +132,11 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
   }
 
   Place getShreds() {
-    synchronized (myLock) {
-      return myShreds;
-    }
+    return myDocumentWindow.getShreds();
   }
 
   @Override
+  @NotNull
   public DocumentWindow getDocument() {
     return myDocumentWindow;
   }

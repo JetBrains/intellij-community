@@ -86,6 +86,11 @@ public class AndroidClassTagDescriptor implements XmlElementDescriptor {
     return myParentDescriptor.getContentType();
   }
 
+  @Override
+  public String getDefaultValue() {
+    return null;
+  }
+
   public PsiElement getDeclaration() {
     return myClass;
   }

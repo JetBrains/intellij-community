@@ -33,42 +33,32 @@ import java.util.Map;
  * @author peter
  */
 public class MethodCallWithoutQualifierBlock extends GroovyBlock {
-  private final PsiElement myNameElement;
-  private final boolean myTopLevel;
-  private final List<ASTNode> myChildren;
-  private final PsiElement myElem;
-  
-  public MethodCallWithoutQualifierBlock(PsiElement nameElement,
-                                         Alignment alignment,
-                                         Wrap wrap,
-                                         CommonCodeStyleSettings settings,
-                                         GroovyCodeStyleSettings groovySettings,
-                                         boolean topLevel,
-                                         List<ASTNode> children,
-                                         PsiElement elem,
-                                         Map<PsiElement, Alignment> innerAlignments) {
-    super(nameElement.getNode(), alignment, Indent.getContinuationWithoutFirstIndent(), wrap, settings, groovySettings, innerAlignments);
-    myNameElement = nameElement;
-    myTopLevel = topLevel;
-    myChildren = children;
-    myElem = elem;
-  }
+  private final TextRange myRange;
 
-  @NotNull
-  @Override
-  public List<Block> getSubBlocks() {
-    if (mySubBlocks == null) {
-      mySubBlocks = new ArrayList<Block>();
-      mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), myInnerAlignments.get(myNameElement), Indent.getContinuationWithoutFirstIndent(), myWrap, mySettings, myGroovySettings, myInnerAlignments));
-      new GroovyBlockGenerator(this).addNestedChildrenSuffix(mySubBlocks, myAlignment, myTopLevel, myChildren, myChildren.size());
-    }
-    return mySubBlocks;
+  protected MethodCallWithoutQualifierBlock(PsiElement nameElement,
+                                            Alignment alignment,
+                                            Wrap wrap,
+                                            CommonCodeStyleSettings settings,
+                                            GroovyCodeStyleSettings groovySettings,
+                                            boolean topLevel,
+                                            List<ASTNode> children,
+                                            PsiElement elem,
+                                            Map<PsiElement, Alignment> innerAlignments, Map<PsiElement, GroovyBlock> blocks) {
+    super(nameElement.getNode(), alignment, Indent.getContinuationWithoutFirstIndent(), wrap, settings, groovySettings, innerAlignments,blocks);
+    myRange = new TextRange(nameElement.getTextRange().getStartOffset(), elem.getTextRange().getEndOffset());
+
+    mySubBlocks = new ArrayList<Block>();
+    final GroovySimpleBlock first =
+      new GroovySimpleBlock(nameElement.getNode(), myInnerAlignments.get(nameElement), Indent.getContinuationWithoutFirstIndent(), myWrap,
+                            mySettings, myGroovySettings, myInnerAlignments, myBlocks);
+    mySubBlocks.add(first);
+    new GroovyBlockGenerator(this).addNestedChildrenSuffix(mySubBlocks, myAlignment, topLevel, children, children.size());
   }
 
   @NotNull
   @Override
   public TextRange getTextRange() {
-    return new TextRange(myNameElement.getTextRange().getStartOffset(), myElem.getTextRange().getEndOffset());
+    return myRange;
   }
 
   @Override

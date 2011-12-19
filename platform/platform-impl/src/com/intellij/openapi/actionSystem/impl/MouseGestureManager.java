@@ -39,14 +39,11 @@ import java.util.Map;
 public class MouseGestureManager implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
-  private ActionManagerImpl myActionManager;
 
   private Map<IdeFrame, Object> myListeners = new HashMap<IdeFrame, Object>();
   private boolean HAS_TRACKPAD = false;
-  
 
-  public MouseGestureManager(ActionManagerImpl actionManager) {
-    myActionManager = actionManager;
+  public MouseGestureManager() {
   }
 
   public void add(final IdeFrame frame) {
@@ -74,38 +71,6 @@ public class MouseGestureManager implements ApplicationComponent {
   
   public boolean hasTrackpad() {
     return HAS_TRACKPAD;
-  }
-
-  protected static void processMagnification(IdeFrame frame, double magnification) {
-    Point mouse = MouseInfo.getPointerInfo().getLocation();
-    SwingUtilities.convertPointFromScreen(mouse, frame.getComponent());
-    Component componentAt = SwingUtilities.getDeepestComponentAt(frame.getComponent(), mouse.x, mouse.y);
-    if (componentAt != null) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(componentAt));
-      if (editor != null) {
-        double currentSize = editor.getColorsScheme().getEditorFontSize();
-        int defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-        ((EditorEx)editor).setFontSize((int)(Math.max(currentSize + magnification * 3, defaultFontSize)));
-      }
-    }
-  }
-
-  protected void processLeftSwipe(IdeFrame frame) {
-    AnAction forward = myActionManager.getAction("Forward");
-    if (forward == null) return;
-
-    myActionManager.tryToExecute(forward, createMouseEventWrapper(frame), null, null, false);
-  }
-
-  protected void processRightSwipe(IdeFrame frame) {
-    AnAction back = myActionManager.getAction("Back");
-    if (back == null) return;
-
-    myActionManager.tryToExecute(back, createMouseEventWrapper(frame), null, null, false);
-  }
-
-  private static MouseEvent createMouseEventWrapper(IdeFrame frame) {
-    return new MouseEvent(frame.getComponent(), ActionEvent.ACTION_PERFORMED, System.currentTimeMillis(), 0, 0, 0, 0, false, 0);
   }
 
   public void remove(IdeFrame frame) {

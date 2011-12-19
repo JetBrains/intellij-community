@@ -63,11 +63,23 @@ public class ClassRenderer extends NodeRendererImpl{
   public boolean SHOW_STATIC = false;
   public boolean SHOW_STATIC_FINAL = false;
 
+  public boolean SHOW_FQ_TYPE_NAMES = true;
   public boolean SHOW_DECLARED_TYPE = false;
   public boolean SHOW_OBJECT_ID = true;
   
   public ClassRenderer() {
     myProperties.setEnabled(true);
+  }
+
+  public final String renderTypeName(final String typeName) {
+    if (SHOW_FQ_TYPE_NAMES) {
+      return typeName;
+    }
+    final int dotIndex = typeName.lastIndexOf('.');
+    if (dotIndex > 0) {
+      return typeName.substring(dotIndex + 1);
+    }
+    return typeName;
   }
 
   public String getUniqueId() {

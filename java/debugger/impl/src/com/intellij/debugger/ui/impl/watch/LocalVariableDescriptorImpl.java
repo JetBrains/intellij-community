@@ -121,7 +121,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
       buf.append(getName());
       if (classRenderer.SHOW_DECLARED_TYPE) {
         buf.append(": ");
-        buf.append(myTypeName);
+        buf.append(classRenderer.renderTypeName(myTypeName));
       }
       return buf.toString();
     }

@@ -210,7 +210,7 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaNoVariantsDelegator" id="javaBasic2ClassName"
-                            order="first, before javaMemberName"/>
+                            order="first, before javaMemberName, after liveTemplates"/>
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator" id="basic2ClassName"
                             order="first, after xml"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
