@@ -325,7 +325,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private void registerUnresolvedReferenceProblem(final PyElement node, final PsiReference reference, HighlightSeverity severity) {
       String description = null;
       final String text = reference.getElement().getText();
-      final String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
+      TextRange rangeInElement = reference.getRangeInElement();
+      String ref_text = text;  // text of the part we're working with
+      if (rangeInElement.getStartOffset() > 0 && rangeInElement.getEndOffset() > 0)
+        ref_text = rangeInElement.substring(text);
       final PsiElement element = reference.getElement();
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight
