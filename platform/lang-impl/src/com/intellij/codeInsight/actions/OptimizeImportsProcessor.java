@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +34,19 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
 
   public OptimizeImportsProcessor(Project project) {
-    super(project, COMMAND_NAME, PROGRESS_TEXT);
+    super(project, COMMAND_NAME, PROGRESS_TEXT, false);
   }
 
   public OptimizeImportsProcessor(Project project, Module module) {
-    super(project, module, COMMAND_NAME, PROGRESS_TEXT);
+    super(project, module, COMMAND_NAME, PROGRESS_TEXT, false);
   }
 
   public OptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs) {
-    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME);
+    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, false);
   }
 
   public OptimizeImportsProcessor(Project project, PsiFile file) {
-    super(project, file, PROGRESS_TEXT, COMMAND_NAME);
+    super(project, file, PROGRESS_TEXT, COMMAND_NAME, false);
   }
 
   public OptimizeImportsProcessor(Project project, PsiFile[] files, Runnable postRunnable) {
@@ -54,11 +54,13 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public OptimizeImportsProcessor(Project project, PsiFile[] files, String commandName, Runnable postRunnable) {
-    super(project, files, PROGRESS_TEXT, commandName, postRunnable);
+    super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
   }
 
   @NotNull
-  protected FutureTask<Boolean> preprocessFile(final PsiFile file) throws IncorrectOperationException {
+  protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly)
+    throws IncorrectOperationException
+  {
     final ImportOptimizer optimizer = LanguageImportStatements.INSTANCE.forFile(file);
     Runnable runnable = optimizer != null ? optimizer.processFile(file) : EmptyRunnable.getInstance();
     return new FutureTask<Boolean>(runnable, true);
