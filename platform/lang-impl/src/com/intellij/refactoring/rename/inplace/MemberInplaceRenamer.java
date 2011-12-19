@@ -220,9 +220,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   protected void restoreStateBeforeTemplateIsFinished() {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
+        final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
             final TemplateState state = TemplateManagerImpl.getTemplateState(editor);
             assert state != null;
             final int segmentsCount = state.getSegmentsCount();
@@ -233,6 +233,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             }
           }
         });
+        PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
       }
     }, RENAME_TITLE, null);
   }
