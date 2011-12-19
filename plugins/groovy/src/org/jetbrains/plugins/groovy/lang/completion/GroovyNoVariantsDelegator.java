@@ -18,52 +18,35 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 
 /**
  * @author peter
  */
-public class GroovyNoVariantsDelegator extends CompletionContributor {
+public class GroovyNoVariantsDelegator extends NoVariantsDelegator {
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final Ref<Boolean> empty = Ref.create(true);
-    Consumer<CompletionResult> passResult = new Consumer<CompletionResult>() {
-      public void consume(final CompletionResult lookupElement) {
-        empty.set(false);
-        result.passResult(lookupElement);
-      }
-    };
-    result.runRemainingContributors(parameters, passResult);
+  protected void delegate(CompletionParameters parameters, CompletionResultSet result, Consumer<CompletionResult> passResult) {
+    if (parameters.getCompletionType() == CompletionType.BASIC &&
+        parameters.getInvocationCount() <= 1 &&
+        JavaCompletionContributor.mayStartClassName(result, false) &&
+        GroovyCompletionContributor.isClassNamePossible(parameters.getPosition())) {
+      final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
 
-    if (!empty.get() && parameters.getInvocationCount() == 0) {
-      result.restartCompletionWhenNothingMatches();
-    }
-
-    if (empty.get()) {
-      if (parameters.getCompletionType() == CompletionType.BASIC &&
-          parameters.getInvocationCount() <= 1 &&
-          JavaCompletionContributor.mayStartClassName(result, false) &&
-          GroovyCompletionContributor.isClassNamePossible(parameters.getPosition())) {
-        final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
-
-        GroovyCompletionContributor.addAllClasses(parameters, result,
-                                                         new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement element) {
-            JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-            if (classElement != null) {
-              classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-            }
-            merger.consume(classElement);
+      GroovyCompletionContributor.addAllClasses(parameters, result,
+                                                       new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+          if (classElement != null) {
+            classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
           }
-        }, new InheritorsHolder(parameters.getPosition(), result));
+          merger.consume(classElement);
+        }
+      }, new InheritorsHolder(parameters.getPosition(), result));
 
-        merger.finishedClassProcessing();
+      merger.finishedClassProcessing();
 
-      }
     }
   }
-
 }
