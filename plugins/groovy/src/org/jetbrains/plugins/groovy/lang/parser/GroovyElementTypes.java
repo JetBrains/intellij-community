@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -45,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockI
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrAnnotationMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
@@ -176,8 +178,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("Block statement");
 
-  // Enum
-  GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");
+  EmptyStubElementType<GrEnumConstantList> ENUM_CONSTANTS = new EmptyStubElementType<GrEnumConstantList>("Enumeration constants", GroovyFileType.GROOVY_LANGUAGE) {
+    @Override
+    public GrEnumConstantList createPsi(@NotNull EmptyStub stub) {
+      return new GrEnumConstantListImpl(stub);
+    }
+  };
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
   //Branch statements
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("Break statement");
@@ -374,7 +380,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
       }
     };
 
-  IElementType ENUM_BODY = new GroovyElementType("enum block");
+  EmptyStubElementType<GrEnumDefinitionBody> ENUM_BODY = new EmptyStubElementType<GrEnumDefinitionBody>("enum block", GroovyFileType.GROOVY_LANGUAGE) {
+    @Override
+    public GrEnumDefinitionBody createPsi(@NotNull EmptyStub stub) {
+      return new GrTypeDefinitionBodyBase.GrEnumBody(stub);
+    }
+  };
   //statements
   GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");
   GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement");
