@@ -15,15 +15,21 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteralImpl> {
-  public GrLiteralImpl handleContentChange(GrLiteralImpl expr, TextRange range, String newContent) throws IncorrectOperationException {
+public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteral> {
+  private static final Logger LOG = Logger.getInstance(GroovyStringLiteralManipulator.class);
+
+  public GrLiteralImpl handleContentChange(GrLiteral expr, TextRange range, String newContent) throws IncorrectOperationException {
     if (!(expr.getValue() instanceof String)) throw new IncorrectOperationException("cannot handle content change");
+
+    LOG.assertTrue(expr instanceof GrLiteralImpl);
 
     String oldText = expr.getText();
     final String quote = GrStringUtil.getStartQuote(oldText);
@@ -42,10 +48,10 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
     }
 
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
-    return expr.updateText(newText);
+    return ((GrLiteralImpl)expr).updateText(newText);
   }
 
-  public TextRange getRangeInElement(final GrLiteralImpl element) {
+  public TextRange getRangeInElement(final GrLiteral element) {
     final String text = element.getText();
     if (!(element.getValue() instanceof String)) {
       return super.getRangeInElement(element);
