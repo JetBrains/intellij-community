@@ -64,6 +64,7 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
     public boolean myHighlight = true;
     public boolean myShowTree = true;
     public boolean myTopoOrder = false;
+    public boolean myShowDetails = true;
   }
 
   @Override
@@ -177,5 +178,13 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
 
   public void setHighlight(final boolean value) {
     myState.myHighlight = value;
+  }
+
+  public boolean isShowDetails() {
+    return myState.myShowDetails;
+  }
+
+  public void setShowDetails(boolean showDetails) {
+    myState.myShowDetails = showDetails;
   }
 }
