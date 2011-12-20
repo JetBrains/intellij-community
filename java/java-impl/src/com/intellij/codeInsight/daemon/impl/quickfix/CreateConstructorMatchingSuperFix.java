@@ -126,7 +126,9 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
                 }
               }
 
-              derived.getNameIdentifier().replace(targetClass.getNameIdentifier());
+              final PsiIdentifier identifier = targetClass.getNameIdentifier();
+              LOG.assertTrue(identifier != null, targetClass);
+              derived.getNameIdentifier().replace(identifier);
               @NonNls StringBuffer buffer = new StringBuffer();
               buffer.append("void foo () {\nsuper(");
 
