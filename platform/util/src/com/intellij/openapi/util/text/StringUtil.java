@@ -756,12 +756,12 @@ public class StringUtil {
       return suggestion + "ren";
     }
 
-    if (endsWithChar(suggestion, 's') || endsWithChar(suggestion, 'x') || suggestion.endsWith("ch")) {
+    if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") || endsWithIgnoreCase(suggestion, "ch")) {
       return suggestion + "es";
     }
 
     int len = suggestion.length();
-    if (endsWithChar(suggestion, 'y') && len > 1 && !isVowel(suggestion.charAt(len - 2))) {
+    if (endsWithIgnoreCase(suggestion, "y") && len > 1 && !isVowel(toLowerCase(suggestion.charAt(len - 2)))) {
       return suggestion.substring(0, len - 1) + "ies";
     }
 
