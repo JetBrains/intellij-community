@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -129,7 +130,28 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  public PyType getReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite) {
+  public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyReferenceExpression callSite) {
+    final PyType type = getGenericReturnType(context, callSite);
+    if (PyTypeChecker.hasGenerics(type, context)) {
+      if (callSite != null) {
+        final PsiElement parent = callSite.getParent();
+        if (parent instanceof PyCallExpression) {
+          final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, (PyCallExpression)parent, context);
+          if (substitutions != null) {
+            final Ref<PyType> result = PyTypeChecker.substitute(type, substitutions, context);
+            if (result != null) {
+              return result.get();
+            }
+          }
+        }
+      }
+      return null;
+    }
+    return type;
+  }
+
+  @Nullable
+  private PyType getGenericReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite) {
     if (typeEvalContext.maySwitchToAST(this)) {
       PyAnnotation anno = getAnnotation();
       if (anno != null) {
@@ -161,7 +183,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   private PyType getYieldStatementType(@NotNull final TypeEvalContext context) {
-    PyType elementType = null;
+    Ref<PyType> elementType = null;
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyClass listClass = cache.getClass("list");
     final PyStatementList statements = getStatementList();
@@ -175,16 +197,16 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       });
       final int n = types.size();
       if (n == 1) {
-        elementType = types.iterator().next();
+        elementType = Ref.create(types.iterator().next());
       }
       else if (n > 0) {
-        elementType = PyUnionType.union(types);
+        elementType = Ref.create(PyUnionType.union(types));
       }
     }
     if (elementType != null) {
       final PyType it = PyTypeParser.getTypeByName(this, "Iterator");
       if (it instanceof PyClassType) {
-        return new PyCollectionTypeImpl(((PyClassType)it).getPyClass(), false, elementType);
+        return new PyCollectionTypeImpl(((PyClassType)it).getPyClass(), false, elementType.get());
       }
     }
     return null;

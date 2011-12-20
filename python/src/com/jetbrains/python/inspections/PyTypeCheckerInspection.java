@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -40,9 +42,17 @@ public class PyTypeCheckerInspection extends PyInspection {
     public void visitPyCallExpression(PyCallExpression node) {
       final PyArgumentList args = node.getArgumentList();
       if (args != null) {
+        final Map<PyGenericType, PyType> substitutions = new HashMap<PyGenericType, PyType>();
         final CallArgumentsMapping res = args.analyzeCall(resolveWithoutImplicits());
-        final Map<PyExpression, PyNamedParameter> mapped = res.getPlainMappedParams();
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : mapped.entrySet()) {
+        final PyCallExpression.PyMarkedCallee markedCallee = res.getMarkedCallee();
+        if (markedCallee != null) {
+          final Callable callable = markedCallee.getCallable();
+          final PyFunction function = callable.asMethod();
+          if (function != null) {
+             substitutions.putAll(PyTypeChecker.collectCallGenerics(function, node, myTypeEvalContext));
+          }
+        }
+        for (Map.Entry<PyExpression, PyNamedParameter> entry : res.getPlainMappedParams().entrySet()) {
           final PyNamedParameter p = entry.getValue();
           if (p.isPositionalContainer() || p.isKeywordContainer()) {
             // TODO: Support *args, **kwargs
@@ -50,7 +60,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
           final PyType argType = entry.getKey().getType(myTypeEvalContext);
           final PyType paramType = p.getType(myTypeEvalContext);
-          checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, true);
+          checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions, true);
         }
       }
     }
@@ -107,7 +117,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (p != null) {
             final PyType argType = argument.getType(myTypeEvalContext);
             final PyType paramType = p.getType(myTypeEvalContext);
-            return checkTypes(paramType, argType, argument, myTypeEvalContext, registerProblem);
+            return checkTypes(paramType, argType, argument, myTypeEvalContext, new HashMap<PyGenericType, PyType>(), registerProblem);
           }
         }
       }
@@ -115,12 +125,24 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Nullable
-    private String checkTypes(PyType superType, PyType subType, PsiElement node, TypeEvalContext context, boolean registerPoblem) {
+    private String checkTypes(@Nullable PyType superType, @Nullable PyType subType, @Nullable PsiElement node,
+                              @NotNull TypeEvalContext context, @NotNull Map<PyGenericType, PyType> substitutions, boolean registerPoblem) {
       if (subType != null && superType != null) {
-        if (!PyTypeChecker.match(superType, subType, context)) {
-          final String msg = String.format("Expected type '%s', got '%s' instead",
-                                           PythonDocumentationProvider.getTypeName(superType, context),
-                                           PythonDocumentationProvider.getTypeName(subType, myTypeEvalContext));
+        if (!PyTypeChecker.match(superType, subType, context, substitutions)) {
+          final String superName = PythonDocumentationProvider.getTypeName(superType, context);
+          String expected = String.format("'%s'", superName);
+          if (PyTypeChecker.hasGenerics(superType, context)) {
+            final Ref<PyType> subst = PyTypeChecker.substitute(superType, substitutions, context);
+            if (subst != null) {
+              expected = String.format("'%s' (matched generic type '%s')",
+                                       PythonDocumentationProvider.getTypeName(subst.get(), context),
+                                       superName);
+
+            }
+          }
+          final String msg = String.format("Expected type %s, got '%s' instead",
+                                           expected,
+                                           PythonDocumentationProvider.getTypeName(subType, context));
           if (registerPoblem) {
             registerProblem(node, msg);
           }

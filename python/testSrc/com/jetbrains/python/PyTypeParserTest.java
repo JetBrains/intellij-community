@@ -62,6 +62,14 @@ public class PyTypeParserTest extends PyTestCase {
     assertEquals(7, result.getTypes().values().size());
   }
 
+  public void testGenericType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T");
+    assertNotNull(type);
+    assertInstanceOf(type, PyGenericType.class);
+    assertEquals("T", type.getName());
+  }
+
   // PY-4223
   public void testSphinxFormattedType() {
     myFixture.configureByFile("typeParser/typeParser.py");

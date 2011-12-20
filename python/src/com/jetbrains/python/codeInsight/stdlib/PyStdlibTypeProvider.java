@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -8,6 +9,7 @@ import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
@@ -25,6 +27,16 @@ import java.util.Properties;
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private Properties myStdlibTypes2 = new Properties();
   private Properties myStdlibTypes3 = new Properties();
+
+  @Nullable
+  public static PyStdlibTypeProvider getInstance() {
+    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      if (typeProvider instanceof PyStdlibTypeProvider) {
+        return (PyStdlibTypeProvider)typeProvider;
+      }
+    }
+    return null;
+  }
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
@@ -52,6 +64,19 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
       return getReturnTypeByQName(qname, function);
+    }
+    return null;
+  }
+
+  @Nullable
+  public PyType getConstructorType(@NotNull PyClass cls) {
+    final String classQName = cls.getQualifiedName();
+    if (classQName != null) {
+      final PyQualifiedName canonicalQName = ResolveImportUtil.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(classQName));
+      if (canonicalQName != null) {
+        final PyQualifiedName qname = canonicalQName.append(PyNames.INIT);
+        return getReturnTypeByQName(qname.toString(), cls);
+      }
     }
     return null;
   }

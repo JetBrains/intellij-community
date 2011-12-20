@@ -11,6 +11,8 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -32,6 +34,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     pyVisitor.visitPyBinaryExpression(this);
   }
 
+  @Nullable
   public PyExpression getLeftExpression() {
     return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
@@ -67,6 +70,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return buf.toString().equals(chars);
   }
 
+  @Nullable
   public PyExpression getOppositeExpression(PyExpression expression) throws IllegalArgumentException {
     PyExpression right = getRightExpression();
     PyExpression left = getLeftExpression();
@@ -86,7 +90,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     if (left == child.getPsi() && right != null) {
       replace(right);
     }
-    else if (right == child.getPsi()) {
+    else if (right == child.getPsi() && left != null) {
       replace(left);
     }
     else {
@@ -94,19 +98,27 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     }
   }
 
+  @NotNull
   @Override
-  public PsiReference getReference() {
+  public QualifiedResolveResult followAssignmentsChain(PyResolveContext resolveContext) {
+    return new PyReferenceExpressionImpl.QualifiedResolveResultEmpty();
+  }
+
+  @Override
+  public PyQualifiedName asQualifiedName() {
+    return PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
+  }
+
+  @NotNull
+  @Override
+  public PsiPolyVariantReference getReference() {
     return getReference(PyResolveContext.noImplicits());
   }
 
-  @Nullable
+  @NotNull
   @Override
   public PsiPolyVariantReference getReference(PyResolveContext context) {
-    final PyElementType t = getOperator();
-    if (t != null && t.getSpecialMethodName() != null) {
-      return new PyOperatorReferenceImpl(this, context);
-    }
-    return null;
+    return new PyOperatorReferenceImpl(this, context);
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
@@ -115,19 +127,17 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     final PsiElement operator = getPsiOperator();
     if (lhs != null && rhs != null && operator != null) {
       final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-      if (ref != null) {
-        final PsiElement resolved = ref.resolve();
-        if (resolved instanceof Callable) {
-          context.trace("Binary operator reference resolved to %s", resolved);
-          final PyType res = ((Callable)resolved).getReturnType(context, null);
-          context.trace("Binary operator reference resolve type is %s", res);
-          if (!PyTypeChecker.isUnknown(res) && !(res instanceof PyNoneType)) {
-            return res;
-          }
+      final PsiElement resolved = ref.resolve();
+      if (resolved instanceof Callable) {
+        context.trace("Binary operator reference resolved to %s", resolved);
+        final PyType res = ((Callable)resolved).getReturnType(context, this);
+        context.trace("Binary operator reference resolve type is %s", res);
+        if (!PyTypeChecker.isUnknown(res) && !(res instanceof PyNoneType)) {
+          return res;
         }
-        else {
-          context.trace("Failed to resolve binary operator reference %s", this);
-        }
+      }
+      else {
+        context.trace("Failed to resolve binary operator reference %s", this);
       }
       if (PyNames.COMPARISON_OPERATORS.contains(getReferencedName())) {
         return PyBuiltinCache.getInstance(this).getBoolType();
