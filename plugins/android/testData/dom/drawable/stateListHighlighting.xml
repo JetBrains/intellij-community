@@ -2,7 +2,7 @@
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_window_focused="false" android:drawable="@drawable/myDrawable" />
-    <item android:state_pressed="" android:drawable="@drawable/myDrawable" />
+    <item android:state_pressed="false" android:drawable="@drawable/myDrawable" />
     <item android:state_focused="true" android:drawable="@drawable/myDrawable" />
     <item android:drawable="<error>@drawable/myDrawab</error>" />
 </selector>

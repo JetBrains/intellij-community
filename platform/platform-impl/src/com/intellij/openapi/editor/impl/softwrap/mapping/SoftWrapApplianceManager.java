@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -24,10 +26,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
-import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.IterationState;
-import com.intellij.openapi.editor.impl.TextChangeImpl;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,7 +53,9 @@ import java.util.List;
  * @since Jul 5, 2010 10:01:27 AM
  */
 public class SoftWrapApplianceManager implements SoftWrapFoldingListener, DocumentListener {
-
+  
+  private static final Logger LOG = Logger.getInstance("#" + SoftWrapApplianceManager.class.getName());
+  
   /** Enumerates possible type of soft wrap indents to use. */
   enum IndentType {
     /** Don't apply special indent to soft-wrapped line at all. */
@@ -90,14 +91,15 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
    */
   private int myLastTopLeftCornerOffset = -1;
 
-  private VisibleAreaWidthProvider myWidthProvider;
-  private LineWrapPositionStrategy myLineWrapPositionStrategy;
-  private boolean                  myVisualAreaListenerAttached;
-  private boolean                  myCustomIndentUsedLastTime;
-  private int                      myCustomIndentValueUsedLastTime;
-  private int                      myVisibleAreaWidth;
-  private boolean                  myInProgress;
-  private boolean                  myHasLinesWithFailedWrap;
+  private VisibleAreaWidthProvider    myWidthProvider;
+  private LineWrapPositionStrategy    myLineWrapPositionStrategy;
+  private IncrementalCacheUpdateEvent myEventBeingProcessed;
+  private boolean                     myVisualAreaListenerAttached;
+  private boolean                     myCustomIndentUsedLastTime;
+  private int                         myCustomIndentValueUsedLastTime;
+  private int                         myVisibleAreaWidth;
+  private boolean                     myInProgress;
+  private boolean                     myHasLinesWithFailedWrap;
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorEx editor,
@@ -172,16 +174,28 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     List<IncrementalCacheUpdateEvent> events = new ArrayList<IncrementalCacheUpdateEvent>(myEventsStorage.getEvents());
     myActiveEvents.addAll(events);
     myEventsStorage.release();
+    if (myInProgress && !events.isEmpty()) {
+      String state = "";
+      if (myEditor instanceof EditorImpl) {
+        state = ((EditorImpl)myEditor).dumpState();
+      }
+      LogMessageEx.error(LOG, "Detected race condition at soft wraps recalculation", String.format(
+        "Current events: %s. Concurrent events: %s, event being processed: %s%n%s",
+        events, myActiveEvents, myEventBeingProcessed, state
+      ));
+    }
     myInProgress = true;
     myHasLinesWithFailedWrap = false;
     try {
       for (IncrementalCacheUpdateEvent event : events) {
+        myEventBeingProcessed = event;
         recalculateSoftWraps(event);
       }
     }
     finally {
       myInProgress = false;
       myActiveEvents.clear();
+      myEventBeingProcessed = null;
     }
     updateLastTopLeftCornerOffset();
     return true;
@@ -896,7 +910,8 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   @Override
   public String toString() {
     return String.format(
-      "recalculation in progress: %b; stored update events: %s; active update events: %s", myInProgress, myEventsStorage, myActiveEvents
+      "recalculation in progress: %b; stored update events: %s; active update events: %s, event being processed: %s",
+      myInProgress, myEventsStorage, myActiveEvents, myEventBeingProcessed
     );
   }
 

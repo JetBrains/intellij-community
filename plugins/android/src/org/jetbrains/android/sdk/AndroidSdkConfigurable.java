@@ -54,9 +54,11 @@ public class AndroidSdkConfigurable implements AdditionalDataConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    AndroidSdkAdditionalData newData = new AndroidSdkAdditionalData(mySdk, myForm.getSelectedSdk());
+    final Sdk javaSdk = myForm.getSelectedSdk();
+    AndroidSdkAdditionalData newData = new AndroidSdkAdditionalData(mySdk, javaSdk);
     newData.setBuildTarget(myForm.getSelectedBuildTarget());
     final SdkModificator modificator = mySdk.getSdkModificator();
+    modificator.setVersionString(javaSdk != null ? javaSdk.getVersionString() : null);
     modificator.setSdkAdditionalData(newData);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

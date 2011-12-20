@@ -58,6 +58,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
 
   private final List<String> myResourceTypes;
   private ResolvingConverter<String> myAdditionalConverter;
+  private boolean myAdditionalConverterSoft = false;
   private boolean myWithPrefix = true;
   private boolean myWithExplicitResourceType = true;
 
@@ -75,8 +76,9 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     myWithExplicitResourceType = withExplicitResourceType;
   }
 
-  public void setAdditionalConverter(ResolvingConverter<String> additionalConverter) {
+  public void setAdditionalConverter(ResolvingConverter<String> additionalConverter, boolean soft) {
     myAdditionalConverter = additionalConverter;
+    myAdditionalConverterSoft = soft;
   }
 
   @NotNull
@@ -207,10 +209,13 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
   public ResourceValue fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
     ResourceValue parsed = ResourceValue.parse(s, true, myWithPrefix);
-    if (parsed == null && myAdditionalConverter != null) {
+    if ((parsed == null || !parsed.isReference()) && myAdditionalConverter != null) {
       String value = myAdditionalConverter.fromString(s, context);
       if (value != null) {
         return ResourceValue.literal(value);
+      }
+      else if (!myAdditionalConverterSoft) {
+        return null;
       }
     }
     if (parsed != null && parsed.getResourceType() == null && myResourceTypes.size() == 1) {

@@ -20,12 +20,9 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * @author cdr
@@ -33,8 +30,6 @@ import javax.swing.event.ChangeListener;
 public class StructureViewComposite implements StructureView {
   @NotNull private final StructureViewDescriptor[] myStructureViews;
   @NotNull private StructureViewDescriptor mySelectedViewDescriptor;
-  @NotNull private final TabbedPaneWrapper myTabbedPaneWrapper;
-
   public static class StructureViewDescriptor {
     public final String title;
     public final StructureView structureView;
@@ -53,17 +48,6 @@ public class StructureViewComposite implements StructureView {
       Disposer.register(this, descriptor.structureView);
     }
     mySelectedViewDescriptor = views[0];
-    myTabbedPaneWrapper = new TabbedPaneWrapper(this);
-    for (StructureViewDescriptor descriptor : views) {
-      myTabbedPaneWrapper.addTab(descriptor.title, descriptor.icon, descriptor.structureView.getComponent(), null);
-    }
-    myTabbedPaneWrapper.setSelectedIndex(0);
-    myTabbedPaneWrapper.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        int index = myTabbedPaneWrapper.getSelectedIndex();
-        mySelectedViewDescriptor = myStructureViews[index];
-      }
-    });
   }
 
   public StructureView getSelectedStructureView() {
@@ -84,7 +68,7 @@ public class StructureViewComposite implements StructureView {
   }
 
   public JComponent getComponent() {
-    return myTabbedPaneWrapper.getComponent();
+    return mySelectedViewDescriptor.structureView.getComponent();
   }
 
   public void dispose() {

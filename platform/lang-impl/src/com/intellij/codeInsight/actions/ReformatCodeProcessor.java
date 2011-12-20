@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -37,52 +40,65 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.ReformatCodeProcessor");
 
-  private final TextRange myRange;
+  private final Collection<TextRange> myRanges = new ArrayList<TextRange>();
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("reformat.progress.common.text");
 
-  public ReformatCodeProcessor(Project project) {
-    super(project, COMMAND_NAME, PROGRESS_TEXT);
-    myRange = null;
+  public ReformatCodeProcessor(Project project, boolean processChangedTextOnly) {
+    super(project, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
   }
 
-  public ReformatCodeProcessor(Project project, Module module) {
-    super(project, module, COMMAND_NAME, PROGRESS_TEXT);
-    myRange = null;
+  public ReformatCodeProcessor(Project project, Module module, boolean processChangedTextOnly) {
+    super(project, module, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
   }
 
-  public ReformatCodeProcessor(Project project, PsiDirectory directory, boolean includeSubdirs) {
-    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME);
-    myRange = null;
+  public ReformatCodeProcessor(Project project, PsiDirectory directory, boolean includeSubdirs, boolean processChangedTextOnly) {
+    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, processChangedTextOnly);
   }
 
-  public ReformatCodeProcessor(Project project, PsiFile file, TextRange range) {
-    super(project, file, PROGRESS_TEXT, COMMAND_NAME);
-    myRange = range;
+  public ReformatCodeProcessor(Project project, PsiFile file, @Nullable TextRange range, boolean processChangedTextOnly) {
+    super(project, file, PROGRESS_TEXT, COMMAND_NAME, processChangedTextOnly);
+    if (range != null) {
+      myRanges.add(range);
+    }
   }
 
-  public ReformatCodeProcessor(Project project, PsiFile[] files, Runnable postRunnable) {
-    this(project, files, COMMAND_NAME, postRunnable);
+  public ReformatCodeProcessor(Project project, PsiFile[] files, Runnable postRunnable, boolean processChangedTextOnly) {
+    this(project, files, COMMAND_NAME, postRunnable, processChangedTextOnly);
   }
-  
-  public ReformatCodeProcessor(Project project, PsiFile[] files, String commandName, Runnable postRunnable) {
-    super(project, files, PROGRESS_TEXT, commandName, postRunnable);
-    myRange = null;
+
+  public ReformatCodeProcessor(Project project,
+                               PsiFile[] files,
+                               String commandName,
+                               Runnable postRunnable,
+                               boolean processChangedTextOnly)
+  {
+    super(project, files, PROGRESS_TEXT, commandName, postRunnable, processChangedTextOnly);
   }
 
   @NotNull
-  protected FutureTask<Boolean> preprocessFile(final PsiFile file) throws IncorrectOperationException {
+  protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, final boolean processChangedTextOnly)
+    throws IncorrectOperationException
+  {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
         try {
-          TextRange range = myRange == null ? file.getTextRange() : myRange;
-          CodeStyleManager.getInstance(myProject).reformatText(file, range.getStartOffset(), range.getEndOffset());
+          if (myRanges.isEmpty() && processChangedTextOnly) {
+            myRanges.addAll(FormatChangedTextUtil.getChanges(file));
+          }
+          if (myRanges.isEmpty()) {
+            myRanges.add(file.getTextRange());
+          }
+          CodeStyleManager.getInstance(myProject).reformatText(file, myRanges);
           return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
           return false;
+        }
+        finally {
+          myRanges.clear();
         }
       }
     });

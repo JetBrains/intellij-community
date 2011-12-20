@@ -15,71 +15,34 @@
  */
 package git4idea.repo;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.tests.GitTestUtil;
+import git4idea.test.GitTestUtil;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
-
-import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitConfigTest {
-
+  
   @DataProvider(name = "remote")
   public Object[][] loadRemotes() throws IOException {
-    return loadData("remote");
+    return GitTestUtil.loadConfigData(getTestDataFolder("remote"));
   }
   
   @DataProvider(name = "branch")
   public Object[][] loadBranches() throws IOException {
-    return loadData("branch");
+    return GitTestUtil.loadConfigData(getTestDataFolder("branch"));
   }
 
-  public static Object[][] loadData(String subfolder) throws IOException {
-    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-    File dataDir = new File(new File(new File(pluginRoot, "testData"), "config"), subfolder);
-    File[] tests = dataDir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return !name.startsWith(".");
-      }
-    });
-    Object[][] data = new Object[tests.length][];
-    for (int i = 0; i < tests.length; i++) {
-      File testDir = tests[i];
-      File descriptionFile = null;
-      File configFile = null;
-      File resultFile = null;
-      for (File file : testDir.listFiles()) {
-        if (file.getName().endsWith("_desc.txt")) {
-          descriptionFile = file;
-        }
-        else if (file.getName().endsWith("_config.txt")) {
-          configFile = file;
-        }
-        else if (file.getName().endsWith("_result.txt")) {
-          resultFile = file;
-        }
-      }
-      assertNotNull(descriptionFile, String.format("description file not found in %s among %s", testDir, Arrays.toString(testDir.list())));
-      assertNotNull(configFile, String.format("config file file not found in %s among %s", testDir, Arrays.toString(testDir.list())));
-      assertNotNull(resultFile, String.format("result file file not found in %s among %s", testDir, Arrays.toString(testDir.list())));
-
-      String testName = FileUtil.loadFile(descriptionFile).split("\n")[0]; // description is in the first line of the desc-file
-      data[i] = new Object[]{
-        testName, configFile, resultFile
-      };
-    }
-    return data;
+  private static File getTestDataFolder(String subfolder) {
+    File testData = GitTestUtil.getTestDataFolder();
+    return new File(new File(testData, "config"), subfolder);
   }
 
   @Test(dataProvider = "remote")

@@ -75,13 +75,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
 
     createUIComponents();
 
-    myAvailableQualifiersConfig.createDefault();
-
-    myAvailableQualifiersConfig.setLanguageQualifier(null);
-    myAvailableQualifiersConfig.setVersionQualifier(null);
-    myAvailableQualifiersConfig.setNightModeQualifier(null);
-    myAvailableQualifiersConfig.setUiModeQualifier(null);
-    myAvailableQualifiersConfig.setRegionQualifier(null);
+    createDefaultConfig(myAvailableQualifiersConfig);
 
     myChosenQualifiersConfig.reset();
 
@@ -122,6 +116,30 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
       }
       else if (qualifier instanceof TouchScreenQualifier) {
         myEditors.put(name, new MyTouchScreenEditor());
+      }
+      else if (qualifier instanceof VersionQualifier) {
+        myEditors.put(name, new MyVersionEditor());
+      }
+      else if (qualifier instanceof NightModeQualifier) {
+        myEditors.put(name, new MyNightModeEditor());
+      }
+      else if (qualifier instanceof UiModeQualifier) {
+        myEditors.put(name, new MyUiModeEditor());
+      }
+      else if (qualifier instanceof LanguageQualifier) {
+        myEditors.put(name, new MyLanguageEditor());
+      }
+      else if (qualifier instanceof RegionQualifier) {
+        myEditors.put(name, new MyRegionEditor());
+      }
+      else if (qualifier instanceof SmallestScreenWidthQualifier) {
+        myEditors.put(name, new MySmallestScreenWidthEditor());
+      }
+      else if (qualifier instanceof ScreenWidthQualifier) {
+        myEditors.put(name, new MyScreenWidthEditor());
+      }
+      else if (qualifier instanceof ScreenHeightQualifier) {
+        myEditors.put(name, new MyScreenHeightEditor());
       }
     }
 
@@ -219,6 +237,10 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
         updateQualifierEditor();
       }
     });
+  }
+
+  protected void createDefaultConfig(FolderConfiguration config) {
+    config.createDefault();
   }
 
   public abstract void applyEditors();
@@ -858,4 +880,254 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
       }
     }
   }
+
+  private class MyVersionEditor extends MyQualifierEditor<VersionQualifier> {
+    private final JTextField myTextField = new JTextField(3);
+
+    @Override
+    JComponent getComponent() {
+      final JPanel panel = new JPanel(new VerticalFlowLayout());
+      final JBLabel label = new JBLabel("Platform API level:");
+      panel.add(label);
+      label.setLabelFor(myTextField);
+      myTextField.getDocument().addDocumentListener(myUpdatingDocumentListener);
+      panel.add(myTextField);
+      return panel;
+    }
+
+    @Override
+    void reset(@NotNull VersionQualifier qualifier) {
+      myTextField.setText(Integer.toString(qualifier.getVersion()));
+    }
+
+    @NotNull
+    @Override
+    VersionQualifier apply() throws InvalidOptionValueException {
+      try {
+        final int apiLevel = Integer.parseInt(myTextField.getText().trim());
+        if (apiLevel < 0) {
+          throw new InvalidOptionValueException("Incorrect API level");
+        }
+        return new VersionQualifier(apiLevel);
+      }
+      catch (NumberFormatException e) {
+        throw new InvalidOptionValueException("Incorrect API level");
+      }
+    }
+  }
+
+  private class MyNightModeEditor extends MyEnumBasedEditor<NightModeQualifier, NightMode> {
+    protected MyNightModeEditor() {
+      super(NightMode.class);
+    }
+
+    @NotNull
+    @Override
+    protected String getCaption() {
+      return "Night mode:";
+    }
+
+    @Override
+    protected NightMode getValue(@NotNull NightModeQualifier qualifier) {
+      return qualifier.getValue();
+    }
+
+    @NotNull
+    @Override
+    protected NightModeQualifier getQualifier(@NotNull NightMode value) {
+      return new NightModeQualifier(value);
+    }
+
+    @NotNull
+    @Override
+    protected String getErrorMessage() {
+      return "Specify night mode";
+    }
+  }
+
+  private class MyUiModeEditor extends MyEnumBasedEditor<UiModeQualifier, UiMode> {
+    private MyUiModeEditor() {
+      super(UiMode.class);
+    }
+
+    @NotNull
+    @Override
+    protected String getCaption() {
+      return "UI mode:";
+    }
+
+    @Override
+    protected UiMode getValue(@NotNull UiModeQualifier qualifier) {
+      return qualifier.getValue();
+    }
+
+    @NotNull
+    @Override
+    protected UiModeQualifier getQualifier(@NotNull UiMode value) {
+      return new UiModeQualifier(value);
+    }
+
+    @NotNull
+    @Override
+    protected String getErrorMessage() {
+      return "Specify UI mode";
+    }
+  }
+
+  private class MyLanguageEditor extends MyQualifierEditor<LanguageQualifier> {
+    private final JTextField myTextField = new JTextField(2);
+
+    @Override
+    JComponent getComponent() {
+      final JPanel panel = new JPanel(new VerticalFlowLayout());
+      final JBLabel label = new JBLabel("<html><body>Language<br>(2 letter code):</body></html>");
+      panel.add(label);
+      label.setLabelFor(myTextField);
+      myTextField.getDocument().addDocumentListener(myUpdatingDocumentListener);
+      panel.add(myTextField);
+      return panel;
+    }
+
+    @Override
+    void reset(@NotNull LanguageQualifier qualifier) {
+      myTextField.setText(qualifier.getValue());
+    }
+
+    @NotNull
+    @Override
+    LanguageQualifier apply() throws InvalidOptionValueException {
+      final String languageCode = myTextField.getText().trim();
+      if (languageCode.length() != 2) {
+        throw new InvalidOptionValueException("Incorrect language code");
+      }
+      return new LanguageQualifier(languageCode);
+    }
+  }
+
+  private class MyRegionEditor extends MyQualifierEditor<RegionQualifier> {
+    private final JTextField myTextField = new JTextField(2);
+
+    @Override
+    JComponent getComponent() {
+      final JPanel panel = new JPanel(new VerticalFlowLayout());
+      final JBLabel label = new JBLabel("<html><body>Region<br>(2 letter code):</body></html>");
+      panel.add(label);
+      label.setLabelFor(myTextField);
+      myTextField.getDocument().addDocumentListener(myUpdatingDocumentListener);
+      panel.add(myTextField);
+      return panel;
+    }
+
+    @Override
+    void reset(@NotNull RegionQualifier qualifier) {
+      myTextField.setText(qualifier.getValue());
+    }
+
+    @NotNull
+    @Override
+    RegionQualifier apply() throws InvalidOptionValueException {
+      final String languageCode = myTextField.getText().trim();
+      if (languageCode.length() != 2) {
+        throw new InvalidOptionValueException("Incorrect region code");
+      }
+      return new RegionQualifier(languageCode);
+    }
+  }
+
+  private abstract class MySizeEditorBase<T extends ResourceQualifier> extends MyQualifierEditor<T> {
+    private final JTextField myTextField = new JTextField(3);
+
+    @Override
+    JComponent getComponent() {
+      final JPanel panel = new JPanel(new VerticalFlowLayout());
+      final JBLabel label = new JBLabel("Smallest screen width:");
+      panel.add(label);
+      label.setLabelFor(myTextField);
+      myTextField.getDocument().addDocumentListener(myUpdatingDocumentListener);
+      panel.add(myTextField);
+      return panel;
+    }
+
+    @Override
+    void reset(@NotNull T qualifier) {
+      myTextField.setText(Integer.toString(getValue(qualifier)));
+    }
+    
+    protected abstract int getValue(@NotNull T qualifier);
+    
+    @NotNull
+    protected abstract T createQualifier(int value);
+    
+    protected abstract String getErrorMessage();
+
+    @NotNull
+    @Override
+    T apply() throws InvalidOptionValueException {
+      try {
+        final int value = Integer.parseInt(myTextField.getText().trim());
+        if (value < 0) {
+          throw new InvalidOptionValueException(getErrorMessage());
+        }
+        return createQualifier(value);
+      }
+      catch (NumberFormatException e) {
+        throw new InvalidOptionValueException(getErrorMessage());
+      }
+    }
+  }
+  
+  private class MySmallestScreenWidthEditor extends MySizeEditorBase<SmallestScreenWidthQualifier> {
+    @Override
+    protected int getValue(@NotNull SmallestScreenWidthQualifier qualifier) {
+      return qualifier.getValue();
+    }
+
+    @NotNull
+    @Override
+    protected SmallestScreenWidthQualifier createQualifier(int value) {
+      return new SmallestScreenWidthQualifier(value);
+    }
+
+    @Override
+    protected String getErrorMessage() {
+      return "Incorrect smallest screen width";
+    }
+  }
+  
+  private class MyScreenWidthEditor extends MySizeEditorBase<ScreenWidthQualifier> {
+    @Override
+    protected int getValue(@NotNull ScreenWidthQualifier qualifier) {
+      return qualifier.getValue();
+    }
+
+    @NotNull
+    @Override
+    protected ScreenWidthQualifier createQualifier(int value) {
+      return new ScreenWidthQualifier(value);
+    }
+
+    @Override
+    protected String getErrorMessage() {
+      return "Incorrect screen width";
+    }
+  }
+  
+  private class MyScreenHeightEditor extends MySizeEditorBase<ScreenHeightQualifier> {
+    @Override
+    protected int getValue(@NotNull ScreenHeightQualifier qualifier) {
+      return qualifier.getValue();
+    }
+
+    @NotNull
+    @Override
+    protected ScreenHeightQualifier createQualifier(int value) {
+      return new ScreenHeightQualifier();
+    }
+
+    @Override
+    protected String getErrorMessage() {
+      return "Incorrect screen height";
+    }
+  }
 }
+                                                                                   

@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -158,6 +159,7 @@ public class SymLinkHandlingTest extends LightPlatformTestCase {
     return linkFile;
   }
 
+  @Nullable
   private VirtualFile refreshAndFind(final File ioFile) {
     refresh();
     return myFileSystem.findFileByPath(ioFile.getAbsolutePath());
