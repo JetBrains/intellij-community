@@ -584,6 +584,11 @@ public class IdeEventQueue extends EventQueue {
       final Component focusOwner = mgr.getFocusOwner();
       if (focusOwner == null || !focusOwner.isShowing() || focusOwner instanceof JFrame || focusOwner instanceof JDialog) {
 
+        final Application app = ApplicationManager.getApplication();
+        if (app instanceof ApplicationImpl && !((ApplicationImpl) app).isComponentsCreated()) {
+          return;
+        }
+
         boolean mouseEventsAhead = isMouseEventAhead(e);
         boolean focusTransferredNow = IdeFocusManager.getGlobalInstance().isFocusBeingTransferred();
 
