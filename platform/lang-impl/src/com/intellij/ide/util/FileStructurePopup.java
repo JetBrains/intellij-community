@@ -30,6 +30,7 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.LanguageStructureViewBuilder;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -42,7 +43,10 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -74,6 +78,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -86,6 +91,7 @@ public class FileStructurePopup implements Disposable {
   private final Project myProject;
   private final StructureViewModel myTreeModel;
   private final StructureViewModel myBaseTreeModel;
+  @NotNull private final Disposable myDisposable;
   private final MyTreeActionsOwner myTreeActionsOwner;
   private JBPopup myPopup;
 
@@ -94,6 +100,54 @@ public class FileStructurePopup implements Disposable {
   private Tree myTree;
   private AbstractTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
+  private TreeSpeedSearch mySpeedSearch;
+  private HashSet<TreeElement> myVisibleElements = new HashSet<TreeElement>();
+  private Filter mySearchFilter = new Filter() {
+    @Override
+    public boolean isVisible(TreeElement treeNode) {
+      if (mySpeedSearch != null && myShouldNarrowDown && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())) {
+
+      if (myVisibleElements.contains(treeNode)) return true;
+        ItemPresentation presentation = treeNode.getPresentation();
+        if (presentation == null) return true;
+        String text = presentation.getPresentableText();
+        if (text == null) return true;
+        Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
+        if (ranges == null) return true;
+        Iterator<TextRange> iterator = ranges.iterator();
+        boolean contains = iterator.hasNext();
+      if (contains) {
+        myVisibleElements.add(treeNode);
+        return true;
+      }
+      for (TreeElement child : treeNode.getChildren()) {
+        if (isVisible(child)) {
+          myVisibleElements.add(treeNode);
+          return true;
+        }
+      }
+      return false;
+      }
+      return true;
+    }
+
+    @Override
+    public boolean isReverted() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public ActionPresentation getPresentation() {
+      return new ActionPresentationData("", "", null);
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Narrow Down";
+    }
+  };
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                              @Nullable Editor editor,
@@ -105,9 +159,16 @@ public class FileStructurePopup implements Disposable {
     myEditor = editor;
     myNavigatable = navigatable;
     myBaseTreeModel = structureViewModel;
+    myDisposable = auxDisposable;
     if (applySortAndFilter) {
       myTreeActionsOwner = new MyTreeActionsOwner();
-      myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner);
+      myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner) {
+        @NotNull
+        @Override
+        public Filter[] getFilters() {
+          return ArrayUtil.append(super.getFilters(), mySearchFilter);
+        }
+      };
     }
     else {
       myTreeActionsOwner = null;
@@ -162,7 +223,6 @@ public class FileStructurePopup implements Disposable {
         return StructureViewComponent.isValid(child);
       }
     };
-
   }
 
   public void show() {
@@ -175,8 +235,19 @@ public class FileStructurePopup implements Disposable {
       .setMovable(true)
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
       .createPopup();
+    Disposer.register(myPopup, myDisposable);
+    Disposer.register(myPopup, this);
+    Disposer.register(myPopup, myAbstractTreeBuilder);
     myPopup.showInCenterOf(myEditor.getContentComponent());
-    new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
+    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
+    mySpeedSearch.addChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        myVisibleElements.clear();
+        myAbstractTreeBuilder.queueUpdate();
+
+      }
+    });
     myAbstractTreeBuilder.expandAll(new Runnable() {
       @Override
       public void run() {
