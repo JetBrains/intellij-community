@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.PatternSyntaxException;
 
 import static org.jetbrains.idea.eclipse.conversion.EPathUtil.*;
 
@@ -150,7 +151,13 @@ public class EclipseClasspathReader {
       }
       else {
         String srcUrl = VfsUtil.pathToUrl(myRootPath + "/" + path);
-        final boolean isTestFolder = testPattern != null && testPattern.length() > 0 && path.matches(testPattern);
+        boolean isTestFolder = false;
+        try {
+          isTestFolder = testPattern != null && testPattern.length() > 0 && path.matches(testPattern);
+        }
+        catch (PatternSyntaxException e) {
+          isTestFolder = false;
+        }
         final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(myRootPath, path);
         if (linkedResource != null) {
           if (linkedResource.containsPathVariable()) {
