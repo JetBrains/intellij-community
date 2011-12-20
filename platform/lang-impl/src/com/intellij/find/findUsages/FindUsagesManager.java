@@ -358,9 +358,9 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   private static UsageSearcher createUsageSearcher(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
                                                    final FindUsagesHandler handler,
-                                                   final FindUsagesOptions options,
+                                                   FindUsagesOptions _options,
                                                    final PsiFile scopeFile) {
-
+    final FindUsagesOptions options = _options.clone();
     return new UsageSearcher() {
       @Override
       public void generate(@NotNull final Processor<Usage> processor) {
