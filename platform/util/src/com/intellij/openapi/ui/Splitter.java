@@ -432,7 +432,7 @@ public class Splitter extends JPanel {
   }
 
   /**
-   * Sets component which is located as the "secont" splitted area. The method doesn't validate and
+   * Sets component which is located as the "second" splitted area. The method doesn't validate and
    * repaint the splitter.
    *
    * @param component
