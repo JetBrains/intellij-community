@@ -129,7 +129,6 @@ public class GitLogUI implements Disposable {
   private MyRefreshAction myRefreshAction;
   private MyStructureFilter myStructureFilter;
   private StructureFilterAction myStructureFilterAction;
-  private ToggleAction myShowDetailsAction;
   private AnAction myCopyHashAction;
   // todo group somewhere??
   private Consumer<CommitI> myDetailsLoaderImpl;
@@ -865,19 +864,20 @@ public class GitLogUI implements Disposable {
     myRootsAction = new MyRootsAction(rootsGetter, myJBTable);
     group.add(myRootsAction);
     group.add(myMyShowTreeAction);
-    myShowDetailsAction = new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return GitLogSettings.getInstance(myProject).isShowDetails();
-      }
 
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        setupDetailsSplitter(state);
-        GitLogSettings.getInstance(myProject).setShowDetails(state);
-      }
-    };
-    group.add(myShowDetailsAction);
+    group.add(new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          return GitLogSettings.getInstance(myProject).isShowDetails();
+        }
+
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          setupDetailsSplitter(state);
+          GitLogSettings.getInstance(myProject).setShowDetails(state);
+        }
+      });
+
     myMyGotoCommitAction = new MyGotoCommitAction();
     group.add(myMyGotoCommitAction);
     group.add(myRefreshAction);

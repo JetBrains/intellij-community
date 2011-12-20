@@ -687,7 +687,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myDetailsSplitter.setFirstComponent(commentGroup);
     myDetailsSplitter.setSecondComponent(myAdditionalDetails);
 
-
     mySplitter.setFirstComponent(myDualView);
     setupDetails();
     return mySplitter;
