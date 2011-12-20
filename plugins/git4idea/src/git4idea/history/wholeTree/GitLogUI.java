@@ -49,10 +49,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -132,6 +129,7 @@ public class GitLogUI implements Disposable {
   private MyRefreshAction myRefreshAction;
   private MyStructureFilter myStructureFilter;
   private StructureFilterAction myStructureFilterAction;
+  private ToggleAction myShowDetailsAction;
   private AnAction myCopyHashAction;
   // todo group somewhere??
   private Consumer<CommitI> myDetailsLoaderImpl;
@@ -151,6 +149,8 @@ public class GitLogUI implements Disposable {
   private JViewport myTableViewPort;
   private GitLogUI.MyGotoCommitAction myMyGotoCommitAction;
   private final Set<VirtualFile> myClearedHighlightingRoots;
+  private final Splitter myDetailsSplitter;
+  private JScrollPane myTableScrollPane;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -190,6 +190,8 @@ public class GitLogUI implements Disposable {
         reloadRequest();
       }
     };
+    myDetailsSplitter = new Splitter(true, 0.6f);
+    myDetailsSplitter.setShowDividerControls(true);
   }
   
   public void initFromSettings() {
@@ -654,18 +656,18 @@ public class GitLogUI implements Disposable {
     };
     myJBTable.addMouseListener(popupHandler);
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
-    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT | SideBorder.BOTTOM));
+    myTableScrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
+    myTableScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT | SideBorder.BOTTOM));
     myGraphGutter = new GraphGutter(myTableModel);
     myGraphGutter.setJBTable(myJBTable);
-    myTableViewPort = scrollPane.getViewport();
+    myTableViewPort = myTableScrollPane.getViewport();
     myGraphGutter.setTableViewPort(myTableViewPort);
     myGraphGutter.getComponent().addMouseListener(popupHandler);
 
     new AdjustComponentWhenShown() {
       @Override
       protected boolean init() {
-        return adjustColumnSizes(scrollPane);
+        return adjustColumnSizes(myTableScrollPane);
       }
 
       @Override
@@ -688,7 +690,7 @@ public class GitLogUI implements Disposable {
       }
     }
     );
-    scrollPane.getViewport().addChangeListener(myMyChangeListener);
+    myTableScrollPane.getViewport().addChangeListener(myMyChangeListener);
 
     final JPanel wrapper = new DataProviderPanel(new BorderLayout());
     wrapper.add(actionToolbar.getComponent(), BorderLayout.NORTH);
@@ -699,9 +701,10 @@ public class GitLogUI implements Disposable {
     wrapperGutter.add(myEqualToHeadr, BorderLayout.NORTH);
     wrapperGutter.add(myGraphGutter.getComponent(), BorderLayout.CENTER);
     mainBorderWrapper.add(wrapperGutter, BorderLayout.WEST);
-    mainBorderWrapper.add(scrollPane, BorderLayout.CENTER);
+    mainBorderWrapper.add(myTableScrollPane, BorderLayout.CENTER);
     //mainBorderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
     wrapper.add(mainBorderWrapper, BorderLayout.CENTER);
+    
     myDetailsPanel = new GitLogDetailsPanel(myProject, myDetailsCache, new Convertor<VirtualFile, CachedRefs>() {
       @Override
       public CachedRefs convert(VirtualFile o) {
@@ -713,14 +716,12 @@ public class GitLogUI implements Disposable {
         return myMarked.contains(hash);
       }
     });
-    final JPanel borderWrapper = new JPanel(new BorderLayout());
-    borderWrapper.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT));
-    borderWrapper.add(myDetailsPanel.getComponent(), BorderLayout.CENTER);
 
-    final Splitter splitter = new Splitter(true, 0.6f);
-    splitter.setFirstComponent(wrapper);
-    splitter.setSecondComponent(borderWrapper);
-    return splitter;
+    myDetailsSplitter.setFirstComponent(wrapper);
+    JPanel details = myDetailsPanel.getComponent();
+    details.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT));
+    setupDetailsSplitter(GitLogSettings.getInstance(myProject).isShowDetails());
+    return myDetailsSplitter;
   }
 
   private void createTreeUpperComponent() {
@@ -864,6 +865,19 @@ public class GitLogUI implements Disposable {
     myRootsAction = new MyRootsAction(rootsGetter, myJBTable);
     group.add(myRootsAction);
     group.add(myMyShowTreeAction);
+    myShowDetailsAction = new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return GitLogSettings.getInstance(myProject).isShowDetails();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        setupDetailsSplitter(state);
+        GitLogSettings.getInstance(myProject).setShowDetails(state);
+      }
+    };
+    group.add(myShowDetailsAction);
     myMyGotoCommitAction = new MyGotoCommitAction();
     group.add(myMyGotoCommitAction);
     group.add(myRefreshAction);
@@ -902,6 +916,16 @@ public class GitLogUI implements Disposable {
       }
     };
     return ActionManager.getInstance().createActionToolbar("Git log", group, true);
+  }
+
+  private void setupDetailsSplitter(boolean state) {
+    myDetailsSplitter.setSecondComponent(state ? myDetailsPanel.getComponent() : null);
+    if (state) {
+      myTableScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT | SideBorder.BOTTOM));
+    }
+    else {
+      myTableScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT));
+    }
   }
 
   private class DataProviderPanel extends JPanel implements TypeSafeDataProvider {
@@ -1804,7 +1828,7 @@ public class GitLogUI implements Disposable {
     private final GitLogSettings myInstance;
 
     public MyShowTreeAction() {
-      super("Show graph", "Show graph", IconLoader.getIcon("/icons/branch.png"));
+      super("Show Graph", "Display commit graph", IconLoader.getIcon("/icons/branch.png"));
       myInstance = GitLogSettings.getInstance(myProject);
       myIsSelected = myInstance.isShowTree();
     }
