@@ -323,11 +323,11 @@ public class MvcConsole implements Disposable {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
+
             module.putUserData(UPDATING_BY_CONSOLE_PROCESS, true);
             LocalFileSystem.getInstance().refresh(false);
             module.putUserData(UPDATING_BY_CONSOLE_PROCESS, null);
-
-            if (myProject.isDisposed()) return;
 
             try {
               if (onDone != null && !module.isDisposed()) onDone.run();
