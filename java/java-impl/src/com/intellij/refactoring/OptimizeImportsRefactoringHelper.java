@@ -34,6 +34,7 @@ import java.util.Set;
 public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<PsiJavaFile>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.OptimizeImportsRefactoringHelper");
 
+  @Override
   public Set<PsiJavaFile> prepareOperation(final UsageInfo[] usages) {
     Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
     for (UsageInfo usage : usages) {
@@ -49,8 +50,10 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
     return javaFiles;
   }
 
+  @Override
   public void performOperation(final Project project, final Set<PsiJavaFile> javaFiles) {
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
+      @Override
       public void run() {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }
@@ -58,35 +61,42 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
 
     final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<SmartPsiElementPointer<PsiImportStatementBase>>();
     final Runnable findRedundantImports = new Runnable() {
+      @Override
       public void run() {
-        final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-        int i = 0;
-        final int fileCount = javaFiles.size();
-        for (PsiJavaFile file : javaFiles) {
-          if (file.isValid()) {
-            final VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile != null) {
-              if (progressIndicator != null) {
-                progressIndicator.setText2(virtualFile.getPresentableUrl());
-                progressIndicator.setFraction((double)i++/fileCount);
-              }
-              final Collection<PsiImportStatementBase> perFile = styleManager.findRedundantImports(file);
-              if (perFile != null) {
-                for (PsiImportStatementBase redundant : perFile) {
-                  redundants.add(pointerManager.createSmartPsiElementPointer(redundant));
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+            final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+            int i = 0;
+            final int fileCount = javaFiles.size();
+            for (PsiJavaFile file : javaFiles) {
+              if (file.isValid()) {
+                final VirtualFile virtualFile = file.getVirtualFile();
+                if (virtualFile != null) {
+                  if (progressIndicator != null) {
+                    progressIndicator.setText2(virtualFile.getPresentableUrl());
+                    progressIndicator.setFraction((double)i++ / fileCount);
+                  }
+                  final Collection<PsiImportStatementBase> perFile = styleManager.findRedundantImports(file);
+                  if (perFile != null) {
+                    for (PsiImportStatementBase redundant : perFile) {
+                      redundants.add(pointerManager.createSmartPsiElementPointer(redundant));
+                    }
+                  }
                 }
               }
             }
           }
-        }
+        });
       }
     };
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, "Removing redundant imports", false, project)) return;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           for (final SmartPsiElementPointer<PsiImportStatementBase> pointer : redundants) {

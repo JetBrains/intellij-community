@@ -120,7 +120,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     }
     PsiMethod method = (PsiMethod)myClass.add(myMethodPrototype);
     method = (PsiMethod)method.replace(reformat(project, method));
-    if (editor != null) {
+    if (editor != null && method.getContainingFile() == file) {
       GenerateMembersUtil.positionCaret(editor, method, true);
     }
   }

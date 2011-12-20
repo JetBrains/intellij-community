@@ -194,6 +194,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
     final Runnable[] resultRunnable = new Runnable[1];
     Runnable readAction = new Runnable() {
+      @Override
       public void run() {
         if (!checkFileWritable(file)) return;
         try{
@@ -205,6 +206,7 @@ public abstract class AbstractLayoutCodeProcessor {
       }
     };
     Runnable writeAction = new Runnable() {
+      @Override
       public void run() {
         if (resultRunnable[0] != null) {
           resultRunnable[0].run();
@@ -261,6 +263,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     return new Runnable() {
+      @Override
       public void run() {
         SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, myCommandName);
         ReformatFilesTask reformatFilesTask = new ReformatFilesTask(tasks);
@@ -277,11 +280,13 @@ public abstract class AbstractLayoutCodeProcessor {
     final Runnable[] resultRunnable = new Runnable[1];
     runLayoutCodeProcess(
       new Runnable() {
+        @Override
         public void run() {
           resultRunnable[0] = preprocessFiles(new ArrayList<PsiFile>(Arrays.asList(files)));
         }
       },
       new Runnable() {
+        @Override
         public void run() {
           if (resultRunnable[0] != null){
             resultRunnable[0].run();
@@ -352,10 +357,12 @@ public abstract class AbstractLayoutCodeProcessor {
 
     final Runnable[] resultRunnable = new Runnable[1];
     runLayoutCodeProcess(new Runnable() {
+      @Override
       public void run() {
         resultRunnable[0] = preprocessFiles(array);
       }
     }, new Runnable() {
+      @Override
       public void run() {
         if (resultRunnable[0] != null) {
           resultRunnable[0].run();
@@ -450,12 +457,14 @@ public abstract class AbstractLayoutCodeProcessor {
     final ModalityState modalityState = ModalityState.current();
 
     final Runnable process = new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(readAction);
       }
     };
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         try {
           //DaemonCodeAnalyzer.getInstance(myProject).setUpdateByTimerEnabled(false);
@@ -474,8 +483,10 @@ public abstract class AbstractLayoutCodeProcessor {
         */
 
         final Runnable writeRunnable = new Runnable() {
+          @Override
           public void run() {
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+              @Override
               public void run() {
                 if (globalAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
                 try {

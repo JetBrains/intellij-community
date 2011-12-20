@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -78,10 +79,14 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
             progressIndicator.setFraction((double)i++/total);
           }
           final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
-          final List<GrImportStatement> perFile = optimizer.findUnusedImports(file, usedImports);
-          if (perFile != null) {
-            redundants.put(file, Pair.create(perFile, usedImports));
-          }
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              final List<GrImportStatement> perFile = optimizer.findUnusedImports(file, usedImports);
+              if (perFile != null) {
+                redundants.put(file, Pair.create(perFile, usedImports));
+              }
+            }
+          });
         }
       }
     };

@@ -43,6 +43,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.Consumer
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Computable
 
 /**
  * @author peter
@@ -949,9 +951,15 @@ public class Bar {
       myFixture.completeBasic()
     }
     myFixture.checkResult 'class Foo {pr<caret>}'
-    lookup.items.each {
-      lookup.list.cellRenderer.getListCellRendererComponent(lookup.list, it, 0, false, false)
-    }
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      void run() {
+        getLookup().items.each {
+          getLookup().list.cellRenderer.getListCellRendererComponent(getLookup().list, it, 0, false, false)
+        }
+      }
+    });
     assert myFixture.lookupElementStrings.containsAll(['private', 'protected'])
   }
 
@@ -1098,7 +1106,10 @@ class Foo {{
   <caret>t;
   t;
 }}"""
-    def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
+    def caret = ApplicationManager.getApplication().runReadAction(new Computable<LogicalPosition>() {
+            public LogicalPosition compute() {
+              return myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
+            }});
     edt { myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line + 1, caret.column + 1)) }
     type 'toStr'
     assert lookup

@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -41,22 +42,22 @@ public class RefreshQueueImpl extends RefreshQueue {
   private final ExecutorService myQueue = ConcurrencyUtil.newSingleThreadExecutor("FS Synchronizer");
   private final ProgressIndicator myRefreshIndicator = new RefreshProgress(VfsBundle.message("file.synchronize.progress"));
 
-  public void execute(final RefreshSessionImpl session) {
+  public void execute(@NotNull RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
       ModalityState state = session.getModalityState();
-      queueSession(session, state != null ? state : ModalityState.NON_MODAL);
+      queueSession(session, state);
     }
     else {
-      final Application app = ApplicationManager.getApplication();
-      boolean isEDT = app.isDispatchThread();
-      final boolean hasWriteAction = app.isWriteAccessAllowed();
-      if (isEDT || hasWriteAction) {
+      final Application application = ApplicationManager.getApplication();
+      boolean isEDT = application.isDispatchThread();
+      if (isEDT) {
         session.scan();
+        final boolean hasWriteAction = application.isWriteAccessAllowed();
         session.fireEvents(hasWriteAction);
       }
       else {
-        if (((ApplicationEx)app).holdsReadLock()) {
-          LOG.error("Do not call synchronous refresh from inside read action except for event dispatch thread. This will eventually cause deadlock if there are events to fire");
+        if (((ApplicationEx)application).holdsReadLock()) {
+          LOG.error( "Do not call synchronous refresh from inside read action except for event dispatch thread. This will eventually cause deadlock if there are events to fire");
           return;
         }
 
@@ -66,7 +67,7 @@ public class RefreshQueueImpl extends RefreshQueue {
     }
   }
 
-  private void queueSession(final RefreshSessionImpl session, final ModalityState modality) {
+  private void queueSession(@NotNull final RefreshSessionImpl session, @NotNull final ModalityState modality) {
     myQueue.submit(new Runnable() {
       @Override
       public void run() {
@@ -96,12 +97,12 @@ public class RefreshQueueImpl extends RefreshQueue {
   }
 
   @Override
-  public RefreshSession createSession(final boolean async, boolean recursively, @Nullable final Runnable finishRunnable, ModalityState state) {
+  public RefreshSession createSession(final boolean async, boolean recursively, @Nullable final Runnable finishRunnable, @NotNull ModalityState state) {
     return new RefreshSessionImpl(async, recursively, finishRunnable, state);
   }
 
   @Override
-  public void refreshLocalRoots(boolean async, Runnable postAction, ModalityState modalityState) {
+  public void refreshLocalRoots(boolean async, @Nullable Runnable postAction, @NotNull ModalityState modalityState) {
     RefreshQueue.getInstance().refresh(async, true, postAction, modalityState, ManagingFS.getInstance().getLocalRoots());
   }
 

@@ -930,9 +930,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
 
     @Override
     public boolean equals(final BaseInjection o1, final BaseInjection o2) {
-      if (!o1.sameLanguageParameters(o2)) return false;
-      if (!o1.getInjectionPlaces().equals(o2.getInjectionPlaces())) return false;
-      return true;
+      return o1.sameLanguageParameters(o2) && Arrays.equals(o1.getInjectionPlaces(), o2.getInjectionPlaces());
     }
   }
 

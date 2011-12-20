@@ -92,13 +92,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     if (localVariable != null) {
       final PsiElement nameIdentifier = localVariable.getNameIdentifier();
       if (nameIdentifier != null) {
-        myLocalMarker = editor.getDocument().createRangeMarker(nameIdentifier.getTextRange());
+        myLocalMarker = createMarker(nameIdentifier);
       }
     }
     else {
       myLocalMarker = null;
     }
-    myExprText = expr != null ? expr.getText() : null;
+    myExprText = getExpressionText(expr);
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
     myPreview =
@@ -130,6 +130,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     myWholePanel.setBorder(null);
 
     showDialogAdvertisement(getActionName());
+  }
+
+  @Nullable
+  protected String getExpressionText(E expr) {
+    return expr != null ? expr.getText() : null;
   }
 
   protected final void setPreviewText(final String text) {
@@ -318,11 +323,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return myConstantName;
   }
 
-  @Override
-  protected boolean performAutomaticRename() {
-    return false;
-  }
-
 
   @Override
   public void finish() {
@@ -433,7 +433,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         if (exprMarker != null) {
           myExpr = restoreExpression(containingFile, psiField, exprMarker, myExprText);
           if (myExpr != null && myExpr.isPhysical()) {
-            myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+            myExprMarker = createMarker(myExpr);
           }
         }
         if (myLocalMarker != null) {
@@ -449,7 +449,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           if (localVariable != null && localVariable.isPhysical()) {
             final PsiElement nameIdentifier = localVariable.getNameIdentifier();
             if (nameIdentifier != null) {
-              myLocalMarker = myEditor.getDocument().createRangeMarker(nameIdentifier.getTextRange());
+              myLocalMarker = createMarker(nameIdentifier);
             }
           }
         }

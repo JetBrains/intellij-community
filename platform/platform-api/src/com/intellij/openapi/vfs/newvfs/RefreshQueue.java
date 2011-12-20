@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class RefreshQueue {
@@ -34,22 +35,23 @@ public abstract class RefreshQueue {
     return createSession(async, recursive, finishRunnable, getDefaultModalityState());
   }
 
-  public abstract RefreshSession createSession(boolean async, boolean recursive, @Nullable Runnable finishRunnable, ModalityState state);
+  public abstract RefreshSession createSession(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState state);
 
-  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, ModalityState state, VirtualFile... files) {
+  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState state, @NotNull VirtualFile... files) {
     RefreshSession session = createSession(async, recursive, finishRunnable, state);
     session.addAllFiles(files);
     session.launch();
   }
 
-  public abstract void refreshLocalRoots(boolean async, @Nullable Runnable postAction, ModalityState modalityState);
+  public abstract void refreshLocalRoots(boolean async, @Nullable Runnable postAction, @NotNull ModalityState modalityState);
 
-  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, VirtualFile... files) {
+  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull VirtualFile... files) {
     refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
   }
 
   public abstract void processSingleEvent(VFileEvent event);
 
+  @NotNull
   protected ModalityState getDefaultModalityState() {
     return ModalityState.NON_MODAL;
   }

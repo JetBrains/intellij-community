@@ -265,12 +265,14 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   private static GrReferenceExpression createRefExpression(GrField field, PsiElement place) {
     final PsiClass containingClass = field.getContainingClass();
     LOG.assertTrue(containingClass != null);
+    final String qname = containingClass.getQualifiedName();
+    final String prefix = qname != null ? qname + "." : "";
     final String refText;
     if (field.hasModifierProperty(PsiModifier.STATIC)) {
-      refText = containingClass.getQualifiedName() + "." + field.getName();
+      refText = prefix + field.getName();
     }
     else {
-      refText = containingClass.getQualifiedName() + ".this." + field.getName();
+      refText = prefix + "this." + field.getName();
     }
     return GroovyPsiElementFactory.getInstance(place.getProject()).createReferenceExpressionFromText(refText, place);
   }

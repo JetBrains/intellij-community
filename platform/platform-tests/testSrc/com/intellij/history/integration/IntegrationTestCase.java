@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.PlatformTestCase;
@@ -143,8 +144,12 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     return getRevisionsFor(f, null);
   }
 
-  protected List<Revision> getRevisionsFor(VirtualFile f, String pattern) {
-    return LocalHistoryTestCase.collectRevisions(getVcs(), getRootEntry(), f.getPath(), myProject.getLocationHash(), pattern);
+  protected List<Revision> getRevisionsFor(final VirtualFile f, final String pattern) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<Revision>>() {
+            public List<Revision> compute() {
+              return LocalHistoryTestCase.collectRevisions(getVcs(), getRootEntry(), f.getPath(), myProject.getLocationHash(), pattern);
+            }
+          });
   }
 
   protected RootEntry getRootEntry() {

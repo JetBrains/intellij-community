@@ -41,7 +41,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -68,7 +67,6 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PatchedWeakReference;
-import com.intellij.util.Processor;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
 import com.intellij.util.ui.UIUtil;
@@ -617,7 +615,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       throw IdeaLogger.ourErrorsOccurred;
     }
 
-    if (++LEAK_WALKS % 1000 == 0) {
+    /*
+    if (++LEAK_WALKS % 1 == 0) {
       LeakHunter.checkLeak(ApplicationManager.getApplication(), ProjectImpl.class, new Processor<ProjectImpl>() {
         @Override
         public boolean process(ProjectImpl project) {
@@ -625,6 +624,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       });
     }
+    */
   }
   private static int LEAK_WALKS;
 

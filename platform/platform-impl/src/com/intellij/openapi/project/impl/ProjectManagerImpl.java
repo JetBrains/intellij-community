@@ -121,6 +121,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     MessageBus messageBus = app.getMessageBus();
     MessageBusConnection connection = messageBus.connect(app);
     connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+      @Override
       public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
         VirtualFile file = event.getFile();
         LOG.debug("[RELOAD] Storage file changed: " + file.getPath());
@@ -133,10 +134,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     addProjectManagerListener(
       new ProjectManagerListener() {
+        @Override
         public void projectOpened(final Project project) {
           MessageBus messageBus = project.getMessageBus();
           MessageBusConnection connection = messageBus.connect(project);
           connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+            @Override
             public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
               VirtualFile file = event.getFile();
               if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
@@ -151,6 +154,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           }
         }
 
+        @Override
         public void projectClosed(Project project) {
           busPublisher.projectClosed(project);
           for (ProjectManagerListener listener : getListeners(project)) {
@@ -158,6 +162,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           }
         }
 
+        @Override
         public boolean canCloseProject(Project project) {
           for (ProjectManagerListener listener : getListeners(project)) {
             if (!listener.canCloseProject(project)) {
@@ -167,6 +172,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           return true;
         }
 
+        @Override
         public void projectClosing(Project project) {
           busPublisher.projectClosing(project);
           for (ProjectManagerListener listener : getListeners(project)) {
@@ -179,10 +185,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     registerExternalProjectFileListener(virtualFileManagerEx);
   }
 
+  @Override
   public void disposeComponent() {
     Disposer.dispose(myChangedFilesAlarm);
     if (myDefaultProject != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           Disposer.dispose(myDefaultProject);
         }
@@ -193,9 +201,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   @Nullable
   public Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
@@ -283,8 +293,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private static void scheduleDispose(final ProjectImpl project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             if (!project.isDisposed()) {
               Disposer.dispose(project);
@@ -295,6 +307,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     });
   }
 
+  @Override
   @Nullable
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
     try {
@@ -333,6 +346,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized boolean isDefaultProjectInitialized() {
     return myDefaultProject != null;
   }
+  @Override
   @NotNull
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
@@ -357,6 +371,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myDefaultProjectRootElement;
   }
 
+  @Override
   @NotNull
   public Project[] getOpenProjects() {
     if (myOpenProjectsArrayCache.length != myOpenProjects.size()) {
@@ -374,6 +389,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myOpenProjectsArrayCache;
   }
 
+  @Override
   public boolean isProjectOpened(Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode() && myCurrentTestProject != null) {
       return project == myCurrentTestProject || myOpenProjects.contains(project);
@@ -381,6 +397,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myOpenProjects.contains(project);
   }
 
+  @Override
   public boolean openProject(final Project project) {
     final Application application = ApplicationManager.getApplication();
 
@@ -403,6 +420,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         startupManager.runStartupActivities();
 
@@ -410,6 +428,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         // only when startCacheUpdate is called from UI thread, we can guarantee that
         // when the method returns, the application has entered dumb mode
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
           public void run() {
             startupManager.startCacheUpdate();
           }
@@ -418,6 +437,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         startupManager.runPostStartupActivitiesFromExtensions();
 
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             startupManager.runPostStartupActivities();
           }
@@ -434,6 +454,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
       // should be invoked last
       StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+        @Override
         public void run() {
           final TrackingPathMacroSubstitutor macroSubstitutor =
             ((ProjectEx)project).getStateStore().getStateStorageManager().getMacroSubstitutor();
@@ -451,6 +472,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
+  @Override
   public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
 
     final Project project = convertAndLoadProject(filePath);
@@ -462,6 +484,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (!openProject(project)) {
       showWelcomeScreenIfNoProjectOpened();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           Disposer.dispose(project);
         }
@@ -498,6 +521,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     if (!conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+        @Override
         public void run() {
           conversionResult.postStartupActivity(project);
         }
@@ -519,6 +543,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     final ProjectImpl project = createProject(null, canonicalize(filePath), false, false);
     try {
       myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, IOException>() {
+        @Override
         @Nullable
         public Project compute() throws IOException {
           doLoadProject(filePath, project);
@@ -572,9 +597,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private void registerExternalProjectFileListener(VirtualFileManagerEx virtualFileManager) {
     virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerListener() {
+      @Override
       public void beforeRefreshStart(boolean asynchonous) {
       }
 
+      @Override
       public void afterRefreshFinish(boolean asynchonous) {
         scheduleReloadApplicationAndProject();
       }
@@ -618,6 +645,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       final LinkedHashSet<String> components = new LinkedHashSet<String>();
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           try {
             reloadOk[0] = ((ApplicationImpl)app).getStateStore().reload(causes, components);
@@ -684,6 +712,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     final boolean[] reloadOk = {false};
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           LOG.debug("[RELOAD] Reloading project/components...");
@@ -725,14 +754,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                                                   Messages.getQuestionIcon()) == 0;
   }
 
+  @Override
   public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
     return mySavedCopies.containsKey(candidate);
   }
 
+  @Override
   public void blockReloadingProjectOnExternalChanges() {
     myReloadBlockCount.incrementAndGet();
   }
 
+  @Override
   public void unblockReloadingProjectOnExternalChanges() {
     if (myReloadBlockCount.decrementAndGet() == 0) scheduleReloadApplicationAndProject();
   }
@@ -748,6 +780,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         //  public void run() {
         //    IdeEventQueue.getInstance().removeIdleListener(this);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
               public void run() {
                 if (!tryToReloadApplication()) return;
                 askToReloadProjectIfConfigFilesChangedExternally();
@@ -759,17 +792,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     //}, ModalityState.NON_MODAL);
   }
 
+  @Override
   public void setCurrentTestProject(@Nullable final Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myCurrentTestProject = project;
   }
 
+  @Override
   @Nullable
   public Project getCurrentTestProject() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     return myCurrentTestProject;
   }
 
+  @Override
   public void saveChangedProjectFile(final VirtualFile file, final Project project) {
     if (file.exists()) {
       copyToTemp(file);
@@ -813,6 +849,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     myChangedFilesAlarm.cancelAllRequests();
     myChangedFilesAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         LOG.debug("[RELOAD] Scheduling reload application & project, myReloadBlockCount = " + myReloadBlockCount);
         if (myReloadBlockCount.get() == 0) {
@@ -855,6 +892,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
+  @Override
   public void reloadProject(@NotNull final Project p) {
     reloadProjectImpl(p, true, false);
   }
@@ -874,6 +912,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     final Application application = ApplicationManager.getApplication();
 
     application.invokeLater(new Runnable() {
+      @Override
       public void run() {
         LOG.debug("Reloading project.");
         ProjectImpl projectImpl = (ProjectImpl)project[0];
@@ -894,6 +933,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
         if (project[0].isDisposed() || ProjectUtil.closeAndDispose(project[0])) {
           application.runWriteAction(new Runnable() {
+            @Override
             public void run() {
               for (final IFile originalFile : original) {
                 restoreCopy(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(originalFile));
@@ -915,6 +955,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
   */
 
+  @Override
   public boolean closeProject(@NotNull final Project project) {
     return closeProject(project, true, false);
   }
@@ -940,6 +981,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           myOpenProjects.remove(project);
           cacheOpenProjects();
@@ -982,6 +1024,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
+  @Override
   public void addProjectManagerListener(@NotNull ProjectManagerListener listener) {
     myListeners.add(listener);
   }
@@ -997,11 +1040,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     });
   }
 
+  @Override
   public void removeProjectManagerListener(@NotNull ProjectManagerListener listener) {
     boolean removed = myListeners.remove(listener);
     LOG.assertTrue(removed);
   }
 
+  @Override
   public void addProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
@@ -1010,6 +1055,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     listeners.add(listener);
   }
 
+  @Override
   public void removeProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners != null) {
@@ -1051,6 +1097,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
+  @Override
   public boolean canClose(Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: canClose()");
@@ -1080,6 +1127,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                                Messages.getWarningIcon()) == 0;
   }
 
+  @Override
   public void writeExternal(Element parentNode) throws WriteExternalException {
     if (myDefaultProject != null) {
       myDefaultProject.save();
@@ -1098,6 +1146,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myDefaultProjectRootElement = defaultProjectRootElement;
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     myDefaultProjectRootElement = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
 
@@ -1108,20 +1157,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myDefaultProjectRootElement.detach();
   }
 
+  @Override
   public String getExternalFileName() {
     return "project.default";
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "ProjectManager";
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("project.default.settings");

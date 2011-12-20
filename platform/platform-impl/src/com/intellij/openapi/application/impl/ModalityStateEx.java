@@ -32,7 +32,7 @@ public class ModalityStateEx extends ModalityState {
     this(EMPTY_REFS_ARRAY);
   }
 
-  public ModalityStateEx(Object[] modalEntities) {
+  public ModalityStateEx(@NotNull Object[] modalEntities) {
     if (modalEntities.length > 0) {
       myModalEntities = new WeakReference[modalEntities.length];
       for (int i = 0; i < modalEntities.length; i++) {
@@ -71,6 +71,7 @@ public class ModalityStateEx extends ModalityState {
     return false;
   }
 
+  @Override
   public boolean dominates(@NotNull ModalityState anotherState){
     if (anotherState == ModalityState.any()) return false;
     

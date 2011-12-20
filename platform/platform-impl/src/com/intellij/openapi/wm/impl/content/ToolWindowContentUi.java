@@ -425,7 +425,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       @NotNull
       @Override
       public String getTextFor(Content value) {
-        final String displayName = value.getDisplayName();
+        final String displayName = value.getTabName();
         return displayName != null ? displayName : "";
       }
 

@@ -33,10 +33,7 @@ import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
@@ -143,17 +140,20 @@ public class XmlCompletionContributor extends CompletionContributor {
     PsiElement element = parameters.getPosition();
     if (!isXmlNameCompletion(parameters)) return;
     result.stopHere();
-    if (!(element.getParent() instanceof XmlTag) || !(parameters.getOriginalFile() instanceof XmlFile)) {
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof XmlTag) ||
+        !(parameters.getOriginalFile() instanceof XmlFile) ||
+        !((XmlTag)parent).getNamespacePrefix().isEmpty()) {
       return;
     }
-    final XmlTag parent = (XmlTag)element.getParent();
-    final String namespace = parent.getNamespace();
-    final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
+    final XmlTag tag = (XmlTag)parent;
+    final String namespace = tag.getNamespace();
+    final XmlElementDescriptor parentDescriptor = tag.getDescriptor();
     final String prefix = result.getPrefixMatcher().getPrefix();
     final int pos = prefix.indexOf(':');
     final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
 
-    final PsiReference reference = parent.getReference();
+    final PsiReference reference = tag.getReference();
     if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
       final Set<LookupElement> set = new HashSet<LookupElement>();
       new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
@@ -166,7 +166,7 @@ public class XmlCompletionContributor extends CompletionContributor {
       final CompletionResultSet newResult = result.withPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
 
       final XmlFile file = (XmlFile)parameters.getOriginalFile();
-      final List<Pair<String,String>> names = XmlExtension.getExtension(file).getAvailableTagNames(file, parent);
+      final List<Pair<String,String>> names = XmlExtension.getExtension(file).getAvailableTagNames(file, tag);
       for (Pair<String, String> pair : names) {
         final String name = pair.getFirst();
         final String ns = pair.getSecond();
