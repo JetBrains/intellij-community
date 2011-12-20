@@ -22,12 +22,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,7 +60,6 @@ import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
@@ -112,8 +112,6 @@ public class GitLogUI implements Disposable {
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   final List<CommitI> myCommitsInRepositoryChangesBrowser;
   private boolean myDataBeingAdded;
-  private CardLayout myRepoLayout;
-  private JPanel myRepoPanel;
   private boolean myStarted;
   private String myPreviousFilter;
   private final CommentSearchContext myCommentSearchContext;
@@ -388,7 +386,6 @@ public class GitLogUI implements Disposable {
 
   public void createMe() {
     mySplitter = new Splitter(false, 0.7f);
-    mySplitter.setDividerWidth(4);
 
     final JPanel wrapper = createMainTable();
     mySplitter.setFirstComponent(wrapper);
@@ -487,10 +484,10 @@ public class GitLogUI implements Disposable {
   }
 
   private JComponent createRepositoryBrowserDetails() {
-    myRepoLayout = new CardLayout();
-    myRepoPanel = new JPanel(myRepoLayout);
     myRepositoryChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.<CommittedChangeList>emptyList(), Collections.<Change>emptyList(), null);
     myRepositoryChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myJBTable);
+    myRepositoryChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
+    myRepositoryChangesBrowser.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 4));
     myJBTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -498,13 +495,7 @@ public class GitLogUI implements Disposable {
         mySelectionRequestsMerger.request();
       }
     });
-    myRepoPanel.add("main", myRepositoryChangesBrowser);
-    // todo loading circle
-    myRepoPanel.add("loading", panelWithCenteredText("Loading..."));
-    myRepoPanel.add("tooMuch", panelWithCenteredText("Too many rows selected"));
-    myRepoPanel.add("empty", panelWithCenteredText("Nothing selected"));
-    myRepoLayout.show(myRepoPanel, "empty");
-    return myRepoPanel;
+    return myRepositoryChangesBrowser;
   }
 
   private void selectionChanged() {
@@ -516,17 +507,14 @@ public class GitLogUI implements Disposable {
     selectionChangedForDetails(rows);
 
     if (rows.length == 0) {
-      myRepoLayout.show(myRepoPanel, "empty");
-      myRepoPanel.repaint();
+      myRepositoryChangesBrowser.getViewer().setEmptyText("Nothing selected");
       return;
     } else if (rows.length >= 10) {
-      myRepoLayout.show(myRepoPanel, "tooMuch");
-      myRepoPanel.repaint();
+      myRepositoryChangesBrowser.getViewer().setEmptyText("Too many rows selected");
       return;
     }
     if (! myDataBeingAdded && ! gatherNotLoadedData()) {
-      myRepoLayout.show(myRepoPanel, "loading");
-      myRepoPanel.repaint();
+      myRepositoryChangesBrowser.getViewer().setEmptyText("Loading...");
     }
   }
 
@@ -591,16 +579,6 @@ public class GitLogUI implements Disposable {
     return myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
   }
 
-  private static JPanel panelWithCenteredText(final String text) {
-    final JPanel jPanel = new JPanel(new BorderLayout());
-    jPanel.setBackground(UIUtil.getTableBackground());
-    final JLabel label = new JLabel(text, JLabel.CENTER);
-    label.setUI(new MultiLineLabelUI());
-    jPanel.add(label, BorderLayout.CENTER);
-    jPanel.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
-    return jPanel;
-  }
-
   public void updateByScroll() {
     gatherNotLoadedData();
   }
@@ -638,8 +616,6 @@ public class GitLogUI implements Disposable {
     }
     final List<Change> zipped = CommittedChangesTreeBrowser.zipChanges(changes);
     myRepositoryChangesBrowser.setChangesToDisplay(zipped);
-    myRepoLayout.show(myRepoPanel, "main");
-    myRepoPanel.repaint();
     return true;
   }
 
@@ -679,6 +655,7 @@ public class GitLogUI implements Disposable {
     myJBTable.addMouseListener(popupHandler);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
+    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT | SideBorder.BOTTOM));
     myGraphGutter = new GraphGutter(myTableModel);
     myGraphGutter.setJBTable(myJBTable);
     myTableViewPort = scrollPane.getViewport();
@@ -737,13 +714,12 @@ public class GitLogUI implements Disposable {
       }
     });
     final JPanel borderWrapper = new JPanel(new BorderLayout());
-    borderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
+    borderWrapper.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT));
     borderWrapper.add(myDetailsPanel.getComponent(), BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(true, 0.6f);
     splitter.setFirstComponent(wrapper);
     splitter.setSecondComponent(borderWrapper);
-    splitter.setDividerWidth(4);
     return splitter;
   }
 
@@ -1461,6 +1437,7 @@ public class GitLogUI implements Disposable {
   private class MyTextFieldAction extends SearchFieldAction {
     private MyTextFieldAction() {
       super("Filter:");
+
     }
 
     @Override
