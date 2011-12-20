@@ -33,13 +33,14 @@ import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
-import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -142,19 +143,18 @@ public class XmlCompletionContributor extends CompletionContributor {
     result.stopHere();
     PsiElement parent = element.getParent();
     if (!(parent instanceof XmlTag) ||
-        !(parameters.getOriginalFile() instanceof XmlFile) ||
-        !((XmlTag)parent).getNamespacePrefix().isEmpty()) {
+        !(parameters.getOriginalFile() instanceof XmlFile)) {
       return;
     }
     final XmlTag tag = (XmlTag)parent;
     final String namespace = tag.getNamespace();
-    final XmlElementDescriptor parentDescriptor = tag.getDescriptor();
     final String prefix = result.getPrefixMatcher().getPrefix();
     final int pos = prefix.indexOf(':');
     final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
 
     final PsiReference reference = tag.getReference();
-    if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
+    if (reference != null && !namespace.isEmpty() && !tag.getNamespacePrefix().isEmpty()) {
+      // fallback to simple completion
       final Set<LookupElement> set = new HashSet<LookupElement>();
       new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
       for (final LookupElement item : set) {
