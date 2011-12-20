@@ -104,7 +104,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
   }
 
   private static boolean doClone(@NotNull Project project, @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
-    if (GitHttpAdapter.isHttpUrlWithoutUserCredentials(sourceRepositoryURL)) {
+    if (GitHttpAdapter.shouldUseJGit(sourceRepositoryURL)) {
       GitFetchResult result = GitHttpAdapter.cloneRepository(project, new File(parentDirectory, directoryName), sourceRepositoryURL);
       GitFetcher.displayFetchResult(project, result, "Clone failed", result.getErrors());
       return result.isSuccess();

@@ -141,7 +141,7 @@ public class GitCloneDialog extends DialogWrapper {
 
   private void test() {
     myTestURL = getCurrentUrlText();
-    boolean testResult = GitHttpAdapter.isHttpUrlWithoutUserCredentials(myTestURL) ? testHttp(myTestURL) : testNatively(myTestURL);
+    boolean testResult = GitHttpAdapter.shouldUseJGit(myTestURL) ? testHttp(myTestURL) : testNatively(myTestURL);
 
     if (testResult) {
       Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
