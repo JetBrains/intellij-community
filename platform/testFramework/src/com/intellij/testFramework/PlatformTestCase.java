@@ -83,6 +83,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -125,11 +126,28 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   protected void initApplication() throws Exception {
     boolean firstTime = ourApplication == null;
+    autodetectPlatformPrefix();
     ourApplication = IdeaTestApplication.getInstance(getApplicationConfigDirPath());
     ourApplication.setDataProvider(this);
 
     if (firstTime) {
       cleanPersistedVFSContent();
+    }
+  }
+
+  private static void autodetectPlatformPrefix() {
+    if (ourPlatformPrefixInitialized) {
+      return;
+    }
+    URL resource = PlatformTestCase.class.getClassLoader().getResource("idea/ApplicationInfo.xml");
+    if (resource == null) {
+      resource = PlatformTestCase.class.getClassLoader().getResource("idea/IdeaApplicationInfo.xml");
+      if (resource == null) {
+        System.setProperty("idea.platform.prefix", "PlatformLangXml");
+      }
+      else {
+        System.setProperty("idea.platform.prefix", "Idea");
+      }
     }
   }
 
