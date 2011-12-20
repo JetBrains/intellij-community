@@ -18,7 +18,6 @@ package com.intellij.psi.impl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,6 +53,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -318,7 +318,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
             }
             if (success) {
               assert !ApplicationManager.getApplication().isDispatchThread();
-              ApplicationManager.getApplication().invokeLater(finishRunnable, ModalityState.NON_MODAL); // do not commit while modal progress is running
+              UIUtil.invokeLaterIfNeeded(finishRunnable);
               log("Invoked later finishRunnable", document, false, success, finishRunnable, indicator);
             }
           }

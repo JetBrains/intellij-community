@@ -31,7 +31,6 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -696,16 +695,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
               // we'll restart when write action finish
               return;
             }
-            PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-            if (documentManager.hasUncommitedDocuments()) {
-              if (ModalityState.current() == ModalityState.NON_MODAL) {
-                ((PsiDocumentManagerImpl)documentManager).cancelAndRunWhenAllCommitted("restart daemon when all committed", this);
-                return;
-              }
-              else {
-                // when modal dialog is open, DocumentCommitThread is not able to commit in background, so force commit here
-                documentManager.commitAllDocuments();
-              }
+            if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
+              ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).cancelAndRunWhenAllCommitted(
+                "restart daemon when all committed", this);
+              return;
             }
 
             Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());
