@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -45,6 +42,7 @@ import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +51,9 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * @author max
+ */
 public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
@@ -638,48 +639,58 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvents(Collections.singletonList(event));
   }
 
-  private static final Comparator<VFileDeleteEvent> DEPTH_COMPARATOR = new Comparator<VFileDeleteEvent>() {
+  private static class EventWrapper {
+    private final VFileDeleteEvent event;
+    private final int id;
+
+    private EventWrapper(final VFileDeleteEvent event, final int id) {
+      this.event = event;
+      this.id = id;
+    }
+  }
+
+  private static final Comparator<EventWrapper> DEPTH_COMPARATOR = new Comparator<EventWrapper>() {
     @Override
-    public int compare(final VFileDeleteEvent o1, final VFileDeleteEvent o2) {
-      return o1.getFileDepth() - o2.getFileDepth();
+    public int compare(final EventWrapper o1, final EventWrapper o2) {
+      return o1.event.getFileDepth() - o2.event.getFileDepth();
     }
   };
 
-  private static List<? extends VFileEvent> validateEvents(List<? extends VFileEvent> events) {
-    List<VFileEvent> filtered = new ArrayList<VFileEvent>(events.size());
-    List<VFileDeleteEvent> deletionList = new ArrayList<VFileDeleteEvent>();
-
-    for (VFileEvent event : events) {
-      if (event.isValid()) {
-        if (event instanceof VFileDeleteEvent) {
-          deletionList.add((VFileDeleteEvent)event);
-        }
-        else {
-          filtered.add(event);
-        }
+  private static List<? extends VFileEvent> validateEvents(final List<? extends VFileEvent> events) {
+    final List<EventWrapper> deletionEvents = Lists.newArrayList();
+    for (int i = 0, size = events.size(); i < size; i++) {
+      final VFileEvent event = events.get(i);
+      if (event instanceof VFileDeleteEvent && event.isValid()) {
+        deletionEvents.add(new EventWrapper((VFileDeleteEvent)event, i));
       }
     }
 
-    ContainerUtil.quickSort(deletionList, DEPTH_COMPARATOR);
-    List<VirtualFile> filesToBeDeleted = new ArrayList<VirtualFile>();
-    for (VFileDeleteEvent event : deletionList) {
-      boolean ok = true;
-      VirtualFile candidate = event.getFile();
-      for (VirtualFile file : filesToBeDeleted) {
+    ContainerUtil.quickSort(deletionEvents, DEPTH_COMPARATOR);
+
+    final TIntHashSet invalidIDs = new TIntHashSet(deletionEvents.size());
+    final List<VirtualFile> dirsToBeDeleted = new ArrayList<VirtualFile>();
+    nextEvent:
+    for (EventWrapper wrapper : deletionEvents) {
+      final VirtualFile candidate = wrapper.event.getFile();
+      for (VirtualFile file : dirsToBeDeleted) {
         if (VfsUtilCore.isAncestor(file, candidate, false)) {
-          ok = false;
-          break;
+          invalidIDs.add(wrapper.id);
+          continue nextEvent;
         }
       }
 
-      if (ok) {
-        filtered.add(event);
-        if (candidate.isDirectory()) {
-          filesToBeDeleted.add(candidate);
-        }
+      if (candidate.isDirectory()) {
+        dirsToBeDeleted.add(candidate);
       }
     }
 
+    final List<VFileEvent> filtered = Lists.newArrayListWithCapacity(events.size() - invalidIDs.size());
+    for (int i = 0, size = events.size(); i < size; i++) {
+      final VFileEvent event = events.get(i);
+      if (event.isValid() && !(event instanceof VFileDeleteEvent && invalidIDs.contains(i))) {
+        filtered.add(event);
+      }
+    }
     return filtered;
   }
 
@@ -829,6 +840,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return _findFileById(id, true);
   }
 
+  @Nullable
   private NewVirtualFile _findFileById(int id, final boolean cachedOnly) {
     final NewVirtualFile cached = myIdToDirCache.get(id);
     if (cached != null) {
@@ -951,9 +963,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private static void appendIdToParentList(final int parentId, final int childId) {
-    int[] childrenlist = FSRecords.list(parentId);
-    childrenlist = ArrayUtil.append(childrenlist, childId);
-    FSRecords.updateList(parentId, childrenlist);
+    int[] childrenList = FSRecords.list(parentId);
+    childrenList = ArrayUtil.append(childrenList, childId);
+    FSRecords.updateList(parentId, childrenList);
   }
 
   private void executeDelete(final VirtualFile file) {

@@ -15,26 +15,21 @@
  */
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformLangTestCase;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
-public class SymLinkHandlingTest extends LightPlatformTestCase {
+public class SymLinkHandlingTest extends LightPlatformLangTestCase {
   private LocalFileSystem myFileSystem;
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public SymLinkHandlingTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -135,25 +130,64 @@ public class SymLinkHandlingTest extends LightPlatformTestCase {
     assertTrue(childFile.exists());
   }
 
+  public void testTransGenderRefresh() throws Exception {
+    if (!SystemInfo.areSymLinksSupported) return;
+
+    final File targetFile = FileUtil.createTempFile("target", "");
+    final File targetDir = FileUtil.createTempDirectory("targetDir", "");
+
+    // file link
+    File link = createTempLink(targetFile.getAbsolutePath(), "link");
+    VirtualFile vFile1 = refreshAndFind(link);
+    assertTrue("link=" + link + ", vLink=" + vFile1,
+               vFile1 != null && !vFile1.isDirectory() && vFile1.isSymLink());
+
+    // file link => dir
+    assertTrue(link.getAbsolutePath(), link.delete() && link.mkdir() && link.isDirectory());
+    VirtualFile vFile2 = refreshAndFind(link);
+    assertTrue("link=" + link + ", vLink=" + vFile2,
+               !vFile1.isValid() && vFile2 != null && vFile2.isDirectory() && !vFile2.isSymLink());
+
+    // dir => dir link
+    assertTrue(link.getAbsolutePath(), link.delete());
+    link = createTempLink(targetDir.getAbsolutePath(), "link");
+    vFile1 = refreshAndFind(link);
+    assertTrue("link=" + link + ", vLink=" + vFile1,
+               !vFile2.isValid() && vFile1 != null && vFile1.isDirectory() && vFile1.isSymLink());
+
+    // dir link => file
+    assertTrue(link.getAbsolutePath(), link.delete() && link.createNewFile() && link.isFile());
+    vFile2 = refreshAndFind(link);
+    assertTrue("link=" + link + ", vLink=" + vFile1,
+               !vFile1.isValid() && vFile2 != null && !vFile2.isDirectory() && !vFile2.isSymLink());
+
+    // file => file link
+    assertTrue(link.getAbsolutePath(), link.delete());
+    link = createTempLink(targetFile.getAbsolutePath(), "link");
+    vFile1 = refreshAndFind(link);
+    assertTrue("link=" + link + ", vLink=" + vFile1,
+               !vFile2.isValid() && vFile1 != null && !vFile1.isDirectory() && vFile1.isSymLink());
+  }
+
   // todo[r.sh] use NIO2 API after migration to JDK 7
-  private static File createTempLink(final String target, final String link) throws IOException, InterruptedException {
+  private static File createTempLink(final String target, final String link) throws InterruptedException, ExecutionException {
     final File linkFile = new File(FileUtil.getTempDirectory(), link);
     assertTrue(link, !linkFile.exists() || linkFile.delete());
     final File parentDir = linkFile.getParentFile();
     assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
 
-    final ProcessBuilder builder;
+    final GeneralCommandLine commandLine;
     if (SystemInfo.isWindows) {
-      builder = new File(target).isDirectory()
-                ? new ProcessBuilder("cmd", "/C", "mklink", "/D", linkFile.getAbsolutePath(), target)
-                : new ProcessBuilder("cmd", "/C", "mklink", linkFile.getAbsolutePath(), target);
+      commandLine = new File(target).isDirectory()
+                ? new GeneralCommandLine("cmd", "/C", "mklink", "/D", linkFile.getAbsolutePath(), target)
+                : new GeneralCommandLine("cmd", "/C", "mklink", linkFile.getAbsolutePath(), target);
     }
     else {
-      builder = new ProcessBuilder("ln", "-s", target, linkFile.getAbsolutePath());
+      commandLine = new GeneralCommandLine("ln", "-s", target, linkFile.getAbsolutePath());
     }
-    final Process process = builder.start();
+    final Process process = commandLine.createProcess();
     final int res = process.waitFor();
-    assertTrue(builder.command() + ": " + res, res == 0);
+    assertTrue(commandLine.getCommandLineString() + ": " + res, res == 0);
     final File targetFile = new File(target);
     assertEquals("target=" + target + ", link=" + linkFile, targetFile.exists(), linkFile.exists());
     return linkFile;

@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.VfsUtil;
@@ -32,6 +28,9 @@ import com.intellij.util.containers.Queue;
 
 import java.util.*;
 
+/**
+ * @author max
+ */
 public class RefreshWorker {
   private final VirtualFile myRefreshRoot;
   private final boolean myIsRecursive;
@@ -135,10 +134,14 @@ public class RefreshWorker {
 
   private void scheduleChildRefresh(final VirtualFileSystemEntry file, final VirtualFile child, final NewVirtualFileSystem delegate) {
     final boolean currentIsDirectory = child.isDirectory();
+    final boolean currentIsSymlink = child.isSymLink();
+    final boolean currentIsSpecial = child.isSpecialFile();
     final boolean upToDateIsDirectory = delegate.isDirectory(child);
-    if (currentIsDirectory != upToDateIsDirectory) {
+    final boolean upToDateIsSymlink = delegate.isSymLink(child);
+    final boolean upToDateIsSpecial = delegate.isSpecialFile(child);
+    if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       scheduleDeletion(child);
-      scheduleCreation(file, child.getName(), upToDateIsDirectory);
+      scheduleReCreation(file, child.getName(), upToDateIsDirectory);
     }
     else if (myIsRecursive || !currentIsDirectory) {
       myRefreshQueue.addLast(child);
@@ -156,7 +159,11 @@ public class RefreshWorker {
   }
 
   private void scheduleCreation(final VirtualFileSystemEntry parent, final String childName, final boolean isDirectory) {
-    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
+    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, false));
+  }
+
+  private void scheduleReCreation(final VirtualFileSystemEntry parent, final String childName, final boolean isDirectory) {
+    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, true));
   }
 
   private void scheduleDeletion(final VirtualFile file) {

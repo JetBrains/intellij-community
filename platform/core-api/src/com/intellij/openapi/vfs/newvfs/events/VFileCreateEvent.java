@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @author max
+ */
 public class VFileCreateEvent extends VFileEvent {
   private final VirtualFile myParent;
   private final boolean myDirectory;
   private final String myChildName;
+  private final boolean myReCreation;
 
-  public VFileCreateEvent(final Object requestor, final VirtualFile parent, final String childName, boolean isDirectory, boolean isFromRefresh) {
+  public VFileCreateEvent(final Object requestor,
+                          final VirtualFile parent,
+                          final String childName,
+                          final boolean isDirectory,
+                          final boolean isFromRefresh) {
+    this(requestor, parent, childName, isDirectory, isFromRefresh, false);
+  }
+
+  public VFileCreateEvent(final Object requestor,
+                          final VirtualFile parent,
+                          final String childName,
+                          final boolean isDirectory,
+                          final boolean isFromRefresh,
+                          final boolean isReCreation) {
     super(requestor, isFromRefresh);
     myChildName = childName;
     myParent = parent;
     myDirectory = isDirectory;
+    myReCreation = isReCreation;
   }
 
   public String getChildName() {
@@ -48,8 +62,10 @@ public class VFileCreateEvent extends VFileEvent {
   }
 
   @NonNls
+  @Override
   public String toString() {
-    return "VfsEvent[create " + (isDirectory() ? "dir " : "file ") + myChildName +  " in " + myParent.getUrl() + "]";
+    return "VfsEvent[" + (myReCreation ? "re" : "") + "create " + (myDirectory ? "dir " : "file ") +
+           myChildName +  " in " + myParent.getUrl() + "]";
   }
 
   @Override
@@ -69,9 +85,15 @@ public class VFileCreateEvent extends VFileEvent {
 
   @Override
   public boolean isValid() {
-    return myParent.isValid() && myParent.findChild(myChildName) == null;
+    if (myParent.isValid()) {
+      final VirtualFile child = myParent.findChild(myChildName);
+      return !myReCreation && child == null || myReCreation && child != null;
+    }
+
+    return false;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -81,15 +103,17 @@ public class VFileCreateEvent extends VFileEvent {
     if (myDirectory != event.myDirectory) return false;
     if (!myChildName.equals(event.myChildName)) return false;
     if (!myParent.equals(event.myParent)) return false;
+    if (myReCreation != event.myReCreation) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
-    int result;
-    result = myParent.hashCode();
+    int result = myParent.hashCode();
     result = 31 * result + (myDirectory ? 1 : 0);
     result = 31 * result + myChildName.hashCode();
+    result = 31 * result + (myReCreation ? 1 : 0);
     return result;
   }
 }
