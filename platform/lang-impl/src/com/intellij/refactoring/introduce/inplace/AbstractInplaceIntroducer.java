@@ -323,11 +323,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return myConstantName;
   }
 
-  @Override
-  protected boolean performAutomaticRename() {
-    return false;
-  }
-
 
   @Override
   public void finish() {

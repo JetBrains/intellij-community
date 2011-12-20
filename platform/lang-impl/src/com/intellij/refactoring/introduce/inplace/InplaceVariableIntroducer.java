@@ -238,4 +238,8 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
     //move logic to performRefactoring
   }
 
+  @Override
+  protected boolean performAutomaticRename() {
+    return false;
+  }
 }
