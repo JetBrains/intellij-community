@@ -60,14 +60,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     final PsiElement importParent = PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class);
     if (importParent != null) {
-      if (importParent instanceof PyImportElement) {
-        final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(importParent, PyImportStatementBase.class);
-        if (importStatement instanceof PyFromImportStatement) {
-          return new PyFromImportNameReference(this, context);
-        }
-        return new PyImportReference(this, context);
-      }
-      return new PyFromImportSourceReference(this, context);
+      return PyImportReference.forElement(this, importParent, context);
     }
 
     if (file != null) {
