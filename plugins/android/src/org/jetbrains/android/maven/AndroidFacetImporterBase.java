@@ -742,6 +742,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   @Override
   public void collectExcludedFolders(MavenProject mavenProject, List<String> result) {
     result.add(mavenProject.getGeneratedSourcesDirectory(false) + "/combined-resources");
+    result.add(mavenProject.getGeneratedSourcesDirectory(false) + "/combined-assets");
     result.add(mavenProject.getGeneratedSourcesDirectory(false) + "/extracted-dependencies");
   }
 
