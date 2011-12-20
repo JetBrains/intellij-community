@@ -44,7 +44,7 @@ class StatusPanel extends JPanel {
   private boolean myLogMode;
   private boolean myDirty;
   private boolean myAfterClick;
-  private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private Alarm myLogAlarm;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -105,6 +105,17 @@ class StatusPanel extends JPanel {
     return null;
   }
 
+  private Alarm getAlarm() {
+    if (myLogAlarm == null || myLogAlarm.isDisposed()) {
+      myLogAlarm = null; //Welcome screen
+      Project project = getActiveProject();
+      if (project != null) {
+        myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+      }
+    }
+    return myLogAlarm;
+  }
+
   public void setLogMessage(String text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -119,35 +130,30 @@ class StatusPanel extends JPanel {
     final Project project = getActiveProject();
     final Pair<Notification, Long> statusMessage = EventLog.getStatusMessage(project);
     myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null;
-    myLogAlarm.cancelAllRequests();
+    final Alarm alarm = getAlarm();
 
-    if (myLogMode) {
-      myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      new Runnable() {
-        @Override
-        public void run() {
-          assert statusMessage != null;
-          String text = EventLog.formatForLog(statusMessage.first).status;
-          if (myDirty || System.currentTimeMillis() - statusMessage.second >= DateFormatUtil.MINUTE) {
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
+    if (alarm != null) {
+      alarm.cancelAllRequests();
+
+      if (myLogMode) {
+        myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        new Runnable() {
+          @Override
+          public void run() {
+            assert statusMessage != null;
+            String text = EventLog.formatForLog(statusMessage.first).status;
+            if (myDirty || System.currentTimeMillis() - statusMessage.second >= DateFormatUtil.MINUTE) {
+              text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
+            }
+            setStatusText(text);
+            alarm.addRequest(this, 30000);
           }
-          setStatusText(text);
-          myLogAlarm.addRequest(this, 30000);          
-          if (project != null) {
-            final Runnable request = this;
-            Disposer.register(project, new Disposable() {
-              @Override
-              public void dispose() {
-                myLogAlarm.cancelRequest(request);                
-              }
-            });
-          }
-        }
-      }.run();
-    } else {
-      myTextPanel.setCursor(Cursor.getDefaultCursor());
-      myDirty = true;
-      setStatusText(nonLogText);
+        }.run();
+      } else {
+        myTextPanel.setCursor(Cursor.getDefaultCursor());
+        myDirty = true;
+        setStatusText(nonLogText);
+      }
     }
     return myLogMode;
   }
@@ -166,15 +172,18 @@ class StatusPanel extends JPanel {
   }
 
   public void restoreLogIfNeeded() {
-    myLogAlarm.cancelAllRequests();
-    myLogAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (StringUtil.isEmpty(myTextPanel.getText())) {
-          updateText(true, "");
+    Alarm alarm = getAlarm();
+    if (alarm != null) {
+      alarm.cancelAllRequests();
+      alarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          if (StringUtil.isEmpty(myTextPanel.getText())) {
+            updateText(true, "");
+          }
         }
-      }
-    }, 300);
+      }, 300);
+    }
   }
 
   public String getText() {
