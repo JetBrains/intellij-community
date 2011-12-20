@@ -21,12 +21,14 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.FileStructureDialog;
+import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -55,13 +57,24 @@ public class ViewStructureAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
     Navigatable navigatable = e.getData(PlatformDataKeys.NAVIGATABLE);
-    DialogWrapper dialog = createDialog(editor, project, navigatable, fileEditor);
-    if (dialog != null) {
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile != null) {
-        dialog.setTitle(virtualFile.getName());
+    if (Registry.is("file.structure.tree.mode")) {
+      FileStructurePopup popup = createPopup(editor, project, navigatable, fileEditor);
+      if (popup != null) {
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile != null) {
+          popup.setTitle(virtualFile.getName());
+        }
+        popup.show();
       }
-      dialog.show();
+    } else {
+      DialogWrapper dialog = createDialog(editor, project, navigatable, fileEditor);
+      if (dialog != null) {
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile != null) {
+          dialog.setTitle(virtualFile.getName());
+        }
+        dialog.show();
+      }
     }
   }
 
@@ -72,6 +85,14 @@ public class ViewStructureAction extends AnAction {
     StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
     return createStructureViewBasedDialog(structureView.getTreeModel(), editor, project, navigatable, structureView);
   }
+  
+  @Nullable
+  private static FileStructurePopup createPopup(final Editor editor, Project project, Navigatable navigatable, final FileEditor fileEditor) {
+    final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
+    if (structureViewBuilder == null) return null;
+    StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
+    return createStructureViewPopup(structureView.getTreeModel(), editor, project, navigatable, structureView);
+  }
 
   public static FileStructureDialog createStructureViewBasedDialog(final StructureViewModel structureViewModel,
                                                                    final Editor editor,
@@ -80,7 +101,14 @@ public class ViewStructureAction extends AnAction {
                                                                    final @NotNull Disposable alternativeDisposable) {
     return new FileStructureDialog(structureViewModel, editor, project, navigatable, alternativeDisposable, true);
   }
-
+  public static FileStructurePopup createStructureViewPopup(final StructureViewModel structureViewModel,
+                                                                   final Editor editor,
+                                                                   final Project project,
+                                                                   final Navigatable navigatable,
+                                                                   final @NotNull Disposable alternativeDisposable) {
+    return new FileStructurePopup(structureViewModel, editor, project, navigatable, alternativeDisposable, true);
+  }
+  
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

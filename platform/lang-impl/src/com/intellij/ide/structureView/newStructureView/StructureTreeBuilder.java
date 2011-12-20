@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
-class StructureTreeBuilder extends AbstractTreeBuilder {
+public class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
   private final StructureViewModel myStructureModel;
 

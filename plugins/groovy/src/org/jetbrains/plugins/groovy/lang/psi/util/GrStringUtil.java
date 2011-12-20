@@ -35,6 +35,70 @@ public class GrStringUtil {
   private GrStringUtil() {
   }
 
+  public static String escapeForSlashyStrings(String str) {
+    final StringBuilder buffer = new StringBuilder(str.length());
+    escapeSymbolsForSlashyStrings(buffer, str);
+    return buffer.toString();
+  }
+  
+  public static void escapeSymbolsForSlashyStrings(StringBuilder buffer, String str) {
+    final int length = str.length();
+    for (int idx = 0; idx < length; idx++) {
+      char ch = str.charAt(idx);
+      switch (ch) {
+        case '/':
+          buffer.append("\\/");
+          break;
+        default:
+          if (Character.isISOControl(ch) || ch == '$') {
+            appendUnicode(buffer, ch);
+          }
+          else {
+            buffer.append(ch);
+          }
+      }
+    }
+  }
+
+  public static String escapeSymbolsForDollarSlashyStrings(String str) {
+    final StringBuilder buffer = new StringBuilder(str.length());
+    escapeSymbolsForDollarSlashyStrings(buffer, str);
+    return buffer.toString();
+  }
+  
+  public static void escapeSymbolsForDollarSlashyStrings(StringBuilder buffer, String str) {
+    final int length = str.length();
+    for (int idx = 0; idx < length; idx++) {
+      char ch = str.charAt(idx);
+      switch (ch) {
+        case '/':
+          if (idx + 1 < length && str.charAt(idx + 1) == '$') {
+            appendUnicode(buffer, '/');
+            appendUnicode(buffer, '$');
+            break;
+          }
+        default:
+          if (Character.isISOControl(ch)) {
+            appendUnicode(buffer, ch);
+          }
+          else {
+            buffer.append(ch);
+          }
+      }
+    }
+  }
+
+  private static void appendUnicode(StringBuilder buffer, char ch) {
+    String hexCode = Integer.toHexString(ch).toUpperCase();
+    buffer.append("\\u");
+    int paddingCount = 4 - hexCode.length();
+    while (paddingCount-- > 0) {
+      buffer.append(0);
+    }
+    buffer.append(hexCode);
+  }
+
+
   public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes) {
     return escapeSymbolsForGString(s, escapeDoubleQuotes, false);
   }
@@ -115,13 +179,7 @@ public class GrStringUtil {
             buffer.append("\\").append(ch);
           }
           else if (Character.isISOControl(ch)) {
-            String hexCode = Integer.toHexString(ch).toUpperCase();
-            buffer.append("\\u");
-            int paddingCount = 4 - hexCode.length();
-            while (paddingCount-- > 0) {
-              buffer.append(0);
-            }
-            buffer.append(hexCode);
+            appendUnicode(buffer, ch);
           }
           else {
             buffer.append(ch);

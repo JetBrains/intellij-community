@@ -16,55 +16,38 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.AbstractElementManipulator;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteral> {
-  public GrLiteral handleContentChange(GrLiteral expr, TextRange range, String newContent) throws IncorrectOperationException {
+public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteralImpl> {
+  public GrLiteralImpl handleContentChange(GrLiteralImpl expr, TextRange range, String newContent) throws IncorrectOperationException {
     if (!(expr.getValue() instanceof String)) throw new IncorrectOperationException("cannot handle content change");
 
     String oldText = expr.getText();
-    if (oldText.startsWith("'")) {
-      newContent = GrStringUtil.escapeSymbolsForString(newContent, !oldText.startsWith("'''"), true);
-    }
-    else if (oldText.startsWith("\"")) {
-      newContent = GrStringUtil.escapeSymbolsForGString(newContent, !oldText.startsWith("\"\"\""), true);
-    }
-    else if (oldText.startsWith("/")) {
-      newContent = StringUtil.escapeSlashes(newContent);
-    }
-    //if there is $/-string we don't need to escape something
+    final String quote = GrStringUtil.getStartQuote(oldText);
 
-    String newText;
-    if (range.getStartOffset() == 1 && (newContent.indexOf('\n') >= 0 || newContent.indexOf('\r') >= 0)) {
-      String corner = oldText.substring(0, 1) + oldText.substring(0, 1) + oldText.substring(0, 1);
-      newText = corner + newContent + corner;
+    if (quote.startsWith("'")) {
+      newContent = GrStringUtil.escapeSymbolsForString(newContent, !quote.equals("'''"), false);
     }
-    else {
-      newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
+    else if (quote.startsWith("\"")) {
+      newContent = GrStringUtil.escapeSymbolsForGString(newContent, !quote.equals("\"\"\""), true);
     }
-    final GrExpression newExpr = GroovyPsiElementFactory.getInstance(expr.getProject()).createExpressionFromText(newText);
+    else if ("/".equals(quote)) {
+      newContent = GrStringUtil.escapeForSlashyStrings(newContent);
+    }
+    else if ("$/".equals(quote)) {
+      newContent = GrStringUtil.escapeSymbolsForDollarSlashyStrings(newContent);
+    }
 
-    PsiElement firstChild = expr.getFirstChild();
-    assert firstChild != null && firstChild.getNextSibling() == null;
-
-    PsiElement newElement = newExpr.getFirstChild();
-    assert newElement != null;
-    firstChild.replace(newElement);
-
-    return expr;
+    String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
+    return expr.updateText(newText);
   }
 
-  public TextRange getRangeInElement(final GrLiteral element) {
+  public TextRange getRangeInElement(final GrLiteralImpl element) {
     final String text = element.getText();
-    if (element instanceof GrLiteralImpl && !(element.getValue() instanceof String)) {
+    if (!(element.getValue() instanceof String)) {
       return super.getRangeInElement(element);
     }
     return getLiteralRange(text);

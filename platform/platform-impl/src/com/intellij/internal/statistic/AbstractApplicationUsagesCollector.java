@@ -40,7 +40,7 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
     public void persistProjectUsages(@NotNull Project project,
                                      @NotNull Set<UsageDescriptor> usages,
                                      @NotNull ApplicationStatisticsPersistence persistence) {
-        persistence.persistFrameworks(getGroupId(), project, usages);
+        persistence.persistUsages(getGroupId(), project, usages);
     }
 
     @NotNull
@@ -50,20 +50,20 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
 
     @NotNull
     public Set<UsageDescriptor> getApplicationUsages(@NotNull final ApplicationStatisticsPersistence persistence) {
-        final Map<String, Integer> facets = new HashMap<String, Integer>();
+        final Map<String, Integer> result = new HashMap<String, Integer>();
 
-        for (Set<UsageDescriptor> frameworks : persistence.getApplicationData(getGroupId()).values()) {
-            for (UsageDescriptor framework : frameworks) {
-                final String key = framework.getKey();
-                final Integer count = facets.get(key);
-                facets.put(key, count == null ? 1 : count.intValue() + 1);
+        for (Set<UsageDescriptor> usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
+            for (UsageDescriptor usageDescriptor : usageDescriptors) {
+                final String key = usageDescriptor.getKey();
+                final Integer count = result.get(key);
+                result.put(key, count == null ? 1 : count.intValue() + 1);
             }
         }
 
-        return ContainerUtil.map2Set(facets.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
+        return ContainerUtil.map2Set(result.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
             @Override
-            public UsageDescriptor fun(Map.Entry<String, Integer> facet) {
-                return new UsageDescriptor(facet.getKey(), facet.getValue());
+            public UsageDescriptor fun(Map.Entry<String, Integer> entry) {
+                return new UsageDescriptor(entry.getKey(), entry.getValue());
             }
         });
     }

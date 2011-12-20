@@ -1330,6 +1330,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     public void _setBounds(Rectangle bounds) {
+      Rectangle currentBounds = getBounds();
+      if (currentBounds.width != bounds.width || currentBounds.height != bounds.height) {
+        invalidateShadowImage();
+      }
+
       super.setBounds(bounds);
       if (myCloseRec.getParent() == null && getParent() != null) {
         myLayeredPane.add(myCloseRec);
@@ -1355,6 +1360,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         revalidate();
         repaint();
       }
+    }
+
+    private void invalidateShadowImage() {
+      myImage = null;
+      myShadow = null;
     }
 
     public void repaintButton() {

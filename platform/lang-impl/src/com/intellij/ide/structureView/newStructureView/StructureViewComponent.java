@@ -733,7 +733,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
 //todo [kirillk] dirty hack for discovering invalid psi elements, to delegate it to a proper place after 8.1
-  private static boolean isValid(Object treeElement) {
+  public static boolean isValid(Object treeElement) {
     if (treeElement instanceof StructureViewTreeElementWrapper) {
       final StructureViewTreeElementWrapper wrapper = (StructureViewTreeElementWrapper)treeElement;
       if (wrapper.getValue() instanceof PsiTreeElementBase) {
@@ -744,7 +744,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return true;
   }
 
-  static class StructureViewTreeElementWrapper extends TreeElementWrapper implements NodeDescriptorProvidingKey {
+  public static class StructureViewTreeElementWrapper extends TreeElementWrapper implements NodeDescriptorProvidingKey {
     private long childrenStamp = -1;
     private long modificationCountForChildren = ourSettingsModificationCount;
 
