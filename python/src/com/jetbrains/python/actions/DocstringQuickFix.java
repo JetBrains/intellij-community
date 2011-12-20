@@ -179,7 +179,8 @@ public class DocstringQuickFix implements LocalQuickFix {
         ws = ws + whitespace.getText().split("\n")[1];
       }
     }
-    replacementText.deleteCharAt(replacementText.length() - 1);
+    if (replacementText.length() > 0)
+      replacementText.deleteCharAt(replacementText.length() - 1);
     replacementText.append(ws);
 
     String paramText = myMissingText;
