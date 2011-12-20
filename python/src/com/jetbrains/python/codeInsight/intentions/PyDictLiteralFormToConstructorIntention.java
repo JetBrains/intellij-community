@@ -72,12 +72,14 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
       PyExpression argument = argumentList[i];
       if (argument instanceof PyKeyValueExpression) {
         PyExpression key = ((PyKeyValueExpression)argument).getKey();
-        if (key instanceof PyStringLiteralExpression)
+        PyExpression value = ((PyKeyValueExpression)argument).getValue();
+        if (key instanceof PyStringLiteralExpression && value != null) {
           stringBuilder.append(((PyStringLiteralExpression)key).getStringValue());
-        stringBuilder.append("=");
-        stringBuilder.append(((PyKeyValueExpression)argument).getValue().getText());
-        if (i != size-1)
-          stringBuilder.append(", ");
+          stringBuilder.append("=");
+          stringBuilder.append(value.getText());
+          if (i != size-1)
+            stringBuilder.append(", ");
+        }
       }
     }
     stringBuilder.append(")");
