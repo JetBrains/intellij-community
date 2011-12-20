@@ -18,6 +18,7 @@ package com.intellij.find.findUsages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   @Override
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    if (element instanceof PsiFile) {
-      if (((PsiFile)element).getVirtualFile() == null) return false;
+    if (element instanceof PsiFileSystemItem) {
+      if (((PsiFileSystemItem)element).getVirtualFile() == null) return false;
     }
     else if (!LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).canFindUsagesFor(element)) {
       return false;

@@ -544,7 +544,7 @@ public class HighlightMethodUtil {
     PsiMethod method = methodCandidate.getElement();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiSubstitutor substitutor = methodCandidate.getSubstitutor();
-    @NonNls String ms = "<td><b>" + method.getName() + "</b></td>";
+    @NonNls @Language("HTML") String ms = "<td><b>" + method.getName() + "</b></td>";
 
     for (int j = 0; j < parameters.length; j++) {
       PsiParameter parameter = parameters[j];

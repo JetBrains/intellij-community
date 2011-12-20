@@ -338,7 +338,7 @@ public class VariableInplaceRenamer {
                   performOnInvalidIdentifier(myNewName, nameSuggestions);
                   return;
                 }
-                if (snapshot != null && performAutomaticRename()) {
+                if (myNewName != null && snapshot != null && performAutomaticRename()) {
                   if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
                     ApplicationManager.getApplication().runWriteAction(new Runnable() {
                       public void run() {
@@ -536,6 +536,7 @@ public class VariableInplaceRenamer {
 
   @Nullable
   protected String getNewName(String newName, ResolveSnapshotProvider.ResolveSnapshot snapshot) {
+    if (!performAutomaticRename()) return null;
     return snapshot != null ? newName : null;
   }
 

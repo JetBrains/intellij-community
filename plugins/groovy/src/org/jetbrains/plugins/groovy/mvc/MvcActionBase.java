@@ -18,12 +18,12 @@ public abstract class MvcActionBase extends DumbAwareAction {
   @Override
   public final void actionPerformed(AnActionEvent e) {
     Pair<MvcFramework, Module> pair = guessFramework(e);
-    if (pair != null && isSupportFramework(pair.getFirst())) {
+    if (pair != null && isFrameworkSupported(pair.getFirst())) {
       actionPerformed(e, pair.getSecond(), pair.getFirst());
     }
   }
 
-  protected boolean isSupportFramework(@NotNull MvcFramework framework) {
+  protected boolean isFrameworkSupported(@NotNull MvcFramework framework) {
     return true;
   }
 
@@ -73,7 +73,7 @@ public abstract class MvcActionBase extends DumbAwareAction {
 
   public final void update(AnActionEvent event) {
     Pair<MvcFramework, Module> pair = guessFramework(event);
-    if (pair != null && isSupportFramework(pair.getFirst())) {
+    if (pair != null && isFrameworkSupported(pair.getFirst())) {
       event.getPresentation().setVisible(true);
       updateView(event, pair.getFirst(), pair.getSecond());
     }

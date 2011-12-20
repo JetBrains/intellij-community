@@ -36,7 +36,6 @@ public class SideEffectWarningDialog extends DialogWrapper {
   private final String myBeforeText;
   private final String myAfterText;
   private final boolean myCanCopeWithSideEffects;
-  private AbstractAction myMakeStmtAction;
   private AbstractAction myRemoveAllAction;
   private AbstractAction myCancelAllAction;
   public static final int MAKE_STATEMENT = 1;
@@ -71,7 +70,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
     };
     actions.add(myRemoveAllAction);
     if (myCanCopeWithSideEffects) {
-      myMakeStmtAction = new AbstractAction() {
+      AbstractAction makeStmtAction = new AbstractAction() {
         {
           UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.transform"), this);
         }
@@ -80,9 +79,8 @@ public class SideEffectWarningDialog extends DialogWrapper {
         public void actionPerformed(ActionEvent e) {
           close(MAKE_STATEMENT);
         }
-
       };
-      actions.add(myMakeStmtAction);
+      actions.add(makeStmtAction);
     }
     myCancelAllAction = new AbstractAction() {
       {

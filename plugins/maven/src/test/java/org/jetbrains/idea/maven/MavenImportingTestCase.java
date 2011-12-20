@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -289,8 +290,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
   }
 
-  protected Module getModule(String name) {
-    Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
+  protected Module getModule(final String name) {
+    Module m = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+            public Module compute() {
+              return ModuleManager.getInstance(myProject).findModuleByName(name);
+            }
+          });
     assertNotNull("Module " + name + " not found", m);
     return m;
   }

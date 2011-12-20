@@ -37,6 +37,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
@@ -132,7 +133,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       text = "method \'" + ((PsiMethod)myRoot[0]).getName() + "\' return";
     }
     else {
-      text = myRoot.toString();
+      text = Arrays.toString(myRoot);
     }
     Content content =  UsageViewManager.getInstance(myProject)
         .addContent("Migrate Type of " +

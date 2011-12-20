@@ -128,6 +128,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
           DirectoryChooser.ItemWrapper item = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
           if (item != null && fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()) == root) {
             getComboBox().setSelectedItem(item);
+            getComboBox().repaint();
             return;
           }
         }

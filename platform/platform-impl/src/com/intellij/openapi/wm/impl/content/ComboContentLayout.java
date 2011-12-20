@@ -145,7 +145,7 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void showContentPopup(ListPopup listPopup) {
-    listPopup.setMinimumSize(new Dimension(myComboLabel.getPreferredSize().width, 0));
+    listPopup.setMinimumSize(new Dimension(myComboLabel.getSize().width, 0));
     listPopup.showUnderneathOf(myComboLabel);
   }
 

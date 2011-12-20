@@ -105,7 +105,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     mySubPanels.add(mySuspendPolicyPanel);
     myMasterBreakpointPanel.init(project, breakpointManager, breakpoint);
     mySubPanels.add(myMasterBreakpointPanel);
-    XDebuggerEditorsProvider debuggerEditorsProvider = breakpointType.getEditorsProvider();
+    XDebuggerEditorsProvider debuggerEditorsProvider = breakpointType.getEditorsProvider(breakpoint);
 
     myActionsPanel.init(project, breakpointManager, breakpoint, debuggerEditorsProvider);
     mySubPanels.add(myActionsPanel);

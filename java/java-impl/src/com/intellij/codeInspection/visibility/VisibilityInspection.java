@@ -178,9 +178,10 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       }
       @Modifier String access = getPossibleAccess(refElement);
       if (access != refElement.getAccessModifier() && access != null) {
-        final PsiElement psiElement = HighlightUsagesHandler.getNameIdentifier(refElement.getElement());
-        if (psiElement != null) {
-          return new ProblemDescriptor[]{manager.createProblemDescriptor(psiElement,
+        final PsiElement element = refElement.getElement();
+        final PsiElement nameIdentifier = element != null ? HighlightUsagesHandler.getNameIdentifier(element) : null;
+        if (nameIdentifier != null) {
+          return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
                                                                          access.equals(PsiModifier.PRIVATE)
                                                                           ? CAN_BE_PRIVATE
                                                                           : access.equals(PsiModifier.PACKAGE_LOCAL)

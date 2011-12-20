@@ -16,20 +16,28 @@
 
 package com.intellij.ide.util;
 
+import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
+import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
@@ -51,6 +59,9 @@ public class DirectoryChooser extends DialogWrapper {
   private boolean myFilterExisting;
   private PsiDirectory myDefaultSelection;
   private List<ItemWrapper> myItems = new ArrayList<ItemWrapper>();
+  private PsiElement mySelection;
+  private final TabbedPaneWrapper myTabbedPaneWrapper;
+  private final ChooseByNamePanel myChooseByNamePanel;
 
   public DirectoryChooser(Project project){
     this(project, new DirectoryChooserModuleTreeView(project));
@@ -61,12 +72,40 @@ public class DirectoryChooser extends DialogWrapper {
     myView = view;
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     myFilterExisting = propertiesComponent.isValueSet(FILTER_NON_EXISTING) && propertiesComponent.isTrueValue(FILTER_NON_EXISTING);
+    myTabbedPaneWrapper = new TabbedPaneWrapper(getDisposable());
+    myChooseByNamePanel = new ChooseByNamePanel(project, new GotoClassModel2(project){
+      @Override
+      public String[] getNames(boolean checkBoxState) {
+        return super.getNames(false);
+      }
+    }, "", false, null) {
+      protected void showTextFieldPanel() {
+      }
+
+      protected void close(boolean isOk) {
+        super.close(isOk);
+        if (isOk) {
+          final List<Object> elements = getChosenElements();
+          if (elements != null && elements.size() > 0) {
+            myActionListener.elementChosen(elements.get(0));
+          }
+          doOKAction();
+        }
+        else {
+          doCancelAction();
+        }
+      }
+    };
+    Disposer.register(myDisposable, myChooseByNamePanel);
     init();
   }
 
   @Override
   protected void doOKAction() {
     PropertiesComponent.getInstance().setValue(FILTER_NON_EXISTING, String.valueOf(myFilterExisting));
+    if (myTabbedPaneWrapper.getSelectedIndex() == 1) {
+      setSelection(myChooseByNamePanel.getChosenElement());
+    }
     super.doOKAction();
   }
 
@@ -93,7 +132,23 @@ public class DirectoryChooser extends DialogWrapper {
 
     installEnterAction(component);
     panel.add(jScrollPane, BorderLayout.CENTER);
-    return panel;
+    myTabbedPaneWrapper.addTab("Directory Structure", panel);
+
+    myChooseByNamePanel.invoke(new ChooseByNamePopupComponent.Callback() {
+      @Override
+      public void elementChosen(Object element) {
+        setSelection(element);
+      }
+    }, ModalityState.stateForComponent(getRootPane()), false);
+    myTabbedPaneWrapper.addTab("Choose By Neighbor Class", myChooseByNamePanel.getPanel());
+
+    return myTabbedPaneWrapper.getComponent();
+  }
+
+  private void setSelection(Object element) {
+    if (element instanceof PsiElement) {
+      mySelection = (PsiElement)element;
+    }
   }
 
   private void installEnterAction(final JComponent component) {
@@ -396,6 +451,12 @@ public class DirectoryChooser extends DialogWrapper {
 
   @Nullable
   public PsiDirectory getSelectedDirectory() {
+    if (mySelection != null) {
+      final PsiFile file = mySelection.getContainingFile();
+      if (file != null){
+        return file.getContainingDirectory();
+      }
+    }
     ItemWrapper wrapper = myView.getSelectedItem();
     if (wrapper == null) return null;
     return wrapper.myDirectory;

@@ -47,7 +47,7 @@ public class RefreshSessionImpl extends RefreshSession {
   private final Semaphore mySemaphore = new Semaphore();
   private volatile boolean iHaveEventsToFire;
 
-  private ModalityState myModalityState;
+  private final ModalityState myModalityState;
 
   public RefreshSessionImpl(final boolean isAsync, final boolean recursively, final Runnable finishRunnable) {
     this(isAsync, recursively, finishRunnable, ModalityState.NON_MODAL);
@@ -65,6 +65,7 @@ public class RefreshSessionImpl extends RefreshSession {
     myIsRecursive = false;
     myFinishRunnable = null;
     myEvents = new ArrayList<VFileEvent>(events);
+    myModalityState = ModalityState.NON_MODAL;
   }
 
   @Override
@@ -167,6 +168,7 @@ public class RefreshSessionImpl extends RefreshSession {
     return events;
   }
 
+  @NotNull
   public ModalityState getModalityState() {
     return myModalityState;
   }

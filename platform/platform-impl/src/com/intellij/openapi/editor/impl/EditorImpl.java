@@ -192,8 +192,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final int MOUSE_SELECTION_STATE_WORD_SELECTED = 1;
   private static final int MOUSE_SELECTION_STATE_LINE_SELECTED = 2;
 
-  private final MarkupModelListener myMarkupModelListener;
-
   private EditorHighlighter myHighlighter;
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
@@ -306,7 +304,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
-    myMarkupModelListener = new MarkupModelListener() {
+    MarkupModelListener markupModelListener = new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         attributesChanged(highlighter);
@@ -341,8 +339,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myCaretModel, markupModelListener);
+    ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myCaretModel, markupModelListener);
 
     myDocument.addDocumentListener(myFoldingModel,myCaretModel);
     myDocument.addDocumentListener(myCaretModel,myCaretModel);
