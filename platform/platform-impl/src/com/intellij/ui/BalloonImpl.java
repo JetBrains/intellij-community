@@ -1330,8 +1330,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     public void _setBounds(Rectangle bounds) {
-      Rectangle currentBounds = getBounds();
-      if (currentBounds.width != bounds.width || currentBounds.height != bounds.height) {
+      if (!getBounds().getSize().equals(bounds.getSize())) {
         invalidateShadowImage();
       }
 
