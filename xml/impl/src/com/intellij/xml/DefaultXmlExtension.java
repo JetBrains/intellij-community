@@ -184,13 +184,11 @@ public class DefaultXmlExtension extends XmlExtension {
     }
     
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
-    XmlSchemaProvider prefixProvider = null;
     String prefix = nsPrefix;
     if (prefix == null) {
       for (XmlSchemaProvider provider : providers) {
         prefix = provider.getDefaultPrefix(namespace, file);
         if (prefix != null) {
-          prefixProvider = provider;
           break;
         }
       }
