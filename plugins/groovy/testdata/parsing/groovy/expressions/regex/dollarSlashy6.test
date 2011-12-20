@@ -1,0 +1,8 @@
+$/abc/$
+-----
+Groovy script
+  Literal
+    GroovyASTPsiElementImpl($/ regex literal)
+      PsiElement($/ regex begin)('$/')
+      PsiElement($/ regex content)('abc')
+      PsiElement($/ regex end)('/$')

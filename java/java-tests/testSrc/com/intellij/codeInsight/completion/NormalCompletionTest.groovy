@@ -478,6 +478,21 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResult()
   }
 
+  public void testAnonymousProcess() {
+    myFixture.addClass 'package java.lang; public class Process {}'
+    myFixture.addClass '''
+import java.util.*;
+public class Process {}
+interface Pred <A> { boolean predicate(A elem); }
+public class ListUtils {
+    public static <A> List<A> filter(List<A> list, Pred<A> pred) {}
+}
+'''
+    configure()
+    type '\n'
+    checkResult()
+  }
+
   public void testNoThisInComment() throws Throwable { doAntiTest() }
 
   public void testLastExpressionInFor() throws Throwable { doTest(); }

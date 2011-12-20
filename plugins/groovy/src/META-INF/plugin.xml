@@ -1077,6 +1077,10 @@
               text="Change SDK version" description="Change Grails/Griffon SDK version">
       </action>
 
+      <action id="Griffon.UpdateDependencies" class="org.jetbrains.plugins.groovy.griffon.UpdateGriffonSettingsAction"
+              text="Synchronize Griffon settings" description="Refresh IntelliJ IDEA project structure so that it matches Griffon build settings">
+      </action>
+
       <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.MvcRunTarget"
               text="Run Target" description="Run arbitrary Grails/Griffon target">
         <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>

@@ -22,12 +22,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,10 +49,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -59,7 +57,6 @@ import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
@@ -112,8 +109,6 @@ public class GitLogUI implements Disposable {
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   final List<CommitI> myCommitsInRepositoryChangesBrowser;
   private boolean myDataBeingAdded;
-  private CardLayout myRepoLayout;
-  private JPanel myRepoPanel;
   private boolean myStarted;
   private String myPreviousFilter;
   private final CommentSearchContext myCommentSearchContext;
@@ -134,6 +129,7 @@ public class GitLogUI implements Disposable {
   private MyRefreshAction myRefreshAction;
   private MyStructureFilter myStructureFilter;
   private StructureFilterAction myStructureFilterAction;
+  private ToggleAction myShowDetailsAction;
   private AnAction myCopyHashAction;
   // todo group somewhere??
   private Consumer<CommitI> myDetailsLoaderImpl;
@@ -153,6 +149,8 @@ public class GitLogUI implements Disposable {
   private JViewport myTableViewPort;
   private GitLogUI.MyGotoCommitAction myMyGotoCommitAction;
   private final Set<VirtualFile> myClearedHighlightingRoots;
+  private final Splitter myDetailsSplitter;
+  private JScrollPane myTableScrollPane;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -192,6 +190,8 @@ public class GitLogUI implements Disposable {
         reloadRequest();
       }
     };
+    myDetailsSplitter = new Splitter(true, 0.6f);
+    myDetailsSplitter.setShowDividerControls(true);
   }
   
   public void initFromSettings() {
@@ -388,7 +388,6 @@ public class GitLogUI implements Disposable {
 
   public void createMe() {
     mySplitter = new Splitter(false, 0.7f);
-    mySplitter.setDividerWidth(4);
 
     final JPanel wrapper = createMainTable();
     mySplitter.setFirstComponent(wrapper);
@@ -487,10 +486,10 @@ public class GitLogUI implements Disposable {
   }
 
   private JComponent createRepositoryBrowserDetails() {
-    myRepoLayout = new CardLayout();
-    myRepoPanel = new JPanel(myRepoLayout);
     myRepositoryChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.<CommittedChangeList>emptyList(), Collections.<Change>emptyList(), null);
     myRepositoryChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myJBTable);
+    myRepositoryChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
+    myRepositoryChangesBrowser.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 4));
     myJBTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -498,13 +497,7 @@ public class GitLogUI implements Disposable {
         mySelectionRequestsMerger.request();
       }
     });
-    myRepoPanel.add("main", myRepositoryChangesBrowser);
-    // todo loading circle
-    myRepoPanel.add("loading", panelWithCenteredText("Loading..."));
-    myRepoPanel.add("tooMuch", panelWithCenteredText("Too many rows selected"));
-    myRepoPanel.add("empty", panelWithCenteredText("Nothing selected"));
-    myRepoLayout.show(myRepoPanel, "empty");
-    return myRepoPanel;
+    return myRepositoryChangesBrowser;
   }
 
   private void selectionChanged() {
@@ -516,17 +509,14 @@ public class GitLogUI implements Disposable {
     selectionChangedForDetails(rows);
 
     if (rows.length == 0) {
-      myRepoLayout.show(myRepoPanel, "empty");
-      myRepoPanel.repaint();
+      myRepositoryChangesBrowser.getViewer().setEmptyText("Nothing selected");
       return;
     } else if (rows.length >= 10) {
-      myRepoLayout.show(myRepoPanel, "tooMuch");
-      myRepoPanel.repaint();
+      myRepositoryChangesBrowser.getViewer().setEmptyText("Too many rows selected");
       return;
     }
     if (! myDataBeingAdded && ! gatherNotLoadedData()) {
-      myRepoLayout.show(myRepoPanel, "loading");
-      myRepoPanel.repaint();
+      myRepositoryChangesBrowser.getViewer().setEmptyText("Loading...");
     }
   }
 
@@ -591,16 +581,6 @@ public class GitLogUI implements Disposable {
     return myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
   }
 
-  private static JPanel panelWithCenteredText(final String text) {
-    final JPanel jPanel = new JPanel(new BorderLayout());
-    jPanel.setBackground(UIUtil.getTableBackground());
-    final JLabel label = new JLabel(text, JLabel.CENTER);
-    label.setUI(new MultiLineLabelUI());
-    jPanel.add(label, BorderLayout.CENTER);
-    jPanel.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
-    return jPanel;
-  }
-
   public void updateByScroll() {
     gatherNotLoadedData();
   }
@@ -638,8 +618,6 @@ public class GitLogUI implements Disposable {
     }
     final List<Change> zipped = CommittedChangesTreeBrowser.zipChanges(changes);
     myRepositoryChangesBrowser.setChangesToDisplay(zipped);
-    myRepoLayout.show(myRepoPanel, "main");
-    myRepoPanel.repaint();
     return true;
   }
 
@@ -678,17 +656,18 @@ public class GitLogUI implements Disposable {
     };
     myJBTable.addMouseListener(popupHandler);
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
+    myTableScrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
+    myTableScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT | SideBorder.BOTTOM));
     myGraphGutter = new GraphGutter(myTableModel);
     myGraphGutter.setJBTable(myJBTable);
-    myTableViewPort = scrollPane.getViewport();
+    myTableViewPort = myTableScrollPane.getViewport();
     myGraphGutter.setTableViewPort(myTableViewPort);
     myGraphGutter.getComponent().addMouseListener(popupHandler);
 
     new AdjustComponentWhenShown() {
       @Override
       protected boolean init() {
-        return adjustColumnSizes(scrollPane);
+        return adjustColumnSizes(myTableScrollPane);
       }
 
       @Override
@@ -711,7 +690,7 @@ public class GitLogUI implements Disposable {
       }
     }
     );
-    scrollPane.getViewport().addChangeListener(myMyChangeListener);
+    myTableScrollPane.getViewport().addChangeListener(myMyChangeListener);
 
     final JPanel wrapper = new DataProviderPanel(new BorderLayout());
     wrapper.add(actionToolbar.getComponent(), BorderLayout.NORTH);
@@ -722,9 +701,10 @@ public class GitLogUI implements Disposable {
     wrapperGutter.add(myEqualToHeadr, BorderLayout.NORTH);
     wrapperGutter.add(myGraphGutter.getComponent(), BorderLayout.CENTER);
     mainBorderWrapper.add(wrapperGutter, BorderLayout.WEST);
-    mainBorderWrapper.add(scrollPane, BorderLayout.CENTER);
+    mainBorderWrapper.add(myTableScrollPane, BorderLayout.CENTER);
     //mainBorderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
     wrapper.add(mainBorderWrapper, BorderLayout.CENTER);
+    
     myDetailsPanel = new GitLogDetailsPanel(myProject, myDetailsCache, new Convertor<VirtualFile, CachedRefs>() {
       @Override
       public CachedRefs convert(VirtualFile o) {
@@ -736,15 +716,12 @@ public class GitLogUI implements Disposable {
         return myMarked.contains(hash);
       }
     });
-    final JPanel borderWrapper = new JPanel(new BorderLayout());
-    borderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
-    borderWrapper.add(myDetailsPanel.getComponent(), BorderLayout.CENTER);
 
-    final Splitter splitter = new Splitter(true, 0.6f);
-    splitter.setFirstComponent(wrapper);
-    splitter.setSecondComponent(borderWrapper);
-    splitter.setDividerWidth(4);
-    return splitter;
+    myDetailsSplitter.setFirstComponent(wrapper);
+    JPanel details = myDetailsPanel.getComponent();
+    details.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT));
+    setupDetailsSplitter(GitLogSettings.getInstance(myProject).isShowDetails());
+    return myDetailsSplitter;
   }
 
   private void createTreeUpperComponent() {
@@ -888,6 +865,19 @@ public class GitLogUI implements Disposable {
     myRootsAction = new MyRootsAction(rootsGetter, myJBTable);
     group.add(myRootsAction);
     group.add(myMyShowTreeAction);
+    myShowDetailsAction = new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return GitLogSettings.getInstance(myProject).isShowDetails();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        setupDetailsSplitter(state);
+        GitLogSettings.getInstance(myProject).setShowDetails(state);
+      }
+    };
+    group.add(myShowDetailsAction);
     myMyGotoCommitAction = new MyGotoCommitAction();
     group.add(myMyGotoCommitAction);
     group.add(myRefreshAction);
@@ -926,6 +916,16 @@ public class GitLogUI implements Disposable {
       }
     };
     return ActionManager.getInstance().createActionToolbar("Git log", group, true);
+  }
+
+  private void setupDetailsSplitter(boolean state) {
+    myDetailsSplitter.setSecondComponent(state ? myDetailsPanel.getComponent() : null);
+    if (state) {
+      myTableScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT | SideBorder.BOTTOM));
+    }
+    else {
+      myTableScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT));
+    }
   }
 
   private class DataProviderPanel extends JPanel implements TypeSafeDataProvider {
@@ -1461,6 +1461,7 @@ public class GitLogUI implements Disposable {
   private class MyTextFieldAction extends SearchFieldAction {
     private MyTextFieldAction() {
       super("Filter:");
+
     }
 
     @Override
@@ -1827,7 +1828,7 @@ public class GitLogUI implements Disposable {
     private final GitLogSettings myInstance;
 
     public MyShowTreeAction() {
-      super("Show graph", "Show graph", IconLoader.getIcon("/icons/branch.png"));
+      super("Show Graph", "Display commit graph", IconLoader.getIcon("/icons/branch.png"));
       myInstance = GitLogSettings.getInstance(myProject);
       myIsSelected = myInstance.isShowTree();
     }

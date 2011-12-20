@@ -184,13 +184,11 @@ public class DefaultXmlExtension extends XmlExtension {
     }
     
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
-    XmlSchemaProvider prefixProvider = null;
     String prefix = nsPrefix;
     if (prefix == null) {
       for (XmlSchemaProvider provider : providers) {
         prefix = provider.getDefaultPrefix(namespace, file);
         if (prefix != null) {
-          prefixProvider = provider;
           break;
         }
       }
@@ -210,10 +208,10 @@ public class DefaultXmlExtension extends XmlExtension {
 
     String location = null;
     if (namespace.length() > 0) {
-      if (prefixProvider != null) {
-        final Set<String> strings = prefixProvider.getLocations(namespace, file);
-        if (strings != null && strings.size() > 0) {
-          location = strings.iterator().next();
+      for (XmlSchemaProvider provider : providers) {
+        Set<String> locations = provider.getLocations(namespace, file);
+        if (locations != null && !locations.isEmpty()) {
+          location = locations.iterator().next();
         }
       }
     }

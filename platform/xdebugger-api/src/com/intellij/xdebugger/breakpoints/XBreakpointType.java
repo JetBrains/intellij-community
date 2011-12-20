@@ -118,9 +118,17 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  /**
+   * @deprecated override {@link #getEditorsProvider(XBreakpoint)} instead
+   */
   @Nullable
   public XDebuggerEditorsProvider getEditorsProvider() {
     return null;
+  }
+
+  @Nullable
+  public XDebuggerEditorsProvider getEditorsProvider(@NotNull B breakpoint) {
+    return getEditorsProvider();
   }
 
   public List<XBreakpointGroupingRule<B, ?>> getGroupingRules() {

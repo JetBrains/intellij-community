@@ -111,7 +111,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   @Override
   public void disposeUIResources() {
     if (myMessageBusConnection != null) {
-      myMessageBusConnection.dispose();
       myMessageBusConnection.disconnect();
     }
   }

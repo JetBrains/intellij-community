@@ -43,6 +43,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -234,15 +235,25 @@ public class GrabDependencies implements IntentionAction {
       for (VirtualFile jar : jars) {
         final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jar);
         if (jarRoot != null) {
-          final String libName = "Grab:" + jar.getName();
-
-          final Library existing = tableModel.getLibraryByName(libName);
-          if (existing != null) {
-            tableModel.removeLibrary(existing);
+          OrderRootType rootType = OrderRootType.CLASSES;
+          String libName = "Grab:" + jar.getName();
+          for (String classifier : CollectionFactory.ar("sources", "source", "src")) {
+            if (libName.endsWith("-" + classifier + ".jar")) {
+              rootType = OrderRootType.SOURCES;
+              libName = StringUtil.trimEnd(libName, "-" + classifier + ".jar") + ".jar";
+            }
           }
 
-          final Library.ModifiableModel libModel = tableModel.createLibrary(libName).getModifiableModel();
-          libModel.addRoot(jarRoot, OrderRootType.CLASSES);
+          Library library = tableModel.getLibraryByName(libName);
+          if (library == null) {
+            library = tableModel.createLibrary(libName);
+          }
+
+          final Library.ModifiableModel libModel = library.getModifiableModel();
+          for (String url : libModel.getUrls(rootType)) {
+            libModel.removeRoot(url, rootType);
+          }
+          libModel.addRoot(jarRoot, rootType);
           libModel.commit();
         }
       }

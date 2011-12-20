@@ -76,7 +76,7 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
     myTitle = title;
     myOccurrences = occurrences;
     myExpr = expr;
-    myExprMarker = myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null;
+    myExprMarker = myExpr != null && myExpr.isPhysical() ? createMarker(myExpr) : null;
     initOccurrencesMarkers();
   }
 
@@ -127,8 +127,12 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
     if (myOccurrenceMarkers != null) return;
     myOccurrenceMarkers = new ArrayList<RangeMarker>();
     for (E occurrence : myOccurrences) {
-      myOccurrenceMarkers.add(myEditor.getDocument().createRangeMarker(occurrence.getTextRange()));
+      myOccurrenceMarkers.add(createMarker(occurrence));
     }
+  }
+
+  protected RangeMarker createMarker(PsiElement element) {
+    return myEditor.getDocument().createRangeMarker(element.getTextRange());
   }
 
 
@@ -234,4 +238,8 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
     //move logic to performRefactoring
   }
 
+  @Override
+  protected boolean performAutomaticRename() {
+    return false;
+  }
 }

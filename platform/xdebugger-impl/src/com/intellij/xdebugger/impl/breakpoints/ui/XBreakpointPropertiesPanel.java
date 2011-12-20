@@ -63,7 +63,7 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
 
     mySuspendPolicyPanel.init(project, breakpointManager, breakpoint);
 
-    XDebuggerEditorsProvider debuggerEditorsProvider = breakpointType.getEditorsProvider();
+    XDebuggerEditorsProvider debuggerEditorsProvider = breakpointType.getEditorsProvider(breakpoint);
 
     myBreakpointActionsPanel.init(project, breakpointManager, breakpoint, debuggerEditorsProvider);
 
