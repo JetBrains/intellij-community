@@ -210,10 +210,10 @@ public class DefaultXmlExtension extends XmlExtension {
 
     String location = null;
     if (namespace.length() > 0) {
-      if (prefixProvider != null) {
-        final Set<String> strings = prefixProvider.getLocations(namespace, file);
-        if (strings != null && strings.size() > 0) {
-          location = strings.iterator().next();
+      for (XmlSchemaProvider provider : providers) {
+        Set<String> locations = provider.getLocations(namespace, file);
+        if (locations != null && !locations.isEmpty()) {
+          location = locations.iterator().next();
         }
       }
     }
