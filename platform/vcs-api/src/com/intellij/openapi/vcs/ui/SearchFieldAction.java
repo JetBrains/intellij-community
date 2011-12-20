@@ -19,10 +19,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import java.awt.event.KeyEvent;
 
 /**
@@ -56,6 +59,15 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
         actionPerformed(null);
       }
     };
+    Border border = myField.getBorder();
+    Border emptyBorder = IdeBorderFactory.createEmptyBorder(3, 0, 2, 0);
+    if (border instanceof CompoundBorder) {
+      myField.setBorder(new CompoundBorder(emptyBorder, ((CompoundBorder)border).getInsideBorder()));
+    }
+    else {
+      myField.setBorder(emptyBorder);
+    }
+
     myField.setSearchIcon(IconLoader.getIcon("/actions/filter_small.png"));
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
