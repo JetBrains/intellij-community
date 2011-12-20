@@ -169,6 +169,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return DateFormatUtil.formatPrettyDateTime(Clock.getTime());
     }
   };
+  private final Splitter myDetailsSplitter = new Splitter(false, 0.5f);
 
   public void scheduleRefresh() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -671,8 +672,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
     });
 
-    final Splitter detailsSplitter = new Splitter(false, 0.5f);
-    JPanel commentGroup = new JPanel(new BorderLayout(4, 4));
+    JPanel commentGroup = new JPanel(new BorderLayout());
     final JLabel commentLabel = new JLabel(COMMIT_MESSAGE_TITLE + ":") {
       @Override
       public Dimension getPreferredSize() {
@@ -684,14 +684,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     pane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | (myAdditionalDetails == null ? 0 : SideBorder.BOTTOM)));
 
     commentGroup.add(pane, BorderLayout.CENTER);
-    detailsSplitter.setFirstComponent(commentGroup);
-    detailsSplitter.setSecondComponent(myAdditionalDetails);
+    myDetailsSplitter.setFirstComponent(commentGroup);
+    myDetailsSplitter.setSecondComponent(myAdditionalDetails);
 
-    myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
 
     mySplitter.setFirstComponent(myDualView);
-    mySplitter.setSecondComponent(detailsSplitter);
+    setupDetails();
     return mySplitter;
+  }
+
+  private void setupDetails() {
+    boolean showDetails = getConfiguration().SHOW_FILE_HISTORY_DETAILS;
+    if (showDetails) {
+      myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
+    }
+    else {
+      myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+    }
+    
+    mySplitter.setSecondComponent(showDetails ? myDetailsSplitter : null);
   }
 
   private void chooseView() {
@@ -773,6 +784,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
     }
     result.add(new RefreshFileHistoryAction());
+    result.add(new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return getConfiguration().SHOW_FILE_HISTORY_DETAILS;
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        getConfiguration().SHOW_FILE_HISTORY_DETAILS = state;
+        setupDetails();
+      }
+    });
 
     if (!popup && supportsTree()) {
       result.add(new MyShowAsTreeAction());
