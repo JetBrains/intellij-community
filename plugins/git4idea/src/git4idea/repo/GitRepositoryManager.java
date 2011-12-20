@@ -58,7 +58,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   @Override
   public void initComponent() {
-    myProject.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     Disposer.register(myProject, this);
   }
 
