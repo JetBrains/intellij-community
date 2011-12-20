@@ -248,19 +248,26 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     super.stop();
 
+    if (isDialogShowing()) {
+      if (myFocusTrackback != null) {
+        myFocusTrackback.setWillBeSheduledForRestore();
+      }      
+    }
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        boolean wasShowing = myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
+        boolean wasShowing = isDialogShowing();
         if (myDialog != null) {
           myDialog.hide();
         }
         
-        if (wasShowing) {
-          myFocusTrackback.restoreFocus();
-        } else {
-          myFocusTrackback.consume();
+        if (myFocusTrackback != null) {
+          if (wasShowing) {
+            myFocusTrackback.restoreFocus();
+          } else {
+            myFocusTrackback.consume();
+          }
         }
 
         myStoppedAlready = true;
@@ -270,6 +277,10 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     });
 
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
+  }
+
+  private boolean isDialogShowing() {
+    return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
   }
 
   public void cancel() {
