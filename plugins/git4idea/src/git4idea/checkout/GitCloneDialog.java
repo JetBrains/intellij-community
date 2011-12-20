@@ -19,14 +19,15 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.util.ArrayUtil;
-import git4idea.commands.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandlerPasswordRequestAware;
+import git4idea.commands.GitTask;
+import git4idea.commands.GitTaskResult;
 import git4idea.i18n.GitBundle;
-import git4idea.jgit.GitHttpAdapter;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NonNls;
 
@@ -38,7 +39,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -141,7 +141,7 @@ public class GitCloneDialog extends DialogWrapper {
 
   private void test() {
     myTestURL = getCurrentUrlText();
-    boolean testResult = GitHttpAdapter.shouldUseJGit(myTestURL) ? testHttp(myTestURL) : testNatively(myTestURL);
+    boolean testResult = test(myTestURL);
 
     if (testResult) {
       Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
@@ -158,31 +158,13 @@ public class GitCloneDialog extends DialogWrapper {
    * That way, we have a hack here: if http response asked for a password, then the url is at least valid and existant, and we consider
    * that the test passed.
    */
-  private boolean testHttp(String url) {
-    final AtomicBoolean passwordRequested = new AtomicBoolean();
-    final GitLineHandler handler = new GitLineHandler(myProject, new File("."), GitCommand.LS_REMOTE);
-    handler.addParameters(url, "master");
-    handler.addLineListener(new GitLineHandlerAdapter() {
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        String lowerCasedLine = line.toLowerCase();
-        if (lowerCasedLine.contains("password") || lowerCasedLine.contains("login") || lowerCasedLine.contains("username")) {
-          handler.cancel();
-          passwordRequested.set(true);
-        }
-      }
-    });
-    GitTask task = new GitTask(myProject, handler, GitBundle.message("clone.testing", url));
-    GitTaskResult result = task.executeModal();
-    return result.isOK() || passwordRequested.get();
-  }
-
-  private boolean testNatively(String url) {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, new File("."), GitCommand.LS_REMOTE);
+  private boolean test(String url) {
+    final GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(myProject, new File("."), GitCommand.LS_REMOTE);
     handler.addParameters(url, "master");
     GitTask task = new GitTask(myProject, handler, GitBundle.message("clone.testing", url));
     GitTaskResult result = task.executeModal();
-    return result.isOK();
+    boolean authFailed = handler.hadAuthRequest();
+    return result.isOK() || authFailed;
   }
 
   /**
