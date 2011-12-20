@@ -52,7 +52,6 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
       validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
     }
     validateOfParam(psiClass, builder, psiAnnotation, ofProperty);
-    validateCallSuperParam(psiAnnotation, psiClass, builder, "toString()");
 
     return result;
   }
