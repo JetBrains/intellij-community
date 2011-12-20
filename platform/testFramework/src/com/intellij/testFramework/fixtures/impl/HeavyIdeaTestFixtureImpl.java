@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -236,6 +237,10 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         VfsUtil.saveText(virtualFile[0], fileText);
       }
     }.execute();
-    return PsiManager.getInstance(getProject()).findFile(virtualFile[0]);
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+            public PsiFile compute() {
+              return PsiManager.getInstance(getProject()).findFile(virtualFile[0]);
+            }
+          });
   }
 }
