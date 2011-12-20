@@ -373,39 +373,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public void installActions(final int index, final NavBarItem component) {
-    DnDSupport.createBuilder(component)
-      .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
-        @Override
-        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
-          return new DnDDragStartBean(new TransferableWrapper() {
-            @Override
-            public List<File> asFileList() {
-              final Object o = myModel.get(index);
-              if (o instanceof PsiElement) {
-                final VirtualFile vf =  o instanceof PsiDirectory ? ((PsiDirectory)o).getVirtualFile()
-                                                                  : ((PsiElement)o).getContainingFile().getVirtualFile();
-                if (vf != null) {
-                  return Arrays.asList(new File(vf.getPath()).getAbsoluteFile());
-                }
-              }
-              return Collections.emptyList();
-            }
-
-            @Override
-            public TreeNode[] getTreeNodes() {
-              return null;
-            }
-
-            @Override
-            public PsiElement[] getPsiElements() {
-              return null;
-            }
-          });
-        }
-      })
-      .setDisposableParent(component)
-      .install();
-
+    //suppress it for a while
+    //installDnD(index, component);
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {
@@ -444,6 +413,41 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         }
       }
     });
+  }
+
+  private void installDnD(final int index, NavBarItem component) {
+    DnDSupport.createBuilder(component)
+      .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
+        @Override
+        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
+          return new DnDDragStartBean(new TransferableWrapper() {
+            @Override
+            public List<File> asFileList() {
+              final Object o = myModel.get(index);
+              if (o instanceof PsiElement) {
+                final VirtualFile vf =  o instanceof PsiDirectory ? ((PsiDirectory)o).getVirtualFile()
+                                                                  : ((PsiElement)o).getContainingFile().getVirtualFile();
+                if (vf != null) {
+                  return Arrays.asList(new File(vf.getPath()).getAbsoluteFile());
+                }
+              }
+              return Collections.emptyList();
+            }
+
+            @Override
+            public TreeNode[] getTreeNodes() {
+              return null;
+            }
+
+            @Override
+            public PsiElement[] getPsiElements() {
+              return null;
+            }
+          });
+        }
+      })
+      .setDisposableParent(component)
+      .install();
   }
 
   private void doubleClick(final int index) {
