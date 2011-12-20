@@ -1105,7 +1105,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   public Set<String> getActionIds(){
-    return new HashSet<String>(myId2Action.keySet());
+    synchronized (myLock) {
+      return new HashSet<String>(myId2Action.keySet());
+    }
   }
 
   private int myActionsPreloaded = 0;
