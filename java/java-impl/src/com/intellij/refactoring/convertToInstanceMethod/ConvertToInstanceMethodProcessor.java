@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -114,8 +115,9 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     }
 
     for (final PsiReference ref : ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false)) {
-      if (ref.getElement() instanceof PsiReferenceExpression) {
-        result.add(new ParameterUsageInfo((PsiReferenceExpression)ref));
+      final PsiElement element = ref.getElement();
+      if (element instanceof PsiReferenceExpression || element instanceof PsiDocParamRef) {
+        result.add(new ParameterUsageInfo(ref));
       }
     }
 
@@ -344,15 +346,23 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void processParameterUsage(ParameterUsageInfo usage) throws IncorrectOperationException {
-    final PsiJavaCodeReferenceElement referenceExpression = usage.getReferenceExpression();
-    if (referenceExpression.getParent() instanceof PsiReferenceExpression) {
-      // todo: check for correctness
-      referenceExpression.delete();
-    }
-    else {
-      final PsiExpression expression =
-        JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createExpressionFromText("this", null);
-      referenceExpression.replace(expression);
+    final PsiReference reference = usage.getReferenceExpression();
+    if (reference instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)reference;
+      if (referenceExpression.getParent() instanceof PsiReferenceExpression) {
+        // todo: check for correctness
+        referenceExpression.delete();
+      }
+      else {
+        final PsiExpression expression =
+          JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createExpressionFromText("this", null);
+        referenceExpression.replace(expression);
+      }
+    } else {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiDocParamRef) {
+        element.getParent().delete();
+      }
     }
   }
 

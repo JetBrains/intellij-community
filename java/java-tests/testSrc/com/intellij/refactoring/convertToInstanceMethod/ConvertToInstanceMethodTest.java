@@ -30,6 +30,8 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testInterfaceTypeParameter() throws Exception { doTest(0); }
 
+  public void testJavadocParameter() throws Exception { doTest(0); }
+
   private void doTest(final int targetParameter) throws Exception {
     final String filePath = "/refactoring/convertToInstanceMethod/" + getTestName(false) + ".java";
     configureByFile(filePath);
