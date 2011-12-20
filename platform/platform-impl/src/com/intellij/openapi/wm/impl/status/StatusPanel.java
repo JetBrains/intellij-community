@@ -17,9 +17,11 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -130,7 +132,16 @@ class StatusPanel extends JPanel {
             text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
           }
           setStatusText(text);
-          myLogAlarm.addRequest(this, 30000);
+          myLogAlarm.addRequest(this, 30000);          
+          if (project != null) {
+            final Runnable request = this;
+            Disposer.register(project, new Disposable() {
+              @Override
+              public void dispose() {
+                myLogAlarm.cancelRequest(request);                
+              }
+            });
+          }
         }
       }.run();
     } else {
