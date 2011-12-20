@@ -678,9 +678,9 @@ public class VariableInplaceRenamer {
   protected void revertState() {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
+        final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
             final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
             assert state != null;
             final int segmentsCount = state.getSegmentsCount();
@@ -691,9 +691,9 @@ public class VariableInplaceRenamer {
             }
           }
         });
+        PsiDocumentManager.getInstance(myProject).commitDocument(topLevelEditor.getDocument());
       }
     }, RENAME_TITLE, null);
-    PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
   }
 
   private static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {
@@ -836,7 +836,7 @@ public class VariableInplaceRenamer {
             if (templateState != null) {
               final TextRange range = templateState.getCurrentVariableRange();
               if (range != null) {
-                myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), suggestion);
+                topLevelEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), suggestion);
               }
             }
           }

@@ -66,18 +66,18 @@ public abstract class AbstractLayoutCodeProcessor {
   private final String myProgressText;
   private final String myCommandName;
   private final Runnable myPostRunnable;
+  private final boolean myProcessChangedTextOnly;
 
-  protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText) {
-    myProject = project;
-    myModule = null;
-    myDirectory = null;
-    myIncludeSubdirs = true;
-    myCommandName = commandName;
-    myProgressText = progressText;
-    myPostRunnable = null;
+  protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText, boolean processChangedTextOnly) {
+    this(project, (Module)null, commandName, progressText, processChangedTextOnly);
   }
 
-  protected AbstractLayoutCodeProcessor(Project project, Module module, String commandName, String progressText) {
+  protected AbstractLayoutCodeProcessor(Project project,
+                                        @Nullable Module module,
+                                        String commandName,
+                                        String progressText,
+                                        boolean processChangedTextOnly)
+  {
     myProject = project;
     myModule = module;
     myDirectory = null;
@@ -85,9 +85,16 @@ public abstract class AbstractLayoutCodeProcessor {
     myCommandName = commandName;
     myProgressText = progressText;
     myPostRunnable = null;
+    myProcessChangedTextOnly = processChangedTextOnly;
   }
 
-  protected AbstractLayoutCodeProcessor(Project project, PsiDirectory directory, boolean includeSubdirs, String progressText, String commandName) {
+  protected AbstractLayoutCodeProcessor(Project project,
+                                        PsiDirectory directory,
+                                        boolean includeSubdirs,
+                                        String progressText,
+                                        String commandName,
+                                        boolean processChangedTextOnly)
+  {
     myProject = project;
     myModule = null;
     myDirectory = directory;
@@ -95,24 +102,38 @@ public abstract class AbstractLayoutCodeProcessor {
     myProgressText = progressText;
     myCommandName = commandName;
     myPostRunnable = null;
+    myProcessChangedTextOnly = processChangedTextOnly;
   }
 
-  protected AbstractLayoutCodeProcessor(Project project, PsiFile file, String progressText, String commandName) {
+  protected AbstractLayoutCodeProcessor(Project project,
+                                        PsiFile file,
+                                        String progressText,
+                                        String commandName,
+                                        boolean processChangedTextOnly)
+  {
     myProject = project;
     myModule = null;
     myFile = file;
     myProgressText = progressText;
     myCommandName = commandName;
     myPostRunnable = null;
+    myProcessChangedTextOnly = processChangedTextOnly;
   }
 
-  protected AbstractLayoutCodeProcessor(Project project, PsiFile[] files, String progressText, String commandName, Runnable postRunnable) {
+  protected AbstractLayoutCodeProcessor(Project project,
+                                        PsiFile[] files,
+                                        String progressText,
+                                        String commandName,
+                                        @Nullable Runnable postRunnable,
+                                        boolean processChangedTextOnly)
+  {
     myProject = project;
     myModule = null;
     myFiles = filterFiles(files);
     myProgressText = progressText;
     myCommandName = commandName;
     myPostRunnable = postRunnable;
+    myProcessChangedTextOnly = processChangedTextOnly;
   }
 
   private static PsiFile[] filterFiles(PsiFile[] files){
@@ -128,13 +149,15 @@ public abstract class AbstractLayoutCodeProcessor {
   /**
    * Ensures that given file is ready to reformatting and prepares it if necessary.
    * 
-   * @param file      file to process
+   * @param file                    file to process
+   * @param processChangedTextOnly  flag that defines is only the changed text (in terms of VCS change) should be processed
    * @return          task that triggers formatting of the given file. Returns value of that task indicates whether formatting
    *                  is finished correctly or not (exception occurred, user cancelled formatting etc)
    * @throws IncorrectOperationException    if unexpected exception occurred during formatting
    */
   @NotNull
-  protected abstract FutureTask<Boolean> preprocessFile(PsiFile file) throws IncorrectOperationException;
+  protected abstract FutureTask<Boolean> preprocessFile(@NotNull PsiFile file, boolean processChangedTextOnly)
+    throws IncorrectOperationException;
 
   public void run() {
     if (myDirectory != null){
@@ -154,7 +177,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  private void runProcessFile(final PsiFile file) {
+  private void runProcessFile(@NotNull final PsiFile file) {
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
 
     if (document == null) {
@@ -174,7 +197,7 @@ public abstract class AbstractLayoutCodeProcessor {
       public void run() {
         if (!checkFileWritable(file)) return;
         try{
-          resultRunnable[0] = preprocessFile(file);
+          resultRunnable[0] = preprocessFile(file, myProcessChangedTextOnly);
         }
         catch(IncorrectOperationException e){
           LOG.error(e);
@@ -223,7 +246,7 @@ public abstract class AbstractLayoutCodeProcessor {
       }
       if (file.isWritable()){
         try{
-          tasks.add(preprocessFile(file));
+          tasks.add(preprocessFile(file, myProcessChangedTextOnly));
         }
         catch(IncorrectOperationException e){
           LOG.error(e);
@@ -487,7 +510,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   public void runWithoutProgress() throws IncorrectOperationException {
-    final Runnable runnable = preprocessFile(myFile);
+    final Runnable runnable = preprocessFile(myFile, myProcessChangedTextOnly);
     runnable.run();
   }
   

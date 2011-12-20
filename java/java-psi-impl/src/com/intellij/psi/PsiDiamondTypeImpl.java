@@ -169,9 +169,17 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         final Project project = newExpression.getProject();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         final PsiResolveHelper resolveHelper = facade.getResolveHelper();
+        final PsiExpression newExpressionQualifier = newExpression.getQualifier();
         final PsiElement qualifierElement = classReference.getQualifier();
         final String qualifier = qualifierElement != null ? qualifierElement.getText() : "";
-        return resolveHelper.resolveReferencedClass(StringUtil.getQualifiedName(qualifier, text), newExpression);
+        final String qualifiedName = StringUtil.getQualifiedName(qualifier, text);
+        if (newExpressionQualifier != null) {
+          final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(newExpressionQualifier.getType());
+          if (aClass != null) {
+            return aClass.findInnerClassByName(qualifiedName, false);
+          }
+        }
+        return resolveHelper.resolveReferencedClass(qualifiedName, newExpression);
       } else {
         return null;
       }

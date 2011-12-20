@@ -1,2 +1,2 @@
-print <error descr="Dollar-slashy strings cannot be the first argument of a command method call">$/abc/$</error>
-print <error descr="Dollar-slashy strings cannot be the first argument of a command method call">$/a$bc/$</error>
+print <error descr="';' or new line expected">$/abc/$</error>
+print <error descr="';' or new line expected">$/a$bc/$</error>

@@ -36,7 +36,7 @@ public class CreateResourceDirectoryAction extends CreateElementActionBase {
         return CreateResourceDirectoryAction.this.createValidator(project, directory);
       }
     };
-    dialog.setTitle(getCommandName());
+    dialog.setTitle(AndroidBundle.message("new.resource.dir.dialog.title"));
     dialog.show();
     final InputValidator validator = dialog.getValidator();
     if (validator == null) {

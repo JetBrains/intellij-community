@@ -69,6 +69,10 @@ public class GrIntroduceFieldTest extends LightCodeInsightFixtureTestCase {
   public void testReplaceExpressionWithAssignment() {
     doTest(false, false, false, CUR_METHOD, false, null);
   }
+  
+  public void testAnonymousClass() {
+    doTest(false, false, false, CUR_METHOD, false, null);
+  }
 
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,

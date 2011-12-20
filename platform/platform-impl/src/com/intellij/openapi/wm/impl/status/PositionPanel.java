@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,9 +152,18 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
       if (selectionModel.hasBlockSelection()) {
         LogicalPosition start = selectionModel.getBlockStart();
         LogicalPosition end = selectionModel.getBlockEnd();
+        if (start == null || end == null) {
+          throw new IllegalStateException(String.format(
+            "Invalid selection model state detected: 'blockSelection' property is 'true' but selection start position (%s) or "
+            + "selection end position (%s) is undefined", start, end
+          ));
+        }
         appendLogicalPosition(start, message);
         message.append("-");
-        appendLogicalPosition(new LogicalPosition(Math.abs(end.line - start.line), Math.abs(end.column - start.column) - 1), message);
+        appendLogicalPosition(
+          new LogicalPosition(Math.abs(end.line - start.line), Math.max(0, Math.abs(end.column - start.column) - 1)),
+          message
+        );
       }
       else {
         LogicalPosition caret = editor.getCaretModel().getLogicalPosition();

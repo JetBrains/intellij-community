@@ -73,21 +73,21 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
           XmlAttributeValue value = attribute.getValueElement();
           assert value != null;
           holder.registerProblem(attribute, "Namespace declaration is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                 new RemoveNamespaceDeclarationFix(declaredPrefix));
+                                 new RemoveNamespaceDeclarationFix(declaredPrefix, false));
 
           XmlTag parent = attribute.getParent();
           if (declaredPrefix.length() == 0) {
             XmlAttribute location = getDefaultLocation(parent);
             if (location != null) {
               holder.registerProblem(location, NAMESPACE_LOCATION_IS_NEVER_USED, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                     new RemoveNamespaceDeclarationFix(declaredPrefix));
+                                     new RemoveNamespaceDeclarationFix(declaredPrefix, true));
             }
           }
           else {
             for (PsiReference reference : getLocationReferences(namespace, parent)) {
               if (!XmlHighlightVisitor.hasBadResolve(reference, false))
               holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
-                                                 new RemoveNamespaceDeclarationFix(declaredPrefix));
+                                                 new RemoveNamespaceDeclarationFix(declaredPrefix, true));
             }
           }
         }
@@ -234,9 +234,11 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     public static final String NAME = "Remove unused namespace declaration";
 
     protected final String myPrefix;
+    private final boolean myLocationFix;
 
-    private RemoveNamespaceDeclarationFix(@Nullable String prefix) {
+    private RemoveNamespaceDeclarationFix(@Nullable String prefix, boolean locationFix) {
       myPrefix = prefix;
+      myLocationFix = locationFix;
     }
 
     @NotNull
@@ -328,7 +330,9 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof RemoveNamespaceDeclarationFix && Comparing.equal(myPrefix, ((RemoveNamespaceDeclarationFix)obj).myPrefix);
+      return obj instanceof RemoveNamespaceDeclarationFix &&
+             Comparing.equal(myPrefix, ((RemoveNamespaceDeclarationFix)obj).myPrefix) &&
+             (myLocationFix || ((RemoveNamespaceDeclarationFix)obj).myLocationFix);
     }
 
     @Override
@@ -342,7 +346,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     public static final String NAME = "Remove unused namespace location";
 
     private RemoveNamespaceLocationFix(String namespace) {
-      super(namespace);
+      super(namespace, true);
     }
 
     @NotNull

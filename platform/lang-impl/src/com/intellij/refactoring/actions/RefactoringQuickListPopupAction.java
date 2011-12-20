@@ -33,19 +33,26 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(IdeActions.GROUP_REFACTOR);
-    collectEnabledChildren(action, group, dataContext, actionManager);
+    collectEnabledChildren(action, group, dataContext, actionManager, false);
   }
 
   private static void collectEnabledChildren(AnAction action,
                                              DefaultActionGroup destinationGroup,
                                              DataContext dataContext,
-                                             ActionManager actionManager) {
+                                             ActionManager actionManager, boolean popup) {
     if (action instanceof DefaultActionGroup) {
       final AnAction[] children = ((DefaultActionGroup)action).getChildren(null);
       for (AnAction child : children) {
         if (child instanceof DefaultActionGroup) {
-          collectEnabledChildren(child, destinationGroup, dataContext, actionManager);
-        } else if (child instanceof Separator) {
+          final boolean isPopup = ((DefaultActionGroup)child).isPopup();
+          if (isPopup) {
+            destinationGroup.add(new Separator(child.getTemplatePresentation().getText()));
+          }
+          collectEnabledChildren(child, destinationGroup, dataContext, actionManager, isPopup || popup);
+          if (isPopup) {
+            destinationGroup.add(Separator.getInstance());
+          }
+        } else if (child instanceof Separator && !popup) {
           destinationGroup.add(child);
         }
         else {

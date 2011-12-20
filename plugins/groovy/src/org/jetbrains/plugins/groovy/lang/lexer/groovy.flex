@@ -663,9 +663,6 @@ mGSTRING_LITERAL = \"\"
 
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
 
-"$""/"                                                     {  yypushback(2);
-                                                              yybegin(WAIT_FOR_REGEX); }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// keywords /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -738,11 +735,20 @@ mGSTRING_LITERAL = \"\"
 "?"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mQUESTION);  }
 "/"                                       {  if (zzStartRead == 0 ||
-                                                 zzBuffer.subSequence(0, zzStartRead).toString().trim().length() == 0) {
-                                                yypushback(1);
-                                                yybegin(WAIT_FOR_REGEX);
+                                               zzBuffer.subSequence(0, zzStartRead).toString().trim().length() == 0) {
+                                               yypushback(1);
+                                               yybegin(WAIT_FOR_REGEX);
                                              } else {
                                                return(mDIV);
+                                             }
+                                          }
+"$""/"                                    {  if (zzStartRead == 0 ||
+                                               zzBuffer.subSequence(0, zzStartRead).toString().trim().length() == 0) {
+                                               yypushback(2);
+                                               yybegin(WAIT_FOR_REGEX);
+                                             } else {
+                                               yypushback(1);
+                                               return(mDOLLAR);
                                              }
                                           }
 "/="                                      {  yybegin(WAIT_FOR_REGEX);

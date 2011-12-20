@@ -21,7 +21,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.Processor;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchesCollection;
-import git4idea.tests.GitTestUtil;
+import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

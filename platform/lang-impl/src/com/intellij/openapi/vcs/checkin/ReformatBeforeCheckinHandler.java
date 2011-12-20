@@ -84,7 +84,9 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
     };
 
     if (reformat(configuration, true)) {
-      new ReformatCodeProcessor(myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction).run();
+      new ReformatCodeProcessor(
+        myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction, false
+      ).run();
     }
     else {
       performCheckoutAction.run();

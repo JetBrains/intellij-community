@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,40 +38,44 @@ public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProce
   private final OptimizeImportsProcessor myOptimizeImportsProcessor;
   private final ReformatCodeProcessor myReformatCodeProcessor;
 
-  public ReformatAndOptimizeImportsProcessor(Project project) {
-    super(project, COMMAND_NAME, PROGRESS_TEXT);
+  public ReformatAndOptimizeImportsProcessor(Project project, boolean processChangedTextOnly) {
+    super(project, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
     myOptimizeImportsProcessor = new OptimizeImportsProcessor(project);
-    myReformatCodeProcessor = new ReformatCodeProcessor(project);
+    myReformatCodeProcessor = new ReformatCodeProcessor(project, processChangedTextOnly);
   }
 
-  public ReformatAndOptimizeImportsProcessor(Project project, Module module) {
-    super(project, module, COMMAND_NAME, PROGRESS_TEXT);
+  public ReformatAndOptimizeImportsProcessor(Project project, Module module, boolean processChangedTextOnly) {
+    super(project, module, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
     myOptimizeImportsProcessor = new OptimizeImportsProcessor(project, module);
-    myReformatCodeProcessor = new ReformatCodeProcessor(project, module);
+    myReformatCodeProcessor = new ReformatCodeProcessor(project, module, processChangedTextOnly);
   }
 
-  public ReformatAndOptimizeImportsProcessor(Project project, PsiFile[] files) {
-    super(project, files, PROGRESS_TEXT, COMMAND_NAME, null);
+  public ReformatAndOptimizeImportsProcessor(Project project, PsiFile[] files, boolean processChangedTextOnly) {
+    super(project, files, PROGRESS_TEXT, COMMAND_NAME, null, processChangedTextOnly);
     myOptimizeImportsProcessor = new OptimizeImportsProcessor(project);
-    myReformatCodeProcessor = new ReformatCodeProcessor(project);
+    myReformatCodeProcessor = new ReformatCodeProcessor(project, processChangedTextOnly);
   }
 
-  public ReformatAndOptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs) {
-    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME);
+  public ReformatAndOptimizeImportsProcessor(Project project,
+                                             PsiDirectory directory,
+                                             boolean includeSubdirs,
+                                             boolean processChangedTextOnly)
+  {
+    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, processChangedTextOnly);
     myOptimizeImportsProcessor = new OptimizeImportsProcessor(project, directory, includeSubdirs);
-    myReformatCodeProcessor = new ReformatCodeProcessor(project, directory, includeSubdirs);
+    myReformatCodeProcessor = new ReformatCodeProcessor(project, directory, includeSubdirs, processChangedTextOnly);
   }
 
-  public ReformatAndOptimizeImportsProcessor(Project project, PsiFile file) {
-    super(project, file, PROGRESS_TEXT, COMMAND_NAME);
+  public ReformatAndOptimizeImportsProcessor(Project project, PsiFile file, boolean processChangedTextOnly) {
+    super(project, file, PROGRESS_TEXT, COMMAND_NAME, processChangedTextOnly);
     myOptimizeImportsProcessor = new OptimizeImportsProcessor(project, file);
-    myReformatCodeProcessor = new ReformatCodeProcessor(project, file, null);
+    myReformatCodeProcessor = new ReformatCodeProcessor(project, file, null, processChangedTextOnly);
   }
 
   @NotNull
-  protected FutureTask<Boolean> preprocessFile(PsiFile file) throws IncorrectOperationException {
-    final FutureTask<Boolean> reformatTask = myReformatCodeProcessor.preprocessFile(file);
-    final FutureTask<Boolean> optimizeImportsTask = myOptimizeImportsProcessor.preprocessFile(file);
+  protected FutureTask<Boolean> preprocessFile(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
+    final FutureTask<Boolean> reformatTask = myReformatCodeProcessor.preprocessFile(file, processChangedTextOnly);
+    final FutureTask<Boolean> optimizeImportsTask = myOptimizeImportsProcessor.preprocessFile(file, false);
     return new FutureTask<Boolean>(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {

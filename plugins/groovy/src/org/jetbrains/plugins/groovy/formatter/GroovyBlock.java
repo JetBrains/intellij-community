@@ -55,7 +55,7 @@ import java.util.Map;
  *
  * @author ilyas
  */
-public abstract class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
+public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   final protected ASTNode myNode;
   protected Alignment myAlignment;
   final protected Indent myIndent;
@@ -63,7 +63,6 @@ public abstract class GroovyBlock implements Block, GroovyElementTypes, ASTBlock
   final protected CommonCodeStyleSettings mySettings;
   final protected GroovyCodeStyleSettings myGroovySettings;
   final protected Map<PsiElement, Alignment> myInnerAlignments;
-  final protected Map<PsiElement, GroovyBlock> myBlocks;
 
   protected List<Block> mySubBlocks = null;
 
@@ -73,12 +72,10 @@ public abstract class GroovyBlock implements Block, GroovyElementTypes, ASTBlock
                      @Nullable final Wrap wrap,
                      final CommonCodeStyleSettings settings,
                      GroovyCodeStyleSettings groovySettings,
-                     @NotNull Map<PsiElement, Alignment> innerAlignments, Map<PsiElement, GroovyBlock> blocks) {
+                     @NotNull Map<PsiElement, Alignment> innerAlignments) {
     myNode = node;
-    myBlocks = blocks;
     if (groovySettings.USE_FLYING_GEESE_BRACES) {
       PsiElement psi = myNode.getPsi();
-      myBlocks.put(psi, this);
       if (alignment == null) {
         alignment = innerAlignments.get(psi);
       }
@@ -119,8 +116,12 @@ public abstract class GroovyBlock implements Block, GroovyElementTypes, ASTBlock
   }
 
   @NotNull
+  @Override
   public List<Block> getSubBlocks() {
-    return mySubBlocks;
+    if (mySubBlocks == null) {
+      mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
+    }
+    return  mySubBlocks;
   }
 
   @Nullable
@@ -226,10 +227,6 @@ public abstract class GroovyBlock implements Block, GroovyElementTypes, ASTBlock
 
   public boolean isIncomplete() {
     return isIncomplete(myNode);
-  }
-
-  public void setAlignment(Alignment alignment) {
-    myAlignment = alignment;
   }
 
   /**

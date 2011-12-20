@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobUtil;
@@ -6,8 +21,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 
@@ -22,7 +38,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class VfsUtilTest extends IdeaTestCase {
+public class VfsUtilTest extends PlatformLangTestCase {
   @Override
   protected void runBareRunnable(Runnable runnable) throws Throwable {
     runnable.run();
@@ -82,7 +98,7 @@ public class VfsUtilTest extends IdeaTestCase {
     final VirtualFileFilter fileFilter = new VirtualFileFilter() {
       @Override
       public boolean accept(VirtualFile file) {
-        return IdeaTestUtil.CVS_FILE_FILTER.accept(file) && !file.getName().endsWith(".new");
+        return PlatformTestUtil.CVS_FILE_FILTER.accept(file) && !file.getName().endsWith(".new");
       }
     };
     for (VirtualFile child : children) {
@@ -156,8 +172,8 @@ public class VfsUtilTest extends IdeaTestCase {
       }
     }.execute().getResultObject();
     LocalFileSystem fs = LocalFileSystem.getInstance();
-    VirtualFile vtemp = fs.findFileByIoFile(temp);
-    assert vtemp != null;
+    VirtualFile vTemp = fs.findFileByIoFile(temp);
+    assert vTemp != null;
     VirtualFile[] children = new VirtualFile[N];
 
     long[] timestamp = new long[N];
@@ -170,7 +186,7 @@ public class VfsUtilTest extends IdeaTestCase {
       timestamp[i] = file.lastModified();
     }
 
-    vtemp.refresh(false,true);
+    vTemp.refresh(false, true);
 
     for (int i=0;i< N;i++) {
       File file = new File(temp, i + ".txt");
@@ -183,7 +199,8 @@ public class VfsUtilTest extends IdeaTestCase {
       assertNotNull(child);
 
       long mod = child.getTimeStamp();
-      assertEquals("File:"+child.getPath()+"; mod:"+ new Date(mod)+"; io:"+new File(child.getPath()).lastModified(),timestamp[i], mod);
+      assertEquals("File:" + child.getPath() + "; mod:" + new Date(mod) + "; io:" + new File(child.getPath()).lastModified(),
+                          timestamp[i], mod);
     }
 
     Thread.sleep(2000);  // todo[r.sh] find a way to get timestamps with millisecond granularity on Linux ?
@@ -231,13 +248,13 @@ public class VfsUtilTest extends IdeaTestCase {
         result.setResult(res);
       }
     }.execute().getResultObject();
-    VirtualFile vdir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
-    assertNotNull(vdir);
-    assertTrue(vdir.isDirectory());
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
+    assertNotNull(vDir);
+    assertTrue(vDir.isDirectory());
 
-    VirtualFile child = vdir.findChild(" ");
+    VirtualFile child = vDir.findChild(" ");
     assertNull(child);
 
-    assertEmpty(vdir.getChildren());
+    UsefulTestCase.assertEmpty(vDir.getChildren());
   }
 }

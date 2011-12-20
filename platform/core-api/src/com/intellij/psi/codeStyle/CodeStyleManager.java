@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * Service for reformatting code fragments, getting names for elements
@@ -123,9 +125,7 @@ public abstract class CodeStyleManager  {
                                            boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
   /**
-   * Reformats a range of text in the specified file. This method works faster than
-   * {@link #reformatRange(com.intellij.psi.PsiElement, int, int)} but invalidates the
-   * PSI structure for the file.
+   * Delegates to the {@link #reformatText(PsiFile, Collection)} with the single range defined by the given offsets.
    *
    * @param element     the file to reformat.
    * @param startOffset the start of the text range to reformat.
@@ -135,7 +135,18 @@ public abstract class CodeStyleManager  {
   public abstract void reformatText(@NotNull PsiFile element, int startOffset, int endOffset) throws IncorrectOperationException;
 
   /**
-   * Reformats the specified range of a file, modifying only line indents and leaving
+   * Re-formats a ranges of text in the specified file. This method works faster than
+   * {@link #reformatRange(com.intellij.psi.PsiElement, int, int)} but invalidates the
+   * PSI structure for the file.
+   * 
+   * @param element  the file to reformat
+   * @param ranges   ranges to process
+   * @throws IncorrectOperationException  if the file to reformat is read-only.
+   */
+  public abstract void reformatText(@NotNull PsiFile element, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
+
+  /**
+   * Re-formats the specified range of a file, modifying only line indents and leaving
    * all other whitespace intact.
    *
    * @param file          the file to reformat.
