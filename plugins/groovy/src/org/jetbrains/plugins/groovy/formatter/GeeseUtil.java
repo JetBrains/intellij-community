@@ -82,7 +82,7 @@ public class GeeseUtil {
   }
 
   @Nullable
-  static Alignment calculateRBraceAlignment(PsiElement rBrace, Map<PsiElement, Alignment> alignments, Map<PsiElement, GroovyBlock> blocks) {
+  static Alignment calculateRBraceAlignment(PsiElement rBrace, Map<PsiElement, Alignment> alignments) {
     int leadingBraceCount = 0;
     PsiElement next;
 
@@ -146,11 +146,7 @@ public class GeeseUtil {
 
     Alignment alignment = alignments.get(cur);
     if (alignment == null) {
-      final GroovyBlock block = blocks.get(cur);
       alignment = Alignment.createAlignment(true);
-      if (block != null) {
-        block.setAlignment(alignment);
-      }
       alignments.put(cur, alignment);
     }
     return alignment;
