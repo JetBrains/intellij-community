@@ -359,17 +359,24 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   }
 
   private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath) {
-    final String fileName;
-    if (name != null) {
-      fileName = file instanceof PsiClassOwner ? name + "." + file.getViewProvider().getVirtualFile().getExtension() : name;
-    }
-    else {
-      fileName = file.getName();
-    }
+    final String fileName = getNewFileName(file, name);
     if (relativePath != null && !relativePath.isEmpty()) {
       return buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory().copyFileFrom(fileName, file);
     }
     return directory.copyFileFrom(fileName, file);
+  }
+
+  private static String getNewFileName(PsiFile file, String name) {
+    if (name != null) {
+      if (file instanceof PsiClassOwner) {
+        final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
+        if (classes.length > 0 && !(classes[0] instanceof SyntheticElement)) {
+          return name + "." + file.getViewProvider().getVirtualFile().getExtension();
+        }
+      }
+      return name;
+    }
+    return file.getName();
   }
 
   @NotNull
