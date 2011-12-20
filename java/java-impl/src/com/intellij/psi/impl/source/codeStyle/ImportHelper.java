@@ -789,7 +789,8 @@ public class ImportHelper{
   }
 
   private static void addUnresolvedImportNames(@NotNull final Set<Pair<String, Boolean>> namesToImport, @NotNull PsiJavaFile file) {
-    PsiImportStatementBase[] imports = file.getImportList().getAllImportStatements();
+    final PsiImportList importList = file.getImportList();
+    PsiImportStatementBase[] imports = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
     final Map<String, Pair<String, Boolean>> unresolvedNames = new THashMap<String, Pair<String, Boolean>>();
     @NotNull Set<Pair<String, Boolean>> unresolvedOnDemand = new THashSet<Pair<String, Boolean>>();
     for (PsiImportStatementBase anImport : imports) {
