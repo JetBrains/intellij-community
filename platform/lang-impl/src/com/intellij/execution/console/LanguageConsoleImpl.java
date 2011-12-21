@@ -65,11 +65,15 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -612,10 +616,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     });
   }
 
-  public static void printToConsole(final LanguageConsoleImpl console,
-                                    final String string,
-                                    final ConsoleViewContentType mainType,
-                                    ConsoleViewContentType additionalType) {
+  public static void printToConsole(@NotNull final LanguageConsoleImpl console,
+                                    @NotNull final String string,
+                                    @NotNull final ConsoleViewContentType mainType,
+                                    @Nullable ConsoleViewContentType additionalType) {
     final TextAttributes mainAttributes = mainType.getAttributes();
     final TextAttributes attributes;
     if (additionalType == null) {
