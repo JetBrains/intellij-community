@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -60,7 +61,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (p instanceof MethodCandidateInfo) {
       return ((MethodCandidateInfo)p).getElement().getParameterList().getParameters();
     }
-    else if (p instanceof PsiMethod) {
+    if (p instanceof PsiMethod) {
       return ((PsiMethod)p).getParameterList().getParameters();
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -262,18 +263,16 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (list.getParent() instanceof PsiMethodCallExpression) {
       return (PsiCall)list.getParent();
     }
-    else if (list.getParent() instanceof PsiNewExpression) {
+    if (list.getParent() instanceof PsiNewExpression) {
       return (PsiCall)list.getParent();
     }
-    else if (list.getParent() instanceof PsiAnonymousClass) {
+    if (list.getParent() instanceof PsiAnonymousClass) {
       return (PsiCall)list.getParent().getParent();
     }
-    else if (list.getParent() instanceof PsiEnumConstant) {
+    if (list.getParent() instanceof PsiEnumConstant) {
       return (PsiCall)list.getParent();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   private static CandidateInfo[] getMethods(PsiExpressionList argList) {
@@ -335,7 +334,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           returnType = substitutor.substitute(returnType);
         }
 
-        appendModifierList(buffer, method.getModifierList());
+        appendModifierList(buffer, method);
         buffer.append(returnType.getPresentableText());
         buffer.append(" ");
       }
@@ -360,7 +359,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           if (substitutor != null) {
             paramType = substitutor.substitute(paramType);
           }
-          appendModifierList(buffer, param.getModifierList());
+          appendModifierList(buffer, param);
           buffer.append(paramType.getPresentableText());
           String name = param.getName();
           if (name != null) {
@@ -401,13 +400,22 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     );
   }
 
-  private static void appendModifierList(final StringBuilder buffer, final PsiModifierList list) {
-    if (list == null) return;
+  private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
+    final PsiModifierList list = owner.getModifierList();
+    PsiAnnotation[] annotations = PsiAnnotation.EMPTY_ARRAY;
     int lastSize = buffer.length();
-    for (PsiAnnotation a : list.getAnnotations()) {
+    if (list != null) {
+      annotations = list.getAnnotations();
+    }
+    final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
+    if (externalAnnotations != null) {
+      annotations = ArrayUtil.mergeArrays(annotations, externalAnnotations, PsiAnnotation.ARRAY_FACTORY);
+    }
+
+    for (PsiAnnotation a : annotations) {
       if (lastSize != buffer.length()) buffer.append(" ");
       final PsiJavaCodeReferenceElement element = a.getNameReferenceElement();
-      if (element != null) buffer.append("@").append(element.getText());
+      if (element != null) buffer.append("@").append(element.getReferenceName());
     }
     if (lastSize != buffer.length()) buffer.append(" ");
   }
