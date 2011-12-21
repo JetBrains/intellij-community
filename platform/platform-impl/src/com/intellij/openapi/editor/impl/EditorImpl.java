@@ -317,6 +317,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
+        if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         int textLength = myDocument.getTextLength();
 
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
@@ -2500,6 +2501,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPaintSelection = paintSelection;
   }
 
+  @NonNls
   public String dumpState() {
     return "prefix: '" + (myPrefixText == null ? "none" : new String(myPrefixText))
            + "', allow caret inside tab: " + mySettings.isCaretInsideTabs()
@@ -5167,6 +5169,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   selectWordAtCaret(false);
                   break;
                 }
+              //noinspection fallthrough
               case 4:
                 mySelectionModel.selectLineAtCaret();
                 setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
@@ -6090,7 +6093,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     final VisualPosition visual = getCaretModel().getVisualPosition();
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }

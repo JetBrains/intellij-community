@@ -299,7 +299,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     info.put("packageName", getName());
     info.put("packageQualifiedName", getQualifiedName());
   }

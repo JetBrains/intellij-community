@@ -625,6 +625,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return myToFocus;
   }
 
-
+  protected void hideErrorsComponent() {
+    myErrorsComponent.setVisible(false);
+  }
 
 }
