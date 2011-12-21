@@ -4,19 +4,23 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_INJECTION;
 
 /**
  * @author Maxim.Medvedev
@@ -384,12 +388,12 @@ public class GrStringUtil {
 
     final GrExpression template = factory.createExpressionFromText(quotes + "$x" + quotes);
     if (firstChild != null &&
-        firstChild.getNode().getElementType() == GroovyTokenTypes.mGSTRING_BEGIN &&
+        firstChild.getNode().getElementType() == mGSTRING_BEGIN &&
         !quotes.equals(firstChild.getText())) {
       grString.getNode().replaceChild(firstChild.getNode(), template.getFirstChild().getNode());
     }
     if (lastChild != null &&
-        lastChild.getNode().getElementType() == GroovyTokenTypes.mGSTRING_END &&
+        lastChild.getNode().getElementType() == mGSTRING_END &&
         !quotes.equals(lastChild.getText())) {
       grString.getNode().replaceChild(lastChild.getNode(), template.getLastChild().getNode());
     }
@@ -674,5 +678,38 @@ public class GrStringUtil {
       }
     }
     return true;
+  }
+  
+  public static GrLiteral createStringFromRegex(@NotNull GrLiteral regex) {
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(regex.getProject());
+
+
+    if (regex instanceof GrRegex) {
+      StringBuilder builder = new StringBuilder();
+      String quote = regex.getText().indexOf('\n') >= 0 ? TRIPLE_DOUBLE_QUOTES : DOUBLE_QUOTES;
+      builder.append(quote);
+      for (PsiElement child = regex.getFirstChild(); child!=null; child = child.getNextSibling()) {
+        final IElementType type = child.getNode().getElementType();
+        if (type == mREGEX_CONTENT) {
+          builder.append(escapeSymbolsForGString(unescapeSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), false));
+        }
+        else if (type == mDOLLAR_SLASH_REGEX_CONTENT) {
+          builder.append(escapeSymbolsForGString(unescapeDollarSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), false));
+        }
+        else if (type == GSTRING_INJECTION) {
+          builder.append(child.getText());
+        }
+      }
+      builder.append(quote);
+      return (GrLiteral)factory.createExpressionFromText(builder.toString());
+    }
+    else {
+      Object value = regex.getValue();
+      LOG.assertTrue(value==null || value instanceof String);
+      if (value == null) {
+        value = removeQuotes(regex.getText());
+      }
+      return factory.createLiteralFromValue(value);
+    }
   }
 }

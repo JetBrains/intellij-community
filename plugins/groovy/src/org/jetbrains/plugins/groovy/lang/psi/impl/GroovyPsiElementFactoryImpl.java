@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -351,7 +352,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return ((GrParenthesizedExpression) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")"));
   }
 
-  public PsiElement createStringLiteral(String text) {
+  public PsiElement createStringLiteralForReference(String text) {
     return ((GrReferenceExpression) createDummyFile("a.'" + text + "'").getTopStatements()[0]).getReferenceNameElement();
   }
 
@@ -750,7 +751,20 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrLiteral createLiteralFromValue(@Nullable Object value) {
     if (value instanceof String) {
-      return (GrLiteral)createStringLiteral((String)value);
+      StringBuilder buffer = new StringBuilder();
+      if (((String)value).indexOf('\n') >= 0) {
+        buffer.append("'''");
+        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "", false, buffer);
+        buffer.append("'''");
+      }
+      else {
+        buffer.append("'");
+        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "", false, buffer);
+        buffer.append("'");
+      }
+      final GrExpression expr = createExpressionFromText(buffer.toString());
+      LOG.assertTrue(expr instanceof GrLiteral, "value = " + value);
+      return (GrLiteral)expr;
     }
 
     if (value == null) {
