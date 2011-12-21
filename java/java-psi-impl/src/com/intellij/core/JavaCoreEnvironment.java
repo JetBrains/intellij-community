@@ -15,6 +15,7 @@
  */
 package com.intellij.core;
 
+import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageASTFactory;
@@ -62,6 +63,7 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
     registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
     registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
+    registerExtensionPoint(Extensions.getRootArea(), JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
     addExtension(ClsStubBuilderFactory.EP_NAME, new DefaultClsStubBuilderFactory());
 
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
