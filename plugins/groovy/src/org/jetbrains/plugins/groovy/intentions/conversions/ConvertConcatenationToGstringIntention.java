@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -91,8 +92,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       builder.append(GrStringUtil.removeQuotes(operand.getText()));
     }
     else if (operand instanceof GrLiteral) {
-      String text = GrStringUtil.escapeSymbolsForGString(GrStringUtil.removeQuotes(operand.getText()), false);
-      builder.append(text);
+      final String unescaped = StringUtil.unescapeStringCharacters(GrStringUtil.removeQuotes(operand.getText()));
+      GrStringUtil.escapeStringCharacters(unescaped.length(), unescaped, "$", false, builder);
     }
     else if (MyPredicate.satisfiedBy(operand, false)) {
       performIntention((GrBinaryExpression)operand, builder);
