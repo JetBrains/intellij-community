@@ -6,9 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -130,18 +128,21 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyReferenceExpression callSite) {
+  @Override
+  public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
     final PyType type = getGenericReturnType(context, callSite);
+    if (callSite == null) {
+      return type;
+    }
     if (PyTypeChecker.hasGenerics(type, context)) {
-      if (callSite != null) {
-        final PsiElement parent = callSite.getParent();
-        if (parent instanceof PyCallExpression) {
-          final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, (PyCallExpression)parent, context);
-          if (substitutions != null) {
-            final Ref<PyType> result = PyTypeChecker.substitute(type, substitutions, context);
-            if (result != null) {
-              return result.get();
-            }
+      final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
+      if (results != null) {
+        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, results.getReceiver(), results.getArguments(),
+                                                                                        context);
+        if (substitutions != null) {
+          final Ref<PyType> result = PyTypeChecker.substitute(type, substitutions, context);
+          if (result != null) {
+            return result.get();
           }
         }
       }
@@ -151,7 +152,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  private PyType getGenericReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite) {
+  private PyType getGenericReturnType(TypeEvalContext typeEvalContext, @Nullable PyQualifiedExpression callSite) {
     if (typeEvalContext.maySwitchToAST(this)) {
       PyAnnotation anno = getAnnotation();
       if (anno != null) {

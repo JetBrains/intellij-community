@@ -2,6 +2,10 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.psi.*;
@@ -226,15 +230,12 @@ public class PyTypeChecker {
   }
 
   @Nullable
-  public static Map<PyGenericType, PyType> unifyGenericCall(@NotNull PyFunction function, @NotNull PyCallExpression call,
+  public static Map<PyGenericType, PyType> unifyGenericCall(@NotNull PyFunction function,
+                                                            @Nullable PyExpression receiver,
+                                                            @NotNull Map<PyExpression, PyNamedParameter> arguments,
                                                             @NotNull TypeEvalContext context) {
-    final PyArgumentList args = call.getArgumentList();
-    if (args == null) {
-      return null;
-    }
-    final Map<PyGenericType, PyType> substitutions = collectCallGenerics(function, call, context);
-    final CallArgumentsMapping res = args.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    for (Map.Entry<PyExpression, PyNamedParameter> entry : res.getPlainMappedParams().entrySet()) {
+    final Map<PyGenericType, PyType> substitutions = collectCallGenerics(function, receiver, context);
+    for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter p = entry.getValue();
       final String name = p.getName();
       if (p.isPositionalContainer() || p.isKeywordContainer() || name == null) {
@@ -250,40 +251,33 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  public static Map<PyGenericType, PyType> collectCallGenerics(@NotNull PyFunction function, @NotNull PyCallExpression call,
-                                                               @NotNull TypeEvalContext context) {
+  public static Map<PyGenericType, PyType> collectCallGenerics(@NotNull PyFunction function, @Nullable PyExpression receiver,
+                                                                @NotNull TypeEvalContext context) {
     final Map<PyGenericType, PyType> substitutions = new HashMap<PyGenericType, PyType>();
-    final PyExpression callee = call.getCallee();
-    if (callee instanceof PyReferenceExpression) {
-      final PyReferenceExpression expr = (PyReferenceExpression)callee;
-      final PyExpression qualifier = expr.getQualifier();
-      if (qualifier != null) {
-        final PyType qualType = qualifier.getType(context);
-        // Collect generic params of object type
-        final Set<PyGenericType> generics = new HashSet<PyGenericType>();
-        collectGenerics(qualType, context, generics);
-        for (PyGenericType t : generics) {
-          substitutions.put(t, t);
+    // Collect generic params of object type
+    final Set<PyGenericType> generics = new HashSet<PyGenericType>();
+    final PyType qualifierType = receiver != null ? receiver.getType(context) : null;
+    collectGenerics(qualifierType, context, generics);
+    for (PyGenericType t : generics) {
+      substitutions.put(t, t);
+    }
+    final PyClass cls = function.getContainingClass();
+    if (cls != null) {
+      final PyFunction init = cls.findInitOrNew(true);
+      // Unify generics in constructor
+      if (init != null) {
+        final PyType initType = init.getReturnType(context, null);
+        if (initType != null) {
+          match(initType, qualifierType, context, substitutions);
         }
-        final PyClass cls = function.getContainingClass();
-        if (cls != null) {
-          final PyFunction init = cls.findInitOrNew(true);
-          // Unify generics in constructor
-          if (init != null) {
-            final PyType initType = init.getReturnType(context, null);
-            if (initType != null) {
-              match(initType, qualType, context, substitutions);
-            }
-          }
-          else {
-            // Unify generics in stdlib pseudo-constructor
-            final PyStdlibTypeProvider stdlib = PyStdlibTypeProvider.getInstance();
-            if (stdlib != null) {
-              final PyType initType = stdlib.getConstructorType(cls);
-              if (initType != null) {
-                match(initType, qualType, context, substitutions);
-              }
-            }
+      }
+      else {
+        // Unify generics in stdlib pseudo-constructor
+        final PyStdlibTypeProvider stdlib = PyStdlibTypeProvider.getInstance();
+        if (stdlib != null) {
+          final PyType initType = stdlib.getConstructorType(cls);
+          if (initType != null) {
+            match(initType, qualifierType, context, substitutions);
           }
         }
       }
@@ -298,6 +292,114 @@ public class PyTypeChecker {
     else {
       final String superName = superClass.getName();
       return superName != null && superName.equals(subClass.getName());
+    }
+  }
+
+  @Nullable
+  public static AnalyzeCallResults analyzeCallSite(@Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
+    if (callSite == null) {
+      return null;
+    }
+    final PsiElement parent = callSite.getParent();
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    if (parent instanceof PyCallExpression) {
+      final PyExpression receiver = callSite.getQualifier();
+      final PyCallExpression call = (PyCallExpression)parent;
+      final PyArgumentList args = call.getArgumentList();
+      if (args != null) {
+        final CallArgumentsMapping mapping = args.analyzeCall(resolveContext);
+        final Map<PyExpression, PyNamedParameter> arguments = mapping.getPlainMappedParams();
+        final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
+        if (markedCallee != null) {
+          final Callable callable = markedCallee.getCallable();
+          if (callable instanceof PyFunction) {
+            return new AnalyzeCallResults((PyFunction)callable, receiver, arguments);
+          }
+        }
+      }
+    }
+    else if (callSite instanceof PyBinaryExpression) {
+      final PyBinaryExpression expr = (PyBinaryExpression)callSite;
+      final PsiPolyVariantReference ref = expr.getReference(resolveContext);
+      if (ref != null) {
+        final ResolveResult[] resolveResult = ref.multiResolve(false);
+        AnalyzeCallResults firstResults = null;
+        for (ResolveResult result : resolveResult) {
+          final PsiElement resolved = result.getElement();
+          if (resolved instanceof PyFunction) {
+            final PyFunction function = (PyFunction)resolved;
+            final boolean isRight = PyNames.isRightOperatorName(function.getName());
+            final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
+            final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
+            final PyParameter[] parameters = function.getParameterList().getParameters();
+            if (parameters.length == 2) {
+              final PyNamedParameter param = parameters[1].getAsNamed();
+              if (arg != null && param != null) {
+                final Map<PyExpression, PyNamedParameter> arguments = new HashMap<PyExpression, PyNamedParameter>();
+                arguments.put(arg, param);
+                final AnalyzeCallResults resutls = new AnalyzeCallResults(function, receiver, arguments);
+                if (firstResults == null) {
+                  firstResults = resutls;
+                }
+                if (match(param.getType(context), arg.getType(context), context)) {
+                  return resutls;
+                }
+              }
+            }
+          }
+        }
+        if (firstResults != null) {
+          return firstResults;
+        }
+      }
+    }
+    else if (callSite instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression expr = (PySubscriptionExpression)callSite;
+      final PsiReference ref = expr.getReference(resolveContext);
+      if (ref != null) {
+        final PsiElement resolved = ref.resolve();
+        if (resolved instanceof PyFunction) {
+          final PyFunction function = (PyFunction)resolved;
+          final PyParameter[] parameters = function.getParameterList().getParameters();
+          if (parameters.length == 2) {
+            final PyNamedParameter param = parameters[1].getAsNamed();
+            if (param != null) {
+              final Map<PyExpression, PyNamedParameter> arguments = new HashMap<PyExpression, PyNamedParameter>();
+              arguments.put(expr.getIndexExpression(), param);
+              return new AnalyzeCallResults(function, expr.getOperand(), arguments);
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static class AnalyzeCallResults {
+    @NotNull private final PyFunction myFunction;
+    @Nullable private final PyExpression myReceiver;
+    @NotNull private final Map<PyExpression, PyNamedParameter> myArguments;
+
+    public AnalyzeCallResults(@NotNull PyFunction function, @Nullable PyExpression receiver,
+                              @NotNull Map<PyExpression, PyNamedParameter> arguments) {
+      myFunction = function;
+      myReceiver = receiver;
+      myArguments = arguments;
+    }
+
+    @NotNull
+    public PyFunction getFunction() {
+      return myFunction;
+    }
+
+    @Nullable
+    public PyExpression getReceiver() {
+      return myReceiver;
+    }
+
+    @NotNull
+    public Map<PyExpression, PyNamedParameter> getArguments() {
+      return myArguments;
     }
   }
 }

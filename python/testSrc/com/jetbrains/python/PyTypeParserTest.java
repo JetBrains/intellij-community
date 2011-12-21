@@ -39,9 +39,15 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testDictType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from string to MyObject");
+    final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from str to MyObject");
+    assertNotNull(type);
     assertClassType(type, "dict");
-    assertClassType(type.getElementType(TypeEvalContext.fast()), "MyObject");
+    final PyType elementType = type.getElementType(TypeEvalContext.fast());
+    assertInstanceOf(elementType, PyTupleType.class);
+    final PyTupleType tupleType = (PyTupleType)elementType;
+    assertEquals(2, tupleType.getElementCount());
+    assertClassType(tupleType.getElementType(0), "str");
+    assertClassType(tupleType.getElementType(1), "MyObject");
   }
 
   public void testUnionType() {

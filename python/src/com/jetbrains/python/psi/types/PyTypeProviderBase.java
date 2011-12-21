@@ -20,7 +20,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   protected interface ReturnTypeCallback {
     @Nullable
-    PyType getType(@Nullable PyReferenceExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context);
+    PyType getType(@Nullable PyQualifiedExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context);
   }
 
   private static class ReturnTypeDescriptor {
@@ -31,7 +31,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
     }
 
     @Nullable
-    public PyType get(PyFunction function, @Nullable PyReferenceExpression callSite, TypeEvalContext context) {
+    public PyType get(PyFunction function, @Nullable PyQualifiedExpression callSite, TypeEvalContext context) {
       PyClass containingClass = function.getContainingClass();
       if (containingClass != null) {
         final ReturnTypeCallback typeCallback = myStringToReturnTypeMap.get(containingClass.getQualifiedName());
@@ -47,7 +47,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   private final ReturnTypeCallback mySelfTypeCallback = new ReturnTypeCallback() {
     @Override
-    public PyType getType(@Nullable PyReferenceExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context) {
+    public PyType getType(@Nullable PyQualifiedExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context) {
       if (qualifierType instanceof PyClassType) {
         return new PyClassType(((PyClassType)qualifierType).getPyClass(), false);
       }
@@ -79,7 +79,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public PyType getReturnType(PyFunction function, @Nullable PyReferenceExpression callSite, TypeEvalContext context) {
+  public PyType getReturnType(PyFunction function, @Nullable PyQualifiedExpression callSite, TypeEvalContext context) {
     ReturnTypeDescriptor descriptor;
     synchronized (myMethodToReturnTypeMap) {
       descriptor = myMethodToReturnTypeMap.get(function.getName());

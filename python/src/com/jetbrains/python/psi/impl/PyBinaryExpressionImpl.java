@@ -11,8 +11,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -96,17 +94,6 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     else {
       throw new IncorrectOperationException("Element " + child.getPsi() + " is neither left expression or right expression");
     }
-  }
-
-  @NotNull
-  @Override
-  public QualifiedResolveResult followAssignmentsChain(PyResolveContext resolveContext) {
-    return new PyReferenceExpressionImpl.QualifiedResolveResultEmpty();
-  }
-
-  @Override
-  public PyQualifiedName asQualifiedName() {
-    return PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
   }
 
   @NotNull

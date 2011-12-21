@@ -84,7 +84,7 @@ def f_list_tuple(spam, eggs):
 
 def test_list_tuple():
     f_list_tuple(<warning descr="Expected type 'list of one of (str, unicode)', got 'list of int' instead">[1, 2, 3]</warning>,
-                 (<warning descr="Expected type 'tuple(bool,int,unicode)', got 'tuple(bool,int,str)' instead">False, 2, ''</warning>))
+                 (<warning descr="Expected type '(bool,int,unicode)', got '(bool,int,str)' instead">False, 2, ''</warning>))
 
 
 def test_builtin_numerics():
