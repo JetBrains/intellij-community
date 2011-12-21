@@ -38,7 +38,7 @@ public class PagedFileStorage implements Forceable {
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
   private static final int MEGABYTE = 1024 * 1024;
-  final static int DEFAULT_BUFFER_SIZE;
+  public final static int DEFAULT_BUFFER_SIZE;
 
   private final static int UPPER_LIMIT;
   private static final int LOWER_LIMIT_IN_MEGABYTES = 100;
