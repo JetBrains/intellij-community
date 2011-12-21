@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
+import java.io.File;
 import java.lang.reflect.Field;
 
 /**
@@ -36,9 +38,33 @@ public class MacUIUtil {
   public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";
   public static final int MAC_COMBO_BORDER_V_OFFSET = SystemInfo.isMacOSLion ? 1 : 0;
   private static Cursor INVERTED_TEXT_CURSOR;
+  private static boolean CURSOR_HIDER_LOADED = false;
+
+  static {
+    if (SystemInfo.isMac) {
+      try {
+        System.load(PathManager.getBinPath() + File.separatorChar + "cursorHider.jnilib");
+        CURSOR_HIDER_LOADED = true;
+      } catch (UnsatisfiedLinkError ignored) {}
+    }
+  }
 
   private MacUIUtil() {
   }
+
+  public static void hideCursor() {
+    if (CURSOR_HIDER_LOADED) {
+      doHideCursor();
+    }
+  }
+  private static native void doHideCursor();
+
+  public static void showCursor() {
+    if (CURSOR_HIDER_LOADED) {
+      doShowCursor();
+    }
+  }
+  private static native void doShowCursor();
 
   public static class EditorTextFieldBorder implements Border {
     private JComponent myEnabledComponent;
