@@ -56,6 +56,9 @@ public class StatisticsHttpClientSender implements StatisticsDataSender {
         throw new StatServiceException("Error during updating statistics " + (!StringUtil.isEmptyOrSpaces(value) ? " : " + value : ""));
       }
     }
+    catch (StatServiceException e) {
+          throw e;
+    }
     catch (Exception e) {
       throw new StatServiceException("Error during data sending...", e);
     }

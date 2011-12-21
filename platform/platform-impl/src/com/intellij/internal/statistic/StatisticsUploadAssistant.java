@@ -70,7 +70,7 @@ public class StatisticsUploadAssistant {
         return settings != null && settings.isAllowed();
     }
 
-    public static String getData(@NotNull Set<String> disabledGroups) {
+    public String getData(@NotNull Set<String> disabledGroups) {
         return getStringPatch(disabledGroups, ProjectManager.getInstance().getOpenProjects());
     }
 

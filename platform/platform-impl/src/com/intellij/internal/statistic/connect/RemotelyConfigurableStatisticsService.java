@@ -29,7 +29,7 @@ public class RemotelyConfigurableStatisticsService implements StatisticsService 
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
-    String content = myAssistant.getData();
+    String content = myAssistant.getData(myConnectionService.getDisabledGroups());
 
     if (StringUtil.isEmptyOrSpaces(content)) {
       return new StatisticsResult(StatisticsResult.ResultCode.NOTHING_TO_SEND, "NOTHING_TO_SEND");
