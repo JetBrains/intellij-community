@@ -21,6 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -350,7 +351,7 @@ public final class TabInfo implements Queryable {
     return this;
   }
 
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     if (myQueryable != null) {
       myQueryable.putInfo(info);
     }

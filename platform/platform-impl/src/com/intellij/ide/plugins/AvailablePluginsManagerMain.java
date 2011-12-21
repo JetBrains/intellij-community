@@ -16,7 +16,10 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -30,6 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
@@ -85,6 +90,19 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_RATE, 70);
 
     return ScrollPaneFactory.createScrollPane(pluginTable);
+  }
+
+  @Override
+  protected void installTableActions(final PluginTable pluginTable) {
+    super.installTableActions(pluginTable);
+    pluginTable.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() != 2) return;
+        if (pluginTable.columnAtPoint(e.getPoint()) < 0) return;
+        if (pluginTable.rowAtPoint(e.getPoint()) < 0) return;
+        new ActionInstallPlugin(AvailablePluginsManagerMain.this, installed).install();
+      }
+    });
   }
 
   @Override

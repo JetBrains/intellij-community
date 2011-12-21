@@ -499,9 +499,6 @@ public class FileBasedIndex implements ApplicationComponent {
             keyDescriptor.save(out, key);
           }
         }
-        catch (IOException e) {
-          throw e;
-        }
         catch (IllegalArgumentException e) {
           throw new IOException("Error saving data for index " + indexId, e);
         }
@@ -516,9 +513,6 @@ public class FileBasedIndex implements ApplicationComponent {
             list.add(keyDescriptor.read(in));
           }
           return list;
-        }
-        catch (IOException e) {
-          throw e;
         }
         catch (IllegalArgumentException e) {
           throw new IOException("Error reading data for index " + indexId, e);

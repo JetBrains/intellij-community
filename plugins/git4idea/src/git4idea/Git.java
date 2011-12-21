@@ -125,7 +125,7 @@ public class Git {
   
   @NotNull
   public static GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName) {
-    GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
+    GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
     handler.addParameters(url);
     handler.addParameters(clonedDirectoryName);
     return run(handler, true);
@@ -221,7 +221,7 @@ public class Git {
   }
 
   public static GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull GitLineHandlerListener... listeners) {
-    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
+    final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
     h.setSilent(false);
 
     for (GitLineHandlerListener listener : listeners) {
@@ -274,6 +274,11 @@ public class Git {
     });
     
     handler.runInCurrentThread(null);
+
+    if (handler instanceof GitLineHandlerPasswordRequestAware && ((GitLineHandlerPasswordRequestAware)handler).hadAuthRequest()) {
+      errorOutput.add("Authentication failed");
+    }
+
     final boolean success = !startFailed.get() && errorOutput.isEmpty() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
     return new GitCommandResult(success, exitCode.get(), errorOutput, output);
   }

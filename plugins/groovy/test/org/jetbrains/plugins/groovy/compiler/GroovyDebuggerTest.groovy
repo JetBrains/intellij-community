@@ -39,6 +39,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -205,7 +206,9 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
       waitForBreakpoint()
       SourcePosition position = managed {
         EvaluationContextImpl context = evaluationContext()
-        ContextUtil.getSourcePosition(context)
+        Computable<SourcePosition> a = { ContextUtil.getSourcePosition(context) } as Computable<SourcePosition>
+        SourcePosition pos = ApplicationManager.getApplication().runReadAction (a)
+        pos
       }
       assert myClass == position.file.virtualFile
       eval 'a', '2'

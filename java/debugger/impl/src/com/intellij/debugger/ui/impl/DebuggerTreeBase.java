@@ -75,6 +75,8 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
       }
     });
 
+    Disposer.register(this, myTipManager);
+
     UIUtil.setLineStyleAngled(this);
     setRootVisible(false);
     setShowsRootHandles(true);
@@ -388,7 +390,5 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     }
     myCurrentTooltip = null;
     myCurrentTooltipNode = null;
-    Disposer.dispose(myTipManager);
   }
-
 }

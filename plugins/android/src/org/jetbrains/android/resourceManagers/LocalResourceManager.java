@@ -272,7 +272,7 @@ public class LocalResourceManager extends ResourceManager {
     ResourceElement element = addValueResource(type, resources);
     element.getName().setValue(name);
     if (value != null) {
-      element.setValue(value);
+      element.setStringValue(value);
     }
     return element;
   }

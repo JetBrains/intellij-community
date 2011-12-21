@@ -66,7 +66,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   public GrEnumDefinitionBody getBody() {
-    return (GrEnumDefinitionBody)findChildByType(GroovyElementTypes.ENUM_BODY);
+    return getStubOrPsiChild(GroovyElementTypes.ENUM_BODY);
   }
 
   public boolean isEnum() {

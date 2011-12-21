@@ -43,11 +43,6 @@ public abstract class IdeaTestCase extends PlatformTestCase {
     super.tearDown();
   }
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  protected IdeaTestCase() {
-    initPlatformPrefix();
-  }
-
   public final JavaPsiFacadeEx getJavaFacade() {
     return myJavaFacade;
   }

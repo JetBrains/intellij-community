@@ -156,9 +156,6 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     else if (new File(sdkHome, "lib/webide.jar").exists()) {
       productName = "WebStorm/PhpStorm ";
     }
-    else if (new File(sdkHome, "lib/webide.jar").exists()) {
-      productName = "WebStorm/PhpStorm ";
-    }
     else {
       productName = "IDEA ";
     }

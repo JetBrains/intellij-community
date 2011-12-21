@@ -192,8 +192,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final int MOUSE_SELECTION_STATE_WORD_SELECTED = 1;
   private static final int MOUSE_SELECTION_STATE_LINE_SELECTED = 2;
 
-  private final MarkupModelListener myMarkupModelListener;
-
   private EditorHighlighter myHighlighter;
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
@@ -306,7 +304,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
-    myMarkupModelListener = new MarkupModelListener() {
+    MarkupModelListener markupModelListener = new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         attributesChanged(highlighter);
@@ -319,6 +317,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
+        if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         int textLength = myDocument.getTextLength();
 
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
@@ -341,8 +340,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myCaretModel, markupModelListener);
+    ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myCaretModel, markupModelListener);
 
     myDocument.addDocumentListener(myFoldingModel,myCaretModel);
     myDocument.addDocumentListener(myCaretModel,myCaretModel);
@@ -2502,6 +2501,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPaintSelection = paintSelection;
   }
 
+  @NonNls
   public String dumpState() {
     return "prefix: '" + (myPrefixText == null ? "none" : new String(myPrefixText))
            + "', allow caret inside tab: " + mySettings.isCaretInsideTabs()
@@ -5169,6 +5169,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   selectWordAtCaret(false);
                   break;
                 }
+              //noinspection fallthrough
               case 4:
                 mySelectionModel.selectLineAtCaret();
                 setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
@@ -6092,7 +6093,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     final VisualPosition visual = getCaretModel().getVisualPosition();
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }

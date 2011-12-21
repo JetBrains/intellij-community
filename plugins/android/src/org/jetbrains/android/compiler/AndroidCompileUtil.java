@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -51,6 +52,8 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.fileTypes.AndroidIdlFileType;
+import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidUtils;
@@ -609,10 +612,15 @@ public class AndroidCompileUtil {
 
   public static void createGenModulesAndSourceRoots(@NotNull final AndroidFacet facet) {
     final Module module = facet.getModule();
+    String sourceRootPath;
 
-    String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
-    if (sourceRootPath != null) {
-      createSourceRootIfNotExist(sourceRootPath, module);
+    final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
+
+    if (FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0) {
+      sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
+      if (sourceRootPath != null) {
+        createSourceRootIfNotExist(sourceRootPath, module);
+      }
     }
 
     sourceRootPath = facet.getAptGenSourceRootPath();
@@ -620,9 +628,11 @@ public class AndroidCompileUtil {
       createSourceRootIfNotExist(sourceRootPath, module);
     }
 
-    sourceRootPath = facet.getAidlGenSourceRootPath();
-    if (sourceRootPath != null) {
-      createSourceRootIfNotExist(sourceRootPath, module);
+    if (FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0) {
+      sourceRootPath = facet.getAidlGenSourceRootPath();
+      if (sourceRootPath != null) {
+        createSourceRootIfNotExist(sourceRootPath, module);
+      }
     }
   }
 

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <integer name="res1">1</integer>
+  <bool name="res2">false</bool>
+  <color name="res3">#ffffff</color>
+  <string name="res4">str</string>
+
+  <string name="s1">@integer/res1</string>
+  <string name="s2">@bool/res2</string>
+  <string name="s3">@color/res3</string>
+  <string name="s4">@string/res4</string>
+  <string name="s5"><error>@string/err</error></string>
+
+  <color name="c1">@integer/res1</color>
+  <color name="c2">@bool/res2</color>
+  <color name="c3">@color/res3</color>
+  <color name="c4">@string/res4</color>
+  <color name="c5"><error>@string/err</error></color>
+
+  <drawable name="drawable1">@integer/res1</drawable>
+  <drawable name="drawable2">@bool/res2</drawable>
+  <drawable name="drawable3">@color/res3</drawable>
+  <drawable name="drawable4">@string/res4</drawable>
+  <drawable name="drawable5"><error>@string/err</error></drawable>
+
+  <dimen name="dimen1">@integer/res1</dimen>
+  <dimen name="dimen2">@bool/res2</dimen>
+  <dimen name="dimen3">@color/res3</dimen>
+  <dimen name="dimen4">@string/res4</dimen>
+  <dimen name="dimen5"><error>@string/err</error></dimen>
+
+  <array name="ar">
+    <item>@integer/res1</item>
+    <item>@bool/res2</item>
+    <item>@color/res3</item>
+    <item>@string/res4</item>
+    <item><error>@string/err</error></item>
+  </array>
+
+  <string-array name="sar">
+    <item>@integer/res1</item>
+    <item>@bool/res2</item>
+    <item>@color/res3</item>
+    <item>@string/res4</item>
+    <item><error>@string/err</error></item>
+  </string-array>
+
+  <bool name="bool1">@integer/res1</bool>
+  <bool name="bool2">@bool/res2</bool>
+  <bool name="bool3">@color/res3</bool>
+  <bool name="bool4">@string/res4</bool>
+  <bool name="bool5"><error>@string/err</error></bool>
+  <bool name="bool6">true</bool>
+  <bool name="bool7"><error>tru</error></bool>
+
+  <integer name="i1">@integer/res1</integer>
+  <integer name="i2">@bool/res2</integer>
+  <integer name="i3">@color/res3</integer>
+  <integer name="i4">@string/res4</integer>
+  <integer name="i5"><error>@string/err</error></integer>
+  <integer name="i6">10</integer>
+  <integer name="i7"><error>aba</error></integer>
+
+  <integer-array name="iar">
+    <item>@integer/res1</item>
+    <item>@bool/res2</item>
+    <item>@color/res3</item>
+    <item>@string/res4</item>
+    <item><error>@string/err</error></item>
+  </integer-array>
+
+  <item name="item1" type="string">@integer/res1</item>
+  <item name="item2" type="string">@bool/res2</item>
+  <item name="item3" type="string">@color/res3</item>
+  <item name="item4" type="string">@string/res4</item>
+  <item name="item5" type="string"><error>@string/err</error></item>
+
+  <item name="iitem1" type="bool">@integer/res1</item>
+  <item name="iitem2" type="bool">@bool/res2</item>
+  <item name="iitem3" type="bool">@color/res3</item>
+  <item name="iitem4" type="bool">@string/res4</item>
+</resources>
