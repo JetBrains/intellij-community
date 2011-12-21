@@ -166,4 +166,15 @@ public class MismatchedCollectionQueryUpdate {
       for (final String value : ourValues) {}
     }
   }
+
+  private void updateAttachmentWarning(final String message) {
+    final List<String> includedAttachments;
+    if (message instanceof Object &&
+        !(includedAttachments = boo()).isEmpty()) {
+      if (includedAttachments.size() == 1) {
+      }
+    }
+  }
+
+  List<String> boo() {return null;}
 }

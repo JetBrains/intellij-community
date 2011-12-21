@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,10 +73,10 @@ class VariableAssignedVisitor extends JavaRecursiveElementVisitor {
     if (assigned) {
       return;
     }
+    super.visitPrefixExpression(prefixExpression);
     if (!checkUnaryExpressions) {
       return;
     }
-    super.visitPrefixExpression(prefixExpression);
     final IElementType tokenType = prefixExpression.getOperationTokenType();
     if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
         !tokenType.equals(JavaTokenType.MINUSMINUS)) {
@@ -94,10 +94,10 @@ class VariableAssignedVisitor extends JavaRecursiveElementVisitor {
     if (assigned) {
       return;
     }
+    super.visitPostfixExpression(postfixExpression);
     if (!checkUnaryExpressions) {
       return;
     }
-    super.visitPostfixExpression(postfixExpression);
     final IElementType tokenType = postfixExpression.getOperationTokenType();
     if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
         !tokenType.equals(JavaTokenType.MINUSMINUS)) {

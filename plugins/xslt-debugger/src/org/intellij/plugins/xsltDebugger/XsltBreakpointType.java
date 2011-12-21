@@ -8,7 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.ui.DebuggerIcons;
@@ -24,12 +27,13 @@ import javax.swing.*;
 * User: sweinreuter
 * Date: 03.03.11
 */
-public abstract class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+public class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
 
-  private final XsltDebuggerEditorsProvider myMyEditorsProvider = new XsltDebuggerEditorsProvider(getLanguageLevel());
+  private final XsltDebuggerEditorsProvider myMyEditorsProvider1 = new XsltDebuggerEditorsProvider(XsltChecker.LanguageLevel.V1);
+  private final XsltDebuggerEditorsProvider myMyEditorsProvider2 = new XsltDebuggerEditorsProvider(XsltChecker.LanguageLevel.V2);
 
-  protected XsltBreakpointType(final String id) {
-    super(id, "XSLT Breakpoints");
+  public XsltBreakpointType() {
+    super("xslt", "XSLT Breakpoints");
   }
 
   @Override
@@ -45,14 +49,29 @@ public abstract class XsltBreakpointType extends XLineBreakpointType<XBreakpoint
     if (fileType != StdFileTypes.XML || !XsltSupport.isXsltFile(psiFile)) {
       return false;
     }
-    return getLanguageLevel() == XsltSupport.getXsltLanguageLevel(psiFile);
+    return true;
   }
 
-  protected abstract XsltChecker.LanguageLevel getLanguageLevel();
-
   @Override
-  public XDebuggerEditorsProvider getEditorsProvider() {
-    return myMyEditorsProvider;
+  public XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint, @NotNull Project project) {
+    final XSourcePosition position = breakpoint.getSourcePosition();
+    if (position == null) {
+      return null;
+    }
+
+    final PsiFile file = PsiManager.getInstance(project).findFile(position.getFile());
+    if (file == null) {
+      return null;
+    }
+
+    final XsltChecker.LanguageLevel level = XsltSupport.getXsltLanguageLevel(file);
+    if (level == XsltChecker.LanguageLevel.V1) {
+      return myMyEditorsProvider1;
+    } else if (level == XsltChecker.LanguageLevel.V2) {
+      return myMyEditorsProvider2;
+    }
+
+    return null;
   }
 
   @NotNull
@@ -70,27 +89,5 @@ public abstract class XsltBreakpointType extends XLineBreakpointType<XBreakpoint
   @Override
   public XBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
     return null;
-  }
-
-  public static final class V1 extends XsltBreakpointType {
-    public V1() {
-      super("xslt");
-    }
-
-    @Override
-    protected XsltChecker.LanguageLevel getLanguageLevel() {
-      return XsltChecker.LanguageLevel.V1;
-    }
-  }
-
-  public static final class V2 extends XsltBreakpointType {
-    public V2() {
-      super("xslt2");
-    }
-
-    @Override
-    protected XsltChecker.LanguageLevel getLanguageLevel() {
-      return XsltChecker.LanguageLevel.V2;
-    }
   }
 }

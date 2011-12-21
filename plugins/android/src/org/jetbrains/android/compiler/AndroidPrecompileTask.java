@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -92,10 +93,13 @@ public class AndroidPrecompileTask implements CompileTask {
 
       LOG.debug("Platform-tools revision for module " + module.getName() + " is " + platformToolsRevision);
 
-      if (platformToolsRevision >= 0 && platformToolsRevision <= 7) {
-        if (facet.getConfiguration().LIBRARY_PROJECT) {
+      if (facet.getConfiguration().LIBRARY_PROJECT) {
+        if (platformToolsRevision >= 0 && platformToolsRevision <= 7) {
           LOG.debug("Excluded sources of module " + module.getName());
           excludeAllSourceRoots(module, configuration, addedEntries);
+        }
+        else {
+          unexcludeAllSourceRoots(module, configuration);
         }
       }
     }
@@ -158,6 +162,24 @@ public class AndroidPrecompileTask implements CompileTask {
 
     if (vFile != null) {
       vFile.refresh(false, true);
+    }
+  }
+  
+  private static void unexcludeAllSourceRoots(Module module,
+                                              ExcludedEntriesConfiguration configuration) {
+    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+    final Set<VirtualFile> sourceRootSet = new HashSet<VirtualFile>();
+    sourceRootSet.addAll(Arrays.asList(sourceRoots));
+
+    final ExcludeEntryDescription[] descriptions = configuration.getExcludeEntryDescriptions();
+    configuration.removeAllExcludeEntryDescriptions();
+
+    for (ExcludeEntryDescription description : descriptions) {
+      final VirtualFile file = description.getVirtualFile();
+
+      if (file == null || !sourceRootSet.contains(file)) {
+        configuration.addExcludeEntryDescription(description);
+      }
     }
   }
 

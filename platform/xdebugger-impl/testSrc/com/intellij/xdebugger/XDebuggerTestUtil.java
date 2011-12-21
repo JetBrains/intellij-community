@@ -166,19 +166,19 @@ public class XDebuggerTestUtil {
     assertVariableValue(findVar(vars, name), name, value);
   }
 
-  public static void assertVariableValueMatches(Collection<XValue> vars,
+  public static void assertVariableValueMatches(@NotNull Collection<XValue> vars,
                                                 @Nullable String name,
                                                 @Nullable String valuePattern) throws InterruptedException {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 
-  public static void assertVariableValueMatches(XValue var,
+  public static void assertVariableValueMatches(@NotNull XValue var,
                                                 @Nullable String name,
                                                 @Nullable String valuePattern) throws InterruptedException {
     assertVariableValueMatches(var, name, null, valuePattern);
   }
 
-  public static void assertVariableValueMatches(XValue var,
+  public static void assertVariableValueMatches(@NotNull XValue var,
                                                 @Nullable String name,
                                                 @Nullable String type,
                                                 @Nullable String valuePattern) throws InterruptedException {
@@ -190,7 +190,9 @@ public class XDebuggerTestUtil {
     }
   }
 
-  public static void assertVariableTypeMatches(XValue var, String name, @Language("RegExp") String typePattern) throws InterruptedException {
+  public static void assertVariableTypeMatches(@NotNull XValue var, 
+                                               @Nullable String name, 
+                                               @Nullable @Language("RegExp") String typePattern) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
     if (name != null) {
       Assert.assertEquals(name, node.myName);
@@ -200,7 +202,8 @@ public class XDebuggerTestUtil {
     }
   }
 
-  public static void assertVariableFullValue(XValue var, @Nullable String value) throws InterruptedException {
+  public static void assertVariableFullValue(@NotNull XValue var,
+                                             @Nullable String value) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
     final String[] result = new String[1];
 
