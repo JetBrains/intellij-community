@@ -19,6 +19,7 @@ package com.intellij.internal.statistic.persistence;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.UsagesCollector;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -94,7 +95,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
           Set<UsageDescriptor> frameworkDescriptors = new HashSet<UsageDescriptor>();
           for (String key : StringUtil.split(frameworks, TOKENIZER)) {
-            frameworkDescriptors.add(new UsageDescriptor(key, 1));
+            frameworkDescriptors.add(getUsageDescriptor(key));
           }
           getApplicationData(groupDescriptor).put(projectId, frameworkDescriptors);
         }
@@ -129,13 +130,37 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     return element;
   }
 
-  private static String joinUsages(@NotNull Set<UsageDescriptor> usages) {
-    return StringUtil.join(usages, new Function<UsageDescriptor, String>() {
-        @Override
-        public String fun(UsageDescriptor usageDescriptor) {
-          return usageDescriptor.getKey();
+  private UsageDescriptor getUsageDescriptor(String usage) {
+    // for instance, usage can be: "_foo"(equals "_foo=1") or "_foo=2"
+    final int i = usage.indexOf("=");
+    if (i > 0 && i < usage.length() - 1) {
+      String key = usage.substring(0, i).trim();
+      String value = usage.substring(i + 1).trim();
+      if (!StringUtil.isEmptyOrSpaces(key) && !StringUtil.isEmptyOrSpaces(value)) {
+        try {
+          final int count = Integer.parseInt(value);
+          if (count > 0) {
+            return new UsageDescriptor(key, count);
+          }
         }
-      }, TOKENIZER);
+        catch (NumberFormatException e) {
+        }
+      }
+    }
+    return new UsageDescriptor(usage, 1);
+  }
+
+  private static String joinUsages(@NotNull Set<UsageDescriptor> usages) {
+    // for instance, usage can be: "_foo"(equals "_foo=1") or "_foo=2"
+    return StringUtil.join(usages, new Function<UsageDescriptor, String>() {
+      @Override
+      public String fun(UsageDescriptor usageDescriptor) {
+        final String key = usageDescriptor.getKey();
+        final int value = usageDescriptor.getValue();
+
+        return value > 1 ? key + "=" + value : key;
+      }
+    }, TOKENIZER);
   }
 
   @NotNull

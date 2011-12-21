@@ -220,7 +220,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     }
 
     @Override
-    public void putInfo(Map<String, String> info) {
+    public void putInfo(@NotNull Map<String, String> info) {
       myPanel.putInfo(info);
     }
 

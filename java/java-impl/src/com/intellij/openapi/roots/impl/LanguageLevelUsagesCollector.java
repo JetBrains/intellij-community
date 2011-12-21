@@ -23,12 +23,14 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesCollector {
@@ -49,10 +51,10 @@ public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesColle
       final LanguageLevelModuleExtension instance = LanguageLevelModuleExtension.getInstance(module);
       final LanguageLevel languageLevel = instance.getLanguageLevel();
       if (languageLevel != null) {
-        languageLevels.add(languageLevel.getPresentableText());
+        languageLevels.add(languageLevel.toString());
       }
     }
-    languageLevels.add(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().getPresentableText());
+    languageLevels.add(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().toString());
 
     return ContainerUtil.map2Set(languageLevels, new Function<String, UsageDescriptor>() {
       @Override

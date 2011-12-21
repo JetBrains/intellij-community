@@ -24,8 +24,9 @@ public class GroupDescriptor implements Comparable<GroupDescriptor> {
     private double myPriority;
 
     public static GroupDescriptor create(String id) {
-        assert id != null;
-        return new GroupDescriptor(id);
+      ConvertUsagesUtil.assertDescriptorName(id);
+
+      return new GroupDescriptor(id);
     }
 
     public static GroupDescriptor create(String id, double priority) {

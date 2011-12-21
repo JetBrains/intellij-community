@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.java.parser;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
@@ -26,10 +27,10 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ResourceBundle;
+
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.java.parser.JavaParserUtil.done;
-import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
-import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
+import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class FileParser {
@@ -51,10 +52,14 @@ public class FileParser {
   }
 
   public void parse(final PsiBuilder builder) {
-    parseFile(builder, IMPORT_LIST_STOPPER_SET, JavaErrorMessages.message("expected.class.or.interface"));
+    parseFile(builder, IMPORT_LIST_STOPPER_SET, JavaErrorMessages.BUNDLE, "expected.class.or.interface");
   }
 
-  public void parseFile(final PsiBuilder builder, final TokenSet importListStoppers, final String errorMessage) {
+  private static String error(@NotNull String bundle, @NotNull String errorMessageKey) {
+    return CommonBundle.message(ResourceBundle.getBundle(bundle), errorMessageKey);
+  }
+
+  public void parseFile(final PsiBuilder builder, final TokenSet importListStoppers, @NotNull String bundle, @NotNull String errorMessageKey) {
     parsePackageStatement(builder);
 
     final Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);
@@ -65,7 +70,7 @@ public class FileParser {
     while (!builder.eof()) {
       if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
         if (invalidElements != null) {
-          invalidElements.error(errorMessage);
+          invalidElements.error(error(bundle, errorMessageKey));
           invalidElements = null;
         }
         builder.advanceLexer();
@@ -76,7 +81,7 @@ public class FileParser {
       final PsiBuilder.Marker declaration = parseInitial(builder);
       if (declaration != null) {
         if (invalidElements != null) {
-          invalidElements.errorBefore(errorMessage, declaration);
+          invalidElements.errorBefore(error(bundle, errorMessageKey), declaration);
           invalidElements = null;
         }
         if (firstDeclarationOk == null) {
@@ -96,7 +101,7 @@ public class FileParser {
     }
 
     if (invalidElements != null) {
-      invalidElements.error(errorMessage);
+      invalidElements.error(error(bundle, errorMessageKey));
     }
 
     if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {

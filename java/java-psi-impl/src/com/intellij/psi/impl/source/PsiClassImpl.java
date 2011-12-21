@@ -655,11 +655,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     putInfo(this, info);
   }
 
-  public static void putInfo(PsiClass psiClass, Map<String, String> info) {
+  public static void putInfo(@NotNull PsiClass psiClass, @NotNull Map<String, String> info) {
     info.put("className", psiClass.getName());
     info.put("qualifiedClassName", psiClass.getQualifiedName());
     PsiFile file = psiClass.getContainingFile();

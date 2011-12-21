@@ -47,7 +47,8 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
         return super.checkAutoPopup(c, project, editor, psiFile);
       }
       myCaretPosition = editor.getCaretModel().getOffset();
-      if (selectedText.length() > 1 && !Registry.is("editor.smarterSelectionQuoting")) {
+      boolean replace = false;
+      if (selectedText.length() > 1) {
         final char firstChar = selectedText.charAt(0);
         if (isSimilarDelimiters(firstChar, c) &&
             selectedText.charAt(selectedText.length() - 1) == getMatchingDelimiter(firstChar) &&
@@ -55,14 +56,16 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
             !shouldSkipReplacementOfQuotesOrBraces(psiFile, editor, selectedText, c)
           ) {
           selectedText = selectedText.substring(1, selectedText.length() - 1);
+          replace = true;
         }
       }
       final int caretOffset = editor.getSelectionModel().getSelectionStart();
       final char c2 = getMatchingDelimiter(c);
       final String newText = String.valueOf(c) + selectedText + c2;
       EditorModificationUtil.insertStringAtCaret(editor, newText);
-      if (Registry.is("editor.smarterSelectionQuoting")) {
+      if (Registry.is("editor.smarterSelectionQuoting") && !replace) {
         myReplacedTextRange = new TextRange(caretOffset + 1, caretOffset + newText.length() - 1);
+        myCaretPosition += 1;
       } else {
         myReplacedTextRange = new TextRange(caretOffset, caretOffset + newText.length());
       }
@@ -109,7 +112,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (myReplacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
         editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
         if (Registry.is("editor.smarterSelectionQuoting")) {
-          editor.getCaretModel().moveToOffset(myCaretPosition + 1);
+          editor.getCaretModel().moveToOffset(myCaretPosition);
         }
       }
       myReplacedTextRange = null;

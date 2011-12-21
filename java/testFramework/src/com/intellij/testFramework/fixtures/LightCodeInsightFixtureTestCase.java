@@ -16,7 +16,6 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,6 +26,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NonNls;
@@ -93,7 +93,10 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
    */
   @NonNls
   protected final String getTestDataPath() {
-    return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
+    String communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/');
+    String path = communityPath + getBasePath();
+    if (new File(path).exists()) return path;
+    return communityPath + "/../" + getBasePath();
   }
 
   @Override

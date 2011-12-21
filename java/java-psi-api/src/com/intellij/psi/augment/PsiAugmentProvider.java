@@ -28,15 +28,13 @@ import java.util.List;
 public abstract class PsiAugmentProvider {
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
 
-  private static final PsiAugmentProvider[] PROVIDERS = Extensions.getExtensions(EP_NAME);
-
   @NotNull
   public abstract <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type);
 
   @NotNull
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
     final List<Psi> augments = new ArrayList<Psi>();
-    for (PsiAugmentProvider provider : PROVIDERS) {
+    for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
       try {
         final List<Psi> list = provider.getAugments(element, type);
         augments.addAll(list);

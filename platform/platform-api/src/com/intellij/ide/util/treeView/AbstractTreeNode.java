@@ -153,7 +153,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return getTestPresentation();
   }
 
-  public void apply(Map<String, String> info) {
+  public void apply(@NotNull Map<String, String> info) {
   }
 
   /**

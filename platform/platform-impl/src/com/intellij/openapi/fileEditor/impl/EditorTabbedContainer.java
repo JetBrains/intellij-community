@@ -331,7 +331,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       myTab = tab;
     }
 
-    public void putInfo(Map<String, String> info) {
+    public void putInfo(@NotNull Map<String, String> info) {
       info.put("editorTab", myTab.getText());
     }
   }
