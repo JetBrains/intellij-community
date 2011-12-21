@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.HashMap;
@@ -225,14 +226,11 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     final VirtualFile scriptFile = getScriptFile();
     if (scriptFile == null) return null;
     final PsiFile file = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (file instanceof GroovyFile) {
-      if (((GroovyFile)file).isScript()) return ((GroovyFile)file).getScriptClass();
-      final PsiClass[] classes = ((GroovyFile)file).getClasses();
-      for (PsiClass aClass : classes) {
-        if (GroovyScriptRunConfigurationProducer.isRunnable(aClass)) {
-          return aClass;
-        }
-      }
+    if (!(file instanceof GroovyFile)) return null;
+    if (((GroovyFile)file).isScript()) return ((GroovyFile)file).getScriptClass();
+    final PsiClass[] classes = ((GroovyFile)file).getClasses();
+    if (classes.length > 0) {
+      return classes[0];
     }
     return null;
   }
@@ -243,16 +241,16 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    final PsiClass scriptClass = getScriptClass();
-    if (scriptClass == null) {
+    final PsiClass toRun = getScriptClass();
+    if (toRun == null) {
       throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
     }
-    if (scriptClass instanceof GrTypeDefinition) {
-      if (!GroovyScriptRunConfigurationProducer.isRunnable(scriptClass)) {
+    if (toRun instanceof GrTypeDefinition) {
+      if (!GroovyScriptRunConfigurationProducer.isRunnable(toRun) && !PsiMethodUtil.hasMainMethod(toRun)) {
         throw new RuntimeConfigurationWarning(GroovyBundle.message("class.can't be executed"));
       }
     }
-    else if (!(scriptClass instanceof GroovyScriptClass)) {
+    else if (!(toRun instanceof GroovyScriptClass)) {
       throw new RuntimeConfigurationWarning(GroovyBundle.message("script.file.is.not.groovy.file"));
     }
   }
