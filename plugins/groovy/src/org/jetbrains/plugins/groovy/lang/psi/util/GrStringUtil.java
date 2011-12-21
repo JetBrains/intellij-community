@@ -35,6 +35,67 @@ public class GrStringUtil {
   private GrStringUtil() {
   }
 
+  public static String unescapeSlashyString(String s) {
+    return unescapeRegex(s, true);
+  }
+
+  public static String unescapeDollarSlashyString(String s) {
+    return unescapeRegex(s, false);
+  }
+
+  private static String unescapeRegex(String s, boolean unescapeSlash) {
+    final int length = s.length();
+    StringBuilder buffer = new StringBuilder(length);
+    
+    boolean escaped = false;
+    for (int idx = 0; idx < length; idx++) {
+      char ch = s.charAt(idx);
+      if (!escaped) {
+        if (ch == '\\') {
+          escaped = true;
+        }
+        else {
+          buffer.append(ch);
+        }
+      }
+      else {
+        switch (ch) {
+          case '/':
+            if (!unescapeSlash) {
+              buffer.append('\\');
+            }
+            buffer.append('/');
+            break;
+          case 'u':
+            if (idx + 4 < length) {
+              try {
+                int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
+                idx += 4;
+                buffer.append((char)code);
+              }
+              catch (NumberFormatException e) {
+                buffer.append("\\u");
+              }
+            }
+            else {
+              buffer.append("\\u");
+            }
+            break;
+
+          default:
+            buffer.append('\\');
+            buffer.append(ch);
+            break;
+        }
+        escaped = false;
+      }
+    }
+
+    if (escaped) buffer.append('\\');
+    return buffer.toString();
+  }
+
+
   public static String escapeForSlashyStrings(String str) {
     final StringBuilder buffer = new StringBuilder(str.length());
     escapeSymbolsForSlashyStrings(buffer, str);
@@ -105,7 +166,7 @@ public class GrStringUtil {
 
   public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes, boolean forInjection) {
     StringBuilder b = new StringBuilder();
-    escapeStringCharacters(s.length(), s, escapeDoubleQuotes ? "$\"" : "$", false, forInjection, b);
+    escapeStringCharacters(s.length(), s, escapeDoubleQuotes ? "$\"" : "$", forInjection, b);
     if (!forInjection) {
       unescapeCharacters(b, escapeDoubleQuotes ? "'" : "'\"", true);
     }
@@ -118,7 +179,7 @@ public class GrStringUtil {
 
   public static String escapeSymbolsForString(String s, boolean escapeQuotes, boolean forInjection) {
     final StringBuilder builder = new StringBuilder();
-    escapeStringCharacters(s.length(), s, escapeQuotes ? "'" : "", false, forInjection, builder);
+    escapeStringCharacters(s.length(), s, escapeQuotes ? "'" : "", forInjection, builder);
     if (!forInjection) {
       unescapeCharacters(builder, escapeQuotes ? "$\"" : "$'\"", true);
     }
@@ -129,8 +190,7 @@ public class GrStringUtil {
   public static StringBuilder escapeStringCharacters(int length,
                                                      @NotNull String str,
                                                      @Nullable String additionalChars,
-                                                     boolean escapeNR,
-                                                     boolean escapeSlash,
+                                                     boolean escapeLineFeeds,
                                                      @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
@@ -148,16 +208,11 @@ public class GrStringUtil {
           break;
 
         case '\\':
-          if (escapeSlash) {
-            buffer.append("\\\\");
-          }
-          else {
-            buffer.append("\\");
-          }
+          buffer.append("\\\\");
           break;
 
         case '\n':
-          if (escapeNR) {
+          if (escapeLineFeeds) {
             buffer.append("\\n");
           }
           else {
@@ -166,7 +221,7 @@ public class GrStringUtil {
           break;
 
         case '\r':
-          if (escapeNR) {
+          if (escapeLineFeeds) {
             buffer.append("\\r");
           }
           else {

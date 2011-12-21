@@ -17,14 +17,23 @@ package org.jetbrains.plugins.groovy.lang.editor;
 
 import com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
@@ -106,51 +115,81 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
 
   }
 
-  @NotNull
   @Override
-  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token, boolean escapeSlashes) {
-    IElementType tokenType = token.getNode().getElementType();
+  public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+    final Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    final SelectionModel selectionModel = editor.getSelectionModel();
 
-    if (tokenType == mREGEX_CONTENT || tokenType == mDOLLAR_SLASH_REGEX_CONTENT) {
-      if (escapeSlashes) {
-        return StringUtil.escapeSlashes(s);
-      }
-      else {
-        return s;
-      }
-    }
-
-    String chars;
-    if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
-      if (token.getText().contains("\"\"\"")) {
-        chars = "$";
-      }
-      else {
-        chars = "\"$";
-      }
-    }
-    else if (tokenType == mSTRING_LITERAL && !token.getText().contains("'''")) {
-      chars = "'";
-    }
-    else {
-      chars = "";
+    // pastes in block selection mode (column mode) are not handled by a CopyPasteProcessor
+    final int selectionStart = selectionModel.getSelectionStart();
+    final int selectionEnd = selectionModel.getSelectionEnd();
+    PsiElement token = findLiteralTokenType(file, selectionStart, selectionEnd);
+    if (token == null) {
+      return text;
     }
 
-    StringBuilder buffer = new StringBuilder();
-    StringUtil.escapeStringCharacters(s.length(), s, chars, escapeSlashes, buffer);
-    return buffer.toString();
+    if (isStringLiteral(token)) {
+      StringBuilder buffer = new StringBuilder(text.length());
+      @NonNls String breaker = getLineBreaker(token);
+      final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
+      for (int i = 0; i < lines.length; i++) {
+        buffer.append(escapeCharCharacters(lines[i], token));
+        if (i != lines.length - 1 || "\n".equals(breaker) && text.endsWith("\n")) {
+          buffer.append(breaker);
+        }
+      }
+      text = buffer.toString();
+    }
+    return text;
   }
 
   @NotNull
   @Override
-  protected String unescape(String text, PsiElement token) {
-    final IElementType tokenType = token.getNode().getElementType();
+  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
+    IElementType tokenType = token.getNode().getElementType();
 
-    if (tokenType == mREGEX_CONTENT || tokenType == mDOLLAR_SLASH_REGEX_CONTENT) {
-      return StringUtil.unescapeSlashes(text);
+    if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
+      return GrStringUtil.escapeForSlashyStrings(s);
     }
 
-    return super.unescape(text, token);
+    if (tokenType == mDOLLAR_SLASH_REGEX_CONTENT || tokenType == mDOLLAR_SLASH_REGEX_LITERAL) {
+      return GrStringUtil.escapeSymbolsForDollarSlashyStrings(s);
+    }
+
+    if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
+      return GrStringUtil.escapeSymbolsForGString(s, !token.getText().contains("\"\"\""));
+    }
+
+    if (tokenType == mSTRING_LITERAL) {
+      return GrStringUtil.escapeSymbolsForString(s, !token.getText().contains("'''"));
+    }
+
+    return super.escapeCharCharacters(s, token);
+  }
+
+  @NotNull
+  @Override
+  protected String unescape(String s, PsiElement token) {
+    final IElementType tokenType = token.getNode().getElementType();
+
+    if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
+      return GrStringUtil.unescapeSlashyString(s);
+    }
+
+    if (tokenType == mDOLLAR_SLASH_REGEX_CONTENT || tokenType == mDOLLAR_SLASH_REGEX_LITERAL) {
+      return GrStringUtil.unescapeDollarSlashyString(s);
+    }
+
+    if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
+      return StringUtil.unescapeStringCharacters(s);
+    }
+
+    if (tokenType == mSTRING_LITERAL) {
+      return StringUtil.unescapeStringCharacters(s);
+    }
+
+    return super.unescape(s, token);
   }
 
 }
