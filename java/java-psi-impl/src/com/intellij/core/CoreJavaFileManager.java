@@ -16,6 +16,7 @@
 package com.intellij.core;
 
 import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
@@ -70,6 +71,18 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
     return result;
   }
 
+  @Nullable
+  public PsiPackage getPackage(PsiDirectory dir) {
+    final File ioFile = new File(dir.getVirtualFile().getPath());
+    for (File root : myClasspath) {
+      if (FileUtil.isAncestor(root, ioFile, false)) {
+        final String relativePath = FileUtil.getRelativePath(root.getPath(), ioFile.getPath(), '.');
+        return new PsiPackageImpl(myPsiManager, relativePath);
+      }
+    }
+    return null;
+  }
+  
   @Nullable
   private VirtualFile findUnderClasspathEntry(File classpathEntry, String relativeName) {
     if (classpathEntry.isFile()) {

@@ -15,8 +15,10 @@
  */
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -51,17 +53,25 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   }
 
   private PsiClass addClass(@NonNls final String rootPath, @NotNull @NonNls final String classText) {
-    final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
-    final String qName = aClass.getQualifiedName();
+    final String qName =
+      ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
+          return aClass.getQualifiedName();
+        }
+      });
     assert qName != null;
-
     final PsiFile psiFile = new WriteCommandAction<PsiFile>(getProject()) {
       @Override
       protected void run(Result<PsiFile> result) throws Throwable {
         result.setResult(addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText));
       }
     }.execute().getResultObject();
-    return ((PsiJavaFile)psiFile).getClasses()[0];
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+            public PsiClass compute() {
+              return ((PsiJavaFile)psiFile).getClasses()[0];
+            }
+          });
   }
 
   @Override

@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -934,7 +935,14 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
-          collectFrameworkThemes(themes, facet, finalTargetData, addedThemes);
+
+          ProgressManager.getInstance().runProcess(new Runnable() {
+            @Override
+            public void run() {
+              collectFrameworkThemes(themes, facet, finalTargetData, addedThemes);
+            }
+          }, new AndroidPreviewProgressIndicator(AndroidLayoutPreviewToolWindowForm.this, 0));
+
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {

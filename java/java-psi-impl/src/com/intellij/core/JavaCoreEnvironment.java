@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
@@ -60,10 +61,14 @@ public class JavaCoreEnvironment extends CoreEnvironment {
 
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
     registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
+    registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
     addExtension(ClsStubBuilderFactory.EP_NAME, new DefaultClsStubBuilderFactory());
+
+    myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
     myFileManager = new CoreJavaFileManager(myPsiManager, getLocalFileSystem(), myJarFileSystem);
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, null);
+    myProject.registerService(CoreJavaFileManager.class, myFileManager);
     registerComponentInstance(myProject.getPicoContainer(),
                               JavaPsiFacade.class,
                               javaPsiFacade);
@@ -72,10 +77,10 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
-    myProject.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
     myProject.registerService(PackageIndex.class, myFileManager);
-
+    
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
+    myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
   }
 
   public void addToClasspath(File path) {

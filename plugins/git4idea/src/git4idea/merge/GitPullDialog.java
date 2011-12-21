@@ -182,7 +182,7 @@ public class GitPullDialog extends DialogWrapper {
 
   @NotNull
   private Collection<String> getRemoteBranches(@NotNull GitDeprecatedRemote remote) {
-    if (GitHttpAdapter.isHttpUrlWithoutUserCredentials(remote.fetchUrl())) {
+    if (GitHttpAdapter.shouldUseJGit(remote.fetchUrl())) {
       GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(gitRoot());
       if (repository == null) {
         return Collections.emptyList();

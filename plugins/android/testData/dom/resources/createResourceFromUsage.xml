@@ -1,0 +1,3 @@
+<resources>
+    <drawable name="d1">@drawable/dd<caret>2</drawable>
+</resources>

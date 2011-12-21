@@ -86,7 +86,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   @Override
   protected void runBareRunnable(Runnable r) throws Throwable {
     if (getName().equals("testRefreshingAsynchronously")) {
-      // this methods waits for another thread to finish, that leds
+      // this method waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
       // outside of swing-thread
       r.run();

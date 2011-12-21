@@ -16,8 +16,6 @@
 
 package org.jetbrains.android.dom.resources;
 
-import com.intellij.util.xml.DomElement;
-
 import java.util.List;
 
 /**
@@ -28,5 +26,5 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public interface StringArray extends ResourceElement {
-  List<DomElement> getItems();
+  List<ArrayElement> getItems();
 }

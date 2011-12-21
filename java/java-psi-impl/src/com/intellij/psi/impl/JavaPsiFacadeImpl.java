@@ -299,7 +299,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
     @Override
     @NotNull
-    public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
       List<PsiClass> list = null;
       String packageName = psiPackage.getQualifiedName();
       for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
@@ -315,9 +315,18 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           }
         }
       }
-      return list == null ? PsiClass.EMPTY_ARRAY : list.toArray(new PsiClass[list.size()]);
-    }
+      if (list == null) {
+        return PsiClass.EMPTY_ARRAY;
+      }
+      ContainerUtil.quickSort(list, new Comparator<PsiClass>() {
+        @Override
+        public int compare(PsiClass o1, PsiClass o2) {
+          return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
+        }
+      });
 
+      return list.toArray(new PsiClass[list.size()]);
+    }
 
     @Override
     public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {

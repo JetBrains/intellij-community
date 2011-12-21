@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl.file;
 
+import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -39,14 +40,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
-public class JavaDirectoryServiceImpl extends JavaDirectoryService {
+public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.JavaDirectoryServiceImpl");
 
   @Override
@@ -55,23 +53,6 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     String packageName = projectFileIndex.getPackageNameByDirectory(dir.getVirtualFile());
     if (packageName == null) return null;
     return JavaPsiFacade.getInstance(dir.getProject()).findPackage(packageName);
-  }
-
-  @Override
-  @NotNull
-  public PsiClass[] getClasses(@NotNull PsiDirectory dir) {
-    LOG.assertTrue(dir.isValid());
-
-    List<PsiClass> classes = null;
-    for (PsiFile file : dir.getFiles()) {
-      if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
-        PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
-        if (psiClasses.length == 0) continue;
-        if (classes == null) classes = new ArrayList<PsiClass>();
-        ContainerUtil.addAll(classes, psiClasses);
-      }
-    }
-    return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);
   }
 
   @Override

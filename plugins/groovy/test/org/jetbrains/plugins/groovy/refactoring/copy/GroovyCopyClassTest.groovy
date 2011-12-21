@@ -60,6 +60,6 @@ public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
     def psiFile = myFixture.psiManager.findFile(file)
     //would be copied as file
     assertFalse(CopyClassesHandler.canCopyClass(myFixture.javaFacade.findClass("foo.$testName", GlobalSearchScope.allScope(project))));
-    assertFalse(CopyClassesHandler.canCopyClass(psiFile));
+    assertTrue(CopyClassesHandler.canCopyClass(psiFile));
   }
 }

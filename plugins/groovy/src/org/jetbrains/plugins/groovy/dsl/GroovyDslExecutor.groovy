@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.AnnotatedScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
+import com.intellij.util.ObjectUtils
 
 /**
  * @author ilyas
@@ -24,7 +25,7 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
 
 public class GroovyDslExecutor {
   static final def cats = PsiEnhancerCategory.EP_NAME.extensions.collect { it.class }
-  final List<Pair<ContextFilter, Closure>> enhancers = []
+  final List<Pair<ContextFilter, Closure>> enhancers = ObjectUtils.assertNotNull([])
 
   private final String myFileName;
   static final String ideaVersion

@@ -19,9 +19,10 @@ package org.jetbrains.android.dom.resources;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-import org.jetbrains.android.dom.converters.StaticEnumConverter;
-import org.jetbrains.android.dom.converters.FormatConverter;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
+import org.jetbrains.android.dom.converters.FormatConverter;
+import org.jetbrains.android.dom.converters.QuietResourceReferenceConverter;
+import org.jetbrains.android.dom.converters.StaticEnumConverter;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.List;
  * Time: 5:40:29 PM
  * To change this template use File | Settings | File Templates.
  */
+@Convert(QuietResourceReferenceConverter.class)
 public interface Item extends ResourceElement {
   class TypeConverter extends StaticEnumConverter {
     public TypeConverter() {

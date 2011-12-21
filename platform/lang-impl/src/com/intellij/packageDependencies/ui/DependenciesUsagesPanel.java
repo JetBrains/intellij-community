@@ -36,6 +36,7 @@ import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -87,6 +88,7 @@ public class DependenciesUsagesPanel extends UsagesPanel {
                         elementsToSearch = searchFor;
                         usages = FindDependencyUtil.findDependencies(myBuilders, searchIn, searchFor);
                       }
+                      assert !new HashSet<PsiFile>(elementsToSearch).contains(null);
                     }
                     catch (ProcessCanceledException e) {
                     }

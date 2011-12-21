@@ -132,11 +132,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     if (isStringLiteral(token)) {
-      boolean escapeSlashes = true;
       if (rawText != null && rawText.rawText != null) {
-        //is is assumed that all slashes are escaped in the raw text but some unescaped symbols can present (for example " copied from CharLiteral '"')
-        //so we should escape all needed symbols except slash.
-        escapeSlashes = false;
         text = rawText.rawText;
       }
 
@@ -144,7 +140,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       @NonNls String breaker = getLineBreaker(token);
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
-        buffer.append(escapeCharCharacters(lines[i], token, escapeSlashes));
+        buffer.append(escapeCharCharacters(lines[i], token));
         if (i != lines.length - 1 || "\n".equals(breaker) && text.endsWith("\n")) {
           buffer.append(breaker);
         }
@@ -153,10 +149,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     }
     else if (isCharLiteral(token)) {
       if (rawText != null && rawText.rawText != null) {
-        return escapeCharCharacters(rawText.rawText, token, false);
+        return escapeCharCharacters(rawText.rawText, token);
       }
       else {
-        return escapeCharCharacters(text, token, true);
+        return escapeCharCharacters(text, token);
       }
     }
     return text;
@@ -206,9 +202,9 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @NotNull
-  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token, boolean escapeSlashes) {
+  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     StringBuilder buffer = new StringBuilder();
-    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'",escapeSlashes, buffer);
+    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'", buffer);
     return buffer.toString();
   }
 }

@@ -1,0 +1,1 @@
+n7 uppercase, login & password order change

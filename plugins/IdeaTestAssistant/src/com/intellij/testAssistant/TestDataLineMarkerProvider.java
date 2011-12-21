@@ -1,9 +1,25 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.testAssistant;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -22,14 +38,6 @@ import java.util.List;
  */
 public class TestDataLineMarkerProvider implements LineMarkerProvider {
   public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
-    if (!(element instanceof PsiMethod)) {
-      return null;
-    }
-    final PsiMethod method = (PsiMethod)element;
-    if (isTestMethod(method)) {
-      return new LineMarkerInfo<PsiMethod>(method, method.getTextOffset(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null,
-                                           new TestDataNavigationHandler());
-    }
     return null;
   }
 
@@ -56,6 +64,20 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
   }
   
   public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+    for (PsiElement element : elements) {
+      if (!(element instanceof PsiMethod)) {
+        continue;
+      }
+      final PsiMethod method = (PsiMethod)element;
+      if (isTestMethod(method)) {
+        result.add(new LineMarkerInfo<PsiMethod>(
+          method, method.getTextOffset(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler()
+        ));
+      }
+    }
   }
 
   @Nullable
@@ -69,13 +91,17 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
         final Object constantValue = evaluationHelper.computeConstantExpression(value, false);
         if (constantValue instanceof String) {
           String path = (String) constantValue;
-          if (path.indexOf("$CONTENT_ROOT") >= 0) {
+          if (path.contains("$CONTENT_ROOT")) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-            final VirtualFile contentRoot = fileIndex.getContentRootForFile(psiClass.getContainingFile().getVirtualFile());
+            final VirtualFile file = psiClass.getContainingFile().getVirtualFile();
+            if (file == null) {
+              return null;
+            }
+            final VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
             if (contentRoot == null) return null;
             path = path.replace("$CONTENT_ROOT", contentRoot.getPath());
           }
-          if (path.indexOf("$PROJECT_ROOT") >= 0) {
+          if (path.contains("$PROJECT_ROOT")) {
             final VirtualFile baseDir = project.getBaseDir();
             if (baseDir == null) {
               return null;

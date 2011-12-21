@@ -18,6 +18,7 @@ package com.intellij.debugger.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.*;
@@ -65,14 +66,14 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
     public boolean isInterrupted() {
       assert myRequestFuture != null;
-      return myRequestFuture.isCancelled();
+      return myRequestFuture.isCancelled() || myRequestFuture.isDone();
     }
 
     public void join() throws InterruptedException, ExecutionException {
       assert myRequestFuture != null;
       try {
         myRequestFuture.get();
-      } 
+      }
       catch(CancellationException ignored) {
       }
     }
@@ -101,7 +102,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
     public boolean isDone() {
       assert myRequestFuture != null;
-      return myRequestFuture.isDone();
+      return myRequestFuture.isDone() && ourWorkerRequest.get() == null;
     }
   }
 
@@ -122,7 +123,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }
 
-  public void run(WorkerThreadRequest threadRequest) {
+  private void run(@NotNull WorkerThreadRequest threadRequest) {
     while(true) {
       try {
         if(threadRequest.isInterrupted()) {
