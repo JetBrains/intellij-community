@@ -35,11 +35,11 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
   }
 
   public String getDisplayName() {
-    return "Groovy Script";
+    return "Groovy";
   }
 
   public String getConfigurationTypeDescription() {
-    return "Groovy Script";
+    return "Groovy Class or Script";
   }
 
   public Icon getIcon() {
