@@ -65,11 +65,11 @@ public final class GitHttpAdapter {
 
   private static final Pattern HTTP_URL_WITH_USERNAME_AND_PASSWORD = Pattern.compile("http(s?)://([^\\s^@:]+):([^\\s^@:]+)@.*");
 
-  public static boolean isHttpUrlWithoutUserCredentials(@NotNull String url) {
-    // if username & password are specified in the url, give it to the native Git
+  public static boolean shouldUseJGit(@NotNull String url) {
     if (!url.startsWith("http")) {
       return false;
     }
+    // if username & password are specified in the url, give it to the native Git
     if (HTTP_URL_WITH_USERNAME_AND_PASSWORD.matcher(url).matches()) {
       return false;
     }
@@ -79,11 +79,11 @@ public final class GitHttpAdapter {
       return !netrcData.hasAuthDataForUrl(url);
     }
     catch (FileNotFoundException e) {
-      return false;
+      return true;
     }
     catch (IOException e) {
       LOG.warn("Couldn't read netrc file", e);
-      return false;
+      return true;
     }
   }
 

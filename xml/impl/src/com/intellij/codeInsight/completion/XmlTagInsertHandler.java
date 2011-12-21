@@ -60,8 +60,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   public void handleInsert(InsertionContext context, LookupElement item) {
-    LOG.assertTrue(context.getTailOffset() >= 0);
-
     Project project = context.getProject();
     Editor editor = context.getEditor();
     // Need to insert " " to prevent creating tags like <tagThis is my text
@@ -70,7 +68,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     PsiElement current = context.getFile().findElementAt(context.getStartOffset());
     editor.getDocument().deleteString(offset, offset + 1);
-    LOG.assertTrue(context.getTailOffset() >= 0);
 
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
@@ -87,7 +84,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
       if (descriptor != null) {
         insertIncompleteTag(context.getCompletionChar(), editor, project, descriptor, tag);
-        LOG.assertTrue(context.getTailOffset() >= 0);
       }
     }
     else if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
@@ -112,8 +108,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           editor.getDocument().deleteString(sOffset, eOffset);
           assert otherTag != null;
           editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
-
-          LOG.assertTrue(context.getTailOffset() >= 0);
         }
       }
 
@@ -122,15 +116,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       editor.getSelectionModel().removeSelection();
     }
 
-    LOG.assertTrue(context.getTailOffset() >= 0);
-
     if (context.getCompletionChar() == ' ' && TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       return;
     }
 
     final TailType tailType = LookupItem.handleCompletionChar(editor, item, context.getCompletionChar());
     tailType.processTail(editor, editor.getCaretModel().getOffset());
-    LOG.assertTrue(context.getTailOffset() >= 0);
   }
 
   private static void insertIncompleteTag(char completionChar,

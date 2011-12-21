@@ -74,6 +74,10 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
+    install();
+  }
+
+  public void install() {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
     if (userConfirm(selection)) {
@@ -113,12 +117,12 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       }
       catch (IOException e1) {
         PluginManagerMain.LOG.error(e1);
-        IOExceptionDialog.showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
+        IOExceptionDialog
+          .showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
       }
       getPluginTable().updateUI();
     }
   }
-
 
 
   public PluginTable getPluginTable() {

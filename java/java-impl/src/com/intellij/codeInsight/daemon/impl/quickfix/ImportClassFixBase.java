@@ -55,13 +55,23 @@ import java.util.regex.PatternSyntaxException;
 public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> implements HintAction, HighPriorityAction {
   private final T myRef;
 
-  protected ImportClassFixBase(T ref) {
+  protected ImportClassFixBase(@NotNull T ref) {
     myRef = ref;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myRef.isValid() && file.getManager().isInProject(file) && !getClassesToImport().isEmpty();
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiFile file) {
+    if (!myRef.isValid()) {
+      return false;
+    }
+    PsiManager manager = file.getManager();
+    if (!manager.isInProject(file)) {
+      return false;
+    }
+    if (getClassesToImport().isEmpty()) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -70,6 +80,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
   protected abstract boolean hasTypeParameters(T reference);
 
+  @NotNull
   public List<PsiClass> getClassesToImport() {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myRef.getProject());
     String name = getReferenceName(myRef);

@@ -66,6 +66,7 @@ public class EnumConstant implements GroovyElementTypes {
     PsiBuilder.Marker enumConstantsMarker = builder.mark();
 
     if (!parseEnumConstant(builder, parser)) {
+      enumConstantsMarker.drop();
       return;
     }
 

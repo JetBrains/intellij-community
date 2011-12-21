@@ -445,7 +445,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       try {
         LightPlatformTestCase.checkEditorsReleased();
       }
-      catch (AssertionError error) {
+      catch (Throwable error) {
         result.add(error);
       }
     }

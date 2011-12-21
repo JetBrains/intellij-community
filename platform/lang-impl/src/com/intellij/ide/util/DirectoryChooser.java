@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -55,6 +56,7 @@ import java.util.Map;
 
 public class DirectoryChooser extends DialogWrapper {
   @NonNls private static final String FILTER_NON_EXISTING = "filter_non_existing";
+  private static final String DEFAULT_SELECTION = "last_directory_selection";
   private final DirectoryChooserView myView;
   private boolean myFilterExisting;
   private PsiDirectory myDefaultSelection;
@@ -105,6 +107,13 @@ public class DirectoryChooser extends DialogWrapper {
     PropertiesComponent.getInstance().setValue(FILTER_NON_EXISTING, String.valueOf(myFilterExisting));
     if (myTabbedPaneWrapper.getSelectedIndex() == 1) {
       setSelection(myChooseByNamePanel.getChosenElement());
+    }
+    final ItemWrapper item = myView.getSelectedItem();
+    if (item != null) {
+      final PsiDirectory directory = item.getDirectory();
+      if (directory != null) {
+        PropertiesComponent.getInstance(directory.getProject()).setValue(DEFAULT_SELECTION, directory.getVirtualFile().getPath());
+      }
     }
     super.doOKAction();
   }
@@ -363,8 +372,11 @@ public class DirectoryChooser extends DialogWrapper {
     if (myView.getItemsSize() > 0){
       myView.clearItems();
     }
-    if (defaultSelection == null && directories.length > 0) {
-      defaultSelection = directories[0];
+    if (defaultSelection == null) {
+      defaultSelection = getDefaultSelection(directories, project);
+      if (defaultSelection == null && directories.length > 0) {
+        defaultSelection = directories[0];
+      }
     }
     int selectionIndex = -1;
     for(int i = 0; i < directories.length; i++){
@@ -435,6 +447,19 @@ public class DirectoryChooser extends DialogWrapper {
     }
     enableButtons();
     myView.getComponent().repaint();
+  }
+
+  @Nullable
+  private static PsiDirectory getDefaultSelection(PsiDirectory[] directories, Project project) {
+    final String defaultSelectionPath = PropertiesComponent.getInstance(project).getValue(DEFAULT_SELECTION);
+    if (defaultSelectionPath != null) {
+      final VirtualFile directoryByDefault = LocalFileSystem.getInstance().findFileByPath(defaultSelectionPath);
+      if (directoryByDefault != null) {
+        final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(directoryByDefault);
+        return directory != null && ArrayUtil.find(directories, directory) > -1 ? directory : null;
+      }
+    }
+    return null;
   }
 
   private static boolean isParent(PsiDirectory directory, PsiDirectory parentCandidate) {

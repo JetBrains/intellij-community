@@ -19,6 +19,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.commands.*;
@@ -67,7 +68,7 @@ public class GitFetcher {
       if (url == null) {
         continue;
       }
-      if (GitHttpAdapter.isHttpUrlWithoutUserCredentials(url)) {
+      if (GitHttpAdapter.shouldUseJGit(url)) {
         GitFetchResult res = GitHttpAdapter.fetch(repository, remote, url);
         myErrors.addAll(res.getErrors());
         if (!res.isSuccess()) {
@@ -86,7 +87,7 @@ public class GitFetcher {
   }
 
   private boolean fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote) {
-    final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.FETCH);
+    final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
     h.addParameters(remote.getName());
     final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
     fetchTask.setProgressIndicator(myProgressIndicator);
@@ -102,11 +103,15 @@ public class GitFetcher {
       protected void onCancel() {
         LOG.info("Cancelled fetch.");
       }
-
+      
       @Override
       protected void onFailure() {
         LOG.info("Error fetching: " + h.errors());
-        myErrors.addAll(h.errors());
+        if (!h.hadAuthRequest()) {
+          myErrors.addAll(h.errors());
+        } else {
+          myErrors.add(new VcsException("Authentication failed"));
+        }
       }
     });
     return success.get();

@@ -307,7 +307,12 @@ public class FocusTrackback {
 
     if (mustBeLastInStack) {
       for (int i = index + 1; i < stack.size(); i++) {
-        if (!stack.get(i).isConsumed()) {
+        if (!stack.get(i).isMustBeShown()) {
+          if ((stack.get(i).isSheduledForRestore() || stack.get(i).isWillBeSheduledForRestore()) && !stack.get(i).isConsumed()) {
+            toFocus = null;
+            break;
+          }
+        } else if (!stack.get(i).isConsumed()) {
           toFocus = null;
           break;
         }
