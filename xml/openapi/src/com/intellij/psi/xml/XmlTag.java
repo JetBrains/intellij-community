@@ -73,7 +73,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * @param enforceNamespacesDeep if you pass some xml tags to <code>bodyText</code> parameter, this flag sets namespace prefixes for them
    * @return created tag. Use {@link #addSubTag(XmlTag, boolean)}} to add it to parent
    */
-  XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @NonNls String bodyText, boolean enforceNamespacesDeep);
+  XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @Nullable @NonNls String bodyText, boolean enforceNamespacesDeep);
   XmlTag addSubTag(XmlTag subTag, boolean first);
 
   @NotNull XmlTag[] getSubTags();
