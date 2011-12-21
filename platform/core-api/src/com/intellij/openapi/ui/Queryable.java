@@ -23,7 +23,7 @@ import java.util.Map;
 
 public interface Queryable {
 
-  void putInfo(Map<String, String> info);
+  void putInfo(@NotNull Map<String, String> info);
 
   class PrintInfo {
     String[] myIdKeys;
@@ -69,7 +69,7 @@ public interface Queryable {
         id = map.values().iterator().next();
       }
 
-      StringBuffer info = new StringBuffer();
+      StringBuilder info = new StringBuilder();
       if (print.myInfoKeys != null) {
         for (String eachKey : print.myInfoKeys) {
           String eachValue = map.get(eachKey);
@@ -92,7 +92,7 @@ public interface Queryable {
   }
 
   interface Contributor {
-    void apply(Map<String, String> info);
+    void apply(@NotNull Map<String, String> info);
   }
 
 }

@@ -483,7 +483,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   @Override
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     PsiFileImpl.putInfo(this, info);
   }
 

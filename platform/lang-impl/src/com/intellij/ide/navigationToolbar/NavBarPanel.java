@@ -815,7 +815,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   @Override
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < myList.size(); i++) {
       NavBarItem each = myList.get(i);

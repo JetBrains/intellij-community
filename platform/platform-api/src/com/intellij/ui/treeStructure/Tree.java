@@ -638,7 +638,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     boolean accept(T node);
   }
 
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     final TreePath[] selection = getSelectionPaths();
     if (selection == null) return;
 

@@ -3038,7 +3038,7 @@ public class JBTabsImpl extends JComponent
     return getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
   }
 
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     final TabInfo selected = getSelectedInfo();
     if (selected != null) {
       selected.putInfo(info);
