@@ -102,7 +102,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private final TreeSelectionListener myTsl;
   private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
   private Content myContent;
-  private TreePath[] mySelectedPaths;
+  private Change[] mySelectedPaths;
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
@@ -160,11 +160,24 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        if (mySelectedPaths == null && e.getPaths() == null) {
+        Change[] selectedChanges = myView.getSelectedChanges();
+        if (mySelectedPaths == null && selectedChanges == null) {
           return;
         }
-        if (checkSelectionNotChanged(e)) return;
-        mySelectedPaths = e.getPaths();
+        if (mySelectedPaths != null && selectedChanges != null) {
+          if (mySelectedPaths.length == selectedChanges.length) {
+            boolean changed = false;
+            int idx = 0;
+            for (; idx < selectedChanges.length; idx++) {
+              Change change = selectedChanges[idx];
+              if (! change.equals(mySelectedPaths[idx])) {
+                changed = true;
+                break;
+              }
+            }
+            if (! changed) return;
+          }
+        }
         if (LOG.isDebugEnabled()) {
           StringWriter sw = new StringWriter();
           new Throwable().printStackTrace(new PrintWriter(sw));
@@ -176,31 +189,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
             changeDetails();
           }
         });
-      }
-
-      private boolean checkSelectionNotChanged(TreeSelectionEvent e) {
-        if (mySelectedPaths != null && e.getPaths() != null) {
-          if (mySelectedPaths.length == e.getPaths().length) {
-            boolean equal = true;
-            int idx = 0;
-            TreePath[] paths = e.getPaths();
-            for (; idx < mySelectedPaths.length; idx ++) {
-              Object last1 = mySelectedPaths[idx].getLastPathComponent();
-              Object last2 = paths[idx].getLastPathComponent();
-              if (last1 instanceof ChangesBrowserNode && last2.getClass().equals(last1.getClass())) {
-                equal = Comparing.equal(((ChangesBrowserNode)last1).getUserObject(), ((ChangesBrowserNode) last2).getUserObject());
-                if (! equal) break;
-              } else {
-                equal = false;
-                break;
-              }
-            }
-            if (equal) {
-              return true;
-            }
-          }
-        }
-        return false;
       }
 
       private String toStringPaths(TreePath[] paths) {
