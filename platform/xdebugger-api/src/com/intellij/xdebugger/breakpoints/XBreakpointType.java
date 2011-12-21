@@ -119,7 +119,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   /**
-   * @deprecated override {@link #getEditorsProvider(XBreakpoint)} instead
+   * @deprecated override {@link #getEditorsProvider(B, com.intellij.openapi.project.Project)} instead
    */
   @Nullable
   public XDebuggerEditorsProvider getEditorsProvider() {
@@ -127,7 +127,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   @Nullable
-  public XDebuggerEditorsProvider getEditorsProvider(@NotNull B breakpoint) {
+  public XDebuggerEditorsProvider getEditorsProvider(@NotNull B breakpoint, @NotNull Project project) {
     return getEditorsProvider();
   }
 
