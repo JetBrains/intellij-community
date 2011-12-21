@@ -70,11 +70,12 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myVmParameters;
   }
 
+  @Nullable
   public Charset getCharset() {
     return myCharset;
   }
 
-  public void setCharset(final Charset charset) {
+  public void setCharset(@Nullable final Charset charset) {
     myCharset = charset;
   }
 
