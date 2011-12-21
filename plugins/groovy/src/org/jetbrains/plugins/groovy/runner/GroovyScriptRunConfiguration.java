@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.HashMap;
@@ -246,7 +245,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
     }
     if (toRun instanceof GrTypeDefinition) {
-      if (!GroovyScriptRunConfigurationProducer.isRunnable(toRun) && !PsiMethodUtil.hasMainMethod(toRun)) {
+      if (!GroovyScriptRunConfigurationProducer.canBeRunByGroovy(toRun)) {
         throw new RuntimeConfigurationWarning(GroovyBundle.message("class.can't be executed"));
       }
     }
@@ -297,7 +296,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public void setProgramParameters(@Nullable String value) {
-    LOG.assertTrue(false, "Don't add program parameters to Groovy script run configuration. Use Script parameters instead");
+    LOG.error("Don't add program parameters to Groovy script run configuration. Use Script parameters instead");
   }
 
   @Override
