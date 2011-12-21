@@ -754,12 +754,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       StringBuilder buffer = new StringBuilder();
       if (((String)value).indexOf('\n') >= 0) {
         buffer.append("'''");
-        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "", false, buffer);
+        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "", false, true, buffer);
         buffer.append("'''");
       }
       else {
         buffer.append("'");
-        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "", false, buffer);
+        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "", false, true, buffer);
         buffer.append("'");
       }
       final GrExpression expr = createExpressionFromText(buffer.toString());

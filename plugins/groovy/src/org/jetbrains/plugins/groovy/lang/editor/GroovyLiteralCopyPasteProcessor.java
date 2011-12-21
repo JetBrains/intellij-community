@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -150,7 +149,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     IElementType tokenType = token.getNode().getElementType();
 
     if (tokenType == mREGEX_CONTENT || tokenType == mREGEX_LITERAL) {
-      return GrStringUtil.escapeForSlashyStrings(s);
+      return GrStringUtil.escapeSymbolsForSlashyStrings(s);
     }
 
     if (tokenType == mDOLLAR_SLASH_REGEX_CONTENT || tokenType == mDOLLAR_SLASH_REGEX_LITERAL) {
@@ -158,11 +157,13 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
-      return GrStringUtil.escapeSymbolsForGString(s, !token.getText().contains("\"\"\""));
+      boolean escapeDoubleQuotes = !token.getText().contains("\"\"\"");
+      return GrStringUtil.escapeSymbolsForGString(s, escapeDoubleQuotes, false);
     }
 
     if (tokenType == mSTRING_LITERAL) {
-      return GrStringUtil.escapeSymbolsForString(s, !token.getText().contains("'''"));
+      boolean escapeQuotes = !token.getText().contains("'''");
+      return GrStringUtil.escapeSymbolsForString(s, escapeQuotes, false);
     }
 
     return super.escapeCharCharacters(s, token);
@@ -182,11 +183,11 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
-      return StringUtil.unescapeStringCharacters(s);
+      return GrStringUtil.unescapeString(s);
     }
 
     if (tokenType == mSTRING_LITERAL) {
-      return StringUtil.unescapeStringCharacters(s);
+      return GrStringUtil.unescapeString(s);
     }
 
     return super.unescape(s, token);
