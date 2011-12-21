@@ -296,81 +296,96 @@ public class PyTypeChecker {
   }
 
   @Nullable
+  public static AnalyzeCallResults analyzeCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PyArgumentList args = call.getArgumentList();
+    if (args != null) {
+      final CallArgumentsMapping mapping = args.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
+      final Map<PyExpression, PyNamedParameter> arguments = mapping.getPlainMappedParams();
+      final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
+      if (markedCallee != null) {
+        final Callable callable = markedCallee.getCallable();
+        if (callable instanceof PyFunction) {
+          final PyExpression callee = call.getCallee();
+          final PyExpression receiver = callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
+          return new AnalyzeCallResults((PyFunction)callable, receiver, arguments);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static AnalyzeCallResults analyzeCall(@NotNull PyBinaryExpression expr, @NotNull TypeEvalContext context) {
+    final PsiPolyVariantReference ref = expr.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
+    if (ref != null) {
+      final ResolveResult[] resolveResult = ref.multiResolve(false);
+      AnalyzeCallResults firstResults = null;
+      for (ResolveResult result : resolveResult) {
+        final PsiElement resolved = result.getElement();
+        if (resolved instanceof PyFunction) {
+          final PyFunction function = (PyFunction)resolved;
+          final boolean isRight = PyNames.isRightOperatorName(function.getName());
+          final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
+          final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
+          final PyParameter[] parameters = function.getParameterList().getParameters();
+          if (parameters.length == 2) {
+            final PyNamedParameter param = parameters[1].getAsNamed();
+            if (arg != null && param != null) {
+              final Map<PyExpression, PyNamedParameter> arguments = new HashMap<PyExpression, PyNamedParameter>();
+              arguments.put(arg, param);
+              final AnalyzeCallResults resutls = new AnalyzeCallResults(function, receiver, arguments);
+              if (firstResults == null) {
+                firstResults = resutls;
+              }
+              if (match(param.getType(context), arg.getType(context), context)) {
+                return resutls;
+              }
+            }
+          }
+        }
+      }
+      if (firstResults != null) {
+        return firstResults;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static AnalyzeCallResults analyzeCall(@NotNull PySubscriptionExpression expr, @NotNull TypeEvalContext context) {
+    final PsiReference ref = expr.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
+    if (ref != null) {
+      final PsiElement resolved = ref.resolve();
+      if (resolved instanceof PyFunction) {
+        final PyFunction function = (PyFunction)resolved;
+        final PyParameter[] parameters = function.getParameterList().getParameters();
+        if (parameters.length == 2) {
+          final PyNamedParameter param = parameters[1].getAsNamed();
+          if (param != null) {
+            final Map<PyExpression, PyNamedParameter> arguments = new HashMap<PyExpression, PyNamedParameter>();
+            arguments.put(expr.getIndexExpression(), param);
+            return new AnalyzeCallResults(function, expr.getOperand(), arguments);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public static AnalyzeCallResults analyzeCallSite(@Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
     if (callSite == null) {
       return null;
     }
     final PsiElement parent = callSite.getParent();
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     if (parent instanceof PyCallExpression) {
-      final PyExpression receiver = callSite.getQualifier();
-      final PyCallExpression call = (PyCallExpression)parent;
-      final PyArgumentList args = call.getArgumentList();
-      if (args != null) {
-        final CallArgumentsMapping mapping = args.analyzeCall(resolveContext);
-        final Map<PyExpression, PyNamedParameter> arguments = mapping.getPlainMappedParams();
-        final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
-        if (markedCallee != null) {
-          final Callable callable = markedCallee.getCallable();
-          if (callable instanceof PyFunction) {
-            return new AnalyzeCallResults((PyFunction)callable, receiver, arguments);
-          }
-        }
-      }
+      return analyzeCall((PyCallExpression)parent, context);
     }
     else if (callSite instanceof PyBinaryExpression) {
-      final PyBinaryExpression expr = (PyBinaryExpression)callSite;
-      final PsiPolyVariantReference ref = expr.getReference(resolveContext);
-      if (ref != null) {
-        final ResolveResult[] resolveResult = ref.multiResolve(false);
-        AnalyzeCallResults firstResults = null;
-        for (ResolveResult result : resolveResult) {
-          final PsiElement resolved = result.getElement();
-          if (resolved instanceof PyFunction) {
-            final PyFunction function = (PyFunction)resolved;
-            final boolean isRight = PyNames.isRightOperatorName(function.getName());
-            final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
-            final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
-            final PyParameter[] parameters = function.getParameterList().getParameters();
-            if (parameters.length == 2) {
-              final PyNamedParameter param = parameters[1].getAsNamed();
-              if (arg != null && param != null) {
-                final Map<PyExpression, PyNamedParameter> arguments = new HashMap<PyExpression, PyNamedParameter>();
-                arguments.put(arg, param);
-                final AnalyzeCallResults resutls = new AnalyzeCallResults(function, receiver, arguments);
-                if (firstResults == null) {
-                  firstResults = resutls;
-                }
-                if (match(param.getType(context), arg.getType(context), context)) {
-                  return resutls;
-                }
-              }
-            }
-          }
-        }
-        if (firstResults != null) {
-          return firstResults;
-        }
-      }
+      return analyzeCall((PyBinaryExpression)callSite, context);
     }
     else if (callSite instanceof PySubscriptionExpression) {
-      final PySubscriptionExpression expr = (PySubscriptionExpression)callSite;
-      final PsiReference ref = expr.getReference(resolveContext);
-      if (ref != null) {
-        final PsiElement resolved = ref.resolve();
-        if (resolved instanceof PyFunction) {
-          final PyFunction function = (PyFunction)resolved;
-          final PyParameter[] parameters = function.getParameterList().getParameters();
-          if (parameters.length == 2) {
-            final PyNamedParameter param = parameters[1].getAsNamed();
-            if (param != null) {
-              final Map<PyExpression, PyNamedParameter> arguments = new HashMap<PyExpression, PyNamedParameter>();
-              arguments.put(expr.getIndexExpression(), param);
-              return new AnalyzeCallResults(function, expr.getOperand(), arguments);
-            }
-          }
-        }
-      }
+      return analyzeCall((PySubscriptionExpression)callSite, context);
     }
     return null;
   }

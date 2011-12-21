@@ -342,6 +342,16 @@ def test_right_operators():
     ]
 
 
+def test_string_integer():
+    print('foo' + 'bar')
+    print(2 + 3)
+    print('foo' + <warning descr="Expected type 'one of (str, unicode)', got 'int' instead">3</warning>)
+    print(3 + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>)
+    print('foo' + 'bar' * 3)
+    print('foo' + 3 * 'bar')
+    print('foo' + <warning descr="Expected type 'one of (str, unicode)', got 'int' instead">2 * 3</warning>)
+
+
 def test_isinstance_implicit_self_types():
     x = 1
     if isinstance(x, unicode):

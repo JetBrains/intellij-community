@@ -34,7 +34,7 @@ i = "test"
 '%(name)s' % {'name': i}  #ok
 '%s' % i  #ok
 '%f' % i  #Unexpected type
-'%f' % (2 * i + 5)  #ok
+'%f' % (2 * 3 + 5)  #ok
 s = "%s" % "a".upper() #ok
 x = ['a', 'b', 'c']
 print "%d: %s" % (len(x), ", ".join(x)) #ok
