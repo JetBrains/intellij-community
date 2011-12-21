@@ -150,10 +150,11 @@ public class XmlCompletionContributor extends CompletionContributor {
     final String namespace = tag.getNamespace();
     final String prefix = result.getPrefixMatcher().getPrefix();
     final int pos = prefix.indexOf(':');
-    final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
 
     final PsiReference reference = tag.getReference();
-    if (reference != null && !namespace.isEmpty() && !tag.getNamespacePrefix().isEmpty()) {
+    String namespacePrefix = tag.getNamespacePrefix();
+
+    if (reference != null && !namespace.isEmpty() && !namespacePrefix.isEmpty()) {
       // fallback to simple completion
       final Set<LookupElement> set = new HashSet<LookupElement>();
       new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
@@ -170,7 +171,7 @@ public class XmlCompletionContributor extends CompletionContributor {
       for (Pair<String, String> pair : names) {
         final String name = pair.getFirst();
         final String ns = pair.getSecond();
-        final LookupElement item = createLookupElement(name, ns, ns, namespacePrefix);
+        final LookupElement item = createLookupElement(name, ns, ns, namespacePrefix.isEmpty() ? null : namespacePrefix);
         newResult.addElement(item);
       }
     }
