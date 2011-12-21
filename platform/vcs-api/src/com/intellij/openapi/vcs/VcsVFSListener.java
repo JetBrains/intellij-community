@@ -415,12 +415,16 @@ public abstract class VcsVFSListener implements Disposable {
           checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {
             executeAdd();
+            myAddedFiles.clear();
           }
           if (!myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty()) {
             executeDelete();
+            myDeletedFiles.clear();
+            myDeletedWithoutConfirmFiles.clear();
           }
           if (!myMovedFiles.isEmpty()) {
             executeMoveRename();
+            myMovedFiles.clear();
           }
           if (! myDirtyFiles.isEmpty()) {
             final List<VirtualFile> files = new ArrayList<VirtualFile>();

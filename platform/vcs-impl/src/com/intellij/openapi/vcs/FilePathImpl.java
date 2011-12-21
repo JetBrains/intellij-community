@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -93,8 +94,14 @@ public class FilePathImpl implements FilePath {
       return false;
     }
     else {
+      if (! isSpecialName(myName) && ! isSpecialName(((FilePath)o).getName()) &&
+        (! Comparing.equal(myName, ((FilePath)o).getName()))) return false;
       return myFile.equals(((FilePath)o).getIOFile());
     }
+  }
+  
+  private boolean isSpecialName(final String name) {
+    return ".".equals(name) || "..".equals(name);
   }
 
   public void refresh() {

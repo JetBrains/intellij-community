@@ -57,6 +57,11 @@ public class VcsRootIterator {
     return true;
   }
 
+  public static boolean iterateVfUnderVcsRoot(Project project, VirtualFile file, Processor<VirtualFile> processor) {
+    final MyRootIterator rootIterator = new MyRootIterator(project, file, null, processor, null);
+    return rootIterator.iterate();
+  }
+
   private static class MyRootFilter {
     private final VirtualFile myRoot;
     private final String myVcsName;
@@ -102,20 +107,22 @@ public class VcsRootIterator {
 
   public static boolean iterateVcsRoot(final Project project, final VirtualFile root, final Processor<FilePath> processor,
                                        @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
-    final MyRootIterator rootIterator = new MyRootIterator(project, root, processor, directoryFilter);
+    final MyRootIterator rootIterator = new MyRootIterator(project, root, processor, null, directoryFilter);
     return rootIterator.iterate();
   }
 
   private static class MyRootIterator {
     private final Processor<FilePath> myProcessor;
+    private final Processor<VirtualFile> myVfProcessor;
     @Nullable private final PairProcessor<VirtualFile, VirtualFile[]> myDirectoryFilter;
     private final LinkedList<VirtualFile> myQueue;
     private final MyRootFilter myRootPresentFilter;
     private final FileIndexFacade myExcludedFileIndex;
 
-    private MyRootIterator(final Project project, final VirtualFile root, final Processor<FilePath> processor,
+    private MyRootIterator(final Project project, final VirtualFile root, final Processor<FilePath> processor, final Processor<VirtualFile> vfProcessor,
                            @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
       myProcessor = processor;
+      myVfProcessor = vfProcessor;
       myDirectoryFilter = directoryFilter;
 
       final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -130,7 +137,7 @@ public class VcsRootIterator {
     public boolean iterate() {
       while (! myQueue.isEmpty()) {
         final VirtualFile current = myQueue.removeFirst();
-        if (! myProcessor.process(new FilePathImpl(current))) return false;
+        if (!process(current)) return false;
 
         if (current.isDirectory()) {
           final VirtualFile[] files = current.getChildren();
@@ -144,6 +151,14 @@ public class VcsRootIterator {
         }
       }
       return true;
+    }
+
+    private boolean process(VirtualFile current) {
+      if (myProcessor != null) {
+        return myProcessor.process(new FilePathImpl(current));
+      } else {
+        return myVfProcessor.process(current);
+      }
     }
   }
 }

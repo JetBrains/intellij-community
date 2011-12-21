@@ -91,6 +91,8 @@ public abstract class VcsDirtyScope {
    * @param iterator an iterator to invoke
    */
   public abstract void iterate(Processor<FilePath> iterator);
+  
+  public abstract void iterateExistingInsideScope(Processor<VirtualFile> vf);
 
   public abstract boolean isEmpty();
 
@@ -104,5 +106,12 @@ public abstract class VcsDirtyScope {
 
   public Collection<VirtualFile> getAffectedContentRootsWithCheck() {
     return getAffectedContentRoots();
+  }
+  
+  public boolean wasEveryThingDirty() {
+    return false;
+  }
+
+  public void setWasEverythingDirty(boolean wasEverythingDirty) {
   }
 }

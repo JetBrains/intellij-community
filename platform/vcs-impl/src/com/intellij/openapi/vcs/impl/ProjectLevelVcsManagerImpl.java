@@ -179,6 +179,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return AllVcses.getInstance(myProject).getDescriptor(name);
   }
 
+  @Override
+  public void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor) {
+    VcsRootIterator.iterateVfUnderVcsRoot(myProject, file, processor);
+  }
+
   public VcsDescriptor[] getAllVcss() {
     return AllVcses.getInstance(myProject).getAll();
   }

@@ -394,7 +394,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       myUpdateChangesProgressIndicator = createProgressIndicator();
 
-      iterateScopes(dataHolder, scopes);
+      iterateScopes(dataHolder, scopes, wasEverythingDirty);
 
       final boolean takeChanges = (myUpdateException == null);
       if (takeChanges) {
@@ -476,7 +476,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return checkScopeIsAllIgnored(invalidated);
   }
 
-  private void iterateScopes(DataHolder dataHolder, List<VcsDirtyScope> scopes) {
+  private void iterateScopes(DataHolder dataHolder, List<VcsDirtyScope> scopes, boolean wasEverythingDirty) {
     final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
     // do actual requests about file statuses
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
@@ -487,6 +487,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       final AbstractVcs vcs = scope.getVcs();
       if (vcs == null) continue;
+      scope.setWasEverythingDirty(wasEverythingDirty);
       final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope) scope);
 
       myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
