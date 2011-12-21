@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import javax.swing.*;
-import java.util.Collection;
 
 /**
  * @author sergey.evdokimov
