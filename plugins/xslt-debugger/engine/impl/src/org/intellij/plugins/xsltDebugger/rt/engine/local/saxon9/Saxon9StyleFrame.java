@@ -22,9 +22,15 @@ import net.sf.saxon.expr.instruct.GlobalVariable;
 import net.sf.saxon.expr.instruct.LocalVariable;
 import net.sf.saxon.expr.instruct.SlotManager;
 import net.sf.saxon.functions.FunctionLibrary;
-import net.sf.saxon.om.*;
+import net.sf.saxon.om.Item;
+import net.sf.saxon.om.SequenceIterator;
+import net.sf.saxon.om.StructuredQName;
+import net.sf.saxon.om.ValueRepresentation;
 import net.sf.saxon.style.*;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.iter.EmptyIterator;
+import net.sf.saxon.tree.iter.SingletonIterator;
+import net.sf.saxon.type.AnyItemType;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.Type;
 import net.sf.saxon.type.TypeHierarchy;
@@ -74,18 +80,7 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       final int variables = myXPathContext.getStackFrame().getStackFrameMap().getNumberOfVariables();
       ExpressionTool.allocateSlots(expression, variables, myElement.getContainingSlotManager());
 
-      final TypeHierarchy typeHierarchy = myXPathContext.getConfiguration().getTypeHierarchy();
-      final ItemType itemType = expression.getItemType(typeHierarchy);
-
-      final SequenceIterator it = expression.iterate(myXPathContext);
-      Item value = null;
-      if (it.next() != null) {
-        value = it.current();
-      }
-      if (it.next() == null) {
-        return new SingleValue(value, itemType);        
-      }
-      return new SequenceValue(value, it, itemType);
+      return createValue(new ExpressionFacade(expression));
     } catch (AssertionError e) {
       debug(e);
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
@@ -97,9 +92,38 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     }
   }
 
+  private Value createValue(ValueFacade expression) throws XPathException {
+    final TypeHierarchy typeHierarchy = myXPathContext.getConfiguration().getTypeHierarchy();
+    final ItemType itemType = expression.getItemType(typeHierarchy);
+
+    final SequenceIterator it = expression.iterate(myXPathContext);
+    Item value = null;
+    if (it.next() != null) {
+      value = it.current();
+    }
+    if (it.next() == null) {
+      return new SingleValue(value, itemType);        
+    }
+    return new SequenceValue(value, it, itemType);
+  }
+
   public List<Debugger.Variable> getVariables() {
     assert isValid();
 
+    Saxon9TraceListener.MUTED = true;
+    final ArrayList<Debugger.Variable> variables;
+    try {
+      variables = collectVariables();
+    } finally {
+      Saxon9TraceListener.MUTED = false;
+    }
+
+    Collections.sort(variables, VariableComparator.INSTANCE);
+
+    return variables;
+  }
+
+  private ArrayList<Debugger.Variable> collectVariables() {
     final ArrayList<Debugger.Variable> variables = new ArrayList<Debugger.Variable>();
 
     final HashMap<StructuredQName,GlobalVariable> globalVariables =
@@ -107,20 +131,11 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     if (globalVariables != null) {
       for (StructuredQName name : globalVariables.keySet()) {
         final GlobalVariable globalVariable = globalVariables.get(name);
-        variables.add(new VariableImpl(globalVariable.getVariableQName().getDisplayName(), new Value() {
-          public Object getValue() {
-            try {
-              final ValueRepresentation valueRepresentation = globalVariable.evaluateVariable(myXPathContext);
-              return valueRepresentation != null ? valueRepresentation.getStringValue() : null;
-            } catch (XPathException e) {
-              return " - error: " + e.getMessage() + " - ";
-            }
-          }
 
-          public Type getType() {
-            return new ObjectType(globalVariable.getRequiredType().toString());
-          }
-        }, false, Debugger.Variable.Kind.VARIABLE, "", -1));
+        final Value value = createVariableValue(new GlobalVariableFacade(globalVariable));
+        final int lineNumber = globalVariable.getLineNumber();
+        final String systemId = globalVariable.getSourceLocator().getSystemId();
+        variables.add(new VariableImpl(globalVariable.getVariableQName().getDisplayName(), value, true, Debugger.Variable.Kind.VARIABLE, systemId, lineNumber));
       }
     }
 
@@ -128,16 +143,8 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
     while (context != null) {
       final StackFrame frame = context.getStackFrame();
       final SlotManager map = frame.getStackFrameMap();
-      //final int numberOfVariables = map.getNumberOfVariables();
-      //System.out.println("numberOfVariables = " + numberOfVariables);
-
-      //for (int i = 0; i < numberOfVariables; i++) {
-      //  final ValueRepresentation valueRepresentation = context.evaluateLocalVariable(i);
-      //  System.out.println("valueRepresentation = " + valueRepresentation);
-      //}
 
       final ValueRepresentation[] values = frame.getStackFrameValues();
-      //System.out.println("values = " + Arrays.toString(values));
 
       outer:
       for (int i = 0, valuesLength = values.length; i < valuesLength; i++) {
@@ -150,36 +157,22 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
             }
           }
 
-          variables.add(new VariableImpl(name, new Value() {
-            public Object getValue() {
-              try {
-                return value.getStringValue();
-              } catch (XPathException e) {
-                return " - error: " + e.getMessage() + " - ";
-              }
-            }
-
-            public Type getType() {
-              if (value instanceof net.sf.saxon.value.Value) {
-                final ItemType type =
-                  ((net.sf.saxon.value.Value)value).getItemType(myXPathContext.getConfiguration().getTypeHierarchy());
-                return new ObjectType(type.toString());
-              } else if (value instanceof NodeInfo) {
-                return XPathType.NODESET;
-              }
-              return XPathType.UNKNOWN;
-            }
-          }, false, Debugger.Variable.Kind.VARIABLE, "", -1));
+          final Value localValue = createVariableValue(new LocalVariableFacade(value));
+          variables.add(new VariableImpl(name, localValue, false, Debugger.Variable.Kind.VARIABLE, "", -1));
         }
       }
 
       context = context.getCaller();
-      //System.out.println("context = " + context);
     }
-
-    Collections.sort(variables, VariableComparator.INSTANCE);
-
     return variables;
+  }
+
+  private Value createVariableValue(ValueFacade facade) {
+    try {
+      return createValue(facade);
+    } catch (XPathException e) {
+      return new ErrorValue(e.getMessage(), facade);
+    }
   }
 
   private static class SingleValue implements Value {
@@ -337,6 +330,102 @@ class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debug
       public FunctionLibrary copy() {
         return this;
       }
+    }
+  }
+
+  private interface ValueFacade {
+    ItemType getItemType(TypeHierarchy hierarchy);
+
+    SequenceIterator iterate(XPathContext context) throws XPathException;
+  }
+
+  private static class ExpressionFacade implements ValueFacade {
+    private final Expression myExpression;
+
+    public ExpressionFacade(Expression expression) {
+      myExpression = expression;
+    }
+
+    public ItemType getItemType(TypeHierarchy hierarchy) {
+      return myExpression.getItemType(hierarchy);
+    }
+
+    public SequenceIterator iterate(XPathContext context) throws XPathException {
+      return myExpression.iterate(context);
+    }
+  }
+
+  private static class GlobalVariableFacade implements ValueFacade {
+    private final GlobalVariable myVariable;
+
+    public GlobalVariableFacade(GlobalVariable variable) {
+      myVariable = variable;
+    }
+
+    public ItemType getItemType(TypeHierarchy hierarchy) {
+      return myVariable.getRequiredType().getPrimaryType();
+    }
+
+    public SequenceIterator iterate(XPathContext context) throws XPathException {
+      final SequenceIterator iterator = myVariable.iterate(context);
+      if (iterator instanceof EmptyIterator) {
+        final ValueRepresentation value = myVariable.evaluateVariable(context);
+        if (value instanceof Item) {
+          return SingletonIterator.makeIterator((Item)value);
+        } else if (value instanceof net.sf.saxon.value.Value) {
+          return ((net.sf.saxon.value.Value)value).iterate();
+        } else {
+          return iterator;
+        }
+      } else {
+        return iterator;
+      }
+    }
+  }
+
+  private static class LocalVariableFacade implements ValueFacade {
+    private final ValueRepresentation myValue;
+
+    public LocalVariableFacade(ValueRepresentation value) {
+      myValue = value;
+    }
+
+    public ItemType getItemType(TypeHierarchy hierarchy) {
+      if (myValue instanceof net.sf.saxon.value.Value) {
+        return ((net.sf.saxon.value.Value)myValue).getItemType(hierarchy);
+      }
+      if (myValue instanceof Item) {
+        return Type.getItemType((Item)myValue, hierarchy);
+      }
+      return AnyItemType.getInstance();
+    }
+
+    public SequenceIterator iterate(XPathContext context) throws XPathException {
+      if (myValue instanceof net.sf.saxon.value.Value) {
+        return ((net.sf.saxon.value.Value)myValue).iterate(context);
+      }
+      if (myValue instanceof Item) {
+        return ((Item)myValue).getTypedValue();
+      }
+      return EmptyIterator.getInstance();
+    }
+  }
+
+  private class ErrorValue implements Value {
+    private final String myError;
+    private final ValueFacade myFacade;
+
+    public ErrorValue(String error, ValueFacade facade) {
+      myError = error;
+      myFacade = facade;
+    }
+
+    public Object getValue() {
+      return " - error: " + myError + " - ";
+    }
+
+    public Type getType() {
+      return new ObjectType(myFacade.getItemType(myXPathContext.getConfiguration().getTypeHierarchy()).toString());
     }
   }
 }

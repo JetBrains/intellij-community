@@ -142,7 +142,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
   }
 
   @Override
-  public void apply(Map<String, String> info) {
+  public void apply(@NotNull Map<String, String> info) {
     info.put("toDoFileCount", String.valueOf(getFileCount(getValue())));
     info.put("toDoItemCount", String.valueOf(getTodoItemCount(getValue())));
   }

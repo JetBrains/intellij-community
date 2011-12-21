@@ -210,11 +210,12 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
         indicator.setIndeterminate(true);
         final Map<String, SvnMergeInfoRootPanelManual> panels = new HashMap<String, SvnMergeInfoRootPanelManual>();
         final Map<String, MergeInfoHolder> holders = new HashMap<String, MergeInfoHolder>();
-        final JPanel mainPanel = prepareData(panels, holders);
+        final List<WCInfoWithBranches> roots = myDataLoader.loadRoots();
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (myDisposed) return;
-            
+            final JPanel mainPanel = prepareData(panels, holders, roots);
+
             myMergePanels.clear();
             myHolders.clear();
             myMergePanels.putAll(panels);
@@ -270,9 +271,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     myToolbarComponent = actionToolbar.getComponent();
   }
 
-  private JPanel prepareData(final Map<String, SvnMergeInfoRootPanelManual> panels, final Map<String, MergeInfoHolder> holders) {
-      final List<WCInfoWithBranches> roots = myDataLoader.loadRoots();
-
+  private JPanel prepareData(final Map<String, SvnMergeInfoRootPanelManual> panels,
+                             final Map<String, MergeInfoHolder> holders,
+                             List<WCInfoWithBranches> roots) {
       final JPanel mainPanel = new JPanel(new GridBagLayout());
       boolean onlyOneRoot = roots.size() == 1;
       final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,

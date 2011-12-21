@@ -17,7 +17,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -43,7 +42,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
@@ -63,8 +61,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -304,7 +300,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
             DumbService.getInstance(myProject).waitForSmartMode();
             doRender(facet, psiFile);
           }
-        }, new MyProgressIndicator());
+        }, new AndroidPreviewProgressIndicator(myToolWindowForm, 1000));
       }
 
       @Override
@@ -626,47 +622,6 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         }
       }
       processFileEditorChange(layoutXmlEditor);
-    }
-  }
-
-  private class MyProgressIndicator extends ProgressIndicatorBase {
-    private final Object myLock = new Object();
-
-    @Override
-    public void start() {
-      super.start();
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          final Timer timer = UIUtil.createNamedTimer("Android rendering progress timer", 1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              synchronized (myLock) {
-                if (isRunning() && myToolWindowForm != null) {
-                  myToolWindowForm.getPreviewPanel().showProgress();
-                }
-              }
-            }
-          });
-          timer.setRepeats(false);
-          timer.start();
-        }
-      });
-    }
-
-    @Override
-    public void stop() {
-      synchronized (myLock) {
-        super.stop();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myToolWindowForm != null) {
-              myToolWindowForm.getPreviewPanel().hideProgress();
-            }
-          }
-        });
-      }
     }
   }
 }

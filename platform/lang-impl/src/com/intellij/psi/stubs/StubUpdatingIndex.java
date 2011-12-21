@@ -80,7 +80,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       return elementType instanceof IStubFileElementType &&
             (((IStubFileElementType)elementType).shouldBuildStubFor(file) || IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
     }
-    else if (fileType.isBinary()) {
+    if (fileType.isBinary()) {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       return builder != null && builder.acceptsFile(file);
     }

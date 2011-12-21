@@ -106,6 +106,8 @@ public class VcsChangeDetailsManager {
 
     @Override
     public boolean canComment(Change change) {
+      FilePath path = ChangesUtil.getFilePath(change);
+      if (path != null && path.isDirectory()) return false;
       return ShowDiffAction.isBinaryChangeAndCanShow(myProject, change);
     }
 

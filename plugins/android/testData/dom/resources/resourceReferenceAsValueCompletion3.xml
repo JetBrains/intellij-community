@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <bool name="res1">false</bool>
+  <color name="res2">#ffffff</color>
+  <string name="res3">str</string>
+  <integer name="res4">1</integer>
+
+  <bool name="s1"><caret></bool>
+</resources>

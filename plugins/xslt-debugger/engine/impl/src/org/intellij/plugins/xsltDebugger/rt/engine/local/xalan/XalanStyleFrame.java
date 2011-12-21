@@ -68,7 +68,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
     final String name = variable.getName().getLocalName();
     try {
       final Value value = kind == Debugger.Variable.Kind.PARAMETER ?
-                          eval("$" + variable.getName().toNamespacedString()) : // http://youtrack.jetbrains.net/issue/IDEA-78638
+                          eval("$" + variable.getName().toString()) : // http://youtrack.jetbrains.net/issue/IDEA-78638
                           new XObjectValue(variable.getValue(myTransformer, myCurrentNode));
 
       variables.add(new VariableImpl(name, value, global, kind, variable.getSystemId(), variable.getLineNumber()));

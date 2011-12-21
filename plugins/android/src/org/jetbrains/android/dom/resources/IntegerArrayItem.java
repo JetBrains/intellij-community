@@ -17,11 +17,14 @@ package org.jetbrains.android.dom.resources;
 
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
+import org.jetbrains.android.dom.AdditionalConverter;
 import org.jetbrains.android.dom.converters.IntegerConverter;
+import org.jetbrains.android.dom.converters.QuietResourceReferenceConverter;
 
 /**
  * @author Eugene.Kudelevsky
  */
-@Convert(IntegerConverter.class)
+@Convert(QuietResourceReferenceConverter.class)
+@AdditionalConverter(IntegerConverter.class)
 public interface IntegerArrayItem extends GenericDomValue {
 }

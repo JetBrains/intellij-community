@@ -1,0 +1,4 @@
+<resources>
+    <drawable name="d1">@drawable/dd2</drawable>
+    <drawable name="dd2"></drawable>
+</resources>
