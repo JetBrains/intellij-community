@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -333,7 +333,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       }
       final int precedence = ParenthesesUtils.getPrecedence(min);
       final String minText;
-      if (precedence > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+      if (precedence >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
         minText = '(' + min.getText() + ')';
       }
       else {
