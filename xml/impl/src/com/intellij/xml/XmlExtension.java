@@ -92,7 +92,7 @@ public abstract class XmlExtension {
   }
 
   public abstract void insertNamespaceDeclaration(@NotNull final XmlFile file,
-                                                    @NotNull final Editor editor,
+                                                    @Nullable final Editor editor,
                                                     @NonNls @NotNull final Set<String> possibleNamespaces,
                                                     @NonNls @Nullable final String nsPrefix,
                                                     @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException;

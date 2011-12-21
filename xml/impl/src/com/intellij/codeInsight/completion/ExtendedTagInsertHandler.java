@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,13 +27,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -126,9 +125,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
   @Nullable
   public static String getPrefixByNamespace(XmlFile file, final String namespace) {
-    final XmlDocument document = file.getDocument();
-    assert document != null;
-    final XmlTag tag = document.getRootTag();
+    final XmlTag tag = file.getRootTag();
     return tag == null ? null : tag.getPrefixByNamespace(namespace);
   }
 
