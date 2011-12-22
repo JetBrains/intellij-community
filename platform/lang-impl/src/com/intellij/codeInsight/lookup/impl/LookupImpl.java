@@ -364,7 +364,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     ensureSelectionVisible();
   }
 
-  //todo closing such a lookup still cancels the live template, it shouldn't
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
     myStartCompletionWhenNothingMatches = startCompletionWhenNothingMatches;
   }
