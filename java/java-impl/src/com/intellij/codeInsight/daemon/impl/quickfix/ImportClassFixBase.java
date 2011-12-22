@@ -33,12 +33,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,10 +109,38 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
         }
       }
     }
+
+    final String memberName = getRequiredMemberName(myRef);
+    if (memberName != null) {
+      List<PsiClass> filtered = ContainerUtil.findAll(classList, new Condition<PsiClass>() {
+        @Override
+        public boolean value(PsiClass psiClass) {
+          PsiField field = psiClass.findFieldByName(memberName, true);
+          if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && isAccessible(field, myRef)) return true;
+
+          PsiClass inner = psiClass.findInnerClassByName(memberName, true);
+          if (inner != null && isAccessible(inner, myRef)) return true;
+
+          for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
+            if (method.hasModifierProperty(PsiModifier.STATIC) && isAccessible(method, myRef)) return true;
+          }
+          return false;
+        }
+      });
+      if (!filtered.isEmpty()) {
+        return filtered;
+      }
+    }
+
     return classList;
   }
 
-  protected abstract boolean isAccessible(PsiClass aClass, T reference);
+  @Nullable
+  protected String getRequiredMemberName(T reference) {
+    return null;
+  }
+
+  protected abstract boolean isAccessible(PsiMember member, T reference);
 
   protected abstract String getQualifiedName(T reference);
 

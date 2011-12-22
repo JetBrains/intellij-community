@@ -18,9 +18,9 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -75,7 +75,15 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
     return false;
   }
 
-  protected boolean isAccessible(PsiClass aClass, GrReferenceElement reference) {
+  @Override
+  protected String getRequiredMemberName(GrReferenceElement reference) {
+    if (reference.getParent() instanceof GrReferenceElement) {
+      return ((GrReferenceElement)reference.getParent()).getReferenceName();
+    }
+    return super.getRequiredMemberName(reference);
+  }
+
+  protected boolean isAccessible(PsiMember member, GrReferenceElement reference) {
     return true;
   }
 }
