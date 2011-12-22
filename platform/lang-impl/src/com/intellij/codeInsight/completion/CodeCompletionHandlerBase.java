@@ -40,7 +40,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
@@ -51,10 +50,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -75,7 +71,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -272,7 +267,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                           boolean hasModifiers,
                           int invocationCount,
                           PsiFile hostFile,
-                          int hostStartOffset, Editor hostEditor, OffsetMap hostMap) {
+                          int hostStartOffset, Editor hostEditor, OffsetMap hostMap, OffsetTranslator translator) {
     CompletionContext context = createCompletionContext(hostFile, hostStartOffset, hostEditor, hostMap);
     CompletionParameters parameters = createCompletionParameters(invocationCount, initContext, context);
 
@@ -291,8 +286,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
                                                                                   initContext.getOffsetMap(), hasModifiers);
-    indicator.addMapToDispose(hostMap);
-    indicator.addMapToDispose(context.getOffsetMap());
+    Disposer.register(indicator, hostMap);
+    Disposer.register(indicator, context.getOffsetMap());
+    Disposer.register(indicator, translator);
 
     CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
 
@@ -539,6 +535,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Document document = fileCopy[0].getViewProvider().getDocument();
     assert document != null : "no document";
+    final OffsetTranslator translator = new OffsetTranslator(initContext.getEditor().getDocument(), initContext.getFile(), document);
 
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       @Override
@@ -546,7 +543,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            patchFileCopy(initContext, fileCopy[0], document);
+            initContext.getFileCopyPatcher().patchFileCopy(fileCopy[0], document, initContext.getOffsetMap());
           }
         });
       }
@@ -559,6 +556,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (!synchronous) {
       if (!CompletionServiceImpl.assertPhase(CompletionPhase.CommittingDocuments.class)) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        Disposer.dispose(translator);
         return;
       }
       
@@ -567,15 +565,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       CompletionAutoPopupHandler.runLaterWithCommitted(project, hostDocument, new Runnable() {
         @Override
         public void run() {
-          if (phase.checkExpired()) return;
-          doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
+          if (phase.checkExpired()) {
+            Disposer.dispose(translator);
+            return;
+          }
+          doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap, translator);
         }
       });
     }
     else {
       PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
 
-      doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap);
+      doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap, translator);
     }
   }
 
@@ -610,23 +611,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     assert context.getStartOffset() >= 0 : "start < 0";
 
     return context;
-  }
-
-  private static void patchFileCopy(CompletionInitializationContext initContext, PsiFile fileCopy, Document document) {
-    final LinkedList<DocumentEvent> events = new LinkedList<DocumentEvent>();
-
-    final DocumentAdapter listener = new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        events.addFirst(e);
-      }
-    };
-
-    document.addDocumentListener(listener);
-    initContext.getFileCopyPatcher().patchFileCopy(fileCopy, document, initContext.getOffsetMap());
-    document.removeDocumentListener(listener);
-
-    document.putUserData(CompletionUtil.RANGE_TRANSLATION, events);
   }
 
   private boolean isAutocompleteCommonPrefixOnInvocation() {
@@ -681,7 +665,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           if (!indicator.getProject().isDisposed()) {
             runnable.run();
           }
-          indicator.disposeOffsetMaps();
+          indicator.disposeIndicator();
         }
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -692,7 +676,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     }
     else {
-      indicator.disposeOffsetMaps();
+      indicator.disposeIndicator();
     }
   }
 

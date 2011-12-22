@@ -25,7 +25,6 @@ import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
@@ -43,12 +42,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 import static com.intellij.patterns.PlatformPatterns.character;
 
 public class CompletionUtil {
-  static final Key<List<DocumentEvent>> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
+  static final Key<OffsetTranslator> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
   public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
@@ -222,19 +219,6 @@ public class CompletionUtil {
   }
 
   @Nullable
-  private static Integer translateOffset(int offset, DocumentEvent event) {
-    if (event.getOffset() < offset && offset < event.getOffset() + event.getNewLength()) {
-      if (event.getOldLength() == 0) {
-        return event.getOffset();
-      }
-
-      return null;
-    }
-
-    return offset <= event.getOffset() ? offset : offset - event.getNewLength() + event.getOldLength();
-  }
-
-  @Nullable
   public static PsiElement getTargetElement(LookupElement lookupElement) {
     Object object = lookupElement.getObject();
     if (object instanceof ResolveResult) {
@@ -262,14 +246,12 @@ public class CompletionUtil {
       Integer end = range.getEndOffset();
       final Document document = file.getViewProvider().getDocument();
       if (document != null) {
-        final List<DocumentEvent> translator = document.getUserData(RANGE_TRANSLATION);
+        final OffsetTranslator translator = document.getUserData(RANGE_TRANSLATION);
         if (translator != null) {
-          for (DocumentEvent event : translator) {
-            start = translateOffset(start, event);
-            end = translateOffset(end, event);
-            if (start == null || end == null) {
-              return null;
-            }
+          start = translator.translateOffset(start);
+          end = translator.translateOffset(end);
+          if (start == null || end == null) {
+            return null;
           }
         }
       }

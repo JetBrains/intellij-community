@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import gnu.trove.THashMap;
@@ -26,7 +27,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class OffsetMap {
+public class OffsetMap implements Disposable {
   private final Document myDocument;
   private final Map<OffsetKey, RangeMarker> myMap = new THashMap<OffsetKey, RangeMarker>();
   private final Set<OffsetKey> myModified = new THashSet<OffsetKey>();

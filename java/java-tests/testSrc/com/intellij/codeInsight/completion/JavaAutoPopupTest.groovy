@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
@@ -27,6 +28,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.CurrentEditorProvider
@@ -34,22 +36,27 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.PsiFile
-import com.intellij.util.Consumer
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Computable
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.util.Consumer
 
 /**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
+  @Override
+  protected void setUp() {
+    super.setUp()    //To change body of overridden methods use File | Settings | File Templates.
+    CompletionAutoPopupHandler.testName = getName()
+  }
 
   public void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """
@@ -145,18 +152,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable", 'iterable2'
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
-  }
-
-  public void _testNoAutopopupInTheMiddleOfIdentifier() {
-    myFixture.configureByText("a.java", """
-      class Foo {
-        String foo(String iterable) {
-          return it<caret>rable;
-        }
-      }
-    """)
-    type 'e'
-    assertNull lookup
   }
 
   public void testGenerallyFocusLookupInJavaMethod() {
@@ -935,6 +930,36 @@ public class Bar {
     assert !lookup
   }
 
+  public void testTargetElementInLookup() {
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  void x__foo() {}
+  void bar() {
+    <caret>
+  }
+  void x__goo() {}
+}
+'''
+    def cls = ((PsiJavaFile)myFixture.file).getClasses()[0]
+    def foo = cls.methods[0]
+    def goo = cls.methods[2]
+    type('x')
+    assert myFixture.lookupElementStrings == ['x__foo', 'x__goo']
+    edt {
+      assert foo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+      assert goo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
+    }
+
+    type('_')
+    assert myFixture.lookupElementStrings == ['x__foo', 'x__goo']
+    edt {
+      assert goo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
+      assert foo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
+    }
+  }
+
   public void testExplicitAutocompletionAfterAutoPopup() {
     myFixture.configureByText 'a.java', 'class Foo <caret>'
     type 'ext'
@@ -1027,22 +1052,6 @@ public class UTest {
     assert 'xxxxx.SYstem' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[0]).qualifiedName
     assert 'java.lang.System' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[1]).qualifiedName
     assert 'xxxxx.SYSTEM_EXCEPTION' == ((JavaPsiClassReferenceElement) myFixture.lookupElements[2]).qualifiedName
-  }
-
-  public void _testTabShouldPreferLookupsToLiveTemplate() {
-    myFixture.configureByText "a.java", """
-class LiveComplete {
-    public void innerThing() { }
-    public void context() {
-      <caret>
-    }
-}
-"""
-    type 'inn'
-    assert myFixture.lookupElementStrings == ['inn', 'innerThing']
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
-    type '\t'
-    assert myFixture.file.text.contains("innerThing();")
   }
 
   private FileEditor openEditorForUndo() {

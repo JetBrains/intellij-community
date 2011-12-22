@@ -107,10 +107,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     }
 
     InjectedLanguageManagerImpl injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
-    Runnable runnable = new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        UIUtil.dispatchAllInvocationEvents();
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
@@ -119,8 +118,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
           }
         });
       }
-    };
-    UIUtil.invokeAndWaitIfNeeded(runnable);
+    });
 
     for (final File fileToDelete : myFilesToDelete) {
       boolean deleted = FileUtil.delete(fileToDelete);

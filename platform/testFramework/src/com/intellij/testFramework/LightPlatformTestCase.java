@@ -57,7 +57,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -531,6 +530,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       public void run() {
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
         ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+        
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
 
