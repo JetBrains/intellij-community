@@ -73,7 +73,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
         final PsiClass containingClass = candidate.getContainingClass();
         return containingClass != null && containingClass.equals(myAccessClass.getSuperClass());
       }
-      return myAccessClass.equals(candidate.getContainingClass());
+      return myAccessClass.isEquivalentTo(candidate.getContainingClass());
     }
   }
 
