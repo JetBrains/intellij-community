@@ -43,10 +43,7 @@ import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
-import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -91,7 +88,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
   private final FramesPanel myFramesPanel;
-  private final RunnerLayoutUi myUi;
   private ExecutionEnvironment myEnvironment;
   private RunProfile myConfiguration;
 
@@ -100,15 +96,9 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private final Icon myIcon;
 
   public DebuggerSessionTab(final Project project, final String sessionName, @Nullable final Icon icon) {
-    super(project);
+    super(project, "JavaDebugger", sessionName);
 
     myIcon = icon;
-
-    myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", XDebuggerBundle.message("xdebugger.default.content.title"), sessionName, this);
-
-    myUi.getDefaults().initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null).
-        initFocusContent(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION).
-        initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
 
     final DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction("Debugger.FocusOnBreakpoint"));
@@ -220,11 +210,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         updateStatus(event.getContent());
       }
     }, this);
-  }
-
-  @Override
-  public RunnerLayoutUi getUi() {
-    return myUi;
   }
 
   private static void updateStatus(final Content content) {

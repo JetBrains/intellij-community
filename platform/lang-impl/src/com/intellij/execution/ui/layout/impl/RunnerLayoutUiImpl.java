@@ -54,8 +54,8 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
   private final ContentManager myViewsContentManager;
   public static final Key<String> CONTENT_TYPE = Key.create("ContentType");
 
-  public RunnerLayoutUiImpl(Project project, Disposable parent, String runnerType, String runnerTitle, String sessionName) {
-    myLayout = RunnerLayoutSettings.getInstance().getLayout(runnerType);
+  public RunnerLayoutUiImpl(Project project, Disposable parent, String runnerId, String runnerTitle, String sessionName) {
+    myLayout = RunnerLayoutSettings.getInstance().getLayout(runnerId);
     Disposer.register(parent, this);
 
     myContentUI = new RunnerContentUi(project, this, ActionManager.getInstance(), IdeFocusManager.getInstance(project), myLayout,

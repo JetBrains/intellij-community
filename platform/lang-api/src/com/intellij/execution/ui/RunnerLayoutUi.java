@@ -89,7 +89,7 @@ public interface RunnerLayoutUi  {
       return ServiceManager.getService(project, Factory.class);
     }
 
-    public abstract RunnerLayoutUi create(@NotNull String runnerType, @NotNull String runnerTitle, @NotNull String sessionName, @NotNull Disposable parent);
+    public abstract RunnerLayoutUi create(@NotNull String runnerId, @NotNull String runnerTitle, @NotNull String sessionName, @NotNull Disposable parent);
   }
 
 }
