@@ -907,6 +907,10 @@ class Foo {
       type 'as'
       assert lookup
       assert myFixture.lookupElementStrings == ['asdf', 'assert']
+      type '\n.'
+      assert lookup
+      assert 'hashCode' in myFixture.lookupElementStrings
+      assert myFixture.file.text.contains('asdf.')
     }
     finally {
       ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
