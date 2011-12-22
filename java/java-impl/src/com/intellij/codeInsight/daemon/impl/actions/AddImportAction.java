@@ -101,6 +101,11 @@ public class AddImportAction implements QuestionAction {
         }
 
         @Override
+        public boolean isSpeedSearchEnabled() {
+          return true;
+        }
+
+        @Override
         public PopupStep onChosen(PsiClass selectedValue, boolean finalChoice) {
           if (selectedValue == null) {
             return FINAL_CHOICE;
