@@ -247,7 +247,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
       }
       else {
-        EditorModificationUtil.insertStringAtCaret(editor, "\n");
+        originalHandler.execute(editor, dataContext);
       }
       return true;
     }

@@ -77,6 +77,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   public void testGstring7() throws Throwable { doTest(); }
   public void testGstring8() throws Throwable { doTest(); }
   public void testGstring9() throws Throwable { doTest(); }
+  public void testMultilineIndent() throws Throwable { doTest(); }
   public void testSpaces1() throws Throwable { doTest(); }
   public void testString1() throws Throwable { doTest(); }
   public void testString2() throws Throwable { doTest(); }

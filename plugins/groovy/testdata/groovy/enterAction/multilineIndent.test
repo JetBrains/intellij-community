@@ -1,0 +1,12 @@
+'''
+class Foo {
+  void foo() {}<caret>
+}
+'''
+-----
+'''
+class Foo {
+  void foo() {}
+  <caret>
+}
+'''
