@@ -8,6 +8,9 @@ import com.intellij.internal.statistic.connect.StatisticsResult;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class RemotelyConfigurableStatServiceTest extends TestCase {
 
@@ -34,7 +37,7 @@ public class RemotelyConfigurableStatServiceTest extends TestCase {
                                                                                               new StatisticsHttpClientSender(),
                                                                                               new StatisticsUploadAssistant() {
                                                                                                 @Override
-                                                                                                public String getData() {
+                                                                                                public String getData(@NotNull Set<String> disabledGroups) {
                                                                                                   return "";
                                                                                                 }
                                                                                               });
@@ -47,7 +50,7 @@ public class RemotelyConfigurableStatServiceTest extends TestCase {
                                                                                               new StatisticsHttpClientSender(),
                                                                                               new StatisticsUploadAssistant() {
                                                                                                 @Override
-                                                                                                public String getData() {
+                                                                                                public String getData(@NotNull Set<String> disabledGroups) {
                                                                                                   return "group:key1=11";
                                                                                                 }
                                                                                               });
