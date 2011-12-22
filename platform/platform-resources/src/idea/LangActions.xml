@@ -702,6 +702,9 @@
       <reference ref="XDebugger.AddToWatches"/>
     </group>
 
+    <group id="XDebugger.Variables.Tree.Toolbar">
+    </group>
+
     <group id="XDebugger.Watches.Tree.Popup">
       <reference ref="XDebugger.NewWatch"/>
       <reference ref="XDebugger.RemoveWatch"/>

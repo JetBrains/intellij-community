@@ -84,6 +84,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
                                         XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
     result.setCloseable(false);
+
+    ActionGroup group = getActionGroup(XDebuggerActions.VARIABLES_TREE_TOOLBAR_GROUP);
+    result.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, variablesView.getTree());
+
     return result;
   }
 

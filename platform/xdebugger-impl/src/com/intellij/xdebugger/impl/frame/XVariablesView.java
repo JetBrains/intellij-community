@@ -86,6 +86,10 @@ public class XVariablesView extends XDebugViewBase {
     }
   }
 
+  public XDebuggerTree getTree() {
+    return myDebuggerTreePanel.getTree();
+  }
+
   public JComponent getPanel() {
     return myDebuggerTreePanel.getMainPanel();
   }
