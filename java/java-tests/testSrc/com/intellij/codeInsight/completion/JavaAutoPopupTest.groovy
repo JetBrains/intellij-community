@@ -52,11 +52,6 @@ import com.intellij.util.Consumer
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
-  @Override
-  protected void setUp() {
-    super.setUp()    //To change body of overridden methods use File | Settings | File Templates.
-    CompletionAutoPopupHandler.testName = getName()
-  }
 
   public void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """
