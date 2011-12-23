@@ -53,8 +53,7 @@
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
-    <orderEntry type="module" module-name="maven2-server-impl" scope="PROVIDED" />
-    <orderEntry type="module" module-name="maven3-server-impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="maven2-server-impl" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>
