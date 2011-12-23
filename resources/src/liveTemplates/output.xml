@@ -32,6 +32,14 @@
       <option name="GROOVY_STATEMENT" value="false" />
     </context>
   </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutp"
+            name="soutp" toReformat="true" toShortenFQNames="true" value="System.out.println($FORMAT$);">
+    <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;'\&quot;' + _1.collect { it + ' = [\&quot; + ' + it + ' + \&quot;]'}.join(', ') + '\&quot;'&quot;, methodParameters())" name="FORMAT" />
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
             name="soutv" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
     <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />

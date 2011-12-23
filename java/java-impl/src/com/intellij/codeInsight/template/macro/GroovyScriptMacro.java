@@ -20,6 +20,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
@@ -60,7 +62,18 @@ public class GroovyScriptMacro extends Macro {
 
       for(int i = 1; i < params.length; ++i) {
         Result paramResult = params[i].calculateResult(context);
-        binding.setVariable("_"+i, paramResult != null ? paramResult.toString():null);
+        Object value = null;
+        if (paramResult instanceof ListResult) {
+          value = ContainerUtil.map2List(((ListResult)paramResult).getComponents(), new Function<Result, String>() {
+            @Override
+            public String fun(Result result) {
+              return result.toString();
+            }
+          });
+        } else if (paramResult != null) {
+          value = paramResult.toString();
+        }
+        binding.setVariable("_"+i, value);
       }
 
       binding.setVariable("_editor", context.getEditor());
