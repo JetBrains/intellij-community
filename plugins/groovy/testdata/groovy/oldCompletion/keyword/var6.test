@@ -14,11 +14,14 @@ abstract
 boolean
 byte
 char
+class
 def
 double
+enum
 final
 float
 int
+interface
 long
 native
 private
