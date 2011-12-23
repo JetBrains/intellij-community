@@ -95,7 +95,8 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
           Set<UsageDescriptor> frameworkDescriptors = new HashSet<UsageDescriptor>();
           for (String key : StringUtil.split(frameworks, TOKENIZER)) {
-            frameworkDescriptors.add(getUsageDescriptor(key));
+            final UsageDescriptor descriptor = getUsageDescriptor(key);
+            if (descriptor != null) frameworkDescriptors.add(descriptor);
           }
           getApplicationData(groupDescriptor).put(projectId, frameworkDescriptors);
         }
@@ -132,22 +133,27 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   private UsageDescriptor getUsageDescriptor(String usage) {
     // for instance, usage can be: "_foo"(equals "_foo=1") or "_foo=2"
-    final int i = usage.indexOf("=");
-    if (i > 0 && i < usage.length() - 1) {
-      String key = usage.substring(0, i).trim();
-      String value = usage.substring(i + 1).trim();
-      if (!StringUtil.isEmptyOrSpaces(key) && !StringUtil.isEmptyOrSpaces(value)) {
-        try {
-          final int count = Integer.parseInt(value);
-          if (count > 0) {
-            return new UsageDescriptor(key, count);
+    try {
+      final int i = usage.indexOf("=");
+      if (i > 0 && i < usage.length() - 1) {
+        String key = usage.substring(0, i).trim();
+        String value = usage.substring(i + 1).trim();
+        if (!StringUtil.isEmptyOrSpaces(key) && !StringUtil.isEmptyOrSpaces(value)) {
+          try {
+            final int count = Integer.parseInt(value);
+            if (count > 0) {
+              return new UsageDescriptor(key, count);
+            }
+          }
+          catch (NumberFormatException e) {
           }
         }
-        catch (NumberFormatException e) {
-        }
       }
+      return new UsageDescriptor(usage, 1);
+    } catch (AssertionError e) {
+      //escape loading of invalid usages
     }
-    return new UsageDescriptor(usage, 1);
+    return null;
   }
 
   private static String joinUsages(@NotNull Set<UsageDescriptor> usages) {
