@@ -488,6 +488,10 @@ class Indirect {
   public static class JpsMode extends GroovyCompilerTest {
     @Override protected boolean useJps() { true }
 
+    @Override
+    void testCorrectFailAndCorrect() {
+      super.testCorrectFailAndCorrect()
+    }
   }
 
 }

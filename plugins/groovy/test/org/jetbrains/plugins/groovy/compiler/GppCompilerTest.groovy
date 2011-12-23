@@ -123,6 +123,16 @@ class A {
   public static class JpsMode extends GppCompilerTest {
     @Override
     protected boolean useJps() { true }
+
+    @Override
+    void testRecompileDependentJavaClasses() {
+      super.testRecompileDependentJavaClasses()
+    }
+
+    @Override
+    void testRecompileDependentGroovyClasses() {
+      super.testRecompileDependentGroovyClasses()
+    }
   }
 
 
