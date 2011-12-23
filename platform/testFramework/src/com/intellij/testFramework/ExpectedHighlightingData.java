@@ -234,7 +234,7 @@ public class ExpectedHighlightingData {
     final Set<String> markers = highlightingTypes.keySet();
     final String typesRx = "(?:" + StringUtil.join(markers, ")|(?:") + ")";
     final String openingTagRx = "<(" + typesRx + ")" +
-                                "(?:\\s+descr=\"((?:[^\"\\\\]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\\\])*)\")?" +
+                                "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\\\])*)\")?" +
                                 "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
                                 "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
                                 "(?:\\s+background=\"([0-9xa-f]+)\")?" +

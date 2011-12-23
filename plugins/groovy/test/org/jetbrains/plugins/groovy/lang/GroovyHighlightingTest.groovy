@@ -28,6 +28,8 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
+import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
@@ -556,5 +558,10 @@ class A {
 
     myFixture.enableInspections(GroovyAssignabilityCheckInspection)
     myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testJUnitConvention() {
+    myFixture.addClass("package junit.framework; public class TestCase {}")
+    doTest(new JUnitTestClassNamingConventionInspection(), new JUnitAbstractTestClassNamingConventionInspection())
   }
 }

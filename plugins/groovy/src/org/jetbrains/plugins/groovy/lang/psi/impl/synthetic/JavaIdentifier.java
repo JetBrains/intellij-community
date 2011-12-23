@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.light.LightIdentifier;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -30,6 +31,12 @@ public class JavaIdentifier extends LightIdentifier {
   public JavaIdentifier(PsiManager manager, PsiElement element) {
     super(manager, element.getText());
     myElement = element;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    return myElement;
   }
 
   @Override
