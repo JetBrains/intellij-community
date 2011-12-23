@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic;
 
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -56,6 +57,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
   }
 
   private void doTrigger(String feature) {
+    ConvertUsagesUtil.assertDescriptorName(feature);
     final Integer count = myState.myValues.get(feature);
     if (count == null) {
       myState.myValues.put(feature, 1);
