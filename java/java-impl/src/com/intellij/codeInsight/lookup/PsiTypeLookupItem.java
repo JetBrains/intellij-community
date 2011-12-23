@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
@@ -74,7 +71,9 @@ public class PsiTypeLookupItem extends LookupItem {
 
   @Override
   public void handleInsert(InsertionContext context) {
-    context.getDocument().insertString(context.getTailOffset(), calcGenerics());
+    PsiElement position = context.getFile().findElementAt(context.getStartOffset());
+    assert position != null;
+    context.getDocument().insertString(context.getTailOffset(), calcGenerics(position));
     DefaultInsertHandler.addImportForItem(context, this);
     PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
 
@@ -99,18 +98,21 @@ public class PsiTypeLookupItem extends LookupItem {
     }
   }
 
-  public String calcGenerics() {
+  public String calcGenerics(@NotNull PsiElement context) {
     if (myDiamond) {
       return "<>";
     }
 
     if (getObject() instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)getObject();
+      PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper();
       PsiSubstitutor substitutor = getSubstitutor();
       StringBuilder builder = new StringBuilder();
       for (PsiTypeParameter parameter : psiClass.getTypeParameters()) {
         PsiType substitute = substitutor.substitute(parameter);
-        if (substitute == null || PsiUtil.resolveClassInType(substitute) == parameter) {
+        if (substitute == null ||
+            (PsiUtil.resolveClassInType(substitute) == parameter && 
+             resolveHelper.resolveReferencedClass(parameter.getName(), context) != CompletionUtil.getOriginalOrSelf(parameter))) {
           return "";
         }
         if (builder.length() > 0) {

@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -127,12 +126,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
 
     if (fillTypeArgs) {
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-      int typeArgs = context.getOffset(refEnd);
-      if (typeArgs >= 0) {
-        context.getDocument().insertString(typeArgs, "<>");
-        context.getEditor().getCaretModel().moveToOffset(typeArgs + 1);
-      }
+      ConstructorInsertHandler.promptTypeArgs(context, context.getOffset(refEnd));
     }
   }
 
