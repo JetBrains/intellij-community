@@ -19,6 +19,7 @@ package com.intellij.ide.favoritesTreeView.actions;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AddToFavoritesActionGroup extends ActionGroup {
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
@@ -34,7 +36,6 @@ public class AddToFavoritesActionGroup extends ActionGroup {
       return AnAction.EMPTY_ARRAY;
     }
     final String[] availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesLists();
-    if (availableFavoritesLists == null) return AnAction.EMPTY_ARRAY;
     AnAction[] actions = new AnAction[availableFavoritesLists.length + 2];
     int idx = 0;
     for (String favoritesList : availableFavoritesLists) {

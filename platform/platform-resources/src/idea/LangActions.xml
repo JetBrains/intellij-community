@@ -486,6 +486,7 @@
       <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.actions.DeleteFromFavoritesAction"/>
       <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.DeleteFavoritesListAction"/>
       <action id="RemoveAllFavoritesListsButThis" class="com.intellij.ide.favoritesTreeView.actions.DeleteAllFavoritesListsButThisAction"/>
+      <reference ref="AddToFavorites"/>
       <reference ref="SendToFavoritesGroup"/>
       <reference ref="MoveToChangeList"/>
       <separator/>

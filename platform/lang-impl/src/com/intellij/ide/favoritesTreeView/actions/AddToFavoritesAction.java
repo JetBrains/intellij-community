@@ -70,7 +70,7 @@ public class AddToFavoritesAction extends AnAction {
   public static Collection<AbstractTreeNode> getNodesToAdd(final DataContext dataContext, final boolean inProjectView) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    if (project == null) return null;
+    if (project == null) return Collections.emptyList();
 
     Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
