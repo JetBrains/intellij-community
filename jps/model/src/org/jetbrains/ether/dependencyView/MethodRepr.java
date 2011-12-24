@@ -154,16 +154,6 @@ class MethodRepr extends ProtoMember {
     };
   }
 
-  /*
-  static Predicate equal(final MethodRepr me){
-    return new Predicate() {
-      @Override
-      public boolean satisfy(MethodRepr that) {
-        return me.equals(that);
-      }
-    };
-  }
-  */
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

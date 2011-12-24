@@ -37,5 +37,5 @@ interface MultiMaplet<K, V> {
   void removeAll(final K key, final Collection<V> value);
   void close();
   Collection<K> keyCollection();
-  Set<Map.Entry<K, Collection<V>>> entrySet();
+  Collection<Map.Entry<K, Collection<V>>> entrySet();
 }

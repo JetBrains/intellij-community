@@ -22,8 +22,8 @@ import com.intellij.util.io.PersistentHashMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,11 +33,11 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class PersistentMaplet<K, V> implements Maplet<K, V> {
-  private final PersistentHashMap<K, V> map;
+  private final PersistentHashMap<K, V> myMap;
 
   public PersistentMaplet(final File file, final KeyDescriptor<K> k, final DataExternalizer<V> v) {
     try {
-      map = new PersistentHashMap<K, V>(file, k, v);
+      myMap = new PersistentHashMap<K, V>(file, k, v);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -47,7 +47,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   @Override
   public boolean containsKey(final Object key) {
     try {
-      return map.containsMapping((K)key);
+      return myMap.containsMapping((K)key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -57,7 +57,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   @Override
   public V get(final Object key) {
     try {
-      return map.get((K)key);
+      return myMap.get((K)key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -67,7 +67,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   @Override
   public void put(final K key, final V value) {
     try {
-      map.put(key, value);
+      myMap.put(key, value);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -78,7 +78,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   public void putAll(final Maplet<K, V> m) {
     try {
       for (Map.Entry<K, V> e : m.entrySet()) {
-        map.put(e.getKey(), e.getValue());
+        myMap.put(e.getKey(), e.getValue());
       }
     }
     catch (IOException e) {
@@ -89,7 +89,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   @Override
   public void remove(final Object key) {
     try {
-      map.remove((K)key);
+      myMap.remove((K)key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -99,7 +99,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   @Override
   public void close() {
     try {
-      map.close();
+      myMap.close();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -109,7 +109,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   @Override
   public Collection<K> keyCollection() {
     try {
-      return map.getAllKeysWithExistingMapping();
+      return myMap.getAllKeysWithExistingMapping();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -117,8 +117,37 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public Set<Map.Entry<K, V>> entrySet() {
-    assert (false);
-    return null;
+  public Collection<Map.Entry<K, V>> entrySet() {
+    final Collection<Map.Entry<K, V>> result = new LinkedList<Map.Entry<K, V>>();
+
+    try {
+      for (final K key : myMap.getAllKeysWithExistingMapping()) {
+        final V value = myMap.get(key);
+
+        final Map.Entry<K, V> entry = new Map.Entry<K, V>() {
+          @Override
+          public K getKey() {
+            return key;
+          }
+
+          @Override
+          public V getValue() {
+            return value;
+          }
+
+          @Override
+          public V setValue(V value) {
+            return null;
+          }
+        };
+
+        result.add(entry);
+      }
+
+      return result;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
