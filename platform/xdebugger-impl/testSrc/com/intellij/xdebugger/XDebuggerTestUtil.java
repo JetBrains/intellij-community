@@ -83,11 +83,11 @@ public class XDebuggerTestUtil {
     return session.getSuspendContext().getActiveExecutionStack();
   }
 
-  public static List<XStackFrame> collectStacks(@NotNull XDebugSession session) throws InterruptedException {
-    return collectStacks(null, session);
+  public static List<XStackFrame> collectFrames(@NotNull XDebugSession session) throws InterruptedException {
+    return collectFrames(null, session);
   }
 
-  public static List<XStackFrame> collectStacks(@Nullable XExecutionStack thread, @NotNull XDebugSession session)
+  public static List<XStackFrame> collectFrames(@Nullable XExecutionStack thread, @NotNull XDebugSession session)
     throws InterruptedException {
     return collectStacks(thread == null ? getActiveThread(session) : thread);
   }
