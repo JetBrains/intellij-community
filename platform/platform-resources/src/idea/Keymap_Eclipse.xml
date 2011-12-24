@@ -137,6 +137,7 @@
     <action id="Forward">
       <keyboard-shortcut first-keystroke="alt RIGHT" />
     </action>
+    <action id="GotoTest"/>
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="shift control T" />
     </action>
