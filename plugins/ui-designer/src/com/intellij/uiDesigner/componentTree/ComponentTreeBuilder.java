@@ -187,16 +187,20 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
    */
   private final class MyHierarchyChangeListener implements HierarchyChangeListener{
     public void hierarchyChanged(){
-      if(myInsideChange>0){
+      if (myInsideChange>0) {
         return;
       }
 
       myInsideChange++;
       try{
-        updateFromRoot();
-        // After updating the tree we have to synchronize the selection in the tree
-        // with selected elemenet in the hierarchy
-        syncSelection();
+        queueUpdate().doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            // After updating the tree we have to synchronize the selection in the tree
+            // with selected element in the hierarchy
+            syncSelection();
+          }
+        });
       }finally{
         myInsideChange--;
       }
