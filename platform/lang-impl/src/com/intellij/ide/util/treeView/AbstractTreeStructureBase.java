@@ -49,7 +49,12 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     if (providers != null && !providers.isEmpty()) {
       ViewSettings settings = treeNode instanceof ProjectViewNode ? ((ProjectViewNode) treeNode).getSettings() : ViewSettings.DEFAULT;
       for (TreeStructureProvider provider : providers) {
-        elements = provider.modify(treeNode, (Collection<AbstractTreeNode>)elements, settings);
+        try {
+          elements = provider.modify(treeNode, (Collection<AbstractTreeNode>)elements, settings);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
     for (AbstractTreeNode node : elements) {
