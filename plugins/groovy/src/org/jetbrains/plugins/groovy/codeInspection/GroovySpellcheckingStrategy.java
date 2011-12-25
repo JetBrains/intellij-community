@@ -15,10 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
-import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 /**
  * @author peter
  */
-public class GroovySpellcheckingStrategy extends SpellcheckingStrategy {
+public class GroovySpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
@@ -48,5 +49,15 @@ public class GroovySpellcheckingStrategy extends SpellcheckingStrategy {
       }
     }
     return super.getTokenizer(element);
+  }
+
+  @Override
+  public boolean isSuppressedFor(PsiElement element, String name) {
+    return GroovySuppressableInspectionTool.getElementToolSuppressedIn(element, name) != null;
+  }
+
+  @Override
+  public SuppressIntentionAction[] getSuppressActions(PsiElement element, String name) {
+    return GroovySuppressableInspectionTool.getSuppressActions(name);
   }
 }
