@@ -28,12 +28,11 @@ import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.Color;
-import java.awt.LayoutManager;
+import java.awt.*;
 import java.text.MessageFormat;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
@@ -96,13 +95,15 @@ public final class XmlReader {
         if (componentClass == null) {
           component = createErrorComponent(module, id, lwComponent, loader);
         }
-        else if (JTable.class.isAssignableFrom(componentClass)) {
-          component = new RadTable(module, componentClass, id);
-        }
         else {
           RadComponent component1;
           try {
-            component1 = new RadAtomicComponent(module, componentClass, id);
+            if (JTable.class.isAssignableFrom(componentClass)) {
+              component1 = new RadTable(module, componentClass, id);
+            }
+            else {
+              component1 = new RadAtomicComponent(module, componentClass, id);
+            }
           }
           catch (final Exception exc) {
             String errorDescription = MessageFormat.format(UIDesignerBundle.message("error.class.cannot.be.instantiated"), lwComponent.getComponentClassName());
