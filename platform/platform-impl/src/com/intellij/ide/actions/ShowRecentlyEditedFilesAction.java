@@ -28,6 +28,11 @@ public class ShowRecentlyEditedFilesAction extends BaseShowRecentFilesAction {
     return IdeDocumentHistory.getInstance(project).getChangedFiles();
   }
 
+  @Override
+  protected String getPeerActionId() {
+    return "RecentFiles";
+  }
+
   protected String getTitle() {
     return "Recently Edited Files";
   }

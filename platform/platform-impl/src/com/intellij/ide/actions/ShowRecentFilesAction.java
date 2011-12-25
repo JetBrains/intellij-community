@@ -39,6 +39,11 @@ public class ShowRecentFilesAction extends BaseShowRecentFilesAction  {
     return EditorHistoryManager.getInstance(project).getFiles();
   }
 
+  @Override
+  protected String getPeerActionId() {
+    return "RecentChangedFiles";
+  }
+
   protected String getTitle() {
     return IdeBundle.message("title.popup.recent.files");
   }
