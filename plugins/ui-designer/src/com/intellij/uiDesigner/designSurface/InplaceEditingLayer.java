@@ -309,9 +309,6 @@ public final class InplaceEditingLayer extends JComponent{
     // request component into glass layer. Otherwise focus from component being removed
     // can go to some RadComponent.
 
-    // This cast is safe because InplaceEditingLayer is always in TabbedPaneWrapper
-    final Container ancestor = getFocusCycleRootAncestor();
-    LOG.assertTrue(ancestor != null);
     LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myEditor.getGlassLayer());
     try {
       remove(myInplaceEditorComponent);
