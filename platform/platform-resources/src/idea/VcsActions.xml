@@ -189,6 +189,8 @@
     <group id="UpdateActionGroup">
       <reference ref="EditSource"/>
       <reference ref="$Delete"/>
+      <action id="Diff.UpdatedFiles" class="com.intellij.openapi.vcs.update.ShowUpdatedDiffAction"
+              use-shortcut-of="CompareDirs" icon="/actions/diff.png"/>
     </group>
 
     <group id="Vcs.MessageActionGroup">
