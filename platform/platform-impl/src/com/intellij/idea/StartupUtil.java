@@ -111,7 +111,7 @@ public class StartupUtil {
     }
 
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
-      showError("Error", "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.");
+      showError("Error", "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.");
       return false;
     }
 
