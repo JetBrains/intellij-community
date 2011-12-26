@@ -183,6 +183,7 @@ public class FileStructurePopup implements Disposable {
       .setResizable(true)
       .setFocusable(true)
       .setMovable(true)
+      .setCancelKeyEnabled(false)
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
       .createPopup();
     Disposer.register(myPopup, myDisposable);
@@ -283,6 +284,16 @@ public class FileStructurePopup implements Disposable {
         }
       }
     }.registerCustomShortcutSet(shortcutSet, panel);
+
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
+          mySpeedSearch.hidePopup();
+        } else {
+          myPopup.cancel();
+        }
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), myTree);
 
     //myCommanderPanel.setPreferredSize(new Dimension(400, 500));
 
