@@ -66,7 +66,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
   public static class CloseAction extends ForContent {
 
-    public CloseAction(Content content) {
+    public CloseAction(@NotNull Content content) {
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
     }
 

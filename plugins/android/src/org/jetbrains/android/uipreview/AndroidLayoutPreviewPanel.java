@@ -1,6 +1,7 @@
  package org.jetbrains.android.uipreview;
 
  import com.intellij.openapi.Disposable;
+ import com.intellij.openapi.progress.ProgressIndicator;
  import com.intellij.openapi.ui.Messages;
  import com.intellij.openapi.ui.VerticalFlowLayout;
  import com.intellij.openapi.util.Disposer;
@@ -17,8 +18,10 @@
  import javax.swing.event.HyperlinkListener;
  import java.awt.*;
  import java.awt.image.BufferedImage;
+ import java.util.ArrayList;
+ import java.util.List;
 
-/**
+ /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
@@ -35,6 +38,9 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
 
   private double myZoomFactor = 1.0;
   private boolean myZoomToFit = true;
+   
+  private final List<ProgressIndicator> myProgressIndicators = new ArrayList<ProgressIndicator>();
+  private boolean myProgressVisible = false;
 
   private final JPanel myImagePanel = new JPanel() {
     @Override
@@ -110,16 +116,30 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     doRevalidate();
   }
 
-  public void showProgress() {
-    ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, PROGRESS_ICON_CARD_NAME);
-    myProgressIcon.setVisible(true);
-    myProgressIcon.resume();
+  public synchronized void registerIndicator(@NotNull ProgressIndicator indicator) {
+    synchronized (myProgressIndicators) {
+      myProgressIndicators.add(indicator);
+
+      if (!myProgressVisible) {
+        myProgressVisible = true;
+        ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, PROGRESS_ICON_CARD_NAME);
+        myProgressIcon.setVisible(true);
+        myProgressIcon.resume();
+      }
+    }
   }
 
-  public void hideProgress() {
-    myProgressIcon.suspend();
-    ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, EMPTY_CARD_NAME);
-    myProgressIcon.setVisible(false);
+  public void unregisterIndicator(@NotNull ProgressIndicator indicator) {
+    synchronized (myProgressIndicators) {
+      myProgressIndicators.remove(indicator);
+      
+      if (myProgressIndicators.size() == 0 && myProgressVisible) {
+        myProgressVisible = false;
+        myProgressIcon.suspend();
+        ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, EMPTY_CARD_NAME);
+        myProgressIcon.setVisible(false);
+      }
+    }
   }
 
   private void doRevalidate() {

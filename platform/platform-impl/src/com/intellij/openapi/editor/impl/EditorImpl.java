@@ -236,7 +236,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myEmbeddedIntoDialogWrapper;
   private CachedFontContent myLastCache;
-  private boolean mySpacesHaveSameWidth;
+
+  /**
+   * Positive value is assumed to indicate that space width for all interested font styles (bold, italic etc) is equal.
+   * That value is stored at the current field.
+   */
+  private int myCommonSpaceWidth;
 
   /**
    * There is a possible case that specific font is used for particular text drawing operation (e.g. for 'before' and 'after'
@@ -317,6 +322,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
+        if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         int textLength = myDocument.getTextLength();
 
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
@@ -2346,8 +2352,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final int boldSpaceWidth = EditorUtil.getSpaceWidth(Font.BOLD, this);
     final int italicSpaceWidth = EditorUtil.getSpaceWidth(Font.ITALIC, this);
     final int boldItalicSpaceWidth = EditorUtil.getSpaceWidth(Font.BOLD | Font.ITALIC, this);
-    mySpacesHaveSameWidth =
+    
+    boolean spacesHaveSameWidth =
       plainSpaceWidth == boldSpaceWidth && plainSpaceWidth == italicSpaceWidth && plainSpaceWidth == boldItalicSpaceWidth;
+    myCommonSpaceWidth = spacesHaveSameWidth ? boldSpaceWidth : -1;
 
     int lineHeight = getLineHeight();
 
@@ -2500,6 +2508,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPaintSelection = paintSelection;
   }
 
+  @NonNls
   public String dumpState() {
     return "prefix: '" + (myPrefixText == null ? "none" : new String(myPrefixText))
            + "', allow caret inside tab: " + mySettings.isCaretInsideTabs()
@@ -2520,11 +2529,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int myCount = 0;
     final FontInfo myFontType;
+    final int spaceWidth;
 
     private char[] myLastData;
 
     private CachedFontContent(FontInfo fontInfo) {
       myFontType = fontInfo;
+      spaceWidth = fontInfo.charWidth(' ', myEditorComponent);
     }
 
     private void flushContent(Graphics g) {
@@ -2927,7 +2938,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         else if (x > clip.x + clip.width) {
           return endX;
         }
-        endX += font.charWidth(c, myEditorComponent);
+        
+        // We experienced the following situation:
+        //   * the editor was configured to use monospaced font;
+        //   * the document contained either english or russian symbols;
+        //   * different fonts were used to display english and russian symbols;
+        //   * the fonts mentioned above have different space width;
+        // So, the problem was when white space followed russian word - the white space width was calculated using the english font
+        // but drawn using the russian font, so, there was a visual inconsistency at the editor.
+        final int charWidth = font.charWidth(c, myEditorComponent);
+        if (c == ' '
+            && myCommonSpaceWidth > 0
+            && myLastCache != null
+            && (charWidth != myCommonSpaceWidth || charWidth != myLastCache.spaceWidth))
+        {
+          myForceRefreshFont = true;
+        }
+        endX += charWidth;
       }
 
       if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
@@ -2945,7 +2972,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void drawCharsCached(Graphics g, char[] data, int start, int end, int x, int y, int fontType, Color color) {
-    if (!myForceRefreshFont && mySpacesHaveSameWidth && myLastCache != null && spacesOnly(data, start, end)) {
+    if (!myForceRefreshFont && myCommonSpaceWidth > 0 && myLastCache != null && spacesOnly(data, start, end)) {
       myLastCache.addContent(g, data, start, end, x, y, null);
     }
     else {
@@ -5167,6 +5194,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   selectWordAtCaret(false);
                   break;
                 }
+              //noinspection fallthrough
               case 4:
                 mySelectionModel.selectLineAtCaret();
                 setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
@@ -6090,7 +6118,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     final VisualPosition visual = getCaretModel().getVisualPosition();
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }

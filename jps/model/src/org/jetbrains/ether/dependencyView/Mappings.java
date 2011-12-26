@@ -27,6 +27,8 @@ public class Mappings {
   private final static String mySourceToUsagesName = "sourceToUsages.tab";
   private final static String myClassToSourceName = "classToSource.tab";
 
+  private final boolean myIsTansient;
+
   private final File myRootDir;
   private DependencyContext myContext;
   private MultiMaplet<DependencyContext.S, DependencyContext.S> myClassToSubclasses;
@@ -59,9 +61,15 @@ public class Mappings {
       }
     };
 
-  private Mappings(final DependencyContext context) {
-    myRootDir = null;
-    myContext = context;
+  private Mappings(final Mappings base) throws IOException {
+    myIsTansient = true;
+
+    myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
+    myContext = base.myContext;
+
+    myRootDir.mkdirs();
+
+    //createImplementation(myRootDir, myIsTansient);
 
     myClassToSubclasses = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
     mySourceFileToClasses = new TransientMultiMaplet<DependencyContext.S, ClassRepr>(ourClassSetConstructor);
@@ -72,12 +80,15 @@ public class Mappings {
   }
 
   public Mappings(final File rootDir) throws IOException {
+    myIsTansient = false;
     myRootDir = rootDir;
-    createPersistentImplementation(rootDir);
+    createImplementation(rootDir, myIsTansient);
   }
 
-  private void createPersistentImplementation(File rootDir) throws IOException {
-    myContext = new DependencyContext(rootDir);
+  private void createImplementation(final File rootDir, final boolean isTransient) throws IOException {
+    if (! isTransient) {
+      myContext = new DependencyContext(rootDir);
+    }
 
     myClassToSubclasses =
       new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(rootDir, myClassToSubclassesName),
@@ -110,7 +121,12 @@ public class Mappings {
   }
 
   public Mappings createDelta() {
-    return new Mappings(myContext);
+    try {
+      return new Mappings(this);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void clearMemoryCaches() {
@@ -149,7 +165,7 @@ public class Mappings {
     if (myRootDir != null) {
       close();
       FileUtil.delete(myRootDir);
-      createPersistentImplementation(myRootDir);
+      createImplementation(myRootDir, false);
     }
   }
 
@@ -555,7 +571,8 @@ public class Mappings {
           dependents.addAll(deps);
         }
 
-        affectedUsages.add(method.createUsage(myContext, p));
+        affectedUsages
+          .add(rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p));
       }
     }
 
@@ -805,23 +822,12 @@ public class Mappings {
           if ((m.access & Opcodes.ACC_PRIVATE) == 0 && !myContext.getValue(m.name).equals("<init>")) {
             final ClassRepr oldIt = getReprByName(it.name);
 
-            if (oldIt != null && self.findOverridenMethods(m, oldIt).size() > 0) { //  oldIt.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
+            if (oldIt != null && self.findOverridenMethods(m, oldIt).size() > 0) {
 
             }
             else {
-              final UsageRepr.Usage usage = it.createUsage();
-
-              affectedUsages.add(usage);
-
-              if ((m.access & Opcodes.ACC_PUBLIC) > 0) {
-
-              }
-              else if (isPackageLocal(m.access)) {
-                usageConstraints.put(usage, u.new PackageConstraint(it.getPackageName()));
-              }
-              else if ((m.access & Opcodes.ACC_PROTECTED) > 0) {
-                usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
-              }
+              final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
+              u.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), affectedUsages, dependants);
             }
           }
 
@@ -833,7 +839,9 @@ public class Mappings {
             final Collection<MethodRepr> lessSpecific = it.findMethods(u.lessSpecific(m));
 
             for (MethodRepr mm : lessSpecific) {
-              u.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
+              if (!mm.equals(m)) {
+                u.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
+              }
             }
 
             for (Pair<MethodRepr, ClassRepr> p : affectedMethods) {
@@ -1290,6 +1298,10 @@ public class Mappings {
       }
     }
 
+    //final Set<ClassRepr> cl = (Set<ClassRepr>) delta.mySourceFileToClasses.get(new DependencyContext.S(352));
+    
+    //System.out.println("There: " + (cl == null ? "wow..." : cl.size()));
+    
     myClassToSubclasses.putAll(delta.myClassToSubclasses);
     mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
     mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
@@ -1393,15 +1405,22 @@ public class Mappings {
   }
 
   public void close() {
-    if (myRootDir != null) {
-      // only close if you own the context
-      myContext.close();
-    }
     myClassToSubclasses.close();
     myClassToClassDependency.close();
     mySourceFileToClasses.close();
     mySourceFileToAnnotationUsages.close();
     mySourceFileToUsages.close();
     myClassToSourceFile.close();
+
+    if (!myIsTansient) {
+      // only close if you own the context
+      //final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(new DependencyContext.S(352));
+      //System.out.println("Here: " + (classes == null ? "wow..." : classes.size()));
+        
+      myContext.close();
+    }
+    else {
+      FileUtil.delete(myRootDir);
+    }
   }
 }

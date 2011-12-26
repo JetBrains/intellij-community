@@ -236,8 +236,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
 
     frame.setBounds(myFrameBounds);
-    frame.setExtendedState(myFrameExtendedState);
     frame.setVisible(true);
+    frame.setExtendedState(myFrameExtendedState);
   }
 
   public IdeFrameImpl[] getAllFrames() {

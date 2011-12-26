@@ -1105,7 +1105,7 @@ public class UIUtil {
 
   public static void drawGradientHToolbarBackground(final Graphics g, final int width, final int height) {
     final Graphics2D g2d = (Graphics2D)g;
-    final GradientPaint gradientPaint = new GradientPaint(0, 0, new Color(215, 215, 215), 0, height, new Color(200, 200, 200));
+    final GradientPaint gradientPaint = new GradientPaint(0, 0, Gray._215, 0, height, Gray._200);
     g2d.setPaint(gradientPaint);
     g2d.fillRect(0, 0, width, height);
   }

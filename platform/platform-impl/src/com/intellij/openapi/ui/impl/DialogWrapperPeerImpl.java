@@ -537,7 +537,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       return this;
     }
 
-    public void putInfo(Map<String, String> info) {
+    public void putInfo(@NotNull Map<String, String> info) {
       info.put("dialog", getTitle());
     }
 

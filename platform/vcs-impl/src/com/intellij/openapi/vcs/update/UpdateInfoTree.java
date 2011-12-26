@@ -144,9 +144,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     group.add(new GroupByChangeListAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
-    final ShowUpdatedDiffAction diffAction = new ShowUpdatedDiffAction();
-    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
-    group.add(diffAction);
+    group.add(ActionManager.getInstance().getAction("Diff.UpdatedFiles"));
   }
 
   protected JComponent createCenterPanel() {

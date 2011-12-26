@@ -28,14 +28,14 @@ public interface Resources extends AndroidDomElement {
   List<StringElement> getStrings();
   StringElement addString();
 
-  List<ResourceElement> getColors();
-  ResourceElement addColor();
+  List<ScalarResourceElement> getColors();
+  ScalarResourceElement addColor();
 
-  List<ResourceElement> getDrawables();
-  ResourceElement addDrawable();
+  List<ScalarResourceElement> getDrawables();
+  ScalarResourceElement addDrawable();
 
-  List<ResourceElement> getDimens();
-  ResourceElement addDimen();
+  List<ScalarResourceElement> getDimens();
+  ScalarResourceElement addDimen();
 
   List<Style> getStyles();
   Style addStyle();

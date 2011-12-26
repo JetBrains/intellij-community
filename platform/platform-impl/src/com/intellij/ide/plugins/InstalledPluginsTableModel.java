@@ -566,16 +566,22 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           if (myEnabled.get(pluginId) == null) {
             s.append("Plugin was not loaded.\n");
           }
-          s.append("Required plugin").append(required.size() == 1 ? " \"" : "s \"");
-          s.append(StringUtil.join(required, new Function<PluginId, String>() {
-            @Override
-            public String fun(final PluginId id) {
-              final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-              return plugin == null ? id.getIdString() : plugin.getName();
-            }
-          }, ","));
+          if (required.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
+            s.append("The plugin requires IntelliJ IDEA Ultimate");
+          }
+          else {
+            s.append("Required plugin").append(required.size() == 1 ? " \"" : "s \"");
+            s.append(StringUtil.join(required, new Function<PluginId, String>() {
+              @Override
+              public String fun(final PluginId id) {
+                final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+                return plugin == null ? id.getIdString() : plugin.getName();
+              }
+            }, ","));
 
-          s.append(required.size() == 1 ? "\" is not enabled!" : "\" are not enabled!");
+            s.append(required.size() == 1 ? "\" is not enabled!" : "\" are not enabled!");
+
+          }
           myPanel.setToolTipText(s.toString());
         }
 

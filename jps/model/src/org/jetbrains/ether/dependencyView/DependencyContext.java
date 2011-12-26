@@ -88,7 +88,7 @@ class DependencyContext {
       }
     }
           
-    private S(final int i) {
+    /*private*/ S(final int i) {
       index = i;
     }
     

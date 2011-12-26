@@ -182,7 +182,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
   private static PsiReference[] getLocationReferences(String namespace, XmlAttributeValue value) {
     PsiReference[] references = value.getReferences();
-    for (int i = 0, referencesLength = references.length; i < referencesLength; i++) {
+    for (int i = 0, referencesLength = references.length; i < referencesLength; i+=2) {
       PsiReference reference = references[i];
       if (namespace.equals(getNamespaceFromReference(reference))) {
         if (i + 1 < referencesLength) {

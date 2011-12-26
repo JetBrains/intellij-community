@@ -1292,11 +1292,11 @@
                      key="junit4.test.method.in.class.extending.junit3.testcase.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit4AnnotatedMethodInJUnit3TestCaseInspection"/>
-    <localInspection language="JAVA" shortName="JUnitAbstractTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection shortName="JUnitAbstractTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit.abstract.test.class.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection"/>
-    <localInspection language="JAVA" shortName="JUnitTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection shortName="JUnitTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit.test.class.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection"/>

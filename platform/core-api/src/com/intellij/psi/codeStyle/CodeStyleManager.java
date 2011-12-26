@@ -127,23 +127,23 @@ public abstract class CodeStyleManager  {
   /**
    * Delegates to the {@link #reformatText(PsiFile, Collection)} with the single range defined by the given offsets.
    *
-   * @param element     the file to reformat.
+   * @param file     the file to reformat.
    * @param startOffset the start of the text range to reformat.
    * @param endOffset   the end of the text range to reformat.
    * @throws IncorrectOperationException if the file to reformat is read-only.
    */
-  public abstract void reformatText(@NotNull PsiFile element, int startOffset, int endOffset) throws IncorrectOperationException;
+  public abstract void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException;
 
   /**
    * Re-formats a ranges of text in the specified file. This method works faster than
    * {@link #reformatRange(com.intellij.psi.PsiElement, int, int)} but invalidates the
    * PSI structure for the file.
    * 
-   * @param element  the file to reformat
+   * @param file  the file to reformat
    * @param ranges   ranges to process
    * @throws IncorrectOperationException  if the file to reformat is read-only.
    */
-  public abstract void reformatText(@NotNull PsiFile element, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
+  public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
 
   /**
    * Re-formats the specified range of a file, modifying only line indents and leaving

@@ -18,6 +18,7 @@ package org.jetbrains.android.dom.converters;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -28,11 +29,9 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.CustomReferenceConverter;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
 import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.AdditionalConverter;
 import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
@@ -61,6 +60,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
   private boolean myAdditionalConverterSoft = false;
   private boolean myWithPrefix = true;
   private boolean myWithExplicitResourceType = true;
+  private boolean myQuiet = false;
 
   public ResourceReferenceConverter() {
     this(new ArrayList<String>());
@@ -79,6 +79,10 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
   public void setAdditionalConverter(ResolvingConverter<String> additionalConverter, boolean soft) {
     myAdditionalConverter = additionalConverter;
     myAdditionalConverterSoft = soft;
+  }
+
+  public void setQuiet(boolean quiet) {
+    myQuiet = quiet;
   }
 
   @NotNull
@@ -117,32 +121,37 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     if (element == null) return result;
     String value = getValue(element);
     assert value != null;
-    String resourcePackage = null;
-    String systemPrefix = getPackagePrefix(SYSTEM_RESOURCE_PACKAGE);
-    if (value.startsWith(systemPrefix)) {
-      resourcePackage = SYSTEM_RESOURCE_PACKAGE;
-    }
-    else {
-      result.add(ResourceValue.literal(systemPrefix));
-    }
-    if (recommendedTypes.size() == 1) {
-      String type = recommendedTypes.iterator().next();
-      boolean explicitResourceType = value.startsWith(getTypePrefix(resourcePackage, type)) || myWithExplicitResourceType;
-      addResourceReferenceValuesWithDeps(facet, type, resourcePackage, result, explicitResourceType);
-    }
-    else {
-      for (String type : ResourceManager.REFERABLE_RESOURCE_TYPES) {
-        String typePrefix = getTypePrefix(resourcePackage, type);
-        if (value.startsWith(typePrefix)) {
-          addResourceReferenceValuesWithDeps(facet, type, resourcePackage, result, true);
-        }
-        else if (recommendedTypes.contains(type)) {
-          result.add(ResourceValue.literal(typePrefix));
+
+    if (!myQuiet || value.startsWith("@")) {
+      String resourcePackage = null;
+      String systemPrefix = getPackagePrefix(SYSTEM_RESOURCE_PACKAGE);
+      if (value.startsWith(systemPrefix)) {
+        resourcePackage = SYSTEM_RESOURCE_PACKAGE;
+      }
+      else {
+        result.add(ResourceValue.literal(systemPrefix));
+      }
+      if (recommendedTypes.size() == 1) {
+        String type = recommendedTypes.iterator().next();
+        boolean explicitResourceType = value.startsWith(getTypePrefix(resourcePackage, type)) || myWithExplicitResourceType;
+        addResourceReferenceValuesWithDeps(facet, type, resourcePackage, result, explicitResourceType);
+      }
+      else {
+        for (String type : ResourceManager.REFERABLE_RESOURCE_TYPES) {
+          String typePrefix = getTypePrefix(resourcePackage, type);
+          if (value.startsWith(typePrefix)) {
+            addResourceReferenceValuesWithDeps(facet, type, resourcePackage, result, true);
+          }
+          else if (recommendedTypes.contains(type)) {
+            result.add(ResourceValue.literal(typePrefix));
+          }
         }
       }
     }
-    if (myAdditionalConverter != null) {
-      for (String variant : myAdditionalConverter.getVariants(context)) {
+    final ResolvingConverter<String> additionalConverter = getAdditionalConverter(context);
+
+    if (additionalConverter != null) {
+      for (String variant : additionalConverter.getVariants(context)) {
         result.add(ResourceValue.literal(variant));
       }
     }
@@ -161,6 +170,9 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     if (resourceType != null) {
       String s = resourceType.value();
       if (s != null) types.add(s);
+    }
+    if (types.size() == 0) {
+      types.addAll(ResourceManager.REFERABLE_RESOURCE_TYPES);
     }
     return types;
   }
@@ -209,8 +221,10 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
   public ResourceValue fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
     ResourceValue parsed = ResourceValue.parse(s, true, myWithPrefix);
-    if ((parsed == null || !parsed.isReference()) && myAdditionalConverter != null) {
-      String value = myAdditionalConverter.fromString(s, context);
+    final ResolvingConverter<String> additionalConverter = getAdditionalConverter(context);
+    
+    if ((parsed == null || !parsed.isReference()) && additionalConverter != null) {
+      String value = additionalConverter.fromString(s, context);
       if (value != null) {
         return ResourceValue.literal(value);
       }
@@ -224,6 +238,27 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     return parsed;
   }
 
+  @Nullable
+  private ResolvingConverter<String> getAdditionalConverter(ConvertContext context) {
+    if (myAdditionalConverter != null) {
+      return myAdditionalConverter;
+    }
+
+    final AdditionalConverter additionalConverterAnnotation = 
+      context.getInvocationElement().getAnnotation(AdditionalConverter.class);
+
+    if (additionalConverterAnnotation != null) {
+      final Class<? extends ResolvingConverter> converterClass = additionalConverterAnnotation.value();
+
+      if (converterClass != null) {
+        final ConverterManager converterManager = ServiceManager.getService(ConverterManager.class);
+        //noinspection unchecked
+        return (ResolvingConverter<String>)converterManager.getConverterInstance(converterClass);
+      }
+    }
+    return null;
+  }
+
   public String toString(@Nullable ResourceValue resourceElement, ConvertContext context) {
     return resourceElement != null ? resourceElement.toString() : null;
   }
@@ -232,22 +267,24 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
   public LocalQuickFix[] getQuickFixes(ConvertContext context) {
     AndroidFacet facet = AndroidFacet.getInstance(context);
     if (facet != null) {
-      XmlElement element = context.getXmlElement();
-      if (element instanceof XmlAttribute) {
-        String value = ((XmlAttribute)element).getValue();
-        ResourceValue resourceValue = ResourceValue.parse(value, false, myWithPrefix);
-        if (resourceValue != null) {
-          String aPackage = resourceValue.getPackage();
-          String resourceType = resourceValue.getResourceType();
-          if (resourceType == null && myResourceTypes.size() == 1) {
-            resourceType = myResourceTypes.get(0);
-          }
-          final String resourceName = resourceValue.getResourceName();
-          if (aPackage == null && resourceType != null && resourceName != null) {
-            if (value != null &&
-                FIXABLE_RESOURCE_TYPES.contains(resourceType) &&
-                AndroidResourceUtil.isCorrectAndroidResourceName(resourceName)) {
-              return new LocalQuickFix[]{new MyLocalQuickFix(facet, resourceType, resourceName, element.getContainingFile())};
+      final DomElement domElement = context.getInvocationElement();
+
+      if (domElement instanceof GenericDomValue) {
+        final String value = ((GenericDomValue)domElement).getStringValue();
+
+        if (value != null) {
+          ResourceValue resourceValue = ResourceValue.parse(value, false, myWithPrefix);
+          if (resourceValue != null) {
+            String aPackage = resourceValue.getPackage();
+            String resourceType = resourceValue.getResourceType();
+            if (resourceType == null && myResourceTypes.size() == 1) {
+              resourceType = myResourceTypes.get(0);
+            }
+            final String resourceName = resourceValue.getResourceName();
+            if (aPackage == null && resourceType != null && resourceName != null) {
+              if (FIXABLE_RESOURCE_TYPES.contains(resourceType) && AndroidResourceUtil.isCorrectAndroidResourceName(resourceName)) {
+                return new LocalQuickFix[]{new MyLocalQuickFix(facet, resourceType, resourceName, context.getFile())};
+              }
             }
           }
         }

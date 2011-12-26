@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -97,6 +98,15 @@ public class PsiImplUtil {
     if (newExpr instanceof GrApplicationStatement && !(oldExpr instanceof GrApplicationStatement)) {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
       newExpr = factory.createMethodCallByAppCall(((GrApplicationStatement)newExpr));
+    }
+
+    //regexes cannot be first argument of command call, try to replace it with simple string
+    if ((newExpr instanceof GrRegex ||
+         newExpr instanceof GrLiteral && (newExpr.getText().startsWith("/") || newExpr.getText().startsWith("$/"))) &&
+        oldParent instanceof GrCommandArgumentList &&
+        ((GrCommandArgumentList)oldParent).getAllArguments()[0] == oldExpr) {
+      final GrLiteral stringLiteral = GrStringUtil.createStringFromRegex((GrLiteral)newExpr);
+      return oldExpr.replaceWithExpression(stringLiteral, removeUnnecessaryParentheses);
     }
 
     // Remove unnecessary parentheses

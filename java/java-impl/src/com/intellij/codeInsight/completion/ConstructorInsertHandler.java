@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -68,7 +70,9 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
 
     boolean fillTypeArgs = false;
     if (delegate instanceof PsiTypeLookupItem) {
-      fillTypeArgs = psiClass.getTypeParameters().length > 0 && ((PsiTypeLookupItem)delegate).calcGenerics().isEmpty();
+      fillTypeArgs = !isRawTypeExpected(context, (PsiTypeLookupItem)delegate) &&
+                     psiClass.getTypeParameters().length > 0 &&
+                     ((PsiTypeLookupItem)delegate).calcGenerics(position).isEmpty();
       delegate.handleInsert(context);
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
     }
@@ -95,12 +99,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       editor.getDocument().insertString(offset, " {}");
       editor.getCaretModel().moveToOffset(offset + 2);
 
-      if (fillTypeArgs) {
-        int refEnd = context.getOffset(insideRef);
-        context.getDocument().insertString(refEnd, "<>");
-        editor.getCaretModel().moveToOffset(refEnd + 1);
-        return;
-      }
+      if (fillTypeArgs && promptTypeArgs(context, context.getOffset(insideRef))) return;
 
       context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
     }
@@ -117,7 +116,41 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       if (mySmart) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
       }
+      if (fillTypeArgs && promptTypeArgs(context, context.getOffset(insideRef))) return;
     }
+  }
+
+  static boolean isRawTypeExpected(InsertionContext context, PsiTypeLookupItem delegate) {
+    PsiNewExpression newExpr =
+      PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiNewExpression.class, false);
+    if (newExpr != null) {
+      for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(newExpr, true)) {
+        PsiType expected = info.getDefaultType();
+        if (expected.isAssignableFrom(delegate.getPsiType())) {
+          if (expected instanceof PsiClassType && ((PsiClassType)expected).isRaw()) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  static boolean promptTypeArgs(InsertionContext context, int offset) {
+    if (offset < 0) {
+      return false;
+    }
+
+    OffsetKey key = context.trackOffset(offset, false);
+    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+    offset = context.getOffset(key);
+    if (offset < 0) {
+      return false;
+    }
+
+    context.getDocument().insertString(offset, "<>");
+    context.getEditor().getCaretModel().moveToOffset(offset + 1);
+    return true;
   }
 
   public static boolean insertParentheses(InsertionContext context,

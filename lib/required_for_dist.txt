@@ -24,7 +24,8 @@ jsr173_1.0_api.jar
 junit.jar
 junit-4.10.jar
 log4j.jar
-looks-2.2.2.jar
+jgoodies-common-1.2.1.jar
+jgoodies-looks-2.4.2.jar
 microba.jar
 nanoxml-2.2.3.jar
 nekohtml-1.9.14.jar

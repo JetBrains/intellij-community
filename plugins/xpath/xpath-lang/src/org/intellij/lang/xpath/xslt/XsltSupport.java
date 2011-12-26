@@ -231,7 +231,7 @@ public class XsltSupport {
         return level != XsltChecker.LanguageLevel.NONE;
     }
 
-    public static XsltChecker.LanguageLevel getXsltLanguageLevel(PsiFile psiFile) {
+    public static XsltChecker.LanguageLevel getXsltLanguageLevel(@NotNull PsiFile psiFile) {
         final CachedValuesManager mgr = CachedValuesManager.getManager(psiFile.getProject());
         return mgr.getParameterizedCachedValue(psiFile, FORCE_XSLT_KEY, XsltSupportProvider.INSTANCE, false, psiFile);
     }

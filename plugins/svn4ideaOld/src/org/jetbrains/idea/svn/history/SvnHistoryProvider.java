@@ -32,9 +32,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
@@ -112,7 +110,9 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       gb.gridwidth = 2;
       gb.weightx = gb.weighty = 1;
       gb.fill = GridBagConstraints.BOTH;
-      panel.add(ScrollPaneFactory.createScrollPane(field), gb);
+      JScrollPane pane = ScrollPaneFactory.createScrollPane(field);
+      pane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP));
+      panel.add(pane, gb);
       addComp = panel;
     } else {
       columns = new ColumnInfo[] {new CopyFromColumnInfo()};

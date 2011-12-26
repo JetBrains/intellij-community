@@ -1,2 +1,1 @@
-def s = """Say "hello" 
- to the world"""
+def s = "Say \"hello\" \n to the world"

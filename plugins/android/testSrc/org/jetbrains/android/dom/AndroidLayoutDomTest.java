@@ -2,11 +2,17 @@ package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -324,6 +330,33 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testRelativeIdsCompletion() throws Throwable {
     doTestCompletionVariants(getTestName(false) + ".xml", "@+id/", "@android:", "@id/idd1", "@id/idd2");
+  }
+
+  public void testCreateResourceFromUsage() throws Throwable {
+    final VirtualFile virtualFile = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    final List<HighlightInfo> infos = myFixture.doHighlighting();
+    final List<IntentionAction> actions = new ArrayList<IntentionAction>();
+
+    for (HighlightInfo info : infos) {
+      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = info.quickFixActionRanges;
+      
+      if (ranges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
+          actions.add(pair.getFirst().getAction());
+        }
+      }
+    }
+
+    assertEquals(1, actions.size());
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        actions.get(0).invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+      }
+    }.execute();
+    myFixture.checkResultByFile("res/values/drawables.xml", testFolder + '/' +  getTestName(true) + "_drawable_after.xml", true);
   }
 
   private void copyOnClickClasses() throws IOException {

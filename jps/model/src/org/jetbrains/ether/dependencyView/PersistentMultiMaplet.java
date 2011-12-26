@@ -22,8 +22,8 @@ import com.intellij.util.io.PersistentHashMap;
 import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,9 +41,8 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
                                final DataExternalizer<V> valueExternalizer,
                                final TransientMultiMaplet.CollectionConstructor<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<K, Collection<V>>(
-      file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory)
-    );
+    myMap = new PersistentHashMap<K, Collection<V>>(file, keyExternalizer,
+                                                    new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
   }
 
 
@@ -142,22 +141,16 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public void putAll(MultiMaplet<K, V> m) {
-    try {
-      for (Map.Entry<K, Collection<V>> entry : m.entrySet()) {
-        myMap.put(entry.getKey(), entry.getValue());
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    for (Map.Entry<K, Collection<V>> entry : m.entrySet()) {
+      put(entry.getKey(), entry.getValue());
     }
   }
-
 
   public Collection<K> keyCollection() {
     try {
       return myMap.getAllKeysWithExistingMapping();
     }
-    catch (IOException e){
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
@@ -173,16 +166,46 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
-  public Set<Map.Entry<K, Collection<V>>> entrySet() {
-    assert(false);
-    return null;
+  public Collection<Map.Entry<K, Collection<V>>> entrySet() {
+    final Collection<Map.Entry<K, Collection<V>>> result = new LinkedList<Map.Entry<K, Collection<V>>>();
+
+    try {
+      for (final K key : myMap.getAllKeysWithExistingMapping()) {
+        final Collection<V> value = myMap.get(key);
+
+        final Map.Entry<K, Collection<V>> entry = new Map.Entry<K, Collection<V>>() {
+          @Override
+          public K getKey() {
+            return key;
+          }
+
+          @Override
+          public Collection<V> getValue() {
+            return value;
+          }
+
+          @Override
+          public Collection<V> setValue(Collection<V> value) {
+            return null;
+          }
+        };
+
+        result.add(entry);
+      }
+
+      return result;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
     private final TransientMultiMaplet.CollectionConstructor<V> myCollectionFactory;
 
-    public CollectionDataExternalizer(DataExternalizer<V> elementExternalizer, TransientMultiMaplet.CollectionConstructor<V> collectionFactory) {
+    public CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
+                                      TransientMultiMaplet.CollectionConstructor<V> collectionFactory) {
       myElementExternalizer = elementExternalizer;
       myCollectionFactory = collectionFactory;
     }

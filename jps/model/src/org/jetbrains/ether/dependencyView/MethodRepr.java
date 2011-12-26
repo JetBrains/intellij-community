@@ -153,15 +153,6 @@ class MethodRepr extends ProtoMember {
       }
     };
   }
-  
-  static Predicate equal(final MethodRepr me){
-    return new Predicate() {
-      @Override
-      public boolean satisfy(MethodRepr that) {
-        return me.equals(that);
-      }
-    };
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -178,7 +169,7 @@ class MethodRepr extends ProtoMember {
     return 31 * (31 * Arrays.hashCode(argumentTypes) + type.hashCode()) + name.hashCode();
   }
 
-  public UsageRepr.Usage createUsage(final DependencyContext context, final DependencyContext.S owner) {
+  private String getDescr(final DependencyContext context) {
     final StringBuilder buf = new StringBuilder();
 
     buf.append("(");
@@ -190,6 +181,14 @@ class MethodRepr extends ProtoMember {
     buf.append(")");
     buf.append(type.getDescr(context));
 
-    return UsageRepr.createMethodUsage(context, name, owner, buf.toString());
+    return buf.toString();
+  }
+
+  public UsageRepr.Usage createUsage(final DependencyContext context, final DependencyContext.S owner) {
+    return UsageRepr.createMethodUsage(context, name, owner, getDescr(context));
+  }
+
+  public UsageRepr.Usage createMetaUsage(final DependencyContext context, final DependencyContext.S owner) {
+    return UsageRepr.createMetaMethodUsage(context, name, owner, getDescr(context));
   }
 }

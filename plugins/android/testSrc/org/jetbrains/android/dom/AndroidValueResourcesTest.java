@@ -17,11 +17,19 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -137,6 +145,26 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     myFixture.testCompletion("res/layout/main.xml", testFolder + "/boolResReference_after.xml");
   }
 
+  public void testResourceReferenceAsValueHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testResourceReferenceAsValueCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testResourceReferenceAsValueCompletion2() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testResourceReferenceAsValueCompletion3() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml", "true", "false");
+  }
+
+  public void testResourceReferenceAsValueCompletion4() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml");
+  }
+
   public void testParentStyleReference() throws Throwable {
     VirtualFile file = myFixture.copyFileToProject(testFolder + "/psreference.xml", getPathToCopy("psreference.xml"));
     myFixture.configureFromExistingVirtualFile(file);
@@ -152,5 +180,32 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   // see getPathToCopy()
   public void testResOverlay() throws Throwable {
     doTestCompletionVariants("styles1.xml", "@drawable/picture1", "@drawable/picture2", "@drawable/picture3");
+  }
+
+  public void testCreateResourceFromUsage() throws Throwable {
+    final VirtualFile virtualFile = copyFileToProject(getTestName(true) + ".xml", "res/values/drawables.xml");
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    final List<HighlightInfo> infos = myFixture.doHighlighting();
+    final List<IntentionAction> actions = new ArrayList<IntentionAction>();
+
+    for (HighlightInfo info : infos) {
+      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = info.quickFixActionRanges;
+
+      if (ranges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
+          actions.add(pair.getFirst().getAction());
+        }
+      }
+    }
+
+    assertEquals(1, actions.size());
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        actions.get(0).invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+      }
+    }.execute();
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(true) + "_after.xml", true);
   }
 }

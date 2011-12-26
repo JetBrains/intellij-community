@@ -16,6 +16,9 @@
 
 package org.jetbrains.android.dom.resources;
 
+import com.intellij.util.xml.Convert;
+import org.jetbrains.android.dom.converters.QuietResourceReferenceConverter;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Eugene.Kudelevsky
@@ -23,5 +26,6 @@ package org.jetbrains.android.dom.resources;
  * Time: 6:35:12 PM
  * To change this template use File | Settings | File Templates.
  */
+@Convert(QuietResourceReferenceConverter.class)
 public interface StringElement extends ResourceElement, StyledText {
 }

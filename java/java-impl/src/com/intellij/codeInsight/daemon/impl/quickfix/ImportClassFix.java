@@ -96,7 +96,16 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected boolean isAccessible(PsiClass aClass, PsiJavaCodeReferenceElement reference) {
-    return aClass.hasModifierProperty(PsiModifier.PUBLIC);
+  protected String getRequiredMemberName(PsiJavaCodeReferenceElement reference) {
+    if (reference.getParent() instanceof PsiJavaCodeReferenceElement) {
+      return ((PsiJavaCodeReferenceElement)reference.getParent()).getReferenceName();
+    }
+
+    return super.getRequiredMemberName(reference);
+  }
+
+  @Override
+  protected boolean isAccessible(PsiMember member, PsiJavaCodeReferenceElement reference) {
+    return member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED);
   }
 }

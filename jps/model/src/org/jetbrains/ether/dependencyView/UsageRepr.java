@@ -4,7 +4,9 @@ import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.ether.RW;
 import org.objectweb.asm.Type;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.util.*;
 
@@ -23,12 +25,11 @@ class UsageRepr {
   private final static int CLASS_EXTENDS_USAGE = 4;
   private final static int CLASS_NEW_USAGE = 5;
   private final static int ANNOTATION_USAGE = 6;
+  private final static int METAMETHOD_USAGE = 7;
 
   private UsageRepr() {
 
   }
-
-  private final static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
   public static class Cluster implements RW.Savable {
     final Set<Usage> usages = new HashSet<Usage>();
@@ -56,15 +57,15 @@ class UsageRepr {
     }
 
     @Override
-    public void save(final DataOutput out){
-      try{
+    public void save(final DataOutput out) {
+      try {
         out.writeInt(usages.size());
-        for(Usage u : usages){
+        for (Usage u : usages) {
           u.save(out);
           RW.save(residentialMap.get(u), DependencyContext.descriptorS, out);
         }
       }
-      catch (IOException e){
+      catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
@@ -109,7 +110,7 @@ class UsageRepr {
       return usages.isEmpty();
     }
 
-    public static DataExternalizer<Cluster> clusterExternalizer (final DependencyContext context){
+    public static DataExternalizer<Cluster> clusterExternalizer(final DependencyContext context) {
       return new DataExternalizer<Cluster>() {
         @Override
         public void save(final DataOutput out, final Cluster value) throws IOException {
@@ -156,6 +157,26 @@ class UsageRepr {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FMUsage fmUsage = (FMUsage)o;
+
+      if (!name.equals(fmUsage.name)) return false;
+      if (!owner.equals(fmUsage.owner)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + owner.hashCode();
+      return result;
     }
   }
 
@@ -286,6 +307,56 @@ class UsageRepr {
     @Override
     public int hashCode() {
       return ((31 * Arrays.hashCode(argumentTypes) + (returnType.hashCode())) * 31 + (name.hashCode())) * 31 + (owner.hashCode());
+    }
+  }
+
+  public static class MetaMethodUsage extends FMUsage {
+    private int myArity;
+
+    public MetaMethodUsage(final DependencyContext context, final DependencyContext.S n, final DependencyContext.S o, final String descr) {
+      super(n, o);
+      myArity = TypeRepr.getType(context, Type.getArgumentTypes(descr)).length;
+    }
+
+    public MetaMethodUsage(final DataInput in) {
+      super(in);
+      try {
+        myArity = in.readInt();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public void save(final DataOutput out) {
+      super.save(METAMETHOD_USAGE, out);
+      try {
+        out.writeInt(myArity);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+
+      MetaMethodUsage that = (MetaMethodUsage)o;
+
+      if (myArity != that.myArity) return false;
+
+      return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + myArity;
+      return result;
     }
   }
 
@@ -538,6 +609,13 @@ class UsageRepr {
     return context.getUsage(new MethodUsage(context, name, owner, descr));
   }
 
+  public static Usage createMetaMethodUsage(final DependencyContext context,
+                                            final DependencyContext.S name,
+                                            final DependencyContext.S owner,
+                                            final String descr) {
+    return context.getUsage(new MetaMethodUsage(context, name, owner, descr));
+  }
+
   public static Usage createClassUsage(final DependencyContext context, final DependencyContext.S name) {
     return context.getUsage(new ClassUsage(name));
   }
@@ -588,6 +666,9 @@ class UsageRepr {
 
           case ANNOTATION_USAGE:
             return context.getUsage(new AnnotationUsage(context, in));
+
+          case METAMETHOD_USAGE:
+            return context.getUsage(new MetaMethodUsage(in));
         }
 
         assert (false);

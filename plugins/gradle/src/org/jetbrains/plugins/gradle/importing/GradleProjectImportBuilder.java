@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import javax.swing.*;
@@ -69,7 +70,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
   @Override
   public Icon getIcon() {
-    return GradleIcons.GRADLE_ICON;
+    return GradleConstants.GRADLE_ICON;
   }
 
   @Override
@@ -91,12 +92,22 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   }
 
   @Override
-  public List<Module> commit(Project project,
+  public List<Module> commit(final Project project,
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
-                             ModifiableArtifactModel artifactModel) {
-    //if (project != null) {
-    //  project.getComponent(GradleProjectState.class).GRADLE_PROJECT_FILE_PATH = myProjectFile.getAbsolutePath();
+                             ModifiableArtifactModel artifactModel)
+  {
+    // TODO den uncomment
+    //if (!project.isInitialized()) {
+    //  StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+    //    @Override
+    //    public void run() {
+    //      final GradleProjectState state = project.getComponent(GradleProjectState.class);
+    //      if (state != null) {
+    //        state.GRADLE_PROJECT_FILE_PATH = myProjectFile.getAbsolutePath();
+    //      }
+    //    }
+    //  });
     //}
     GradleModulesImporter importer = new GradleModulesImporter();
     Map<GradleModule, Module> mappings =

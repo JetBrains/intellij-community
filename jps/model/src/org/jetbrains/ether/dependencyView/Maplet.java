@@ -34,5 +34,5 @@ interface Maplet<K, V> {
   void remove(final Object key);
   void close();
   Collection<K> keyCollection();
-  Set<Map.Entry<K, V>> entrySet();
+  Collection<Map.Entry<K, V>> entrySet();
 }

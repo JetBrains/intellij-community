@@ -37,8 +37,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   private BreakpointManager myBreakpointManager = new BreakpointManagerImpl();
 
   private final XBreakpointHandler<?>[] myXBreakpointHandlers = new XBreakpointHandler<?>[]{
-    new XsltBreakpointHandler(this, XsltBreakpointType.V1.class),
-    new XsltBreakpointHandler(this, XsltBreakpointType.V2.class)
+    new XsltBreakpointHandler(this, XsltBreakpointType.class),
   };
   private XsltDebuggerSession myDebuggerSession;
 

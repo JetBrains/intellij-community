@@ -44,13 +44,14 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
 public abstract class BaseShowRecentFilesAction extends AnAction implements DumbAware {
   private static final Color BORDER_COLOR = Gray._135;
-  private JBPopup myPopup;
 
   public void actionPerformed(AnActionEvent e) {
     show(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
@@ -62,7 +63,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     presentation.setEnabled(project != null);
   }
 
-  private void show(final Project project){
+  protected void show(final Project project){
     final DefaultListModel model = new DefaultListModel();
 
     FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(project);
@@ -118,48 +119,8 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
       }
     );
 
-    list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      private String getTitle2Text(String fullText) {
-        int labelWidth = pathLabel.getWidth();
-        if (fullText == null || fullText.length() == 0) return " ";
-        while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
-          int sep = fullText.indexOf(File.separatorChar, 4);
-          if (sep < 0) return fullText;
-          fullText = "..." + fullText.substring(sep);
-        }
-
-        return fullText;
-      }
-
-      public void valueChanged(final ListSelectionEvent e) {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            updatePathLabel();
-          }
-        });
-      }
-
-      private void updatePathLabel() {
-        final Object[] values = list.getSelectedValues();
-        if (values != null && values.length == 1) {
-          final VirtualFile parent = ((VirtualFile)values[0]).getParent();
-          if (parent != null) {
-            pathLabel.setText(getTitle2Text(parent.getPresentableUrl()));
-          }
-          else {
-            pathLabel.setText(" ");
-          }
-        }
-        else {
-          pathLabel.setText(" ");
-        }
-
-        if (myPopup != null) {
-          myPopup.setAdText(pathLabel.getText(), SwingUtilities.RIGHT);
-        }
-      }
-    });
+    final MyListSelectionListener listSelectionListener = new MyListSelectionListener(pathLabel, list);
+    list.getSelectionModel().addListSelectionListener(listSelectionListener);
 
     Runnable runnable = new Runnable() {
       public void run() {
@@ -199,7 +160,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     footerPanel.add(pathLabel);
 
-    myPopup = new PopupChooserBuilder(list).
+    final PopupChooserBuilder builder = new PopupChooserBuilder(list).
       setTitle(getTitle()).
       setAdText(" ").
       setMovable(true).
@@ -209,14 +170,26 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
         public String fun(Object o) {
           return o instanceof VirtualFile ? ((VirtualFile)o).getName() : "";
         }
-      }).
-      createPopup();
-    myPopup.showCenteredInCurrentWindow(project);
+      });
+    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(getPeerActionId());
+    final PeerListener listener = new PeerListener(project, getPeerActionId());
+    for (Shortcut shortcut : shortcuts) {
+      if (shortcut instanceof KeyboardShortcut && ((KeyboardShortcut)shortcut).getSecondKeyStroke() == null) {
+        final KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
+        builder.registerKeyboardAction(keyStroke, listener);
+      }
+    }
+    JBPopup popup = builder.createPopup();
+    listener.setPopup(popup);
+    listSelectionListener.setPopup(popup);
+    popup.showCenteredInCurrentWindow(project);
   }
 
   protected abstract String getTitle();
 
   protected abstract VirtualFile[] filesToShow(Project project);
+
+  protected abstract String getPeerActionId();
 
   private static KeyStroke getAdditionalSelectKeystroke() {
     Shortcut[] shortcuts= KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EDIT_SOURCE);
@@ -251,4 +224,85 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
       }
     }
   }
+
+  private static class PeerListener implements ActionListener {
+    private final Project myProject;
+    private final String myId;
+    private JBPopup myPopup;
+
+    public PeerListener(Project project, final String id) {
+      myProject = project;
+      myId = id;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (myPopup != null) {
+        myPopup.cancel();
+      }
+      BaseShowRecentFilesAction peer = (BaseShowRecentFilesAction)ActionManager.getInstance().getAction(myId);
+      peer.show(myProject);
+    }
+
+    public void setPopup(JBPopup popup) {
+      myPopup = popup;
+    }
+  }
+
+  private static class MyListSelectionListener implements ListSelectionListener {
+    private final JLabel myPathLabel;
+    private final JList myList;
+    private JBPopup myPopup;
+
+    public MyListSelectionListener(JLabel pathLabel, JList list) {
+      myPathLabel = pathLabel;
+      myList = list;
+    }
+
+    private String getTitle2Text(String fullText) {
+      int labelWidth = myPathLabel.getWidth();
+      if (fullText == null || fullText.length() == 0) return " ";
+      while (myPathLabel.getFontMetrics(myPathLabel.getFont()).stringWidth(fullText) > labelWidth) {
+        int sep = fullText.indexOf(File.separatorChar, 4);
+        if (sep < 0) return fullText;
+        fullText = "..." + fullText.substring(sep);
+      }
+
+      return fullText;
+    }
+
+    public void valueChanged(final ListSelectionEvent e) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          updatePathLabel();
+        }
+      });
+    }
+
+    private void updatePathLabel() {
+      final Object[] values = myList.getSelectedValues();
+      if (values != null && values.length == 1) {
+        final VirtualFile parent = ((VirtualFile)values[0]).getParent();
+        if (parent != null) {
+          myPathLabel.setText(getTitle2Text(parent.getPresentableUrl()));
+        }
+        else {
+          myPathLabel.setText(" ");
+        }
+      }
+      else {
+        myPathLabel.setText(" ");
+      }
+
+      if (myPopup != null) {
+        myPopup.setAdText(myPathLabel.getText(), SwingUtilities.RIGHT);
+      }
+    }
+
+    public void setPopup(JBPopup popup) {
+      myPopup = popup;
+    }
+  }
+
 }

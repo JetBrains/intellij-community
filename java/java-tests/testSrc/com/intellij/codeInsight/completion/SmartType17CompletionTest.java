@@ -49,6 +49,8 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testTryWithResourcesNoSemicolon() { doTest(); }
+
   public void testDiamondPresentation() {
     configureByFile("/" + getTestName(false) + ".java");
     LookupElementPresentation presentation = new LookupElementPresentation();
@@ -57,7 +59,7 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
   }
 
 
-  private void doTest() throws Exception {
+  private void doTest() {
     configureByFile("/" + getTestName(false) + ".java");
     if (myItems != null && myItems.length == 1) {
       final Lookup lookup = getLookup();

@@ -68,7 +68,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private TextAttributes myTextAttributes;
   private boolean myIsInUpdate;
   private RangeMarker savedBeforeBulkCaretMarker;
-  private boolean ignoreWrongMoves = false;
+  private boolean myIgnoreWrongMoves = false;
 
   /**
    * We check that caret is located at the target offset at the end of {@link #moveToOffset(int, boolean)} method. However,
@@ -211,11 +211,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     assertIsDispatchThread();
     validateCallContext();
     final LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
-    moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null);
+    final CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, true);
     final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(myOffset);
-    if (!ignoreWrongMoves && !positionByOffsetAfterMove.equals(logicalPosition)) {
+    if (!myIgnoreWrongMoves && !positionByOffsetAfterMove.equals(logicalPosition)) {
       StringBuilder debugBuffer = new StringBuilder();
-      moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer);
+      moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer, false);
       int textStart = Math.max(0, Math.min(offset, myOffset) - 1);
       final DocumentEx document = myEditor.getDocument();
       int textEnd = Math.min(document.getTextLength() - 1, Math.max(offset, myOffset) + 1);
@@ -229,10 +229,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           textStart, textEnd, text, debugBuffer
       ));
     }
+    if (event != null) {
+      for (CaretListener listener : myCaretListeners) {
+        listener.caretPositionChanged(event);
+      }
+    }
   }
 
   public void setIgnoreWrongMoves(boolean ignoreWrongMoves) {
-    this.ignoreWrongMoves = ignoreWrongMoves;
+    this.myIgnoreWrongMoves = ignoreWrongMoves;
   }
 
   @Override
@@ -390,23 +395,32 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
-    moveToLogicalPosition(pos, false, null);
+    moveToLogicalPosition(pos, false, null, false);
   }
 
-  private void moveToLogicalPosition(@NotNull LogicalPosition pos, boolean locateBeforeSoftWrap, @Nullable StringBuilder debugBuffer) {
+  @Nullable
+  private CaretEvent moveToLogicalPosition(@NotNull LogicalPosition pos,
+                                           boolean locateBeforeSoftWrap,
+                                           @Nullable StringBuilder debugBuffer,
+                                           boolean delayListenersNotification)
+  {
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
     myReportCaretMoves = true;
     try {
-      doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer);
+      return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, delayListenersNotification);
     }
     finally {
       myReportCaretMoves = false;
     }
   }
-  
-  private void doMoveToLogicalPosition(@NotNull LogicalPosition pos, boolean locateBeforeSoftWrap, @Nullable StringBuilder debugBuffer) {
+
+  private CaretEvent doMoveToLogicalPosition(@NotNull LogicalPosition pos,
+                                             boolean locateBeforeSoftWrap,
+                                             @Nullable StringBuilder debugBuffer,
+                                             boolean delayListenersNotification)
+  {
     assertIsDispatchThread();
     if (debugBuffer != null) {
       debugBuffer.append(String.format(
@@ -549,7 +563,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           myReportCaretMoves = false;
           try {
             moveToVisualPosition(visualPosition);
-            return;
+            return null;
           }
           finally {
             myReportCaretMoves = restore;
@@ -567,10 +581,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     if (!oldCaretPosition.toVisualPosition().equals(myLogicalCaret.toVisualPosition())) {
       CaretEvent event = new CaretEvent(myEditor, oldCaretPosition, myLogicalCaret);
-      for (CaretListener listener : myCaretListeners) {
-        listener.caretPositionChanged(event);
+      if (delayListenersNotification) {
+        return event;
+      }
+      else {
+        for (CaretListener listener : myCaretListeners) {
+          listener.caretPositionChanged(event);
+        }
       }
     }
+    return null;
   }
 
   private void requestRepaint(VerticalInfo oldCaretInfo) {
@@ -678,7 +698,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         final int line;
         try {
           line = event.translateLineViaDiff(myLogicalCaret.line);
-          moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment, null);
+          moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment, null, false);
         }
         catch (FilesTooBigForDiffException e1) {
           LOG.info(e1);

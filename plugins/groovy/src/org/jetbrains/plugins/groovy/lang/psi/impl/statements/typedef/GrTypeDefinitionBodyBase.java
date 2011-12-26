@@ -173,13 +173,18 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
 
   }
 
-  public static class GrEnumBody extends GrTypeDefinitionBodyBase implements GrEnumDefinitionBody {
+  public static class GrEnumBody extends GrTypeDefinitionBodyBase implements GrEnumDefinitionBody, StubBasedPsiElement<EmptyStub> {
     public GrEnumBody(@NotNull ASTNode node) {
       super(node);
     }
 
+    public GrEnumBody(EmptyStub stub) {
+      super(stub, GroovyElementTypes.ENUM_BODY);
+    }
+
+    @Nullable
     public GrEnumConstantList getEnumConstantList() {
-      return findChildByClass(GrEnumConstantList.class);
+      return getStubOrPsiChild(GroovyElementTypes.ENUM_CONSTANTS);
     }
 
     public void accept(GroovyElementVisitor visitor) {

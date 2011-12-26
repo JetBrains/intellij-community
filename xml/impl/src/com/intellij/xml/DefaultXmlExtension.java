@@ -160,7 +160,7 @@ public class DefaultXmlExtension extends XmlExtension {
   }
 
   public void insertNamespaceDeclaration(@NotNull final XmlFile file,
-                                         @NotNull final Editor editor,
+                                         @Nullable final Editor editor,
                                          @NotNull final Set<String> possibleNamespaces,
                                          @Nullable String nsPrefix,
                                          @Nullable final Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException {
@@ -235,7 +235,7 @@ public class DefaultXmlExtension extends XmlExtension {
     }
     XmlUtil.reformatTagStart(rootTag);
     
-    if (namespace.length() == 0) {
+    if (editor != null && namespace.length() == 0) {
       final XmlAttribute xmlAttribute = rootTag.getAttribute(qname);
       if (xmlAttribute != null) {
         final XmlAttributeValue value = xmlAttribute.getValueElement();

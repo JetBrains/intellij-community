@@ -1058,6 +1058,10 @@ class X {
     checkSingleItemCompletion 'new ArrayLi<caret>', 'new ArrayList<<caret>>()'
   }
 
+  public void testInnerClassStart() {
+    checkSingleItemCompletion 'class Foo { cl<caret> }', 'class Foo { class <caret>}'
+  }
+
   public void testPropertyBeforeAccessor() {
     doVariantableTest 'soSe', 'setSoSe'
   }

@@ -36,7 +36,7 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
       providers.add(support.getSettingsPanelProvider());
     }
 
-    final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+    List<Configurable> configurables = new ArrayList<Configurable>();
     Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
       public int compare(final DebuggerSettingsPanelProvider o1, final DebuggerSettingsPanelProvider o2) {
         return o2.getPriority() - o1.getPriority();
@@ -58,6 +58,11 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
     }
     if (configurables.isEmpty() && rootConfigurable == null) {
       return null;
+    }
+
+    if (rootConfigurable == null && configurables.size() == 1) {
+      rootConfigurable = configurables.get(0);
+      configurables = Collections.emptyList();
     }
 
     return new DebuggerConfigurable(rootConfigurable, configurables);

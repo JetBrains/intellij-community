@@ -4,20 +4,17 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.impl.TemplateImpl
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateSettings
+import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
@@ -43,17 +40,26 @@ public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
   public void testSoutv() {
     myFixture.configureByText("a.groovy", "def x = 2\nsoutv<caret>");
     expandTemplate(myFixture.getEditor());
-    myFixture.checkResult("def x = 2\nprintln \"x = $x\"");
+    myFixture.checkResult("def x = 2\nprintln \"x = \$x\"");
+  }
+
+  public void testSoutp() {
+    myFixture.configureByText("a.groovy", """
+void usage(int num, boolean someBoolean, List<String> args){
+  soutp<caret>
+}
+""");
+    expandTemplate(myFixture.getEditor());
+    myFixture.checkResult '''
+void usage(int num, boolean someBoolean, List<String> args){
+    println "num = [$num], someBoolean = [$someBoolean], args = [$args]"
+}
+'''
   }
 
   public static void expandTemplate(final Editor editor) {
-    new WriteCommandAction(editor.getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        new ListTemplatesAction().actionPerformedImpl(editor.getProject(), editor);
-        ((LookupImpl)LookupManager.getActiveLookup(editor)).finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
-    }.execute();
+    new ListTemplatesAction().actionPerformedImpl(editor.getProject(), editor);
+    ((LookupImpl)LookupManager.getActiveLookup(editor)).finishLookup(Lookup.NORMAL_SELECT_CHAR);
   }
 
   public void testGroovyStatementContext() throws Exception {

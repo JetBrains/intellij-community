@@ -69,7 +69,7 @@ public class TransientMaplet<K, V> implements Maplet<K, V>{
   }
 
   @Override
-  public Set<Map.Entry<K, V>> entrySet() {
+  public Collection<Map.Entry<K, V>> entrySet() {
     return map.entrySet();
   }
 }

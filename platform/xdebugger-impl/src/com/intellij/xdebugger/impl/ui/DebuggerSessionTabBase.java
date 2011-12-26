@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.diagnostic.logging.*;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -23,6 +24,8 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
+import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +41,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,11 +57,16 @@ import java.util.Map;
  * @author nik
  */
 public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManager, Disposable {
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
-  private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners =
+  @NotNull private final Project myProject;
+  @NotNull private final LogFilesManager myManager;
+
+  @NotNull final String mySessionName;
+  @NotNull protected final RunnerLayoutUi myUi;
+
+  @NotNull private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
+  @NotNull private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners =
     new HashMap<AdditionalTabComponent, ContentManagerListener>();
-  private final Project myProject;
-  private final LogFilesManager myManager;
+  
   protected ExecutionEnvironment myEnvironment;
 
   protected ExecutionConsole myConsole;
@@ -65,14 +74,27 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
 
   private final Icon DEFAULT_TAB_COMPONENT_ICON = IconLoader.getIcon("/fileTypes/text.png");
 
-  public DebuggerSessionTabBase(Project project) {
+  public DebuggerSessionTabBase(Project project, @NotNull String runnerId, @NotNull final String sessionName) {
     myProject = project;
     myManager = new LogFilesManager(project, this, this);
+
+    mySessionName = sessionName;
+
+    myUi = RunnerLayoutUi.Factory.getInstance(project).create(
+      runnerId, XDebuggerBundle.message("xdebugger.default.content.title"), sessionName, this);
+
+    myUi.getDefaults()
+      .initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null)
+      .initFocusContent(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
+      .initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
   }
 
   public abstract RunContentDescriptor getRunContentDescriptor();
 
-  public abstract RunnerLayoutUi getUi();
+  @NotNull
+  public RunnerLayoutUi getUi() {
+    return myUi;
+  }
 
   protected void registerFileMatcher(final RunProfile runConfiguration) {
     if (runConfiguration instanceof RunConfigurationBase) {

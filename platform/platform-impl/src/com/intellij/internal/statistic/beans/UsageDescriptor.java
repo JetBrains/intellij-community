@@ -20,7 +20,7 @@ public class UsageDescriptor implements Comparable<UsageDescriptor> {
     private int myValue;
 
     public UsageDescriptor(String key, int value) {
-       assert key != null;
+       ConvertUsagesUtil.assertDescriptorName(key);
 
         myKey = key;
         myValue = value;

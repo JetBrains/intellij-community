@@ -4,19 +4,23 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_INJECTION;
 
 /**
  * @author Maxim.Medvedev
@@ -35,7 +39,145 @@ public class GrStringUtil {
   private GrStringUtil() {
   }
 
-  public static String escapeForSlashyStrings(String str) {
+  public static String unescapeString(String s) {
+    final int length = s.length();
+    StringBuilder buffer = new StringBuilder(length);
+    boolean escaped = false;
+    for (int idx = 0; idx < length; idx++) {
+      char ch = s.charAt(idx);
+      if (!escaped) {
+        if (ch == '\\') {
+          escaped = true;
+        }
+        else {
+          buffer.append(ch);
+        }
+      }
+      else {
+        switch (ch) {
+          case 'n':
+            buffer.append('\n');
+            break;
+
+          case 'r':
+            buffer.append('\r');
+            break;
+
+          case 'b':
+            buffer.append('\b');
+            break;
+
+          case 't':
+            buffer.append('\t');
+            break;
+
+          case 'f':
+            buffer.append('\f');
+            break;
+
+          case '\'':
+            buffer.append('\'');
+            break;
+
+          case '\"':
+            buffer.append('\"');
+            break;
+
+          case '\\':
+            buffer.append('\\');
+            break;
+          case '\n':
+            //do nothing
+            break;
+
+          case 'u':
+            if (idx + 4 < length) {
+              try {
+                int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
+                idx += 4;
+                buffer.append((char)code);
+              }
+              catch (NumberFormatException e) {
+                buffer.append("\\u");
+              }
+            }
+            else {
+              buffer.append("\\u");
+            }
+            break;
+
+          default:
+            buffer.append(ch);
+            break;
+        }
+        escaped = false;
+      }
+    }
+
+    return buffer.toString();
+  }
+
+  public static String unescapeSlashyString(String s) {
+    return unescapeRegex(s, true);
+  }
+
+  public static String unescapeDollarSlashyString(String s) {
+    return unescapeRegex(s, false);
+  }
+
+  private static String unescapeRegex(String s, boolean unescapeSlash) {
+    final int length = s.length();
+    StringBuilder buffer = new StringBuilder(length);
+    
+    boolean escaped = false;
+    for (int idx = 0; idx < length; idx++) {
+      char ch = s.charAt(idx);
+      if (!escaped) {
+        if (ch == '\\') {
+          escaped = true;
+        }
+        else {
+          buffer.append(ch);
+        }
+      }
+      else {
+        switch (ch) {
+          case '/':
+            if (!unescapeSlash) {
+              buffer.append('\\');
+            }
+            buffer.append('/');
+            break;
+          case 'u':
+            if (idx + 4 < length) {
+              try {
+                int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
+                idx += 4;
+                buffer.append((char)code);
+              }
+              catch (NumberFormatException e) {
+                buffer.append("\\u");
+              }
+            }
+            else {
+              buffer.append("\\u");
+            }
+            break;
+
+          default:
+            buffer.append('\\');
+            buffer.append(ch);
+            break;
+        }
+        escaped = false;
+      }
+    }
+
+    if (escaped) buffer.append('\\');
+    return buffer.toString();
+  }
+
+  public static String escapeSymbolsForSlashyStrings(String str) {
     final StringBuilder buffer = new StringBuilder(str.length());
     escapeSymbolsForSlashyStrings(buffer, str);
     return buffer.toString();
@@ -98,27 +240,18 @@ public class GrStringUtil {
     buffer.append(hexCode);
   }
 
-
-  public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes) {
-    return escapeSymbolsForGString(s, escapeDoubleQuotes, false);
-  }
-
   public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes, boolean forInjection) {
     StringBuilder b = new StringBuilder();
-    escapeStringCharacters(s.length(), s, escapeDoubleQuotes ? "$\"" : "$", false, forInjection, b);
+    escapeStringCharacters(s.length(), s, escapeDoubleQuotes ? "$\"" : "$", forInjection, true, b);
     if (!forInjection) {
       unescapeCharacters(b, escapeDoubleQuotes ? "'" : "'\"", true);
     }
     return b.toString();
   }
 
-  public static String escapeSymbolsForString(String s, boolean escapeQuotes) {
-    return escapeSymbolsForString(s, escapeQuotes, false);
-  }
-
   public static String escapeSymbolsForString(String s, boolean escapeQuotes, boolean forInjection) {
     final StringBuilder builder = new StringBuilder();
-    escapeStringCharacters(s.length(), s, escapeQuotes ? "'" : "", false, forInjection, builder);
+    escapeStringCharacters(s.length(), s, escapeQuotes ? "'" : "", forInjection, true, builder);
     if (!forInjection) {
       unescapeCharacters(builder, escapeQuotes ? "$\"" : "$'\"", true);
     }
@@ -129,8 +262,8 @@ public class GrStringUtil {
   public static StringBuilder escapeStringCharacters(int length,
                                                      @NotNull String str,
                                                      @Nullable String additionalChars,
-                                                     boolean escapeNR,
-                                                     boolean escapeSlash,
+                                                     boolean escapeLineFeeds,
+                                                     boolean escapeBackSlash,
                                                      @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
@@ -148,16 +281,16 @@ public class GrStringUtil {
           break;
 
         case '\\':
-          if (escapeSlash) {
+          if (escapeBackSlash) {
             buffer.append("\\\\");
           }
           else {
-            buffer.append("\\");
+            buffer.append('\\');
           }
           break;
 
         case '\n':
-          if (escapeNR) {
+          if (escapeLineFeeds) {
             buffer.append("\\n");
           }
           else {
@@ -166,7 +299,7 @@ public class GrStringUtil {
           break;
 
         case '\r':
-          if (escapeNR) {
+          if (escapeLineFeeds) {
             buffer.append("\\r");
           }
           else {
@@ -189,7 +322,7 @@ public class GrStringUtil {
     return buffer;
   }
 
-  private static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
+  public static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
     for (int i = 0; i < builder.length(); i++) {
       if (builder.charAt(i) != '\\') continue;
       if (i + 1 == builder.length()) break;
@@ -297,7 +430,8 @@ public class GrStringUtil {
     }
     else {
       final String text = removeQuotes(literal.getText());
-      literalText = escapeSymbolsForGString(text, !text.contains("\n") && grString.isPlainString());
+      boolean escapeDoubleQuotes = !text.contains("\n") && grString.isPlainString();
+      literalText = escapeSymbolsForGString(text, escapeDoubleQuotes, false);
     }
 
     if (literalText.contains("\n")) {
@@ -329,12 +463,12 @@ public class GrStringUtil {
 
     final GrExpression template = factory.createExpressionFromText(quotes + "$x" + quotes);
     if (firstChild != null &&
-        firstChild.getNode().getElementType() == GroovyTokenTypes.mGSTRING_BEGIN &&
+        firstChild.getNode().getElementType() == mGSTRING_BEGIN &&
         !quotes.equals(firstChild.getText())) {
       grString.getNode().replaceChild(firstChild.getNode(), template.getFirstChild().getNode());
     }
     if (lastChild != null &&
-        lastChild.getNode().getElementType() == GroovyTokenTypes.mGSTRING_END &&
+        lastChild.getNode().getElementType() == mGSTRING_END &&
         !quotes.equals(lastChild.getText())) {
       grString.getNode().replaceChild(lastChild.getNode(), template.getLastChild().getNode());
     }
@@ -619,5 +753,38 @@ public class GrStringUtil {
       }
     }
     return true;
+  }
+  
+  public static GrLiteral createStringFromRegex(@NotNull GrLiteral regex) {
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(regex.getProject());
+
+
+    if (regex instanceof GrRegex) {
+      StringBuilder builder = new StringBuilder();
+      String quote = regex.getText().indexOf('\n') >= 0 ? TRIPLE_DOUBLE_QUOTES : DOUBLE_QUOTES;
+      builder.append(quote);
+      for (PsiElement child = regex.getFirstChild(); child!=null; child = child.getNextSibling()) {
+        final IElementType type = child.getNode().getElementType();
+        if (type == mREGEX_CONTENT) {
+          builder.append(escapeSymbolsForGString(unescapeSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), false));
+        }
+        else if (type == mDOLLAR_SLASH_REGEX_CONTENT) {
+          builder.append(escapeSymbolsForGString(unescapeDollarSlashyString(child.getText()), quote.equals(DOUBLE_QUOTES), false));
+        }
+        else if (type == GSTRING_INJECTION) {
+          builder.append(child.getText());
+        }
+      }
+      builder.append(quote);
+      return (GrLiteral)factory.createExpressionFromText(builder.toString());
+    }
+    else {
+      Object value = regex.getValue();
+      LOG.assertTrue(value==null || value instanceof String);
+      if (value == null) {
+        value = removeQuotes(regex.getText());
+      }
+      return factory.createLiteralFromValue(value);
+    }
   }
 }

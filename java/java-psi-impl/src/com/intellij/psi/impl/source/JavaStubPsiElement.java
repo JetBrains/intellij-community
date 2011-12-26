@@ -186,7 +186,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     return cloneImpl(treeElementClone);
   }
 
-  protected StubBasedPsiElementBase cloneImpl(CompositeElement treeElementClone) {
+  protected StubBasedPsiElementBase cloneImpl(@NotNull CompositeElement treeElementClone) {
     StubBasedPsiElementBase clone = (StubBasedPsiElementBase)super.clone();
     clone.setNode(treeElementClone);
     treeElementClone.setPsi(clone);

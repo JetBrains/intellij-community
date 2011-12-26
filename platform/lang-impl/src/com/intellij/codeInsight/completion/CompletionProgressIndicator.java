@@ -30,6 +30,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -61,7 +62,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,13 +74,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
  */
-public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess{
+public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private final Editor myEditor;
   private final CompletionParameters myParameters;
@@ -115,7 +114,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   };
   private volatile int myCount;
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(TObjectHashingStrategy.IDENTITY);
-  private final Set<OffsetMap> myMapsToDispose = new THashSet<OffsetMap>();
   private final PropertyChangeListener myLookupManagerListener;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
@@ -146,7 +144,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
-    addMapToDispose(offsetMap);
+    Disposer.register(this, offsetMap);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -213,6 +211,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @NotNull
   CompletionSorterImpl getSorter(LookupElement element) {
     return myItemSorters.get(element);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
@@ -429,15 +431,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     if (disposeOffsetMap) {
-      disposeOffsetMaps();
+      disposeIndicator();
     }
   }
 
-  void disposeOffsetMaps() {
-    for (OffsetMap map : myMapsToDispose) {
-        map.dispose();
-      }
-    myMapsToDispose.clear();
+  void disposeIndicator() {
+    Disposer.dispose(this);
   }
 
   @TestOnly
@@ -736,10 +735,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     }
-  }
-
-  public void addMapToDispose(OffsetMap map) {
-    myMapsToDispose.add(map);
   }
 
 }

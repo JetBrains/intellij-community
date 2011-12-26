@@ -22,9 +22,11 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
@@ -36,34 +38,16 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.lang.ref.SoftReference;
 import java.util.Iterator;
 
 public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
-  private static Icon ourIcon;
-  private static String ourText;
-  private static String ourDescription;
-
-  private static void initData() {
-    ourIcon = IconLoader.getIcon("/actions/diff.png");
-    ourText = VcsBundle.message("updated.info.tree.show.diff.text");
-    ourDescription = VcsBundle.message("updated.info.tree.show.diff.description");
-  }
-
   @Override
   public void update(AnActionEvent e) {
-    if (ourIcon == null) {
-      initData();
-    }
-
     final DataContext dc = e.getDataContext();
 
     final Presentation presentation = e.getPresentation();
-    presentation.setIcon(ourIcon);
-    presentation.setText(ourText);
-    presentation.setDescription(ourDescription);
 
     //presentation.setVisible(isVisible(dc));
     presentation.setEnabled(isVisible(dc) && isEnabled(dc));

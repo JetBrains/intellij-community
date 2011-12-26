@@ -212,7 +212,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
         ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK +buffer.toString());
-
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
           registerShutdownHook();
@@ -348,7 +347,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
 
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(ourProject);
+    ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
+    projectManagerEx.setCurrentTestProject(ourProject);
 
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
@@ -417,7 +417,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     catch (Exception e) {
 
     }
-    assertTrue("open: "+getProject().isOpen()+"; disposed:"+getProject().isDisposed()+"; startup passed:"+ passed+"; testProjectIsOurProject:"+(getProject() == ProjectManagerEx.getInstanceEx().getCurrentTestProject())+"; all open projects: "+
+    assertTrue("open: "+getProject().isOpen()+"; disposed:"+getProject().isDisposed()+"; startup passed:"+ passed+"; testProjectIsOurProject:"+(getProject() == projectManagerEx
+      .getCurrentTestProject())+"; all open projects: "+
                Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
@@ -427,6 +428,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       Document[] unsavedDocuments = manager.getUnsavedDocuments();
       manager.saveAllDocuments();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
@@ -528,6 +530,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       public void run() {
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
         ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+        
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
 
@@ -549,16 +553,28 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  public static void checkEditorsReleased() {
+  public static void checkEditorsReleased() throws Exception {
+    CompositeException result = new CompositeException();
     final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     if (allEditors.length > 0) {
       String fail = null;
       for (Editor editor : allEditors) {
         fail = EditorFactoryImpl.notReleasedError(editor);
-        EditorFactory.getInstance().releaseEditor(editor);
+        try {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
+        catch (Throwable e) {
+          result.add(e);
+        }
       }
-      fail("Unreleased editors: " + allEditors.length + "\n"+fail);
+      try {
+        fail("Unreleased editors: " + allEditors.length + "\n"+fail);
+      }
+      catch (Throwable e) {
+        result.add(e);
+      }
     }
+    if (!result.isEmpty()) throw result;
   }
 
   @Override
@@ -723,6 +739,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 closeAndDeleteProject();
               }

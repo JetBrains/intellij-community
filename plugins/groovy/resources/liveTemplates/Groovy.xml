@@ -26,6 +26,13 @@
       <option name="GROOVY_STATEMENT" value="true" />
     </context>
   </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutp"
+            name="soutp" toReformat="true" toShortenFQNames="true" value="println &quot;$FORMAT$&quot;">
+    <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;_1.collect { it + ' = [$' + it + ']'}.join(', ')&quot;, methodParameters())" name="FORMAT" />
+    <context>
+      <option name="GROOVY_STATEMENT" value="true" />
+    </context>
+  </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
             name="soutv" toReformat="true" toShortenFQNames="true" value="println &quot;$EXPR_COPY$ = $DOLLAR$$EXPR$&quot;">
     <variable alwaysStopAt="false" defaultValue="&quot;$&quot;" expression="" name="DOLLAR" />

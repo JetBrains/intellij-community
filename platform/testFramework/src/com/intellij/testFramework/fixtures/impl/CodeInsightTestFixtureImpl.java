@@ -54,7 +54,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -1029,20 +1028,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void tearDown() throws Exception {
-    if (SwingUtilities.isEventDispatchThread()) {
-      LookupManager.getInstance(getProject()).hideActiveLookup();
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          LookupManager.getInstance(getProject()).hideActiveLookup();
-        }
-      }, ModalityState.NON_MODAL);
-      UIUtil.pump();
-    }
-
     ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
 
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());

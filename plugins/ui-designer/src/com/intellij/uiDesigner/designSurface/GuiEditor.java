@@ -69,6 +69,7 @@ import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.event.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -831,8 +832,12 @@ public final class GuiEditor extends JPanel implements DataProvider {
       myCardLayout.show(this, CARD_VALID);
       refresh();
     }
-    catch (final Exception exc) {
-      showInvalidCard(exc);
+    catch (Exception exc) {
+      Throwable original = exc;
+      while (original instanceof InvocationTargetException) {
+        original = original.getCause();
+      }
+      showInvalidCard(original);
     }
     catch(final LinkageError exc) {
       showInvalidCard(exc);
@@ -843,7 +848,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     LOG.info(exc);
     // setting fictive container
     setRootContainer(new RadRootContainer(myModule, "0"));
-    myFormInvalidLabel.setText(UIDesignerBundle.message("error.form.file.is.invalid.message", exc.getMessage()));
+    myFormInvalidLabel.setText(UIDesignerBundle.message("error.form.file.is.invalid.message", FormEditingUtil.getExceptionMessage(exc)));
     myInvalid = true;
     myCardLayout.show(this, CARD_INVALID);
     repaint();

@@ -152,7 +152,11 @@ public class ConvertGStringToStringIntention extends Intention {
     }
     if (text.length() == 0) return null;
 
-    String escaped = GrStringUtil.escapeSymbolsForString(text, !text.contains("\n") && !text.contains("\r"));
-    return GrStringUtil.addQuotes(escaped, false);
+
+    final StringBuilder buffer = new StringBuilder();
+    boolean containsLineFeeds = text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0;
+    GrStringUtil.escapeStringCharacters(text.length(), text, "'", false, false, buffer);
+    GrStringUtil.unescapeCharacters(buffer, containsLineFeeds ? "$'\"" : "$\"", true);
+    return GrStringUtil.addQuotes(buffer.toString(), false);
   }
 }

@@ -38,6 +38,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -825,7 +826,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     return myTitlePanel;
   }
 
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     info.put("toolWindowTitle", myToolWindow.getTitle());
 
     final Content selection = myToolWindow.getContentManager().getSelectedContent();

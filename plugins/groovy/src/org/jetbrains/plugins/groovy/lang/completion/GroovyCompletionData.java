@@ -29,6 +29,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
@@ -83,7 +84,10 @@ public class GroovyCompletionData {
       }
 
       addTypeDefinitionKeywords(result, position);
-      addExtendsImplements(position, result);
+      for (String keyword : addExtendsImplements(position)) {
+        result.addElement(keyword(keyword, TailType.SPACE));
+      }
+
       registerControlCompletion(position, result);
 
       if (parent instanceof GrExpression) {
@@ -144,9 +148,10 @@ public class GroovyCompletionData {
     }
   }
 
-  private static void addExtendsImplements(PsiElement context, CompletionResultSet result) {
+  @NotNull
+  private static String[] addExtendsImplements(PsiElement context) {
     if (context.getParent() == null) {
-      return;
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     PsiElement elem = context.getParent();
@@ -162,21 +167,20 @@ public class GroovyCompletionData {
 
     ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition;
     impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition;
-    if (!ext && !impl) return;
+    if (!ext && !impl) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     PsiElement[] children = elem.getChildren();
     for (PsiElement child : children) {
       ext &= !(child instanceof GrExtendsClause);
       if (child instanceof GrImplementsClause || child instanceof GrTypeDefinitionBody) {
-        return;
+        return ArrayUtil.EMPTY_STRING_ARRAY;
       }
     }
-    if (ext) {
-      result.addElement(keyword(PsiKeyword.EXTENDS, TailType.SPACE));
+    if (ext && impl) {
+      return new String[]{PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS};
     }
-    if (impl) {
-      result.addElement(keyword(PsiKeyword.IMPLEMENTS, TailType.SPACE));
-    }
+    
+    return new String[]{ext ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS};
   }
 
   public static void addKeywords(CompletionResultSet result, boolean space, String... keywords) {
@@ -268,17 +272,24 @@ public class GroovyCompletionData {
   }
 
   public static boolean suggestClassInterfaceEnum(PsiElement context) {
-    if (context.getParent() != null &&
-        (context.getParent() instanceof GrReferenceExpression) &&
-        context.getParent().getParent() instanceof GroovyFile) {
+    if (suggestThrows(context) || addExtendsImplements(context).length > 0) {
+      return false;
+    }
+
+    PsiElement parent = context.getParent();
+    if (parent instanceof GrTypeDefinitionBody) {
       return true;
     }
-    if (context.getParent() != null &&
-        (context.getParent() instanceof GrReferenceExpression) &&
-        (context.getParent().getParent() instanceof GrApplicationStatement ||
-            context.getParent().getParent() instanceof GrCall) &&
-        context.getParent().getParent().getParent() instanceof GroovyFile) {
-      return true;
+
+    if (parent instanceof GrReferenceExpression) {
+      if (parent.getParent() instanceof GroovyFile) {
+        return true;
+      }
+      if ((parent.getParent() instanceof GrApplicationStatement ||
+           parent.getParent() instanceof GrCall) &&
+          parent.getParent().getParent() instanceof GroovyFile) {
+        return true;
+      }
     }
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
     if (leaf != null) {
@@ -286,11 +297,11 @@ public class GroovyCompletionData {
       prev = PsiImplUtil.realPrevious(prev);
       if (prev instanceof GrModifierList &&
           prev.getParent() != null &&
-          prev.getParent().getParent() instanceof GroovyFile)
+          prev.getParent().getParent() instanceof GroovyFile) {
         return true;
+      }
 
-      PsiElement parent = leaf.getParent();
-      if (parent instanceof GroovyFile) {
+      if (leaf.getParent() instanceof GroovyFile) {
         return GroovyCompletionUtil.isNewStatement(context, false);
       }
     }
@@ -426,7 +437,7 @@ public class GroovyCompletionData {
     return false;
   }
 
-  public static boolean suggestThrows(PsiElement context) {
+  private static boolean suggestThrows(PsiElement context) {
     PsiElement candidate = null;
     if (GroovyCompletionUtil.isInTypeDefinitionBody(context)) {
       PsiElement run = context;

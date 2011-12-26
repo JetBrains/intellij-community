@@ -22,15 +22,12 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.newStructureView.StructureTreeBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.LanguageStructureViewBuilder;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -57,8 +54,12 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -78,7 +79,6 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -98,56 +98,9 @@ public class FileStructurePopup implements Disposable {
   @NonNls private static final String ourPropertyKey = "FileStructure.narrowDown";
   private boolean myShouldNarrowDown = false;
   private Tree myTree;
-  private AbstractTreeBuilder myAbstractTreeBuilder;
+  private FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
   private TreeSpeedSearch mySpeedSearch;
-  private HashSet<TreeElement> myVisibleElements = new HashSet<TreeElement>();
-  private Filter mySearchFilter = new Filter() {
-    @Override
-    public boolean isVisible(TreeElement treeNode) {
-      if (mySpeedSearch != null && myShouldNarrowDown && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())) {
-
-      if (myVisibleElements.contains(treeNode)) return true;
-        ItemPresentation presentation = treeNode.getPresentation();
-        if (presentation == null) return true;
-        String text = presentation.getPresentableText();
-        if (text == null) return true;
-        Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
-        if (ranges == null) return true;
-        Iterator<TextRange> iterator = ranges.iterator();
-        boolean contains = iterator.hasNext();
-      if (contains) {
-        myVisibleElements.add(treeNode);
-        return true;
-      }
-      for (TreeElement child : treeNode.getChildren()) {
-        if (isVisible(child)) {
-          myVisibleElements.add(treeNode);
-          return true;
-        }
-      }
-      return false;
-      }
-      return true;
-    }
-
-    @Override
-    public boolean isReverted() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public ActionPresentation getPresentation() {
-      return new ActionPresentationData("", "", null);
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "Narrow Down";
-    }
-  };
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                              @Nullable Editor editor,
@@ -162,13 +115,7 @@ public class FileStructurePopup implements Disposable {
     myDisposable = auxDisposable;
     if (applySortAndFilter) {
       myTreeActionsOwner = new MyTreeActionsOwner();
-      myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner) {
-        @NotNull
-        @Override
-        public Filter[] getFilters() {
-          return ArrayUtil.append(super.getFilters(), mySearchFilter);
-        }
-      };
+      myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner);
     }
     else {
       myTreeActionsOwner = null;
@@ -190,7 +137,7 @@ public class FileStructurePopup implements Disposable {
       }
     }
 
-    SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModel){
+    SmartTreeStructure smartTreeStructure = new SmartTreeStructure(project, myTreeModel){
       public void rebuildTree() {
         if (!myPopup.isDisposed()) {
           super.rebuildTree();
@@ -210,19 +157,22 @@ public class FileStructurePopup implements Disposable {
         return "structure view tree structure(model=" + myTreeModel + ")";
       }
     };
+    ElementFilter filter = new FileStructurePopupFilter();
+    final FilteringTreeStructure treeStructure = new FilteringTreeStructure(project, filter, smartTreeStructure);
 
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
     myTree = new Tree(model);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
-    myAbstractTreeBuilder = new StructureTreeBuilder(project, myTree,
-                                                     (DefaultTreeModel)myTree.getModel(),treeStructure, myTreeModel) {
+    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
+    myAbstractTreeBuilder = new FilteringTreeBuilder(project, myTree, filter, treeStructure, null) {
       @Override
       protected boolean validateNode(Object child) {
         return StructureViewComponent.isValid(child);
       }
     };
+
   }
 
   public void show() {
@@ -239,15 +189,6 @@ public class FileStructurePopup implements Disposable {
     Disposer.register(myPopup, this);
     Disposer.register(myPopup, myAbstractTreeBuilder);
     myPopup.showInCenterOf(myEditor.getContentComponent());
-    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
-    mySpeedSearch.addChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        myVisibleElements.clear();
-        myAbstractTreeBuilder.queueUpdate();
-
-      }
-    });
     myAbstractTreeBuilder.expandAll(new Runnable() {
       @Override
       public void run() {
@@ -259,10 +200,25 @@ public class FileStructurePopup implements Disposable {
           }
         });
       }
-    });
-
+    });    
+    final Alarm alarm = new Alarm(myPopup);
+    alarm.addRequest(new Runnable() {
+      String filter = "";
+      @Override
+      public void run() {
+        String prefix = mySpeedSearch.getEnteredPrefix();
+        if (prefix == null) prefix = "";
+        
+        if (!filter.equals(prefix)) {
+          filter = prefix;
+          myAbstractTreeBuilder.refilter();
+        }
+        alarm.addRequest(this, 300);
+      }
+    }, 300);
   }
-
+  
+  @Nullable
   protected PsiFile getPsiFile(final Project project) {
     return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
   }
@@ -313,20 +269,22 @@ public class FileStructurePopup implements Disposable {
         }
       }
     }
+    final JPanel panel = new JPanel(new BorderLayout());
+    JPanel comboPanel = new JPanel(new GridLayout(0, 2, 0, 0));
 
-    //new AnAction() {
-    //  public void actionPerformed(AnActionEvent e) {
-    //    final boolean succeeded = myCommanderPanel.navigateSelectedElement();
-    //    if (succeeded) {
-    //      unregisterCustomShortcutSet(myCommanderPanel);
-    //    }
-    //  }
-    //}.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myCommanderPanel);
+    final Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
+    final Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
+    final CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(F4, ENTER));
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        final boolean succeeded = navigateSelectedElement();
+        if (succeeded) {
+          unregisterCustomShortcutSet(panel);
+        }
+      }
+    }.registerCustomShortcutSet(shortcutSet, panel);
 
     //myCommanderPanel.setPreferredSize(new Dimension(400, 500));
-
-    JPanel panel = new JPanel(new BorderLayout());
-    JPanel comboPanel = new JPanel(new GridLayout(0, 2, 0, 0));
 
     addNarrowDownCheckbox(comboPanel);
 
@@ -344,6 +302,33 @@ public class FileStructurePopup implements Disposable {
               //new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
+  }
+
+  public boolean navigateSelectedElement() {
+    final Ref<Boolean> succeeded = new Ref<Boolean>();
+    final CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    commandProcessor.executeCommand(myProject, new Runnable() {
+      public void run() {
+        final AbstractTreeNode selectedNode = (AbstractTreeNode)myTree.getSelectionPath().getLastPathComponent();
+        if (selectedNode != null) {
+          if (selectedNode.canNavigateToSource()) {
+            selectedNode.navigate(true);
+            succeeded.set(true);
+          } else {
+            succeeded.set(false);
+          }
+        } else {
+          succeeded.set(false);
+        }
+
+
+        IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
+      }
+    }, "Navigate", null);
+    if (succeeded.get()) {
+      myPopup.cancel();
+    }
+    return succeeded.get();
   }
 
   protected boolean isShowRoot(final PsiFile psiFile) {
@@ -480,7 +465,19 @@ public class FileStructurePopup implements Disposable {
       final CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.executeCommand(myProject, new Runnable() {
         public void run() {
-          succeeded.set(MyCommanderPanel.super.navigateSelectedElement());
+          final AbstractTreeNode selectedNode = getSelectedNode();
+          if (selectedNode != null) {
+            if (selectedNode.canNavigateToSource()) {
+              selectedNode.navigate(true);
+              succeeded.set(true);
+            } else {
+              succeeded.set(false);
+            }
+          } else {
+            succeeded.set(false);
+          }
+
+
           IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
         }
       }, "Navigate", null);
@@ -596,4 +593,38 @@ public class FileStructurePopup implements Disposable {
     }
   }
 
+  private class FileStructurePopupFilter implements ElementFilter {
+    private String myLastFilter = null;
+    private HashSet<Object> myVisibleParents = new HashSet<Object>();
+    @Override
+    public boolean shouldBeShowing(Object value) {
+      if (!myShouldNarrowDown) return true;
+
+      String filter = mySpeedSearch != null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix()) 
+                      ? mySpeedSearch.getEnteredPrefix() : null;
+      if (!StringUtil.equals(myLastFilter, filter)) {
+        myVisibleParents.clear();
+      }
+      if (filter != null) {
+        if (myVisibleParents.contains(value)) {
+          return true;
+        }
+
+        final Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(value.toString());
+        boolean matches = ranges != null && ranges.iterator().hasNext();
+        
+        if (matches) {
+          Object o = value;
+          while ((o = ((FilteringTreeStructure.Node)o).getParent()) != null) {
+            myVisibleParents.add(o);
+          }
+          return true;
+        } else {
+          return false;
+        }
+        
+      } 
+      return true;
+    }
+  }
 }

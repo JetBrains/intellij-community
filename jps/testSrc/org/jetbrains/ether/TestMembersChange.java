@@ -159,4 +159,8 @@ public class TestMembersChange extends IncrementalTestCase {
   public void testThrowsListDiffersInBaseAndDerived() throws Exception {
     doTest();
   }
+
+  public void testAddMethod() throws Exception {
+      doTest();
+  }
 }

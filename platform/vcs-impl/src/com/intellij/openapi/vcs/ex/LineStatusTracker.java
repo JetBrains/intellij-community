@@ -392,7 +392,7 @@ public class LineStatusTracker {
               if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
             }
 
-            if (myRanges.isEmpty()) {
+            if (myRanges.isEmpty() && myVirtualFile != null) {
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {

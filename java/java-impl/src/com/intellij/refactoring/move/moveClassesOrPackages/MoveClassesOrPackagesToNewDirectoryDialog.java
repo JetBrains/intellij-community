@@ -38,8 +38,8 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -170,6 +170,13 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
       return;
     }
 
+    try {
+      MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(myDirectory, directory);
+    }
+    catch (IncorrectOperationException e) {
+      Messages.showErrorDialog(project, e.getMessage(), RefactoringBundle.message("cannot.move"));
+      return;
+    }
 
     super.doOKAction();
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);

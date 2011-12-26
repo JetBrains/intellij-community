@@ -96,7 +96,7 @@ public final class PackageElement implements Queryable, RootsProvider {
 
 
 
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     PsiPackage pkg = getPackage();
     if (pkg instanceof Queryable) {
       ((Queryable)pkg).putInfo(info);

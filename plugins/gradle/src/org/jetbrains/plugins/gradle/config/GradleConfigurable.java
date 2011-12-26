@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -251,7 +251,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   }
 
   public Icon getIcon() {
-    return GradleIcons.GRADLE_ICON;
+    return GradleConstants.GRADLE_ICON;
   }
 
   @NotNull

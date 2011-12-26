@@ -430,11 +430,8 @@ public class PlatformTestUtil {
   }
 
   /**
-   * example usage: startPerformanceTest(100, testRunnable).cpuBound().assertTiming();
+   * example usage: startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();
    */
-  public static TestInfo startPerformanceTest(int expected, @NotNull ThrowableRunnable test) {
-    return startPerformanceTest("",expected, test);
-  }
   public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expected, @NotNull ThrowableRunnable test) {
     return new TestInfo(test, expected,message);
   }
@@ -464,6 +461,7 @@ public class PlatformTestUtil {
     private TestInfo(@NotNull ThrowableRunnable test, int expected, String message) {
       this.test = test;
       this.expected = expected;
+      assert expected > 0 : "Expected must be > 0. Was: "+ expected;
       this.message = message;
     }
 
@@ -523,13 +521,29 @@ public class PlatformTestUtil {
         }
         else {
           // try one more time
-          if (attempts == 0) throw new AssertionFailedError(logMessage);
+          if (attempts == 0) {
+            //try {
+            //  Object result = Class.forName("com.intellij.util.ProfilingUtil").getMethod("captureCPUSnapshot").invoke(null);
+            //  System.err.println("CPU snapshot captured in '"+result+"'");
+            //}
+            //catch (Exception e) {
+            //}
+
+            throw new AssertionFailedError(logMessage);
+          }
           System.gc();
           System.gc();
           System.gc();
           String s = "Another epic fail (remaining attempts: " + attempts + "): " + logMessage;
           TeamCityLogger.warning(s, null);
           System.err.println(s);
+          //if (attempts == 1) {
+          //  try {
+          //    Class.forName("com.intellij.util.ProfilingUtil").getMethod("startCPUProfiling").invoke(null);
+          //  }
+          //  catch (Exception e) {
+          //  }
+          //}
           continue;
         }
         break;

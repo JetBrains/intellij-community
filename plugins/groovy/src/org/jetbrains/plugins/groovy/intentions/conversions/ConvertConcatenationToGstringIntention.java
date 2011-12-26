@@ -91,8 +91,12 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       builder.append(GrStringUtil.removeQuotes(operand.getText()));
     }
     else if (operand instanceof GrLiteral) {
-      String text = GrStringUtil.escapeSymbolsForGString(GrStringUtil.removeQuotes(operand.getText()), false);
-      builder.append(text);
+      final String text = GrStringUtil.removeQuotes(operand.getText());
+      StringBuilder buffer = new StringBuilder(text.length());
+      boolean containsLineFeeds = text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0;
+      GrStringUtil.escapeStringCharacters(text.length(), text, "$", false, false, buffer);
+      GrStringUtil.unescapeCharacters(buffer, containsLineFeeds?"'\"":"'", containsLineFeeds);
+      builder.append(buffer);
     }
     else if (MyPredicate.satisfiedBy(operand, false)) {
       performIntention((GrBinaryExpression)operand, builder);

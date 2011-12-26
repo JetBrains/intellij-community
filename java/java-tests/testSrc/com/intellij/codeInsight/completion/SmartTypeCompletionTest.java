@@ -895,6 +895,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testIfConditionExpectedType() throws Exception { doTest(); }
 
   public void testUnboundTypeArgs() throws Exception { doTest(); }
+  public void testUnboundTypeArgs2() throws Exception { doTest(); }
+  public void testSameTypeArg() throws Exception { doTest(); }
 
   public void testIDEADEV2668() throws Exception {
     doTest();

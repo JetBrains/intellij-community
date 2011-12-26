@@ -47,7 +47,10 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
    */
   @NotNull Set<Language> getLanguages();
 
-  @Nullable
+  /**
+   * @param target target language
+   * @return PsiFile for given language, or <code>null</code> if the language not present
+   */
   PsiFile getPsi(@NotNull Language target);
 
   @NotNull List<PsiFile> getAllFiles();

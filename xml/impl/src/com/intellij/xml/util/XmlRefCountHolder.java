@@ -241,6 +241,13 @@ public class XmlRefCountHolder {
         myHolder.registerIdReference(value);
       }
 
+      String s = value.getValue();
+      if (s != null) {
+        int pos = s.indexOf(':');
+        if (pos > 0) {
+          myHolder.addUsedPrefix(s.substring(0, pos));
+        }
+      }
       super.visitXmlAttributeValue(value);
     }
 

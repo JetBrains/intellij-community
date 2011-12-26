@@ -45,13 +45,17 @@ import java.util.regex.Matcher;
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool implements CustomSuppressableInspectionTool {
   @Nullable
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
-    final HighlightDisplayKey displayKey = HighlightDisplayKey.find(getShortName());
+    return getSuppressActions(getShortName());
+
+  }
+
+  public static SuppressIntentionAction[] getSuppressActions(String name) {
+    final HighlightDisplayKey displayKey = HighlightDisplayKey.find(name);
     return new SuppressIntentionAction[]{
       new SuppressByGroovyCommentFix(displayKey),
       new SuppressForMemberFix(displayKey, false),
       new SuppressForMemberFix(displayKey, true),
     };
-
   }
 
   public boolean isSuppressedFor(final PsiElement element) {
@@ -59,7 +63,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
   }
 
   @Nullable
-  private static PsiElement getElementToolSuppressedIn(final PsiElement place, final String toolId) {
+  public static PsiElement getElementToolSuppressedIn(final PsiElement place, final String toolId) {
     if (place == null) return null;
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 

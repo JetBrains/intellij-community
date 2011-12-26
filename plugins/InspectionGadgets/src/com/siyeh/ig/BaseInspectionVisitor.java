@@ -78,7 +78,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   protected final void registerClassError(@NotNull PsiClass aClass,
                                           Object... infos) {
-    final PsiElement nameIdentifier;
+    PsiElement nameIdentifier;
     if (aClass instanceof PsiEnumConstantInitializer) {
       final PsiEnumConstantInitializer enumConstantInitializer =
         (PsiEnumConstantInitializer)aClass;
@@ -93,7 +93,10 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     else {
       nameIdentifier = aClass.getNameIdentifier();
     }
-    if (nameIdentifier == null) {
+    if (nameIdentifier != null && !nameIdentifier.isPhysical()) {
+      nameIdentifier = nameIdentifier.getNavigationElement();
+    }
+    if (nameIdentifier == null || !nameIdentifier.isPhysical()) {
       registerError(aClass.getContainingFile(), infos);
     }
     else {

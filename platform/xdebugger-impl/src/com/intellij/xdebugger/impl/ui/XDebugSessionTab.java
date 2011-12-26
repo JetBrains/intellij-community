@@ -27,10 +27,7 @@ import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
-import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -60,20 +57,11 @@ import java.util.List;
  * @author spleaner
  */
 public class XDebugSessionTab extends DebuggerSessionTabBase {
-  private final String mySessionName;
-  private final RunnerLayoutUi myUi;
   private XWatchesView myWatchesView;
   private final List<XDebugViewBase> myViews = new ArrayList<XDebugViewBase>();
 
   public XDebugSessionTab(@NotNull final Project project, @NotNull final String sessionName) {
-    super(project);
-    mySessionName = sessionName;
-
-    myUi = RunnerLayoutUi.Factory.getInstance(project).create("Debug", "unknown!", sessionName, this);
-    myUi.getDefaults()
-      .initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null)
-      .initFocusContent(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
-      .initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
+    super(project, "Debug", sessionName);
   }
 
   private static ActionGroup getActionGroup(final String id) {
@@ -96,6 +84,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
                                         XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
     result.setCloseable(false);
+
+    ActionGroup group = getActionGroup(XDebuggerActions.VARIABLES_TREE_TOOLBAR_GROUP);
+    result.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, variablesView.getTree());
+
     return result;
   }
 
@@ -206,9 +198,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return myRunContentDescriptor;
   }
 
-  public RunnerLayoutUi getUi() {
-    return myUi;
-  }
 
   @Nullable
   public RunContentDescriptor getRunContentDescriptor() {
