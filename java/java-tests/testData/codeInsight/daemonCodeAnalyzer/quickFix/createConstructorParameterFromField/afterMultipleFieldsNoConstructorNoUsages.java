@@ -4,9 +4,9 @@ public class A {
   private final Object o;
   private final Runnable runnable;
 
-    public A(Runnable runnable, Object o, int field) {
-        this.runnable = runnable;
+    public A(int field, Object o, Runnable runnable) {
+        this.field = field;
         this.o = o;
-        this.field = field;<caret>
+        this.runnable = runnable;
     }
 }
