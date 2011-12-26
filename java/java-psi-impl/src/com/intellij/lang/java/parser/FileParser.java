@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.java.parser;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
@@ -26,8 +26,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ResourceBundle;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
@@ -52,14 +50,17 @@ public class FileParser {
   }
 
   public void parse(final PsiBuilder builder) {
-    parseFile(builder, IMPORT_LIST_STOPPER_SET, JavaErrorMessages.BUNDLE, "expected.class.or.interface");
+    parseFile(builder, IMPORT_LIST_STOPPER_SET, JavaErrorMessages.INSTANCE, "expected.class.or.interface");
   }
 
-  private static String error(@NotNull String bundle, @NotNull String errorMessageKey) {
-    return CommonBundle.message(ResourceBundle.getBundle(bundle), errorMessageKey);
+  private static String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
+    return bundle.getMessage(errorMessageKey);
   }
 
-  public void parseFile(final PsiBuilder builder, final TokenSet importListStoppers, @NotNull String bundle, @NotNull String errorMessageKey) {
+  public void parseFile(@NotNull final PsiBuilder builder,
+                        @NotNull final TokenSet importListStoppers,
+                        @NotNull final AbstractBundle bundle,
+                        @NotNull final String errorMessageKey) {
     parsePackageStatement(builder);
 
     final Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);
