@@ -21,6 +21,7 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.server.Maven2ServerGlobals;
+import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 
 import java.rmi.RemoteException;
@@ -69,7 +70,8 @@ public class TransferListenerAdapter implements TransferListener {
 
   public void transferCompleted(TransferEvent event) {
     try {
-      Maven2ServerGlobals.getDownloadListener().artifactDownloaded(event.getLocalFile(), event.getResource().getName());
+      MavenServerDownloadListener listener = Maven2ServerGlobals.getDownloadListener();
+      if (listener != null) listener.artifactDownloaded(event.getLocalFile(), event.getResource().getName());
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
