@@ -538,4 +538,21 @@ class Bar {{
   void testOctalInspection() {
     doTest(new GroovyOctalIntegerInspection())
   }
+
+  void testThisInStaticMethodOfAnonymousClass() {
+    myFixture.configureByText('a.groovy', '''\
+class A {
+    static abc
+    def foo() {
+        new Runnable() {
+            <error descr="Inner classes cannot have static declarations">static</error> void run() {
+                print this.@abc
+            }
+        }.run()
+    }
+}''')
+
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection)
+    myFixture.checkHighlighting(true, false, false);
+  }
 }
