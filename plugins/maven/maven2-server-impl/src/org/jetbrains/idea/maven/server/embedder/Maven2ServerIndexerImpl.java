@@ -44,6 +44,8 @@ import org.sonatype.nexus.index.updater.IndexUpdateRequest;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -229,11 +231,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
       ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
       if (artifactContext == null) return null;
 
-      myIndexer.addArtifactToIndex(artifactContext, index);
-      // this hack is necessary to invalidate searcher's and reader's cache (may not be required then lucene or nexus library change
-      Method m = index.getClass().getDeclaredMethod("closeReaders");
-      m.setAccessible(true);
-      m.invoke(index);
+      addArtifact(myIndexer, index, artifactContext);
 
       org.sonatype.nexus.index.ArtifactInfo a = artifactContext.getArtifactInfo();
       return new MavenId(a.groupId, a.artifactId, a.version);
@@ -241,6 +239,15 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
     }
+  }
+
+  public static void addArtifact(NexusIndexer indexer, IndexingContext index, ArtifactContext artifactContext)
+    throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    indexer.addArtifactToIndex(artifactContext, index);
+    // this hack is necessary to invalidate searcher's and reader's cache (may not be required then lucene or nexus library change
+    Method m = index.getClass().getDeclaredMethod("closeReaders");
+    m.setAccessible(true);
+    m.invoke(index);
   }
 
   public Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult) throws MavenServerIndexerException {

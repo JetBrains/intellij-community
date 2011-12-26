@@ -38,7 +38,6 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -167,14 +166,6 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     if (directory == null) {
       Messages.showErrorDialog(project, RefactoringBundle.message("cannot.find.or.create.destination.directory"),
                                RefactoringBundle.message("cannot.move"));
-      return;
-    }
-
-    try {
-      MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(myDirectory, directory);
-    }
-    catch (IncorrectOperationException e) {
-      Messages.showErrorDialog(project, e.getMessage(), RefactoringBundle.message("cannot.move"));
       return;
     }
 

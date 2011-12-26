@@ -27,6 +27,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.embedder.Maven2ServerEmbedderImpl;
 import org.jetbrains.idea.maven.server.embedder.Maven2ServerIndexFetcher;
+import org.jetbrains.idea.maven.server.embedder.Maven2ServerIndexerImpl;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexingContext;
 import org.sonatype.nexus.index.updater.IndexUpdateRequest;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class NexusIndexerTest extends MavenIndicesTestCase {
   private Maven2ServerEmbedderImpl myEmbedder;
@@ -108,12 +110,14 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     ArtifactInfo ai = new ArtifactInfo(c.getRepositoryId(), "group", "id", "version", null);
     ArtifactContext a = new ArtifactContext(new File(myProjectPom.getPath()), null, null, ai, null);
 
-    myIndexer.addArtifactToIndex(a, c);
+    Maven2ServerIndexerImpl.addArtifact(myIndexer, c, a);
 
     Query q = new TermQuery(new Term(ArtifactInfo.GROUP_ID, "group"));
-    Collection<ArtifactInfo> result = myIndexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
+    FlatSearchRequest request = new FlatSearchRequest(q, ArtifactInfo.VERSION_COMPARATOR);
+    FlatSearchResponse response = myIndexer.searchFlat(request);
+    Set<ArtifactInfo> result = response.getResults();
 
-    assertEquals(1, result.size());
+    assertSize(1, result);
 
     ArtifactInfo found = new ArrayList<ArtifactInfo>(result).get(0);
     assertEquals("group", found.groupId);
@@ -179,7 +183,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
   }
 
   private IndexingContext addContext(String id, File indexDir, File repoDir, String repoUrl) throws Exception {
-    return myIndexer.addIndexingContext(
+    return myIndexer.addIndexingContextForced(
       id,
       id,
       repoDir,

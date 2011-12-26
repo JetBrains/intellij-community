@@ -54,6 +54,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
   private void initEmbedder() throws RemoteException {
     if (myEmbedder != null) releaseEmbedder();
 
+
     myEmbedderImpl = Maven2ServerEmbedderImpl.create(MavenServerManager.convertSettings(getMavenGeneralSettings()));
     myEmbedder = new MavenEmbedderWrapper(null) {
       @NotNull

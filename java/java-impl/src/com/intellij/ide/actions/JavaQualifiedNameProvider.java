@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,14 +303,14 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       element = element.getParent();
       if (element == null) return;
     }
-    if (element instanceof PsiJavaCodeReferenceElement && elementToInsert != null) {
-      try {
-        element = ((PsiJavaCodeReferenceElement)element).bindToElement(elementToInsert);
-      }
-      catch (IncorrectOperationException e) {
-        // failed to bind
-      }
-    }
+    //if (element instanceof PsiJavaCodeReferenceElement && elementToInsert != null) {
+    //  try {
+    //    element = ((PsiJavaCodeReferenceElement)element).bindToElement(elementToInsert);
+    //  }
+    //  catch (IncorrectOperationException e) {
+    //    // failed to bind
+    //  }
+    //}
     final JavaCodeStyleManager codeStyleManagerEx = JavaCodeStyleManager.getInstance(element.getProject());
     codeStyleManagerEx.shortenClassReferences(element, JavaCodeStyleManager.UNCOMPLETE_CODE);
   }

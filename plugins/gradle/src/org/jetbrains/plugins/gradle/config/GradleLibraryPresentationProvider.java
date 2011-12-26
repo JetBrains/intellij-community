@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
@@ -37,7 +37,7 @@ import java.io.File;
  */
 public class GradleLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
   
-  private static final LibraryKind<GroovyLibraryProperties> GRADLE_KIND = LibraryKind.create("gradle");
+  private static final LibraryKind<GroovyLibraryProperties> GRADLE_KIND = LibraryKind.create(GradleConstants.EXTENSION);
   
   private final GradleLibraryManager myLibraryManager;
   
@@ -48,7 +48,7 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
   @NotNull
   @Override
   public Icon getIcon() {
-    return GradleIcons.GRADLE_ICON;
+    return GradleConstants.GRADLE_ICON;
   }
 
   @Nls

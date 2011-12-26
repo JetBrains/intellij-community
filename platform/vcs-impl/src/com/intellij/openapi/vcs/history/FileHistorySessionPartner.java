@@ -103,7 +103,9 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   public void reportCreatedEmptySession(final VcsAbstractHistorySession session) {
     if (mySession != null && session != null && mySession.getRevisionList().equals(session.getRevisionList())) return;
     mySession = session;
-    mySession.shouldBeRefreshed();  // to init current revision!
+    if (mySession != null) {
+      mySession.shouldBeRefreshed();  // to init current revision!
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         String actionName = VcsBundle.message("action.name.file.history", myPath.getName());
