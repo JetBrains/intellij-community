@@ -112,7 +112,6 @@ public class RefreshVFsSynchronously {
     final double num = changes.size();
 
     int cnt = 0;
-    final FilesForRefresh filesForRefresh = new FilesForRefresh();
     for (Change change : changes) {
       if ((! wrapper.beforeNull(change)) && (wrapper.movedOrRenamedOrReplaced(change) || (wrapper.afterNull(change)))) {
         refreshDeletedOrReplaced(wrapper.getBeforeFile(change));
