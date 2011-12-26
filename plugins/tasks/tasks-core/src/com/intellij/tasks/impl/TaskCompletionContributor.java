@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.tasks.Task;
@@ -107,6 +108,7 @@ public class TaskCompletionContributor extends CompletionContributor {
           public void handleInsert(InsertionContext context, LookupElement item) {
             Document document = context.getEditor().getDocument();
             String s = task.getId() + ": " + task.getSummary();
+            s = StringUtil.convertLineSeparators(s);
             document.replaceString(context.getStartOffset(), context.getTailOffset(), s);
             context.getEditor().getCaretModel().moveToOffset(context.getStartOffset() + s.length());
             consumer.consume(task);
