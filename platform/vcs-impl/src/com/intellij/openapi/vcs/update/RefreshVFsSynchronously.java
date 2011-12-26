@@ -119,8 +119,10 @@ public class RefreshVFsSynchronously {
       } else if (! wrapper.beforeNull(change)) {
         refresh(wrapper.getBeforeFile(change));
       }
-      if ((! wrapper.afterNull(change)) && (! Comparing.equal(change.getAfterRevision(), change.getBeforeRevision()))) {
-        refreshDeletedOrReplaced(wrapper.getAfterFile(change));
+      if ((! wrapper.afterNull(change)) && 
+          (wrapper.beforeNull(change) || (! Comparing.equal(change.getAfterRevision().getFile(), change.getBeforeRevision().getFile())))
+         ) {
+        refresh(wrapper.getAfterFile(change));
       }
       if (pi != null) {
         ++ cnt;
