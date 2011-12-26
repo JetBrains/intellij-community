@@ -182,7 +182,8 @@ target('default': "Build artifacts") {
     }
   }
 
-  usedJars.add("$home/community/lib/looks-2.2.2.jar")
+  usedJars.add("$home/community/lib/jgoodies-common-1.2.1.jar")
+  usedJars.add("$home/community/lib/jgoodies-looks-2.4.2.jar")
 
   build_searchable_options()
   wire_build_date(buildName)
