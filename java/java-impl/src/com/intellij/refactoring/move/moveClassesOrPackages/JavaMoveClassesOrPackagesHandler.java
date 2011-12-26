@@ -197,6 +197,15 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
                                             PsiPackage aPackage,
                                             boolean searchInComments,
                                             boolean searchForTextOccurences) {
+            try {
+              for (PsiDirectory dir: directories) {
+                MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(dir, targetDirectory);
+              }
+            }
+            catch (IncorrectOperationException e) {
+              Messages.showErrorDialog(project, e.getMessage(), RefactoringBundle.message("cannot.move"));
+              return;
+            }
             final MoveDirectoryWithClassesProcessor processor =
               new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences,
                                                     true, callback);
