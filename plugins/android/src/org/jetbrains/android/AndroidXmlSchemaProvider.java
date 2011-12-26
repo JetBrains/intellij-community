@@ -16,12 +16,14 @@
 
 package org.jetbrains.android;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
@@ -30,20 +32,19 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.XmlSchemaProvider;
-import com.android.sdklib.SdkConstants;
 import gnu.trove.THashMap;
+import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
-import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -87,12 +88,31 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
   public boolean isAvailable(@NotNull final XmlFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        if (ResourceManager.isInResourceSubdirectory(file, null) || ManifestDomFileDescription.isManifestFile(file)) {
+        if (isXmlResourceFile(file) ||
+            ManifestDomFileDescription.isManifestFile(file)) {
           return AndroidFacet.getInstance(file) != null;
         }
         return false;
       }
     });
+  }
+
+  private static boolean isXmlResourceFile(XmlFile file) {
+    if (!ResourceManager.isInResourceSubdirectory(file, null)) {
+      return false;
+    }
+
+    final PsiDirectory parent = file.getParent();
+    if (parent == null) {
+      return false;
+    }
+
+    final String resType = ResourceManager.getResourceTypeByDirName(parent.getName());
+    if (resType == null) {
+      return false;
+    }
+
+    return !resType.equals("raw");
   }
 
   @NotNull

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:ex="urn:some-exmaple"
+        targetNamespace="urn:some-exmaple"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+    <xs:element name="foo" type="ex:foo"/>
+
+    <xs:complexType name="foo">
+        <xs:sequence>
+        <xs:element name="bar" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

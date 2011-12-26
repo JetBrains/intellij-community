@@ -356,7 +356,19 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
         actions.get(0).invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
       }
     }.execute();
-    myFixture.checkResultByFile("res/values/drawables.xml", testFolder + '/' +  getTestName(true) + "_drawable_after.xml", true);
+    myFixture.checkResultByFile("res/values/drawables.xml", testFolder + '/' + getTestName(true) + "_drawable_after.xml", true);
+  }
+
+  public void testXsdFile1() throws Throwable {
+    final VirtualFile virtualFile = copyFileToProject("XsdFile.xsd", "res/raw/XsdFile.xsd");
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    myFixture.checkHighlighting(false, false, false);
+  }
+
+  public void testXsdFile2() throws Throwable {
+    final VirtualFile virtualFile = copyFileToProject("XsdFile.xsd", "res/assets/XsdFile.xsd");
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    myFixture.checkHighlighting(false, false, false);
   }
 
   private void copyOnClickClasses() throws IOException {
