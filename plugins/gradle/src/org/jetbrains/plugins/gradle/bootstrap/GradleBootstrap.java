@@ -7,15 +7,12 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.impl.ContentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesPanel;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleIcons;
-
-import javax.swing.*;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * // TODO den add doc
@@ -51,7 +48,7 @@ public class GradleBootstrap extends AbstractProjectComponent {
     }
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
     ToolWindow toolWindow = manager.registerToolWindow(GRADLE_TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT);
-    toolWindow.setIcon(GradleIcons.GRADLE_ICON);
+    toolWindow.setIcon(GradleConstants.GRADLE_ICON);
     String syncTitle = GradleBundle.message("gradle.sync.title.tab");
     toolWindow.getContentManager().addContent(new ContentImpl(new GradleProjectStructureChangesPanel(myChangesModel), syncTitle, true)); 
   }

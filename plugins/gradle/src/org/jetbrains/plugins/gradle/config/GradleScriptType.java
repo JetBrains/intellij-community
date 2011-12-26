@@ -38,7 +38,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
@@ -71,13 +71,13 @@ public class GradleScriptType extends GroovyScriptType {
   public static final GroovyScriptType INSTANCE = new GradleScriptType();
   
   private GradleScriptType() {
-    super("gradle");    
+    super(GradleConstants.EXTENSION);    
   }
 
   @NotNull
   @Override
   public Icon getScriptIcon() {
-    return GradleIcons.GRADLE_ICON;
+    return GradleConstants.GRADLE_ICON;
   }
 
   @Override
@@ -156,7 +156,7 @@ public class GradleScriptType extends GroovyScriptType {
           int result = Messages.showOkCancelDialog(
             "Gradle is not configured. Do you want to configure it?",
             "Configure Gradle SDK",
-            GradleIcons.GRADLE_ICON
+            GradleConstants.GRADLE_ICON
           );
           if (result == 0) {
             ShowSettingsUtil.getInstance().editConfigurable(project, new GradleConfigurable(project));

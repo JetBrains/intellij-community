@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.config;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
@@ -25,14 +25,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  */
 public class GradleScriptTypeDetector extends GroovyScriptTypeDetector {
 
-  @NonNls private static final String GRADLE_EXTENSION = "gradle";
 
   public GradleScriptTypeDetector() {
-    super(GradleScriptType.INSTANCE, GRADLE_EXTENSION);
+    super(GradleScriptType.INSTANCE, GradleConstants.EXTENSION);
   }
 
   @Override
   public boolean isSpecificScriptFile(@NotNull GroovyFile script) {
-    return GRADLE_EXTENSION.equals(script.getViewProvider().getVirtualFile().getExtension());
+    return GradleConstants.EXTENSION.equals(script.getViewProvider().getVirtualFile().getExtension());
   }
 }
