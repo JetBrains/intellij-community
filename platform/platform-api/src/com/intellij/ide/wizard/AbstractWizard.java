@@ -334,7 +334,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected void doNextAction() {
     // Commit data of current step
     final Step currentStep = mySteps.get(myCurrentStep);
-    boolean lastStep = getCurrentStep() == getNextStep(getCurrentStep());
+    boolean lastStep = isLastStep();
     LOG.assertTrue(currentStep != null);
     try {
       currentStep._commit(false);
@@ -408,7 +408,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     myIcon.setIcon(step.getIcon());
 
-    if (SystemInfo.isMac && myCurrentStep == mySteps.size() - 1) {
+    if (SystemInfo.isMac && isLastStep()) {
       myFinishButton.setVisible(false);
       myNextButton.setText(IdeBundle.message("button.finish"));
       myNextButton.setVisible(true);
@@ -417,11 +417,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     else {
       myNextButton.setText(IdeBundle.message("button.wizard.next"));
       myFinishButton.setVisible(true);
-      myNextButton.setEnabled(mySteps.size() == 1 || myCurrentStep < mySteps.size() - 1);
+      myNextButton.setEnabled(mySteps.size() == 1 || !isLastStep());
       myNextButton.setMnemonic('N');
     }
 
     myPreviousButton.setEnabled(myCurrentStep > 0);
+  }
+
+  protected boolean isLastStep() {
+    return myCurrentStep == mySteps.size() - 1;
   }
 
   protected JButton getNextButton() {
