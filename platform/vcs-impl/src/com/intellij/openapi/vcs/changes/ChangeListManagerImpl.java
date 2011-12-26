@@ -316,6 +316,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void filterOutIgnoredFiles(final List<VcsDirtyScope> scopes) {
+    final Set<VirtualFile> refreshFiles = new HashSet<VirtualFile>();
     try {
       synchronized (myDataLock) {
         final IgnoredFilesHolder fileHolder = (IgnoredFilesHolder)myComposite.get(FileHolder.HolderType.IGNORED);
@@ -331,6 +332,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               if ((dirtyFile.getVirtualFile() != null) && isIgnoredFile(dirtyFile.getVirtualFile())) {
                 filesIterator.remove();
                 fileHolder.addFile(dirtyFile.getVirtualFile());
+                refreshFiles.add(dirtyFile.getVirtualFile());
               }
             }
             final Collection<VirtualFile> roots = modifier.getAffectedVcsRoots();
@@ -341,6 +343,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 if ((dir.getVirtualFile() != null) && isIgnoredFile(dir.getVirtualFile())) {
                   dirIterator.remove();
                   fileHolder.addFile(dir.getVirtualFile());
+                  refreshFiles.add(dir.getVirtualFile());
                 }
               }
             }
@@ -357,6 +360,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     catch(AssertionError ex) {
       LOG.error(ex);
+    }
+    for (VirtualFile file : refreshFiles) {
+      myFileStatusManager.fileStatusChanged(file);
     }
   }
 
@@ -1190,7 +1196,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void updateIgnoredFiles(final FileHolderComposite composite) {
     final VirtualFileHolder vfHolder = composite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
     final List<VirtualFile> unversionedFiles = vfHolder.getFiles();
+    exchangeWithIgnored(composite, vfHolder, unversionedFiles);
 
+    final VirtualFileHolder vfModifiedHolder = composite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING);
+    final List<VirtualFile> modifiedFiles = vfModifiedHolder.getFiles();
+    exchangeWithIgnored(composite, vfModifiedHolder, modifiedFiles);
+  }
+
+  private void exchangeWithIgnored(FileHolderComposite composite, VirtualFileHolder vfHolder, List<VirtualFile> unversionedFiles) {
     for(VirtualFile file: unversionedFiles) {
       if (isIgnoredFile(file)) {
         vfHolder.removeFile(file);

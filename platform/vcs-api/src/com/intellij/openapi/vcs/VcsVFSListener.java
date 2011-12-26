@@ -91,9 +91,14 @@ public abstract class VcsVFSListener implements Disposable {
   public void dispose() {
   }
 
-  protected boolean isEventIgnored(final VirtualFileEvent event) {
-    return event.isFromRefresh() || myVcsManager.getVcsFor(event.getFile()) != myVcs ||
-           (! myVcsManager.isFileInContent(event.getFile())) || myChangeListManager.isIgnoredFile(event.getFile());
+  protected boolean isEventIgnored(final VirtualFileEvent event, boolean putInDirty) {
+    if (event.isFromRefresh()) return true;
+    boolean vcsIgnored = myVcsManager.getVcsFor(event.getFile()) != myVcs ||
+                (!myVcsManager.isFileInContent(event.getFile())) || myChangeListManager.isIgnoredFile(event.getFile());
+    if (vcsIgnored) {
+      myDirtyFiles.add(event.getFile());
+    }
+    return vcsIgnored;
   }
 
   protected void executeAdd() {
@@ -290,14 +295,14 @@ public abstract class VcsVFSListener implements Disposable {
 
   private class MyVirtualFileAdapter extends VirtualFileAdapter {
     public void fileCreated(final VirtualFileEvent event) {
-      if (!isEventIgnored(event) && !myChangeListManager.isIgnoredFile(event.getFile()) &&
+      if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(event.getFile()) &&
           (isDirectoryVersioningSupported() || !event.getFile().isDirectory())) {
         myAddedFiles.add(event.getFile());
       }
     }
 
     public void fileCopied(final VirtualFileCopyEvent event) {
-      if (isEventIgnored(event) || myChangeListManager.isIgnoredFile(event.getFile())) return;
+      if (isEventIgnored(event, true) || myChangeListManager.isIgnoredFile(event.getFile())) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOriginalFile());
       if (oldVcs == myVcs) {
         final VirtualFile parent = event.getFile().getParent();
@@ -313,7 +318,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
-      if (isEventIgnored(event)) {
+      if (isEventIgnored(event, true)) {
         return;
       }
       if (!myChangeListManager.isIgnoredFile(file)) {
@@ -333,7 +338,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     public void beforeFileMovement(final VirtualFileMoveEvent event) {
-      if (isEventIgnored(event)) return;
+      if (isEventIgnored(event, true)) return;
       final VirtualFile file = event.getFile();
       final AbstractVcs newVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getNewParent());
       if (newVcs == myVcs) {
@@ -345,7 +350,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     public void fileMoved(final VirtualFileMoveEvent event) {
-      if (isEventIgnored(event)) return;
+      if (isEventIgnored(event, true)) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOldParent());
       if (oldVcs != myVcs) {
         myAddedFiles.add(event.getFile());
@@ -353,7 +358,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     public void beforePropertyChange(final VirtualFilePropertyEvent event) {
-      if (!isEventIgnored(event) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
+      if (!isEventIgnored(event, false) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
         String oldName = (String)event.getOldValue();
         String newName = (String)event.getNewValue();
         // in order to force a reparse of a file, the rename event can be fired with old name equal to new name -
