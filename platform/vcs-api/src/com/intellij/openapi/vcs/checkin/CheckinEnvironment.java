@@ -67,4 +67,10 @@ public interface CheckinEnvironment extends VcsProviderMarker {
   List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
 
   boolean keepChangeListAfterCommit(ChangeList changeList);
+
+  /**
+   * @return true if VFS refresh has to be performed after commit, because files might have changed during commit
+   * (for example, due to keyword substitution in SVN or read-only status in Perforce).
+   */
+  boolean isRefreshAfterCommitNeeded();
 }

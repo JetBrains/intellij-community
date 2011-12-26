@@ -365,6 +365,11 @@ public class SvnCheckinEnvironment17 implements CheckinEnvironment {
     return false;
   }
 
+  @Override
+  public boolean isRefreshAfterCommitNeeded() {
+    return true;
+  }
+
   private class KeepLocksComponent implements RefreshableOnComponent {
     private final JCheckBox myKeepLocksBox;
     private boolean myIsKeepLocks;

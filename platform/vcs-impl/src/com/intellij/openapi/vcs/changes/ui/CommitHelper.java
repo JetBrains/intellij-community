@@ -378,11 +378,26 @@ public class CommitHelper {
     }
 
     public void customRefresh() {
+      final List<Change> toRefresh = new ArrayList<Change>();
+      ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, new ChangesUtil.PerVcsProcessor<Change>() {
+        @Override
+        public void process(AbstractVcs vcs, List<Change> items) {
+          CheckinEnvironment ce = vcs.getCheckinEnvironment();
+          if (ce != null && ce.isRefreshAfterCommitNeeded()) {
+            toRefresh.addAll(items);
+          }
+        }
+      });
+
+      if (toRefresh.isEmpty()) {
+        return;
+      }
+      
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
         indicator.setText(VcsBundle.message("commit.dialog.refresh.files"));
       }
-      RefreshVFsSynchronously.updateChanges(myIncludedChanges);
+      RefreshVFsSynchronously.updateChanges(toRefresh);
     }
 
     public Runnable postRefresh() {
