@@ -100,7 +100,6 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
         return new Dimension(prefSize.width + 15, prefSize.height);
       }
     };
-    myJBScrollPane.setHaveBorder(false);
   }
 
   private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {

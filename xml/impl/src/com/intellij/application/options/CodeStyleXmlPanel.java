@@ -23,9 +23,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JTextField myKeepBlankLines;
@@ -44,6 +46,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox myKeepLineBreaksInText;
   private JComboBox myWhiteSpaceAroundCDATA;
   private JCheckBox myKeepWhitespaceInsideCDATACheckBox;
+  private JBScrollPane myJBScrollPane;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -170,5 +173,15 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
 
   protected void prepareForReformat(final PsiFile psiFile) {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+  }
+
+  private void createUIComponents() {
+    myJBScrollPane = new JBScrollPane() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension prefSize = super.getPreferredSize();
+        return new Dimension(prefSize.width + 15, prefSize.height);
+      }
+    };
   }
 }
