@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
     if (lineNumber <= 0) return;
 
     int columnNumber = getColumnNumber(currentPosition.column);
-    myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber - 1, columnNumber - 1));
+    myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber - 1, Math.max(0, columnNumber - 1)));
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     myEditor.getSelectionModel().removeSelection();
     super.doOKAction();
@@ -72,8 +72,9 @@ public class GotoLineNumberDialog extends DialogWrapper {
     if (columnIndex == -1) return defaultValue;
     try {
       return Integer.parseInt(text.substring(columnIndex + 1));
-    } catch (NumberFormatException e) {}
-    return defaultValue;
+    } catch (NumberFormatException e) {
+      return defaultValue;
+    }
   }
 
   private static int columnSeparatorIndex(final String text) {
