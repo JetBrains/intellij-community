@@ -34,6 +34,7 @@ import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor;
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -57,12 +58,14 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -161,6 +164,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
       return false;
+    }
+    if (Registry.is("ide.mac.hide.cursor.when.typing") &&
+        (focusOwner instanceof TypingTarget ||
+        (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()))) {
+      if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyChar() != KeyEvent.VK_ESCAPE) {
+        MacUIUtil.hideCursor();
+      }
     }
 
     MenuSelectionManager menuSelectionManager=MenuSelectionManager.defaultManager();
