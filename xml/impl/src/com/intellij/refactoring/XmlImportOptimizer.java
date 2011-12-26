@@ -22,14 +22,17 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +42,13 @@ import java.util.Map;
 public class XmlImportOptimizer implements ImportOptimizer {
 
   private final XmlUnusedNamespaceInspection myInspection = new XmlUnusedNamespaceInspection();
+  private final Condition<ProblemDescriptor> myCondition = new Condition<ProblemDescriptor>() {
+    @Override
+    public boolean value(ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      return !myInspection.isSuppressedFor(element.getParent());
+    }
+  };
 
   @Override
   public boolean supports(PsiFile file) {
@@ -68,9 +78,10 @@ public class XmlImportOptimizer implements ImportOptimizer {
         }.visitFile(xmlFile);
         ProblemDescriptor[] results = holder.getResultsArray();
         ArrayUtil.reverseArray(results);
+        List<ProblemDescriptor> list = ContainerUtil.filter(results, myCondition);
 
         Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor>();
-        for (ProblemDescriptor result : results) {
+        for (ProblemDescriptor result : list) {
           for (QuickFix fix : result.getFixes()) {
             if (fix instanceof XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix) {
               fixes.put((XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix)fix, result);
