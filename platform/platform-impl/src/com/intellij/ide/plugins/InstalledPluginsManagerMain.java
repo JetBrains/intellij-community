@@ -90,7 +90,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
               Messages.showErrorDialog("Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
               return;
             }
-            PluginDownloader.install(file, file.getName());
+            PluginDownloader.install(file, file.getName(), false);
             ((InstalledPluginsTableModel)pluginsModel).appendOrUpdateDescriptor(pluginDescriptor);
             select(pluginDescriptor);
             setRequireShutdown(true);

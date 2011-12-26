@@ -185,6 +185,10 @@ public class PluginDownloader {
   }
 
   public static void install(final File fromFile, final String pluginName) throws IOException {
+    install(fromFile, pluginName, true);
+  }
+
+  public static void install(final File fromFile, final String pluginName, boolean deleteFromFile) throws IOException {
     //noinspection HardCodedStringLiteral
     if (fromFile.getName().endsWith(".jar")) {
       // add command to copy file to the IDEA/plugins path
@@ -207,8 +211,10 @@ public class PluginDownloader {
     }
 
     // add command to remove temp plugin file
-    StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(fromFile);
-    StartupActionScriptManager.addActionCommand(deleteTemp);
+    if (deleteFromFile) {
+      StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(fromFile);
+      StartupActionScriptManager.addActionCommand(deleteTemp);
+    }
   }
 
   private File downloadPlugin(final ProgressIndicator pi) throws IOException {
