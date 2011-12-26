@@ -318,7 +318,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     public TextAttributes getAttributes(IElementType tokenType) {
       TextAttributes attrs = myAttributesMap.get(tokenType);
       if (attrs == null) {
-        attrs = convertAttributes(SyntaxHighlighterBase.pack(mySyntaxHighlighter.getTokenHighlights(tokenType), myBackground));
+        attrs = convertAttributes(SyntaxHighlighterBase.pack(myBackground, mySyntaxHighlighter.getTokenHighlights(tokenType)));
         myAttributesMap.put(tokenType, attrs);
       }
       return attrs;
