@@ -564,4 +564,14 @@ class A {
     myFixture.addClass("package junit.framework; public class TestCase {}")
     doTest(new JUnitTestClassNamingConventionInspection(), new JUnitAbstractTestClassNamingConventionInspection())
   }
+
+  void testDuplicateMethods() {
+    myFixture.configureByText('a.groovy', '''\
+class A {
+  <error descr="Method with signature foo() is already defined in the class 'A'">def foo()</error>{}
+  <error descr="Method with signature foo() is already defined in the class 'A'">def foo(def a=null)</error>{}
+}
+''')
+    myFixture.checkHighlighting(true, false, false)
+  }
 }

@@ -346,7 +346,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkTypeDefinition(myHolder, typeDefinition);
     checkTypeDefinitionModifiers(myHolder, typeDefinition);
 
-    checkDuplicateMethod(typeDefinition.getGroovyMethods(), myHolder);
+    checkDuplicateMethod(typeDefinition.getMethods(), myHolder);
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
     highligtClassReference(myHolder, typeDefinition.getNameIdentifierGroovy());
