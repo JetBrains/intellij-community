@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.JavaPsiFacade;
@@ -724,28 +725,43 @@ public class AndroidCompileUtil {
   public static void packClassFilesIntoJar(@NotNull String[] firstPackageDirPaths,
                                            @NotNull String[] libFirstPackageDirPaths,
                                            @NotNull File jarFile) throws IOException {
-    final JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
-    try {
-      for (String path : firstPackageDirPaths) {
-        final File firstPackageDir = new File(path);
-        if (firstPackageDir.exists()) {
-          addFileToJar(jos, firstPackageDir, firstPackageDir.getParentFile(), true);
-        }
-      }
-
-      for (String path : libFirstPackageDirPaths) {
-        final File firstPackageDir = new File(path);
-        if (firstPackageDir.exists()) {
-          addFileToJar(jos, firstPackageDir, firstPackageDir.getParentFile(), false);
-        }
+    final List<Pair<File, String>> files = new ArrayList<Pair<File, String>>();
+    for (String path : firstPackageDirPaths) {
+      final File firstPackageDir = new File(path);
+      if (firstPackageDir.exists()) {
+        addFileToJar(firstPackageDir, firstPackageDir.getParentFile(), true, files);
       }
     }
-    finally {
-      jos.close();
+
+    for (String path : libFirstPackageDirPaths) {
+      final File firstPackageDir = new File(path);
+      if (firstPackageDir.exists()) {
+        addFileToJar(firstPackageDir, firstPackageDir.getParentFile(), false, files);
+      }
+    }
+
+    if (files.size() > 0) {
+      final JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
+      try {
+        for (Pair<File, String> pair : files) {
+          packIntoJar(jos, pair.getFirst(), pair.getSecond());
+        }
+      }
+      finally {
+        jos.close();
+      }
+    }
+    else if (jarFile.isFile()) {
+      if (!jarFile.delete()) {
+        throw new IOException("Cannot delete file " + FileUtil.toSystemDependentName(jarFile.getPath()));
+      }
     }
   }
 
-  private static void addFileToJar(@NotNull JarOutputStream jar, @NotNull File file, @NotNull File rootDirectory, boolean packRClasses)
+  private static void addFileToJar(@NotNull File file,
+                                   @NotNull File rootDirectory,
+                                   boolean packRClasses,
+                                   @NotNull List<Pair<File, String>> files)
     throws IOException {
     
     if (file.isDirectory()) {
@@ -753,7 +769,7 @@ public class AndroidCompileUtil {
 
       if (children != null) {
         for (File child : children) {
-          addFileToJar(jar, child, rootDirectory, packRClasses);
+          addFileToJar(child, rootDirectory, packRClasses, files);
         }
       }
     }
@@ -774,22 +790,26 @@ public class AndroidCompileUtil {
         path = path.substring(1);
       }
 
-      final JarEntry entry = new JarEntry(path);
-      entry.setTime(file.lastModified());
-      jar.putNextEntry(entry);
+      files.add(new Pair<File, String>(file, path));
+    }
+  }
 
-      BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-      try {
-        final byte[] buffer = new byte[1024];
-        int count;
-        while ((count = bis.read(buffer)) != -1) {
-          jar.write(buffer, 0, count);
-        }
-        jar.closeEntry();
+  private static void packIntoJar(@NotNull JarOutputStream jar, @NotNull File file, @NotNull String path) throws IOException {
+    final JarEntry entry = new JarEntry(path);
+    entry.setTime(file.lastModified());
+    jar.putNextEntry(entry);
+
+    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+    try {
+      final byte[] buffer = new byte[1024];
+      int count;
+      while ((count = bis.read(buffer)) != -1) {
+        jar.write(buffer, 0, count);
       }
-      finally {
-        bis.close();
-      }
+      jar.closeEntry();
+    }
+    finally {
+      bis.close();
     }
   }
 
