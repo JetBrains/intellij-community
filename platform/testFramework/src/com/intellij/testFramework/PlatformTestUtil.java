@@ -521,16 +521,16 @@ public class PlatformTestUtil {
         }
         else {
           // try one more time
-          //if (attempts == 0) {
-          //  try {
-          //    Object result = Class.forName("com.intellij.util.ProfilingUtil").getMethod("captureCPUSnapshot").invoke(null);
-          //    System.err.println("CPU snapshot captured in '"+result+"'");
-          //  }
-          //  catch (Exception e) {
-          //  }
-          //
-          //  throw new AssertionFailedError(logMessage);
-          //}
+          if (attempts == 0) {
+            //try {
+            //  Object result = Class.forName("com.intellij.util.ProfilingUtil").getMethod("captureCPUSnapshot").invoke(null);
+            //  System.err.println("CPU snapshot captured in '"+result+"'");
+            //}
+            //catch (Exception e) {
+            //}
+
+            throw new AssertionFailedError(logMessage);
+          }
           System.gc();
           System.gc();
           System.gc();
