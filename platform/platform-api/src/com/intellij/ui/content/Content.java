@@ -114,4 +114,6 @@ public interface Content extends UserDataHolder, ComponentContainer {
   BusyObject getBusyObject();
   void setBusyObject(BusyObject object);
 
+  String getSeparator();
+  void setSeparator(String separator);
 }
