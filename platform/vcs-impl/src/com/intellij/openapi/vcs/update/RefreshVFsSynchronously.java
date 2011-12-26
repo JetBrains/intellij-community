@@ -152,7 +152,7 @@ public class RefreshVFsSynchronously {
     }
 
     public boolean movedOrRenamedOrReplaced(Change change) {
-      return change.isIsReplaced() || change.isRenamed() || change.isIsReplaced();
+      return change.isMoved() || change.isRenamed() || change.isIsReplaced();
     }
   }
 
@@ -178,7 +178,7 @@ public class RefreshVFsSynchronously {
     }
 
     public boolean movedOrRenamedOrReplaced(Change change) {
-      return change.isIsReplaced() || change.isRenamed() || change.isIsReplaced();
+      return change.isMoved() || change.isRenamed() || change.isIsReplaced();
     }
   }
 
