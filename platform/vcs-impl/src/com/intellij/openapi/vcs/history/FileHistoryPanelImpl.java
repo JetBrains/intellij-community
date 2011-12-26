@@ -676,12 +676,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     final JLabel commentLabel = new JLabel(COMMIT_MESSAGE_TITLE + ":") {
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(super.getWidth(), 21);
+        return new Dimension(super.getWidth(), 29);
       }
     };
     commentGroup.add(commentLabel, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
-    pane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | (myAdditionalDetails == null ? 0 : SideBorder.BOTTOM)));
+    pane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | (myAdditionalDetails == null ? 0 : SideBorder.RIGHT)));
 
     commentGroup.add(pane, BorderLayout.CENTER);
     myDetailsSplitter.setFirstComponent(commentGroup);
