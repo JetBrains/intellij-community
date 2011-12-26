@@ -42,9 +42,7 @@ public class MethodCellRenderer extends DefaultListCellRenderer {
               PsiFormatUtil.SHOW_TYPE);
     setText(text);
 
-    final int flags = Iconable.ICON_FLAG_VISIBILITY;
-
-    Icon icon = method.getIcon(flags);
+    Icon icon = method.getIcon(Iconable.ICON_FLAG_VISIBILITY);
     if(icon != null) setIcon(icon);
     return this;
   }
