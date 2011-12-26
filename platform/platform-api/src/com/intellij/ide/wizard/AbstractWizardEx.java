@@ -19,6 +19,7 @@ package com.intellij.ide.wizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +93,10 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
       return;
     }
 
+    if (isLastStep()) {
+      doOKAction();
+      return;
+    }
     myCurrentStep = getNextStep(myCurrentStep);
     updateStep();
   }
@@ -112,6 +117,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     return getCurrentStepObject().getHelpId();
   }
 
+
   protected void updateStep() {
     super.updateStep();
     updateButtons();
@@ -124,9 +130,19 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
   }
 
   private void updateButtons() {
-    getNextButton().setEnabled(getCurrentStepObject().isComplete() && getCurrentStepObject().getNextStepId() != null);
     getPreviousButton().setEnabled(getCurrentStepObject().getPreviousStepId() != null);
     getFinishButton().setEnabled(canFinish());
+
+    if (SystemInfo.isMac && isLastStep()) {
+      getNextButton().setEnabled(getFinishButton().isEnabled());
+    }
+    else {
+      getNextButton().setEnabled(getCurrentStepObject().isComplete() && !isLastStep());
+    }
+  }
+
+  protected boolean isLastStep() {
+    return myIndex2Step.get(myCurrentStep).getNextStepId() == null;
   }
 
   protected boolean canFinish() {
