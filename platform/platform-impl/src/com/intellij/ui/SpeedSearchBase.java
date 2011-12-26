@@ -270,6 +270,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return null;
   }
 
+  public void hidePopup() {
+    manageSearchPopup(null);
+  }
+
   private void processKeyEvent(KeyEvent e) {
     if (e.isAltDown()) return;
     if (mySearchPopup != null) {
@@ -462,7 +466,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return keyCode == KeyEvent.VK_HOME || keyCode == KeyEvent.VK_END || keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN;
   }
 
-  private void manageSearchPopup(SearchPopup searchPopup) {
+  private void manageSearchPopup(@Nullable SearchPopup searchPopup) {
     final Project project;
     if (ApplicationManager.getApplication() != null && !ApplicationManager.getApplication().isDisposed()) {
       project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
