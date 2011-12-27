@@ -72,7 +72,6 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -160,8 +159,8 @@ public class FileStructurePopup implements Disposable {
     ElementFilter filter = new FileStructurePopupFilter();
     final FilteringTreeStructure treeStructure = new FilteringTreeStructure(project, filter, smartTreeStructure);
 
-    final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
-    myTree = new Tree(model);
+    //final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
+    myTree = new Tree(new DefaultMutableTreeNode(treeStructure.getRootElement()));
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
@@ -307,12 +306,28 @@ public class FileStructurePopup implements Disposable {
       addCheckbox(comboPanel, provider);
     }
 
-    //myCommanderPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     panel.add(comboPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
-              //new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
+  }
+  
+  @Nullable
+  private AbstractTreeNode getSelectedNode() {
+    Object component = myTree.getSelectionPath().getLastPathComponent();
+    if (component instanceof DefaultMutableTreeNode) {
+      component = ((DefaultMutableTreeNode)component).getUserObject();
+      if (component instanceof FilteringTreeStructure.Node) {
+        component = ((FilteringTreeStructure.Node)component).getDelegate();
+        if (component instanceof FilteringTreeStructure.Node) {
+          component = ((FilteringTreeStructure.Node)component).getDelegate();
+          if (component instanceof AbstractTreeNode) {
+            return (AbstractTreeNode)component;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public boolean navigateSelectedElement() {
@@ -320,7 +335,7 @@ public class FileStructurePopup implements Disposable {
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
       public void run() {
-        final AbstractTreeNode selectedNode = (AbstractTreeNode)myTree.getSelectionPath().getLastPathComponent();
+        final AbstractTreeNode selectedNode = getSelectedNode();
         if (selectedNode != null) {
           if (selectedNode.canNavigateToSource()) {
             selectedNode.navigate(true);
@@ -388,6 +403,7 @@ public class FileStructurePopup implements Disposable {
         }
         final boolean state = chkFilter.isSelected();
         myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
+        myAbstractTreeBuilder.refilter(); //todo full update
         myAbstractTreeBuilder.queueUpdate();
         if (currentParent != null) {
           boolean oldNarrowDown = myShouldNarrowDown;
