@@ -1,6 +1,7 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SystemProperties;
 import org.codehaus.gant.GantBinding;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.ether.dependencyView.Callbacks;
@@ -88,7 +89,7 @@ public class ProjectWrapper {
   }
 
   // Home directory
-  private static final String myHomeDir = System.getProperty("user.home");
+  private static final String myHomeDir = SystemProperties.getUserHome();
 
   // JPS directory
   private static final String myJPSDir = ".jps";

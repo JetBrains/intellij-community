@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -455,7 +456,7 @@ public class MavenUtil {
       }
     }
 
-    String userHome = System.getProperty(PROP_USER_HOME);
+    String userHome = SystemProperties.getUserHome();
     if (!isEmptyOrSpaces(userHome)) {
       final File underUserHome = new File(userHome, M2_DIR);
       if (isValidMavenHome(underUserHome)) {
@@ -525,7 +526,7 @@ public class MavenUtil {
 
   @NotNull
   public static File resolveM2Dir() {
-    return new File(System.getProperty(PROP_USER_HOME), DOT_M2_DIR);
+    return new File(SystemProperties.getUserHome(), DOT_M2_DIR);
   }
 
   @NotNull

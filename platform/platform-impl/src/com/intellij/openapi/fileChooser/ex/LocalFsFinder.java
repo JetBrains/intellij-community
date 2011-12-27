@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.util.List;
 
 public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
-  private File myBaseDir = new File(System.getProperty("user.home"));
+  private File myBaseDir = new File(SystemProperties.getUserHome());
 
   public LookupFile find(@NotNull final String path) {
     final VirtualFile byUrl = VirtualFileManager.getInstance().findFileByUrl(path);

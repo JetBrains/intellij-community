@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -47,7 +48,6 @@ import java.util.*;
 public class AntBuildFileImpl implements AntBuildFileBase {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntBuildFileImpl");
-  @NonNls private static final String USER_HOME = "user.home";
   @NonNls private static final String ANT_LIB = "/.ant/lib";
   private volatile Map<String, String> myCachedExternalProperties;
   private final Object myOptionsLock = new Object();
@@ -185,7 +185,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   public static List<File> getUserHomeLibraries() {
     ArrayList<File> classpath = new ArrayList<File>();
-    final String homeDir = System.getProperty(USER_HOME);
+    final String homeDir = SystemProperties.getUserHome();
     new AllJarsUnderDirEntry(new File(homeDir, ANT_LIB)).addFilesTo(classpath);
     return classpath;
   }
