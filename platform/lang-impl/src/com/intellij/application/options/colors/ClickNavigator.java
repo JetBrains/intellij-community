@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -113,9 +114,9 @@ public class ClickNavigator {
   public static String highlightingTypeFromTokenType(IElementType tokenType, SyntaxHighlighter highlighter) {
     TextAttributesKey[] highlights = highlighter.getTokenHighlights(tokenType);
     String s = null;
-    for (TextAttributesKey highlight : highlights) {
-      if (highlight != HighlighterColors.TEXT) {
-        s = highlight.getExternalName();
+    for (int i = highlights.length - 1; i >= 0; i--) {
+      if (highlights[i] != HighlighterColors.TEXT) {
+        s = highlights[i].getExternalName();
         break;
       }
     }

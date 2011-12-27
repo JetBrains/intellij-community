@@ -707,12 +707,8 @@ public String getAccessorsVisibility() {
     }
 
     private void configureColors(boolean isSelected, JTable table, boolean hasFocus, final int row, final int column) {
-      if (isSelected) {
-        setForeground(table.getSelectionForeground());
-      } else {
-        setForeground(UIUtil.getTableForeground());
-      }
-
+      setForeground(isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground());
+      setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
       if (hasFocus) {
         if (table.isCellEditable(row, column)) {
           super.setForeground(UIUtil.getTableFocusCellForeground());

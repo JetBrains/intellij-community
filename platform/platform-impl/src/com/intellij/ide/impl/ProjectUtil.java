@@ -18,12 +18,14 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.InternalFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -261,5 +263,9 @@ public class ProjectUtil {
     } else {
       IdeFocusManager.getInstance(p).requestFocus(cmd, false);
     }
+  }
+
+  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
+    return com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile(file);
   }
 }

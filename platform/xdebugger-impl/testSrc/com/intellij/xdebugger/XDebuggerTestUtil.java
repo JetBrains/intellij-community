@@ -190,15 +190,21 @@ public class XDebuggerTestUtil {
     }
   }
 
-  public static void assertVariableTypeMatches(@NotNull XValue var, 
-                                               @Nullable String name, 
+  public static void assertVariableTypeMatches(@NotNull Collection<XValue> vars,
+                                               @Nullable String name,
+                                               @Nullable @Language("RegExp") String typePattern) throws InterruptedException {
+    assertVariableTypeMatches(findVar(vars, name), name, typePattern);
+  }
+
+  public static void assertVariableTypeMatches(@NotNull XValue var,
+                                               @Nullable String name,
                                                @Nullable @Language("RegExp") String typePattern) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
     if (name != null) {
       Assert.assertEquals(name, node.myName);
     }
     if (typePattern != null) {
-      Assert.assertTrue("Expected type" + typePattern + " Actual type: " + node.myType, node.myType.matches(typePattern));
+      Assert.assertTrue("Expected type: " + typePattern + " Actual type: " + node.myType, node.myType.matches(typePattern));
     }
   }
 

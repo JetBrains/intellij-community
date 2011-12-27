@@ -38,7 +38,11 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     appendCount(renderer);
-    renderer.setIcon(ModuleType.get(module).getNodeIcon(expanded));
+    if (module.isDisposed()) {
+      renderer.setIcon(ModuleType.EMPTY.getNodeIcon(expanded));
+    } else {
+      renderer.setIcon(ModuleType.get(module).getNodeIcon(expanded));
+    }
   }
 
   @Override

@@ -58,6 +58,7 @@ public class ContentRevisionCache {
   }
 
   private void put(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type, final byte[] bytes) {
+    if (bytes == null) return;
     synchronized (myLock) {
       myCache.put(new Key(path, number, vcsKey, type), bytes);
     }

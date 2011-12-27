@@ -369,7 +369,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                  final boolean silentAddDelete) {
     context.next(new TaskDescriptor("", Where.AWT) {
       @Override
-      public void run(ContinuationContext context) {
+      public void run(ContinuationContext contextInner) {
         final List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
 
         final CommitContext commitContext = new CommitContext();
@@ -402,7 +402,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
             patches, targetChangeList, binaryPatchApplier, commitContext);
 
         // after patch applier part
-        context.next(new TaskDescriptor("", Where.AWT) {
+        contextInner.next(new TaskDescriptor("", Where.AWT) {
           @Override
           public void run(ContinuationContext context) {
             remainingPatches.addAll(patchApplier.getRemainingPatches());
@@ -416,7 +416,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
           }
         });
 
-        patchApplier.scheduleSelf(showSuccessNotification, context, silentAddDelete);
+        patchApplier.scheduleSelf(showSuccessNotification, contextInner, silentAddDelete);
       }
     });
   }

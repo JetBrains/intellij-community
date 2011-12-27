@@ -105,7 +105,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
     myColorSchemeComboBox.setRenderer(new ListCellRendererWrapper(myColorSchemeComboBox.getRenderer()) {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean cellHasFocus) {
-        setText(((EditorColorsScheme)value).getName());
+        if (value != null) {
+          setText(((EditorColorsScheme)value).getName());
+        }
       }
     });
     myColorSchemeComboBox.addActionListener(new ActionListener() {

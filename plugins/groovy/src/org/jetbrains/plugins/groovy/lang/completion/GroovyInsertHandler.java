@@ -111,6 +111,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       }
 
       new MethodParenthesesHandler(method, true).handleInsert(context, item);
+      AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(editor, method);
       return;
     }
 

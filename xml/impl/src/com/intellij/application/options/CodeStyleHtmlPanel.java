@@ -26,11 +26,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -60,6 +62,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox myWrapText;
   private JCheckBox myShouldKeepLineBreaksInText;
   private TextFieldWithBrowseButton myDontBreakIfInlineContent;
+  private JBScrollPane myJBScrollPane;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -87,6 +90,16 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
+  }
+
+  private void createUIComponents() {
+    myJBScrollPane = new JBScrollPane() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension prefSize = super.getPreferredSize();
+        return new Dimension(prefSize.width + 15, prefSize.height);
+      }
+    };
   }
 
   private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {

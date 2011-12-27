@@ -76,7 +76,7 @@ public class VcsContentAnnotationImpl implements VcsContentAnnotation {
   public boolean intervalRecentlyChanged(VirtualFile file, TextRange lineInterval, VcsRevisionNumber currentRevisionNumber) {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final AbstractVcs vcs = vcsManager.getVcsFor(file);
-    if (vcs == null) return false;
+    if (vcs == null || vcs.getDiffProvider() == null) return false;
     if (currentRevisionNumber == null) {
       currentRevisionNumber = vcs.getDiffProvider().getCurrentRevision(file);
       assert currentRevisionNumber != null;

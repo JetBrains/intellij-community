@@ -152,8 +152,15 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         }
       }
 
-
-      addParameterToConstructor(project, file, editor, constructor, constrs.size() == constructors.length ? fields.toArray(new PsiField[fields.size()]) : new PsiField[]{getField()});
+      Collections.sort(fields, new Comparator<PsiField>() {
+        @Override
+        public int compare(PsiField o1, PsiField o2) {
+          return o1.getTextOffset() - o2.getTextOffset();
+        }
+      });
+      addParameterToConstructor(project, file, editor, constructor, constrs.size() == constructors.length
+                                                                    ? fields.toArray(new PsiField[fields.size()])
+                                                                    : new PsiField[]{getField()});
       fieldsToFix.clear();
     }
   }
@@ -217,7 +224,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       expressions[i++] = factory.createExpressionFromText(field.getName(), constructor);
     }
     if (constructor.isVarArgs()) {
-      ArrayUtil.swap(expressions, parameters.length - 1, expressions.length - 1);
+      ArrayUtil.rotateLeft(expressions, parameters.length - 1, expressions.length - 1);
     }
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     final SmartPsiElementPointer constructorPointer = manager.createSmartPsiElementPointer(constructor);

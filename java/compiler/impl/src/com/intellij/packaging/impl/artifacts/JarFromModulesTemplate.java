@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
@@ -94,7 +93,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     String name = modules.length == 1 ? modules[0].getName() : project.getName();
 
     final PackagingElementFactory factory = PackagingElementFactory.getInstance();
-    final CompositePackagingElement<?> archive = factory.createArchive(FileUtil.sanitizeFileName(name) + ".jar");
+    final CompositePackagingElement<?> archive = factory.createArchive(ArtifactUtil.suggestArtifactFileName(name) + ".jar");
 
     OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(project).orderEntries(Arrays.asList(modules));
 

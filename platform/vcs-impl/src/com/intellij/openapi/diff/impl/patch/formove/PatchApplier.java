@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.patch.formove;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -33,10 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsFileListenerContextHelper;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -45,12 +43,14 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.continuation.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
@@ -289,7 +289,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
   }
 
-  protected void refreshFiles(final Collection<FilePath> additionalDirectly, @Nullable final ContinuationPause context) {
+  protected void refreshFiles(final Collection<FilePath> additionalDirectly, @Nullable final ContinuationContext context) {
     final List<FilePath> directlyAffected = myVerifier.getDirectlyAffected();
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
     directlyAffected.addAll(additionalDirectly);
@@ -305,11 +305,32 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return myVerifier.getAllAffected();
   }
 
-  public static void refreshPassedFilesAndMoveToChangelist(final Project project, final ContinuationPause context,
+  public static void refreshPassedFilesAndMoveToChangelist(final Project project, final ContinuationContext context,
       final Collection<FilePath> directlyAffected, final Collection<VirtualFile> indirectlyAffected, final Consumer<Collection<FilePath>> targetChangelistMover) {
     if (context != null) {
       context.suspend();
     }
+
+    final Runnable projectFilesReload =
+      MergeVersion.MergeDocumentVersion.prepareToReportChangedProjectFiles(project, ObjectsConvertor.fp2vf(directlyAffected));
+    final TaskDescriptor projectFilesReloadTaskDescriptor = projectFilesReload == null ? null : new TaskDescriptor("", Where.AWT) {
+      @Override
+      public void run(final ContinuationContext context) {
+        projectFilesReload.run();
+      }
+    };
+    final Runnable scheduleProjectFilesReload = new Runnable() {
+      public void run() {
+        if (projectFilesReloadTaskDescriptor != null) {
+          if (context != null) {
+            context.last(projectFilesReloadTaskDescriptor);
+          } else {
+            SwingUtilities.invokeLater(projectFilesReload);
+          }
+        }
+      }
+    };
+
     final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
       public void run() {
         if (project.isDisposed()) return;
@@ -322,6 +343,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
                 if (targetChangelistMover != null) {
                   targetChangelistMover.consume(directlyAffected);
                 }
+                scheduleProjectFilesReload.run();
                 if (context != null) {
                   context.ping();
                 }
@@ -338,6 +360,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
           final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
           // will schedule update
           vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
+          scheduleProjectFilesReload.run();
           if (context != null) {
             context.ping();
           }

@@ -302,14 +302,14 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.gridy = 2;
     constr.insets = new Insets(5, 0, 0, 0);
     constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.anchor = GridBagConstraints.WEST;
+    constr.anchor = GridBagConstraints.BASELINE_LEADING;
     myInsertWorkingDirectoryMacroButton = new JButton(ToolsBundle.message("tools.insert.macro.button.c"));
     pane.add(myInsertWorkingDirectoryMacroButton, constr);
 
     // for normal resizing
     constr = new GridBagConstraints();
     constr.gridy = 3;
-    constr.fill = GridBagConstraints.VERTICAL;
+    constr.fill = GridBagConstraints.BASELINE_LEADING;
     constr.weighty = 1.0;
     pane.add(new JLabel(), constr);
 
