@@ -19,6 +19,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
@@ -109,7 +111,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       public void actionPerformed(AnActionEvent e) {
         final InputEvent inputEvent = e.getInputEvent();
         final ActionPopupMenu popupMenu =
-          ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, gearProducer.produce());
+          ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, gearProducer.produce(), new MenuItemPresentationFactory(true));
 
         int x = 0;
         int y = 0;
