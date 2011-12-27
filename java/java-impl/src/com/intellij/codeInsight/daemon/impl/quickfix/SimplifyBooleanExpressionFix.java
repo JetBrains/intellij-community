@@ -255,7 +255,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
         }
         else {
           final PsiJavaToken javaToken = expression.getTokenBeforeOperand(operand);
-          if (javaToken != null && !PsiTreeUtil.hasErrorElements(operand)) {
+          if (javaToken != null && !PsiTreeUtil.hasErrorElements(operand) && !PsiTreeUtil.hasErrorElements(lExpr)) {
             resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
           } else {
             resultExpression = null;
