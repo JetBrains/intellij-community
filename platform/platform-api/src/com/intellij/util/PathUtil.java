@@ -101,10 +101,15 @@ public class PathUtil {
 
   @NotNull
   public static String suggestFileName(@NotNull String text) {
+    return suggestFileName(text, false, false);
+  }
+
+  @NotNull
+  public static String suggestFileName(@NotNull String text, final boolean allowDots, final boolean allowSpaces) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      if (!isValidFileNameChar(c) || c == '.' || Character.isWhitespace(c)) {
+      if (!isValidFileNameChar(c) || (!allowDots && c == '.') || (!allowSpaces && Character.isWhitespace(c))) {
         result.append('_');
       }
       else {

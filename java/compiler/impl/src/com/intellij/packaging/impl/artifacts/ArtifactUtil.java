@@ -33,6 +33,7 @@ import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.*;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -553,6 +554,10 @@ public class ArtifactUtil {
       }
     }
     return result;
+  }
+
+  public static String suggestArtifactFileName(String artifactName) {
+    return PathUtil.suggestFileName(artifactName, true, true);
   }
 }
 
