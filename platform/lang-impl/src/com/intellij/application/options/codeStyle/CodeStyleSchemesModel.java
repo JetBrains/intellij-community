@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -41,15 +42,17 @@ public class CodeStyleSchemesModel {
   private final EventDispatcher<CodeStyleSettingsListener> myDispatcher = EventDispatcher.create(CodeStyleSettingsListener.class);
   private final Project myProject;
   private boolean myUsePerProjectSettings;
+  
+  public final static String PROJECT_SCHEME_NAME = "Project";
 
   public CodeStyleSchemesModel(Project project) {
     myProject = project;
-    myProjectScheme = new CodeStyleSchemeImpl("Project Scheme", false, CodeStyleSchemes.getInstance().getDefaultScheme());
+    myProjectScheme = new CodeStyleSchemeImpl(PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
     reset();
     myDefault = CodeStyleSchemes.getInstance().getDefaultScheme();
   }
 
-  public void selectScheme(final CodeStyleScheme selected, Object source) {
+  public void selectScheme(final CodeStyleScheme selected, @Nullable Object source) {
     if (myGlobalSelected != selected && selected != myProjectScheme) {
       myGlobalSelected = selected;
       myDispatcher.getMulticaster().currentSchemeChanged(source);
@@ -263,5 +266,30 @@ public class CodeStyleSchemesModel {
       if (name.equals(scheme.getName())) return scheme;
     }
     return null;
+  }
+
+  public CodeStyleScheme getProjectScheme() {
+    return myProjectScheme;
+  }
+
+  public boolean isProjectScheme(CodeStyleScheme scheme) {
+    return myProjectScheme == scheme;
+  }
+
+  public List<CodeStyleScheme> getAllSortedSchemes() {
+    List<CodeStyleScheme> schemes = new ArrayList<CodeStyleScheme>();
+    schemes.addAll(getSchemes());
+    schemes.add(myProjectScheme);
+    Collections.sort(schemes, new Comparator<CodeStyleScheme>() {
+      @Override
+      public int compare(CodeStyleScheme s1, CodeStyleScheme s2) {
+        if (isProjectScheme(s1)) return -1;
+        if (isProjectScheme(s2)) return 1;
+        if (s1.isDefault()) return -1;
+        if (s2.isDefault()) return 1;
+        return s1.getName().compareToIgnoreCase(s2.getName());
+      }
+    });
+    return schemes;
   }
 }

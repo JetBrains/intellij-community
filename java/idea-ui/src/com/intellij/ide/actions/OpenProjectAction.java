@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
 
 import java.io.File;
 import java.util.Collections;
@@ -59,7 +60,7 @@ public class OpenProjectAction extends AnAction implements DumbAware {
 
     VirtualFile userHomeDir = null;
     if (SystemInfo.isMac || SystemInfo.isLinux) {
-      final String home = System.getProperty("user.home");
+      final String home = SystemProperties.getUserHome();
       if (home != null) {
         userHomeDir = LocalFileSystem.getInstance().findFileByIoFile(new File(home));
       }

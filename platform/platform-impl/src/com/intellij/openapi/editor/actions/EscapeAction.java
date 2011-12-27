@@ -17,7 +17,6 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -41,7 +40,7 @@ public class EscapeAction extends EditorAction {
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       SelectionModel selectionModel = editor.getSelectionModel();
-      return PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext) != Boolean.TRUE &&
+      return //PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext) != Boolean.TRUE &&
              (selectionModel.hasSelection() || selectionModel.hasBlockSelection());
     }
   }

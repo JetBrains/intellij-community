@@ -287,6 +287,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
     @Override
     public void handleInsert(InsertionContext context) {
+      context.commitDocument();
       if (myFile.isValid()) {
         final PsiReference psiReference = context.getFile().findReferenceAt(context.getStartOffset());
         final Pair<FileReference, Boolean> fileReferencePair = getReference(psiReference);

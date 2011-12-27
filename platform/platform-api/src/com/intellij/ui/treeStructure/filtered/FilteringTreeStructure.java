@@ -46,6 +46,9 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   }
 
   public void refilter() {
+    if (myStructure instanceof FilteringTreeStructure) {
+      ((FilteringTreeStructure)myStructure).refilter();
+    }
     myRoot.clear();
     myNodeObject2Node.clear();
     fillChildren(myRoot, getStructure().getRootElement());
@@ -88,6 +91,12 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
     public Object getDelegate() {
       return myDelegate;
+    }
+
+    @Override
+    public void cleanUpCache() {
+      super.cleanUpCache();
+      myChildren.clear();
     }
 
     @Override

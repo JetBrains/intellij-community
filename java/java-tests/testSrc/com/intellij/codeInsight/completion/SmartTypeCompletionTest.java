@@ -1011,6 +1011,9 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testCheckStaticImportsType() throws Throwable { doAntiTest(); }
   public void testThisFieldAssignedToItself() throws Throwable { doAntiTest(); }
 
+  public void testCaseMissingEnumValue() throws Throwable { doTest(); }
+  public void testCaseMissingEnumValue2() throws Throwable { doTest(); }
+
   public void testTypeVariableInstanceOf() throws Throwable {
     configureByTestName();
     performAction();

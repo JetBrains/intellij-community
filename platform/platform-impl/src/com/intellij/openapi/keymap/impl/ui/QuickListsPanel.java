@@ -249,7 +249,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
       updateList(myCurrentIndex);
       myKeymapPanel.processCurrentKeymapChanged();
     }
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myKeymapPanel));
     myQuickListPanel = new QuickListPanel(quickList, getCurrentQuickListIds(), project);
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {

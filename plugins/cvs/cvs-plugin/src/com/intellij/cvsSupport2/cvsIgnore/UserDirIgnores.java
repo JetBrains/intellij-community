@@ -19,6 +19,7 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.util.SimpleStringPattern;
 
@@ -40,10 +41,10 @@ public class UserDirIgnores{
       if (homeDir.exists() && homeDir.isDirectory()) {
         ourUserHomeCVSIgnoreFile = new File(homeDir, CvsUtil.CVS_IGNORE_FILE);
       } else {
-        ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/" + CvsUtil.CVS_IGNORE_FILE);
+        ourUserHomeCVSIgnoreFile = new File(SystemProperties.getUserHome() + "/" + CvsUtil.CVS_IGNORE_FILE);
       }
     } else {
-      ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/" + CvsUtil.CVS_IGNORE_FILE);
+      ourUserHomeCVSIgnoreFile = new File(SystemProperties.getUserHome() + "/" + CvsUtil.CVS_IGNORE_FILE);
     }
   }
 

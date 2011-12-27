@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.util.SystemProperties;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
@@ -144,7 +145,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     }
 
     if (result.getLocalRepository() == null) {
-      result.setLocalRepository(new File(System.getProperty("user.home"), ".m2/repository").getPath());
+      result.setLocalRepository(new File(SystemProperties.getUserHome(), ".m2/repository").getPath());
     }
 
     return result;

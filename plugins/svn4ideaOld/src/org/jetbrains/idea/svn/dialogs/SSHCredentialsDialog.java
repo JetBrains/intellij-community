@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -61,7 +62,6 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private final Project myProject;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
-  @NonNls private static final String USER_HOME_PROPERTY = "user.home";
 
   protected SSHCredentialsDialog(Project project, String realm, String userName, boolean allowSave, final int port) {
     super(project, true);
@@ -375,11 +375,11 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
         file = VirtualFileManager.getInstance().findFileByUrl(path[0]);
       }
       else {
-        path[0] = "file://" + System.getProperty(USER_HOME_PROPERTY) + "/.ssh/identity";
+        path[0] = "file://" + SystemProperties.getUserHome() + "/.ssh/identity";
         path[0] = path[0].replace(File.separatorChar, '/');
         file = VirtualFileManager.getInstance().findFileByUrl(path[0]);
         if (file == null || !file.exists()) {
-          path[0] = "file://" + System.getProperty(USER_HOME_PROPERTY) + "/.ssh"; 
+          path[0] = "file://" + SystemProperties.getUserHome() + "/.ssh";
           file = VirtualFileManager.getInstance().findFileByUrl(path[0]); 
         }
       }

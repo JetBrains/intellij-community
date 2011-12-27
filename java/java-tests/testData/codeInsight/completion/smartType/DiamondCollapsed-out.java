@@ -1,6 +1,6 @@
 class MyClass {
   public void foo() {
-    MyDD<String> d = new MyDD<>()<caret>
+    MyDD<String> d = new MyDD<>();<caret>
   }
 }
 

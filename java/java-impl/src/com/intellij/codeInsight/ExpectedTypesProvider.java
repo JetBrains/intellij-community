@@ -444,7 +444,7 @@ public class ExpectedTypesProvider {
     @Override public void visitVariable(PsiVariable variable) {
       PsiType type = variable.getType();
       ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type,
-                                                 TailType.SEMICOLON);
+                                                 variable instanceof PsiResourceVariable ? TailType.NONE : TailType.SEMICOLON);
       info.expectedName = getPropertyName(variable);
       myResult = new ExpectedTypeInfo[]{info};
     }
