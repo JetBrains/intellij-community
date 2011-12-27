@@ -248,17 +248,20 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    */
   private UIManager.LookAndFeelInfo getDefaultLaf() {
     final String lowercaseProductName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    final String systemLafClassName = UIManager.getSystemLookAndFeelClassName();
     if (SystemInfo.isMac) {
-      UIManager.LookAndFeelInfo laf = findLaf(UIManager.getSystemLookAndFeelClassName());
+      UIManager.LookAndFeelInfo laf = findLaf(systemLafClassName);
       LOG.assertTrue(laf != null);
       return laf;
     }
     if ("Rubymine".equals(lowercaseProductName) || "Pycharm".equals(lowercaseProductName)) {
       final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
       if ("gnome".equals(desktop)) {
-        UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
-        LOG.assertTrue(laf!=null);
-        return laf;
+        UIManager.LookAndFeelInfo laf=findLaf(systemLafClassName);
+        if (laf != null) {
+          return laf;
+        }
+        LOG.info("Could not find system look and feel: " + laf);
       }
     }
     // Default
