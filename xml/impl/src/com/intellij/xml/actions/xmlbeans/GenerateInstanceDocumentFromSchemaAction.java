@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
@@ -81,6 +82,12 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
     final String url = dialog.getUrl().getText();
     final VirtualFile relativeFile = VfsUtil.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
+    final PsiFile file = PsiManager.getInstance(project).findFile(relativeFile);
+    if (! (file instanceof XmlFile)) {
+      Messages.showErrorDialog(project, "This is not XmlFile" + file == null ? "" : " (" + file.getFileType().getName() + ")", XmlBundle.message("error"));
+      return;
+    }
+
     VirtualFile relativeFileDir;
     if (relativeFile == null) {
       Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
@@ -110,7 +117,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
       tempDir.mkdir();
 
       pathToUse = tempDir.getPath() + File.separatorChar + Xsd2InstanceUtils.processAndSaveAllSchemas(
-        (XmlFile) PsiManager.getInstance(project).findFile(relativeFile),
+        (XmlFile) file,
         new THashMap<String, String>(),
         new Xsd2InstanceUtils.SchemaReferenceProcessor() {
           public void processSchema(String schemaFileName, byte[] schemaContent) {
