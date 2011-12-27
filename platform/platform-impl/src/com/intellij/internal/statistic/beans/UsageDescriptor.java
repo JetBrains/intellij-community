@@ -14,31 +14,31 @@
  * limitations under the License.
  */
 package com.intellij.internal.statistic.beans;
+
 public class UsageDescriptor implements Comparable<UsageDescriptor> {
 
-    private final String myKey;
-    private int myValue;
+  private final String myKey;
+  private int myValue;
 
-    public UsageDescriptor(String key, int value) {
-       ConvertUsagesUtil.assertDescriptorName(key);
+  public UsageDescriptor(String key, int value) {
+    assert key != null;
+    myKey = ConvertUsagesUtil.ensureProperKey(key);
+    myValue = value;
+  }
 
-        myKey = key;
-        myValue = value;
-    }
+  public String getKey() {
+    return myKey;
+  }
 
-    public String getKey() {
-        return myKey;
-    }
+  public int getValue() {
+    return myValue;
+  }
 
-    public int getValue() {
-        return myValue;
-    }
-
-    public void setValue(int i) {
-        myValue = i;
-    }
+  public void setValue(int i) {
+    myValue = i;
+  }
 
   public int compareTo(UsageDescriptor ud) {
-        return this.getKey().compareTo(ud.myKey);
-    }
+    return this.getKey().compareTo(ud.myKey);
+  }
 }

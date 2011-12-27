@@ -16,14 +16,17 @@
 package com.intellij.internal.statistic.beans;
 
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class ConvertUsagesUtil {
-  private static final Character GROUP_SEPARATOR = ':';
-  private static final Character GROUPS_SEPARATOR = ';';
-  private static final Character GROUP_VALUE_SEPARATOR = ',';
+  private static final char GROUP_SEPARATOR = ':';
+  private static final char GROUPS_SEPARATOR = ';';
+  private static final char GROUP_VALUE_SEPARATOR = ',';
 
   private ConvertUsagesUtil() {
   }
@@ -76,9 +79,9 @@ public class ConvertUsagesUtil {
   public static Map<GroupDescriptor, Set<UsageDescriptor>> convertString(String usages) {
     assert usages != null;
     Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
-    for (String groupStr : usages.split(GROUPS_SEPARATOR.toString())) {
+    for (String groupStr : usages.split(Character.toString(GROUPS_SEPARATOR))) {
       if (!isEmptyOrSpaces(groupStr)) {
-        final StringPair group = getPair(groupStr, GROUP_SEPARATOR.toString());
+        final StringPair group = getPair(groupStr, Character.toString(GROUP_SEPARATOR));
         if (group != null) {
           descriptors.putAll(convertValueString(GroupDescriptor.create(group.first), group.second));
         }
@@ -91,7 +94,7 @@ public class ConvertUsagesUtil {
   public static Map<GroupDescriptor, Set<UsageDescriptor>> convertValueString(GroupDescriptor groupId, String valueData) {
     assert groupId != null;
     final Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
-    for (String value : valueData.split(GROUP_VALUE_SEPARATOR.toString())) {
+    for (String value : valueData.split(Character.toString(GROUP_VALUE_SEPARATOR))) {
       if (!isEmptyOrSpaces(value)) {
         final StringPair pair = getPair(value, "=");
         if (pair != null) {
@@ -168,7 +171,29 @@ public class ConvertUsagesUtil {
     assert key.contains("\"") == false;
   }
 
+  @NotNull
+  public static String ensureProperKey(@NotNull String input) {
+    final StringBuilder escaped = new StringBuilder();
+    for (int i = 0; i < input.length(); i++) {
+      final char ch = input.charAt(i);
+      switch (ch) {
+        case GROUP_SEPARATOR:
+        case GROUPS_SEPARATOR:
+        case GROUP_VALUE_SEPARATOR:
+        case '\'':
+        case '\"':
+        case '=':
+          escaped.append(' ');
+          break;
+        default:
+            escaped.append(ch);
+          break;
+      }
+    }
+    return escaped.toString();
+  }
+
   public static boolean containsChar(final String value, final char ch) {
-      return value.indexOf(ch) >= 0;
+    return value.indexOf(ch) >= 0;
   }
 }
