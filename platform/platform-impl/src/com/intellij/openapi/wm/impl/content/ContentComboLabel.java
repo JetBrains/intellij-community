@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -98,10 +100,14 @@ public class ContentComboLabel extends BaseLabel {
 
     int width = 0;
     for (int i = 0; i < myUi.myManager.getContentCount(); i++) {
-      String text = myUi.myManager.getContent(i).getDisplayName();
+      final Content content = myUi.myManager.getContent(i);
+      assert content != null;
+      String text = content.getDisplayName();
+      final Icon icon = content.getUserData(ToolWindow.SHOW_CONTENT_ICON) == Boolean.TRUE ? content.getIcon() : null;
       FontMetrics metrics = getFontMetrics(getFont());
       int eachTextWidth = metrics.stringWidth(text != null ? text : "");
-      width = Math.max(eachTextWidth, width);
+      int iconWidth = icon != null ? icon.getIconWidth() : 0;
+      width = Math.max(eachTextWidth + iconWidth, width);
     }
 
     Border border = getBorder();
