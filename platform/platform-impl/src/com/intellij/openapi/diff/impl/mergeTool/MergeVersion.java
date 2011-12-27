@@ -30,10 +30,16 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectOpenProcessor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public interface MergeVersion {
   Document createWorkingDocument(Project project);
@@ -91,11 +97,36 @@ public interface MergeVersion {
 
       FileDocumentManager.getInstance().saveDocument(myDocument);
       final VirtualFile file = getFile();
+      reportProjectFileChangeIfNeeded(project, file);
+    }
+
+    public static void reportProjectFileChangeIfNeeded(Project project, VirtualFile file) {
       if (file != null) {
-        if (ProjectUtil.isProjectOrWorkspaceFile(file)) {
+        if (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
           ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
         }
       }
+    }
+
+    @Nullable
+    public static Runnable prepareToReportChangedProjectFiles(final Project project, final Collection<VirtualFile> files) {
+      final Set<VirtualFile> vfs = new HashSet<VirtualFile>();
+      for (VirtualFile vf : files) {
+        if (vf != null) {
+          if (ProjectUtil.isProjectOrWorkspaceFile(vf) || isProjectFile(vf)) {
+            vfs.add(vf);
+          }
+        }
+      }
+      return vfs.isEmpty() ? null : new Runnable() {
+        @Override
+        public void run() {
+          ProjectManagerEx ex = ProjectManagerEx.getInstanceEx();
+          for (VirtualFile vf : vfs) {
+            ex.saveChangedProjectFile(vf, project);
+          }
+        }
+      };
     }
 
     @Override
@@ -105,6 +136,11 @@ public interface MergeVersion {
           doRestoreOriginalContent(project);
         }
       });
+    }
+
+    public static boolean isProjectFile(VirtualFile file) {
+      final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
+      return importProvider != null && importProvider.lookForProjectsInDirectory();
     }
 
     protected void doRestoreOriginalContent(Project project) {

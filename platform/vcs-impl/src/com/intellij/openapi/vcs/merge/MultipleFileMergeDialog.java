@@ -17,12 +17,14 @@
 package com.intellij.openapi.vcs.merge;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -323,17 +325,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   }
 
   private void checkMarkModifiedProject(final VirtualFile file) {
-    if (file.getFileType() == StdFileTypes.IDEA_MODULE ||
-        file.getFileType() == StdFileTypes.IDEA_PROJECT ||
-        file.getFileType() == StdFileTypes.IDEA_WORKSPACE ||
-        isProjectFile(file)) {
-      myProjectManager.saveChangedProjectFile(file, myProject);
-    }
-  }
-
-  private static boolean isProjectFile(VirtualFile file) {
-    final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
-    return importProvider != null && importProvider.lookForProjectsInDirectory();
+    MergeVersion.MergeDocumentVersion.reportProjectFileChangeIfNeeded(myProject, file);
   }
 
   private static String decodeContent(final VirtualFile file, final byte[] content) {
