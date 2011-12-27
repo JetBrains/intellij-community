@@ -100,6 +100,8 @@ public class FileStructurePopup implements Disposable {
   private FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
   private TreeSpeedSearch mySpeedSearch;
+  private final FilteringTreeStructure myStructure;
+  private SmartTreeStructure mySmartTreeStructure;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                              @Nullable Editor editor,
@@ -136,7 +138,7 @@ public class FileStructurePopup implements Disposable {
       }
     }
 
-    SmartTreeStructure smartTreeStructure = new SmartTreeStructure(project, myTreeModel){
+    mySmartTreeStructure = new SmartTreeStructure(project, myTreeModel){
       public void rebuildTree() {
         if (!myPopup.isDisposed()) {
           super.rebuildTree();
@@ -157,15 +159,15 @@ public class FileStructurePopup implements Disposable {
       }
     };
     ElementFilter filter = new FileStructurePopupFilter();
-    final FilteringTreeStructure treeStructure = new FilteringTreeStructure(project, filter, smartTreeStructure);
+    myStructure = new FilteringTreeStructure(project, filter, mySmartTreeStructure);
 
     //final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
-    myTree = new Tree(new DefaultMutableTreeNode(treeStructure.getRootElement()));
+    myTree = new Tree(new DefaultMutableTreeNode(myStructure.getRootElement()));
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
     mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
-    myAbstractTreeBuilder = new FilteringTreeBuilder(project, myTree, filter, treeStructure, null) {
+    myAbstractTreeBuilder = new FilteringTreeBuilder(project, myTree, filter, myStructure, null) {
       @Override
       protected boolean validateNode(Object child) {
         return StructureViewComponent.isValid(child);
@@ -403,6 +405,7 @@ public class FileStructurePopup implements Disposable {
         }
         final boolean state = chkFilter.isSelected();
         myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
+        mySmartTreeStructure.rebuildTree();
         myAbstractTreeBuilder.refilter(); //todo full update
         myAbstractTreeBuilder.queueUpdate();
         if (currentParent != null) {
@@ -415,8 +418,6 @@ public class FileStructurePopup implements Disposable {
             myShouldNarrowDown = oldNarrowDown;
           }
         }
-        myAbstractTreeBuilder.queueUpdate();
-
         if (SpeedSearchBase.hasActiveSpeedSearch(myTree)) {
           final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myTree);
           if (supply != null && supply.isPopupActive()) supply.refreshSelection();
@@ -642,7 +643,7 @@ public class FileStructurePopup implements Disposable {
         
         if (matches) {
           Object o = value;
-          while ((o = ((FilteringTreeStructure.Node)o).getParent()) != null) {
+          while (o instanceof FilteringTreeStructure.Node && (o = ((FilteringTreeStructure.Node)o).getParent()) != null) {
             myVisibleParents.add(o);
           }
           return true;
