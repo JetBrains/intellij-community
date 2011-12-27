@@ -429,14 +429,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
       final CompositePackagingElement<?> root = getRootElement();
       if (root instanceof ArchivePackagingElement) {
-        String oldFileName = FileUtil.sanitizeFileName(oldArtifactName);
+        String oldFileName = ArtifactUtil.suggestArtifactFileName(oldArtifactName);
         final String name = ((ArchivePackagingElement)root).getArchiveFileName();
         final String fileName = FileUtil.getNameWithoutExtension(name);
         final String extension = FileUtil.getExtension(name);
         if (fileName.equals(oldFileName) && extension.length() > 0) {
           myLayoutTreeComponent.editLayout(new Runnable() {
             public void run() {
-              ((ArchivePackagingElement)getRootElement()).setArchiveFileName(FileUtil.sanitizeFileName(newArtifactName) + "." + extension);
+              ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension);
             }
           });
           myLayoutTreeComponent.updateRootNode();
