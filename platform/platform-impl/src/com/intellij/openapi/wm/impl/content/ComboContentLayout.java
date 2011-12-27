@@ -51,7 +51,7 @@ class ComboContentLayout extends ContentLayout {
   @Override
   public void layout() {
     Rectangle bounds = myUi.getBounds();
-    Dimension idSize = myIdLabel.getPreferredSize();
+    Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : new Dimension(0, 0);
 
     int eachX = 0;
     int eachY = 0;
@@ -60,7 +60,7 @@ class ComboContentLayout extends ContentLayout {
     eachX += idSize.width;
 
     Dimension comboSize = myComboLabel.getPreferredSize();
-    int spaceLeft = bounds.width - eachX - (isToDrawCombo() ? 3 : 0);
+    int spaceLeft = bounds.width - eachX - (isToDrawCombo() && isIdVisible() ? 3 : 0);
 
     int width = comboSize.width;
     if (width > spaceLeft) {
@@ -95,7 +95,7 @@ class ComboContentLayout extends ContentLayout {
       g2d.dispose();
     }
     
-    g.drawImage(myImage, r.x, r.y, null);
+    g.drawImage(myImage, isIdVisible() ? r.x : r.x - 2, r.y, null);
   }
 
   @Override
@@ -112,6 +112,7 @@ class ComboContentLayout extends ContentLayout {
   @Override
   public void update() {
     updateIdLabel(myIdLabel);
+    myIdLabel.setVisible(!"true".equals(myUi.myWindow.getComponent().getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL)));
     myComboLabel.update();
   }
 
@@ -130,6 +131,10 @@ class ComboContentLayout extends ContentLayout {
     return myUi.myManager.getContentCount() > 1;
   }
 
+  boolean isIdVisible() {
+    return myIdLabel.isVisible();
+  }
+
   @Override
   public void contentAdded(ContentManagerEvent event) {
   }
@@ -145,7 +150,8 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void showContentPopup(ListPopup listPopup) {
-    listPopup.setMinimumSize(new Dimension(myComboLabel.getSize().width, 0));
+    final int width = myComboLabel.getSize().width;
+    listPopup.setMinimumSize(new Dimension(isIdVisible() ? width : width - 2, 0));
     listPopup.showUnderneathOf(myComboLabel);
   }
 

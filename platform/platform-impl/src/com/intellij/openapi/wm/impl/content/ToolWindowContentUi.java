@@ -20,6 +20,7 @@ import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
@@ -48,11 +49,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider, SwitchProvider {
   public static final String POPUP_PLACE = "ToolwindowPopup";
+  // when client property is put in toolwindow component, hides toolwindow label
+  public static final String HIDE_ID_LABEL = "HideIdLabel";
 
   ContentManager myManager;
 
@@ -431,12 +435,18 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
       @Override
       public Icon getIconFor(Content aValue) {
-        return aValue.getIcon();
+        return aValue.getPopupIcon();
       }
 
       @Override
       public boolean isMnemonicsNavigationEnabled() {
         return true;
+      }
+
+      @Override
+      public ListSeparator getSeparatorAbove(Content value) {
+        final String separator = value.getSeparator();
+        return separator != null ? new ListSeparator(separator) : super.getSeparatorAbove(value);
       }
     };
 
