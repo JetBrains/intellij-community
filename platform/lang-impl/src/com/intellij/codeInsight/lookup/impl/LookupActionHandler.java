@@ -182,6 +182,11 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(LookupImpl lookup, DataContext context) {
+      if (!lookup.isCompletion()) {
+        myOriginalHandler.execute(lookup.getEditor(), context);
+        return;
+      }
+
       BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1);
     }
   }
@@ -195,7 +200,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       final Editor editor = lookup.getEditor();
       final int offset = editor.getCaretModel().getOffset();
       CharSequence seq = editor.getDocument().getCharsSequence();
-      if (seq.length() <= offset) {
+      if (seq.length() <= offset || !lookup.isCompletion()) {
         myOriginalHandler.execute(editor, context);
         return;
       }
