@@ -27,6 +27,11 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/";
   }
 
+  @Override
+  protected void complete() {
+    myItems = myFixture.complete(CompletionType.SMART);
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
