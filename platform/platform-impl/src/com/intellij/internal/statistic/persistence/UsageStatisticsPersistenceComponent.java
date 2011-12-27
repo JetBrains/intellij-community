@@ -79,7 +79,11 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
 
       String valueData = groupElement.getAttributeValue(DATA_ATTR);
       if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(valueData)) {
-        getSentUsages().putAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
+        try {
+          getSentUsages().putAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
+        } catch (AssertionError e) {
+          //don't load incorrect groups
+        }
       }
     }
 

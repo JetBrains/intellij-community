@@ -78,8 +78,7 @@ public class BasicSentUsagesPersistenceComponent extends SentUsagesPersistence {
 
 
     @NotNull
-    public Map<GroupDescriptor, Set<UsageDescriptor>> getSentUsages
-            () {
+    public Map<GroupDescriptor, Set<UsageDescriptor>> getSentUsages () {
         return mySentDescriptors;
     }
 }
