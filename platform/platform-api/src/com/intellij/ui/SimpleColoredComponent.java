@@ -65,7 +65,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   /**
    * Gap between icon and text. It is used only if icon is defined.
    */
-  private int myIconTextGap;
+  protected int myIconTextGap;
   /**
    * Defines whether the focus border around the text is painted or not.
    * For example, text can have a border if the component represents a selected item
