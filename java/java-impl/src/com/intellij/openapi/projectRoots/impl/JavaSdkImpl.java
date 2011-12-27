@@ -477,6 +477,8 @@ public class JavaSdkImpl extends JavaSdk {
       if (jarDir != null && jarDir.isDirectory()) {
         File[] jarFiles = jarDir.listFiles(jarFileFilter);
         for (File jarFile : jarFiles) {
+          final String jarFileName = jarFile.getName();
+          if (jarFileName.equals("alt-rt.jar") || jarFileName.equals("alt-string.jar")) continue;
           try {
             // File.getCanonicalFile() allows us to filter out duplicate (symbolically linked) jar files,
             // commonly found in osx JDK distributions
