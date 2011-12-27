@@ -985,6 +985,8 @@ public class ListUtils {
   public void testNewGenericInterface() throws Throwable { doTest() }
   public void testEnumPrivateFinal() throws Throwable { doTest() }
 
+  public void testSwitchConstantsFromReferencedClass() throws Throwable { doTest('\n') }
+
   public void testUnfinishedMethodTypeParameter() throws Throwable {
     configure()
     assertStringItems("MyParameter", "MySecondParameter")

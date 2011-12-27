@@ -526,8 +526,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
     if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
         !BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
-        !(position.getParent() instanceof PsiLiteralExpression) &&
-        !(position.getParent().getParent() instanceof PsiSwitchLabelStatement)) {
+        !(position.getParent() instanceof PsiLiteralExpression)) {
       for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
         new JavaMembersGetter(info.getDefaultType(), position).addMembers(position, parameters.getInvocationCount() > 1, new Consumer<LookupElement>() {
           @Override

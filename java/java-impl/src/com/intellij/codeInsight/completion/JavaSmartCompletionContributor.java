@@ -354,10 +354,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                                              boolean quick,
                                              Consumer<LookupElement> consumer) {
     PsiElement position = params.getPosition();
-    final PsiElement parent = position.getParent();
-    if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
-        parent != null &&
-        !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
+    if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position)) {
       for (ExpectedTypeInfo info : mergedInfos) {
         new JavaMembersGetter(info.getType(), position).addMembers(position, !quick, consumer);
         if (!info.getDefaultType().equals(info.getType())) {

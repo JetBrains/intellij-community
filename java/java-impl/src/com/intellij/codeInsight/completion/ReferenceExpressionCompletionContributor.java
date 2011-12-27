@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -149,7 +150,7 @@ public class ReferenceExpressionCompletionContributor {
 
   private static Set<LookupElement> completeFinalReference(final PsiElement element, PsiReference reference, ElementFilter filter,
                                                            final JavaSmartCompletionParameters parameters) {
-    final Set<PsiEnumConstant> used = findConstantsToSkip(element, parameters);
+    final Set<PsiField> used = parameters.getParameters().getInvocationCount() < 2 ? findConstantsUsedInSwitch(element) : Collections.<PsiField>emptySet();
 
     final Set<LookupElement> elements =
       JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {
@@ -164,7 +165,7 @@ public class ReferenceExpressionCompletionContributor {
             }
 
             //noinspection SuspiciousMethodCalls
-            if (member instanceof PsiEnumConstant && used.contains(member)) {
+            if (member instanceof PsiEnumConstant && used.contains(CompletionUtil.getOriginalOrSelf(member))) {
               return false;
             }
 
@@ -192,11 +193,9 @@ public class ReferenceExpressionCompletionContributor {
     return elements;
   }
 
-  private static Set<PsiEnumConstant> findConstantsToSkip(PsiElement element, JavaSmartCompletionParameters parameters) {
-    final Set<PsiEnumConstant> used = new HashSet<PsiEnumConstant>();
-    if (parameters.getParameters().getInvocationCount() < 2 &&
-        psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class))
-          .accepts(element)) {
+  public static Set<PsiField> findConstantsUsedInSwitch(PsiElement element) {
+    final Set<PsiField> used = new HashSet<PsiField>();
+    if (psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class)).accepts(element)) {
       PsiSwitchStatement sw = PsiTreeUtil.getParentOfType(element, PsiSwitchStatement.class);
       assert sw != null;
       final PsiCodeBlock body = sw.getBody();
@@ -206,8 +205,8 @@ public class ReferenceExpressionCompletionContributor {
           final PsiExpression value = ((PsiSwitchLabelStatement)statement).getCaseValue();
           if (value instanceof PsiReferenceExpression) {
             final PsiElement target = ((PsiReferenceExpression)value).resolve();
-            if (target instanceof PsiEnumConstant) {
-              used.add((PsiEnumConstant)target);
+            if (target instanceof PsiField) {
+              used.add(CompletionUtil.getOriginalOrSelf((PsiField)target));
             }
           }
         }
