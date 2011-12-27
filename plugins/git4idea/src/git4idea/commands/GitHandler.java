@@ -109,12 +109,6 @@ public abstract class GitHandler {
     myAppSettings = GitVcsApplicationSettings.getInstance();
     myProjectSettings = GitVcsSettings.getInstance(myProject);
     myEnv = new HashMap<String, String>(System.getenv());
-    if (!myEnv.containsKey("HOME")) {
-      String home = System.getProperty("user.home");
-      if (home != null) {
-        myEnv.put("HOME", home);
-      }
-    }
     myVcs = GitVcs.getInstance(project);
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();

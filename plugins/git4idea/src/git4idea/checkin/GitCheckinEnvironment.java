@@ -88,6 +88,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return false;
   }
 
+  @Override
+  public boolean isRefreshAfterCommitNeeded() {
+    return false;
+  }
+
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {

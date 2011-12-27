@@ -444,11 +444,13 @@ public class FileWatcher {
   }
 
   private void writeLine(String line) throws IOException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("to fsnotifier: " + line);
+    }
+
+    final Process process = notifierProcess;
+    final BufferedWriter writer = notifierWriter;
     try {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("to fsnotifier: " + line);
-      }
-      final BufferedWriter writer = notifierWriter;
       if (writer != null) {
         writer.write(line);
         writer.newLine();
@@ -457,7 +459,6 @@ public class FileWatcher {
     }
     catch (IOException e) {
       try {
-        final Process process = notifierProcess;
         if (process != null) {
           process.exitValue();
         }

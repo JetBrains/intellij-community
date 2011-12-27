@@ -197,6 +197,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return false;
   }
 
+  @Override
+  public boolean isRefreshAfterCommitNeeded() {
+    return false;
+  }
+
   private Map<VirtualFile, Set<HgFile>> getFilesByRepository(List<Change> changes) {
     Map<VirtualFile, Set<HgFile>> result = new HashMap<VirtualFile, Set<HgFile>>();
     for (Change change : changes) {
