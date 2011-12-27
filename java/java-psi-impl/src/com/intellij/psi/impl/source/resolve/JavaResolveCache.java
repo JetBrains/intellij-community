@@ -70,16 +70,18 @@ public class JavaResolveCache {
     myVarToConstValueMapPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
     myVarToConstValueMapNonPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
 
-    messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-        clearCaches(isPhysical);
-      }
-
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
-      }
-    });
+    if (messageBus != null) {
+      messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+        @Override
+        public void beforePsiChanged(boolean isPhysical) {
+          clearCaches(isPhysical);
+        }
+  
+        @Override
+        public void afterPsiChanged(boolean isPhysical) {
+        }
+      });
+    }
   }
 
   private void clearCaches(boolean isPhysical) {
