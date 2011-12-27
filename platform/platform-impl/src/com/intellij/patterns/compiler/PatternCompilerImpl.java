@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ElementPatternCondition;
 import com.intellij.patterns.InitialPatternCondition;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
@@ -88,7 +89,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         for (int i = 0, argsLength = args.length; i < argsLength; i++) {
           args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
         }
-        return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args);
+        return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : args);
       }
     });
     return new LazyPresentablePattern(node);
