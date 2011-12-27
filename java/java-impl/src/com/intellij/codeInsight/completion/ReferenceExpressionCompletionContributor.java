@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -47,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -149,6 +149,8 @@ public class ReferenceExpressionCompletionContributor {
 
   private static Set<LookupElement> completeFinalReference(final PsiElement element, PsiReference reference, ElementFilter filter,
                                                            final JavaSmartCompletionParameters parameters) {
+    final Set<PsiEnumConstant> used = findConstantsToSkip(element, parameters);
+
     final Set<LookupElement> elements =
       JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {
         public boolean isAcceptable(Object o, PsiElement context) {
@@ -159,6 +161,11 @@ public class ReferenceExpressionCompletionContributor {
             final PsiType expectedType = parameters.getExpectedType();
             if (expectedType.equals(PsiType.VOID)) {
               return member instanceof PsiMethod;
+            }
+
+            //noinspection SuspiciousMethodCalls
+            if (member instanceof PsiEnumConstant && used.contains(member)) {
+              return false;
             }
 
             return AssignableFromFilter.isAcceptable(member, element, expectedType, info.getSubstitutor());
@@ -176,12 +183,37 @@ public class ReferenceExpressionCompletionContributor {
         assert item != null;
         final PsiMethod method = (PsiMethod)lookupElement.getObject();
         if (SmartCompletionDecorator.hasUnboundTypeParams(method, parameters.getExpectedType())) {
-          item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, parameters.getExpectedType()), element);
+          item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, parameters.getExpectedType()),
+                                       element);
         }
       }
     }
 
     return elements;
+  }
+
+  private static Set<PsiEnumConstant> findConstantsToSkip(PsiElement element, JavaSmartCompletionParameters parameters) {
+    final Set<PsiEnumConstant> used = new HashSet<PsiEnumConstant>();
+    if (parameters.getParameters().getInvocationCount() < 2 &&
+        psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class))
+          .accepts(element)) {
+      PsiSwitchStatement sw = PsiTreeUtil.getParentOfType(element, PsiSwitchStatement.class);
+      assert sw != null;
+      final PsiCodeBlock body = sw.getBody();
+      assert body != null;
+      for (PsiStatement statement : body.getStatements()) {
+        if (statement instanceof PsiSwitchLabelStatement) {
+          final PsiExpression value = ((PsiSwitchLabelStatement)statement).getCaseValue();
+          if (value instanceof PsiReferenceExpression) {
+            final PsiElement target = ((PsiReferenceExpression)value).resolve();
+            if (target instanceof PsiEnumConstant) {
+              used.add((PsiEnumConstant)target);
+            }
+          }
+        }
+      }
+    }
+    return used;
   }
 
   private static void addSingleArrayElementAccess(PsiElement element, LookupElement item, JavaSmartCompletionParameters parameters,
