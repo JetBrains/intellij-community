@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -43,12 +44,9 @@ public class PyTypeCheckerInspection extends PyInspection {
     // TODO: Visit decorators with arguments
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
-      final PyArgumentList args = node.getArgumentList();
-      if (args != null) {
-        final PyExpression callee = node.getCallee();
-        if (callee instanceof PyQualifiedExpression) {
-          checkCallSite((PyQualifiedExpression)callee);
-        }
+      final PyExpression callee = node.getCallee();
+      if (callee instanceof PyQualifiedExpression) {
+        checkCallSite((PyQualifiedExpression)callee);
       }
     }
 
@@ -76,19 +74,20 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
           final PyType argType = entry.getKey().getType(myTypeEvalContext);
           final PyType paramType = p.getType(myTypeEvalContext);
-          checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions, true);
+          checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions);
         }
       }
     }
 
     @Nullable
     private String checkTypes(@Nullable PyType superType, @Nullable PyType subType, @Nullable PsiElement node,
-                              @NotNull TypeEvalContext context, @NotNull Map<PyGenericType, PyType> substitutions, boolean registerPoblem) {
+                              @NotNull TypeEvalContext context, @NotNull Map<PyGenericType, PyType> substitutions) {
       if (subType != null && superType != null) {
         if (!PyTypeChecker.match(superType, subType, context, substitutions)) {
           final String superName = PythonDocumentationProvider.getTypeName(superType, context);
           String expected = String.format("'%s'", superName);
-          if (PyTypeChecker.hasGenerics(superType, context)) {
+          final boolean hasGenerics = PyTypeChecker.hasGenerics(superType, context);
+          if (hasGenerics) {
             final Ref<PyType> subst = PyTypeChecker.substitute(superType, substitutions, context);
             if (subst != null) {
               expected = String.format("'%s' (matched generic type '%s')",
@@ -100,9 +99,9 @@ public class PyTypeCheckerInspection extends PyInspection {
           final String msg = String.format("Expected type %s, got '%s' instead",
                                            expected,
                                            PythonDocumentationProvider.getTypeName(subType, context));
-          if (registerPoblem) {
-            registerProblem(node, msg);
-          }
+          final ProblemHighlightType highlightType = hasGenerics ? ProblemHighlightType.WEAK_WARNING :
+                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+          registerProblem(node, msg, highlightType, null);
           return msg;
         }
       }

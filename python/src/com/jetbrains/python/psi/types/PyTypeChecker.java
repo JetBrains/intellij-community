@@ -56,6 +56,20 @@ public class PyTypeChecker {
     if (isUnknown(actual)) {
       return true;
     }
+    if (expected instanceof PyGenericType && substitutions != null) {
+      if (expected.equals(actual)) {
+        return true;
+      }
+      final PyGenericType generic = (PyGenericType)expected;
+      final PyType subst = substitutions.get(generic);
+      if (subst != null) {
+        return match(subst, actual, context, substitutions, resolveReferences);
+      }
+      else {
+        substitutions.put(generic, actual);
+        return true;
+      }
+    }
     if (actual instanceof PyUnionType) {
       for (PyType m : ((PyUnionType)actual).getMembers()) {
         if (!match(expected, m, context, substitutions, resolveReferences)) {
@@ -104,18 +118,7 @@ public class PyTypeChecker {
       else if (((PyClassType)actual).isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
         return true;
       }
-    }
-    if (expected.equals(actual)) {
-      return true;
-    }
-    if (expected instanceof PyGenericType && substitutions != null) {
-      final PyGenericType generic = (PyGenericType)expected;
-      final PyType subst = substitutions.get(generic);
-      if (subst != null) {
-        return match(subst, actual, context, substitutions, resolveReferences);
-      }
-      else {
-        substitutions.put(generic, actual);
+      if (expected.equals(actual)) {
         return true;
       }
     }

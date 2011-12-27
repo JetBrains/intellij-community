@@ -425,11 +425,13 @@ def test_union_return_types():
     f3(<warning descr="Expected type 'int', got 'str' instead">x1.strip()</warning>)
 
 
-def test_enumerate_iterator(xs):
+def test_enumerate_iterator():
     def f(x):
         """
         :type x: str
         """
         pass
+    xs = [1.1, 2.2, 3.3]
     for i, x in enumerate(xs):
         f(<warning descr="Expected type 'str', got 'int' instead">i</warning>)
+
