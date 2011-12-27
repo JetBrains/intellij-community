@@ -116,4 +116,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   String getSeparator();
   void setSeparator(String separator);
+
+  void setPopupIcon(Icon icon);
+  Icon getPopupIcon();
 }
