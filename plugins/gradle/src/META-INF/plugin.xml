@@ -58,4 +58,11 @@
     </component>
   </project-components>
   
+  <actions>
+    <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.config.GradleLinkToProjectAction" icon="/general/add.png"/>
+    <group id="Gradle.ChangeActionsToolbar">
+      <reference id="Gradle.LinkToProject"/>
+    </group>
+  </actions>
+  
 </idea-plugin>
