@@ -92,7 +92,7 @@ public class CoreJarVirtualFile extends VirtualFile {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final String[] children = myHandler.list(this);
     for (String child : children) {
-      final VirtualFile childFile = myHandler.findFileByPath(myPathInJar + "/" + child);
+      final VirtualFile childFile = myPathInJar.isEmpty() ? myHandler.findFileByPath(child) : myHandler.findFileByPath(myPathInJar + "/" + child);
       result.add(childFile);
     }
     return result.toArray(new VirtualFile[result.size()]);
