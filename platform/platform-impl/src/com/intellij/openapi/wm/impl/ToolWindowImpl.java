@@ -434,7 +434,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   public void showContentPopup(InputEvent inputEvent) {
-    myContentUI.showContentPopup(inputEvent);
+    myContentUI.toggleContentPopup(inputEvent);
   }
 
   @Override

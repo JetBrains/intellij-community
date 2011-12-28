@@ -52,7 +52,7 @@ public class ContentComboLabel extends BaseLabel {
     super.processMouseEvent(e);
 
     if (UIUtil.isActionClick(e)) {
-      myUi.showContentPopup(e);
+      myUi.toggleContentPopup(e);
     }
   }
 

@@ -21,7 +21,7 @@ import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -34,6 +34,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ui.UIUtil;
@@ -76,6 +77,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
+  private boolean myShouldNotShowPopup;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -420,7 +422,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return getCurrentLayout() == layout;
   }
 
-  public void showContentPopup(InputEvent inputEvent) {
+  public void toggleContentPopup(InputEvent inputEvent) {
+    if (myShouldNotShowPopup) {
+      myShouldNotShowPopup = false;
+      return;
+    }
     BaseListPopupStep step = new BaseListPopupStep<Content>(null, myManager.getContents()) {
       @Override
       public PopupStep onChosen(Content selectedValue, boolean finalChoice) {
@@ -453,8 +459,21 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     };
 
     step.setDefaultOptionIndex(Arrays.asList(myManager.getContents()).indexOf(myManager.getSelectedContent()));
-    getCurrentLayout().showContentPopup(JBPopupFactory.getInstance().createListPopup(step));
-
+    final ListPopup popup = new ListPopupImpl(step) {
+      @Override
+      public void cancel(InputEvent e) {
+        super.cancel(e);
+        if (e instanceof MouseEvent) {
+          final MouseEvent me = (MouseEvent)e;
+          final Component component = SwingUtilities.getDeepestComponentAt(e.getComponent(), me.getX(), me.getY());
+          if (UIUtil.isActionClick(me) && component instanceof ContentComboLabel &&
+              SwingUtilities.isDescendingFrom(component, ToolWindowContentUi.this)) {
+            myShouldNotShowPopup = true;
+          }
+        }
+      }
+    };
+    getCurrentLayout().showContentPopup(popup);
   }
 
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
