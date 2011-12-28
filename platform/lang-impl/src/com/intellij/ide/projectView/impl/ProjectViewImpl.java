@@ -520,10 +520,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         scrollAction = (ScrollFromSourceAction)action;
         myActionGroup.remove(scrollAction);
       }
-      if (action instanceof CollapseAllToolbarAction) {
-        collapseAction = (CollapseAllToolbarAction)action;
-        myActionGroup.remove(collapseAction);
-      }
+      //if (action instanceof CollapseAllToolbarAction) {
+      //  collapseAction = (CollapseAllToolbarAction)action;
+      //  myActionGroup.remove(collapseAction);
+      //}
     }
     decorator.setTitleActions(new AnAction[] {scrollAction, collapseAction});
   }
@@ -692,7 +692,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return true;
       }
     }, getComponent());
-    //myActionGroup.add(collapseAllAction);
+    myActionGroup.add(collapseAllAction);
     getCurrentProjectViewPane().addToolbarActions(myActionGroup);
   }
 
