@@ -78,6 +78,9 @@ public class PsiTypeLookupItem extends LookupItem {
     PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
 
     int tail = context.getTailOffset();
+    if (tail <= 0) {
+      return;
+    }
     String braces = StringUtil.repeat("[]", getBracketsCount());
     Editor editor = context.getEditor();
     if (!braces.isEmpty()) {
