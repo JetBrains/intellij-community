@@ -58,7 +58,8 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
       super.visitPyBinaryExpression(node);
       final PyElementType operator = node.getOperator();
       final PyExpression rightExpression = node.getRightExpression();
-      if (rightExpression == null) {
+      if (rightExpression == null || rightExpression instanceof PyBinaryExpression ||
+          node.getLeftExpression() instanceof PyBinaryExpression) {
         return;
       }
       final String leftExpressionText = node.getLeftExpression().getText();
