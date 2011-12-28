@@ -11,6 +11,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,6 +33,9 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         if (docStringOwner.getDocStringExpression() == string) return false;
       }
       String stringText = string.getText();
+      int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      stringText = stringText.substring(prefixLength);
+
       if (stringText.length() >= 6) {
         if (stringText.startsWith("'''") && stringText.endsWith("'''") ||
               stringText.startsWith("\"\"\"") && stringText.endsWith("\"\"\"")) return false;
@@ -57,15 +61,19 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
       StringBuilder strBuilder = new StringBuilder();
       for (ASTNode node : string.getStringNodes())
         strBuilder.append(node.getText());
-      String stringText = strBuilder.toString();//string.getText();
+      String stringText = strBuilder.toString();
+      int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      String prefix = stringText.substring(0, prefixLength);
+      stringText = stringText.substring(prefixLength);
+
       if (stringText.startsWith("'") && stringText.endsWith("'")) {
         String result = convertSingleToDoubleQuoted(stringText);
-        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
+        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(prefix + result);
         string.replace(st);
       }
       if (stringText.startsWith("\"") && stringText.endsWith("\"")) {
         String result = convertDoubleToSingleQuoted(stringText);
-        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
+        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(prefix + result);
         string.replace(st);
       }
     }
