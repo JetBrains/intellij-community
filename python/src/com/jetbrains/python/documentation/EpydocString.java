@@ -11,8 +11,7 @@ import java.util.*;
  */
 public class EpydocString extends StructuredDocString {
   public static String[] RAISES_TAGS = new String[] { "raises", "raise", "except", "exception" };
-  public static String[] PARAM_TAGS = new String[] { "param", "parameter", "arg", "argument" };
-  public static String[] PARAM_TYPE_TAGS = new String[] { "type" };
+
   public static String[] RETURN_TAGS = new String[] { "return", "returns" };
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "kwarg", "kwparam" };
@@ -266,14 +265,6 @@ public class EpydocString extends StructuredDocString {
       }
     }
     return list;
-  }
-
-  @Override
-  public List<Substring> getParameterSubstrings() {
-    final List<Substring> results = new ArrayList<Substring>();
-    results.addAll(getTagArguments(PARAM_TAGS));
-    results.addAll(getTagArguments(PARAM_TYPE_TAGS));
-    return results;
   }
 
   @Override

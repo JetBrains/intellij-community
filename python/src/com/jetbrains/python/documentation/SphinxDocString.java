@@ -2,7 +2,6 @@ package com.jetbrains.python.documentation;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -77,14 +76,6 @@ public class SphinxDocString extends StructuredDocString {
   @Override
   public List<String> getAdditionalTags() {
     return Collections.emptyList();
-  }
-
-  @Override
-  public List<Substring> getParameterSubstrings() {
-    final List<Substring> results = new ArrayList<Substring>();
-    results.addAll(getTagArguments(EpydocString.PARAM_TAGS));
-    results.addAll(getTagArguments(EpydocString.PARAM_TYPE_TAGS));
-    return results;
   }
 
   @Override
