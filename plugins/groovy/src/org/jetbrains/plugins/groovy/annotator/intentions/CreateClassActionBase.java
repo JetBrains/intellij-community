@@ -109,7 +109,7 @@ public abstract class CreateClassActionBase implements IntentionAction {
       if (contextElement != null &&
           !JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(targetClass, contextElement, null) &&
           modifiers != null) {
-        modifiers.setModifierProperty(PsiKeyword.PUBLIC, true);
+        modifiers.setModifierProperty(PsiModifier.PUBLIC, true);
       }
       return targetClass;
     }

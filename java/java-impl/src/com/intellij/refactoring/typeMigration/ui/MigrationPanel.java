@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandler;
@@ -456,28 +457,19 @@ public class MigrationPanel extends JPanel implements Disposable {
           else {
             final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
             if (member instanceof PsiField) {
-              location = PsiFormatUtil.formatVariable((PsiVariable)member, PsiFormatUtil
-                  .SHOW_NAME |
-                             PsiFormatUtil
-                                 .SHOW_CONTAINING_CLASS |
-                                                        PsiFormatUtil
-                                                            .SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
+              location = PsiFormatUtil.formatVariable((PsiVariable)member, PsiFormatUtilBase.SHOW_NAME |
+                                                                           PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                           PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
             }
             else if (member instanceof PsiMethod) {
-              location = PsiFormatUtil.formatMethod((PsiMethod)member, PsiSubstitutor.EMPTY, PsiFormatUtil
-                  .SHOW_NAME |
-                             PsiFormatUtil
-                                 .SHOW_CONTAINING_CLASS |
-                                                        PsiFormatUtil
-                                                            .SHOW_FQ_NAME, PsiFormatUtil.SHOW_TYPE);
+              location = PsiFormatUtil.formatMethod((PsiMethod)member, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
+                                                                                             PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                                             PsiFormatUtilBase.SHOW_FQ_NAME,
+                                                    PsiFormatUtilBase.SHOW_TYPE);
             }
             else if (member instanceof PsiClass) {
-              location = PsiFormatUtil.formatClass((PsiClass)member, PsiFormatUtil
-                  .SHOW_NAME |
-                             PsiFormatUtil
-                                 .SHOW_CONTAINING_CLASS |
-                                                        PsiFormatUtil
-                                                            .SHOW_FQ_NAME);
+              location = PsiFormatUtil.formatClass((PsiClass)member, PsiFormatUtilBase.SHOW_NAME |
+                                                                     PsiFormatUtilBase.SHOW_FQ_NAME);
             }
             else {
               location = null;

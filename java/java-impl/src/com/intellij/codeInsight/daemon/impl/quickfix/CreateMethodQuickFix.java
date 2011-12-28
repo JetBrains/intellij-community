@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,8 +51,11 @@ public class CreateMethodQuickFix implements LocalQuickFix {
   public String getName() {
 
     String signature = PsiFormatUtil.formatMethod(createMethod(myTargetClass.getProject()), PsiSubstitutor.EMPTY,
-                                                  PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_TYPE,
-                                                  PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_RAW_TYPE, 2);
+                                                  PsiFormatUtilBase.SHOW_NAME |
+                                                  PsiFormatUtilBase.SHOW_TYPE |
+                                                  PsiFormatUtilBase.SHOW_PARAMETERS |
+                                                  PsiFormatUtilBase.SHOW_RAW_TYPE,
+                                                  PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_RAW_TYPE, 2);
     return QuickFixBundle.message("create.method.from.usage.text", signature);
   }
 

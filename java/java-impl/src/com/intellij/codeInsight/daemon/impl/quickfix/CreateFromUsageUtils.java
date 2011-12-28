@@ -400,7 +400,7 @@ public class CreateFromUsageUtils {
                 return null;
               }
               if (!facade.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
-                PsiUtil.setModifierProperty(targetClass, PsiKeyword.PUBLIC, true);
+                PsiUtil.setModifierProperty(targetClass, PsiModifier.PUBLIC, true);
               }
             }
             else { //tests

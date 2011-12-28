@@ -113,7 +113,7 @@ public class PsiMethodReceiverImpl extends CompositePsiElement implements PsiMet
   }
 
   @Override
-  public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return false;
   }
 

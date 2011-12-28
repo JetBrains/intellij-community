@@ -47,6 +47,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.*;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.content.ContentFactory;
@@ -197,18 +198,22 @@ public class PeerFactoryImpl extends PeerFactory {
 
     private static String getPsiElementText(PsiElement psiElement) {
       if (psiElement instanceof PsiClass) {
-        return PsiFormatUtil.formatClass((PsiClass)psiElement, PsiFormatUtil.SHOW_NAME |
-                                                               PsiFormatUtil.SHOW_FQ_NAME);
+        return PsiFormatUtil.formatClass((PsiClass)psiElement, PsiFormatUtilBase.SHOW_NAME |
+                                                               PsiFormatUtilBase.SHOW_FQ_NAME);
       }
       else if (psiElement instanceof PsiMethod) {
         return PsiFormatUtil.formatMethod((PsiMethod)psiElement,
                                           PsiSubstitutor.EMPTY,
-                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                          PsiFormatUtilBase.SHOW_NAME |
+                                          PsiFormatUtilBase.SHOW_PARAMETERS |
+                                          PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
                                           0);
       }
       else if (psiElement instanceof PsiField) {
         return PsiFormatUtil.formatVariable((PsiField)psiElement,
-                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                            PsiFormatUtilBase.SHOW_NAME |
+                                            PsiFormatUtilBase.SHOW_TYPE |
+                                            PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
                                             PsiSubstitutor.EMPTY);
       }
       else {

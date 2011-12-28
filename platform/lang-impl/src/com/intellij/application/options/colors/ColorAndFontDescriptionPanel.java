@@ -381,8 +381,8 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   public void apply(ColorAndFontDescription description, EditorColorsScheme scheme) {
     if (description != null) {
       int fontType = Font.PLAIN;
-      if (myCbBold.isSelected()) fontType += Font.BOLD;
-      if (myCbItalic.isSelected()) fontType += Font.ITALIC;
+      if (myCbBold.isSelected()) fontType |= Font.BOLD;
+      if (myCbItalic.isSelected()) fontType |= Font.ITALIC;
       description.setFontType(fontType);
       description.setForegroundChecked(myCbForeground.isSelected());
       description.setForegroundColor(myForegroundChooser.getSelectedColor());

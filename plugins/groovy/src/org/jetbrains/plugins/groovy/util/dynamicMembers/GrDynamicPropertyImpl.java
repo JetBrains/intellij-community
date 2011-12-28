@@ -107,7 +107,7 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
     return myField.getTypeElement();
   }
 
-  public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return myField.hasModifierProperty(name);
   }
 

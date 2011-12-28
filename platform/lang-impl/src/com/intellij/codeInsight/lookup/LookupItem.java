@@ -71,7 +71,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
 
   /**
-   * @deprecated use LookupElementBuilder
+   * @deprecated use {@link LookupElementBuilder}
    */
   public LookupItem(T o, @NotNull @NonNls String lookupString) {
     setObject(o);
