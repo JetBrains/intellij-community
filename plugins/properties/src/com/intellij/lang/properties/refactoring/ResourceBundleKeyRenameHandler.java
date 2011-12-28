@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.refactoring;
 
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.ResourceBundleUtil;
 import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;

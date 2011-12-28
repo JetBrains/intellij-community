@@ -17,9 +17,12 @@
 /**
  * @author Alexey
  */
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.refactoring;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.ResourceBundleUtil;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;

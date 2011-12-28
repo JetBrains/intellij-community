@@ -17,7 +17,7 @@
 /*
  * @author max
  */
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.refactoring;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
