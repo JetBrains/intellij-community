@@ -57,8 +57,13 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/jira-connector/jira-connector.iml" filepath="$PROJECT_DIR$/plugins/tasks/jira-connector/jira-connector.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps.iml" filepath="$PROJECT_DIR$/jps/jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/plugins/appLauncher/jps-appLauncher.iml" filepath="$PROJECT_DIR$/jps/plugins/appLauncher/jps-appLauncher.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" filepath="$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/plugins/gwt/jps-gwt.iml" filepath="$PROJECT_DIR$/jps/plugins/gwt/jps-gwt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/plugins/javaee/jps-javaee.iml" filepath="$PROJECT_DIR$/jps/plugins/javaee/jps-javaee.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/plugins/jpa/jps-jpa.iml" filepath="$PROJECT_DIR$/jps/plugins/jpa/jps-jpa.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/model/jps-model.iml" filepath="$PROJECT_DIR$/jps/model/jps-model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/plugins/scala/jps-scala.iml" filepath="$PROJECT_DIR$/jps/plugins/scala/jps-scala.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-openapi/jsp-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" filepath="$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" group="java" />
