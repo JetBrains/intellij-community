@@ -105,7 +105,7 @@ public class DomSemContributor extends SemContributor {
             }
             if (current instanceof XmlTag) {
               final XmlTag xmlTag = (XmlTag)current;
-              if (localName.equals(xmlTag.getName()) && namespace.equals(xmlTag.getNamespace())) {
+              if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
                 index++;
                 if (index >= totalCount) {
                   return null;
