@@ -435,3 +435,87 @@ def test_enumerate_iterator():
     for i, x in enumerate(xs):
         f(<warning descr="Expected type 'str', got 'int' instead">i</warning>)
 
+
+def test_generic_user_class():
+    class User1(object):
+        def __init__(self, x):
+            """
+            :type x: T
+            :rtype: User1 of T
+            """
+            self.x = x
+
+        def get(self):
+            """
+            :rtype: T
+            """
+            return self.x
+
+        def put(self, value):
+            """
+            :type value: T
+            """
+            self.x = value
+
+    c = User1(10)
+    print(c.get() + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>)
+    c.put(14)
+    c.put(<weak_warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">'foo'</weak_warning>)
+
+
+def test_generic_user_functions():
+    def f1(xs):
+        """
+        :type xs: collections.Iterable of T
+        """
+        return iter(xs).next()
+
+    def f2(x, xs, z):
+        """
+        :type x: T
+        :type xs: list of T
+        :type z: U
+        """
+        return x in xs
+
+    def id(x):
+        """
+        :type x: T
+        :rtype: T
+        """
+        return x
+
+    def f3(x, y, z):
+        """
+        :type x: T
+        :type y: U
+        :type z: V
+        """
+        r1 = id(x)
+        r2 = id(y)
+        r3 = id(z)
+        return r1, r2, r3
+
+    def f4(x):
+        """
+        :type x: (bool, int, str)
+        """
+
+    result = f1([1, 2, 3])
+    print(result)
+    print(result + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>)
+
+    f2(1, <weak_warning descr="Expected type 'list of int' (matched generic type 'list of T'), got 'list of str' instead">['foo']</weak_warning>, 'bar')
+
+    result = f3(1, 'foo', True)
+    f4(<warning descr="Expected type '(bool,int,str)', got '(int,str,bool)' instead">result</warning>)
+
+
+def test_dict_generics(d):
+    """
+    :type d: dict from int to unicode
+    """
+    xs = d.items()
+    d2 = dict(xs)
+    for k, v in d2.items():
+        print k + <warning descr="Expected type 'one of (int, long, float, complex)', got 'unicode' instead">v</warning>

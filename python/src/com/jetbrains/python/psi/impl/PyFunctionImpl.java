@@ -152,6 +152,24 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
+  public PyType getReturnType(@NotNull TypeEvalContext context,
+                              @Nullable PyExpression receiver,
+                              @NotNull Map<PyExpression, PyNamedParameter> arguments) {
+    final PyType type = getGenericReturnType(context, null);
+    if (PyTypeChecker.hasGenerics(type, context)) {
+      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, receiver, arguments, context);
+      if (substitutions != null) {
+        final Ref<PyType> result = PyTypeChecker.substitute(type, substitutions, context);
+        if (result != null) {
+          return result.get();
+        }
+      }
+      return null;
+    }
+    return type;
+  }
+
+  @Nullable
   private PyType getGenericReturnType(TypeEvalContext typeEvalContext, @Nullable PyQualifiedExpression callSite) {
     if (typeEvalContext.maySwitchToAST(this)) {
       PyAnnotation anno = getAnnotation();

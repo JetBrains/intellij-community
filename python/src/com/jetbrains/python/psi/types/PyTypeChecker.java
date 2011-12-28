@@ -33,7 +33,7 @@ public class PyTypeChecker {
   }
 
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
-                               @Nullable Map<PyGenericType, PyType> substitutions, boolean resolveReferences) {
+                               @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive) {
     // TODO: subscriptable types?, module types?, etc.
     if (expected == null || actual == null) {
       return true;
@@ -44,11 +44,11 @@ public class PyTypeChecker {
         return true;
       }
     }
-    if ((expected instanceof PyTypeReference || actual instanceof PyTypeReference) && !resolveReferences) {
+    if ((expected instanceof PyTypeReference || actual instanceof PyTypeReference) && !recursive) {
       return true;
     }
     if (expected instanceof PyTypeReference) {
-      return match(((PyTypeReference)expected).resolve(null, context), actual, context, substitutions, resolveReferences);
+      return match(((PyTypeReference)expected).resolve(null, context), actual, context, substitutions, recursive);
     }
     if (actual instanceof PyTypeReference) {
       return match(expected, ((PyTypeReference)actual).resolve(null, context), context, substitutions, false);
@@ -57,13 +57,18 @@ public class PyTypeChecker {
       return true;
     }
     if (expected instanceof PyGenericType && substitutions != null) {
-      if (expected.equals(actual)) {
-        return true;
-      }
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);
       if (subst != null) {
-        return match(subst, actual, context, substitutions, resolveReferences);
+        if (expected.equals(actual)) {
+          return true;
+        }
+        else if (recursive) {
+          return match(subst, actual, context, substitutions, false);
+        }
+        else {
+          return false;
+        }
       }
       else {
         substitutions.put(generic, actual);
@@ -72,7 +77,7 @@ public class PyTypeChecker {
     }
     if (actual instanceof PyUnionType) {
       for (PyType m : ((PyUnionType)actual).getMembers()) {
-        if (!match(expected, m, context, substitutions, resolveReferences)) {
+        if (!match(expected, m, context, substitutions, recursive)) {
           return false;
         }
       }
@@ -80,7 +85,7 @@ public class PyTypeChecker {
     }
     if (expected instanceof PyUnionType) {
       for (PyType t : ((PyUnionType)expected).getMembers()) {
-        if (match(t, actual, context, substitutions, resolveReferences)) {
+        if (match(t, actual, context, substitutions, recursive)) {
           return true;
         }
       }
@@ -95,7 +100,7 @@ public class PyTypeChecker {
         }
         final PyType superElementType = ((PyCollectionType)expected).getElementType(context);
         final PyType subElementType = ((PyCollectionType)actual).getElementType(context);
-        return match(superElementType, subElementType, context, substitutions, resolveReferences);
+        return match(superElementType, subElementType, context, substitutions, recursive);
       }
       else if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
@@ -105,7 +110,7 @@ public class PyTypeChecker {
         }
         else {
           for (int i = 0; i < superTupleType.getElementCount(); i++) {
-            if (!match(superTupleType.getElementType(i), subTupleType.getElementType(i), context, substitutions, resolveReferences)) {
+            if (!match(superTupleType.getElementType(i), subTupleType.getElementType(i), context, substitutions, recursive)) {
               return false;
             }
           }
@@ -256,9 +261,9 @@ public class PyTypeChecker {
   @NotNull
   public static Map<PyGenericType, PyType> collectCallGenerics(@NotNull PyFunction function, @Nullable PyExpression receiver,
                                                                 @NotNull TypeEvalContext context) {
-    final Map<PyGenericType, PyType> substitutions = new HashMap<PyGenericType, PyType>();
+    final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
     // Collect generic params of object type
-    final Set<PyGenericType> generics = new HashSet<PyGenericType>();
+    final Set<PyGenericType> generics = new LinkedHashSet<PyGenericType>();
     final PyType qualifierType = receiver != null ? receiver.getType(context) : null;
     collectGenerics(qualifierType, context, generics);
     for (PyGenericType t : generics) {
@@ -334,7 +339,7 @@ public class PyTypeChecker {
           if (parameters.length == 2) {
             final PyNamedParameter param = parameters[1].getAsNamed();
             if (arg != null && param != null) {
-              final Map<PyExpression, PyNamedParameter> arguments = new HashMap<PyExpression, PyNamedParameter>();
+              final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
               arguments.put(arg, param);
               final AnalyzeCallResults resutls = new AnalyzeCallResults(function, receiver, arguments);
               if (firstResults == null) {
@@ -365,7 +370,7 @@ public class PyTypeChecker {
         if (parameters.length == 2) {
           final PyNamedParameter param = parameters[1].getAsNamed();
           if (param != null) {
-            final Map<PyExpression, PyNamedParameter> arguments = new HashMap<PyExpression, PyNamedParameter>();
+            final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
             arguments.put(expr.getIndexExpression(), param);
             return new AnalyzeCallResults(function, expr.getOperand(), arguments);
           }

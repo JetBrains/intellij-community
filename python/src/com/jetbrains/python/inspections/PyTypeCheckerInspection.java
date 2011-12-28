@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyGenericType;
@@ -18,7 +19,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -62,7 +62,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private void checkCallSite(@Nullable PyQualifiedExpression callSite) {
-      final Map<PyGenericType, PyType> substitutions = new HashMap<PyGenericType, PyType>();
+      final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
       final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
       if (results != null) {
         substitutions.putAll(PyTypeChecker.collectCallGenerics(results.getFunction(), results.getReceiver(), myTypeEvalContext));
