@@ -281,7 +281,7 @@ class GroovyStubGenerator implements ModuleBuilder {
 }
 
 class JetBrainsInstrumentations implements ModuleBuilder {
-  class CustomFormInstrumenter extends
+  static class CustomFormInstrumenter extends
           FormInstrumenter {
     final List<String> formFiles;
     final ModuleBuildState state;
