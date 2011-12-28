@@ -25,6 +25,9 @@ public abstract class StructuredDocString {
   private static final Pattern RE_LOOSE_TAG_LINE = Pattern.compile("([a-z]+) ([a-zA-Z_0-9]*):?([^:]*)");
   private static final Pattern RE_ARG_TYPE = Pattern.compile("(.*) ([a-zA-Z_0-9]+)");
 
+  public static String[] PARAM_TAGS = new String[] { "param", "parameter", "arg", "argument" };
+  public static String[] PARAM_TYPE_TAGS = new String[] { "type" };
+
   @Nullable
   public static StructuredDocString parse(String text) {
     if (text == null) {
@@ -174,6 +177,13 @@ public abstract class StructuredDocString {
     return Collections.emptyList();
   }
 
+  public List<Substring> getParameterSubstrings() {
+    final List<Substring> results = new ArrayList<Substring>();
+    results.addAll(getTagArguments(PARAM_TAGS));
+    results.addAll(getTagArguments(PARAM_TYPE_TAGS));
+    return results;
+  }
+
   public abstract List<String> getParameters();
   public abstract List<String> getKeywordArguments();
 
@@ -198,7 +208,6 @@ public abstract class StructuredDocString {
   public abstract String getAttributeDescription();
   public abstract List<String> getAdditionalTags();
 
-  public abstract List<Substring> getParameterSubstrings();
   public abstract List<Substring> getKeywordArgumentSubstrings();
 
   @Nullable

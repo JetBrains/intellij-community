@@ -36,28 +36,40 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         // XXX: It does not work with multielement docstrings
         StructuredDocString docString = StructuredDocString.parse(text);
         if (docString != null) {
-          final List<Substring> paramNames = new ArrayList<Substring>();
-          paramNames.addAll(docString.getParameterSubstrings());
-          paramNames.addAll(docString.getKeywordArgumentSubstrings());
-          for (Substring name : paramNames) {
-            final String s = name.toString();
-            if (PyNames.isIdentifier(s)) {
-              result.add(new DocStringParameterReference(element, name.getTextRange().shiftRight(offset)));
-            }
-            final Substring type = docString.getParamTypeSubstring(s);
-            if (type != null) {
-              result.addAll(parseTypeReferences(element, type, offset));
-            }
-          }
-          final Substring rtype = docString.getReturnTypeSubstring();
-          if (rtype != null) {
-            result.addAll(parseTypeReferences(element, rtype, offset));
-          }
+          result.addAll(referencesFromNames(element, offset, docString,
+                                            docString.getTagArguments(StructuredDocString.PARAM_TAGS), "parameter"));
+          result.addAll(referencesFromNames(element, offset, docString,
+                                            docString.getTagArguments(StructuredDocString.PARAM_TYPE_TAGS), "parameter_type"));
+          result.addAll(referencesFromNames(element, offset, docString,
+                                            docString.getKeywordArgumentSubstrings(), "keyword"));
         }
         return result.toArray(new PsiReference[result.size()]);
       }
     }
     return PsiReference.EMPTY_ARRAY;
+  }
+
+  private List<PsiReference> referencesFromNames(PsiElement element,
+                                                 int offset,
+                                                 StructuredDocString docString,
+                                                 List<Substring> paramNames, 
+                                                 String refType) {
+    List<PsiReference> result = new ArrayList<PsiReference>();
+    for (Substring name : paramNames) {
+      final String s = name.toString();
+      if (PyNames.isIdentifier(s)) {
+        result.add(new DocStringParameterReference(element, name.getTextRange().shiftRight(offset), refType));
+      }
+      final Substring type = docString.getParamTypeSubstring(s);
+      if (type != null) {
+        result.addAll(parseTypeReferences(element, type, offset));
+      }
+    }
+    final Substring rtype = docString.getReturnTypeSubstring();
+    if (rtype != null) {
+      result.addAll(parseTypeReferences(element, rtype, offset));
+    }
+    return result;
   }
 
   private static List<PsiReference> parseTypeReferences(PsiElement anchor, Substring s, int offset) {

@@ -24,7 +24,9 @@ if PYVERSION > [1, 4, 0]:
   current_file_suite = None
 
   def pytest_runtest_logstart(nodeid, location):
-    path = "file://" + os.path.realpath(location[0]) + ":" + str(location[1] + 1)
+    path = "file://" + os.path.realpath(location[0])
+    if location[1]:
+      path += ":" +str(location[1] + 1)
     global current_suite, current_file, current_file_suite
     current_file = nodeid.split("::")[0]
 
@@ -47,7 +49,10 @@ if PYVERSION > [1, 4, 0]:
       try:
         ind = splitted.index(name.split("[")[0])
       except ValueError:
+        try:
           ind = splitted.index(name)
+        except ValueError:
+          ind = 0
       if splitted[ind-1] == current_file:
         suite = None
       else:
