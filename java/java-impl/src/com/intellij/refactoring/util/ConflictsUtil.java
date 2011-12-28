@@ -21,6 +21,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -37,9 +38,16 @@ public class ConflictsUtil {
   public static PsiElement getContainer(PsiElement place) {
     PsiElement parent = place;
     while (true) {
-      if (parent instanceof PsiMember && !(parent instanceof PsiTypeParameter))
+      if (parent instanceof PsiMember && !(parent instanceof PsiTypeParameter)) {
         return parent;
-      if (parent instanceof PsiFile) return parent;
+      }
+      if (parent instanceof PsiFile) {
+        PsiElement host = FileContextUtil.getFileContext((PsiFile)parent);
+        if (host == null) {
+          return parent;
+        }
+        parent = host;
+      }
       parent = parent.getParent();
     }
   }
