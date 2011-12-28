@@ -58,19 +58,19 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
       }
 
       meta.content = {Object[] arg ->
-        arg.each { contentRoots << it}
+        arg.each { contentRoots << it.toString() }
       }
 
       meta.src = {Object[] arg ->
-        arg.each { sourceRoots << it }
+        arg.each { sourceRoots << it.toString() }
       }
 
       meta.testSrc = {Object[] arg ->
-        arg.each { testRoots << it }
+        arg.each { testRoots << it.toString() }
       }
 
       meta.exclude = {Object[] arg ->
-        arg.each { excludes << it }
+        arg.each { excludes << it.toString() }
       }
 
       initializer.delegate = meta

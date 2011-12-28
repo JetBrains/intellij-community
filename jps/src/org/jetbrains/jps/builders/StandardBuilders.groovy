@@ -60,7 +60,9 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     params.debug = String.valueOf(debugInfo);
     params.nowarn = String.valueOf(nowarn);
     params.deprecation = String.valueOf(deprecation);
-    params.verbose = "true"
+    if (state.projectWrapper != null) {
+      params.verbose = "true"
+    }
 
     def javacExecutable = getJavacExecutable(module)
     if (javacExecutable != null) {

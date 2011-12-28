@@ -23,11 +23,11 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
     Closure lazyInit = {
       def meta = new InitializingExpando()
       meta.classpath = {Object[] arg ->
-        arg.each { classpath << it }
+        arg.each { classpath << it.toString() }
       }
 
       meta.src = {Object[] arg ->
-        arg.each { sourceRoots << it }
+        arg.each { sourceRoots << it.toString() }
       }
 
       initializer.delegate = meta
