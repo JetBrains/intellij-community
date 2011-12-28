@@ -41,7 +41,7 @@ public class ChooseItemCompleteStatementAction extends EditorAction {
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      return lookup != null && lookup.isFocused() && lookup.isShown();
+      return lookup != null && lookup.isFocused() && lookup.isAvailableToUser();
     }
   }
 

@@ -884,6 +884,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myChangeGuard || myDisposed;
   }
 
+  public boolean isAvailableToUser() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myShown;
+    }
+    return isVisible();
+  }
+
   public boolean isShown() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();

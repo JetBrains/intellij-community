@@ -51,7 +51,7 @@ public class ChooseItemReplaceAction extends EditorAction {
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup != null) {
-        if (!lookup.isShown()) {
+        if (!lookup.isAvailableToUser()) {
           return false;
         }
 

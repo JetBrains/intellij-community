@@ -150,7 +150,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
-    if (!myLookup.isShown()) {
+    if (!myLookup.isAvailableToUser()) {
       scheduleAdvertising();
     }
 
@@ -263,7 +263,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myLookup.setAdvertisementText(s);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
-                  if (isAutopopupCompletion() && !myLookup.isShown()) {
+                  if (isAutopopupCompletion() && !myLookup.isAvailableToUser()) {
                     return;
                   }
                   if (!CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class)) {
