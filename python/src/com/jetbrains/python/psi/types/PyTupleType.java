@@ -6,6 +6,7 @@ import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -26,7 +27,8 @@ public class PyTupleType extends PyClassType implements PySubscriptableType {
   }
 
   public String getName() {
-    return "tuple(" + StringUtil.join(myElementTypes, new Function<PyType, String>() {
+    return "(" + StringUtil.join(myElementTypes, new Function<PyType, String>() {
+      @Nullable
       public String fun(PyType pyType) {
         return pyType == null ? "unknown" : pyType.getName();
       }

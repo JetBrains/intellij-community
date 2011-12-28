@@ -138,6 +138,9 @@ public class PyTypeParser {
       types.put(whole, t);
       return t;
     }
+    if (type.length() == 1 && 'T' <= type.charAt(0) && type.charAt(0) <= 'Z') {
+      return new PyGenericType(type);
+    }
     final Matcher m = PARAMETRIZED_CLASS.matcher(type);
     if (m.matches()) {
       final PyType objType = parseObjectType(anchor, m.group(1), builtinCache, types, fullRanges, offset + m.start(1));
@@ -229,8 +232,10 @@ public class PyTypeParser {
     PyClassType dict = PyBuiltinCache.getInstance(anchor).getDictType();
     if (dict != null) {
       if (m.matches()) {
+        PyType from = parse(anchor, m.group(1), types, fullRanges, offset + m.start(1));
         PyType to = parse(anchor, m.group(2), types, fullRanges, offset + m.start(2));
-        return new PyCollectionTypeImpl(dict.getPyClass(), false, to);
+        final PyType p = new PyTupleType(anchor, new PyType[] {from, to});
+        return new PyCollectionTypeImpl(dict.getPyClass(), false, p);
       }
       return dict;
     }
