@@ -334,6 +334,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
+  public void setTitleActions(AnAction[] actions) {
+    myHeader.setAdditionalTitleActions(actions);
+  }
+
   private static class InnerPanelBorder implements Border {
 
     private final ToolWindow myWindow;
