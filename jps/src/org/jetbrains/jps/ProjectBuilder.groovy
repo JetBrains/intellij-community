@@ -94,11 +94,12 @@ class ProjectBuilder {
       if (chunk.elements.size() > 1) {
         File outputDir
         if (targetFolder != null) {
-          def basePath = tests ? new File(targetFolder, "test").absolutePath : new File(targetFolder, "production").absolutePath
+          def basePath = forTests ? new File(targetFolder, "test").absolutePath : new File(targetFolder, "production").absolutePath
+          def name = chunk.name
           if (name.length() > 100) {
             name = name.substring(0, 100) + "_etc"
           }
-          outputDir = new File(basePath, name).absolutePath
+          outputDir = new File(basePath, name)
         }
         else {
           outputDir = new File(forTests ? chunk.representativeModule().testOutputPath : chunk.representativeModule().outputPath)

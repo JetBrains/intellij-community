@@ -49,4 +49,9 @@ public class GitBranchesAction extends DumbAwareAction {
     GitBranchPopup.getInstance(project, repository).asListPopup().showInBestPositionFor(e.getDataContext());
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabled(project != null && !project.isDisposed());
+  }
 }

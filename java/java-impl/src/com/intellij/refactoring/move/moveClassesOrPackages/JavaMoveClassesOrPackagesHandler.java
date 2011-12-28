@@ -246,7 +246,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       final Module module = LangDataKeys.TARGET_MODULE.getData(dataContext);
       if (module != null) {
         final PsiDirectory[] directories = ((PsiPackage)targetContainer).getDirectories(GlobalSearchScope.moduleScope(module));
-        if (directories.length > 0) {
+        if (directories.length == 1) {
           return directories[0];
         }
       }

@@ -1,0 +1,27 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps">
+    <output-path>$PROJECT_DIR$/out/artifacts/jps</output-path>
+    <root id="archive" name="jps.jar">
+      <element id="module-output" name="jps" />
+      <element id="module-output" name="antlayout" />
+      <element id="module-output" name="jps-model" />
+      <element id="module-output" name="util" />
+      <element id="module-output" name="platform-resources-en" />
+      <element id="module-output" name="annotations" />
+      <element id="module-output" name="javac2" />
+      <element id="module-output" name="forms-compiler" />
+      <element id="module-output" name="forms_rt" />
+      <element id="module-output" name="notNull" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jna-utils.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jna.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jdom.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/picocontainer.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/trove4j.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/asm.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/asm-commons.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/oromatcher.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jgoodies-forms.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/guava-r09.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

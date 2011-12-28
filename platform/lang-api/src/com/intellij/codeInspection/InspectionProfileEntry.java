@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -66,12 +67,20 @@ public abstract class InspectionProfileEntry {
   public abstract String getDisplayName();
 
   /**
+   * This method is not supposed to be overridden.
    * @return short name that is used in two cases: \inspectionDescriptions\&lt;short_name&gt;.html resource may contain short inspection
    *         description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
    *         inspection or export to HTML function. Should be unique among all inspections.
+   * @see InspectionEP#shortName
    */
   @NonNls @NotNull
-  public abstract String getShortName();
+  public String getShortName() {
+    return getShortName(getClass());
+  }
+
+  public static String getShortName(Class<? extends InspectionProfileEntry> aClass) {
+    return StringUtil.trimEnd(aClass.getSimpleName(), "Inspection");
+  }
 
   /**
    * @return highlighting level for this inspection tool that is used in default settings.

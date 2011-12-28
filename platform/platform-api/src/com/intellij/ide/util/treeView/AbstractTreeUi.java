@@ -3261,16 +3261,6 @@ public class AbstractTreeUi {
   }
 
 
-  private boolean isValid(DefaultMutableTreeNode node) {
-    if (node == null) return false;
-    final Object object = node.getUserObject();
-    if (object instanceof NodeDescriptor) {
-      return isValid((NodeDescriptor)object);
-    }
-
-    return false;
-  }
-
   private boolean isValid(NodeDescriptor descriptor) {
     return descriptor != null && isValid(getElementFromDescriptor(descriptor));
   }

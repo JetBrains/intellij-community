@@ -17,6 +17,7 @@ package git4idea.ui;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -56,21 +57,28 @@ public class GitUIUtil {
    * A private constructor for utility class
    */
   private GitUIUtil() { }
-
-  public static void notifyMessages(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
+  
+  public static void notify(@NotNull NotificationGroup group, @NotNull  Project project, @Nullable String title, @Nullable String description, @NotNull NotificationType type, @Nullable NotificationListener listener) {
+    // title can't be null, but can be empty; description can't be neither null, nor empty
     if (title == null) {
       title = "";
     }
+    if (StringUtil.isEmptyOrSpaces(description)) {
+      description = title; 
+      title = "";
+    }
+    // if both title and description were empty, then it is a problem in the calling code => let assertion notify about that.
+    assert description != null : "description is null after StringUtil.isEmptyOrSpaces(). title: " + title;
+    group.createNotification(title, description, type, listener).notify(project.isDefault() ? null : project);    
+  }
+
+  public static void notifyMessages(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
     String desc = (description != null ? description.replace("\n", "<br/>") : "");
     if (messages != null && !messages.isEmpty()) {
       desc += "<hr/>" + StringUtil.join(messages, "<br/>");
     }
-    if (StringUtil.isEmptyOrSpaces(desc)) {
-      desc = StringUtil.isEmptyOrSpaces(title) ? "Error" : title;    // description is not allowed to be empty, title is => moving title text to description
-      title = "";
-    }
     NotificationGroup group = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
-    group.createNotification(title, desc, type, null).notify(project.isDefault() ? null : project);
+    notify(group, project, title, desc, type, null);
   }
 
   public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<? extends Exception> errors) {

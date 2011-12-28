@@ -63,6 +63,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   private static final Icon ourHideDownIcon = IconLoader.getIcon("/general/hideDownPart.png");
 
   private static final Icon ourSettingsIcon = IconLoader.getIcon("/general/gear.png");
+  private static final Icon ourSeparatorIcon = IconLoader.getIcon("/general/divider.png");
 
   private ToolWindow myToolWindow;
   private WindowInfoImpl myInfo;
@@ -70,6 +71,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
   private ToolWindowType myImageType;
+  private JPanel myButtonPanel;
+  private final ToolWindowHeader.ActionButton myGearButton;
 
   public ToolWindowHeader(final ToolWindowImpl toolWindow, WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
     setLayout(new BorderLayout());
@@ -106,12 +109,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     eastPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
     add(eastPanel, BorderLayout.EAST);
 
-    eastPanel.add(new ActionButton(new AnAction() {
+    myGearButton = new ActionButton(new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final InputEvent inputEvent = e.getInputEvent();
         final ActionPopupMenu popupMenu =
-          ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, gearProducer.produce(), new MenuItemPresentationFactory(true));
+          ((ActionManagerImpl)ActionManager.getInstance())
+            .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, gearProducer.produce(), new MenuItemPresentationFactory(true));
 
         int x = 0;
         int y = 0;
@@ -122,9 +126,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
         popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
       }
-    }, ourSettingsIcon));
-
-    eastPanel.add(Box.createHorizontalStrut(3));
+    }, ourSettingsIcon);
 
     myHideButton = new ActionButton(new HideAction() {
       @Override
@@ -137,7 +139,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
         sideHidden();
       }
     },
-                                    ourHideLeftSideIcon, null, null
+    ourHideLeftSideIcon, null, null
     ) {
       @Override
       protected Icon getActiveIcon() {
@@ -150,7 +152,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       }
     };
 
-    eastPanel.add(myHideButton);
+    addDefaultActions(eastPanel);
+    myButtonPanel = eastPanel;
 
     addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
@@ -180,6 +183,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
   }
 
+  private void addDefaultActions(JPanel eastPanel) {
+    eastPanel.add(myGearButton);
+    eastPanel.add(Box.createHorizontalStrut(6));
+    eastPanel.add(myHideButton);
+    eastPanel.add(Box.createHorizontalStrut(1));
+  }
+
   @Override
   public void dispose() {
     removeAll();
@@ -192,7 +202,23 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       myHideButton.updateTooltip();
     }
   }
-  
+
+  public void setAdditionalTitleActions(AnAction[] actions) {
+    myButtonPanel.removeAll();
+    boolean actionAdded = false;
+    for (AnAction action : actions) {
+      if (action == null) continue;
+      myButtonPanel.add(new ActionButton(action, action.getTemplatePresentation().getIcon()));
+      myButtonPanel.add(Box.createHorizontalStrut(7));
+      actionAdded = true;
+    }
+    if (actionAdded) {
+      myButtonPanel.add(new JLabel(ourSeparatorIcon));
+      myButtonPanel.add(Box.createHorizontalStrut(6));
+    }
+    addDefaultActions(myButtonPanel);
+  }
+
   private static Icon getHideToolWindowIcon(ToolWindow toolWindow) {
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {

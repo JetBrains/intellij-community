@@ -5,7 +5,7 @@ package org.jetbrains.jps
  */
 class JpaTest extends JpsBuildTestCase {
   public void testOverwriteArtifacts() throws Exception {
-    doTest("testData/jpaTest/jpaTest.ipr", null, {
+    doTest("plugins/jpa/testData/jpaTest/jpaTest.ipr", null, {
       dir("artifacts") {
         dir("jpaTest") {
           dir("WEB-INF") {

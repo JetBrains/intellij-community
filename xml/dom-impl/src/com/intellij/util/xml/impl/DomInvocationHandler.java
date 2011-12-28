@@ -588,7 +588,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         return semElement;
       }
     }
-    return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager, "");
+    return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager);
   }
 
   @NotNull

@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps-plugins">
+    <output-path>$PROJECT_DIR$/out/artifacts/jps</output-path>
+    <root id="archive" name="jps-plugins.jar">
+      <element id="module-output" name="jps-appLauncher" />
+      <element id="module-output" name="jps-gwt" />
+      <element id="module-output" name="jps-javaee" />
+      <element id="module-output" name="jps-jpa" />
+      <element id="module-output" name="jps-scala" />
+    </root>
+  </artifact>
+</component>

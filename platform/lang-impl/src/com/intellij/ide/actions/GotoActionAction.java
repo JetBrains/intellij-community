@@ -44,6 +44,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         if (action != null) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
+              if (component == null || !component.isShowing()) {
+                return;
+              }
               final AnActionEvent event = new AnActionEvent(e.getInputEvent(), DataManager.getInstance().getDataContext(component),
                                                             e.getPlace(), (Presentation)action.getTemplatePresentation().clone(), ActionManager.getInstance(),
                                                             e.getModifiers());
