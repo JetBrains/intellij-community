@@ -27,7 +27,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Map;
 
 class TestRenderer {
@@ -42,7 +41,7 @@ class TestRenderer {
   }
 
   private static SimpleTextAttributes getSpecialAttributes() {
-    return new SimpleTextAttributes(Font.BOLD, TestsUIUtil.PASSED_COLOR);
+    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, TestsUIUtil.PASSED_COLOR);
   }
 
   static {

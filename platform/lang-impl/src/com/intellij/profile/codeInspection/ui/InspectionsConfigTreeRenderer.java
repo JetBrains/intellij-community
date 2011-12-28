@@ -54,11 +54,11 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
       selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting ? Color.BLUE : UIUtil.getTreeTextForeground();
 
     @NonNls String text = null;
-    int style = Font.PLAIN;
+    int style = SimpleTextAttributes.STYLE_PLAIN;
     String hint = null;
     if (object instanceof String) {
       text = (String)object;
-      style = Font.BOLD;
+      style = SimpleTextAttributes.STYLE_BOLD;
     }
     else {
       final Descriptor descriptor = node.getDesriptor();

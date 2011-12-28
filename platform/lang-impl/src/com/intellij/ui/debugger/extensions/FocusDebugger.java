@@ -161,7 +161,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     return greyOut ? attr.derive(attr.getStyle(), Color.gray, attr.getBgColor(), attr.getWaveColor()) : attr;
   }
 
-  class FocusElementRenderer extends ColoredListCellRenderer {
+  static class FocusElementRenderer extends ColoredListCellRenderer {
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       clear();
@@ -175,7 +175,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     }
   }
 
-  class FocusElement {
+  static class FocusElement {
     private final SimpleColoredText myText;
     private final Throwable myAllocation;
 

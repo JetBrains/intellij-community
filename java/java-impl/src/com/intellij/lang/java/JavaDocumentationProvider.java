@@ -46,6 +46,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -130,7 +131,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static void generateModifiers(StringBuilder buffer, PsiElement element) {
-    String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+    String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
 
     if (modifiers.length() > 0) {
       buffer.append(modifiers);
@@ -531,8 +532,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         }
 
         final String str = PsiFormatUtil.formatMethod((PsiMethod)element, candidate.getSubstitutor(),
-                                                      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS,
-                                                      PsiFormatUtil.SHOW_TYPE);
+                                                      PsiFormatUtilBase.SHOW_NAME |
+                                                      PsiFormatUtilBase.SHOW_TYPE |
+                                                      PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                      PsiFormatUtilBase.SHOW_TYPE);
         createElementLink(sb, element, StringUtil.escapeXml(str));
       }
 
@@ -583,8 +586,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
             urls.add(classUrl + "#" + signature);
           }
           signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES, 999);
+                                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                        PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES, 999);
           for (String classUrl : classUrls) {
             urls.add(classUrl + "#" + signature);
           }
@@ -614,8 +617,12 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   public static String formatMethodSignature(PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE,
-                                      PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE,
+                                      PsiFormatUtilBase.SHOW_NAME |
+                                      PsiFormatUtilBase.SHOW_PARAMETERS |
+                                      PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE,
+                                      PsiFormatUtilBase.SHOW_TYPE |
+                                      PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES |
+                                      PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE,
                                       999);
   }
 

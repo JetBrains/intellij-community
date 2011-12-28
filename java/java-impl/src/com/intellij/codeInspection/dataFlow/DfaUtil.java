@@ -144,21 +144,23 @@ public class DfaUtil {
     return codeBlock;
   }
 
+  @NotNull
   public static Collection<? extends PsiElement> getPossibleInitializationElements(final PsiElement qualifierExpression) {
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       return Collections.singletonList(qualifierExpression);
     }
-    else if (qualifierExpression instanceof PsiReferenceExpression) {
+    if (qualifierExpression instanceof PsiReferenceExpression) {
       final PsiElement targetElement = ((PsiReferenceExpression)qualifierExpression).resolve();
-      if (targetElement instanceof PsiVariable) {
-        final Collection<? extends PsiElement> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
-        if ((variableValues == null || variableValues.isEmpty())) {
-          return getVariableAssignmentsInFile((PsiVariable)targetElement, false, qualifierExpression);
-        }
-        return variableValues;
+      if (!(targetElement instanceof PsiVariable)) {
+        return Collections.emptyList();
       }
+      final Collection<? extends PsiElement> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
+      if (variableValues == null || variableValues.isEmpty()) {
+        return getVariableAssignmentsInFile((PsiVariable)targetElement, false, qualifierExpression);
+      }
+      return variableValues;
     }
-    else if (qualifierExpression instanceof PsiLiteralExpression) {
+    if (qualifierExpression instanceof PsiLiteralExpression) {
       return Collections.singletonList(qualifierExpression);
     }
     return Collections.emptyList();
@@ -239,7 +241,7 @@ public class DfaUtil {
     final Set<PsiVariable> myNotNulls = new THashSet<PsiVariable>();
     private final PsiElement myContext;
 
-    public ValuableInstructionVisitor(PsiElement context) {
+    public ValuableInstructionVisitor(@NotNull PsiElement context) {
       myContext = context;
     }
 

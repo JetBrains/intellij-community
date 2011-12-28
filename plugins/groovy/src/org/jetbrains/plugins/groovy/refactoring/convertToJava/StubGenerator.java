@@ -52,7 +52,7 @@ import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationU
  * @author Maxim.Medvedev
  */
 public class StubGenerator implements ClassItemGenerator {
-  public static final String[] STUB_MODIFIERS = new String[]{
+  public static final String[] STUB_MODIFIERS = {
     PsiModifier.PUBLIC,
     PsiModifier.PROTECTED,
     PsiModifier.PRIVATE,

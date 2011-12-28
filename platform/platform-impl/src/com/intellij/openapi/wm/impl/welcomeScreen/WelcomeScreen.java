@@ -100,6 +100,7 @@ public class WelcomeScreen implements Disposable {
   @NonNls private static final String HTML_SUFFIX = "</html>";
   @NonNls private static final String ___HTML_SUFFIX = "...</html>";
   @NonNls private static final String ESC_NEW_LINE = "\\n";
+  public static final Icon ICON = IconLoader.getIcon("/actions/closeNew.png");
 
   private final JPanel myWelcomePanel;
   private final JPanel myMainPanel;
@@ -242,7 +243,19 @@ public class WelcomeScreen implements Disposable {
 
     int row = 1;
     for (final AnAction action : recentProjectsActions) {
-      final SimpleColoredComponent actionLabel = new SimpleColoredComponent();
+      final SimpleColoredComponent actionLabel = new SimpleColoredComponent() {
+        @Override
+        public Dimension getPreferredSize() {
+          boolean hasIcon = getIcon() != null;
+          Dimension preferredSize = super.getPreferredSize();
+          return new Dimension(preferredSize.width + (hasIcon ? 0 : ICON.getIconWidth() + myIconTextGap), preferredSize.height);
+        }
+
+        @Override
+        public Dimension getMinimumSize() {
+          return getPreferredSize();
+        }
+      };
       actionLabel.append(String.valueOf(row), CAPTION_UNDERLINE_ATTRIBUTES);
       actionLabel.append(". ", new SimpleTextAttributes(0, CAPTION_COLOR));
       actionLabel.append(action.getTemplatePresentation().getText(), CAPTION_BOLD_UNDERLINE_ATTRIBUTES);
@@ -298,9 +311,7 @@ public class WelcomeScreen implements Disposable {
 
         @Override
         public void mouseEntered(MouseEvent e) {
-          if (actionLabel.getSize().width > actionLabel.getPreferredSize().width) {
-            actionLabel.setIcon(IconLoader.getIcon("/actions/closeNew.png"));
-          }
+          actionLabel.setIcon(ICON);
         }
 
         @Override

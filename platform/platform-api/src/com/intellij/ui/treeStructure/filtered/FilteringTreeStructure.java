@@ -46,9 +46,6 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   }
 
   public void refilter() {
-    if (myStructure instanceof FilteringTreeStructure) {
-      ((FilteringTreeStructure)myStructure).refilter();
-    }
     myRoot.clear();
     myNodeObject2Node.clear();
     fillChildren(myRoot, getStructure().getRootElement());
@@ -218,7 +215,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
   @Override
   public boolean isAlwaysLeaf(Object element) {
-    return ((Node)element).isAlwaysLeaf();
+    if (element instanceof Node) {
+      return ((Node)element).isAlwaysLeaf();
+    }
+    return false;
   }
 
   @NotNull

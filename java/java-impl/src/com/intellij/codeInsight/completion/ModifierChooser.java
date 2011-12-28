@@ -90,7 +90,7 @@ public class ModifierChooser {
       final String[] keywords = keywordSets[keywordSets.length - i - 1];
       boolean containModifierFlag = false;
       if (list != null) {
-        for (@Modifier String keyword : keywords) {
+        for (String keyword : keywords) {
           if (list.hasExplicitModifier(keyword)) {
             containModifierFlag = true;
             break;

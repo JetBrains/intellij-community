@@ -24,8 +24,8 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
   public static final int TOP = 0;
   private boolean myVerticalFill;
   private boolean myHorizontalFill;
-  private int vGap;
-  private int hGap;
+  private final int vGap;
+  private final int hGap;
 
   public VerticalFlowLayout() {
     this(TOP, 5, 5, true, false);

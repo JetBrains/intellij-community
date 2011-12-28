@@ -169,13 +169,13 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
   }
 
   private static class CountDefectsRenderer extends JPanel implements TableCellRenderer {
-    private static final SimpleTextAttributes RUNNING_COLOR = new SimpleTextAttributes(Font.PLAIN, Color.BLACK);
-    private static final SimpleTextAttributes DEFECT_ATTRIBUTE = new SimpleTextAttributes(Font.BOLD, Color.RED);
+    private static final SimpleTextAttributes RUNNING_COLOR = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.BLACK);
+    private static final SimpleTextAttributes DEFECT_ATTRIBUTE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.RED);
 
     private final SimpleColoredRenderer myCounters = new SimpleColoredRenderer();
     private final SimpleColoredRenderer myProgressIndicator = new SimpleColoredRenderer();
     private final TableCellState myCellState = new TableCellState();
-    private static final SimpleTextAttributes TERMINATED_ATTRIBUTE = new SimpleTextAttributes(Font.BOLD, Color.ORANGE);
+    private static final SimpleTextAttributes TERMINATED_ATTRIBUTE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.ORANGE);
 
     public CountDefectsRenderer() {
       super(new BorderLayout());

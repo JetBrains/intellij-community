@@ -104,11 +104,11 @@ public class ComplementaryFontsRegistry {
     if (!SystemInfo.isMac || style == 0) return Pair.create(familyName, style);
 
     StringBuilder st = new StringBuilder(familyName).append('-');
-    if ((style & Font.BOLD) == Font.BOLD) {
+    if ((style & Font.BOLD) != 0) {
       st.append("Bold");
     }
     
-    if ((style & Font.ITALIC) == Font.ITALIC) {
+    if ((style & Font.ITALIC) != 0) {
       st.append("Italic");
     }
     

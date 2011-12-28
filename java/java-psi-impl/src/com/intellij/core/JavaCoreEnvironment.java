@@ -37,6 +37,7 @@ import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
+import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
@@ -80,7 +81,8 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
     myProject.registerService(PackageIndex.class, myFileManager);
-    
+    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(null));
+
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
     myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
   }
