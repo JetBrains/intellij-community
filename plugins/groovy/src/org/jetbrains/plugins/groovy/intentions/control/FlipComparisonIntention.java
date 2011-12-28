@@ -37,6 +37,10 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     final String comparison = ComparisonUtils.getStringForComparison(tokenType);
     final String flippedComparison = ComparisonUtils.getFlippedComparison(tokenType);
 
+    if (comparison.equals(flippedComparison)) {
+      return GroovyIntentionsBundle.message("flip.smth.intention.name", comparison);
+    }
+
     return GroovyIntentionsBundle.message("flip.comparison.intention.name", comparison, flippedComparison);
   }
 
