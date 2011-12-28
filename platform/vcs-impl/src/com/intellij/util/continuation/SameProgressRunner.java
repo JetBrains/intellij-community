@@ -68,16 +68,14 @@ public class SameProgressRunner extends GeneralRunner {
 
         final TaskDescriptor current = getNextMatching();
         if (current == null) {
-          synchronized (myQueueLock) {
-            if (myTriggerSuspend) {
-              mySemaphore.down();
-              while (myTriggerSuspend) {
-                mySemaphore.waitFor(500);
-              }
-              continue;
-            } else {
-              return;
+          if (myTriggerSuspend) {
+            mySemaphore.down();
+            while (myTriggerSuspend) {
+              mySemaphore.waitFor(500);
             }
+            continue;
+          } else {
+            return;
           }
         }
 

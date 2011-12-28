@@ -245,11 +245,11 @@ abstract class GeneralRunner implements ContinuationContext {
   @Nullable
   protected TaskDescriptor getNextMatching() {
     while (true) {
+      if (myTriggerSuspend) {
+        return null;
+      }
       synchronized (myQueueLock) {
         if (myQueue.isEmpty()) return null;
-        if (myTriggerSuspend) {
-          return null;
-        }
         TaskDescriptor current = myQueue.remove(0);
         // check if some tasks were scheduled after disaster was thrown, anyway, they should also be checked for cure
         if (! current.isHaveMagicCure()) {
