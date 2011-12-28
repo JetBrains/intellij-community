@@ -105,7 +105,7 @@ public class DomSemContributor extends SemContributor {
             }
             if (current instanceof XmlTag) {
               final XmlTag xmlTag = (XmlTag)current;
-              if (localName.equals(xmlTag.getName()) && namespace.equals(xmlTag.getNamespace())) {
+              if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
                 index++;
                 if (index >= totalCount) {
                   return null;
@@ -117,7 +117,7 @@ public class DomSemContributor extends SemContributor {
           final DomManagerImpl myDomManager = parent.getManager();
           final IndexedElementInvocationHandler handler =
             new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
-                                                new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, namespace);
+                                                new PhysicalDomParentStrategy(tag, myDomManager), myDomManager);
           tag.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, handler);
           return handler;
         }

@@ -149,6 +149,7 @@ public abstract class BaseRefactoringProcessor {
     final Ref<Language> refErrorLanguage = new Ref<Language>();
     final Ref<Boolean> refProcessCanceled = new Ref<Boolean>();
     final Ref<Boolean> dumbModeOccurred = new Ref<Boolean>();
+    final Ref<Boolean> anyException = new Ref<Boolean>();
 
     final Runnable findUsagesRunnable = new Runnable() {
       @Override
@@ -169,6 +170,9 @@ public abstract class BaseRefactoringProcessor {
         }
         catch (IndexNotReadyException e) {
           dumbModeOccurred.set(Boolean.TRUE);
+        }
+        catch (Throwable e) {
+          anyException.set(Boolean.TRUE);
         }
       }
     };
@@ -191,6 +195,10 @@ public abstract class BaseRefactoringProcessor {
       return;
     }
 
+    if (!anyException.isNull()) {
+      //do not proceed if find usages fails
+      return;
+    }
     assert !refUsages.isNull(): "Null usages from processor " + this;
     if (!preprocessUsages(refUsages)) return;
     final UsageInfo[] usages = refUsages.get();

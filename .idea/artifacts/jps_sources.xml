@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="jps-sources">
+    <output-path>$PROJECT_DIR$/out/artifacts/jps</output-path>
+    <root id="archive" name="jps-sources.zip">
+      <element id="dir-copy" path="$PROJECT_DIR$/jps/antLayout/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/jps/model/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/appLauncher/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/gwt/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/javaee/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/jpa/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/jps/plugins/scala/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/jps/src" />
+    </root>
+  </artifact>
+</component>

@@ -76,24 +76,35 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
 
     final int index = values.indexOf(t);
     if (index < 0) {
-      diagnoseNegativeIndex(t, parent, description, values);
+      diagnoseNegativeIndex2(t, parent, description, values);
     }
     return new IndexedAnchor<T>(parentAnchor, description, index);
   }
 
-  private static <T extends DomElement> void diagnoseNegativeIndex(T t,
-                                                                   DomElement parent,
-                                                                   AbstractDomChildrenDescription description,
-                                                                   List<? extends DomElement> values) {
+  private static <T extends DomElement> void diagnoseNegativeIndex2(T t,
+                                                                    DomElement parent,
+                                                                    AbstractDomChildrenDescription description,
+                                                                    List<? extends DomElement> values) {
     final XmlTag parentTag = parent.getXmlTag();
     StringBuilder diag = new StringBuilder("Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t + "\nvalues=" + values + "\n");
-    for (DomElement value : values) {
+    for (int i = 0, size = values.size(); i < size; i++) {
+      DomElement value = values.get(i);
       if (value.toString().equals(t.toString())) {
-        diag.append(" hasSame, same=" + (value == t) +
+        final XmlElement tElement = t.getXmlElement();
+        final XmlElement valElement = value.getXmlElement();
+        diag.append(" hasSame, i=" + i + 
+                    "; same=" + (value == t) +
                     ", equal=" + value.equals(t) +
                     ", equal2=" + t.equals(value) +
-                    ", sameElements=" + (t.getXmlElement() == value.getXmlElement()) +
+                    ", t.physical=" + (tElement == null ? "null" : String.valueOf(tElement.isPhysical())) +
+                    ", value.physical=" + (valElement == null ? "null" : String.valueOf(valElement.isPhysical())) +
+                    ", sameElements=" + (tElement == value.getXmlElement()) +
                     "\n");
+        if (tElement != null && valElement != null) {
+          diag.append("  sameFile=" + (tElement.getContainingFile() == valElement.getContainingFile()) + 
+                      ", sameParent=" + (tElement.getParent() == valElement.getParent()) +
+                      "\n");
+        }
       }
     }
     
@@ -106,7 +117,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
         diag.append("\n");
       } else {
         for (XmlTag tag : parentTag.getSubTags()) {
-          diag.append(", subtag: ").append(tag.getName());
+          diag.append("\n subtag: ").append(tag.getName());
         }
         diag.append("\n");
       }

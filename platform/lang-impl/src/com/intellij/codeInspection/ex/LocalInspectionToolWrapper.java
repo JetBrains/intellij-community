@@ -51,6 +51,10 @@ public final class LocalInspectionToolWrapper extends InspectionToolWrapper<Loca
     super(ep);
   }
 
+  public LocalInspectionToolWrapper(@Nullable LocalInspectionTool tool, @Nullable LocalInspectionEP ep) {
+    super(tool, ep);
+  }
+
   public void processFile(PsiFile file, final boolean filterSuppressed, final InspectionManager manager) {
     processFile(file, filterSuppressed, manager, false);
   }

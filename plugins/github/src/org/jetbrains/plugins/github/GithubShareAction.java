@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
@@ -37,7 +36,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -98,17 +96,14 @@ public class GithubShareAction extends DumbAwareAction {
 
     final GithubSettings settings = GithubSettings.getInstance();
     final String password = settings.getPassword();
-    final boolean privateRepoAllowed;
-    try {
-      privateRepoAllowed = GithubUtil.accessToGithubWithModalProgress(project, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return GithubUtil.isPrivateRepoAllowed(settings.getHost(), settings.getLogin(), password);
-        }
-      });
-    }
-    catch (GithubUtil.CancelledException ex) {
+    final Boolean privateRepoAllowed = GithubUtil.accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+        return GithubUtil.isPrivateRepoAllowed(settings.getHost(), settings.getLogin(), password);
+      }
+    });
+    if (privateRepoAllowed == null) {
       return;
     }
     final GithubShareDialog shareDialog = new GithubShareDialog(project, names, privateRepoAllowed);

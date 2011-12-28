@@ -76,7 +76,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
             FileElement treeElement = file.getTreeElement();
             StubTree stubTree = file.getStubTree();
             if (treeElement != null) {
-              throw new AssertionError("this="+this+"; file.isPhysical="+file.isPhysical() + "; node=" + myNode + "; file=" + file + "; tree=" + treeElement + "; stubTree=" + stubTree);
+              return notBoundInExistingAst(file, treeElement, stubTree);
             }
             final FileElement fileElement = file.loadTreeElement();
             node = myNode;
@@ -102,6 +102,26 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     }
 
     return node;
+  }
+
+  private ASTNode notBoundInExistingAst(PsiFileImpl file, FileElement treeElement, StubTree stubTree) {
+    String message = "this=" + this +
+                     "; file.isPhysical=" + file.isPhysical() +
+                     "; node=" + myNode +
+                     "; file=" + file +
+                     "; tree=" + treeElement +
+                     "; stubTree=" + stubTree;
+    PsiElement each = this;
+    while (each != null) {
+      message += "\n each=" + each + " of class " + each.getClass();
+      if (each instanceof StubBasedPsiElementBase) {
+        message += "; node=" + ((StubBasedPsiElementBase)each).myNode + "; stub=" + ((StubBasedPsiElementBase)each).myStub;
+        each = ((StubBasedPsiElementBase)each).getParentByStub();
+      } else {
+        break;
+      }
+    }
+    throw new AssertionError(message);
   }
 
   public void setNode(final ASTNode node) {

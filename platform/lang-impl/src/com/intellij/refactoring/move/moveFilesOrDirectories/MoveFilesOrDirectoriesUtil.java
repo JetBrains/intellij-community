@@ -83,7 +83,7 @@ public class MoveFilesOrDirectoriesUtil {
 
       try {
         final VirtualFile virtualFile = file.getVirtualFile();
-        assert virtualFile != null;
+        LOG.assertTrue(virtualFile != null, file);
         virtualFile.move(manager, newDirectory.getVirtualFile());
       }
       catch (IOException e) {

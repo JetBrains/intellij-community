@@ -21,6 +21,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
+import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -69,6 +70,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.*;
@@ -471,6 +473,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myViewContentPanel.revalidate();
     myViewContentPanel.repaint();
     createToolbarActions();
+    updateTitleActions();
 
     newPane.setTreeChangeListener(myTreeChangeListener);
     myAutoScrollToSourceHandler.install(newPane.myTree);
@@ -504,6 +507,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
+  }
+
+  private void updateTitleActions() {
+    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow("Project");
+    if (window == null) return;
+    final InternalDecorator decorator = ((ToolWindowImpl)window).getDecorator();
+    ScrollFromSourceAction scrollAction = null;
+    CollapseAllToolbarAction collapseAction = null;
+    for (AnAction action : myActionGroup.getChildren(null)) {
+      if (action instanceof ScrollFromSourceAction) {
+        scrollAction = (ScrollFromSourceAction)action;
+        myActionGroup.remove(scrollAction);
+      }
+      if (action instanceof CollapseAllToolbarAction) {
+        collapseAction = (CollapseAllToolbarAction)action;
+        myActionGroup.remove(collapseAction);
+      }
+    }
+    decorator.setTitleActions(new AnAction[] {scrollAction, collapseAction});
   }
 
   // public for tests
@@ -670,7 +692,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return true;
       }
     }, getComponent());
-    myActionGroup.add(collapseAllAction);
+    //myActionGroup.add(collapseAllAction);
     getCurrentProjectViewPane().addToolbarActions(myActionGroup);
   }
 
@@ -1732,7 +1754,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
-      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/autoscrollFromSource.png"));
+      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/locate.png"));
     }
 
     @Override
