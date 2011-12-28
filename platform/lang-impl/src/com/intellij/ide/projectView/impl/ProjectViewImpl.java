@@ -511,7 +511,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void updateTitleActions() {
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow("Project");
-    if (window == null) return;
+    if (!(window instanceof ToolWindowImpl)) return;
     final InternalDecorator decorator = ((ToolWindowImpl)window).getDecorator();
     ScrollFromSourceAction scrollAction = null;
     CollapseAllToolbarAction collapseAction = null;
