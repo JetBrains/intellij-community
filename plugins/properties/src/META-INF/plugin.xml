@@ -22,7 +22,7 @@
     <codeInsight.wordCompletionFilter language="Properties"
                                       implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
     <lang.psiStructureViewFactory language="Properties"
-                                  implementationClass="com.intellij.lang.properties.PropertiesStructureViewBuilderFactory"/>
+                                  implementationClass="com.intellij.lang.properties.structureView.PropertiesStructureViewBuilderFactory"/>
     <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
     <joinLinesHandler implementation="com.intellij.lang.properties.PropertiesJoinLinesHandler"/>
     
