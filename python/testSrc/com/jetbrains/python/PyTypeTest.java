@@ -224,7 +224,7 @@ public class PyTypeTest extends PyTestCase {
     assertTrue(PyTypeChecker.isUnknown(t));
     doTest("int", text);
   }
-  
+
   public void testReturnTypeReferenceEquality() {
     final String text = "def foo(x): return x.bar\n" +
                         "def xyzzy(a, x):\n" +
@@ -299,6 +299,36 @@ public class PyTypeTest extends PyTestCase {
     TypeEvalContext context = TypeEvalContext.slow().withTracing();
     PyType actual = expr.getType(context);
     assertFalse(actual.isBuiltin(context));
+  }
+
+  public void testGenericConcrete() {
+    PyExpression expr = parseExpr("def f(x):\n" +
+                                  "    '''\n" +
+                                  "    :type x: T\n" +
+                                  "    :rtype: T\n" +
+                                  "    '''\n" +
+                                  "    return x\n" +
+                                  "\n" +
+                                  "expr = f(1)\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType actual = expr.getType(context);
+    assertNotNull(actual);
+    assertEquals("int", actual.getName());
+  }
+
+  public void testGenericConcreteMismatch() {
+    PyExpression expr = parseExpr("def f(x, y):\n" +
+                                  "    '''\n" +
+                                  "    :type x: T\n" +
+                                  "    :rtype: T\n" +
+                                  "    '''\n" +
+                                  "    return x\n" +
+                                  "\n" +
+                                  "expr = f(1)\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType actual = expr.getType(context);
+    assertNotNull(actual);
+    assertEquals("int", actual.getName());
   }
 
   private PyExpression parseExpr(String text) {

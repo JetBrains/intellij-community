@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -8,7 +9,7 @@ import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private Properties myStdlibTypes2 = new Properties();
   private Properties myStdlibTypes3 = new Properties();
 
+  @Nullable
+  public static PyStdlibTypeProvider getInstance() {
+    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      if (typeProvider instanceof PyStdlibTypeProvider) {
+        return (PyStdlibTypeProvider)typeProvider;
+      }
+    }
+    return null;
+  }
+
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyFunction &&
@@ -39,19 +50,32 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyReferenceExpression callSite, @NotNull TypeEvalContext context) {
+  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
     final String qname = getQualifiedName(function, callSite);
     if (qname != null) {
       if (callSite != null) {
-        final PsiElement parent = callSite.getParent();
-        if (parent instanceof PyCallExpression) {
-          final PyType overloaded = getOverloadedReturnTypeByQName((PyCallExpression)parent, qname, function, context);
+        PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
+        if (results != null) {
+          final PyType overloaded = getOverloadedReturnTypeByQName(results.getArguments(), qname, function, context);
           if (overloaded != null) {
             return overloaded;
           }
         }
       }
       return getReturnTypeByQName(qname, function);
+    }
+    return null;
+  }
+
+  @Nullable
+  public PyType getConstructorType(@NotNull PyClass cls) {
+    final String classQName = cls.getQualifiedName();
+    if (classQName != null) {
+      final PyQualifiedName canonicalQName = ResolveImportUtil.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(classQName));
+      if (canonicalQName != null) {
+        final PyQualifiedName qname = canonicalQName.append(PyNames.INIT);
+        return getReturnTypeByQName(qname.toString(), cls);
+      }
     }
     return null;
   }
@@ -98,7 +122,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private PyType getOverloadedReturnTypeByQName(@NotNull PyCallExpression expr, @NotNull String qname, @NotNull PsiElement anchor,
+  private PyType getOverloadedReturnTypeByQName(@NotNull Map<PyExpression, PyNamedParameter> arguments,
+                                                @NotNull String qname,
+                                                @NotNull PsiElement anchor,
                                                 @NotNull TypeEvalContext context) {
     int i = 1;
     PyType rtype;
@@ -106,39 +132,34 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       final String overloadedQName = String.format("%s.%d", qname, i);
       rtype = getReturnTypeByQName(overloadedQName, anchor);
       if (rtype != null) {
-        final PyArgumentList args = expr.getArgumentList();
-        if (args != null) {
-          final CallArgumentsMapping res = args.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
-          final Map<PyExpression, PyNamedParameter> mapped = res.getPlainMappedParams();
-          boolean matched = true;
-          for (Map.Entry<PyExpression, PyNamedParameter> entry : mapped.entrySet()) {
-            final PyNamedParameter p = entry.getValue();
-            final String name = p.getName();
-            if (p.isPositionalContainer() || p.isKeywordContainer() || name == null) {
-              continue;
-            }
-            PyType argType = entry.getKey().getType(context);
-            // Special case for the 'mode' argument of the 'open()' builtin
-            if (("__builtin__.open".equals(qname) || "io.open".equals(qname)) && "mode".equals(name)) {
-              final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
-              final LanguageLevel level = LanguageLevel.forElement(anchor);
-              argType = cache.getUnicodeType(level);
-              final PyExpression modeExpr = entry.getKey();
-              if (modeExpr instanceof PyStringLiteralExpression) {
-                final String literal = ((PyStringLiteralExpression)modeExpr).getStringValue();
-                if (literal.contains("b")) {
-                  argType = cache.getBytesType(level);
-                }
+        boolean matched = true;
+        for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
+          final PyNamedParameter p = entry.getValue();
+          final String name = p.getName();
+          if (p.isPositionalContainer() || p.isKeywordContainer() || name == null) {
+            continue;
+          }
+          PyType argType = entry.getKey().getType(context);
+          // Special case for the 'mode' argument of the 'open()' builtin
+          if (("__builtin__.open".equals(qname) || "io.open".equals(qname)) && "mode".equals(name)) {
+            final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
+            final LanguageLevel level = LanguageLevel.forElement(anchor);
+            argType = cache.getUnicodeType(level);
+            final PyExpression modeExpr = entry.getKey();
+            if (modeExpr instanceof PyStringLiteralExpression) {
+              final String literal = ((PyStringLiteralExpression)modeExpr).getStringValue();
+              if (literal.contains("b")) {
+                argType = cache.getBytesType(level);
               }
             }
-            final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
-            if (!PyTypeChecker.match(paramType, argType, context)) {
-              matched = false;
-            }
           }
-          if (matched) {
-            return rtype;
+          final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
+          if (!PyTypeChecker.match(paramType, argType, context)) {
+            matched = false;
           }
+        }
+        if (matched) {
+          return rtype;
         }
       }
       i++;

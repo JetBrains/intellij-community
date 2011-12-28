@@ -39,9 +39,15 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testDictType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from string to MyObject");
+    final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from str to MyObject");
+    assertNotNull(type);
     assertClassType(type, "dict");
-    assertClassType(type.getElementType(TypeEvalContext.fast()), "MyObject");
+    final PyType elementType = type.getElementType(TypeEvalContext.fast());
+    assertInstanceOf(elementType, PyTupleType.class);
+    final PyTupleType tupleType = (PyTupleType)elementType;
+    assertEquals(2, tupleType.getElementCount());
+    assertClassType(tupleType.getElementType(0), "str");
+    assertClassType(tupleType.getElementType(1), "MyObject");
   }
 
   public void testUnionType() {
@@ -60,6 +66,14 @@ public class PyTypeParserTest extends PyTestCase {
     final String s = "list of (MyObject, collections.Iterable of MyObject, int) or None";
     PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), s);
     assertEquals(7, result.getTypes().values().size());
+  }
+
+  public void testGenericType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T");
+    assertNotNull(type);
+    assertInstanceOf(type, PyGenericType.class);
+    assertEquals("T", type.getName());
   }
 
   // PY-4223

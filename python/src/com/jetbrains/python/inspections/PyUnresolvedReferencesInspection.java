@@ -383,7 +383,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         boolean marked_qualified = false;
         if (element instanceof PyQualifiedExpression) {
           final PyQualifiedExpression qexpr = (PyQualifiedExpression)element;
-          if (myIgnoredIdentifiers.contains(ref_text) || PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName())) {
+          if (myIgnoredIdentifiers.contains(ref_text) ||
+              PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName()) ||
+              refname == null) {
             return;
           }
           final PyExpression qualifier = qexpr.getQualifier();
@@ -472,7 +474,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       return false;
     }
-    
+
     private static void addCreateMemberFromUsageFixes(PyType qtype, PsiReference reference, String refText, List<LocalQuickFix> actions) {
       PsiElement element = reference.getElement();
       if (qtype instanceof PyClassType) {

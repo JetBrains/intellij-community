@@ -345,7 +345,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
   }
 
-  private static class QualifiedResolveResultEmpty implements QualifiedResolveResult {
+  public static class QualifiedResolveResultEmpty implements QualifiedResolveResult {
     // a trivial implementation
 
     public QualifiedResolveResultEmpty() {
