@@ -29,6 +29,7 @@ import git4idea.actions.BasicAction;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import git4idea.jgit.GitHttpAdapter;
+import git4idea.ui.GitUIUtil;
 import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
@@ -119,8 +120,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
     if (result.success()) {
       return true;
     }
-    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Clone failed", result.getErrorOutputAsHtmlString(), NotificationType.ERROR, null)
-      .notify(project.isDefault() ? null : project);
+    GitUIUtil.notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, project, "Clone failed", result.getErrorOutputAsHtmlString(), NotificationType.ERROR, null);
     return false;
   }
 

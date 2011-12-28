@@ -150,7 +150,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static boolean isNativeFileType(FileType fileType) {
-    return (fileType instanceof INativeFileType && ((INativeFileType) fileType).useNativeIcon()) || fileType instanceof UnknownFileType;
+    return fileType instanceof INativeFileType && ((INativeFileType) fileType).useNativeIcon() || fileType instanceof UnknownFileType;
   }
 
   protected Icon getAdjustedBaseIcon(Icon icon, int flags) {

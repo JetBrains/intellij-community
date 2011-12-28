@@ -57,7 +57,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   private final DependencyValidationManager myDependencyValidationManager;
   private final NamedScopeManager myNamedScopeManager;
   private final NamedScopesHolder.ScopeListener myScopeListener;
-  public static final Icon ICON = IconLoader.getIcon("/general/ideOptions.png");
+  public static final Icon ICON = IconLoader.getIcon("/ide/localScope.png");
 
   public ScopeViewPane(final Project project, ProjectView projectView, DependencyValidationManager dependencyValidationManager, NamedScopeManager namedScopeManager) {
     super(project);

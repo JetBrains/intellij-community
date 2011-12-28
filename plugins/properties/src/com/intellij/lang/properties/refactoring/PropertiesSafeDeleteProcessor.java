@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.safeDelete;
+package com.intellij.lang.properties.refactoring;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo;
+import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
+import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 

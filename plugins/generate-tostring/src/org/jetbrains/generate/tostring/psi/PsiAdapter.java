@@ -384,12 +384,12 @@ public class PsiAdapter {
         // is it public static void main(String[] args)
         for (PsiMethod method : methods) {
             // must be public
-            if (!method.hasModifierProperty("public")) {
+            if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
                 continue;
             }
 
             // must be static
-            if (!method.hasModifierProperty("static")) {
+            if (!method.hasModifierProperty(PsiModifier.STATIC)) {
                 continue;
             }
 
@@ -566,12 +566,12 @@ public class PsiAdapter {
         // is it public boolean equals(Object o)
         for (PsiMethod method : methods) {
             // must be public
-            if (!method.hasModifierProperty("public")) {
+            if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
                 continue;
             }
 
             // must not be static
-          if (method.hasModifierProperty("static")) {
+          if (method.hasModifierProperty(PsiModifier.STATIC)) {
             continue;
           }
 
@@ -613,12 +613,12 @@ public class PsiAdapter {
         // is it public int hashCode()
         for (PsiMethod method : methods) {
             // must be public
-            if (!method.hasModifierProperty("public")) {
+            if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
                 continue;
             }
 
             // must not be static
-          if (method.hasModifierProperty("static")) {
+          if (method.hasModifierProperty(PsiModifier.STATIC)) {
             continue;
           }
 

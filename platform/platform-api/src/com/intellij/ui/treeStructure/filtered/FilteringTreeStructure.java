@@ -25,10 +25,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class FilteringTreeStructure extends AbstractTreeStructure {
 
@@ -88,6 +85,16 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
     public Object getDelegate() {
       return myDelegate;
+    }
+    
+    public List<Node> children() {
+      return Collections.unmodifiableList(myChildren);
+    }
+
+    @Override
+    public void cleanUpCache() {
+      super.cleanUpCache();
+      myChildren.clear();
     }
 
     @Override
@@ -209,7 +216,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
   @Override
   public boolean isAlwaysLeaf(Object element) {
-    return ((Node)element).isAlwaysLeaf();
+    if (element instanceof Node) {
+      return ((Node)element).isAlwaysLeaf();
+    }
+    return false;
   }
 
   @NotNull

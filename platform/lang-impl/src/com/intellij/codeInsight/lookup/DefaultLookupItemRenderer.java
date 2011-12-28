@@ -61,7 +61,6 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
     Object o = item.getObject();
 
-    int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (!real) {
       if (item.getObject() instanceof String) {
         return EmptyIcon.ICON_0;
@@ -71,7 +70,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     }
 
     if (o instanceof Iconable && !(o instanceof PsiElement)) {
-      return ((Iconable)o).getIcon(flags);
+      return ((Iconable)o).getIcon(Iconable.ICON_FLAG_VISIBILITY);
     }
 
     if (o instanceof LookupValueWithPsiElement) {
@@ -80,7 +79,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
       if (element.isValid()) {
-        return element.getIcon(flags);
+        return element.getIcon(Iconable.ICON_FLAG_VISIBILITY);
       }
     }
     return null;

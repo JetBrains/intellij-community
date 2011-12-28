@@ -1004,7 +1004,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
       PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(rootPsi.getContainingFile(), blockStart);
       int blockLength = descriptor.getBlock().getTextRange().getLength();
-      while (currentPsiEl != null &&
+      while (currentPsiEl.getParent() != null &&
              currentPsiEl.getTextRange().getStartOffset() == blockStart &&
              currentPsiEl.getTextLength() != blockLength) {
         currentPsiEl = currentPsiEl.getParent();

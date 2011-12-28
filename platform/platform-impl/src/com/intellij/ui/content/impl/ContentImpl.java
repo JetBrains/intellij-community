@@ -56,6 +56,8 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   private Computable<JComponent> myFocusRequest;
   private BusyObject myBusyObject;
+  private String mySeparator;
+  private Icon myPopupIcon;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -276,6 +278,26 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   public void setBusyObject(BusyObject object) {
     myBusyObject = object;
+  }
+
+  @Override
+  public String getSeparator() {
+    return mySeparator;
+  }
+
+  @Override
+  public void setSeparator(String separator) {
+    mySeparator = separator;
+  }
+
+  @Override
+  public void setPopupIcon(Icon icon) {
+    myPopupIcon = icon;
+  }
+
+  @Override
+  public Icon getPopupIcon() {
+    return myPopupIcon != null ? myPopupIcon : getIcon();
   }
 
   @Override

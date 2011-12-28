@@ -285,22 +285,28 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
       return getName();
     }
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-      assert editor != null;
-      final TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
-      editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
+      asyncResult.doWhenDone(new AsyncResult.Handler<DataContext>() {
+        @Override
+        public void run(DataContext dataContext) {
+          final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+          assert editor != null;
+          final TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
+          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
 
-      final String word = editor.getSelectionModel().getSelectedText();
+          final String word = editor.getSelectionModel().getSelectedText();
 
-      if (word == null || StringUtil.isEmptyOrSpaces(word)) {
-        return;
-      }
-      final List<LookupElement> items = new ArrayList<LookupElement>();
-      for (String variant : myUnboundParams) {
-        items.add(LookupElementBuilder.create(variant));
-      }
-      LookupManager.getInstance(project).showLookup(editor, items.toArray(new LookupElement[items.size()]));
+          if (word == null || StringUtil.isEmptyOrSpaces(word)) {
+            return;
+          }
+          final List<LookupElement> items = new ArrayList<LookupElement>();
+          for (String variant : myUnboundParams) {
+            items.add(LookupElementBuilder.create(variant));
+          }
+          LookupManager.getInstance(project).showLookup(editor, items.toArray(new LookupElement[items.size()]));
+        }
+      });
     }
   }
 

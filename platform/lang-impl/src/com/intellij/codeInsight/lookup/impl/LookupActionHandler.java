@@ -50,7 +50,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public void execute(Editor editor, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null || !lookup.isShown() || myRequireFocusedLookup && !lookup.isFocused()) {
+    if (lookup == null || !lookup.isAvailableToUser() || myRequireFocusedLookup && !lookup.isFocused()) {
       Project project = editor.getProject();
       if (project != null) {
         LookupManager.getInstance(project).hideActiveLookup();
@@ -182,6 +182,11 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(LookupImpl lookup, DataContext context) {
+      if (!lookup.isCompletion()) {
+        myOriginalHandler.execute(lookup.getEditor(), context);
+        return;
+      }
+
       BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1);
     }
   }
@@ -195,7 +200,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       final Editor editor = lookup.getEditor();
       final int offset = editor.getCaretModel().getOffset();
       CharSequence seq = editor.getDocument().getCharsSequence();
-      if (seq.length() <= offset) {
+      if (seq.length() <= offset || !lookup.isCompletion()) {
         myOriginalHandler.execute(editor, context);
         return;
       }

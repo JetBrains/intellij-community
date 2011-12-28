@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -34,12 +35,23 @@ import java.util.Collections;
 
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
+  
+  private static final Logger LOG = Logger.getInstance(AbstractCommonCheckinAction.class);
+  
   public void actionPerformed(final VcsContext context) {
+    LOG.debug("actionPerformed. ");
     final Project project = context.getProject();
-    if (project == null) return;
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + getMnemonicsFreeActionName(context) + " now")) return;
+    if (project == null) {
+      LOG.debug("project is null. returning.");
+      return;
+    }
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + getMnemonicsFreeActionName(context) + " now")) {
+      LOG.debug("ChangeListManager is freezed. returning.");
+      return;
+    }
 
     if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
+      LOG.debug("Background operation is running. returning.");
       return;
     }
 
@@ -52,7 +64,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     changeListManager.invokeAfterUpdate(new Runnable() {
       public void run() {
-
+        LOG.debug("invoking commit dialog after update");
         final LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
 
         Change[] changes = context.getSelectedChanges();

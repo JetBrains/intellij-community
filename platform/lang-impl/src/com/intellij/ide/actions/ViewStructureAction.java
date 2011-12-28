@@ -106,7 +106,7 @@ public class ViewStructureAction extends AnAction {
                                                                    final Project project,
                                                                    final Navigatable navigatable,
                                                                    final @NotNull Disposable alternativeDisposable) {
-    return new FileStructurePopup(structureViewModel, editor, project, navigatable, alternativeDisposable, true);
+    return new FileStructurePopup(structureViewModel, editor, project, alternativeDisposable, true);
   }
   
   public void update(AnActionEvent event) {

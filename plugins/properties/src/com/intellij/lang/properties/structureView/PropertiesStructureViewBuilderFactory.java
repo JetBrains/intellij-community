@@ -17,7 +17,7 @@
 /*
  * @author max
  */
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;

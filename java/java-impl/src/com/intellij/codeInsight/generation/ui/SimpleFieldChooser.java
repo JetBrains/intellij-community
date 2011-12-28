@@ -18,9 +18,9 @@ package com.intellij.codeInsight.generation.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
@@ -68,14 +68,14 @@ public class SimpleFieldChooser extends DialogWrapper {
     return myList.getSelectedValues();
   }
 
-  private class MyListCellRenderer extends DefaultListCellRenderer {
+  private static class MyListCellRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Icon icon = null;
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Icon icon = null;
       if (value instanceof PsiField) {
         PsiField field = (PsiField)value;
         icon = field.getIcon(0);
-        final String text = PsiFormatUtil.formatVariable(field, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
+        final String text = PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
         setText(text);
       }
       super.setIcon(icon);

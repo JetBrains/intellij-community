@@ -16,6 +16,8 @@
 
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.openapi.util.Comparing;
+
 import java.util.Comparator;
 
 public class DependencyNodeComparator implements Comparator<PackageDependenciesNode>{
@@ -36,6 +38,6 @@ public class DependencyNodeComparator implements Comparator<PackageDependenciesN
         return ((Comparable)p1).compareTo(p2);
       }
     }
-    return p1.toString().compareTo(p2.toString());
+    return Comparing.compare(p1.toString(), p2.toString());
   }
 }

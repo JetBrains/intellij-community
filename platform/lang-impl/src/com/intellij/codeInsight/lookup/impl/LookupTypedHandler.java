@@ -36,15 +36,21 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class LookupTypedHandler extends TypedHandlerDelegate {
   private static boolean inside = false;
@@ -165,6 +171,14 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     final ScrollingModelEx scrollingModel = (ScrollingModelEx)editor.getScrollingModel();
     scrollingModel.accumulateViewportChanges();
     try {
+      final List<Pair<DocumentEvent, String>> events = new ArrayList<Pair<DocumentEvent, String>>();
+      final DocumentAdapter listener = new DocumentAdapter() {
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          events.add(Pair.create(e, DebugUtil.currentStackTrace()));
+        }
+      };
+      editor.getDocument().addDocumentListener(listener);
       if (smartUndo) {
         CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
           @Override
@@ -173,6 +187,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
           }
         }, null, "Just insert the completion char");
       }
+      editor.getDocument().removeDocumentListener(listener);
 
       CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
         @Override
@@ -180,7 +195,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
           if (smartUndo) {
             AccessToken token = WriteAction.start();
             try {
-              lookup.performGuardedChange(restore);
+              lookup.performGuardedChange(restore, events.toString());
             }
             finally {
               token.finish();

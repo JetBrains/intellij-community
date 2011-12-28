@@ -118,7 +118,7 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return myMethod.getModifierList();
   }
 
-  public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return myMethod.hasModifierProperty(name);
   }
 

@@ -227,7 +227,10 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     final Map<String, Set<RefEntity>> content = new HashMap<String, Set<RefEntity>>();
 
     for (InspectionTool tool : tools) {
-      content.putAll(tool.getContent());
+      final Map<String, Set<RefEntity>> toolContent = tool.getContent();
+      if (toolContent != null) {
+        content.putAll(toolContent);
+      }
     }
 
     final Set<RefEntity> defaultPackageEntities = content.remove(null);

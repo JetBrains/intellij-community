@@ -74,6 +74,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   private final ToggleSideModeAction myToggleSideModeAction;
   private final ToggleContentUiTypeAction myToggleContentUiTypeAction;
 
+  private ActionGroup myAdditionalGearActions;
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
@@ -333,6 +334,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
+  public void setTitleActions(AnAction[] actions) {
+    myHeader.setAdditionalTitleActions(actions);
+  }
+
   private static class InnerPanelBorder implements Border {
 
     private final ToolWindow myWindow;
@@ -484,6 +489,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   private DefaultActionGroup createGearPopupGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
 
+    if (myAdditionalGearActions != null) {
+      addSorted(group, myAdditionalGearActions);
+      group.addSeparator();
+    }
     if (myInfo.isDocked()) {
       group.add(myToggleAutoHideModeAction);
       group.add(myToggleDockModeAction);
@@ -499,6 +508,26 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       group.add(myToggleFloatingModeAction);
     }
     return group;
+  }
+
+  private static void addSorted(DefaultActionGroup main, ActionGroup group) {
+    final AnAction[] children = group.getChildren(null);
+    boolean hadSecondary = false;
+    for (AnAction action : children) {
+      if (group.isPrimary(action)) {
+        main.add(action);
+      } else {
+        hadSecondary = true;
+      }
+    }
+    if (hadSecondary) {
+      main.addSeparator();
+      for (AnAction action : children) {
+        if (!group.isPrimary(action)) {
+          main.addAction(action).setAsSecondary(true);
+        }
+      }
+    }
   }
 
   /**
@@ -833,5 +862,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     if (selection != null) {
       info.put("toolWindowTab", selection.getTabName());
     }
+  }
+  
+  public void setAdditionalGearActions(ActionGroup additionalGearActions) {
+    myAdditionalGearActions = additionalGearActions;
   }
 }

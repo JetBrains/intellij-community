@@ -17,6 +17,7 @@ package git4idea.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public class NetrcData {
   private static File getNetrcFile() {
     String home = System.getenv("HOME");
     if (home == null || !new File(home, NETRC_FILE).exists()) {
-      home = System.getProperty("user.home");
+      home = SystemProperties.getUserHome();
     }
     return new File(home, NETRC_FILE);
   }

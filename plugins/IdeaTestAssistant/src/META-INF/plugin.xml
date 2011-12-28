@@ -8,8 +8,7 @@
   <actions>
     <action id="TestData.Navigate"
             class="com.intellij.testAssistant.NavigateToTestDataAction"
-            text="Navigate to testdata">
-      <keyboard-shortcut first-keystroke="control shift D" keymap="$default"/>
+            text="Navigate to testdata" use-shortcut-of="GotoRelated">
     </action>
   </actions>
 

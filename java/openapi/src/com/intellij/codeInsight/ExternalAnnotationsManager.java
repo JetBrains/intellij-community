@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ExternalAnnotationsManager {
@@ -38,23 +39,23 @@ public abstract class ExternalAnnotationsManager {
 
   private static final NotNullLazyKey<ExternalAnnotationsManager, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ExternalAnnotationsManager.class);
 
-  public static ExternalAnnotationsManager getInstance(Project project) {
+  public static ExternalAnnotationsManager getInstance(@NotNull Project project) {
     return INSTANCE_KEY.getValue(project);
   }
 
   @Nullable
-  public abstract PsiAnnotation findExternalAnnotation(final PsiModifierListOwner listOwner, final String annotationFQN);
+  public abstract PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
   @Nullable
-  public abstract PsiAnnotation[] findExternalAnnotations(final PsiModifierListOwner listOwner);
+  public abstract PsiAnnotation[] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
 
-  public abstract void annotateExternally(final PsiModifierListOwner listOwner,
-                                          final String annotationFQName,
-                                          final PsiFile fromFile,
-                                          final PsiNameValuePair[] value);
+  public abstract void annotateExternally(@NotNull PsiModifierListOwner listOwner,
+                                          @NotNull String annotationFQName,
+                                          @NotNull PsiFile fromFile,
+                                          PsiNameValuePair[] value);
 
-  public abstract boolean deannotate(final PsiModifierListOwner listOwner, final String annotationFQN);
+  public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
-  public abstract AnnotationPlace chooseAnnotationsPlace(final PsiElement element);
+  public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 
 }

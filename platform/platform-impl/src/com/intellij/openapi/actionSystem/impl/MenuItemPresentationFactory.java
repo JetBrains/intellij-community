@@ -22,8 +22,18 @@ import com.intellij.openapi.actionSystem.Presentation;
  * @author Roman.Chernyatchik
  */
 public class MenuItemPresentationFactory extends PresentationFactory {
+  private final boolean myForceHide;
+
+  public MenuItemPresentationFactory() {
+    this(false);
+  }
+
+  public MenuItemPresentationFactory(boolean forceHide) {
+    myForceHide = forceHide;
+  }
+
   protected Presentation processPresentation(Presentation presentation) {
-    if (!UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+    if (!UISettings.getInstance().SHOW_ICONS_IN_MENUS || myForceHide) {
       presentation.setIcon(null);
       presentation.setDisabledIcon(null);
       presentation.setHoveredIcon(null);

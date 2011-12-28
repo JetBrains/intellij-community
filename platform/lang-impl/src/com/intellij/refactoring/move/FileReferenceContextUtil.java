@@ -114,7 +114,7 @@ public class FileReferenceContextUtil {
   }
 
   private static PsiElement bindElement(final PsiElement element, PsiFileSystemItem item) {
-    if (item != null && item.isValid()) {
+    if (item != null && item.isValid() && item.getVirtualFile() != null) {
       PsiReference[] refs = element.getReferences();
       for (PsiReference ref : refs) {
         if (ref instanceof FileReferenceOwner) {

@@ -15,18 +15,25 @@
  */
 package com.intellij.psi.filters.getters;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
+import com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor;
 import com.intellij.codeInsight.completion.SmartCompletionDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author peter
@@ -40,13 +47,37 @@ public class JavaMembersGetter extends MembersGetter {
     myExpectedType = JavaCompletionUtil.originalize(expectedType);
   }
 
-  public void addMembers(PsiElement position, boolean searchInheritors, Consumer<LookupElement> results) {
+  public void addMembers(PsiElement position, boolean searchInheritors, final Consumer<LookupElement> results) {
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
       addConstantsFromTargetClass(position, results, searchInheritors);
+      addConstantsFromReferencedClassesInSwitch(position, results);
+    }
+
+    if (position.getParent().getParent() instanceof PsiSwitchLabelStatement) {
+      return; //non-enum values are processed above, enum values will be suggested by reference completion
     }
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(myExpectedType);
     processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, searchInheritors);
+  }
+
+  private void addConstantsFromReferencedClassesInSwitch(PsiElement position, final Consumer<LookupElement> results) {
+    final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(position);
+    final Set<PsiClass> classes = new HashSet<PsiClass>();
+    for (PsiField field : fields) {
+      ContainerUtil.addIfNotNull(classes, field.getContainingClass());
+    }
+    for (PsiClass aClass : classes) {
+      processMembers(position, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          //noinspection SuspiciousMethodCalls
+          if (!fields.contains(element.getObject())) {
+            results.consume(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
+          }
+        }
+      }, aClass, false, false);
+    }
   }
 
   private void addConstantsFromTargetClass(PsiElement position, Consumer<LookupElement> results, boolean searchInheritors) {

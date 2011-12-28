@@ -119,7 +119,7 @@ public class LightField extends LightElement implements PsiField {
   }
 
   @Override
-  public boolean hasModifierProperty(@Modifier @NonNls @NotNull final String name) {
+  public boolean hasModifierProperty(@NonNls @NotNull final String name) {
     return myField.hasModifierProperty(name);
   }
 

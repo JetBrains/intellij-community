@@ -15,7 +15,6 @@
  */
 package com.intellij.junit4;
 
-import com.intellij.rt.execution.junit.JUnitForkedStarter;
 import org.junit.Ignore;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.requests.ClassRequest;
@@ -82,13 +81,10 @@ public class JUnit4TestRunnerUtil {
               allClasses = JUnit46ClassesRequestBuilder.getClassesRequest(suiteName, classes);
             }
             catch (ClassNotFoundException e) {
-              try {
-                Class.forName("org.junit.internal.requests.ClassesRequest");
-                allClasses = JUnit4ClassesRequestBuilder.getClassesRequest(suiteName, classes);
-              }
-              catch (ClassNotFoundException e1) {
-                allClasses  = JUnit45ClassesRequestBuilder.getClassesRequest(suiteName, classes);
-              }
+              allClasses = getClassRequestsUsing44API(suiteName, classes);
+            }
+            catch (NoSuchMethodError e) {
+              allClasses = getClassRequestsUsing44API(suiteName, classes);
             }
 
             return classMethods.isEmpty() ? allClasses : allClasses.filterWith(new Filter() {
@@ -158,6 +154,18 @@ public class JUnit4TestRunnerUtil {
     }
 
     return result.size() == 1 ? Request.aClass((Class)result.get(0)) : Request.classes(getArrayOfClasses(result));
+  }
+
+  private static Request getClassRequestsUsing44API(String suiteName, Class[] classes) {
+    Request allClasses;
+    try {
+      Class.forName("org.junit.internal.requests.ClassesRequest");
+      allClasses = JUnit4ClassesRequestBuilder.getClassesRequest(suiteName, classes);
+    }
+    catch (ClassNotFoundException e1) {
+      allClasses  = JUnit45ClassesRequestBuilder.getClassesRequest(suiteName, classes);
+    }
+    return allClasses;
   }
 
   private static void appendTestClass(Vector result, String className) {

@@ -19,7 +19,10 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
@@ -31,6 +34,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ui.UIUtil;
@@ -48,11 +52,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider, SwitchProvider {
   public static final String POPUP_PLACE = "ToolwindowPopup";
+  // when client property is put in toolwindow component, hides toolwindow label
+  public static final String HIDE_ID_LABEL = "HideIdLabel";
 
   ContentManager myManager;
 
@@ -70,6 +77,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
+  private boolean myShouldNotShowPopup;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -327,7 +335,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       group.addAll(toolWindowGroup);
     }
 
-    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
+    final ActionPopupMenu popupMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(POPUP_PLACE, group, new MenuItemPresentationFactory(true));
     popupMenu.getComponent().show(comp, x, y);
   }
 
@@ -414,7 +422,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return getCurrentLayout() == layout;
   }
 
-  public void showContentPopup(InputEvent inputEvent) {
+  public void toggleContentPopup(InputEvent inputEvent) {
+    if (myShouldNotShowPopup) {
+      myShouldNotShowPopup = false;
+      return;
+    }
     BaseListPopupStep step = new BaseListPopupStep<Content>(null, myManager.getContents()) {
       @Override
       public PopupStep onChosen(Content selectedValue, boolean finalChoice) {
@@ -431,18 +443,37 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
       @Override
       public Icon getIconFor(Content aValue) {
-        return aValue.getIcon();
+        return aValue.getPopupIcon();
       }
 
       @Override
       public boolean isMnemonicsNavigationEnabled() {
         return true;
       }
+
+      @Override
+      public ListSeparator getSeparatorAbove(Content value) {
+        final String separator = value.getSeparator();
+        return separator != null ? new ListSeparator(separator) : super.getSeparatorAbove(value);
+      }
     };
 
     step.setDefaultOptionIndex(Arrays.asList(myManager.getContents()).indexOf(myManager.getSelectedContent()));
-    getCurrentLayout().showContentPopup(JBPopupFactory.getInstance().createListPopup(step));
-
+    final ListPopup popup = new ListPopupImpl(step) {
+      @Override
+      public void cancel(InputEvent e) {
+        super.cancel(e);
+        if (e instanceof MouseEvent) {
+          final MouseEvent me = (MouseEvent)e;
+          final Component component = SwingUtilities.getDeepestComponentAt(e.getComponent(), me.getX(), me.getY());
+          if (UIUtil.isActionClick(me) && component instanceof ContentComboLabel &&
+              SwingUtilities.isDescendingFrom(component, ToolWindowContentUi.this)) {
+            myShouldNotShowPopup = true;
+          }
+        }
+      }
+    };
+    getCurrentLayout().showContentPopup(popup);
   }
 
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {

@@ -152,7 +152,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(b, IS_SYNTHETIC_JSP_ELEMENT);
   }
 
-  @Modifier
   @Nullable
   public String getAccessModifier() {
     long access_id = myFlags & ACCESS_MODIFIER_MASK;

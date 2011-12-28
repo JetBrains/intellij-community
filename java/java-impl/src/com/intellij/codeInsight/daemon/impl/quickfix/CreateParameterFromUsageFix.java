@@ -95,7 +95,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
-      @Modifier String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
+      String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
       ChangeSignatureProcessor processor =
         new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
       processor.run();

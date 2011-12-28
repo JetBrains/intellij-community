@@ -369,7 +369,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     @Nullable
     public String getConfirmDuplicatePrompt(final Match match) {
       final PsiElement matchStart = match.getMatchStart();
-      @Modifier String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
+      String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
       final boolean shouldBeStatic = isEssentialStaticContextAbsent(match);
       final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
       if (signature != null) {

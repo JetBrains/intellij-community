@@ -204,7 +204,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
 
     public void update() {
       final PsiElement element = getElement();
-      if (element != null) {
+      if (element != null && element.isValid()) {
         final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
         myIconOpen = presentation != null ? ComputableIcon.create(presentation, true) : null;
         myIconClosed = presentation != null ? ComputableIcon.create(presentation, false) : null;

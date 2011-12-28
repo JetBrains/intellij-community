@@ -138,4 +138,9 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   public boolean keepChangeListAfterCommit(ChangeList changeList) {
     return false;
   }
+
+  @Override
+  public boolean isRefreshAfterCommitNeeded() {
+    return true;
+  }
 }

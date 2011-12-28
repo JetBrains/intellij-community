@@ -18,15 +18,18 @@ package com.theoryinpractice.testng.configuration.browser;
 import com.intellij.ide.structureView.impl.StructureNodeRenderer;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
-import java.awt.BorderLayout;
-import java.util.Comparator;
 import javax.swing.*;
+import java.awt.*;
+import java.util.Comparator;
 
 public class MethodList extends JPanel
 {
@@ -64,7 +67,7 @@ public class MethodList extends JPanel
             protected void customizeCellRenderer(JList jlist, Object obj, int i, boolean flag, boolean flag1)
             {
                 PsiMethod psimethod = (PsiMethod)obj;
-                append(PsiFormatUtil.formatMethod(psimethod, PsiSubstitutor.EMPTY, 1, 0), StructureNodeRenderer.applyDeprecation(psimethod, SimpleTextAttributes.REGULAR_ATTRIBUTES));
+                append(PsiFormatUtil.formatMethod(psimethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, 0), StructureNodeRenderer.applyDeprecation(psimethod, SimpleTextAttributes.REGULAR_ATTRIBUTES));
                 PsiClass psiclass1 = psimethod.getContainingClass();
                 if(!MethodList.this.psiClass.equals(psiclass1)) {
                     append(" (" + psiclass1.getQualifiedName() + ')', StructureNodeRenderer.applyDeprecation(psiclass1, SimpleTextAttributes.GRAY_ATTRIBUTES));

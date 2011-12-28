@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +65,7 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
   }
 
   @Override
-  public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
     final PsiModifierList list = getModifierList();
     return list != null && list.hasExplicitModifier(name);
   }

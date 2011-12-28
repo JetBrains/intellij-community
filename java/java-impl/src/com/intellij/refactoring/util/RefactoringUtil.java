@@ -901,7 +901,7 @@ public class RefactoringUtil {
   @Nullable
   public static PsiMethod getChainedConstructor(PsiMethod constructor) {
     final PsiCodeBlock constructorBody = constructor.getBody();
-    LOG.assertTrue(constructorBody != null);
+    if (constructorBody == null) return null;
     final PsiStatement[] statements = constructorBody.getStatements();
     if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
       final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();

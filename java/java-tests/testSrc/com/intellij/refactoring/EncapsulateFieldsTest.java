@@ -131,13 +131,11 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
         }
 
         @Override
-        @Modifier
         public String getFieldsVisibility() {
           return null;
         }
 
         @Override
-        @Modifier
         public String getAccessorsVisibility() {
           return PsiModifier.PUBLIC;
         }

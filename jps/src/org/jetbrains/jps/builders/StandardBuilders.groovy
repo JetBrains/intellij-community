@@ -60,7 +60,9 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     params.debug = String.valueOf(debugInfo);
     params.nowarn = String.valueOf(nowarn);
     params.deprecation = String.valueOf(deprecation);
-    params.verbose = "true"
+    if (state.projectWrapper != null) {
+      params.verbose = "true"
+    }
 
     def javacExecutable = getJavacExecutable(module)
     if (javacExecutable != null) {
@@ -279,9 +281,9 @@ class GroovyStubGenerator implements ModuleBuilder {
 }
 
 class JetBrainsInstrumentations implements ModuleBuilder {
-  class CustomFormInstrumenter extends
+  static class CustomFormInstrumenter extends
           FormInstrumenter {
-    final List<String> formFiles;
+    final List<File> formFiles;
     final ModuleBuildState state;
 
     @Override
@@ -304,7 +306,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       throw new RuntimeException(msg);
     }
 
-    CustomFormInstrumenter(final File destDir, final List<String> nestedFormPathList, final List<String> ff, final ModuleBuildState s) {
+    CustomFormInstrumenter(final File destDir, final List<PrefixedPath> nestedFormPathList, final List<File> ff, final ModuleBuildState s) {
       super(destDir, nestedFormPathList);
       formFiles = ff;
       state = s;

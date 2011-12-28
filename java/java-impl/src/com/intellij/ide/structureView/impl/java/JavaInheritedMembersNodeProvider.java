@@ -62,7 +62,7 @@ public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvid
       List<TreeElement> array = new ArrayList<TreeElement>();
       for (PsiElement child : inherited) {
         if (!child.isValid()) continue;
-        if (child instanceof PsiClass) {
+        if (child instanceof PsiClass && !child.isEquivalentTo(aClass)) {
           array.add(new JavaClassTreeElement((PsiClass)child, true));
         }
         else if (child instanceof PsiField) {

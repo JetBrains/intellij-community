@@ -1,6 +1,7 @@
 package com.intellij.internal.psiView.formattingblocks;
 
 import com.intellij.formatting.Block;
+import com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -32,7 +33,11 @@ public class BlockTreeNode extends SimpleNode {
 
   @Override
   protected void update(PresentationData presentation) {
-    presentation.addText(new String(myBlock.getClass().getSimpleName()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    String name = myBlock.getClass().getSimpleName();
+    if (myBlock instanceof DataLanguageBlockWrapper) {
+      name += " (" + ((DataLanguageBlockWrapper)myBlock).getOriginal().getClass().getSimpleName() + ")";
+    }
+    presentation.addText(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (myBlock.getIndent() != null) {
       presentation.addText(" " + String.valueOf(myBlock.getIndent()).replaceAll("[<>]", " "), SimpleTextAttributes.GRAY_ATTRIBUTES);

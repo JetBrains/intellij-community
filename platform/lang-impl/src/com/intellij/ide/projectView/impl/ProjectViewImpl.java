@@ -21,13 +21,13 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
+import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.scopeView.ScopeViewPane;
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -42,6 +42,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,23 +56,23 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.PsiUtilBase;
@@ -79,8 +80,7 @@ import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.*;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.*;
 import com.intellij.util.messages.MessageBusConnection;
@@ -95,15 +95,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.util.*;
 import java.util.List;
 
@@ -116,6 +111,8 @@ import java.util.List;
 )
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
+  private static final Key<String> ID_KEY = Key.create("pane-id");
+  private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
   private boolean myExtensionsLoaded = false;
@@ -181,10 +178,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NonNls private static final String ELEMENT_AUTOSCROLL_FROM_SOURCE = "autoscrollFromSource";
   @NonNls private static final String ELEMENT_SORT_BY_TYPE = "sortByType";
   private static final String ATTRIBUTE_ID = "id";
-  private ComboBox myCombo;
   private JPanel myViewContentPanel;
-  private JPanel myActionGroupPanel;
-  private JLabel myLabel;
   private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = new Comparator<AbstractProjectViewPane>() {
     public int compare(final AbstractProjectViewPane o1, final AbstractProjectViewPane o2) {
       return o1.getWeight() - o2.getWeight();
@@ -195,10 +189,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
   private final MessageBusConnection myConnection;
-  private JPanel myTopPanel;
-  private ActionToolbar myToolBar;
   private final Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
   private final Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
+  private ContentManager myContentManager;
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -265,32 +258,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void constructUi() {
-    myActionGroupPanel = new JPanel(new BorderLayout());
-
-    myLabel = SystemInfo.isMac ? null : new JLabel("View as:");
-    if (myLabel != null && !SystemInfo.isMac) { // See IDEADEV-41315
-      myLabel.setDisplayedMnemonic('a');
-    }
-
-    myCombo = new ComboBox();
-
-    final JPanel combo = new JPanel(new BorderLayout(4, 0));
-    combo.setBorder(new EmptyBorder(4, 4, 4, 4));
-
-    if(myLabel != null) {
-      myLabel.setLabelFor(myCombo);
-      combo.add(myLabel, BorderLayout.WEST);
-    }
-    
-    combo.add(myCombo, BorderLayout.CENTER);
-
-    myTopPanel = new JPanel(new GridBagLayout());
-    myTopPanel.add(combo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    myTopPanel.add(myActionGroupPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-
     myViewContentPanel = new JPanel();
     myPanel = new SimpleToolWindowPanel(true).setProvideQuickActions(false);
-    myPanel.setToolbar(myTopPanel);
     myPanel.setContent(myViewContentPanel);
 
     myPanel.setBorder(new ToolWindow.Border(true, false, false, false));
@@ -306,19 +275,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     DefaultActionGroup views = new DefaultActionGroup("Change View", true);
     boolean lastWasHeader = false;
     boolean lastHeaderHadKids = false;
-    for (int i = 0; i < myCombo.getModel().getSize(); i++) {
-      Object each = myCombo.getModel().getElementAt(i);
-      if (each instanceof Pair) {
-        Pair<String, String> eachPair = (Pair<String, String>)each;
+    for (int i = 0; i < myContentManager.getContentCount(); i++) {
+      Content each = myContentManager.getContent(i);
+      if (each != null) {
 
-        if (eachPair.getSecond() == null) {
+        if (each.getUserData(SUB_ID_KEY) == null) {
           if (lastHeaderHadKids) {
             views.add(new Separator());
           } else {
-            if (i + 1 < myCombo.getModel().getSize()) {
-              Object next = myCombo.getModel().getElementAt(i + 1);
-              if (next instanceof Pair) {
-                if (((Pair)next).getSecond() != null) {
+            if (i + 1 < myContentManager.getContentCount()) {
+              Content next = myContentManager.getContent(i + 1);
+              if (next != null) {
+                if (next.getUserData(SUB_ID_KEY) != null) {
                   views.add(new Separator());
                 }
               }
@@ -328,9 +296,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           lastHeaderHadKids = true;
         }
 
-        lastWasHeader = eachPair.getSecond() == null;
+        lastWasHeader = each.getUserData(SUB_ID_KEY) == null;
 
-        views.add(new ChangeViewAction(eachPair.getFirst(), eachPair.getSecond()));
+        views.add(new ChangeViewAction(each.getUserData(ID_KEY), each.getUserData(SUB_ID_KEY)));
       }
     }
     result.add(views);
@@ -397,14 +365,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     if (!myId2Pane.containsKey(idToRemove)) return;
     pane.removeTreeChangeListener();
-    for (int i = myCombo.getItemCount() - 1; i >= 0; i--) {
-      Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(i);
-      String id = ids.first;
-      if (id.equals(idToRemove)) {
-        if (i == myCombo.getSelectedIndex()) {
-          myCombo.setSelectedIndex(0);
-        }
-        myCombo.removeItemAt(i);
+    for (int i = myContentManager.getContentCount() - 1; i >= 0; i--) {
+      Content content = myContentManager.getContent(i);
+      String id = content != null ? content.getUserData(ID_KEY) : null;
+      if (id != null && id.equals(idToRemove)) {
+        myContentManager.removeContent(content, true);
       }
     }
     myId2Pane.remove(idToRemove);
@@ -416,12 +381,24 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     for (AbstractProjectViewPane pane : myUninitializedPanes) {
       doAddPane(pane);
     }
-    if (myCombo.getSelectedItem() == null) { //old selection isn't available anymore
-      final DefaultComboBoxModel comboBoxModel = (DefaultComboBoxModel)myCombo.getModel();
-      final int size = comboBoxModel.getSize();
-      if (size > 0) {
-        final Pair<String, String> ids = (Pair<String, String>)comboBoxModel.getElementAt(size - 1);
-        changeView(ids.first, ids.second);
+    final Content[] contents = myContentManager.getContents();
+    for (int i = 1; i < contents.length; i++) {
+      Content content = contents[i];
+      Content prev = contents[i - 1];
+      if (!StringUtil.equals(content.getUserData(ID_KEY), prev.getUserData(ID_KEY)) &&
+          prev.getUserData(SUB_ID_KEY) != null && content.getSeparator() == null) {
+        content.setSeparator("");
+      }
+    }
+    for (Content content : contents) {
+      final String id = content.getUserData(ID_KEY);
+      final String subId = content.getUserData(SUB_ID_KEY);
+      if (id != null && id.equals(mySavedPaneId) &&
+          StringUtil.equals(subId, content.getUserData(SUB_ID_KEY))) {
+        changeView(mySavedPaneId, mySavedPaneSubId);
+        mySavedPaneId = null;
+        mySavedPaneSubId = null;
+        break;
       }
     }
     myUninitializedPanes.clear();
@@ -429,9 +406,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void doAddPane(final AbstractProjectViewPane newPane) {
     int index;
-    for (index = 0; index < myCombo.getItemCount(); index++) {
-      Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(index);
-      String id = ids.first;
+    final ContentManager manager = myContentManager;
+    for (index = 0; index < manager.getContentCount(); index++) {
+      Content content = manager.getContent(index);
+      String id = content.getUserData(ID_KEY);
       AbstractProjectViewPane pane = myId2Pane.get(id);
 
       int comp = PANE_WEIGHT_COMPARATOR.compare(pane, newPane);
@@ -446,18 +424,30 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     final String id = newPane.getId();
     myId2Pane.put(id, newPane);
     String[] subIds = newPane.getSubIds();
-    subIds = ArrayUtil.mergeArrays(new String[]{null}, subIds);
+    subIds = subIds.length == 0 ? new String[]{null} : subIds;
+    boolean first = true;
     for (String subId : subIds) {
-      myCombo.insertItemAt(Pair.create(id, subId), index++);
+      final String title = subId != null ?  newPane.getPresentableSubIdName(subId) : newPane.getTitle();
+      final Content content = myContentManager.getFactory().createContent(getComponent(), title, false);
+      content.setTabName(title);
+      content.putUserData(ID_KEY, id);
+      content.putUserData(SUB_ID_KEY, subId);
+      content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+      content.setIcon(newPane.getIcon());
+      content.setPopupIcon(subId != null ? BULLET_ICON : newPane.getIcon());
+      content.setPreferredFocusedComponent(new Computable<JComponent>() {
+        public JComponent compute() {
+          final AbstractProjectViewPane current = getCurrentProjectViewPane();
+          return current != null ? current.getComponentToFocus() : null;
+        }
+      });
+      content.setBusyObject(this);
+      if (first && subId != null) {
+        content.setSeparator(newPane.getTitle());
+      }
+      manager.addContent(content, index++);
+      first = false;
     }
-    myCombo.setMaximumRowCount(myCombo.getItemCount());
-
-    if (id.equals(mySavedPaneId)) {
-      changeView(mySavedPaneId, mySavedPaneSubId);
-      mySavedPaneId = null;
-      mySavedPaneSubId = null;
-    }
-
     Disposer.register(this, newPane);
   }
 
@@ -473,7 +463,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         selectedPsiElement = elements[0];
       }
     }
-    removeLabelFocusListener();
     myViewContentPanel.removeAll();
     JComponent component = newPane.createComponent();
     UIUtil.removeScrollBorder(component);
@@ -484,8 +473,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myViewContentPanel.revalidate();
     myViewContentPanel.repaint();
     createToolbarActions();
-    myToolBar.updateActionsImmediately();
-    myTopPanel.revalidate();
+    updateTitleActions();
 
     newPane.setTreeChangeListener(myTreeChangeListener);
     myAutoScrollToSourceHandler.install(newPane.myTree);
@@ -519,7 +507,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
-    installLabelFocusListener();
+  }
+
+  private void updateTitleActions() {
+    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow("Project");
+    if (!(window instanceof ToolWindowImpl)) return;
+    final InternalDecorator decorator = ((ToolWindowImpl)window).getDecorator();
+    ScrollFromSourceAction scrollAction = null;
+    CollapseAllToolbarAction collapseAction = null;
+    for (AnAction action : myActionGroup.getChildren(null)) {
+      if (action instanceof ScrollFromSourceAction) {
+        scrollAction = (ScrollFromSourceAction)action;
+        myActionGroup.remove(scrollAction);
+      }
+      //if (action instanceof CollapseAllToolbarAction) {
+      //  collapseAction = (CollapseAllToolbarAction)action;
+      //  myActionGroup.remove(collapseAction);
+      //}
+    }
+    decorator.setTitleActions(new AnAction[] {scrollAction, collapseAction});
   }
 
   // public for tests
@@ -529,83 +535,28 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   // public for tests
   public synchronized void setupImpl(final ToolWindow toolWindow, final boolean loadPaneExtensions) {
-    myCombo.setRenderer(new ListCellRendererWrapper<Pair<String, String>>(myCombo.getRenderer()){
-      @Override
-      public void customize(final JList list,
-                            final Pair<String, String> value,
-                            final int index,
-                            final boolean selected,
-                            final boolean cellHasFocus) {
-        if (value == null) {
-          return;
-        }
-
-        final String id = value.first;
-        final String subId = value.second;
-        final AbstractProjectViewPane pane = getProjectViewPaneById(id);
-        if (pane != null) {
-          if (subId == null) {
-            setText(pane.getTitle());
-            setIcon(pane.getIcon());
-            return;
-          }
-          final String presentable = pane.getPresentableSubIdName(subId);
-          if (index == -1) {
-            setText(presentable);
-            setIcon(pane.getIcon());
-          }
-          else {
-            // indent sub id
-            setText(presentable);
-            setIcon(BULLET_ICON);
-          }
-        }
-      }
-    });
-
-    myCombo.setMinimumAndPreferredWidth(10);
-
     myActionGroup = new DefaultActionGroup();
 
     myAutoScrollFromSourceHandler.install();
 
-    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, myActionGroup, true);
-    myToolBar.setSecondaryActionsTooltip("View Options");
-    JComponent toolbarComponent = myToolBar.getComponent();
-    myActionGroupPanel.setLayout(new BorderLayout());
-    myActionGroupPanel.add(toolbarComponent, BorderLayout.CENTER);
-
     if (toolWindow != null) {
-      final ContentManager contentManager = toolWindow.getContentManager();
-      final Content content = contentManager.getFactory().createContent(getComponent(), ToolWindowId.PROJECT_VIEW, false);
-      content.setBusyObject(this);
-      contentManager.addContent(content);
-
-      content.setPreferredFocusedComponent(new Computable<JComponent>() {
-        public JComponent compute() {
-          final AbstractProjectViewPane current = getCurrentProjectViewPane();
-          return current != null ? current.getComponentToFocus() : null;
-        }
-      });
+      myContentManager = toolWindow.getContentManager();
+      toolWindow.setContentUiType(ToolWindowContentUiType.getInstance("combo"), null);
       toolWindow.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl()));
+      ((ToolWindowImpl)toolWindow).getDecorator().setAdditionalGearActions(myActionGroup);
+      toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+    } else {
+      final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
+      myContentManager = contentFactory.createContentManager(false, myProject);
     }
-
-    myCombo.addPopupMenuListener(new PopupMenuListener() {
-      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-
-      }
-
-      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        if (!viewSelectionChanged()) {
-          ToolWindowManager.getInstance(myProject).activateEditorComponent();
+    myContentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void selectionChanged(ContentManagerEvent event) {
+        if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+          viewSelectionChanged();
         }
-      }
-
-      public void popupMenuCanceled(PopupMenuEvent e) {
-        ToolWindowManager.getInstance(myProject).activateEditorComponent();
       }
     });
-    installLabelFocusListener();
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
     SwingUtilities.invokeLater(new Runnable() {
@@ -617,7 +568,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (loadPaneExtensions) {
       ensurePanesLoaded();
     }
-
     isInitialized = true;
     doAddUninitializedPanes();
   }
@@ -642,50 +592,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private final FocusListener myLabelFocusListener = new FocusListener() {
-    public void focusGained(FocusEvent e) {
-      if (!myCombo.isPopupVisible() && myCombo.isShowing()) {
-        myCombo.requestFocusInWindow();
-        myCombo.showPopup();
-      }
-    }
-
-    public void focusLost(FocusEvent e) {
-
-    }
-  };
-
-  private void installLabelFocusListener() {
-    if (myLabel != null) myLabel.addFocusListener(myLabelFocusListener);
-  }
-
-  private void removeLabelFocusListener() {
-    if (myLabel != null) myLabel.removeFocusListener(myLabelFocusListener);
-  }
-
   private boolean viewSelectionChanged() {
-    Pair<String, String> ids = (Pair<String, String>)myCombo.getSelectedItem();
-    if (ids == null) return false;
-    final String id = ids.first;
-    String subId = ids.second;
-    if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return false;
+    Content content = myContentManager.getSelectedContent();
+    if (content == null) return false;
+    final String id = content.getUserData(ID_KEY);
+    String subId = content.getUserData(SUB_ID_KEY);
+    if (content.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return false;
     final AbstractProjectViewPane newPane = getProjectViewPaneById(id);
     if (newPane == null) return false;
     newPane.setSubId(subId);
-    String[] subIds = newPane.getSubIds();
-
-    if (subId == null && subIds.length != 0) {
-      final String firstNonTrivialSubId = subIds[0];
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          changeView(id, firstNonTrivialSubId);
-          newPane.setSubId(firstNonTrivialSubId);
-        }
-      });
-    }
-    else {
-      showPane(newPane);
-    }
+    showPane(newPane);
     return true;
   }
 
@@ -777,7 +693,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }, getComponent());
     myActionGroup.add(collapseAllAction);
-
     getCurrentProjectViewPane().addToolbarActions(myActionGroup);
   }
 
@@ -840,6 +755,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void updateToolWindowTitle() {
+    if (true) return;
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow = toolWindowManager == null ? null : toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (toolWindow == null) return;
@@ -855,6 +771,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     if (title == null) {
+      if (true) return;
+
       final PsiElement element = (PsiElement)myDataProvider.getData(LangDataKeys.PSI_ELEMENT.getName());
       if (element != null) {
         PsiFile file = element.getContainingFile();
@@ -973,10 +891,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
     LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId);
     if (!viewId.equals(getCurrentViewId())
-        || subId != null && !subId.equals(pane.getSubId()) ||
-        // element not in model anymore
-        ((DefaultComboBoxModel)myCombo.getModel()).getIndexOf(Pair.create(viewId, pane.getSubId())) == -1) {
-      myCombo.setSelectedItem(Pair.create(viewId, subId));
+        || subId != null && !subId.equals(pane.getSubId())) {
+      for (Content content : myContentManager.getContents()) {
+        if (viewId.equals(content.getUserData(ID_KEY)) && StringUtil.equals(subId, content.getUserData(SUB_ID_KEY))) {
+          myContentManager.setSelectedContent(content);
+          break;
+        }
+      }
       viewSelectionChanged();
     }
   }
@@ -1833,7 +1754,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
-      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/autoscrollFromSource.png"));
+      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/locate.png"));
     }
 
     @Override
