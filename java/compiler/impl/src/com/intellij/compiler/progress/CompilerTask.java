@@ -314,7 +314,7 @@ public class CompilerTask extends Task.Backgroundable {
           (
             CompilerWorkspaceConfiguration.getInstance(myProject).useCompileServer() /*todo: temporary*/||
             CompilerMessageCategory.ERROR.equals(category) ||
-            (CompilerMessageCategory.WARNING.equals(category) && !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings())
+            !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()
           );
         if (shouldAutoActivate) {
           myMessagesAutoActivated = true;
