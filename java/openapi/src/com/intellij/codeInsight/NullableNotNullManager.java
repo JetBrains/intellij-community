@@ -92,7 +92,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   
   @Nullable
   public String getNullable(PsiModifierListOwner owner) {
-    for (String nullable : myNullables) {
+    for (String nullable : getNullables()) {
       if (AnnotationUtil.isAnnotated(owner, nullable, false)) return nullable;
     }
     return null;
@@ -109,7 +109,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   
   @Nullable
   public String getNotNull(PsiModifierListOwner owner) {
-    for (String notNull : myNotNulls) {
+    for (String notNull : getNotNulls()) {
       if (AnnotationUtil.isAnnotated(owner, notNull, false)) return notNull;
     }
     return null;
