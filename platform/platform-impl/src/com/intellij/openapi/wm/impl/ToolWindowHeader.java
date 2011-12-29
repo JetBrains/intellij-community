@@ -471,9 +471,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     @Override
     public void altPressed() {
       PointerInfo info = MouseInfo.getPointerInfo();
-      Point p = info.getLocation();
-      SwingUtilities.convertPointFromScreen(p, this);
-      switchAlternativeAction(myButton.getBounds().contains(p));
+      if (info != null) {
+        Point p = info.getLocation();
+        SwingUtilities.convertPointFromScreen(p, this);
+        switchAlternativeAction(myButton.getBounds().contains(p));
+      }
     }
 
     @Override
