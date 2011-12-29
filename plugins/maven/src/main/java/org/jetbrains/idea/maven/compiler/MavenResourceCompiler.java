@@ -426,6 +426,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         filesToRefresh.add(outputFile);
       }
       catch (IOException e) {
+        MavenLog.LOG.info(e);
         context.addMessage(CompilerMessageCategory.ERROR,
                            "Maven: Cannot process resource file: " + e.getMessage(),
                            sourceVirtualFile.getUrl(),
