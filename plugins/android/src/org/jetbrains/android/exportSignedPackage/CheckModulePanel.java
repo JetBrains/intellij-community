@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import org.jetbrains.android.facet.AndroidFacet;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -31,7 +30,7 @@ public class CheckModulePanel extends JPanel {
   private boolean myHasWarnings;
 
   public CheckModulePanel() {
-    super(new VerticalFlowLayout(FlowLayout.LEFT));
+    super(new VerticalFlowLayout(VerticalFlowLayout.TOP));
   }
 
   public void updateMessages(AndroidFacet facet) {
