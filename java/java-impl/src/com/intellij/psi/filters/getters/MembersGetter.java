@@ -117,7 +117,7 @@ public abstract class MembersGetter {
     for (final PsiElement result : processor.getResults()) {
       if (result instanceof PsiMember && !(result instanceof PsiClass)) {
         final PsiMember member = (PsiMember)result;
-        if (JavaCompletionUtil.isInExcludedPackage(member) || importedStatically.contains(member)) continue;
+        if (JavaCompletionUtil.isInExcludedPackage(member, false) || importedStatically.contains(member)) continue;
         if (member.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(member, context, null)) {
           if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
           if (result instanceof PsiMethod && acceptMethods) continue;

@@ -457,7 +457,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           object = ((GroovyResolveResult)object).getElement();
         }
 
-        if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object)) {
+        if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object, true)) {
           return;
         }
 

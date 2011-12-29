@@ -108,7 +108,7 @@ public class StaticImportMethodFix implements IntentionAction {
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
-      if (JavaCompletionUtil.isInExcludedPackage(method)) continue;
+      if (JavaCompletionUtil.isInExcludedPackage(method, false)) continue;
       if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
       PsiFile file = method.getContainingFile();
       if (file instanceof PsiJavaFile

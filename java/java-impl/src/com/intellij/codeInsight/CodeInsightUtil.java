@@ -314,7 +314,7 @@ public class CodeInsightUtil {
               return true;
             }
 
-            if (JavaCompletionUtil.isInExcludedPackage(inheritor)) return true;
+            if (JavaCompletionUtil.isInExcludedPackage(inheritor, false)) return true;
 
             PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
             if (superSubstitutor == null) return true;
