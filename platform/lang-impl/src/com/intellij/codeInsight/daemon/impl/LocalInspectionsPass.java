@@ -564,14 +564,16 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       Document documentRange = documentManager.getDocument(file);
       if (documentRange == null) continue;
       List<InspectionResult> resultList = entry.getValue();
-      for (InspectionResult inspectionResult : resultList) {
-        indicator.checkCanceled();
-        LocalInspectionTool tool = inspectionResult.tool;
-        HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
-        for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
+      synchronized (resultList) {
+        for (InspectionResult inspectionResult : resultList) {
           indicator.checkCanceled();
-          PsiElement element = descriptor.getPsiElement();
-          createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element);
+          LocalInspectionTool tool = inspectionResult.tool;
+          HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
+          for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
+            indicator.checkCanceled();
+            PsiElement element = descriptor.getPsiElement();
+            createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element);
+          }
         }
       }
     }

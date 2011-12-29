@@ -285,7 +285,7 @@ public final class Presentation implements Cloneable {
     myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 
-  public Object clone(){
+  public Presentation clone(){
     try{
       Presentation presentation = (Presentation)super.clone();
       presentation.myChangeSupport = new PropertyChangeSupport(presentation);

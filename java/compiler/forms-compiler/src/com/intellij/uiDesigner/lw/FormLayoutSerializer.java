@@ -36,10 +36,10 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
 
   public static FormLayoutSerializer INSTANCE = new FormLayoutSerializer();
 
-  public static CellConstraints.Alignment[] ourHorizontalAlignments = new CellConstraints.Alignment[] {
+  public static CellConstraints.Alignment[] ourHorizontalAlignments = {
     CellConstraints.LEFT, CellConstraints.CENTER, CellConstraints.RIGHT, CellConstraints.FILL
   };
-  public static CellConstraints.Alignment[] ourVerticalAlignments = new CellConstraints.Alignment[] {
+  public static CellConstraints.Alignment[] ourVerticalAlignments = {
     CellConstraints.TOP, CellConstraints.CENTER, CellConstraints.BOTTOM, CellConstraints.FILL
   };
 

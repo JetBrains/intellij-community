@@ -1104,7 +1104,7 @@ public class StringUtil {
   }
 
   @NotNull
-  public static Iterable<String> tokenize(@NotNull String s, final StringTokenizer tokenizer) {
+  public static Iterable<String> tokenize(final StringTokenizer tokenizer) {
     return new Iterable<String>() {
       public Iterator<String> iterator() {
         return new Iterator<String>() {

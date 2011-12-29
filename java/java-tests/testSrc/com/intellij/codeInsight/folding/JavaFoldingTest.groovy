@@ -19,6 +19,8 @@ package com.intellij.codeInsight.folding;
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
+import com.intellij.openapi.editor.impl.FoldingModelImpl
 
 /**
  * @author Denis Zhdanov
@@ -26,6 +28,23 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
   
+  def JavaCodeFoldingSettingsImpl myFoldingSettings
+  def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
+  
+  @Override
+  public void setUp() {
+    super.setUp()
+    myFoldingSettings = JavaCodeFoldingSettings.instance as JavaCodeFoldingSettingsImpl
+    myFoldingStateToRestore = new JavaCodeFoldingSettingsImpl()
+    myFoldingStateToRestore.loadState(myFoldingSettings)
+  }
+
+  @Override
+  protected void tearDown() {
+    myFoldingSettings.loadState(myFoldingStateToRestore)
+    super.tearDown()
+  }
+
   public void testEndOfLineComments() {
     myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
   }
@@ -76,10 +95,52 @@ class Test {
     myFixture.performEditorAction 'CollapseBlock'
     assertEquals(text.indexOf('}', text.indexOf('i++')), myFixture.editor.caretModel.offset)
   }
+
+  public void testFoldGroup() {
+    // Implied by IDEA-79420
+    myFoldingSettings.COLLAPSE_CLOSURES = true
+    def text = """\
+class Test {
+    void test() {
+        new Runnable() {
+            public void run() {
+                int i = 1;
+            }
+        }.run();
+    }
+}
+"""
+    
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    def closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
+    assertNotNull closureStartFold
+    assertFalse closureStartFold.expanded
+    
+    assertNotNull closureStartFold.group
+    def closureFolds = foldingModel.getGroupedRegions(closureStartFold.group)
+    assertNotNull closureFolds
+    assertEquals(2, closureFolds.size())
+    
+    def closureEndFold = closureFolds.get(1)
+    assertFalse closureEndFold.expanded
+    
+    myFixture.editor.caretModel.moveToOffset(closureEndFold.startOffset + 1)
+    assertTrue closureStartFold.expanded
+    assertTrue closureEndFold.expanded
+    
+    changeFoldRegions { closureStartFold.expanded = false }
+    assertTrue closureStartFold.expanded
+    assertTrue closureEndFold.expanded
+  }
   
   private def configure(String text) {
     myFixture.configureByText("a.java", text)
     CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
     myFixture.doHighlighting()
+  }
+
+  private def changeFoldRegions(Closure op) {
+    myFixture.editor.foldingModel.runBatchFoldingOperationDoNotCollapseCaret(op)
   }
 }

@@ -563,14 +563,12 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
 
     public boolean isSelected(AnActionEvent event) {
-      return ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
+      return isHideWarnings();
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
-      final ErrorTreeViewConfiguration configuration = ErrorTreeViewConfiguration.getInstance(myProject);
-      final boolean hideWarnings = configuration.isHideWarnings();
-      if (hideWarnings != flag) {
-        configuration.setHideWarnings(flag);
+      if (isHideWarnings() != flag) {
+        ErrorTreeViewConfiguration.getInstance(myProject).setHideWarnings(flag);
         myBuilder.updateTree();
       }
     }

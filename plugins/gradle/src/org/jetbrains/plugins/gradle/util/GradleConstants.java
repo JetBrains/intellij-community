@@ -13,9 +13,10 @@ import javax.swing.*;
  */
 public class GradleConstants {
 
-  public static final         Icon   GRADLE_ICON         = IconLoader.getIcon("/icons/gradle.png");
-  @NonNls public static final String EXTENSION           = "gradle";
-  @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
+  public static final         Icon   GRADLE_ICON               = IconLoader.getIcon("/icons/gradle.png");
+  @NonNls public static final String EXTENSION                 = "gradle";
+  @NonNls public static final String DEFAULT_SCRIPT_NAME       = "build.gradle";
+  @NonNls public static final String TOOL_WINDOW_TOOLBAR_PLACE = "GRADLE_SYNC_CHANGES_TOOLBAR";
 
   private GradleConstants() {
   }
