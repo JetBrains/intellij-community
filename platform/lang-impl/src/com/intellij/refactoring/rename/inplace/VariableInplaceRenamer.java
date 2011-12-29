@@ -191,7 +191,7 @@ public class VariableInplaceRenamer {
       return false; // Should have valid local search scope for inplace rename
     }
     //no need to process further when file is read-only
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, containingFile)) return true;
 
     myEditor.putUserData(INPLACE_RENAMER, this);
     ourRenamersStack.push(this);
