@@ -46,15 +46,19 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
     return originalName;
   }
 
-  public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull final String runtimeName, final Project project) {
+  public PsiFile getExtraScriptIfNotFound(ReferenceType refType,
+                                          @NotNull final String runtimeName,
+                                          final Project project,
+                                          GlobalSearchScope scope) {
     try {
       final String fileName = StringUtil.getShortName(runtimeName);
-      PsiFile[] files = FilenameIndex.getFilesByName(project, fileName + "." + GantScriptType.DEFAULT_EXTENSION,
-                                                     GlobalSearchScope.allScope(project));
+      PsiFile[] files = FilenameIndex.getFilesByName(project, fileName + "." + GantScriptType.DEFAULT_EXTENSION, scope);
+      if (files.length == 0) files = FilenameIndex.getFilesByName(project, fileName + "." + GantScriptType.DEFAULT_EXTENSION, GlobalSearchScope.allScope(project));
       if (files.length == 1) return files[0];
 
       if (files.length == 0) {
-        files = FilenameIndex.getFilesByName(project, fileName + ".groovy", GlobalSearchScope.allScope(project));
+        files = FilenameIndex.getFilesByName(project, fileName + ".groovy", scope);
+        if (files.length == 0) files = FilenameIndex.getFilesByName(project, fileName + "." + GantScriptType.DEFAULT_EXTENSION, GlobalSearchScope.allScope(project));
 
         PsiFile candidate = null;
         for (PsiFile file : files) {

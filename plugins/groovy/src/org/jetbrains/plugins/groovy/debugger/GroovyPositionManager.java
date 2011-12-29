@@ -243,7 +243,7 @@ public class GroovyPositionManager implements PositionManager {
 
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
-        PsiFile file = helper.getExtraScriptIfNotFound(refType, runtimeName, project);
+        PsiFile file = helper.getExtraScriptIfNotFound(refType, runtimeName, project, searchScope);
         if (file != null) return file;
       }
     }
