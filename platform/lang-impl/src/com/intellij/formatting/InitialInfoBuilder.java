@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.google.common.collect.ImmutableCollection;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -364,6 +365,7 @@ class InitialInfoBuilder {
     buffer.append("File text:(").append(model.getTextLength()).append(")\n'");
     buffer.append(model.getText(new TextRange(0, model.getTextLength())).toString());
     buffer.append("'\n");
+    buffer.append("model (").append(model.getClass()).append("): ").append(model);
 
     if (model instanceof FormattingDocumentModelImpl) {
       final FormattingDocumentModelImpl modelImpl = (FormattingDocumentModelImpl)model;
@@ -377,7 +379,7 @@ class InitialInfoBuilder {
       buffer.append('\n');
     }
 
-    LOG.error(buffer);
+    LogMessageEx.error(LOG, "Invalid ranges during formatting", buffer.toString());
   }
 
   /**
