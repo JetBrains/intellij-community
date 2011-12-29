@@ -65,4 +65,9 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
     }
     return mySurrounders;
   }
+
+  @Override
+  public boolean isExclusive() {
+    return false;
+  }
 }

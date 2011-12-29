@@ -47,7 +47,12 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
         return SURROUNDERS;
     }
 
-    private PsiElement[] findElementsInRange(PsiFile file, int startOffset, int endOffset) {
+  @Override
+  public boolean isExclusive() {
+    return false;
+  }
+
+  private PsiElement[] findElementsInRange(PsiFile file, int startOffset, int endOffset) {
         // adjust start/end
         PsiElement element1 = file.findElementAt(startOffset);
         PsiElement element2 = file.findElementAt(endOffset - 1);

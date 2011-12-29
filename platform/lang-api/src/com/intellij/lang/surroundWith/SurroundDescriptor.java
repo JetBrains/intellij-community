@@ -51,4 +51,6 @@ public interface SurroundDescriptor {
    */
   @NotNull
   Surrounder[] getSurrounders();
+
+  boolean isExclusive();
 }
