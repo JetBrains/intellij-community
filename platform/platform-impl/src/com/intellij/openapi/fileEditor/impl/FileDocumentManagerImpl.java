@@ -42,6 +42,7 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -53,6 +54,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.ExternalChangeAction;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -250,8 +252,18 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (!ApplicationManager.getApplication().isDisposed()) {
-          saveAllDocuments();
+        if (ApplicationManager.getApplication().isDisposed()) {
+          return;
+        }
+        final Document[] unsavedDocuments = getUnsavedDocuments();
+        for (Document document : unsavedDocuments) {
+          VirtualFile file = getFile(document);
+          if (file == null) continue;
+          Project project = ProjectUtil.guessProjectForFile(file);
+          if (project == null) continue;
+          if (PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) continue;
+
+          saveDocument(document);
         }
       }
     });
