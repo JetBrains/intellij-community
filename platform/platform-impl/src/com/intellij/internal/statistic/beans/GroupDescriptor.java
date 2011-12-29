@@ -20,7 +20,9 @@ public class GroupDescriptor implements Comparable<GroupDescriptor> {
     public static final double HIGHER_PRIORITY = 100.0;
     public static final double LOWER_PRIORITY = -100.0;
 
-    private final String myId;
+  public static final int MAX_ID_LENGTH = 30;
+
+  private final String myId;
     private double myPriority;
 
     public static GroupDescriptor create(String id) {

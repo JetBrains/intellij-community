@@ -91,7 +91,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
     public void testConvertUsages() {
         final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = StatisticsUploadAssistant
                 .getPatchedUsages(createDescriptors("g:a1:-1", "g2:a2:-2", "g2:a3:-3", "g:a2:-2", "g2:a1:-1", "g3:a1:13"),
-                        new HashMap<GroupDescriptor, Set<UsageDescriptor>>());
+                                  new HashMap<GroupDescriptor, Set<UsageDescriptor>>());
 
         final String result = ConvertUsagesUtil.convertUsages(patchedUsages);
         final Map<GroupDescriptor, Set<UsageDescriptor>> convertedUsages = ConvertUsagesUtil.convertString(result);
@@ -112,7 +112,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
 
 
         assertEquals(ConvertUsagesUtil.convertUsages(patchedUsages),
-                "high:h=1,h2=1;default_1:d11=1,d12=1;default_2:d21=1;low:l1=1,l2=1;");
+                     "high:h=1,h2=1;default_1:d11=1,d12=1;default_2:d21=1;low:l1=1,l2=1;");
     }
 
     public void testConvertUsagesWithEqualPriority() {
@@ -149,6 +149,15 @@ public class StatisticsUploadAssistantTest extends TestCase {
         assertEquals(ConvertUsagesUtil.convertString("asdfa:sd;fs,ad").size(), 0);
         assertEquals(ConvertUsagesUtil.convertString("asdfa:sd;f;sad").size(), 0);
         assertEquals(ConvertUsagesUtil.convertString("asdfa:sd=ds2,f=f,sad=;").size(), 0);
+    }
+
+    public void testConvertWithTooLongGroupDescriptorId() {
+      final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+      createPatchDescriptor(patchedUsages, "g1", GroupDescriptor.HIGHER_PRIORITY, "k1", 1);
+      createPatchDescriptor(patchedUsages, "g1", GroupDescriptor.HIGHER_PRIORITY, "k2", 2);
+
+      final String veryLongGroupId = StringUtil.repeat("g", GroupDescriptor.MAX_ID_LENGTH);
+      assertMapEquals(patchedUsages, ConvertUsagesUtil.convertString(veryLongGroupId + ":k1=1;g1:k1=1,k2=2;"));
     }
 
     public void testPersistSentPatchWithRestrictedSize() {
