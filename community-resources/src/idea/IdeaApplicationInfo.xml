@@ -1,5 +1,5 @@
 <component>
-  <version codename="Community Edition" major="11" minor="0.1" eap="true" update-channel="IDEA11EAP"/>
+  <version codename="Community Edition" major="11" minor="0.1" eap="false" update-channel="IDEA11"/>
 
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="111.69" maxbuild="111.999" version="11"/>
