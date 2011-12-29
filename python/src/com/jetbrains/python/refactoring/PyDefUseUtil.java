@@ -70,7 +70,9 @@ public class PyDefUseUtil {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
-    assert instr >= 0;
+    if (instr < 0) {
+      return new PyElement[0];
+    }
     final boolean[] visited = new boolean[instructions.length];
     final Collection<PyElement> result = Sets.newHashSet();
     for (Instruction instruction : instructions[instr].allSucc()) {
