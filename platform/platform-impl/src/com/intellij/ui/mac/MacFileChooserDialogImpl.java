@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       final ID chooser = invoke("NSOpenPanel", "openPanel");
 
       invoke(chooser, "setPrompt:", Foundation.nsString("Choose"));
-      invoke(chooser, "setCanChooseFiles:", myChooserDescriptor.isChooseFiles());
+      invoke(chooser, "setCanChooseFiles:", myChooserDescriptor.isChooseFiles() || myChooserDescriptor.isChooseJars());
       invoke(chooser, "setCanChooseDirectories:", myChooserDescriptor.isChooseFolders());
       invoke(chooser, "setAllowsMultipleSelection:", myChooserDescriptor.isChooseMultiple());
       invoke(chooser, "setTreatsFilePackagesAsDirectories:", myChooserDescriptor.isChooseFolders());
@@ -179,6 +179,11 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
         }
       }
 
+      ID types = null;
+      if (!myChooserDescriptor.isChooseFiles() && myChooserDescriptor.isChooseJars()) {
+        types = invoke("NSArray", "arrayWithObject:", Foundation.nsString("jar"));
+      }
+
       if (mySheetCallback != null) {
         final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
         if (activeWindow != null) {
@@ -193,12 +198,12 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
           final ID focusedWindow = MacUtil.findWindowForTitle(activeWindowTitle);
           if (focusedWindow != null) {
             invoke(chooser, "beginSheetForDirectory:file:types:modalForWindow:modalDelegate:didEndSelector:contextInfo:",
-                   directory, file, null, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);
+                   directory, file, types, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);
             
             if (directory != null) {
               Foundation.cfRelease(directory);
             }
-            
+
             if (file != null) {
               Foundation.cfRelease(file);
             }
@@ -206,7 +211,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
         }
       }
       else {
-        final ID result = invoke(chooser, "runModalForDirectory:file:", directory, file);
+        final ID result = invoke(chooser, "runModalForDirectory:file:types:", directory, file, types);
         processResult(result, chooser);
       }
     }
