@@ -40,12 +40,16 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   protected final E myEP;
 
   protected InspectionToolWrapper(E ep) {
-    myEP = ep;
+    this(null, ep);
   }
 
   protected InspectionToolWrapper(T tool) {
+    this(tool, null);
+  }
+
+  protected InspectionToolWrapper(@Nullable T tool, @Nullable E ep) {
+    myEP = ep;
     myTool = tool;
-    myEP = null;
   }
 
   @NotNull

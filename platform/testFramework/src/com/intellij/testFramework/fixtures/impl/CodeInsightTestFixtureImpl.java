@@ -69,6 +69,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -153,6 +154,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NonNls private static final String XXX = "XXX";
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
+  private final Map<String, LocalInspectionEP> myExtensions = new HashMap<String, LocalInspectionEP>();
 
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -1035,6 +1037,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
     ensureIndexesUpToDate(getProject());
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
+    LocalInspectionEP[] extensions = Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION);
+    for (LocalInspectionEP extension : extensions) {
+      myExtensions.put(extension.shortName, extension);
+    }
   }
 
   @Override
@@ -1082,9 +1088,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       HighlightDisplayKey.register(shortName, tool.getDisplayName(), id);
     }
     myAvailableTools.put(shortName, tool);
-    myAvailableLocalTools.put(shortName, tool instanceof LocalInspectionTool ?
-                                         new LocalInspectionToolWrapper((LocalInspectionTool)tool) :
-                                         (InspectionTool)tool);
+    InspectionTool inspectionTool;
+    if (tool instanceof LocalInspectionTool) {
+      LocalInspectionEP ep = myExtensions.get(tool.getShortName());
+      inspectionTool = new LocalInspectionToolWrapper((LocalInspectionTool)tool, ep);
+    }
+    else {
+      inspectionTool = (InspectionTool)tool;
+    }
+    myAvailableLocalTools.put(shortName, inspectionTool);
   }
 
   private void configureInspections(final InspectionProfileEntry[] tools) {
