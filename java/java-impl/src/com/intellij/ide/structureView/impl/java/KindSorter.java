@@ -37,7 +37,7 @@ public class KindSorter implements Sorter {
         return 55;
       }
       if (value instanceof JavaClassTreeElement) {
-        return 10;
+        return 54;
       }
       if (value instanceof ClassInitializerTreeElement) {
         return 15;
