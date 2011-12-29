@@ -150,11 +150,11 @@ public class FileStructurePopup implements Disposable {
 
       @Override
       public void revalidateTree() {
-        myTree.revalidate();
-        myTree.repaint();
+        //myTree.revalidate();
+        //myTree.repaint();
       }
     };
-
+    myAbstractTreeBuilder.setCanYieldUpdate(true);
   }
 
   public void show() {
@@ -197,7 +197,7 @@ public class FileStructurePopup implements Disposable {
         
         if (!filter.equals(prefix)) {
           filter = prefix;
-          //myAbstractTreeBuilder.refilter();
+          myAbstractTreeBuilder.refilter(null, false, false);
         }
         alarm.addRequest(this, 500);
       }
@@ -490,7 +490,9 @@ public class FileStructurePopup implements Disposable {
           return true;
         }
 
-        final Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(value.toString());
+        final String text = value.toString();
+        if (text == null) return false;
+        final Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
         boolean matches = ranges != null && ranges.iterator().hasNext();
         
         if (matches) {
