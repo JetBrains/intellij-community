@@ -81,6 +81,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler {
       int end = iterator.getEnd();
       if (end - start >= 1 && offset == end - 1) {
         Document doc = iterator.getDocument();
+        if (doc == null) return false;
         CharSequence chars = doc.getCharsSequence();
         if (chars.length() > offset + 1) {
           Character ch = chars.charAt(offset + 1);
