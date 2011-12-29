@@ -517,8 +517,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     if (myPopupLayeredPane == null) return; // See # 27482. Somewho it does happen...
     Point lPaneP = myPopupLayeredPane.getLocationOnScreen();
-    Point componentP = myComponent.getLocationOnScreen();
-    Rectangle r = myComponent.getVisibleRect();
+    Point componentP = getComponentLocationOnScreen();
+    Rectangle r = getComponentVisibleRect();
     Dimension prefSize = mySearchPopup.getPreferredSize();
     Window window = (Window)SwingUtilities.getAncestorOfClass(Window.class, myComponent);
     Point windowP;
@@ -537,6 +537,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     mySearchPopup.setSize(prefSize);
     mySearchPopup.setVisible(true);
     mySearchPopup.validate();
+  }
+
+  protected Rectangle getComponentVisibleRect() {
+    return myComponent.getVisibleRect();
+  }
+
+  protected Point getComponentLocationOnScreen() {
+    return myComponent.getLocationOnScreen();
   }
 
   private class MyToolWindowManagerListener extends ToolWindowManagerAdapter {
