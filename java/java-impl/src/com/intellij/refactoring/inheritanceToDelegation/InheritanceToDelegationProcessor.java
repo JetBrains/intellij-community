@@ -517,11 +517,15 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     final PsiModifierList modifierList = methodToAdd.getModifierList();
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-    if (manager.isNullable(method, false)) {
-      modifierList.addAfter(myFactory.createAnnotationFromText("@" + manager.getDefaultNullable(), methodToAdd), null);
+    final String nullable = manager.getNullable(method);
+    if (nullable != null) {
+      modifierList.addAfter(myFactory.createAnnotationFromText("@" + nullable, methodToAdd), null);
     }
-    else if (manager.isNotNull(method, false)) {
-      modifierList.addAfter(myFactory.createAnnotationFromText("@" + manager.getDefaultNotNull(), methodToAdd), null);
+    else {
+      final String notNull = manager.getNotNull(method);
+      if (notNull != null) {
+        modifierList.addAfter(myFactory.createAnnotationFromText("@" + notNull, methodToAdd), null);
+      }
     }
 
     final String delegationBody = getDelegationBody(methodToAdd, delegationTarget);

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,6 +89,14 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   public String getDefaultNullable() {
     return myDefaultNullable;
   }
+  
+  @Nullable
+  public String getNullable(PsiModifierListOwner owner) {
+    for (String nullable : myNullables) {
+      if (AnnotationUtil.isAnnotated(owner, nullable, false)) return nullable;
+    }
+    return null;
+  }
 
   public void setDefaultNullable(@NotNull String defaultNullable) {
     LOG.assertTrue(getNullables().contains(defaultNullable));
@@ -96,6 +105,14 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
 
   public String getDefaultNotNull() {
     return myDefaultNotNull;
+  }
+  
+  @Nullable
+  public String getNotNull(PsiModifierListOwner owner) {
+    for (String notNull : myNotNulls) {
+      if (AnnotationUtil.isAnnotated(owner, notNull, false)) return notNull;
+    }
+    return null;
   }
 
   public void setDefaultNotNull(@NotNull String defaultNotNull) {
