@@ -22,6 +22,7 @@ import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,8 +32,9 @@ public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
 
   private String myName;
   
-  public JavaAnonymousClassTreeElement(PsiAnonymousClass aClass) {
-    super(aClass, false);
+  public JavaAnonymousClassTreeElement(PsiAnonymousClass aClass, Set<PsiClass> parents) {
+    super(aClass, false, parents);
+    //parents.add(aClass.getSuperClass());
   }
 
   @Override
@@ -61,6 +63,8 @@ public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
     }
     return "Anonymous";
   }
+
+
 
   @Override
   public String getLocationString() {

@@ -20,17 +20,18 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
-  public JavaClassTreeElement(PsiClass cls, boolean inherited) {
+  private final Set<PsiClass> myParents;
+
+  public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
     super(inherited, cls);
+    myParents = parents;
+    myParents.add(cls);
   }
 
   @NotNull
@@ -53,8 +54,8 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
 
     for (PsiElement child : members) {
       if (!child.isValid()) continue;
-      if (child instanceof PsiClass) {
-        children.add(new JavaClassTreeElement((PsiClass)child, false));
+      if (child instanceof PsiClass && !myParents.contains((PsiClass)child)) {
+        children.add(new JavaClassTreeElement((PsiClass)child, false, myParents));
       }
       else if (child instanceof PsiField) {
         children.add(new PsiFieldTreeElement((PsiField)child, false));
@@ -67,6 +68,10 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
       }
     }
     return children;
+  }
+
+  public Set<PsiClass> getParents() {
+    return myParents;
   }
 
   public String getPresentableText() {

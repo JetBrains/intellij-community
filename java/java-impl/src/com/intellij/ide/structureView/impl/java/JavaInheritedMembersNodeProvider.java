@@ -59,11 +59,18 @@ public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvid
 
       aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
       inherited.removeAll(ownChildren);
+      if (aClass instanceof PsiAnonymousClass) {
+        final PsiElement element = ((PsiAnonymousClass)aClass).getBaseClassReference().resolve();
+        if (element instanceof PsiClass) {
+          ContainerUtil.addAll(inherited, ((PsiClass)element).getInnerClasses());
+        }
+      }
       List<TreeElement> array = new ArrayList<TreeElement>();
       for (PsiElement child : inherited) {
         if (!child.isValid()) continue;
-        if (child instanceof PsiClass && !child.isEquivalentTo(aClass)) {
-          array.add(new JavaClassTreeElement((PsiClass)child, true));
+        final Set<PsiClass> parents = ((JavaClassTreeElement)node).getParents();
+        if (child instanceof PsiClass && !parents.contains(child)) {
+          array.add(new JavaClassTreeElement((PsiClass)child, true, parents));
         }
         else if (child instanceof PsiField) {
           array.add(new PsiFieldTreeElement((PsiField)child, true));
