@@ -449,7 +449,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected boolean isLastStep() {
-    return myCurrentStep == mySteps.size() - 1;
+    return myCurrentStep == mySteps.size() - 1 || getCurrentStep() == getNextStep(getCurrentStep());
   }
 
   protected JButton getNextButton() {
