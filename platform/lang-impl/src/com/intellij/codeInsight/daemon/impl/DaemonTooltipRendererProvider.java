@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -80,7 +80,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     }
     if (!infos.isEmpty()) {
       // show errors first
-      Collections.sort(infos, new Comparator<HighlightInfo>() {
+      ContainerUtil.quickSort(infos, new Comparator<HighlightInfo>() {
         @Override
         public int compare(final HighlightInfo o1, final HighlightInfo o2) {
           int i = SeverityRegistrar.getInstance(myProject).compare(o2.getSeverity(), o1.getSeverity());
