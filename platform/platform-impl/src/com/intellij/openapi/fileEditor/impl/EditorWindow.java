@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -294,9 +295,12 @@ public class EditorWindow {
           editorManager.notifyPublisher(new Runnable() {
             @Override
             public void run() {
-              final FileEditorManagerListener afterPublisher =
-                editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+              final Project project = editorManager.getProject();
+              if (!project.isDisposed()) {
+                final FileEditorManagerListener afterPublisher =
+                  project.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
                 afterPublisher.fileClosed(editorManager, file);
+              }
             }
           });
 
