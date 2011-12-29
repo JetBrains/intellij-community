@@ -107,7 +107,7 @@ public class WorkingContextManager {
     saveContext(entryName, TASKS_ZIP_POSTFIX, task.getSummary());
   }
 
-  public void saveContext(String entryName, @Nullable String comment) {
+  public void saveContext(@Nullable String entryName, @Nullable String comment) {
     saveContext(entryName, CONTEXT_ZIP_POSTFIX, comment);
   }
 
