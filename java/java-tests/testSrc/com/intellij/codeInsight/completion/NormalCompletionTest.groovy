@@ -938,6 +938,11 @@ public class ListUtils {
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
   public void testExpectedTypesDotSelectsItem() throws Throwable { doTest('.') }
 
+  public void testExpectedTypeMembersVersusStaticImports() throws Throwable {
+    configure()
+    assertStringItems('FOO', 'FOX')
+  }
+
   public void testDoubleExpectedTypeFactoryMethod() throws Throwable {
     configure()
     assertStringItems('Key', 'create', 'create')

@@ -552,7 +552,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {
+  static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     final PsiElement originalPosition = parameters.getOriginalPosition();
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {

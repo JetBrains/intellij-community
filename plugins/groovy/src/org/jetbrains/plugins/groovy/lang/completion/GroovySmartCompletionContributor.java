@@ -220,10 +220,10 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       PsiType defType = info.getDefaultType();
       boolean searchInheritors = params.getInvocationCount() > 1;
       if (type instanceof PsiClassType) {
-        new GroovyMembersGetter((PsiClassType)type, reference).processMembers(searchInheritors, consumer);
+        new GroovyMembersGetter((PsiClassType)type, reference, params).processMembers(searchInheritors, consumer);
       }
       if (!defType.equals(type) && defType instanceof PsiClassType) {
-        new GroovyMembersGetter((PsiClassType)defType, reference).processMembers(searchInheritors, consumer);
+        new GroovyMembersGetter((PsiClassType)defType, reference, params).processMembers(searchInheritors, consumer);
       }
     }
   }
