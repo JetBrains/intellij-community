@@ -113,26 +113,40 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   }
 
   public ActionCallback refilter(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
-    if (myRefilterQueue == null || now) {
-      return refilterNow(preferredSelection, adjustSelection);
+    if (myRefilterQueue != null) {
+      myRefilterQueue.cancelAllUpdates();
     }
-    else {
-      final ActionCallback result = new ActionCallback();
-      myRefilterQueue.queue(new Update(this) {
-        public void run() {
-          refilterNow(preferredSelection, adjustSelection).notifyWhenDone(result);
+    final ActionCallback callback = new ActionCallback();
+    getUi().cancelUpdate().doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        if (myRefilterQueue == null || now) {
+          refilterNow(preferredSelection, adjustSelection).doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              callback.setDone();
+            }
+          });
         }
+        else {
+          myRefilterQueue.queue(new Update(this) {
+            public void run() {
+              refilterNow(preferredSelection, adjustSelection).notifyWhenDone(callback);
+            }
 
-        @Override
-        public void setRejected() {
-          super.setRejected();
-          result.setDone();
+            @Override
+            public void setRejected() {
+              super.setRejected();
+              callback.setDone();
+            }
+          });
         }
-      });
+      }
+    });
 
-      return result;
-    }
+    return callback;
   }
+
 
   protected ActionCallback refilterNow(final Object preferredSelection, final boolean adjustSelection) {
     final ActionCallback selectionDone = new ActionCallback();
