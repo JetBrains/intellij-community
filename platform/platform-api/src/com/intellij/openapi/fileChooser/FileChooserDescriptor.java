@@ -130,6 +130,7 @@ public class FileChooserDescriptor implements Cloneable{
    * Defines whether file can be chosen or not 
    */ 
   public boolean isFileSelectable(VirtualFile file) {
+    if (file == null) return false;
     if (file.isDirectory() && myChooseFolders) return true;
     if (acceptAsJarFile(file)) return true;
     if (acceptAsGeneralFile(file)) return true;
