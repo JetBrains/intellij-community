@@ -45,6 +45,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
@@ -167,6 +168,7 @@ public class FileStructurePopup implements Disposable {
       .setFocusable(true)
       .setMovable(true)
       .setCancelKeyEnabled(false)
+      .addUserData("ShowHints")
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
       .createPopup();
     Disposer.register(myPopup, myDisposable);
@@ -174,6 +176,7 @@ public class FileStructurePopup implements Disposable {
     Disposer.register(myPopup, myAbstractTreeBuilder);
     myPopup.showInBestPositionFor(myEditor);
 
+    ((AbstractPopup)myPopup).setShowHints(true);
     if (shouldSetWidth) {
       myPopup.setSize(new Dimension(myPrefferedWidth + 10, myPopup.getSize().height));
     }
