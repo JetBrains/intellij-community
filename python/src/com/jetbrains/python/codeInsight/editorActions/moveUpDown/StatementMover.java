@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -28,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 public class StatementMover extends LineMover {
   private @Nullable PyStatementList myStatementListToAddPass;
   private @Nullable PyStatementList myStatementListToAddPassAfter;  
-  private @Nullable PyStatement myStatementToIncreaseIndent;
-  private @Nullable PyStatement myStatementToDecreaseIndent;
+  private @Nullable PsiElement myStatementToIncreaseIndent;
+  private @Nullable PsiElement myStatementToDecreaseIndent;
   private @Nullable PyStatement myStatementToAddLinebreak;
-  private @Nullable PyStatement myStatementToMove;
+  private @Nullable PsiElement myStatementToMove;
   private @Nullable PyStatementPart myStatementPartToRemovePass;
   private boolean moveToEmptyLine = false;
 
@@ -161,7 +162,7 @@ public class StatementMover extends LineMover {
   }
 
   @Nullable
-  private PyStatement findStatement(Editor editor, PsiFile file, MoveInfo info) {
+  private PsiElement findStatement(Editor editor, PsiFile file, MoveInfo info) {
     Document doc = editor.getDocument();
     int offset1 = getLineStartSafeOffset(doc, info.toMove.startLine);
     PsiElement element1 = file.findElementAt(offset1);
@@ -169,7 +170,9 @@ public class StatementMover extends LineMover {
       if (element1 instanceof PsiWhiteSpace) {
         element1 = PyPsiUtils.getSignificantToTheRight(element1, true);
       }
-      return PsiTreeUtil.getParentOfType(element1, PyStatement.class, false);
+      PyStatement statement = PsiTreeUtil.getParentOfType(element1, PyStatement.class, false);
+      if (statement == null && element1 instanceof PsiComment) return element1;
+      return statement;
     }
     return null;
   }
