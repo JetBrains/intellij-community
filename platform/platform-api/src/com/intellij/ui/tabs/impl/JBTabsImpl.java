@@ -1148,33 +1148,45 @@ public class JBTabsImpl extends JComponent
 
     TabInfo result = null;
     if (index > 0) {
-      result = findEnabledBackward(index - 1);
+      result = findEnabledBackward(index, false);
     }
 
     if (result == null) {
-      result = findEnabledForward(index + 1);
+      result = findEnabledForward(index, false);
     }
 
     return result;
   }
 
-  private TabInfo findEnabledForward(int from) {
+  @Nullable
+  private TabInfo findEnabledForward(int from, boolean cycle) {
+    if (from < 0) return null;
     int index = from;
-    while (index < myVisibleInfos.size() && index >= 0) {
+    while (index < myVisibleInfos.size()) {
+      index++;
+      if (cycle && index == myVisibleInfos.size()) {
+        index = 0;
+      }
+      if (index == from) break;
       final TabInfo each = myVisibleInfos.get(index);
       if (each.isEnabled()) return each;
-      index++;
     }
 
     return null;
   }
 
-  private TabInfo findEnabledBackward(int from) {
+  @Nullable
+  private TabInfo findEnabledBackward(int from, boolean cycle) {
+    if (from < 0) return null;
     int index = from;
-    while (index >= 0 && from < myVisibleInfos.size()) {
+    while (index >= 0) {
+      index--;
+      if (cycle && index == -1) {
+        index = myVisibleInfos.size()-1;
+      }
+      if (index == from) break;
       final TabInfo each = myVisibleInfos.get(index);
       if (each.isEnabled()) return each;
-      index--;
     }
 
     return null;
@@ -2696,12 +2708,36 @@ public class JBTabsImpl extends JComponent
       e.getPresentation().setVisible(tabs != null);
       if (tabs == null) return;
 
-      final int selectedIndex = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
-      final boolean enabled = tabs == myTabs && myTabs.isNavigationVisible() && selectedIndex >= 0 && myTabs.myNavigationActionsEnabled;
-      e.getPresentation().setEnabled(enabled);
-      if (enabled) {
-        _update(e, tabs, selectedIndex);
+      tabs = findNavigatableTabs(tabs);
+      e.getPresentation().setEnabled(tabs != null);
+      if (tabs != null) {
+        _update(e, tabs, tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo()));
       }
+    }
+    
+    @Nullable
+    protected JBTabsImpl findNavigatableTabs(JBTabsImpl tabs) {
+      // The debugger UI contains multiple nested JBTabsImpl, where the innermost JBTabsImpl has only one tab. In this case,
+      // the action should target the outer JBTabsImpl.
+      if (tabs == null || tabs != myTabs) {
+        return null;
+      }
+      if (isNavigatable(tabs)) {
+        return tabs;
+      }
+      Component c = tabs.getParent();
+      while (c != null) {
+        if (c instanceof JBTabsImpl && isNavigatable((JBTabsImpl) c)) {
+          return (JBTabsImpl)c;
+        }
+        c = c.getParent();
+      }
+      return null;
+    }
+
+    private static boolean isNavigatable(JBTabsImpl tabs) {
+      final int selectedIndex = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
+      return tabs.isNavigationVisible() && selectedIndex >= 0 && tabs.myNavigationActionsEnabled;
     }
 
     public void reconnect(String actionId) {
@@ -2712,6 +2748,7 @@ public class JBTabsImpl extends JComponent
 
     public final void actionPerformed(final AnActionEvent e) {
       JBTabsImpl tabs = e.getData(NAVIGATION_ACTIONS_KEY);
+      tabs = findNavigatableTabs(tabs);
       if (tabs == null) return;
 
       final int index = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
@@ -2729,11 +2766,11 @@ public class JBTabsImpl extends JComponent
     }
 
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
-      e.getPresentation().setEnabled(tabs.findEnabledForward(selectedIndex + 1) != null);
+      e.getPresentation().setEnabled(tabs.findEnabledForward(selectedIndex, true) != null);
     }
 
     protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
-      tabs.select(tabs.findEnabledForward(selectedIndex + 1), true);
+      tabs.select(tabs.findEnabledForward(selectedIndex, true), true);
     }
   }
 
@@ -2743,11 +2780,11 @@ public class JBTabsImpl extends JComponent
     }
 
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
-      e.getPresentation().setEnabled(tabs.findEnabledBackward(selectedIndex - 1) != null);
+      e.getPresentation().setEnabled(tabs.findEnabledBackward(selectedIndex, true) != null);
     }
 
     protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
-      tabs.select(tabs.findEnabledBackward(selectedIndex - 1), true);
+      tabs.select(tabs.findEnabledBackward(selectedIndex, true), true);
     }
   }
 
