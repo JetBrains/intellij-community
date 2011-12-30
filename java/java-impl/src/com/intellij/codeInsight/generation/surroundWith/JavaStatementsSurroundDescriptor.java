@@ -48,6 +48,11 @@ public class JavaStatementsSurroundDescriptor implements SurroundDescriptor {
     return SURROUNDERS;
   }
 
+  @Override
+  public boolean isExclusive() {
+    return false;
+  }
+
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);

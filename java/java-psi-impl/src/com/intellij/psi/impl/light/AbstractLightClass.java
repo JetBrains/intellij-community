@@ -61,7 +61,7 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  public boolean hasModifierProperty(@Modifier @NonNls @NotNull String name) {
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return getDelegate().hasModifierProperty(name);
   }
 

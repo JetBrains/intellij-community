@@ -87,6 +87,7 @@ public class FileStructurePopup implements Disposable {
   private String myTitle;
   private TreeSpeedSearch mySpeedSearch;
   private SmartTreeStructure myTreeStructure;
+  private JComponent myPanel;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -130,20 +131,36 @@ public class FileStructurePopup implements Disposable {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
-    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
+    mySpeedSearch = new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true) {
+      @Override
+      protected Point getComponentLocationOnScreen() {
+        return myPopup.getContent().getLocationOnScreen();
+      }
+
+      @Override
+      protected Rectangle getComponentVisibleRect() {
+        return myPopup.getContent().getVisibleRect();
+      }
+    };
     myAbstractTreeBuilder = new FilteringTreeBuilder(project, myTree, new FileStructurePopupFilter(), myTreeStructure, null) {
       @Override
       protected boolean validateNode(Object child) {
         return StructureViewComponent.isValid(child);
       }
-    };
 
+      @Override
+      public void revalidateTree() {
+        //myTree.revalidate();
+        //myTree.repaint();
+      }
+    };
+    myAbstractTreeBuilder.setCanYieldUpdate(true);
   }
 
   public void show() {
-    final JComponent panel = createCenterPanel();
-    new MnemonicHelper().register(panel);
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
+    myPanel = createCenterPanel();
+    new MnemonicHelper().register(myPanel);
+    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myPanel, null)
       .setTitle(myTitle)
       .setResizable(true)
       .setFocusable(true)
@@ -168,21 +185,23 @@ public class FileStructurePopup implements Disposable {
         });
       }
     });    
-    final Alarm alarm = new Alarm(myPopup);
+    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
     alarm.addRequest(new Runnable() {
       String filter = "";
       @Override
       public void run() {
+        alarm.cancelAllRequests();
         String prefix = mySpeedSearch.getEnteredPrefix();
+        myTree.getEmptyText().setText("Can't find '" + prefix + "'");
         if (prefix == null) prefix = "";
         
         if (!filter.equals(prefix)) {
           filter = prefix;
-          myAbstractTreeBuilder.refilter();
+          myAbstractTreeBuilder.refilter(null, false, false);
         }
-        alarm.addRequest(this, 300);
+        alarm.addRequest(this, 500);
       }
-    }, 300);
+    }, 500);
   }
 
   private void selectPsiElement(PsiElement element) {
@@ -389,7 +408,7 @@ public class FileStructurePopup implements Disposable {
         final boolean state = chkFilter.isSelected();
         myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
         myTreeStructure.rebuildTree();
-        myAbstractTreeBuilder.refilter(); //todo full update
+        myAbstractTreeBuilder.refilter();
         myAbstractTreeBuilder.queueUpdate();
 
         if (SpeedSearchBase.hasActiveSpeedSearch(myTree)) {
@@ -444,6 +463,15 @@ public class FileStructurePopup implements Disposable {
     }
   }
 
+  private class MyFilter extends ElementFilter.Active.Impl<StructureViewComponent.StructureViewTreeElementWrapper> {
+
+    @Override
+    public boolean shouldBeShowing(StructureViewComponent.StructureViewTreeElementWrapper value) {
+      return true;
+    }
+  }
+
+
   private class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter = null;
     private HashSet<Object> myVisibleParents = new HashSet<Object>();
@@ -455,13 +483,16 @@ public class FileStructurePopup implements Disposable {
                       ? mySpeedSearch.getEnteredPrefix() : null;
       if (!StringUtil.equals(myLastFilter, filter)) {
         myVisibleParents.clear();
+        myLastFilter = filter;
       }
       if (filter != null) {
         if (myVisibleParents.contains(value)) {
           return true;
         }
 
-        final Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(value.toString());
+        final String text = value.toString();
+        if (text == null) return false;
+        final Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
         boolean matches = ranges != null && ranges.iterator().hasNext();
         
         if (matches) {

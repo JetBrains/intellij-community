@@ -52,7 +52,7 @@ public class SameProgressRunner extends GeneralRunner {
 
   @Override
   public void ping() {
-    myTriggerSuspend = false;
+    clearSuspend();
     if (Thread.currentThread().equals(myInitThread)) {
       pingInSourceThread();
     } else {
@@ -66,17 +66,16 @@ public class SameProgressRunner extends GeneralRunner {
         // stop if project is being disposed
         if (! myProject.isOpen()) return;
 
+        if (getSuspendFlag()) {
+          mySemaphore.down();
+          while (getSuspendFlag()) {
+            mySemaphore.waitFor(500);
+          }
+        }
+
         final TaskDescriptor current = getNextMatching();
         if (current == null) {
-          if (myTriggerSuspend) {
-            mySemaphore.down();
-            while (myTriggerSuspend) {
-              mySemaphore.waitFor(500);
-            }
-            continue;
-          } else {
-            return;
-          }
+          return;
         }
 
         if (Where.AWT.equals(current.getWhere())) {

@@ -101,6 +101,12 @@ public class SequentialModalProgressTask extends Task.Modal {
           }
         }
       });
+      //if (ApplicationManager.getApplication().isDispatchThread()) {
+      //  runnable.run();
+      //}
+      //else {
+      //  ApplicationManagerEx.getApplicationEx().suspendReadAccessAndRunWriteAction(runnable);
+      //}
     }
   }
 

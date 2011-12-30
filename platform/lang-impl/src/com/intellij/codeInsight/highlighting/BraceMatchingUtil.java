@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
-import java.util.List;
 
 public class BraceMatchingUtil {
   public static final int UNDEFINED_TOKEN_GROUP = -1;
@@ -52,6 +51,7 @@ public class BraceMatchingUtil {
       return getBraceMatcher(fileType, lbraceType).isPairedBracesAllowedBeforeType(lbraceType, tokenType);
     }
     catch (AbstractMethodError incompatiblePluginThatWeDoNotCare) {
+      // Do nothing
     }
     return true;
   }
@@ -84,7 +84,6 @@ public class BraceMatchingUtil {
     String brace1TagName;
     boolean isStrict;
     boolean isCaseSensitive;
-    boolean isStructural;
     private BraceMatcher myMatcher;
 
     private final Stack<IElementType> myBraceStack = new Stack<IElementType>();
@@ -102,7 +101,6 @@ public class BraceMatchingUtil {
       brace1TagName = myMatcher == null ? null : getTagName(myMatcher, fileText, iterator);
 
       isStrict = myMatcher != null && isStrictTagMatching(myMatcher, fileType, group);
-      isStructural = !isStrict && myMatcher != null && myMatcher.isStructuralBrace(iterator, fileText, fileType);
       isCaseSensitive = myMatcher != null && areTagsCaseSensitive(myMatcher, fileType, group);
     }
 
@@ -138,15 +136,6 @@ public class BraceMatchingUtil {
         }
         String tagName = myMatcher == null ? null : getTagName(myMatcher, fileText, iterator);
         if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
-
-        if (isStructural && (forward ? isRBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType)
-                                     : isLBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType))) {
-
-          if (!myBraceStack.isEmpty() && myMatcher != null && shouldStopMatching(tokenType)) {
-            return false;
-          }
-        }
-
         if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)) {
           myBraceStack.push(tokenType);
           if (isStrict) {
@@ -160,15 +149,23 @@ public class BraceMatchingUtil {
             topTagName = myTagNameStack.pop();
           }
 
-          if (!isStrict && myMatcher != null && myBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType))) {
-            while (!isPairBraces(topTokenType, tokenType, fileType) && !myBraceStack.empty()) {
-              topTokenType = myBraceStack.pop();
+          if (!isStrict) {
+            final IElementType baseType = myMatcher.getOppositeBraceTokenType(tokenType);
+            if (myMatcher != null && myBraceStack.contains(baseType)) {
+              while (!isPairBraces(topTokenType, tokenType, fileType) && !myBraceStack.empty()) {
+                topTokenType = myBraceStack.pop();
+              }
+            }
+            else if (!topTokenType.equals(baseType) && (brace1TagName == null || !brace1TagName.equals(tagName))) {
+              // Ignore non-matched opposite-direction brace.
+              myBraceStack.push(topTokenType);
+              continue;
             }
           }
 
           if (!isPairBraces(topTokenType, tokenType, fileType)
-              || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)
-            ) {
+              || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive))
+          {
             matched = false;
             break;
           }
@@ -180,20 +177,6 @@ public class BraceMatchingUtil {
         }
       }
       return matched;
-    }
-
-    private boolean shouldStopMatching(IElementType tokenType) {
-      if (myMatcher instanceof NontrivialBraceMatcher) {
-        if (((NontrivialBraceMatcher)myMatcher).shouldStopMatch(forward, brace1Token, iterator)) return true;
-        List<IElementType> oppositeElementTypes = ((NontrivialBraceMatcher)myMatcher).getOppositeBraceTokenTypes(tokenType);
-        for (int i = myBraceStack.size() - 1; i >= 0; i--) {
-          if (oppositeElementTypes.contains(myBraceStack.get(i))) {
-            return false;
-          }
-        }
-        return true;
-      }
-      return !myBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType));
     }
   }
 

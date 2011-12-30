@@ -18,6 +18,7 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.StaticMemberProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Condition;
@@ -28,11 +29,14 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ik
@@ -40,7 +44,9 @@ import java.util.List;
  */
 public abstract class MembersGetter {
 
-  public void processMembers(@NotNull final PsiElement context, final Consumer<LookupElement> results, @Nullable final PsiClass where, final boolean acceptMethods, boolean searchInheritors) {
+  public void processMembers(@NotNull final PsiElement context, final Consumer<LookupElement> results, @Nullable final PsiClass where,
+                             final boolean acceptMethods, boolean searchInheritors,
+                             StaticMemberProcessor processor) {
     if (where == null) return;
     
     final List<PsiClass> placeClasses = new ArrayList<PsiClass>();
@@ -51,6 +57,31 @@ public abstract class MembersGetter {
       placeClasses.add(current);
       current = PsiTreeUtil.getContextOfType(current, PsiClass.class);
     }
+
+    final Set<PsiMember> importedStatically = new HashSet<PsiMember>();
+    processor.processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
+      @Override
+      public void consume(PsiMember member, PsiClass psiClass) {
+        importedStatically.add(member);
+      }
+    });
+    
+    final Condition<PsiClass> mayProcessMembers = new Condition<PsiClass>() {
+      @Override
+      public boolean value(PsiClass psiClass) {
+        if (psiClass == null) {
+          return false;
+        }
+
+        psiClass = CompletionUtil.getOriginalOrSelf(psiClass);
+        for (PsiClass placeClass : placeClasses) {
+          if (InheritanceUtil.isInheritorOrSelf(placeClass, psiClass, true)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    };
     
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
 
@@ -59,14 +90,14 @@ public abstract class MembersGetter {
       @Override
       public void consume(PsiType psiType) {
         PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-        if (psiClass != null) {
+        if (mayProcessMembers.value(psiClass)) {
           psiClass = CompletionUtil.getOriginalOrSelf(psiClass);
           for (PsiClass placeClass : placeClasses) {
-            if (InheritanceUtil.isInheritorOrSelf(placeClass, where, true)) {
+            if (InheritanceUtil.isInheritorOrSelf(placeClass, psiClass, true)) {
               return;
             }
           }
-          processClassDeclaredMembers(psiClass, context, acceptMethods, results, resolveHelper);
+          processClassDeclaredMembers(psiClass, context, acceptMethods, results, resolveHelper, importedStatically);
         }
       }
     };
@@ -79,14 +110,14 @@ public abstract class MembersGetter {
   private void processClassDeclaredMembers(PsiClass where,
                                            PsiElement context,
                                            boolean acceptMethods,
-                                           Consumer<LookupElement> results, final PsiResolveHelper resolveHelper) {
+                                           Consumer<LookupElement> results, final PsiResolveHelper resolveHelper, final Set<PsiMember> importedStatically) {
     final FilterScopeProcessor<PsiElement> processor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
     where.processDeclarations(processor, ResolveState.initial(), null, context);
 
     for (final PsiElement result : processor.getResults()) {
       if (result instanceof PsiMember && !(result instanceof PsiClass)) {
         final PsiMember member = (PsiMember)result;
-        if (JavaCompletionUtil.isInExcludedPackage(member)) continue;
+        if (JavaCompletionUtil.isInExcludedPackage(member, false) || importedStatically.contains(member)) continue;
         if (member.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(member, context, null)) {
           if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
           if (result instanceof PsiMethod && acceptMethods) continue;

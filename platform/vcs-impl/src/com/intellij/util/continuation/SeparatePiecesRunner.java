@@ -40,6 +40,7 @@ public class SeparatePiecesRunner extends GeneralRunner {
 
   @CalledInAwt
   public void ping() {
+    clearSuspend();
     if (! ApplicationManager.getApplication().isDispatchThread()) {
       Runnable command = new Runnable() {
         public void run() {
@@ -52,15 +53,14 @@ public class SeparatePiecesRunner extends GeneralRunner {
     }
   }
 
+  @CalledInAwt
   private void pingImpl() {
     while (true) {
     // stop if project is being disposed
       if (! myProject.isDefault() && ! myProject.isOpen()) return;
+      if (getSuspendFlag()) return;
       final TaskDescriptor current = getNextMatching();
       if (current == null) {
-        synchronized (myQueueLock) {
-          myTriggerSuspend = false;
-        }
         return;
       }
 

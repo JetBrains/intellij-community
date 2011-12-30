@@ -212,7 +212,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
     Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
     Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
-    Font boldItalicFont = new Font(editorFontName, Font.BOLD + Font.ITALIC, editorFontSize);
+    Font boldItalicFont = new Font(editorFontName, Font.BOLD | Font.ITALIC, editorFontSize);
 
     myFonts.put(EditorFontType.PLAIN, plainFont);
     myFonts.put(EditorFontType.BOLD, boldFont);
@@ -225,7 +225,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     Font consolePlainFont = new Font(consoleFontName, Font.PLAIN, consoleFontSize);
     Font consoleBoldFont = new Font(consoleFontName, Font.BOLD, consoleFontSize);
     Font consoleItalicFont = new Font(consoleFontName, Font.ITALIC, consoleFontSize);
-    Font consoleBoldItalicFont = new Font(consoleFontName, Font.BOLD + Font.ITALIC, consoleFontSize);
+    Font consoleBoldItalicFont = new Font(consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize);
 
     myFonts.put(EditorFontType.CONSOLE_PLAIN, consolePlainFont);
     myFonts.put(EditorFontType.CONSOLE_BOLD, consoleBoldFont);

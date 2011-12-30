@@ -18,7 +18,6 @@ package com.intellij.codeInsight.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ReflectionCache;

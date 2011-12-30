@@ -56,7 +56,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.content.impl.ContentManagerImpl");
 
   private ContentUI myUI;
-  private ArrayList<Content> myContents;
+  private final ArrayList<Content> myContents;
   private EventListenerList myListeners;
   private List<Content> mySelection = new ArrayList<Content>();
   private final boolean myCanCloseContents;
@@ -651,7 +651,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public void dispose() {
     myDisposed = true;
 
-    myContents = null;
+    myContents.clear();
     mySelection = null;
     myContentWithChangedComponent.clear();
     myUI = null;

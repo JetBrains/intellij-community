@@ -19,9 +19,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -78,7 +76,9 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
         if (intentions != null && !intentions.isEmpty()) {
           HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
           IntentionActionWithTextCaching actionWithTextCaching = step.wrapAction(descriptor, psiFile, psiFile, editor);
-          step = step.getSubStep(actionWithTextCaching, null);
+          if (step.hasSubstep(actionWithTextCaching)) {
+            step = step.getSubStep(actionWithTextCaching, null);
+          }
         }
         JBPopupFactory.getInstance().createListPopup(step).showUnderneathOf(myLabel);
       }

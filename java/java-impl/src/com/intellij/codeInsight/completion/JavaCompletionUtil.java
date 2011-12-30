@@ -45,7 +45,6 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -170,12 +169,15 @@ public class JavaCompletionUtil {
     return type;
   }
 
-  public static boolean isInExcludedPackage(@NotNull final PsiMember member) {
+  public static boolean isInExcludedPackage(@NotNull final PsiMember member, boolean allowInstanceInnerClasses) {
     final String name = StaticImportMethodFix.getMemberQualifiedName(member);
     if (name == null) return false;
 
     if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-      if (member instanceof PsiMethod || member instanceof PsiField || member instanceof PsiClass && member.getContainingClass() != null) {
+      if (member instanceof PsiMethod || member instanceof PsiField) {
+        return false;
+      }
+      if (allowInstanceInnerClasses && member instanceof PsiClass && member.getContainingClass() != null) {
         return false;
       }
     }
@@ -447,7 +449,7 @@ public class JavaCompletionUtil {
           continue;
         }
         if (o instanceof PsiMember) {
-          if (isInExcludedPackage((PsiMember)o)) {
+          if (isInExcludedPackage((PsiMember)o, true)) {
             continue;
           }
           mentioned.add((PsiMember)o);

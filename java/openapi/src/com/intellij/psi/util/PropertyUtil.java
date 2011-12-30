@@ -478,11 +478,15 @@ public class PropertyUtil {
   private static void annotateWithNullableStuff(final PsiModifierListOwner field, final PsiElementFactory factory, final PsiModifierListOwner listOwner)
     throws IncorrectOperationException {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
-    if (manager.isNotNull(field, false)) {
-      annotate(factory, listOwner, manager.getDefaultNotNull());
+    final String notNull = manager.getNotNull(field);
+    if (notNull != null) {
+      annotate(factory, listOwner, notNull);
     }
-    else if (manager.isNullable(field, false)) {
-      annotate(factory, listOwner, manager.getDefaultNullable());
+    else {
+      final String nullable = manager.getNullable(field);
+      if (nullable != null) {
+        annotate(factory, listOwner, nullable);
+      }
     }
   }
 

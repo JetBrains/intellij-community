@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -88,7 +89,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     return className == null ? "" : className;
   }
 
-  public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project) {
+  public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project, GlobalSearchScope scope) {
     String sourceFilePath = getScriptForClassName(refType);
     if (sourceFilePath == null) return null;
 

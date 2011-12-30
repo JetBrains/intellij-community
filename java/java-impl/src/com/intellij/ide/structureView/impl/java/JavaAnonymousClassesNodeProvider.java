@@ -50,7 +50,7 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
         if (elements != null && elements.length > 0) {
           List<JavaAnonymousClassTreeElement> result = new ArrayList<JavaAnonymousClassTreeElement>(elements.length);
           for (PsiElement element : elements) {
-            result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element));
+            result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element, ((JavaClassTreeElement)node).getParents()));
           }
           return result;
         }

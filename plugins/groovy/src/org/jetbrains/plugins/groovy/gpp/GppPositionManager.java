@@ -35,7 +35,7 @@ public class GppPositionManager extends ScriptPositionManagerHelper {
   }
 
   @Override
-  public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project) {
+  public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project, GlobalSearchScope scope) {
     final PsiClass trait =
       JavaPsiFacade.getInstance(project).findClass(StringUtil.trimEnd(runtimeName, TRAIT_IMPL), GlobalSearchScope.allScope(project));
     if (trait != null) {

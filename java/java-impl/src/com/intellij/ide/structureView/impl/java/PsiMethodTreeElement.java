@@ -29,7 +29,9 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement {
   public PsiMethodTreeElement(PsiMethod method, boolean isInherited) {
@@ -56,7 +58,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     element.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override public void visitClass(PsiClass aClass) {
         if (!(aClass instanceof PsiAnonymousClass) && !(aClass instanceof PsiTypeParameter)) {
-          result.add(new JavaClassTreeElement(aClass, isInherited()));
+          result.add(new JavaClassTreeElement(aClass, isInherited(), new HashSet<PsiClass>(Arrays.asList(aClass.getSupers()))));
         }
 
       }

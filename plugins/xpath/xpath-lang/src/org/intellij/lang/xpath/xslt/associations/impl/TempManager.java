@@ -31,6 +31,7 @@ class TempManager extends TransactionalManager {
 
     TempManager(FileAssociationsManagerImpl impl, Project project, VirtualFilePointerManager filePointerManager) {
         myTmp = new FileAssociationsManagerImpl(project, filePointerManager);
+        myTmp.markAsTempCopy();
         myTmp.copyFrom(impl);
 
         myImpl = impl;

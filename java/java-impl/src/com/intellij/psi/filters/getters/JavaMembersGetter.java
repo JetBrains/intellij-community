@@ -16,10 +16,7 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor;
-import com.intellij.codeInsight.completion.SmartCompletionDecorator;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
@@ -47,10 +44,12 @@ public class JavaMembersGetter extends MembersGetter {
     myExpectedType = JavaCompletionUtil.originalize(expectedType);
   }
 
-  public void addMembers(PsiElement position, boolean searchInheritors, final Consumer<LookupElement> results) {
+  public void addMembers(CompletionParameters parameters, boolean searchInheritors, final Consumer<LookupElement> results) {
+    final StaticMemberProcessor processor = JavaGlobalMemberNameCompletionContributor.completeStaticMembers(parameters);
+    final PsiElement position = parameters.getPosition();
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
-      addConstantsFromTargetClass(position, results, searchInheritors);
-      addConstantsFromReferencedClassesInSwitch(position, results);
+      addConstantsFromTargetClass(position, results, searchInheritors, processor);
+      addConstantsFromReferencedClassesInSwitch(position, results, processor);
     }
 
     if (position.getParent().getParent() instanceof PsiSwitchLabelStatement) {
@@ -58,10 +57,10 @@ public class JavaMembersGetter extends MembersGetter {
     }
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(myExpectedType);
-    processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, searchInheritors);
+    processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, searchInheritors, processor);
   }
 
-  private void addConstantsFromReferencedClassesInSwitch(PsiElement position, final Consumer<LookupElement> results) {
+  private void addConstantsFromReferencedClassesInSwitch(PsiElement position, final Consumer<LookupElement> results, final StaticMemberProcessor processor) {
     final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(position);
     final Set<PsiClass> classes = new HashSet<PsiClass>();
     for (PsiField field : fields) {
@@ -76,11 +75,13 @@ public class JavaMembersGetter extends MembersGetter {
             results.consume(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
           }
         }
-      }, aClass, false, false);
+      }, aClass, false, false, processor);
     }
   }
 
-  private void addConstantsFromTargetClass(PsiElement position, Consumer<LookupElement> results, boolean searchInheritors) {
+  private void addConstantsFromTargetClass(PsiElement position,
+                                           Consumer<LookupElement> results,
+                                           boolean searchInheritors, final StaticMemberProcessor processor) {
     PsiElement parent = position.getParent();
     if (!(parent instanceof PsiReferenceExpression)) {
       return;
@@ -93,7 +94,8 @@ public class JavaMembersGetter extends MembersGetter {
       final IElementType op = binaryExpression.getOperationTokenType();
       if (JavaTokenType.EQEQ == op || JavaTokenType.NE == op) {
         if (prev == binaryExpression.getROperand()) {
-          processMembers(position, results, getCalledClass(binaryExpression.getLOperand()), false, searchInheritors);
+          processMembers(position, results, getCalledClass(binaryExpression.getLOperand()), false, searchInheritors,
+                         processor);
         }
         return;
       }
@@ -101,7 +103,7 @@ public class JavaMembersGetter extends MembersGetter {
       parent = parent.getParent();
     }
     if (parent instanceof PsiExpressionList) {
-      processMembers(position, results, getCalledClass(parent.getParent()), false, searchInheritors);
+      processMembers(position, results, getCalledClass(parent.getParent()), false, searchInheritors, processor);
     }
   }
 

@@ -260,7 +260,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
       }
       if (passed > 0) {
         final Color color = suiteState.isPassed() ? TestsUIUtil.PASSED_COLOR : Color.BLACK;
-        myCounters.append(separator + ExecutionBundle.message("junit.runing.info.passed.count.message", passed), new SimpleTextAttributes(Font.BOLD, color));
+        myCounters.append(separator + ExecutionBundle.message("junit.runing.info.passed.count.message", passed), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, color));
       }
     }
 
@@ -271,7 +271,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
       }
       else if (state.isPassed()) {
         myCounters
-          .append(ExecutionBundle.message("junit.runing.info.passed.label"), new SimpleTextAttributes(Font.BOLD, TestsUIUtil.PASSED_COLOR));
+          .append(ExecutionBundle.message("junit.runing.info.passed.label"), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, TestsUIUtil.PASSED_COLOR));
       }
       else if (state.getMagnitude() == PoolOfTestStates.ERROR_INDEX) {
         myCounters.append(ExecutionBundle.message("junit.runing.info.error.tree.node"), DEFECT_ATTRIBUTE);

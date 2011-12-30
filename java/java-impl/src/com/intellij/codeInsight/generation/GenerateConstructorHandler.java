@@ -274,9 +274,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       PsiParameter parm = factory.createParameter(parmName, field.getType());
 
       final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
-      if (nullableManager.isNotNull(field, false)) {
-        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + nullableManager.getDefaultNotNull(), field);
-        parm.getModifierList().addAfter(annotation, null);
+      final String notNull = nullableManager.getNotNull(field);
+      if (notNull != null) {
+        parm.getModifierList().addAfter(factory.createAnnotationFromText("@" + notNull, field), null);
       }
 
       constructor.getParameterList().add(parm);

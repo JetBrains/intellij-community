@@ -353,7 +353,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     rightPabel.add(new JBScrollPane(myChosenQualifiersList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
 
-    final JPanel buttonsPanel = new JPanel(new VerticalFlowLayout(FlowLayout.CENTER, 0, 0, true, false));
+    final JPanel buttonsPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.MIDDLE, 0, 0, true, false));
     myAddQualifierButton = new JButton(">>");
     buttonsPanel.add(myAddQualifierButton);
     myRemoveQualifierButton = new JButton("<<");

@@ -270,17 +270,20 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
             continue;
           }
         }
-        final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
-        if (nullableManager.isNotNull(field, false)) {
-          final PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
-            "@" + nullableManager.getDefaultNotNull(), field);
-          parameter.getModifierList().addBefore(annotation, null);
-        }
+        notNull(project, field, parameter);
         AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, editor);
         created = true;
       }
     }
     return created;
+  }
+
+  private static void notNull(Project project, PsiField field, PsiParameter parameter) {
+    final String notNull = NullableNotNullManager.getInstance(field.getProject()).getNotNull(field);
+    if (notNull != null) {
+      final PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + notNull, field);
+      parameter.getModifierList().addBefore(annotation, null);
+    }
   }
 
   @Nullable
