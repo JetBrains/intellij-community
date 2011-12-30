@@ -139,10 +139,6 @@ public class IntentionDescriptionPanel {
     }
   }
 
-  private void createUIComponents() {
-    // TODO: place custom component creation code here
-  }
-
   private static void showUsages(final JPanel panel,
                                  final TitledSeparator separator,
                                  final List<IntentionUsagePanel> usagePanels,
