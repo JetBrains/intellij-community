@@ -1150,5 +1150,16 @@ class Foo {{
     myFixture.checkResult 'class Foo extends Abcdefg <caret>'
   }
 
+  public void testClassNameInProperties() {
+    myFixture.addClass("package java.langa; public class Abcdefg {}")
+    myFixture.configureByText 'a.properties', 'key.11=java<caret>'
+    type '.'
+    assert lookup
+    type 'lang'
+    assert myFixture.lookupElementStrings.size() >= 2
+    type '.'
+    assert lookup
+  }
+
 
 }

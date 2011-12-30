@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -161,34 +160,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   public void setComparator(final SpeedSearchComparator comparator) {
     myComparator = comparator;
-  }
-
-  public static class SpeedSearchComparator {
-    private NameUtil.MinusculeMatcher myMinusculeMatcher;
-    private String myRecentSearchText;
-    private boolean myShouldMatchFromTheBeginning;
-
-    public SpeedSearchComparator() {
-      this(true);
-    }
-
-    public SpeedSearchComparator(boolean shouldMatchFromTheBeginning) {
-      myShouldMatchFromTheBeginning = shouldMatchFromTheBeginning;
-    }
-
-    @Nullable
-    public Iterable<TextRange> matchingFragments(String pattern, String text) {
-      if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
-        myRecentSearchText = pattern;
-        myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-      }
-      return myMinusculeMatcher.matchingFragments(text);
-    }
-
-
-    public String getRecentSearchText() {
-      return myRecentSearchText;
-    }
   }
 
   @Nullable

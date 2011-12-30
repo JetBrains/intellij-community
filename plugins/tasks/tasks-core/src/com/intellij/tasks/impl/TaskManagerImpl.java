@@ -782,6 +782,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     public boolean clearContext = true;
     public boolean createChangelist = true;
+    public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = true;
     public boolean markAsInProgress = false;
 

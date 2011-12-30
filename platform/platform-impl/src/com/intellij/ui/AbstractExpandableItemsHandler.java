@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -213,7 +214,19 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   private boolean isPopup() {
     Window window = SwingUtilities.getWindowAncestor(myComponent);
-    return window != null && !(window instanceof Dialog || window instanceof Frame);
+    return window != null 
+           && !(window instanceof Dialog || window instanceof Frame)
+           && !isHintsAllowed(window);
+  }
+
+  private static boolean isHintsAllowed(Window window) {
+    if (window instanceof RootPaneContainer) {
+      final JRootPane pane = ((RootPaneContainer)window).getRootPane();
+      if (pane != null) {
+        return Boolean.TRUE.equals(pane.getClientProperty(AbstractPopup.SHOW_HINTS));
+      }
+    }
+    return false;
   }
 
   private void hideHint() {

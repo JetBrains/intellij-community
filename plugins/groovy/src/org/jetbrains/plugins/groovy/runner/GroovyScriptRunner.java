@@ -51,6 +51,10 @@ public abstract class GroovyScriptRunner {
   public abstract void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script,
                                             GroovyScriptRunConfiguration configuration) throws CantRunException;
 
+  public boolean shouldRefreshAfterFinish() {
+    return false;
+  }
+
   protected static String getConfPath(final String groovyHomePath) {
     String confpath = FileUtil.toSystemDependentName(groovyHomePath + "/conf/groovy-starter.conf");
     if (new File(confpath).exists()) {

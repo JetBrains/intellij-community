@@ -22,12 +22,13 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.PlaceProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
 
-public interface VcsContext {
+public interface VcsContext extends PlaceProvider<String> {
   Project getProject();
 
   @Nullable
@@ -44,8 +45,6 @@ public interface VcsContext {
   int getModifiers();
 
   Refreshable getRefreshableDialog();
-
-  String getPlace();
 
   File getSelectedIOFile();
 

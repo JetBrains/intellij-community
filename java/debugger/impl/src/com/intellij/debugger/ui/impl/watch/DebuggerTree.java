@@ -52,7 +52,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
 import com.sun.jdi.*;
 
@@ -119,7 +119,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     myProject = project;
     final TreeSpeedSearch search = new TreeSpeedSearch(this);
-    search.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
+    search.setComparator(new SpeedSearchComparator(false));
   }
 
   protected NodeManagerImpl createNodeManager(Project project) {

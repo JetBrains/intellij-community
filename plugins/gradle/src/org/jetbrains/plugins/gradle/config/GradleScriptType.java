@@ -143,6 +143,11 @@ public class GradleScriptType extends GroovyScriptType {
   public GroovyScriptRunner getRunner() {
     return new GroovyScriptRunner() {
       @Override
+      public boolean shouldRefreshAfterFinish() {
+        return true;
+      }
+
+      @Override
       public boolean isValidModule(@NotNull Module module) {
         GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
         return libraryManager.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());

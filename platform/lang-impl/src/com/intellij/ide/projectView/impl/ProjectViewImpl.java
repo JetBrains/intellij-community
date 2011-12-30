@@ -520,10 +520,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         scrollAction = (ScrollFromSourceAction)action;
         myActionGroup.remove(scrollAction);
       }
-      //if (action instanceof CollapseAllToolbarAction) {
-      //  collapseAction = (CollapseAllToolbarAction)action;
-      //  myActionGroup.remove(collapseAction);
-      //}
+      if (action instanceof CollapseAllToolbarAction) {
+        collapseAction = (CollapseAllToolbarAction)action;
+        collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
+        myActionGroup.remove(collapseAction);
+      }
     }
     decorator.setTitleActions(new AnAction[] {scrollAction, collapseAction});
   }
@@ -684,7 +685,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         AbstractProjectViewPane pane = getCurrentProjectViewPane();
         JTree tree = pane.myTree;
         if (tree != null) {
-          TreeUtil.collapseAll(tree, -1);
+          TreeUtil.collapseAll(tree, 0);
         }
       }
 

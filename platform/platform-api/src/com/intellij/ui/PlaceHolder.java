@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,9 @@
  */
 package com.intellij.ui;
 
-import javax.swing.*;
-
 /**
- * @deprecated use {@link com.intellij.ui.treeStructure.Tree} instead
+ * @author Konstantin Bulenkov
  */
-public class TreeToolTipHandler {
-  public static void install(JTree tree) {
-  }
+public interface PlaceHolder<Place> extends PlaceProvider<Place> {
+  void setPlace(Place place);
 }

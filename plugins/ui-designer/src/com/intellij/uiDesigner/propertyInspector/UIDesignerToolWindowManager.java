@@ -31,7 +31,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
@@ -95,6 +97,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     }
     myPendingListeners.clear();
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myComponentTree);
+    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     scrollPane.setPreferredSize(new Dimension(250, -1));
     myComponentTree.initQuickFixManager(scrollPane.getViewport());
     myPropertyInspector= new PropertyInspector(myProject, myComponentTree);

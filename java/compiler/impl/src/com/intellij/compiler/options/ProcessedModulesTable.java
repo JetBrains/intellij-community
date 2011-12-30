@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
@@ -109,7 +110,7 @@ public class ProcessedModulesTable extends JPanel {
         }
       }
     };
-    speedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
+    speedSearch.setComparator(new SpeedSearchComparator(false));
   }
 
   public void refresh() {

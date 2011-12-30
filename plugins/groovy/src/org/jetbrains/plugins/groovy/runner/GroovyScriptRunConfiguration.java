@@ -21,8 +21,12 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -40,6 +44,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -180,6 +185,24 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
 
     final JavaCommandLineState state = new JavaCommandLineState(environment) {
+      @NotNull
+      @Override
+      protected OSProcessHandler startProcess() throws ExecutionException {
+        final OSProcessHandler handler = super.startProcess();
+        if (scriptRunner.shouldRefreshAfterFinish()) {
+          handler.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void processTerminated(ProcessEvent event) {
+              if (!ApplicationManager.getApplication().isDisposed()) {
+                VirtualFileManager.getInstance().refresh(true);
+              }
+            }
+          });
+        }
+
+        return handler;
+      }
+
       protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = createJavaParametersWithSdk(module);
         ProgramParametersUtil.configureConfiguration(params, GroovyScriptRunConfiguration.this);

@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.PlaceProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ import java.util.Map;
  * @see AnAction#update(AnActionEvent)
  */
 
-public class AnActionEvent {
+public class AnActionEvent implements PlaceProvider<String> {
   private final InputEvent myInputEvent;
   private final ActionManager myActionManager;
   @NotNull private final DataContext myDataContext;

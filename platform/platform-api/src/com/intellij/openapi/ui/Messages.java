@@ -546,7 +546,7 @@ public class Messages {
   public static String showInputDialog(Project project,
                                        @Nls String message,
                                        @Nls String title,
-                                       Icon icon,
+                                       @Nullable Icon icon,
                                        @NonNls String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {

@@ -40,6 +40,10 @@ import java.io.File;
  * @author ilyas
  */
 public class GantRunner extends GroovyScriptRunner {
+  @Override
+  public boolean shouldRefreshAfterFinish() {
+    return true;
+  }
 
   @Override
   public boolean isValidModule(@NotNull Module module) {
