@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -26,25 +28,25 @@ import org.jetbrains.annotations.NotNull;
 public class JavaClassReferenceCompletionContributor extends CompletionContributor {
   @Override
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
-    PsiReference reference = context.getFile().findReferenceAt(context.getStartOffset());
-    if (reference instanceof PsiMultiReference) {
-      for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
-        if (psiReference instanceof JavaClassReference) {
-          reference = psiReference;
-          break;
-        }
-      }
-    }
-    if (reference instanceof JavaClassReference) {
-      final JavaClassReference classReference = (JavaClassReference)reference;
-      if (classReference.getExtendClassNames() != null) {
-        final PsiReference[] references = classReference.getJavaClassReferenceSet().getReferences();
-        final PsiReference last = references[references.length - 1];
-        context.setReplacementOffset(last.getRangeInElement().getEndOffset() + last.getElement().getTextRange().getStartOffset());
-      }
+    JavaClassReference reference = findJavaClassReference(context.getFile(), context.getStartOffset());
+    if (reference != null && reference.getExtendClassNames() != null) {
+      final PsiReference[] references = reference.getJavaClassReferenceSet().getReferences();
+      final PsiReference last = references[references.length - 1];
+      context.setReplacementOffset(last.getRangeInElement().getEndOffset() + last.getElement().getTextRange().getStartOffset());
     }
 
   }
 
-
+  @Nullable 
+  public static JavaClassReference findJavaClassReference(final PsiFile file, final int offset) {
+    PsiReference reference = file.findReferenceAt(offset);
+    if (reference instanceof PsiMultiReference) {
+      for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
+        if (psiReference instanceof JavaClassReference) {
+          return (JavaClassReference)psiReference;
+        }
+      }
+    }
+    return reference instanceof JavaClassReference ? (JavaClassReference)reference : null;
+  }
 }
