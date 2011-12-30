@@ -685,7 +685,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         AbstractProjectViewPane pane = getCurrentProjectViewPane();
         JTree tree = pane.myTree;
         if (tree != null) {
-          TreeUtil.collapseAll(tree, -1);
+          TreeUtil.collapseAll(tree, 0);
         }
       }
 
