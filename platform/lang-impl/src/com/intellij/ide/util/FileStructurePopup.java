@@ -82,7 +82,7 @@ public class FileStructurePopup implements Disposable {
   private final MyTreeActionsOwner myTreeActionsOwner;
   private JBPopup myPopup;
 
-  @NonNls private static final String ourPropertyKey = "FileStructure.narrowDown";
+  @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
   private boolean myShouldNarrowDown = false;
   private Tree myTree;
   private FilteringTreeBuilder myAbstractTreeBuilder;
@@ -390,12 +390,12 @@ public class FileStructurePopup implements Disposable {
   }
 
   private JComponent createSouthPanel() {
-    final JCheckBox checkBox = new JCheckBox(IdeBundle.message("checkbox.narrow.down.the.list.on.typing"));
-    checkBox.setSelected(PropertiesComponent.getInstance().isTrueValue(ourPropertyKey));
+    final JCheckBox checkBox = new JCheckBox(IdeBundle.message("checkbox.narrow.down.on.typing"));
+    checkBox.setSelected(PropertiesComponent.getInstance().getBoolean(narrowDownPropertyKey, true));
     checkBox.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         myShouldNarrowDown = checkBox.isSelected();
-        PropertiesComponent.getInstance().setValue(ourPropertyKey, Boolean.toString(myShouldNarrowDown));
+        PropertiesComponent.getInstance().setValue(narrowDownPropertyKey, Boolean.toString(myShouldNarrowDown));
 
         myAbstractTreeBuilder.queueUpdate();
       }
