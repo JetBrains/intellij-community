@@ -36,12 +36,12 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -175,7 +175,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
       @Override
       public boolean isEntryPoint(PsiElement psiElement) {
-        return ext_src != null && VfsUtil.isAncestor(ext_src, PsiUtil.getVirtualFile(psiElement), false);
+        return ext_src != null && VfsUtilCore.isAncestor(ext_src, PsiUtilCore.getVirtualFile(psiElement), false);
       }
 
       @Override
@@ -211,10 +211,14 @@ public abstract class InspectionTestCase extends PsiTestCase {
     super.tearDown();
   }
 
+  @Override
+  protected void setUpJdk() {
+
+  }
+
   protected Sdk getTestProjectSdk() {
     Sdk sdk = JavaSdkImpl.getMockJdk17();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    //sdk = JavaSdkImpl.getMockJdk("");
     return sdk;
   }
 
