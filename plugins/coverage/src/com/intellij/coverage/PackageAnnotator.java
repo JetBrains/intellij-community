@@ -17,11 +17,8 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.commons.EmptyVisitor;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -351,19 +348,9 @@ public class PackageAnnotator {
         }
       }
     });
-
-    if (content == null) return false;
-    ClassReader reader = new ClassReader(content, 0, content.length);
     final CoverageSuitesBundle coverageSuite = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
     if (coverageSuite == null) return false;
-    SourceLineCounter counter = new SourceLineCounter(new EmptyVisitor(), null, coverageSuite.isTracingEnabled());
-    reader.accept(counter, 0);
-    classCoverageInfo.totalLineCount += counter.getNSourceLines();
-    classCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
-    packageCoverageInfo.totalLineCount += counter.getNSourceLines();
-    if (!counter.isInterface()) {
-      packageCoverageInfo.totalClassCount++;
-    }
-    return counter.getNMethodsWithCode() > 0;
+    return SourceLineCounterUtil
+      .collectNonCoveredClassInfo(classCoverageInfo, packageCoverageInfo, content, coverageSuite.isTracingEnabled());
   }
 }

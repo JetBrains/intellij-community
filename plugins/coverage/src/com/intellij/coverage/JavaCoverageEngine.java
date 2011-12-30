@@ -44,10 +44,7 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
-import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import com.intellij.util.containers.HashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntProcedure;
 import jetbrains.coverage.report.ClassInfo;
 import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.ReportGenerationFailedException;
@@ -56,8 +53,6 @@ import jetbrains.coverage.report.html.HTMLReportBuilder;
 import jetbrains.coverage.report.idea.IDEACoverageData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.commons.EmptyVisitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -262,18 +257,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       return null;
     }
 
-    final ClassReader reader = new ClassReader(content, 0, content.length);
-    final boolean excludeLines = suite.isTracingEnabled();
-    final SourceLineCounter collector = new SourceLineCounter(new EmptyVisitor(), null, excludeLines);
-    reader.accept(collector, 0);
-    final TIntObjectHashMap lines = collector.getSourceLines();
-    lines.forEachKey(new TIntProcedure() {
-      public boolean execute(int line) {
-        line--;
-        uncoveredLines.add(line);
-        return true;
-      }
-    });
+    SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.isTracingEnabled());
     return uncoveredLines;
   }
 
