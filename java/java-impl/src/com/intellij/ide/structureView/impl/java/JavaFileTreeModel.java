@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
@@ -23,15 +24,17 @@ import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.*;
+import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class JavaFileTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider {
+public class JavaFileTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider, PlaceHolder<String> {
   private static final Collection<NodeProvider> NODE_PROVIDERS = Arrays.<NodeProvider>asList(new JavaInheritedMembersNodeProvider(),
                                                                                              new JavaAnonymousClassesNodeProvider());
   private final PsiJavaFile myFile;
+  private String myPlace;
 
   public JavaFileTreeModel(@NotNull PsiJavaFile file) {
     super(file);
@@ -65,7 +68,11 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
 
   @NotNull
   public Sorter[] getSorters() {
-    return new Sorter[]{KindSorter.INSTANCE, VisibilitySorter.INSTANCE, AnonymousClassesSorter.INSTANCE, Sorter.ALPHA_SORTER};
+    return new Sorter[] {
+      ViewStructureAction.isInStructureViewPopup(this) ? KindSorter.POPUP_INSTANCE : KindSorter.INSTANCE,
+      VisibilitySorter.INSTANCE,
+      AnonymousClassesSorter.INSTANCE,
+      Sorter.ALPHA_SORTER};
   }
 
   protected PsiFile getPsiFile() {
@@ -109,5 +116,15 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
   @NotNull
   protected Class[] getSuitableClasses() {
     return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaFile.class};
+  }
+
+  @Override
+  public void setPlace(String place) {
+    myPlace = place;
+  }
+
+  @Override
+  public String getPlace() {
+    return myPlace;
   }
 }
