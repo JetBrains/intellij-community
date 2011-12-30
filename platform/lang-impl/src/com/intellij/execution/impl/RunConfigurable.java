@@ -452,7 +452,13 @@ class RunConfigurable extends BaseConfigurable {
     group.add(new AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
                            ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"), EDIT_DEFAULTS_ICON) {
       public void actionPerformed(final AnActionEvent e) {
-        final TreeNode defaults = TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot);
+        TreeNode defaults = TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot);
+        if (defaults != null) {
+          final ConfigurationType configurationType = getSelectedConfigurationType();
+          if (configurationType != null) {
+            defaults = TreeUtil.findNodeWithObject(configurationType, myTree.getModel(), defaults);
+          }
+        }
         final DefaultMutableTreeNode defaultsNode = (DefaultMutableTreeNode)defaults;
         final TreePath path = TreeUtil.getPath(myRoot, defaultsNode);
         myTree.expandPath(path);
