@@ -167,7 +167,9 @@ public class TypedHandler extends TypedActionHandlerBase {
     for(TypedHandlerDelegate delegate: delegates) {
       final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
       handled = result == TypedHandlerDelegate.Result.STOP;
-      if (result != TypedHandlerDelegate.Result.CONTINUE) break;
+      if (result != TypedHandlerDelegate.Result.CONTINUE) {
+        break;
+      }
     }
 
     if (!handled) {
