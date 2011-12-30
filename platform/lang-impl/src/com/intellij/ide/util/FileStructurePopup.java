@@ -33,6 +33,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -44,7 +45,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
@@ -87,7 +87,7 @@ public class FileStructurePopup implements Disposable {
   private String myTitle;
   private TreeSpeedSearch mySpeedSearch;
   private SmartTreeStructure myTreeStructure;
-  private JComponent myPanel;
+  private int myPrefferedWidth;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -158,9 +158,10 @@ public class FileStructurePopup implements Disposable {
   }
 
   public void show() {
-    myPanel = createCenterPanel();
-    new MnemonicHelper().register(myPanel);
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myPanel, null)
+    JComponent panel = createCenterPanel();
+    new MnemonicHelper().register(panel);
+    boolean shouldSetWidth = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject) == null;
+    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
       .setTitle(myTitle)
       .setResizable(true)
       .setFocusable(true)
@@ -171,20 +172,29 @@ public class FileStructurePopup implements Disposable {
     Disposer.register(myPopup, myDisposable);
     Disposer.register(myPopup, this);
     Disposer.register(myPopup, myAbstractTreeBuilder);
-    myPopup.showInCenterOf(myEditor.getComponent());
-    myAbstractTreeBuilder.expandAll(new Runnable() {
+    myPopup.showInBestPositionFor(myEditor);
+
+    if (shouldSetWidth) {
+      myPopup.setSize(new Dimension(myPrefferedWidth + 10, myPopup.getSize().height));
+    }
+    new Alarm().addRequest(new Runnable() {
       @Override
       public void run() {
-        IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
-        myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
+        myAbstractTreeBuilder.expandAll(new Runnable() {
           @Override
           public void run() {
-            myAbstractTreeBuilder.expandAll(null);                        
-            selectPsiElement(getCurrentElement(getPsiFile(myProject)));
+            IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+            myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
+              @Override
+              public void run() {
+                myAbstractTreeBuilder.expandAll(null);
+                selectPsiElement(getCurrentElement(getPsiFile(myProject)));
+              }
+            });
           }
         });
       }
-    });    
+    }, 100);
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
     alarm.addRequest(new Runnable() {
       String filter = "";
@@ -192,7 +202,7 @@ public class FileStructurePopup implements Disposable {
       public void run() {
         alarm.cancelAllRequests();
         String prefix = mySpeedSearch.getEnteredPrefix();
-        myTree.getEmptyText().setText("Can't find '" + prefix + "'");
+        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ?  "Nothing to show" : "Can't find '" + prefix + "'");
         if (prefix == null) prefix = "";
         
         if (!filter.equals(prefix)) {
@@ -254,8 +264,8 @@ public class FileStructurePopup implements Disposable {
   public void dispose() {
   }
 
-  protected String getDimensionServiceKey() {
-    return DockManager.getInstance(myProject).getDimensionKeyForFocus("#com.intellij.ide.util.FileStructureDialog");
+  protected static String getDimensionServiceKey() {
+    return "StructurePopup";
   }
 
   @Nullable
@@ -324,7 +334,7 @@ public class FileStructurePopup implements Disposable {
     for (FileStructureNodeProvider provider : fileStructureNodeProviders) {
       addCheckbox(comboPanel, provider);
     }
-
+    myPrefferedWidth = Math.max(comboPanel.getPreferredSize().width, 350);
     panel.add(comboPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
     panel.add(createSouthPanel(), BorderLayout.SOUTH);
@@ -463,13 +473,13 @@ public class FileStructurePopup implements Disposable {
     }
   }
 
-  private class MyFilter extends ElementFilter.Active.Impl<StructureViewComponent.StructureViewTreeElementWrapper> {
-
-    @Override
-    public boolean shouldBeShowing(StructureViewComponent.StructureViewTreeElementWrapper value) {
-      return true;
-    }
-  }
+  //private class MyFilter extends ElementFilter.Active.Impl<StructureViewComponent.StructureViewTreeElementWrapper> {
+  //
+  //  @Override
+  //  public boolean shouldBeShowing(StructureViewComponent.StructureViewTreeElementWrapper value) {
+  //    return true;
+  //  }
+  //}
 
 
   private class FileStructurePopupFilter implements ElementFilter {

@@ -112,7 +112,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     refilter(null, true, false);
   }
 
-  public ActionCallback refilter(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
+  public ActionCallback refilter(@Nullable final Object preferredSelection, final boolean adjustSelection, final boolean now) {
     if (myRefilterQueue != null) {
       myRefilterQueue.cancelAllUpdates();
     }
