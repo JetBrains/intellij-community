@@ -48,7 +48,9 @@ public class CopyPasteUtil {
     private void updateByTransferable(final Transferable t) {
       final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
       for (PsiElement psiElement : psiElements) {
-        myUpdater.addSubtreeToUpdateByElement(psiElement);
+        if (!psiElement.getProject().isDisposed()) {
+          myUpdater.addSubtreeToUpdateByElement(psiElement);
+        }
       }
     }
   }
