@@ -62,6 +62,7 @@ public class AbstractPopup implements JBPopup {
 
   private static final Image ourMacCorner = ImageLoader.loadFromResource("/general/macCorner.png");
   private static final Object SUPPRESS_MAC_CORNER = new Object();
+  public static final String SHOW_HINTS = "ShowHints";
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
@@ -320,6 +321,16 @@ public class AbstractPopup implements JBPopup {
     }
 
     return true;
+  }
+
+  public void setShowHints(boolean show) {
+    final Window ancestor = SwingUtilities.getWindowAncestor(myComponent);
+    if (ancestor instanceof RootPaneContainer) {
+      final JRootPane rootPane = ((RootPaneContainer)ancestor).getRootPane();
+      if (rootPane != null) {
+        rootPane.putClientProperty(SHOW_HINTS, Boolean.valueOf(show));
+      }
+    }
   }
 
   public static void suppressMacCornerFor(JComponent popupComponent) {
