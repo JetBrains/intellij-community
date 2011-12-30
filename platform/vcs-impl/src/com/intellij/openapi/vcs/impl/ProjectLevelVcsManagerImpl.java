@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -396,6 +397,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
       editorSettings.setLineNumbersShown(false);
       editorSettings.setFoldingOutlineShown(false);
 
+      ((EditorImpl)editor).getScrollPane().setBorder(null);
       myEditorAdapter = new EditorAdapter(editor, myProject);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(editor.getComponent(), BorderLayout.CENTER);
