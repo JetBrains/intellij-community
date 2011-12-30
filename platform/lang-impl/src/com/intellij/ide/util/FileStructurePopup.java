@@ -171,7 +171,6 @@ public class FileStructurePopup implements Disposable {
       .setFocusable(true)
       .setMovable(true)
       .setCancelKeyEnabled(false)
-      .addUserData("ShowHints")
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
       .createPopup();
     Disposer.register(myPopup, myDisposable);
