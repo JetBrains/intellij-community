@@ -72,7 +72,7 @@ public class HighlightsExtractor {
     if (openTag == -1) {
       return null;
     }
-    if (text.charAt(openTag + 1) == '<') {
+    while (text.charAt(openTag + 1) == '<') {
       openTag++;
     }
     if (text.charAt(openTag + 1) == '/') {
@@ -104,7 +104,7 @@ public class HighlightsExtractor {
         sb.append(text.substring(index, text.length()));
         break;
       }
-      if (text.charAt(from+1) == '<') {
+      while (text.charAt(from+1) == '<') {
         from++;
       }
       int to = text.indexOf('>', from+1);
