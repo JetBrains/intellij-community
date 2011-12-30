@@ -21,10 +21,7 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
 import org.w3c.dom.Node;
 
 import javax.xml.transform.TransformerException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debugger.StyleFrame {
   private final boolean myWithSourceFrame;
@@ -59,7 +56,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
     myCurrentNode = myContext.getCurrentNode();
   }
 
-  private void addVariable(ElemVariable variable, boolean global, List<Debugger.Variable> variables) {
+  private void addVariable(ElemVariable variable, boolean global, Collection<Debugger.Variable> variables) {
     final Debugger.Variable.Kind kind = variable instanceof ElemParam ?
                                         Debugger.Variable.Kind.PARAMETER : Debugger.Variable.Kind.VARIABLE;
 
@@ -94,13 +91,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
   }
 
   private List<Debugger.Variable> collectVariables() {
-    List<Debugger.Variable> variables = new ArrayList<Debugger.Variable>();
-
-    @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
-    final Vector<ElemVariable> globals = myTransformer.getStylesheet().getVariablesAndParamsComposed();
-    for (ElemVariable variable : globals) {
-      addVariable(variable, true, variables);
-    }
+    final Set<Debugger.Variable> variables = new HashSet<Debugger.Variable>();
 
     ElemTemplateElement p = myCurrentElement;
     while (p != null) {
@@ -118,9 +109,15 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
       p = p.getParentElem();
     }
 
-    Collections.sort(variables, VariableComparator.INSTANCE);
+    @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
+    final Vector<ElemVariable> globals = myTransformer.getStylesheet().getVariablesAndParamsComposed();
+    for (ElemVariable variable : globals) {
+      addVariable(variable, true, variables);
+    }
 
-    return variables;
+    final ArrayList<Debugger.Variable> result = new ArrayList<Debugger.Variable>(variables);
+    Collections.sort(result, VariableComparator.INSTANCE);
+    return result;
   }
 
   public String getURI() {
