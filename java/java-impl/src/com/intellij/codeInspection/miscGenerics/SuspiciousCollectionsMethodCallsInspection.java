@@ -21,7 +21,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -37,7 +36,6 @@ import java.util.List;
  * @author ven
  */
 public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection");
   public boolean REPORT_CONVERTIBLE_METHOD_CALLS = true;
 
   @Nullable
@@ -165,6 +163,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
     if (calleeMethod == null) return null;
     PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
 
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (patternMethods) {
       if (patternMethods.isEmpty()) {
         setupPatternMethods(methodCall.getManager(), methodCall.getResolveScope(), patternMethods, indices);
@@ -182,6 +181,8 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
       final PsiClass calleeClass = calleeMethod.getContainingClass();
       PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       final PsiClass patternClass = patternMethod.getContainingClass();
+      assert patternClass != null;
+      assert calleeClass != null;
       substitutor = TypeConversionUtil.getClassSubstitutor(patternClass, calleeClass, substitutor);
       if (substitutor == null) continue;
 
