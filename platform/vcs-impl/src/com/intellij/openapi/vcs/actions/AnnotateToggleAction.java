@@ -310,7 +310,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
           final int size = bgColors.size();
           bgColors.put(author, BG_COLORS[size < length ? size : size % length]);
         }
-        if (!revNumbers.containsKey(revNumber)) {
+        if (revNumber != null && !revNumbers.containsKey(revNumber)) {
           revNumbers.put(revNumber, bgColors.get(author));          
         }
     }
