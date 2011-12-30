@@ -156,8 +156,8 @@ public class BraceMatchingUtil {
                 topTokenType = myBraceStack.pop();
               }
             }
-            else if (!topTokenType.equals(baseType) && (brace1TagName == null || !brace1TagName.equals(tagName))) {
-              // Ignore non-matched opposite-direction brace.
+            else if ((brace1TagName == null || !brace1TagName.equals(tagName)) && !isPairBraces(topTokenType, tokenType, fileType)) {
+              // Ignore non-matched opposite-direction brace for non-strict processing.
               myBraceStack.push(topTokenType);
               continue;
             }
