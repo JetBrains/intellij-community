@@ -79,9 +79,13 @@ public class ConvertUsagesUtil {
         for (String groupStr : usages.split(GROUPS_SEPARATOR.toString())) {
             if (!isEmptyOrSpaces(groupStr)) {
                 final StringPair group = getPair(groupStr, GROUP_SEPARATOR.toString());
-                if (group != null) {
-                    descriptors.putAll(convertValueString(GroupDescriptor.create(group.first), group.second));
+              if (group != null) {
+                final String groupId = group.first;
+                assert groupId != null;
+                if (groupId.length() < GroupDescriptor.MAX_ID_LENGTH) {
+                  descriptors.putAll(convertValueString(GroupDescriptor.create(groupId), group.second));
                 }
+              }
             }
         }
         return descriptors;

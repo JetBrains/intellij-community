@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ public class GroupDescriptor implements Comparable<GroupDescriptor> {
     public static final double DEFAULT_PRIORITY = 0.0;
     public static final double HIGHER_PRIORITY = 100.0;
     public static final double LOWER_PRIORITY = -100.0;
+
+  public static final int MAX_ID_LENGTH = 30;
 
     private final String myId;
     private double myPriority;
