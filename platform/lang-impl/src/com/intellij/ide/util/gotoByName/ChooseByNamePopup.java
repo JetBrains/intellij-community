@@ -17,6 +17,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -95,8 +96,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myShowListForEmptyPattern = showListForEmptyPattern;
   }
 
-  protected boolean isCloseByFocusLost(){
-    return true;
+  protected boolean isCloseByFocusLost() {
+    return UISettings.getInstance().HIDE_NAVIGATION_ON_FOCUS_LOSS;
   }
 
   protected void showList() {
