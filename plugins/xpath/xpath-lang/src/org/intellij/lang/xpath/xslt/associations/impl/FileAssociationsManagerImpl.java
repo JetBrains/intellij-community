@@ -44,11 +44,16 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   private final VirtualFilePointerManager myFilePointerManager;
   private final Map<VirtualFilePointer, VirtualFilePointerContainer> myAssociations;
   private long myModCount;
+  private boolean myTempCopy;
 
   public FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
     myProject = project;
     myFilePointerManager = filePointerManager;
     myAssociations = new LinkedHashMap<VirtualFilePointer, VirtualFilePointerContainer>();
+  }
+  
+  public void markAsTempCopy() {
+    myTempCopy = true;
   }
 
   @SuppressWarnings({"unchecked"})
@@ -114,9 +119,11 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
 
   private void touch() {
     myModCount++;
-    final ProjectView view = ProjectView.getInstance(myProject);
-    if (view != null) {
-      view.refresh();
+    if (!myTempCopy) {
+      final ProjectView view = ProjectView.getInstance(myProject);
+      if (view != null) {
+        view.refresh();
+      }
     }
   }
 
