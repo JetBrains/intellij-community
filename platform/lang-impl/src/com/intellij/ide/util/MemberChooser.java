@@ -328,7 +328,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         return delegate.getText();
       }
     });
-    treeSpeedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
+    treeSpeedSearch.setComparator(new SpeedSearchComparator(false));
 
     treeSpeedSearch.addChangeListener(new PropertyChangeListener() {
       @Override

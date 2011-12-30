@@ -128,7 +128,7 @@ public class RegistryUi implements Disposable {
     tb.setTargetComponent(myTable);
 
     myContent.add(tb.getComponent(), BorderLayout.NORTH);
-    new TableSpeedSearch(myTable).setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
+    new TableSpeedSearch(myTable).setComparator(new SpeedSearchComparator(false));
   }
 
 

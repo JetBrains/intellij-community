@@ -44,6 +44,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.ElementFilter;
@@ -143,7 +144,7 @@ public class FileStructurePopup implements Disposable {
         return myPopup.getContent().getVisibleRect();
       }
     };
-    mySpeedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
+    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
 
     myAbstractTreeBuilder = new FilteringTreeBuilder(project, myTree, new FileStructurePopupFilter(), myTreeStructure, null) {
       @Override
