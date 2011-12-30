@@ -143,6 +143,8 @@ public class FileStructurePopup implements Disposable {
         return myPopup.getContent().getVisibleRect();
       }
     };
+    mySpeedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
+
     myAbstractTreeBuilder = new FilteringTreeBuilder(project, myTree, new FileStructurePopupFilter(), myTreeStructure, null) {
       @Override
       protected boolean validateNode(Object child) {
