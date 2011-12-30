@@ -59,9 +59,10 @@ public final class DataBindingWizard extends AbstractWizard{
   }
 
   protected void updateStep() {
-    super.updateStep();
     // "Finish" button is enabled only at the last step
-    getFinishButton().setEnabled(getCurrentStep() == mySteps.size() - 1);
+    getFinishButton().setEnabled(isLastStep());
+    super.updateStep();
+
   }
 
   protected void doOKAction() {
