@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -133,8 +134,17 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
                                                        final IntArrayList indices) {
     final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
     if (args.length != 1) return null;
+
     PsiType argType = args[0].getType();
-    return getSuspiciousMethodCallMessage(methodCall, argType, reportConvertibleMethodCalls, patternMethods, indices);
+    final String plainMessage = getSuspiciousMethodCallMessage(methodCall, argType, reportConvertibleMethodCalls, patternMethods, indices);
+    if (plainMessage != null) {
+      final PsiType dfaType = GuessManager.getInstance(methodCall.getProject()).getControlFlowExpressionType(args[0]);
+      if (dfaType != null && getSuspiciousMethodCallMessage(methodCall, dfaType, reportConvertibleMethodCalls, patternMethods, indices) == null) {
+        return null;
+      }
+    }
+
+    return plainMessage;
   }
 
   @Nullable
