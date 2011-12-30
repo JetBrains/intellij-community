@@ -63,7 +63,15 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
     myAnimator = new Animator(myName, icons.length, cycleLength, true) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
-        myCurrentIconIndex = (int)frame;
+        if (frame < 0) {
+          myCurrentIconIndex = 0;
+        }
+        else if (frame >= myIcons.length) {
+          myCurrentIconIndex = myIcons.length-1;
+        }
+        else {
+          myCurrentIconIndex = (int)frame;
+        }
         paintImmediately(0, 0, getWidth(), getHeight());
       }
     };
