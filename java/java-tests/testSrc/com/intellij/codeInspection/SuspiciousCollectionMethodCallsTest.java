@@ -1,24 +1,22 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class SuspiciousCollectionMethodCallsTest extends InspectionTestCase {
+public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixtureTestCase {
   private final SuspiciousCollectionsMethodCallsInspection myTool = new SuspiciousCollectionsMethodCallsInspection();
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/suspiciousCalls";
   }
 
   private void doTest() throws Exception {
-    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(myTool);
-    doTest("suspiciousCalls/" + getTestName(false), tool, "java 1.5");
+    myFixture.enableInspections(myTool);
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
-  public void testWildcardCapture() throws Exception { doTest(); }
   public void testWildcard() throws Exception { doTest(); }
   public void testIgnoreConvertible() throws Exception {
     myTool.REPORT_CONVERTIBLE_METHOD_CALLS = false;

@@ -1,3 +1,4 @@
+import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -10,6 +11,6 @@ class Clazz {
   }
 
   void foo(List<? extends Number> c) {
-    c.contains("");
+    c.contains(<warning descr="'List<? extends Number>' may not contain objects of type 'String'">""</warning>);
   }
 }
