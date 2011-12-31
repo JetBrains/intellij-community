@@ -30,7 +30,8 @@ public class GroovyNoVariantsDelegator extends NoVariantsDelegator {
     if (parameters.getCompletionType() == CompletionType.BASIC &&
         parameters.getInvocationCount() <= 1 &&
         JavaCompletionContributor.mayStartClassName(result, false) &&
-        GroovyCompletionContributor.isClassNamePossible(parameters.getPosition())) {
+        GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
+        !MapArgumentCompletionProvider.isMapKeyCompletion(parameters)) {
       final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
 
       GroovyCompletionContributor.addAllClasses(parameters, result,

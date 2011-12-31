@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -70,21 +71,13 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
-    PsiElement mapOrArgumentList;
-
-    PsiElement parent = parameters.getPosition().getParent();
-    if (parent instanceof GrReferenceExpression) {
-      if (((GrReferenceExpression)parent).getQualifier() != null) return;
-      mapOrArgumentList = parent.getParent();
-    }
-    else {
-      mapOrArgumentList = parent.getParent().getParent();
+    PsiElement mapOrArgumentList = findMapOrArgumentList(parameters);
+    if (mapOrArgumentList == null) {
+      return;
     }
 
-    if (mapOrArgumentList instanceof GrListOrMap) {
-      if (((GrListOrMap)mapOrArgumentList).getNamedArguments().length > 0) {
-        result.stopHere();
-      }
+    if (isMapKeyCompletion(parameters)) {
+      result.stopHere();
     }
 
     Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
@@ -111,6 +104,24 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       result.addElement(lookup);
     }
 
+  }
+
+  public static boolean isMapKeyCompletion(CompletionParameters parameters) {
+    PsiElement mapOrArgumentList = findMapOrArgumentList(parameters);
+    return mapOrArgumentList instanceof GrListOrMap && ((GrListOrMap)mapOrArgumentList).getNamedArguments().length > 0;
+  }
+
+  @Nullable
+  private static PsiElement findMapOrArgumentList(CompletionParameters parameters) {
+    PsiElement parent = parameters.getPosition().getParent();
+    if (parent instanceof GrReferenceExpression) {
+      if (((GrReferenceExpression)parent).getQualifier() != null) return null;
+      return parent.getParent();
+    }
+    if (parent == null || parent.getParent() == null) {
+      return null;
+    }
+    return parent.getParent().getParent();
   }
 
   private static Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
@@ -145,7 +156,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return GrNamedArgument.EMPTY_ARRAY;
   }
 
-  private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(PsiElement mapOrArgumentList) {
+  private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
     PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
     if (argumentList instanceof GrArgumentList) {
       if (mapOrArgumentList instanceof GrListOrMap) {

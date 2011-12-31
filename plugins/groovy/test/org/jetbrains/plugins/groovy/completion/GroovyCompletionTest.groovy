@@ -840,6 +840,11 @@ return foo()"""
     doVariantableTest 'foo1', 'foo3', 'foo4', 'Foo5', 'Foo7'
   }
 
+  public void testNoClassesAsMapKeys() throws Exception {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    doVariantableTest()
+  }
+
   public void testNamedArgsUsedInFile() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     doVariantableTest 'false', 'foo2', 'float', 'foo1', 'foo3', 'foo4', 'foo5'
