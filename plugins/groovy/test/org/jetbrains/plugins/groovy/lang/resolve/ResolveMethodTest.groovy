@@ -277,10 +277,11 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testTupleConstructor() {
     myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
-    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; int b }')
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; final int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     def target = ((GrNewExpression) ref.element.parent).advancedResolve().element
     assert target instanceof PsiMethod
+    assert target.parameterList.parametersCount == 2
     assert target.navigationElement instanceof PsiClass
   }
 
