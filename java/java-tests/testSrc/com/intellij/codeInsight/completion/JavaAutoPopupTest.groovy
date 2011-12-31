@@ -720,7 +720,7 @@ class Foo {
     joinAutopopup()
     joinCompletion()
     myFixture.type '\n'
-    myFixture.checkResult(" class Foo { { int newa; new <caret>} } ")
+    myFixture.checkResult(" class Foo { { int newa; new <caret> } } ")
     assert !lookup
   }
 

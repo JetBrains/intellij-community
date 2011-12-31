@@ -145,7 +145,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         if (isInline) {
           result.addElement(TailTypeDecorator.withInsertHandler(LookupElementBuilder.create(s), new InlineInsertHandler()));
         } else {
-          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SPACE));
+          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.INSERT_SPACE));
         }
       }
     }

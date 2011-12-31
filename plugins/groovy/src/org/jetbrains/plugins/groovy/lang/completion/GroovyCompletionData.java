@@ -77,15 +77,15 @@ public class GroovyCompletionData {
     
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&").accepts(position)) {
       if (suggestPackage(position)) {
-        result.addElement(keyword(PsiKeyword.PACKAGE, TailType.SPACE));
+        result.addElement(keyword(PsiKeyword.PACKAGE, TailType.INSERT_SPACE));
       }
       if (suggestImport(position)) {
-        result.addElement(keyword(PsiKeyword.IMPORT, TailType.SPACE));
+        result.addElement(keyword(PsiKeyword.IMPORT, TailType.INSERT_SPACE));
       }
 
       addTypeDefinitionKeywords(result, position);
       for (String keyword : addExtendsImplements(position)) {
-        result.addElement(keyword(keyword, TailType.SPACE));
+        result.addElement(keyword(keyword, TailType.INSERT_SPACE));
       }
 
       registerControlCompletion(position, result);
@@ -144,7 +144,7 @@ public class GroovyCompletionData {
       addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM);
     }
     if (afterAtInType(position)) {
-      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.SPACE));
+      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.INSERT_SPACE));
     }
   }
 
@@ -185,7 +185,7 @@ public class GroovyCompletionData {
 
   public static void addKeywords(CompletionResultSet result, boolean space, String... keywords) {
     for (String s : keywords) {
-      result.addElement(keyword(s, space ? TailType.SPACE : TailType.NONE));
+      result.addElement(keyword(s, space ? TailType.INSERT_SPACE : TailType.NONE));
     }
   }
 
@@ -201,7 +201,7 @@ public class GroovyCompletionData {
       addKeywords(result, true, controlKeywords);
     }
     if (inCaseSection(context)) {
-      result.addElement(keyword("case", TailType.SPACE));
+      result.addElement(keyword("case", TailType.INSERT_SPACE));
       result.addElement(keyword("default", TailType.CASE_COLON));
     }
     if (afterTry(context)) {
@@ -217,7 +217,7 @@ public class GroovyCompletionData {
     if (PlatformPatterns.psiElement(GroovyDocTokenTypes.mGDOC_TAG_NAME).andNot(PlatformPatterns.psiElement().afterLeaf(".")).accepts(position)) {
       String[] tags = position.getParent() instanceof GrDocInlinedTag ? INLINED_DOC_TAGS : DOC_TAGS;
       for (String docTag : tags) {
-        result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailType.SPACE));
+        result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailType.INSERT_SPACE));
       }
     }
   }

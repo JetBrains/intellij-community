@@ -88,6 +88,7 @@ public abstract class TailType {
     }
   };
   public static final TailType SPACE = new CharTailType(' ');
+  public static final TailType INSERT_SPACE = new CharTailType(' ', false);
   public static final TailType DOT = new CharTailType('.');
 
   public static final TailType CASE_COLON = new CharTailType(':');

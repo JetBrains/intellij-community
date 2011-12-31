@@ -1,3 +1,3 @@
-class Foo<T extends <caret>A> {
+class Foo<T extends <caret> A> {
 
 }
