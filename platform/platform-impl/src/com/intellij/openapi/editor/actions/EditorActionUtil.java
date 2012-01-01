@@ -184,7 +184,6 @@ public class EditorActionUtil {
   public static boolean isWordStart(CharSequence text, int offset, boolean isCamel) {
     char prev = offset > 0 ? text.charAt(offset - 1) : 0;
     char current = text.charAt(offset);
-    char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0;
 
     final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
     final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
@@ -192,13 +191,8 @@ public class EditorActionUtil {
       return true;
     }
 
-    if (isCamel) {
-      if (firstIsIdentifierPart && secondIsIdentifierPart &&
-          (isLowerCaseOrDigit(prev) && Character.isUpperCase(current) ||
-           prev == '_' && current != '_' ||
-           Character.isUpperCase(prev) && Character.isUpperCase(current) && isLowerCaseOrDigit(next))) {
-        return true;
-      }
+    if (isCamel && firstIsIdentifierPart && secondIsIdentifierPart && isHumpBound(text, offset, true)) {
+      return true;
     }
 
     return (Character.isWhitespace(prev) || firstIsIdentifierPart) &&
@@ -728,5 +722,18 @@ public class EditorActionUtil {
       return start <= offset && offset < end;
     }
     return true;
+  }
+
+  public static boolean isHumpBound(CharSequence editorText, int offset, boolean start) {
+    final char prevChar = editorText.charAt(offset - 1);
+    final char curChar = editorText.charAt(offset);
+    final char nextChar = offset + 1 < editorText.length() ? editorText.charAt(offset + 1) : 0; // 0x00 is not lowercase.
+
+    return isLowerCaseOrDigit(prevChar) && Character.isUpperCase(curChar) ||
+        start && prevChar == '_' && curChar != '_' ||
+        !start && prevChar != '_' && curChar == '_' ||
+        start && prevChar == '$' && Character.isLetterOrDigit(curChar) ||
+        !start && Character.isLetterOrDigit(prevChar) && curChar == '$' ||
+        Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(nextChar);
   }
 }

@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
@@ -89,11 +90,11 @@ public class SelectWordUtil {
       int end = cursorOffset + 1;
       final int textLen = editorText.length();
 
-      while (start > 0 && Character.isJavaIdentifierPart(editorText.charAt(start - 1)) && !isWordBound(editorText, start)) {
+      while (start > 0 && Character.isJavaIdentifierPart(editorText.charAt(start - 1)) && !EditorActionUtil.isHumpBound(editorText, start, true)) {
         start--;
       }
 
-      while (end < textLen && Character.isJavaIdentifierPart(editorText.charAt(end)) && !isWordBound(editorText, end)) {
+      while (end < textLen && Character.isJavaIdentifierPart(editorText.charAt(end)) && !EditorActionUtil.isHumpBound(editorText, end, false)) {
         end++;
       }
 
@@ -103,19 +104,6 @@ public class SelectWordUtil {
     }
 
     return null;
-  }
-
-  private static boolean isWordBound(CharSequence editorText, int offset) {
-    final char prevChar = editorText.charAt(offset - 1);
-    final char curChar = editorText.charAt(offset);
-    final char nextChar = offset + 1 < editorText.length() ? editorText.charAt(offset + 1) : 0; // 0x00 is not lowercase.
-
-    return Character.isLowerCase(prevChar) && Character.isUpperCase(curChar) ||
-        prevChar == '_' && curChar != '_' ||
-        prevChar != '_' && curChar == '_' ||
-        prevChar == '$' && Character.isLetterOrDigit(curChar) ||
-        Character.isLetterOrDigit(prevChar) && curChar == '$' ||
-        Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(nextChar);
   }
 
   @Nullable
