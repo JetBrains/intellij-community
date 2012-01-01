@@ -79,7 +79,6 @@ public class SelectWordHandler extends EditorActionHandler {
   }
 
   private static void doAction(Editor editor, PsiFile file) {
-    CharSequence text = editor.getDocument().getCharsSequence();
 
     if (file instanceof PsiCompiledElement) {
       file = (PsiFile)((PsiCompiledElement)file).getMirror();
@@ -87,12 +86,7 @@ public class SelectWordHandler extends EditorActionHandler {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.select.word");
 
-    int caretOffset = editor.getCaretModel().getOffset();
-
-    if (caretOffset > 0 && caretOffset < editor.getDocument().getTextLength() &&
-        !Character.isJavaIdentifierPart(text.charAt(caretOffset)) && Character.isJavaIdentifierPart(text.charAt(caretOffset - 1))) {
-      caretOffset--;
-    }
+    int caretOffset = adjustCaretOffset(editor);
 
     PsiElement element = findElementAt(file, caretOffset);
 
@@ -144,7 +138,7 @@ public class SelectWordHandler extends EditorActionHandler {
 
     final Ref<TextRange> minimumRange = new Ref<TextRange>(new TextRange(0, editor.getDocument().getTextLength()));
 
-    SelectWordUtil.processRanges(element, text, caretOffset, editor, new Processor<TextRange>() {
+    SelectWordUtil.processRanges(element, editor.getDocument().getCharsSequence(), caretOffset, editor, new Processor<TextRange>() {
       @Override
       public boolean process(TextRange range) {
         if (range.contains(selectionRange) && !range.equals(selectionRange)) {
@@ -159,6 +153,24 @@ public class SelectWordHandler extends EditorActionHandler {
 
     TextRange range = minimumRange.get();
     editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+  }
+
+  private static int adjustCaretOffset(Editor editor) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    if (caretOffset == 0) {
+      return caretOffset;
+    }
+
+    CharSequence text = editor.getDocument().getCharsSequence();
+    char prev = text.charAt(caretOffset - 1);
+    if (caretOffset < text.length() &&
+        !Character.isJavaIdentifierPart(text.charAt(caretOffset)) && Character.isJavaIdentifierPart(prev)) {
+      return caretOffset - 1;
+    }
+    if ((caretOffset == text.length() || Character.isWhitespace(text.charAt(caretOffset))) && !Character.isWhitespace(prev)) {
+      return caretOffset - 1;
+    }
+    return caretOffset;
   }
 
   @Nullable
