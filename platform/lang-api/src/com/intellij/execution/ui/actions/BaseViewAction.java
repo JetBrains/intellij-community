@@ -79,6 +79,7 @@ public abstract class BaseViewAction extends DumbAwareAction {
     return cell != null && cell.isDetached();
   }
 
+  @Nullable
   protected static Tab getTabFor(final ViewContext context, final Content[] content) {
     Grid grid = context.findGridFor(content[0]);
     return context.getTabFor(grid);
