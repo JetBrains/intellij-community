@@ -33,10 +33,10 @@ import java.util.Collection;
 public class JavaFileTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider, PlaceHolder<String> {
   private static final Collection<NodeProvider> NODE_PROVIDERS = Arrays.<NodeProvider>asList(new JavaInheritedMembersNodeProvider(),
                                                                                              new JavaAnonymousClassesNodeProvider());
-  private final PsiJavaFile myFile;
+  private final PsiClassOwner myFile;
   private String myPlace;
 
-  public JavaFileTreeModel(@NotNull PsiJavaFile file) {
+  public JavaFileTreeModel(@NotNull PsiClassOwner file) {
     super(file);
     myFile = file;
   }
@@ -94,19 +94,17 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
     if (super.isSuitable(element)) {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
-        PsiElement parent = method.getParent();
-        if (parent instanceof PsiClass) {
-          return ((PsiClass)parent).getQualifiedName() != null;
-        }
+        PsiClass parent = method.getContainingClass();
+        return parent != null && parent.getQualifiedName() != null;
       }
-      else if (element instanceof PsiField) {
+
+      if (element instanceof PsiField) {
         PsiField field = (PsiField)element;
-        PsiElement parent = field.getParent();
-        if (parent instanceof PsiClass) {
-          return ((PsiClass)parent).getQualifiedName() != null;
-        }
+        PsiClass parent = field.getContainingClass();
+        return parent != null && parent.getQualifiedName() != null;
       }
-      else if (element instanceof PsiClass) {
+
+      if (element instanceof PsiClass) {
         return ((PsiClass)element).getQualifiedName() != null;
       }
     }
