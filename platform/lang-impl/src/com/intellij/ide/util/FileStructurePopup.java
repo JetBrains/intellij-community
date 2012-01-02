@@ -33,10 +33,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -162,6 +159,8 @@ public class FileStructurePopup implements Disposable {
   }
 
   public void show() {
+    final ActionCallback treeHasBuilt = new ActionCallback();
+    IdeFocusManager.getInstance(myProject).typeAheadUntil(treeHasBuilt);
     JComponent panel = createCenterPanel();
     new MnemonicHelper().register(panel);
     boolean shouldSetWidth = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject) == null;
@@ -182,24 +181,19 @@ public class FileStructurePopup implements Disposable {
     if (shouldSetWidth) {
       myPopup.setSize(new Dimension(myPrefferedWidth + 10, myPopup.getSize().height));
     }
-    new Alarm().addRequest(new Runnable() {
+    myAbstractTreeBuilder.expandAll(new Runnable() {
       @Override
       public void run() {
-        myAbstractTreeBuilder.expandAll(new Runnable() {
+        IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+        myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
           @Override
           public void run() {
-            IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
-            myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
-              @Override
-              public void run() {
-                myAbstractTreeBuilder.expandAll(null);
-                selectPsiElement(getCurrentElement(getPsiFile(myProject)));
-              }
-            });
+            selectPsiElement(getCurrentElement(getPsiFile(myProject)));
+            treeHasBuilt.setDone();
           }
         });
       }
-    }, 100);
+    });
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
     alarm.addRequest(new Runnable() {
       String filter = "";
@@ -209,7 +203,7 @@ public class FileStructurePopup implements Disposable {
         String prefix = mySpeedSearch.getEnteredPrefix();
         myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ?  "Nothing to show" : "Can't find '" + prefix + "'");
         if (prefix == null) prefix = "";
-        
+
         if (!filter.equals(prefix)) {
           filter = prefix;
           myAbstractTreeBuilder.refilter(null, false, false);
