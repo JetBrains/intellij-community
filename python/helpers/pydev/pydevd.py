@@ -905,6 +905,9 @@ class PyDB:
         except SystemExit:
             return None
 
+        except TypeError:
+            return None
+
         except Exception:
             #Log it
             if traceback is not None:
