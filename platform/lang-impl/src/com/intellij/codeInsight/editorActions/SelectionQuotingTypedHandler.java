@@ -63,9 +63,14 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       final char c2 = getMatchingDelimiter(c);
       final String newText = String.valueOf(c) + selectedText + c2;
       EditorModificationUtil.insertStringAtCaret(editor, newText);
-      if (Registry.is("editor.smarterSelectionQuoting") && !replace) {
+      if (Registry.is("editor.smarterSelectionQuoting")) {
         myReplacedTextRange = new TextRange(caretOffset + 1, caretOffset + newText.length() - 1);
-        myCaretPosition += 1;
+        if (!replace || myCaretPosition == caretOffset) {
+          myCaretPosition++;
+        }
+        else if (myCaretPosition == caretOffset + newText.length()) {
+          myCaretPosition--;
+        }
       } else {
         myReplacedTextRange = new TextRange(caretOffset, caretOffset + newText.length());
       }
