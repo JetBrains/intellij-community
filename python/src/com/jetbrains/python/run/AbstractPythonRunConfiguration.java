@@ -72,6 +72,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
       public List<Module> getValidModules() {
         return AbstractPythonRunConfiguration.this.getValidModules();
       }
+
+      @Override
+      public boolean showConfigureInterpretersLink() {
+        return false;
+      }
     };
   }
 

@@ -11,4 +11,5 @@ import java.util.List;
 public interface PyCommonOptionsFormData {
   Project getProject();
   List<Module> getValidModules();
+  boolean showConfigureInterpretersLink();
 }

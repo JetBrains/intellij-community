@@ -67,6 +67,11 @@ public class PyConsoleSpecificOptionsPanel {
       public List<Module> getValidModules() {
         return AbstractPythonRunConfiguration.getValidModules(project);
       }
+
+      @Override
+      public boolean showConfigureInterpretersLink() {
+        return true;
+      }
     };
   }
 
