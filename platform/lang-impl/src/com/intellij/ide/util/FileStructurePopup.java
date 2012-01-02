@@ -63,6 +63,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -169,6 +171,7 @@ public class FileStructurePopup implements Disposable {
       .setResizable(true)
       .setFocusable(true)
       .setMovable(true)
+      //.setCancelOnClickOutside(false) //for debug and snapshots
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
       .createPopup();
@@ -325,6 +328,15 @@ public class FileStructurePopup implements Disposable {
         }
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), myTree);
+    
+    myTree.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() > 1) {          
+          navigateSelectedElement();
+        }
+      }
+    });
 
     for(FileStructureFilter filter: fileStructureFilters) {
       addCheckbox(comboPanel, filter);
