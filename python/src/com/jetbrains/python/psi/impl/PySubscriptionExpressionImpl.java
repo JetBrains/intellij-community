@@ -44,7 +44,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     if (ref != null) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof Callable) {
-        res = ((Callable)resolved).getReturnType(context, null);
+        res = ((Callable)resolved).getReturnType(context, this);
       }
     }
     if (PyTypeChecker.isUnknown(res) || res instanceof PyNoneType) {

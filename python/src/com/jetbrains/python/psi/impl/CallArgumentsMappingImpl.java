@@ -29,8 +29,8 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
 
   public CallArgumentsMappingImpl(PyArgumentList arglist) {
     // full of empty containers
-    myPlainMappedParams = new HashMap<PyExpression, PyNamedParameter>();
-    myNestedMappedParams = new HashMap<PyExpression, List<PyNamedParameter>>();
+    myPlainMappedParams = new LinkedHashMap<PyExpression, PyNamedParameter>();
+    myNestedMappedParams = new LinkedHashMap<PyExpression, List<PyNamedParameter>>();
     myTupleMappedParams = new ArrayList<PyNamedParameter>();
     myKwdMappedParams = new ArrayList<PyNamedParameter>();
     myUnmappedParams = new ArrayList<PyNamedParameter>();
@@ -81,7 +81,7 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     }
     // prepare parameter slots
     final PyParameter[] parameters = myMarkedCallee.getCallable().getParameterList().getParameters();
-    Map<PyNamedParameter, PyExpression> slots = new HashMap<PyNamedParameter, PyExpression>();
+    Map<PyNamedParameter, PyExpression> slots = new LinkedHashMap<PyNamedParameter, PyExpression>();
     PyNamedParameter kwd_par = null;   // **param
     PyNamedParameter tuple_par = null; // *param
     Set<PyExpression> mapped_args = new HashSet<PyExpression>();
@@ -182,7 +182,7 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     }
     boolean seen_named_args = false;
     // map named args to named params if possible
-    Map<String, PyNamedParameter> parameter_by_name = new HashMap<String, PyNamedParameter>();
+    Map<String, PyNamedParameter> parameter_by_name = new LinkedHashMap<String, PyNamedParameter>();
     for (PyParameter par : parameters) {
       PyNamedParameter n_par = par.getAsNamed();
       if (n_par != null) parameter_by_name.put(n_par.getName(), n_par);

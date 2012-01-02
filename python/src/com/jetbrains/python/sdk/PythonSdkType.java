@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -294,7 +295,7 @@ public class PythonSdkType extends SdkType {
 
   // /home/joe/foo -> ~/foo
   protected static String shortenDirName(String path) {
-    String home = System.getProperty("user.home");
+    String home = SystemProperties.getUserHome();
     if (path.startsWith(home)) {
       return "~" + path.substring(home.length());
     }

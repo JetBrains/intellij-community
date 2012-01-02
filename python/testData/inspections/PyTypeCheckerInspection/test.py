@@ -84,7 +84,7 @@ def f_list_tuple(spam, eggs):
 
 def test_list_tuple():
     f_list_tuple(<warning descr="Expected type 'list of one of (str, unicode)', got 'list of int' instead">[1, 2, 3]</warning>,
-                 (<warning descr="Expected type 'tuple(bool,int,unicode)', got 'tuple(bool,int,str)' instead">False, 2, ''</warning>))
+                 (<warning descr="Expected type '(bool,int,unicode)', got '(bool,int,str)' instead">False, 2, ''</warning>))
 
 
 def test_builtin_numerics():
@@ -342,6 +342,16 @@ def test_right_operators():
     ]
 
 
+def test_string_integer():
+    print('foo' + 'bar')
+    print(2 + 3)
+    print('foo' + <warning descr="Expected type 'one of (str, unicode)', got 'int' instead">3</warning>)
+    print(3 + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>)
+    print('foo' + 'bar' * 3)
+    print('foo' + 3 * 'bar')
+    print('foo' + <warning descr="Expected type 'one of (str, unicode)', got 'int' instead">2 * 3</warning>)
+
+
 def test_isinstance_implicit_self_types():
     x = 1
     if isinstance(x, unicode):
@@ -415,11 +425,98 @@ def test_union_return_types():
     f3(<warning descr="Expected type 'int', got 'str' instead">x1.strip()</warning>)
 
 
-def test_enumerate_iterator(xs):
+def test_enumerate_iterator():
     def f(x):
         """
         :type x: str
         """
         pass
+    xs = [1.1, 2.2, 3.3]
     for i, x in enumerate(xs):
         f(<warning descr="Expected type 'str', got 'int' instead">i</warning>)
+        f(<warning descr="Expected type 'str', got 'float' instead">x</warning>)
+
+
+def test_generic_user_class():
+    class User1(object):
+        def __init__(self, x):
+            """
+            :type x: T
+            :rtype: User1 of T
+            """
+            self.x = x
+
+        def get(self):
+            """
+            :rtype: T
+            """
+            return self.x
+
+        def put(self, value):
+            """
+            :type value: T
+            """
+            self.x = value
+
+    c = User1(10)
+    print(c.get() + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>)
+    c.put(14)
+    c.put(<weak_warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">'foo'</weak_warning>)
+
+
+def test_generic_user_functions():
+    def f1(xs):
+        """
+        :type xs: collections.Iterable of T
+        """
+        return iter(xs).next()
+
+    def f2(x, xs, z):
+        """
+        :type x: T
+        :type xs: list of T
+        :type z: U
+        """
+        return x in xs
+
+    def id(x):
+        """
+        :type x: T
+        :rtype: T
+        """
+        return x
+
+    def f3(x, y, z):
+        """
+        :type x: T
+        :type y: U
+        :type z: V
+        """
+        r1 = id(x)
+        r2 = id(y)
+        r3 = id(z)
+        return r1, r2, r3
+
+    def f4(x):
+        """
+        :type x: (bool, int, str)
+        """
+
+    result = f1([1, 2, 3])
+    print(result)
+    print(result + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>)
+
+    f2(1, <weak_warning descr="Expected type 'list of int' (matched generic type 'list of T'), got 'list of str' instead">['foo']</weak_warning>, 'bar')
+
+    result = f3(1, 'foo', True)
+    f4(<warning descr="Expected type '(bool,int,str)', got '(int,str,bool)' instead">result</warning>)
+
+
+def test_dict_generics(d):
+    """
+    :type d: dict from int to unicode
+    """
+    xs = d.items()
+    d2 = dict(xs)
+    for k, v in d2.items():
+        print k + <warning descr="Expected type 'one of (int, long, float, complex)', got 'unicode' instead">v</warning>

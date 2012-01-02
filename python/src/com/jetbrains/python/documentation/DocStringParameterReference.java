@@ -21,8 +21,12 @@ import java.util.Set;
  * @author yole
  */
 public class DocStringParameterReference extends PsiReferenceBase<PsiElement> {
-  public DocStringParameterReference(PsiElement element, TextRange range) {
+  String myType;
+  public DocStringParameterReference(PsiElement element,
+                                     TextRange range,
+                                     String refType) {
     super(element, range);
+    myType = refType;
   }
 
   @Override
@@ -57,7 +61,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> {
       if (expression != null) {
         PsiReference[] references = expression.getReferences();
         for (PsiReference ref : references) {
-          if (ref instanceof DocStringParameterReference)
+          if (ref instanceof DocStringParameterReference && ((DocStringParameterReference)ref).getType().equals(myType))
             usedParameters.add(ref.getCanonicalText());
         }
       }
@@ -69,5 +73,9 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> {
       return ArrayUtil.toObjectArray(result);
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+  
+  public String getType() {
+    return myType;
   }
 }

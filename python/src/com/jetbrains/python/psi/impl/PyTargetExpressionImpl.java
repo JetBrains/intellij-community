@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -280,7 +281,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           }
           if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
             final PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
-            if (next != null) {
+            if (next instanceof PyFunctionImpl) {
+              type = ((PyFunctionImpl)next).getReturnType(context, source, new HashMap<PyExpression, PyNamedParameter>());
+            }
+            else if (next != null) {
               type = next.getReturnType(context, null);
             }
           }

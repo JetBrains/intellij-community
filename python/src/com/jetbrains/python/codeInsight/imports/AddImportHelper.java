@@ -190,7 +190,7 @@ public class AddImportHelper {
         }
         PyImportElement importElement = PyElementGenerator.getInstance(file.getProject()).createImportElement(name);
         existingImport.add(importElement);
-        return false;
+        return true;
       }
     }
     addImportFromStatement(file, path, name, asName, priority);

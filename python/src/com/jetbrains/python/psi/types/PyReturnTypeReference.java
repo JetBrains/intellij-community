@@ -1,8 +1,12 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.Callable;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author yole
@@ -21,12 +25,24 @@ public class PyReturnTypeReference extends PyTypeReferenceImpl {
   }
 
   public String getName() {
-    return "return type of " + myCallable.getPresentation().getPresentableText();
+    final ItemPresentation presentation = myCallable.getPresentation();
+    if (presentation != null) {
+      return "return type of " + presentation.getPresentableText();
+    }
+    return "return type of " + myCallable.toString();
   }
 
   @Override
   public boolean isBuiltin(TypeEvalContext context) {
-    PyType type = resolve(null, context);
+    return isBuiltin(context, new HashSet<PyType>());
+  }
+
+  private boolean isBuiltin(TypeEvalContext context, Set<PyType> evaluated) {
+    final PyType type = resolve(null, context);
+    if (evaluated.contains(type)) {
+      return false;
+    }
+    evaluated.add(type);
     return type != null && type.isBuiltin(context);
   }
 

@@ -31,4 +31,9 @@ public class PyExpressionSurroundDescriptor implements SurroundDescriptor {
   public Surrounder[] getSurrounders() {
     return SURROUNDERS;
   }
+
+  @Override
+  public boolean isExclusive() {
+    return false;
+  }
 }

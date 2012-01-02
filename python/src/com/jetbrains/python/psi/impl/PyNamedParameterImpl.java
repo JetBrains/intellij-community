@@ -13,13 +13,11 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,6 +159,20 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
           // must be 'self' or 'cls'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
+            PyType initType = null;
+            final PyFunction init = containingClass.findInitOrNew(true);
+            if (init != null) {
+              initType = init.getReturnType(context, null);
+            }
+            else {
+              final PyStdlibTypeProvider stdlib = PyStdlibTypeProvider.getInstance();
+              if (stdlib != null) {
+                initType = stdlib.getConstructorType(containingClass);
+              }
+            }
+            if (initType != null && !(initType instanceof PyNoneType)) {
+              return initType;
+            }
             return new PyClassType(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
           }
         }

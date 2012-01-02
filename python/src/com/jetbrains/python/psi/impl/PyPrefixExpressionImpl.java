@@ -69,7 +69,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     if (ref != null) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof Callable) {
-        return ((Callable)resolved).getReturnType(context, null);
+        return ((Callable)resolved).getReturnType(context, this);
       }
     }
     return null;
