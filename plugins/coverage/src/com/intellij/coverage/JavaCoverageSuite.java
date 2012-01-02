@@ -51,10 +51,11 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
                            final boolean tracingEnabled,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
-                           @NotNull final JavaCoverageEngine coverageSupportProvider) {
+                           @NotNull final JavaCoverageEngine coverageSupportProvider,
+                           final Project project) {
     super(name, coverageDataFileProvider, lastCoverageTimeStamp, coverageByTestEnabled,
           tracingEnabled, trackTestFolders,
-          coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class));
+          coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class), project);
 
     myFilters = filters;
     myCoverageEngine = coverageSupportProvider;

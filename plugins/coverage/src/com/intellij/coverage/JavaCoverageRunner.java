@@ -18,6 +18,10 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   private static final Logger LOG = Logger.getInstance("#" + JavaCoverageRunner.class.getName());
   private static final String COVERAGE_AGENT_PATH = "coverage.lib.path";
 
+  public boolean isJdk7Compatible() {
+    return true;
+  }
+  
   @Override
   public boolean acceptsCoverageEngine(@NotNull CoverageEngine engine) {
     return engine instanceof JavaCoverageEngine;

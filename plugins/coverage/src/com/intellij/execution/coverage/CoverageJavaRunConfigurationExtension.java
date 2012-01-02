@@ -74,13 +74,13 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
       coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
       coverageConfig.appendCoverageArgument(params);
-      if (!(coverageRunner instanceof IDEACoverageRunner)) {
-        final Sdk jdk = params.getJdk();
-        if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7)) {
-          Notifications.Bus.notify(new Notification("Coverage", "Coverage instrumentation is not fully compatible with JDK 7",
-                                                    coverageRunner.getPresentableName() + " coverage instrumentation can lead to java.lang.VerifyError errors with JDK 7. If so, please try IDEA coverage runner.",
-                                                    NotificationType.WARNING));
-        }
+
+      final Sdk jdk = params.getJdk();
+      if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7) && coverageRunner instanceof JavaCoverageRunner && !((JavaCoverageRunner)coverageRunner).isJdk7Compatible()) {
+        Notifications.Bus.notify(new Notification("Coverage", "Coverage instrumentation is not fully compatible with JDK 7",
+                                                  coverageRunner.getPresentableName() +
+                                                  " coverage instrumentation can lead to java.lang.VerifyError errors with JDK 7. If so, please try IDEA coverage runner.",
+                                                  NotificationType.WARNING));
       }
     }
   }

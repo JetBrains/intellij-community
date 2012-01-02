@@ -98,10 +98,10 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            String suiteToMerge,
                                            boolean coverageByTestEnabled,
                                            boolean tracingEnabled,
-                                           boolean trackTestFolders) {
+                                           boolean trackTestFolders, Project project) {
 
     return createSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, coverageByTestEnabled,
-                       tracingEnabled, trackTestFolders);
+                       tracingEnabled, trackTestFolders, project);
   }
 
   @Override
@@ -116,7 +116,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                          new Date().getTime(),
                          javaConfig.isTrackPerTestCoverage() && !javaConfig.isSampling(),
                          !javaConfig.isSampling(),
-                         javaConfig.isTrackTestFolders());
+                         javaConfig.isTrackTestFolders(), config.getConfiguration().getProject());
     }
     return null;
   }
@@ -519,14 +519,14 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   protected JavaCoverageSuite createSuite(CoverageRunner acceptedCovRunner,
-                                        String name, CoverageFileProvider coverageDataFileProvider,
-                                        String[] filters,
-                                        long lastCoverageTimeStamp,
-                                        boolean coverageByTestEnabled,
-                                        boolean tracingEnabled,
-                                        boolean trackTestFolders) {
+                                          String name, CoverageFileProvider coverageDataFileProvider,
+                                          String[] filters,
+                                          long lastCoverageTimeStamp,
+                                          boolean coverageByTestEnabled,
+                                          boolean tracingEnabled,
+                                          boolean trackTestFolders, Project project) {
     return new JavaCoverageSuite(name, coverageDataFileProvider, filters, lastCoverageTimeStamp, coverageByTestEnabled, tracingEnabled,
-                                 trackTestFolders, acceptedCovRunner, this);
+                                 trackTestFolders, acceptedCovRunner, this, project);
   }
 
   @NotNull
