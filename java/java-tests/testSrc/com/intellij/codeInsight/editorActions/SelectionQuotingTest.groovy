@@ -36,7 +36,7 @@ var c = "test test test";\
     
     def expected = '''\
 var a =  "a test";
-var b = abc<caret>;
+var b = "abc<caret>";
 var c = "test test test";\
 '''
     
