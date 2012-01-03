@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,23 +107,29 @@ public class PasteReferenceProvider implements PasteProvider {
   }
 
   @Nullable
-  private static String getCopiedFqn(DataContext dataContext) {
-    Transferable transferable = null;
-
+  private static String getCopiedFqn(final DataContext dataContext) {
     @SuppressWarnings("unchecked")
-    Producer<Transferable> transferableProducer = (Producer<Transferable>)dataContext.getData(PasteHandler.TRANSFERABLE_PROVIDER);
-    if (transferableProducer != null) {
-      transferable = transferableProducer.produce();
-      if (transferable == null) {
-        transferable = CopyPasteManager.getInstance().getContents();
+    final Producer<Transferable> transferableProducer = (Producer<Transferable>)dataContext.getData(PasteHandler.TRANSFERABLE_PROVIDER);
+    if (transferableProducer == null) return null;
+
+    final Transferable transferable = transferableProducer.produce();
+    if (transferable != null) {
+      try {
+        return (String)transferable.getTransferData(CopyReferenceAction.ourFlavor);
+      }
+      catch (Exception ignored) { }
+    }
+
+    final CopyPasteManager manager = CopyPasteManager.getInstance();
+    if (manager.isDataFlavorAvailable(CopyReferenceAction.ourFlavor)) {
+      final Transferable contents = manager.getContents();
+      if (contents != null) {
+        try {
+          return (String)contents.getTransferData(CopyReferenceAction.ourFlavor);
+        }
+        catch (Exception ignored) { }
       }
     }
-    if (transferable == null) return null;
-
-    try {
-      return (String)transferable.getTransferData(CopyReferenceAction.ourFlavor);
-    }
-    catch (Exception ignored) { }
 
     return null;
   }
