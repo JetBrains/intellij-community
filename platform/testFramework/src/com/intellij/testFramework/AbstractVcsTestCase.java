@@ -421,7 +421,7 @@ public abstract class AbstractVcsTestCase {
     File beforeFile = new File(myWorkingCopyDir.getPath(), beforePath);
     String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
     final String beforeRevPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
-    Assert.assertTrue(beforeFullPath.equalsIgnoreCase(beforeRevPath));
+    Assert.assertTrue(beforeFullPath + "!=" + beforeRevPath,  beforeFullPath.equalsIgnoreCase(beforeRevPath));
   }
 
   public static void sortChanges(final List<Change> changes) {
