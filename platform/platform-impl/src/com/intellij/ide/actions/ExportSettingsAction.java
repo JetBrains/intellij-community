@@ -29,6 +29,7 @@ import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,6 +46,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ExportSettingsAction");
 
   public void actionPerformed(AnActionEvent e) {
+    Project project = getEventProject(e);
     List<ExportableComponent> exportableComponents = new ArrayList<ExportableComponent>();
     Map<File,Set<ExportableComponent>> fileToComponents = getRegisteredComponentsAndFiles(exportableComponents);
 
@@ -64,8 +66,8 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
     ApplicationManager.getApplication().saveSettings();
 
+    final File saveFile = dialog.getExportFile();
     try {
-      final File saveFile = dialog.getExportFile();
       if (saveFile.exists()) {
         final int ret = Messages.showOkCancelDialog(
           IdeBundle.message("prompt.overwrite.settings.file", FileUtil.toSystemDependentName(saveFile.getPath())),
@@ -92,8 +94,8 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
       finally {
         output.close();
       }
-      Messages.showMessageDialog(IdeBundle.message("message.settings.exported.successfully"),
-                                 IdeBundle.message("title.export.successful"), Messages.getInformationIcon());
+      ShowFilePathAction.showDialog(project, IdeBundle.message("message.settings.exported.successfully"),
+                                    IdeBundle.message("title.export.successful"), saveFile);
     }
     catch (IOException e1) {
       Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e1.toString()),IdeBundle.message("title.error.writing.file"));
