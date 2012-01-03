@@ -830,7 +830,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiClassInitializer createClassInitializer() throws IncorrectOperationException {
+  public GrClassInitializer createClassInitializer() throws IncorrectOperationException {
     final GrTypeDefinition typeDefinition = createTypeDefinition("class X {{}}");
     return typeDefinition.getInitializers()[0];
   }

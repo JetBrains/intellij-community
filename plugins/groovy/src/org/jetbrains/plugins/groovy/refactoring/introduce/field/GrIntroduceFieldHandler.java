@@ -28,10 +28,12 @@ import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
@@ -194,18 +196,35 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
   private static void initializeInConstructor(GrIntroduceContext context, GrIntroduceFieldSettings settings, GrField field) {
     final GrTypeDefinition scope = (GrTypeDefinition)context.scope;
-    PsiMethod[] constructors = scope.getConstructors();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
+
+    if (scope instanceof GrAnonymousClassDefinition) {
+      final GrClassInitializer[] initializers = scope.getInitializers();
+      final GrClassInitializer initializer;
+      if (initializers.length == 0) {
+        initializer = (GrClassInitializer)scope.add(factory.createClassInitializer());
+      }
+      else {
+        initializer = initializers[0];
+      }
+
+      final PsiElement anchor = findAnchor(context, settings, initializer.getBlock());
+      generateAssignment(context, settings, field, (GrStatement)anchor, initializer.getBlock());
+      return;
+    }
+
+    PsiMethod[] constructors = scope.getConstructors();
     if (constructors.length == 0) {
-      final GrMethod constructor =
-        factory.createConstructorFromText(scope.getName(), EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY, "{}", scope);
+      final String name = scope.getName();
+      LOG.assertTrue(name != null, scope.getText());
+      final GrMethod constructor = factory.createConstructorFromText(name, EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY, "{}", scope);
       final PsiElement added = scope.add(constructor);
       constructors = new PsiMethod[]{(PsiMethod)added};
     }
     for (PsiMethod constructor : constructors) {
       final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation((GrMethod)constructor);
       if (invocation != null && invocation.isThisCall()) continue;
-      final PsiElement anchor = findAnchor(context, settings, (GrMethod)constructor);
+      final PsiElement anchor = findAnchor(context, settings, ((GrMethod)constructor).getBlock());
 
       generateAssignment(context, settings, field, (GrStatement)anchor, ((GrMethod)constructor).getBlock());
     }
@@ -238,15 +257,15 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   @Nullable
-  private static PsiElement findAnchor(GrIntroduceContext context, GrIntroduceFieldSettings settings, final GrMethod constructor) {
+  private static PsiElement findAnchor(GrIntroduceContext context, GrIntroduceFieldSettings settings, final GrCodeBlock block) {
     final List<PsiElement> elements = ContainerUtil.findAll(context.occurrences, new Condition<PsiElement>() {
       @Override
       public boolean value(PsiElement element) {
-        return PsiTreeUtil.isAncestor(constructor, element, true);
+        return PsiTreeUtil.isAncestor(block, element, true);
       }
     });
     if (elements.size() == 0) return null;
-    return findAnchor(context, settings, ContainerUtil.toArray(elements, new PsiElement[elements.size()]), constructor.getBlock());
+    return findAnchor(context, settings, ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }
 
   private static void replaceOccurence(GrField field, PsiElement occurence) {
