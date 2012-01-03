@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * <p>This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
@@ -391,15 +392,15 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         if (formats == null || formats.length == 0) {
           return Collections.emptySet();
         }
-        else {
-          //noinspection unchecked
-          return DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
+        for (int i = 0, length = formats.length; i < length; i++) {
+          if (formats[i] == 0) return Collections.emptySet();
         }
+        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+        final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
+        return set;
       }
-      catch (IllegalAccessException ignore) {
-      }
-      catch (IllegalArgumentException ignore) {
-      }
+      catch (IllegalAccessException ignore) { }
+      catch (IllegalArgumentException ignore) { }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
         if (cause instanceof IllegalStateException) {
