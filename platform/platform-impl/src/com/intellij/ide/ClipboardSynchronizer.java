@@ -269,7 +269,6 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   @Nullable
   private static Transferable getClipboardContentNatively() {
     String plainText = "public.utf8-plain-text";
-    String jvmObject = "application/x-java-jvm";
 
     ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
     ID types = Foundation.invoke(pasteboard, "types");
