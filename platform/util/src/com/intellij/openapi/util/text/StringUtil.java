@@ -1333,6 +1333,10 @@ public class StringUtil {
       return name.substring(0, name.length() - 3) + "y";
     }
 
+    if (name.endsWith("leaves") || name.endsWith("Leaves")) {
+      return name.substring(0, name.length() - "eaves".length()) + "eaf";
+    }
+
     String result = stripEnding(name, "s");
     if (result != null) {
       return result;
@@ -1345,6 +1349,7 @@ public class StringUtil {
     if (name.endsWith("Children") && name.length() > "Children".length()) {
       return name.substring(0, name.length() - "Children".length()) + "Child";
     }
+
 
     return null;
   }
