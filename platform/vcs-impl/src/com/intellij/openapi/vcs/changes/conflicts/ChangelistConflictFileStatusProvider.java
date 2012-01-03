@@ -33,11 +33,11 @@ import java.awt.*;
 public class ChangelistConflictFileStatusProvider implements FileStatusProvider {
 
   private static final FileStatus MODIFIED_OUTSIDE =
-    FileStatusFactory.SERVICE.getInstance().createFileStatus("modifiedOutside", "Modified in not active changelist", FileStatus.COLOR_MODIFIED.brighter());
+    FileStatusFactory.getInstance().createFileStatus("modifiedOutside", "Modified in not active changelist", FileStatus.COLOR_MODIFIED.brighter());
   private static final FileStatus ADDED_OUTSIDE =
-    FileStatusFactory.SERVICE.getInstance().createFileStatus("addedOutside", "Added in not active changelist", FileStatus.COLOR_ADDED.brighter());
+    FileStatusFactory.getInstance().createFileStatus("addedOutside", "Added in not active changelist", FileStatus.COLOR_ADDED.brighter());
   private static final FileStatus CHANGELIST_CONFLICT =
-    FileStatusFactory.SERVICE.getInstance().createFileStatus("changelistConflict", "Changelist conflict", Color.red);
+    FileStatusFactory.getInstance().createFileStatus("changelistConflict", "Changelist conflict", Color.red);
 
   private final ChangelistConflictTracker myConflictTracker;
   private final ChangeListManager myChangeListManager;

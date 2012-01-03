@@ -469,7 +469,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
                                
   private static void initFileStatusDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
 
-    FileStatus[] statuses = FileStatusFactory.SERVICE.getInstance().getAllFileStatuses();
+    FileStatus[] statuses = FileStatusFactory.getInstance().getAllFileStatuses();
 
     for (FileStatus fileStatus : statuses) {
       addEditorSettingDescription(descriptions,

@@ -15,21 +15,33 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.vcs.impl.FileStatusImpl;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public interface FileStatusFactory {
-  FileStatus createFileStatus(@NonNls String id, String description, Color color);
-  FileStatus[] getAllFileStatuses();
+public class FileStatusFactory {
+  private static final FileStatusFactory ourInstance = new FileStatusFactory();
+  private final List<FileStatus> myStatuses = new ArrayList<FileStatus>();
 
-  class SERVICE {
-    private SERVICE() {
-    }
-
-    public static FileStatusFactory getInstance() {
-      return ServiceManager.getService(FileStatusFactory.class);      
-    }
+  private FileStatusFactory() {
   }
+
+  public synchronized FileStatus createFileStatus(@NonNls String id, String description, Color color) {
+    FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey("FILESTATUS_" + id, color), description);
+    myStatuses.add(result);
+    return result;
+  }
+
+  public synchronized FileStatus[] getAllFileStatuses() {
+    return myStatuses.toArray(new FileStatus[myStatuses.size()]);
+  }
+
+  public static FileStatusFactory getInstance() {
+    return ourInstance;
+  }
+
 }
