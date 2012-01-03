@@ -35,7 +35,7 @@ public class TagListDialog extends DialogWrapper{
 
   public TagListDialog(String title) {
     super(true);
-    myPanel.add(createToolbal(), BorderLayout.NORTH);
+    myPanel.add(createToolbar(), BorderLayout.NORTH);
     myPanel.add(createList(), BorderLayout.CENTER);
     setTitle(title);
     init();
@@ -65,7 +65,7 @@ public class TagListDialog extends DialogWrapper{
     return ScrollPaneFactory.createScrollPane(myList);
   }
 
-  private JComponent createToolbal() {
+  private JComponent createToolbar() {
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
                                                            createActionGroup(),
                                                            true).getComponent();
