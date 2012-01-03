@@ -14,9 +14,7 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="tasks-core" />
     <orderEntry type="module" module-name="tasks-api" />
-    <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="util" />
   </component>
 </module>
