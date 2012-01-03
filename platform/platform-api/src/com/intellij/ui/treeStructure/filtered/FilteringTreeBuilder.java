@@ -50,7 +50,12 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
                               ElementFilter filter,
                               AbstractTreeStructure structure,
                               Comparator<NodeDescriptor> comparator) {
-    super(tree, (DefaultTreeModel)tree.getModel(), new FilteringTreeStructure(project, filter, structure), comparator);
+    super(tree,
+          (DefaultTreeModel)tree.getModel(),
+          structure instanceof FilteringTreeStructure ? structure
+                                                      : new FilteringTreeStructure(project, filter, structure),
+          comparator);
+
     myTree = tree;
     initRootNode();
 
