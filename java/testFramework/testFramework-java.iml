@@ -12,7 +12,6 @@
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
-    <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="lang-api" exported="" />
     <orderEntry type="module" module-name="lang-impl" exported="" />
     <orderEntry type="module" module-name="compiler-impl" />
