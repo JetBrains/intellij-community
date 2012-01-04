@@ -71,6 +71,11 @@ class CoverageListNode extends AbstractTreeNode {
   }
 
   @Override
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
+
+  @Override
   public void navigate(boolean requestFocus) {
     if (canNavigate()) {
       final PsiNamedElement value = (PsiNamedElement)getValue();

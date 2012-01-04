@@ -113,5 +113,7 @@ public class CoverageViewManager implements ProjectComponent, PersistentStateCom
   
   public static class StateBean {
     public boolean myFlattenPackages = false;
+    public boolean myAutoScrollToSource = false;
+    public boolean myAutoScrollFromSource = false;
   }
 }

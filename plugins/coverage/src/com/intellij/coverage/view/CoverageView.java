@@ -5,6 +5,12 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -12,11 +18,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableScrollingUtil;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Alarm;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -28,7 +34,7 @@ import java.awt.event.*;
  * User: anna
  * Date: 1/2/12
  */
-public class CoverageView extends JPanel {
+public class CoverageView extends JPanel implements DataProvider{
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls private static final String ACTION_GO_UP = "GoUp";
 
@@ -104,7 +110,35 @@ public class CoverageView extends JPanel {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new GoUpAction(treeStructure));
     actionGroup.add(new FlattenPackagesAction());
+
+    installAutoScrollToSource(actionGroup);
+    installAutoScrollFromSource(actionGroup);
+
+    actionGroup.add(ActionManager.getInstance().getAction("GenerateCoverageReport"));
+    
     return actionGroup;
+  }
+
+  private void installAutoScrollFromSource(DefaultActionGroup actionGroup) {
+    final MyAutoScrollFromSourceHandler handler = new MyAutoScrollFromSourceHandler();
+    handler.install();
+    actionGroup.add(handler.createToggleAction());
+  }
+
+  private void installAutoScrollToSource(DefaultActionGroup actionGroup) {
+    AutoScrollToSourceHandler autoScrollToSourceHandler = new AutoScrollToSourceHandler(){
+      @Override
+      protected boolean isAutoScrollMode() {
+        return myStateBean.myAutoScrollToSource;
+      }
+
+      @Override
+      protected void setAutoScrollMode(boolean state) {
+        myStateBean.myAutoScrollToSource = state;
+      }
+    };
+    autoScrollToSourceHandler.install(myTable);
+    actionGroup.add(autoScrollToSourceHandler.createToggleAction());
   }
 
   public void goUp() {
@@ -115,8 +149,7 @@ public class CoverageView extends JPanel {
   }
 
   private void drillDown(CoverageViewTreeStructure treeStructure) {
-    final int selectedRow = myTable.getSelectedRow();
-    final AbstractTreeNode element = (AbstractTreeNode)myModel.getElementAt(selectedRow);
+    final AbstractTreeNode element = getSelectedValue();
     if (treeStructure.getChildElements(element).length == 0) {
       if (element.canNavigate()) {
         element.navigate(true);
@@ -124,6 +157,11 @@ public class CoverageView extends JPanel {
       return;
     }
     myBuilder.drillDown();
+  }
+
+  private AbstractTreeNode getSelectedValue() {
+    final int selectedRow = myTable.getSelectedRow();
+    return (AbstractTreeNode)myModel.getElementAt(selectedRow);
   }
 
   private boolean topElementIsSelected(final CoverageViewTreeStructure treeStructure) {
@@ -153,6 +191,13 @@ public class CoverageView extends JPanel {
     if (psiFile instanceof PsiClassOwner) {
       myBuilder.selectElement(((PsiClassOwner)psiFile).getClasses()[0], file);
     }
+  }
+
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      return getSelectedValue();
+    }
+    return null;
   }
 
   private static class NodeDescriptorTableCellRenderer extends DefaultTableCellRenderer {
@@ -209,6 +254,54 @@ public class CoverageView extends JPanel {
     @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(!topElementIsSelected(myTreeStructure));
+    }
+  }
+
+  private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
+    private final Alarm myAutoscrollAlarm = new Alarm(myProject);
+    
+    public MyAutoScrollFromSourceHandler() {
+      super(CoverageView.this.myProject);
+    }
+
+    @Override
+    protected boolean isAutoScrollMode() {
+      return myStateBean.myAutoScrollFromSource;
+    }
+
+    @Override
+    protected void setAutoScrollMode(boolean state) {
+      myStateBean.myAutoScrollFromSource = state;
+    }
+
+    public void install() {
+      final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+        public void selectionChanged(final FileEditorManagerEvent event) {
+          final FileEditor newEditor = event.getNewEditor();
+          if (newEditor == null) return;
+          myAutoscrollAlarm.cancelAllRequests();
+          myAutoscrollAlarm.addRequest(new Runnable() {
+            public void run() {
+              if (myProject.isDisposed() || !CoverageView.this.isShowing()) return;
+              if (myStateBean.myAutoScrollFromSource) {
+                final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(newEditor);
+                if (file != null) {
+                  if (canSelect(file)) {
+                    select(file);
+                  }
+                }
+              }
+            }
+          }, 300, ModalityState.NON_MODAL);
+        }
+      });
+    }
+
+    public void dispose() {
+      if (!myAutoscrollAlarm.isDisposed()) {
+        myAutoscrollAlarm.cancelAllRequests();
+      }
     }
   }
 }
