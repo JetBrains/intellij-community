@@ -22,11 +22,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -72,6 +70,33 @@ public abstract class AutoScrollToSourceHandler {
       new TreeSelectionListener() {
         public void valueChanged(TreeSelectionEvent e) {
           onSelectionChanged(tree);
+        }
+      }
+    );
+  }
+
+  public void install(final JTable table) {
+    myAutoScrollAlarm = new Alarm();
+    table.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) return;
+
+        Component location = table.getComponentAt(e.getPoint());
+        if (location != null) {
+          onMouseClicked(table);
+        }
+      }
+    });
+    table.addMouseMotionListener(new MouseMotionAdapter() {
+      public void mouseDragged(final MouseEvent e) {
+        onSelectionChanged(table);
+      }
+    });
+    table.getSelectionModel().addListSelectionListener(
+      new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+          onSelectionChanged(table);
         }
       }
     );
