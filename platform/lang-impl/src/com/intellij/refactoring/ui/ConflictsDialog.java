@@ -34,6 +34,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,13 +119,12 @@ public class ConflictsDialog extends DialogWrapper{
 
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
 
-    @NonNls String contentType = "text/html";
     @NonNls StringBuilder buf = new StringBuilder();
     for (String description : myConflictDescriptions) {
       buf.append(description);
       buf.append("<br><br>");
     }
-    JEditorPane messagePane = new JEditorPane(contentType, buf.toString());
+    JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, buf.toString());
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,
                                                                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,

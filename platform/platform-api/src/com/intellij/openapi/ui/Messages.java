@@ -1005,7 +1005,7 @@ public class Messages {
       final HTMLEditorKit editorKit = new HTMLEditorKit();
       editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(UIUtil.getLabelFont(), UIUtil.getLabelForeground()));
       messageComponent.setEditorKit(editorKit);
-      messageComponent.setContentType("text/html");
+      messageComponent.setContentType(UIUtil.HTML_MIME);
       if (addBrowserHyperlinkListener) {
         messageComponent.addHyperlinkListener(new BrowserHyperlinkListener());
       }

@@ -56,6 +56,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,6 @@ import java.util.ArrayList;
 
 public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable");
-  @NonNls private static final String CONTENT_TYPE_HTML = "text/html";
   @NonNls private static final String EMPTY_HTML = "<html></html>";
   @NonNls private static final String CONTENT_TYPE_PLAIN = "text/plain";
 
@@ -167,7 +167,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     myTemplateEditor = createEditor();
 
-    myDescriptionComponent = new JEditorPane(CONTENT_TYPE_HTML, EMPTY_HTML);
+    myDescriptionComponent = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
 
     myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
@@ -343,7 +343,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myDescriptionComponent.setContentType(CONTENT_TYPE_PLAIN);
     myDescriptionComponent.setEditable(true);
     myDescriptionComponent.setText(desc);
-    myDescriptionComponent.setContentType(CONTENT_TYPE_HTML);
+    myDescriptionComponent.setContentType(UIUtil.HTML_MIME);
     myDescriptionComponent.setText(desc);
     myDescriptionComponent.setCaretPosition(0);
     myDescriptionComponent.setEditable(false);

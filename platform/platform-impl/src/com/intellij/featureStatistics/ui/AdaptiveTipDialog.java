@@ -24,6 +24,7 @@ import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,7 +61,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
-    myBrowser = new JEditorPane("text/html", "");
+    myBrowser = new JEditorPane(UIUtil.HTML_MIME, "");
 
     panel.add(ScrollPaneFactory.createScrollPane(myBrowser));
     panel.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
