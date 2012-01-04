@@ -4,6 +4,7 @@ import sys
 import codeop, re
 original_stdout = sys.stdout
 original_stderr = sys.stderr
+from IPython.core import release
 
 
 #=======================================================================================================================
@@ -18,6 +19,8 @@ def _showtraceback(*args, **kwargs):
 # PyDevFrontEnd
 #=======================================================================================================================
 class PyDevFrontEnd:
+
+    version = release.__version__
 
 
     def __init__(self, *args, **kwargs):        
