@@ -46,11 +46,7 @@ public class CoverageViewBuilder extends AbstractListBuilder {
 
   @Override
   protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
-    final Object value = node.getValue();
-   /* if (value instanceof PsiClass && Comparing.equal(((PsiClass)value).getContainingFile(), element)) {
-      return true;
-    }*/
-    return Comparing.equal(value, element);
+    return Comparing.equal(node.getValue(), element);
   }
 
   @Override

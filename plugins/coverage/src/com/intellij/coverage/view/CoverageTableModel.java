@@ -28,11 +28,9 @@ class CoverageTableModel extends AbstractTableModel implements AbstractListBuild
   final List myElements = new ArrayList();
 
   private final JavaCoverageAnnotator myAnnotator;
-  private final CoverageDataManager myDataManager;
 
-  CoverageTableModel(CoverageAnnotator annotator, CoverageDataManager dataManager) {
+  CoverageTableModel(CoverageAnnotator annotator) {
     myAnnotator = (JavaCoverageAnnotator)annotator;
-    myDataManager = dataManager;
   }
 
   public void removeAllElements() {
@@ -88,9 +86,16 @@ class CoverageTableModel extends AbstractTableModel implements AbstractListBuild
     else if (element instanceof CoverageListNode) {
       final Object value = ((CoverageListNode)element).getValue();
       if (value instanceof PsiClass) {
-        return myAnnotator.getClassCoverageInformationString(((PsiClass)value).getQualifiedName(), myDataManager);
+        final String qualifiedName = ((PsiClass)value).getQualifiedName();
+        if (columnIndex == 1) {
+          return myAnnotator.getClassMethodPercentage(qualifiedName);
+        }
+        return myAnnotator.getClassLinePercentage(qualifiedName);
       }
-      return myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null, myDataManager);
+      if (columnIndex == 1) {
+        return myAnnotator.getPackageClassPercentage((PsiPackage)value);
+      }
+      return myAnnotator.getPackageLinePercentage((PsiPackage)value);
     }
     return element;
   }

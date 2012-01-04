@@ -45,7 +45,7 @@ public class CoverageView extends JPanel {
     myStateBean = stateBean;
     final JLabel titleLabel = new JLabel();
     final CoverageSuitesBundle suitesBundle = dataManager.getCurrentSuitesBundle();
-    myModel = new CoverageTableModel(suitesBundle.getAnnotator(project), dataManager);
+    myModel = new CoverageTableModel(suitesBundle.getAnnotator(project));
 
     myTable = new JBTable(myModel);
     myTable.getColumnModel().getColumn(0).setCellRenderer(new NodeDescriptorTableCellRenderer());

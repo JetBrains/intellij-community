@@ -118,7 +118,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  private String getCoverageInformationString(PackageAnnotator.PackageCoverageInfo info, boolean subCoverageActive) {
+  private static String getCoverageInformationString(PackageAnnotator.PackageCoverageInfo info, boolean subCoverageActive) {
     if (info == null) return null;
     if (info.totalClassCount == 0 || info.totalLineCount == 0) return null;
     if (subCoverageActive) {
@@ -156,7 +156,29 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     }
     return getCoverageInformationString(info, subCoverageActive);
   }
+  
+  public String getPackageClassPercentage(final PsiPackage psiPackage) {
+    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = myPackageCoverageInfos.get(psiPackage.getQualifiedName());
+    return (int)((double)packageCoverageInfo.coveredClassCount/packageCoverageInfo.totalClassCount * 100) +"% (" + packageCoverageInfo.coveredClassCount + "/" + packageCoverageInfo.totalClassCount + ")"; 
+  }
 
+  public String getPackageLinePercentage(final PsiPackage psiPackage) {
+    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = myPackageCoverageInfos.get(psiPackage.getQualifiedName());
+    return (int)((double)packageCoverageInfo.coveredLineCount/packageCoverageInfo.totalLineCount * 100) +"% (" + packageCoverageInfo.coveredLineCount + "/" + packageCoverageInfo.totalLineCount + ")"; 
+  }
+
+  public String getClassLinePercentage(String classFQName) {
+    final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+    final int coveredLines = info.fullyCoveredLineCount + info.partiallyCoveredLineCount;
+    return (int)((double)coveredLines /info.totalLineCount * 100) +"% (" + coveredLines + "/" + info.totalLineCount + ")";
+  }
+  
+  //todo class percentage
+  public String getClassMethodPercentage(String classFQName) {
+    final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+    return (int)((double)info.coveredMethodCount /info.totalMethodCount * 100) +"% (" + info.coveredMethodCount + "/" + info.totalMethodCount + ")";
+  }
+  
   private static PackageAnnotator.PackageCoverageInfo merge(final PackageAnnotator.PackageCoverageInfo info,
                                                             final PackageAnnotator.PackageCoverageInfo testInfo) {
     if (info == null) return testInfo;
