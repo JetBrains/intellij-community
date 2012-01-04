@@ -1,9 +1,11 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageOptionsProvider;
 import com.intellij.coverage.CoverageSuiteListener;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -24,6 +26,7 @@ import java.util.Map;
     storages = {@Storage( file = "$WORKSPACE_FILE$")}
 )
 public class CoverageViewManager implements ProjectComponent, PersistentStateComponent<CoverageViewManager.StateBean> {
+  private static final Logger LOG = Logger.getInstance("#" + CoverageViewManager.class.getName());
   public static final String TOOLWINDOW_ID = "Coverage View";
   private Project myProject;
   private final ToolWindowManager myToolWindowManager;
@@ -95,6 +98,7 @@ public class CoverageViewManager implements ProjectComponent, PersistentStateCom
   public void createToolWindow(String displayName) {
     final Content[] myContent = new Content[1];
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
+    LOG.assertTrue(toolWindow != null);
     final CoverageView oldView = myViews.get(displayName);
     if (oldView != null) {
       final Content content = myContentManager.getContent(oldView);
@@ -108,7 +112,9 @@ public class CoverageViewManager implements ProjectComponent, PersistentStateCom
     myContentManager.addContent(myContent[0]);
     myContentManager.setSelectedContent(myContent[0]);
 
-    toolWindow.activate(null);
+    if (CoverageOptionsProvider.getInstance(myProject).activateViewOnRun()) {
+      toolWindow.activate(null);
+    }
   }
   
   public static class StateBean {
