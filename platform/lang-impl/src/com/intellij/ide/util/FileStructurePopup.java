@@ -145,7 +145,7 @@ public class FileStructurePopup implements Disposable {
     };
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
 
-    myAbstractTreeBuilder = new FilteringTreeBuilder(project, myTree, new FileStructurePopupFilter(), myTreeStructure, null) {
+    myAbstractTreeBuilder = new FilteringTreeBuilder(myTree, new FileStructurePopupFilter(), myTreeStructure, null) {
       @Override
       protected boolean validateNode(Object child) {
         return StructureViewComponent.isValid(child);
@@ -225,10 +225,10 @@ public class FileStructurePopup implements Disposable {
       element = element.getParent();
     }
 
-    FilteringTreeStructure.Node node = (FilteringTreeStructure.Node)myAbstractTreeBuilder.getRootElement();
+    FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
     while (node != null) {
       boolean changed = false;
-      for (FilteringTreeStructure.Node n : node.children()) {
+      for (FilteringTreeStructure.FilteringNode n : node.children()) {
         final PsiElement psiElement = getPsi(n);
         if (psiElement != null && parents.contains(psiElement)) {
           node = n;
@@ -244,7 +244,7 @@ public class FileStructurePopup implements Disposable {
   }
 
   @Nullable
-  private PsiElement getPsi(FilteringTreeStructure.Node n) {
+  private PsiElement getPsi(FilteringTreeStructure.FilteringNode n) {
     final Object delegate = n.getDelegate();
     if (delegate instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
       final TreeElement value = ((StructureViewComponent.StructureViewTreeElementWrapper)delegate).getValue();
@@ -358,8 +358,8 @@ public class FileStructurePopup implements Disposable {
     Object component = myTree.getSelectionPath().getLastPathComponent();
     if (component instanceof DefaultMutableTreeNode) {
       component = ((DefaultMutableTreeNode)component).getUserObject();
-      if (component instanceof FilteringTreeStructure.Node) {
-        component = ((FilteringTreeStructure.Node)component).getDelegate();
+      if (component instanceof FilteringTreeStructure.FilteringNode) {
+        component = ((FilteringTreeStructure.FilteringNode)component).getDelegate();
         if (component instanceof AbstractTreeNode) {
           return (AbstractTreeNode)component;
         }
@@ -428,14 +428,21 @@ public class FileStructurePopup implements Disposable {
       public void actionPerformed(final ActionEvent e) {
         final boolean state = chkFilter.isSelected();
         myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
+        //final String filter = mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
+        //mySpeedSearch.hidePopup();
         myTreeStructure.rebuildTree();
-        myAbstractTreeBuilder.refilter();
-        myAbstractTreeBuilder.queueUpdate();
-
-        if (SpeedSearchBase.hasActiveSpeedSearch(myTree)) {
-          final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myTree);
-          if (supply != null && supply.isPopupActive()) supply.refreshSelection();
-        }
+        FilteringTreeStructure structure = (FilteringTreeStructure)myAbstractTreeBuilder.getTreeStructure();
+        if (structure == null) return;
+        structure.rebuild();
+        myAbstractTreeBuilder.refilter(null, true, false).doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            if (SpeedSearchBase.hasActiveSpeedSearch(myTree)) {
+              final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myTree);
+              if (supply != null && supply.isPopupActive()) supply.refreshSelection();
+            }
+          }
+        });
       }
     });
     chkFilter.setFocusable(false);
@@ -518,7 +525,7 @@ public class FileStructurePopup implements Disposable {
         
         if (matches) {
           Object o = value;
-          while (o instanceof FilteringTreeStructure.Node && (o = ((FilteringTreeStructure.Node)o).getParent()) != null) {
+          while (o instanceof FilteringTreeStructure.FilteringNode && (o = ((FilteringTreeStructure.FilteringNode)o).getParent()) != null) {
             myVisibleParents.add(o);
           }
           return true;

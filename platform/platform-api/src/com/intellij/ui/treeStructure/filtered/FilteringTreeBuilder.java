@@ -18,7 +18,6 @@ package com.intellij.ui.treeStructure.filtered;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.speedSearch.ElementFilter;
@@ -45,15 +44,14 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   private MergingUpdateQueue myRefilterQueue;
 
-  public FilteringTreeBuilder(Project project,
-                              Tree tree,
+  public FilteringTreeBuilder(Tree tree,
                               ElementFilter filter,
                               AbstractTreeStructure structure,
                               Comparator<NodeDescriptor> comparator) {
     super(tree,
           (DefaultTreeModel)tree.getModel(),
           structure instanceof FilteringTreeStructure ? structure
-                                                      : new FilteringTreeStructure(project, filter, structure),
+                                                      : new FilteringTreeStructure(filter, structure),
           comparator);
 
     myTree = tree;
@@ -164,7 +162,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
         Object toSelect = preferredSelection != null ? preferredSelection : myLastSuccessfulSelect;
 
         if (adjustSelection && toSelect != null) {
-          final FilteringTreeStructure.Node nodeToSelect = getFilteredStructure().getVisibleNodeFor(toSelect);
+          final FilteringTreeStructure.FilteringNode nodeToSelect = getFilteredStructure().getVisibleNodeFor(toSelect);
 
           if (nodeToSelect != null) {
             select(nodeToSelect, new Runnable() {
@@ -229,7 +227,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   @Nullable
   private Object getSelected() {
     if (isSimpleTree()) {
-      FilteringTreeStructure.Node selected = (FilteringTreeStructure.Node)((SimpleTree)myTree).getSelectedNode();
+      FilteringTreeStructure.FilteringNode selected = (FilteringTreeStructure.FilteringNode)((SimpleTree)myTree).getSelectedNode();
       return selected != null ? selected.getDelegate() : null;
     } else {
       final Object[] nodes = myTree.getSelectedNodes(Object.class, null);
@@ -237,13 +235,13 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  public FilteringTreeStructure.Node getVisibleNodeFor(Object nodeObject) {
+  public FilteringTreeStructure.FilteringNode getVisibleNodeFor(Object nodeObject) {
     FilteringTreeStructure structure = getFilteredStructure();
     return structure != null ? structure.getVisibleNodeFor(nodeObject) : null;
   }
 
   public Object getOriginalNode(Object node) {
-    return ((FilteringTreeStructure.Node)node).getDelegate();
+    return ((FilteringTreeStructure.FilteringNode)node).getDelegate();
   }
 
   @Override

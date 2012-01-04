@@ -197,7 +197,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
               if (configurable != myQueuedConfigurable) return;
 
               final EditorNode editorNode = myConfigurable2Node.get(configurable);
-              FilteringTreeStructure.Node editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
+              FilteringTreeStructure.FilteringNode editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
               if (editorUiNode == null) return;
 
               if (!myBuilder.getSelectedElements().contains(editorUiNode)) {
@@ -415,8 +415,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     if (object instanceof DefaultMutableTreeNode) {
       final DefaultMutableTreeNode uiNode = (DefaultMutableTreeNode)object;
       final Object o = uiNode.getUserObject();
-      if (o instanceof FilteringTreeStructure.Node) {
-        return (Base)((FilteringTreeStructure.Node)o).getDelegate();
+      if (o instanceof FilteringTreeStructure.FilteringNode) {
+        return (Base)((FilteringTreeStructure.FilteringNode)o).getDelegate();
       }
     }
 
@@ -749,7 +749,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     boolean myWasHoldingFilter;
 
     public MyBuilder(SimpleTreeStructure structure) {
-      super(myProject, OptionsTree.this.myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
+      super(OptionsTree.this.myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
