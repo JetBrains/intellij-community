@@ -40,7 +40,7 @@ import java.util.List;
 public abstract class AbstractListBuilder {
   protected final Project myProject;
   protected final JList myList;
-  private final Model myModel;
+  protected final Model myModel;
   protected final AbstractTreeStructure myTreeStructure;
   private final Comparator myComparator;
 
@@ -49,26 +49,28 @@ public abstract class AbstractListBuilder {
   private AbstractTreeNode myCurrentParent = null;
   private final AbstractTreeNode myShownRoot;
 
-  public abstract static class Model extends AbstractListModel {
-    public abstract void removeAllElements();
+  public interface Model {
+    void removeAllElements();
 
-    public abstract void addElement(final Object node);
+    void addElement(final Object node);
     
-    public abstract void replaceElements(final List newElements);
+    void replaceElements(final List newElements);
 
-    public abstract Object[] toArray();
+    Object[] toArray();
 
-    public abstract int indexOf(final Object o);
+    int indexOf(final Object o);
+    
+    int getSize();
+    
+    Object getElementAt(int idx);
   }
-  
-  AbstractListBuilder(
-    final Project project,
-    final JList list,
-    final Model model,
-    final AbstractTreeStructure treeStructure,
-    final Comparator comparator,
-    final boolean showRoot
-    ) {
+
+  public AbstractListBuilder(final Project project,
+                             final JList list,
+                             final Model model,
+                             final AbstractTreeStructure treeStructure,
+                             final Comparator comparator,
+                             final boolean showRoot) {
     myProject = project;
     myList = list;
     myModel = model;
@@ -92,13 +94,13 @@ public abstract class AbstractListBuilder {
     myParentTitle = parentTitle;
   }
 
-  final void drillDown() {
-    final Object value = myList.getSelectedValue();
+  public final void drillDown() {
+    final Object value = getSelectedValue();
     if (value instanceof AbstractTreeNode) {
       try {
         final AbstractTreeNode node = (AbstractTreeNode)value;
         buildList(node);
-        ListScrollingUtil.ensureSelectionExists(myList);
+        ensureSelectionExist();
       }
       finally {
         updateParentTitle();
@@ -109,7 +111,7 @@ public abstract class AbstractListBuilder {
     }
   }
 
-  final void goUp() {
+  public final void goUp() {
     if (myCurrentParent == myShownRoot.getParent()) {
       return;
     }
@@ -128,8 +130,8 @@ public abstract class AbstractListBuilder {
           final NodeDescriptor desc = (NodeDescriptor)myModel.getElementAt(i);
           final Object elem = desc.getElement();
           if (oldParent.equals(elem)) {
-            ListScrollingUtil.selectItem(myList, i);
-          break;
+            selectItem(i);
+            break;
           }
         }
       }
@@ -137,6 +139,18 @@ public abstract class AbstractListBuilder {
     finally {
       updateParentTitle();
     }
+  }
+
+  protected Object getSelectedValue() {
+    return myList.getSelectedValue();
+  }
+  
+  protected void selectItem(int i) {
+    ListScrollingUtil.selectItem(myList, i);
+  }
+
+  protected void ensureSelectionExist() {
+    ListScrollingUtil.ensureSelectionExists(myList);
   }
 
   public final void selectElement(final Object element, VirtualFile virtualFile) {
@@ -158,13 +172,13 @@ public abstract class AbstractListBuilder {
           if (desc.getValue() instanceof StructureViewTreeElement) {
             StructureViewTreeElement treeelement = (StructureViewTreeElement)desc.getValue();
             if (element.equals(treeelement.getValue())) {
-              ListScrollingUtil.selectItem(myList, i);
+              selectItem(i);
             break;
             }
           }
           else {
             if (element.equals(desc.getValue())) {
-              ListScrollingUtil.selectItem(myList, i);
+              selectItem(i);
             break;
             }
           }
@@ -181,7 +195,7 @@ public abstract class AbstractListBuilder {
       AbstractTreeNode lastPathNode = goDownToElement(element, file);
       if (lastPathNode == null) return;
       buildList(lastPathNode);
-      ListScrollingUtil.ensureSelectionExists(myList);
+      ensureSelectionExist();
     }
     finally {
       updateParentTitle();
@@ -195,7 +209,7 @@ public abstract class AbstractListBuilder {
   public final void enterElement(final AbstractTreeNode element) {
     try {
       buildList(element);
-      ListScrollingUtil.ensureSelectionExists(myList);
+      ensureSelectionExist();
     }
     finally {
       updateParentTitle();
@@ -297,7 +311,7 @@ public abstract class AbstractListBuilder {
     }
   }
 
-  private boolean shouldAddTopElement() {
+  protected boolean shouldAddTopElement() {
     return !myShownRoot.equals(myCurrentParent);
   }
 

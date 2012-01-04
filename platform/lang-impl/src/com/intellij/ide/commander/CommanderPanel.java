@@ -602,7 +602,7 @@ public class CommanderPanel extends JPanel {
     }
   }
   
-  private static final class MyModel extends AbstractListBuilder.Model {
+  public static final class MyModel extends AbstractListModel implements AbstractListBuilder.Model{
     final List myElements = new ArrayList();
     public void removeAllElements() {
       int index1 = myElements.size()-1;
