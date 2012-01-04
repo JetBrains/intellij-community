@@ -160,14 +160,12 @@ public class CoverageView extends JPanel implements DataProvider{
   }
 
   private AbstractTreeNode getSelectedValue() {
-    final int selectedRow = myTable.getSelectedRow();
-    return (AbstractTreeNode)myModel.getElementAt(selectedRow);
+    return (AbstractTreeNode)myBuilder.getSelectedValue();
   }
 
   private boolean topElementIsSelected(final CoverageViewTreeStructure treeStructure) {
     if (myTable == null) return false;
-    int[] selectedIndices = myTable.getSelectedRows();
-    if (selectedIndices.length >= 1) {
+    if (myModel.getSize() >= 1) {
       final AbstractTreeNode rootElement = (AbstractTreeNode)treeStructure.getRootElement();
       final AbstractTreeNode node = (AbstractTreeNode)myModel.getElementAt(0);
       if (node.getParent() == rootElement) {

@@ -84,10 +84,10 @@ public class CoverageViewBuilder extends AbstractListBuilder {
   }
 
   @Override
-  protected Object getSelectedValue() {
+  public  Object getSelectedValue() {
     final int row = myTable.getSelectedRow();
     if (row == -1) return null;
-    return myModel.getElementAt(row); //todo map indices
+    return myModel.getElementAt(myTable.convertRowIndexToModel(row));
   }
 
   @Override
@@ -97,6 +97,6 @@ public class CoverageViewBuilder extends AbstractListBuilder {
 
   @Override
   protected void selectItem(int i) {
-    TableUtil.selectRows(myTable, new int[]{i});
+    TableUtil.selectRows(myTable, new int[]{myTable.convertRowIndexToView(i)});
   }
 }
