@@ -77,7 +77,6 @@ public class FileStructurePopup implements Disposable {
   private final Project myProject;
   private final StructureViewModel myTreeModel;
   private final StructureViewModel myBaseTreeModel;
-  @NotNull private final Disposable myDisposable;
   private final MyTreeActionsOwner myTreeActionsOwner;
   private JBPopup myPopup;
 
@@ -98,7 +97,7 @@ public class FileStructurePopup implements Disposable {
     myProject = project;
     myEditor = editor;
     myBaseTreeModel = structureViewModel;
-    myDisposable = auxDisposable;
+    Disposer.register(this, auxDisposable);
     if (applySortAndFilter) {
       myTreeActionsOwner = new MyTreeActionsOwner();
       myTreeModel = new TreeModelWrapper(structureViewModel, myTreeActionsOwner);
@@ -158,6 +157,7 @@ public class FileStructurePopup implements Disposable {
       }
     };
     myAbstractTreeBuilder.setCanYieldUpdate(true);
+    Disposer.register(this, myAbstractTreeBuilder);
   }
 
   public void show() {
@@ -175,9 +175,15 @@ public class FileStructurePopup implements Disposable {
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(null, getDimensionServiceKey(), false)
       .createPopup();
-    Disposer.register(myPopup, myDisposable);
     Disposer.register(myPopup, this);
-    Disposer.register(myPopup, myAbstractTreeBuilder);
+    Disposer.register(myPopup, new Disposable() {
+      @Override
+      public void dispose() {
+        if (!treeHasBuilt.isDone()) {
+          treeHasBuilt.setRejected();
+        }
+      }
+    });
     myPopup.showInBestPositionFor(myEditor);
 
     ((AbstractPopup)myPopup).setShowHints(true);
