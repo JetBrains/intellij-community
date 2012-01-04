@@ -51,6 +51,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -155,8 +156,16 @@ public class FileStructurePopup implements Disposable {
         //myTree.revalidate();
         //myTree.repaint();
       }
+
+      @Override
+      public boolean isToEnsureSelectionOnFocusGained() {
+        return false;
+      }
     };
-    myAbstractTreeBuilder.setCanYieldUpdate(true);
+
+    myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
+
+    //myAbstractTreeBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myAbstractTreeBuilder);
   }
 
@@ -184,7 +193,7 @@ public class FileStructurePopup implements Disposable {
         }
       }
     });
-    myPopup.showInBestPositionFor(myEditor);
+    myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
     if (shouldSetWidth) {
@@ -217,9 +226,9 @@ public class FileStructurePopup implements Disposable {
           filter = prefix;
           myAbstractTreeBuilder.refilter(null, false, false);
         }
-        alarm.addRequest(this, 500);
+        alarm.addRequest(this, 300);
       }
-    }, 500);
+    }, 300);
   }
 
   private void selectPsiElement(PsiElement element) {
@@ -436,11 +445,15 @@ public class FileStructurePopup implements Disposable {
         myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
         //final String filter = mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
         //mySpeedSearch.hidePopup();
+        Object selection = ContainerUtil.getFirstItem(myAbstractTreeBuilder.getSelectedElements());
+        if (selection instanceof FilteringTreeStructure.FilteringNode) {
+          selection = ((FilteringTreeStructure.FilteringNode)selection).getDelegate();
+        }
         myTreeStructure.rebuildTree();
         FilteringTreeStructure structure = (FilteringTreeStructure)myAbstractTreeBuilder.getTreeStructure();
         if (structure == null) return;
         structure.rebuild();
-        myAbstractTreeBuilder.refilter(null, true, false).doWhenDone(new Runnable() {
+        myAbstractTreeBuilder.refilter(selection, true, false).doWhenDone(new Runnable() {
           @Override
           public void run() {
             if (SpeedSearchBase.hasActiveSpeedSearch(myTree)) {

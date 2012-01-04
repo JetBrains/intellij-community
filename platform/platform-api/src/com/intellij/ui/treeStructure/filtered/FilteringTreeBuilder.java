@@ -111,8 +111,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return true;
   }
 
-  public void refilter() {
-    refilter(null, true, false);
+  public ActionCallback refilter() {
+    return refilter(null, true, false);
   }
 
   public ActionCallback refilter(@Nullable final Object preferredSelection, final boolean adjustSelection, final boolean now) {
