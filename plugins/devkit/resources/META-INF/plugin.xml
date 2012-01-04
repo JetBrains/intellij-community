@@ -1,23 +1,29 @@
 <idea-plugin version="2">
   <name>Plugin DevKit</name>
   <id>DevKit</id>
-  <version>1.0</version>  <!-- $Revision$ -->
+  <version>1.0</version>
 
   <category>inspection</category>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+
   <depends>com.intellij.properties</depends>
-  <resource-bundle xmlns="">org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
+
+  <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildParticipantProvider implementation="org.jetbrains.idea.devkit.build.PluginBuildParticipantProvider"/>
 
     <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginXmlDomFileDescription"/>
-    <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions" extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
-    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.IdeaPlugin" implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
-    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension" implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
+    <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
+                  extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.IdeaPlugin"
+                        implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension"
+                        implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
@@ -25,7 +31,8 @@
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
 
-    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" groupBundle="org.jetbrains.idea.devkit.DevKitBundle"
+    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
     <localInspection language="JAVA" shortName="ComponentNotRegistered" bundle="org.jetbrains.idea.devkit.DevKitBundle"
@@ -72,17 +79,19 @@
     <component>
       <implementation-class>org.jetbrains.idea.devkit.build.PluginBuildConfiguration</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>
-    </component>    
+    </component>
   </module-components>
+
   <actions>
     <group id="PluginDeployActions">
-      <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" id="MakeJarAction" />
-      <action class="org.jetbrains.idea.devkit.build.PrepareAllToDeployAction" id="MakeAllJarsAction" />
+      <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" id="MakeJarAction"/>
+      <action class="org.jetbrains.idea.devkit.build.PrepareAllToDeployAction" id="MakeAllJarsAction"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="Compile"/>
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildJar"/>
     </group>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction" text="Application Component" id="NewApplicationComponent">
+    <action class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction" text="Application Component"
+            id="NewApplicationComponent">
       <add-to-group anchor="last" group-id="NewGroup"/>
     </action>
 
@@ -104,4 +113,5 @@
     </action>
 
   </actions>
+
 </idea-plugin>
