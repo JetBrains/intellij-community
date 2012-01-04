@@ -9,6 +9,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtil;
@@ -93,6 +94,8 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
         } else {
           final PsiPackage[] subPackages = ((PsiPackage)val).getSubPackages();
           for (PsiPackage aPackage : subPackages) {
+            final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(aPackage.getProject()));
+            if (directories.length == 0) continue;
             if (packages.containsKey(aPackage.getQualifiedName())) {
               children.add(new CoverageListNode(aPackage, bundle, packages, topLevelPackages, stateBean));
             }
