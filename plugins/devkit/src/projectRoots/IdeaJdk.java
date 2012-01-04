@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,16 +221,16 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     if (javaSdks.isEmpty()){
       JavaSdkVersion requiredVersion = getRequiredJdkVersion(sdk);
       if (requiredVersion != null) {
-        Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVersion), "No Java SDK found");
+        Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVersion), "No Java SDK Found");
       }
       else {
-        Messages.showErrorDialog(DevKitBundle.message("no.idea.sdk.version.found"), "No Java SDK found");
+        Messages.showErrorDialog(DevKitBundle.message("no.idea.sdk.version.found"), "No Java SDK Found");
       }
       return false;
     }
 
     final int choice = Messages
-      .showChooseDialog("Select Java SDK to be used as IDEA internal platform", "Select internal Java platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+      .showChooseDialog("Select Java SDK to be used as IDEA internal platform", "Select Internal Java Platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
 
     if (choice != -1) {
       final String name = javaSdks.get(choice);
