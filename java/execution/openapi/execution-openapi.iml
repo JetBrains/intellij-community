@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="module" module-name="xdebugger-api" exported="" />
-    <orderEntry type="module" module-name="java-runtime" />
   </component>
   <component name="copyright">
     <Base>
