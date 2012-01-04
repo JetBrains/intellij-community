@@ -24,6 +24,7 @@
     <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
                     serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
     <programRunner implementation="com.intellij.coverage.DefaultJavaCoverageRunner"/>
+    <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
@@ -37,6 +38,9 @@
       <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
       <implementation-class>com.intellij.coverage.CoveragePluginDataManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.coverage.view.CoverageViewManager</implementation-class>
     </component>
   </project-components>
   <actions>

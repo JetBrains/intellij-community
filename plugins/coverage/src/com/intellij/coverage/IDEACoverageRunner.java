@@ -6,8 +6,6 @@ package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.PathUtil;
@@ -36,7 +34,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
       tempFile.deleteOnExit();
       write2file(tempFile, sessionDataFilePath);
       write2file(tempFile, String.valueOf(collectLineInfo));
-      write2file(tempFile, Boolean.FALSE.toString()); //append unloaded
+      write2file(tempFile, Boolean.TRUE.toString()); //append unloaded
       write2file(tempFile, Boolean.FALSE.toString());//merge with existing
       write2file(tempFile, String.valueOf(isSampling));
       if (patterns != null) {

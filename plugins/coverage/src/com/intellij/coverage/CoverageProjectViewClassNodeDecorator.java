@@ -80,7 +80,7 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProve
   }
 
   @Nullable
-  private JavaCoverageAnnotator getCovAnnotator(final CoverageSuitesBundle currentSuite, Project project) {
+  private static JavaCoverageAnnotator getCovAnnotator(final CoverageSuitesBundle currentSuite, Project project) {
     if (currentSuite != null) {
       final CoverageAnnotator coverageAnnotator = currentSuite.getAnnotator(project);
       if (coverageAnnotator instanceof JavaCoverageAnnotator) {
