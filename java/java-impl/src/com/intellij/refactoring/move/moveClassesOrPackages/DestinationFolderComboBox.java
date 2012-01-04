@@ -50,6 +50,7 @@ import java.util.*;
  */
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
   private static final String LEAVE_IN_SAME_SOURCE_ROOT = "Leave in same source root";
+  private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);
   private PsiDirectory myInitialTargetDirectory;
   private VirtualFile[] mySourceRoots;
 
@@ -85,7 +86,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     new ComboboxSpeedSearch(getComboBox()) {
       @Override
       protected String getElementText(Object element) {
-        if (element == null) return LEAVE_IN_SAME_SOURCE_ROOT;
+        if (element == NULL_WRAPPER) return LEAVE_IN_SAME_SOURCE_ROOT;
         if (element instanceof DirectoryChooser.ItemWrapper) {
           final VirtualFile virtualFile = ((DirectoryChooser.ItemWrapper)element).getDirectory().getVirtualFile();
           final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
@@ -104,7 +105,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                             int index,
                             boolean selected,
                             boolean hasFocus) {
-        if (itemWrapper != null) {
+        if (itemWrapper != NULL_WRAPPER) {
           setIcon(itemWrapper.getIcon(fileIndex));
 
           setText(getPresentableText(itemWrapper, project));
@@ -126,7 +127,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         final ComboBoxModel model = getComboBox().getModel();
         for (int i = 0; i < model.getSize(); i++) {
           DirectoryChooser.ItemWrapper item = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
-          if (item != null && fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()) == root) {
+          if (item != NULL_WRAPPER && fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()) == root) {
             getComboBox().setSelectedItem(item);
             getComboBox().repaint();
             return;
@@ -141,7 +142,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       public void documentChanged(DocumentEvent e) {
         JComboBox comboBox = getComboBox();
         DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)comboBox.getSelectedItem();
-        setComboboxModel(comboBox, selectedItem != null ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile()) : initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater);
+        setComboboxModel(comboBox, selectedItem != null && selectedItem != NULL_WRAPPER ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile()) : initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater);
       }
     });
     setComboboxModel(getComboBox(), initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater);
@@ -150,7 +151,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       public void actionPerformed(ActionEvent e) {
         Object selectedItem = getComboBox().getSelectedItem();
         updateErrorMessage(errorMessageUpdater, fileIndex, selectedItem);
-        if (selectedItem instanceof DirectoryChooser.ItemWrapper) {
+        if (selectedItem instanceof DirectoryChooser.ItemWrapper && selectedItem != NULL_WRAPPER) {
           PsiDirectory directory = ((DirectoryChooser.ItemWrapper)selectedItem).getDirectory();
           if (directory != null) {
             selection[0] = fileIndex.getSourceRootForFile(directory.getVirtualFile());
@@ -171,7 +172,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   @Nullable
   public MoveDestination selectDirectory(final PackageWrapper targetPackage, final boolean showChooserWhenDefault) {
     final DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)getComboBox().getSelectedItem();
-    if (selectedItem == null) {
+    if (selectedItem == null || selectedItem == NULL_WRAPPER) {
       return new MultipleRootsMoveDestination(targetPackage);
     }
     final PsiDirectory selectedPsiDirectory = selectedItem.getDirectory();
@@ -185,7 +186,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
 
   private void updateErrorMessage(Pass<String> updateErrorMessage, ProjectFileIndex fileIndex, Object selectedItem) {
     updateErrorMessage.pass(null);
-    if (myInitialTargetDirectory != null && selectedItem instanceof DirectoryChooser.ItemWrapper) {
+    if (myInitialTargetDirectory != null && selectedItem instanceof DirectoryChooser.ItemWrapper && selectedItem != NULL_WRAPPER) {
       final PsiDirectory directory = ((DirectoryChooser.ItemWrapper)selectedItem).getDirectory();
       final boolean isSelectionInTestSourceContent = fileIndex.isInTestSourceContent(directory.getVirtualFile());
       final boolean inTestSourceContent = fileIndex.isInTestSourceContent(myInitialTargetDirectory.getVirtualFile());
@@ -229,7 +230,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         oldOne = itemWrapper;
       }
     }
-    items.add(null);
+    items.add(NULL_WRAPPER);
     final DirectoryChooser.ItemWrapper selection = chooseSelection(initialTargetDirectorySourceRoot, fileIndex, items, initial, oldOne);
     final ComboBoxModel model = comboBox.getModel();
     if (model instanceof CollectionComboBoxModel) {
@@ -254,8 +255,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     Collections.sort(items, new Comparator<DirectoryChooser.ItemWrapper>() {
       @Override
       public int compare(DirectoryChooser.ItemWrapper o1, DirectoryChooser.ItemWrapper o2) {
-        if (o1 == null) return -1;
-        if (o2 == null) return 1;
+        if (o1 == NULL_WRAPPER) return -1;
+        if (o2 == NULL_WRAPPER) return 1;
         return getPresentableText(o1, project).compareToIgnoreCase(getPresentableText(o2, project));
       }
     });
@@ -268,7 +269,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                                               final ArrayList<DirectoryChooser.ItemWrapper> items,
                                                               final DirectoryChooser.ItemWrapper initial,
                                                               final DirectoryChooser.ItemWrapper oldOne) {
-    if (initial != null || items.contains(null) || items.isEmpty()) {
+    if (initial != null || items.contains(NULL_WRAPPER) || items.isEmpty()) {
       return initial;
     }
     else {
@@ -289,7 +290,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   }
 
   private static boolean areItemsEquivalent(DirectoryChooser.ItemWrapper oItem, DirectoryChooser.ItemWrapper itemWrapper) {
-    if (oItem == null || itemWrapper == null) {
+    if (oItem == NULL_WRAPPER || itemWrapper == NULL_WRAPPER) {
       if (oItem != itemWrapper) {
         return false;
       }
