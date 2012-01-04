@@ -26,13 +26,17 @@ class CoverageListNode extends AbstractTreeNode {
   private final Map<String, List<String>> myPackages;
   private List<AbstractTreeNode> myTopLevelPackages;
   private CoverageViewManager.StateBean myStateBean;
+  private List<String> myFilteredPackages;
+  private List<String> myFilteredClasses;
 
   public CoverageListNode(PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
                           Map<String, List<String>> packages,
                           List<AbstractTreeNode> topLevelPackages,
-                          CoverageViewManager.StateBean stateBean) {
+                          CoverageViewManager.StateBean stateBean, List<String> filteredPackages, List<String> filteredClasses) {
     super(classOrPackage.getProject(), classOrPackage);
+    myFilteredPackages = filteredPackages;
+    myFilteredClasses = filteredClasses;
     myName = classOrPackage.getName();
     myBundle = bundle;
     myPackages = packages;
@@ -48,7 +52,8 @@ class CoverageListNode extends AbstractTreeNode {
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
     return (Collection<CoverageListNode>)Arrays.asList(
-      (CoverageListNode[])CoverageViewTreeStructure.getChildren(getValue(), myBundle, myPackages, myTopLevelPackages, myStateBean));
+      (CoverageListNode[])CoverageViewTreeStructure.getChildren(getValue(), myBundle, myPackages, myFilteredPackages, myFilteredClasses,
+                                                                myTopLevelPackages, myStateBean));
   }
 
   @Override

@@ -34,7 +34,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
       tempFile.deleteOnExit();
       write2file(tempFile, sessionDataFilePath);
       write2file(tempFile, String.valueOf(collectLineInfo));
-      write2file(tempFile, Boolean.TRUE.toString()); //append unloaded
+      write2file(tempFile, Boolean.FALSE.toString()); //append unloaded
       write2file(tempFile, Boolean.FALSE.toString());//merge with existing
       write2file(tempFile, String.valueOf(isSampling));
       if (patterns != null) {

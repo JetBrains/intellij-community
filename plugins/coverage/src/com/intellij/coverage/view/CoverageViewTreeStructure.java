@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +30,8 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final CoverageListNode myRootNode;
   private final Map<String,List<String>> myPackages;
   private final List<AbstractTreeNode> myTopLevelPackages;
+  private final List<String> myFilteredPackages;
+  private final List<String> myFilteredClasses;
 
   public CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
     myData = bundle;
@@ -40,18 +41,26 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
     myPackages = new HashMap<String, List<String>>();
     buildPackageIndex(bundle.getCoverageData(), myPackages);
     myTopLevelPackages = new ArrayList<AbstractTreeNode>();
-    myRootNode = new CoverageListNode(myRootPackage, myData, myPackages, myTopLevelPackages, myStateBean);
+    myFilteredPackages = new ArrayList<String>();
+    myFilteredClasses = new ArrayList<String>();
+
+    myRootNode = new CoverageListNode(myRootPackage, myData, myPackages, myTopLevelPackages, myStateBean, myFilteredPackages,
+                                      myFilteredClasses);
 
     for (CoverageSuite suite : bundle.getSuites()) {
       final List<PsiPackage> packages = ((JavaCoverageSuite)suite).getCurrentSuitePackages(project);
       for (PsiPackage aPackage : packages) {
-        final CoverageListNode node = new CoverageListNode(aPackage, myData, myPackages, myTopLevelPackages, myStateBean);
+        myFilteredPackages.add(aPackage.getQualifiedName());
+        final CoverageListNode node = new CoverageListNode(aPackage, myData, myPackages, myTopLevelPackages, myStateBean,
+                                                           myFilteredPackages, myFilteredClasses);
         myTopLevelPackages.add(node);
         collectSubPackages(myTopLevelPackages, aPackage, myPackages);
       }
       final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(project);
       for (PsiClass aClass : classes) {
-        myTopLevelPackages.add(new CoverageListNode(aClass, bundle, myPackages, myTopLevelPackages, myStateBean));
+        myFilteredClasses.add(aClass.getQualifiedName());
+        myTopLevelPackages.add(new CoverageListNode(aClass, bundle, myPackages, myTopLevelPackages, myStateBean, myFilteredPackages,
+                                                    myFilteredClasses));
       }
     }
     for (AbstractTreeNode abstractTreeNode : myTopLevelPackages) {
@@ -65,7 +74,7 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   }
 
   public Object[] getChildElements(final Object element) {
-    return getChildren(element, myData, myPackages, myTopLevelPackages, myStateBean);
+    return getChildren(element, myData, myPackages, myFilteredPackages, myFilteredClasses, myTopLevelPackages, myStateBean);
   }
 
   public boolean contains(String packageName) {
@@ -75,40 +84,52 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   static Object[] getChildren(Object element,
                               final CoverageSuitesBundle bundle,
                               Map<String, List<String>> packages,
-                              List<AbstractTreeNode> topLevelPackages,
+                              List<String> filteredPackages, List<String> filteredClasses, List<AbstractTreeNode> topLevelPackages,
                               CoverageViewManager.StateBean stateBean) {
     List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     if (element instanceof CoverageListNode) {
       Object val = ((CoverageListNode)element).getValue();
       if (val instanceof PsiClass) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-      final ProjectData data = bundle.getCoverageData();
       //append package classes
       if (val instanceof PsiPackage) {
+        final String qualifiedName = ((PsiPackage)val).getQualifiedName();
         if (stateBean.myFlattenPackages) {
-          if (StringUtil.isEmpty(((PsiPackage)val).getQualifiedName())) {
+          if (StringUtil.isEmpty(qualifiedName)) {
             for (AbstractTreeNode topLevelPackageNode : topLevelPackages) {
               children.add(topLevelPackageNode);
             }
           }
         } else {
-          final PsiPackage[] subPackages = ((PsiPackage)val).getSubPackages();
+          final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(((PsiPackage)val).getProject());
+          final PsiPackage[] subPackages = ((PsiPackage)val).getSubPackages(searchScope);
           for (PsiPackage aPackage : subPackages) {
-            final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(aPackage.getProject()));
+            final PsiDirectory[] directories = aPackage.getDirectories(searchScope);
             if (directories.length == 0) continue;
             if (packages.containsKey(aPackage.getQualifiedName())) {
-              children.add(new CoverageListNode(aPackage, bundle, packages, topLevelPackages, stateBean));
+              children.add(new CoverageListNode(aPackage, bundle, packages, topLevelPackages, stateBean, filteredPackages, filteredClasses));
             }
           }
         }
 
 
-        final PsiClass[] classes = ((PsiPackage)val).getClasses();
-        for (PsiClass aClass : classes) {
-          final ClassData classData = data.getClassData(aClass.getQualifiedName());
-          if (classData != null) {
-            final CoverageListNode treeNode = new CoverageListNode(aClass, bundle, packages, topLevelPackages, stateBean);
-            children.add(treeNode);
+        boolean found = false;
+        for (String packageName : filteredPackages) {
+          if (qualifiedName.startsWith(packageName + ".")) {
+            final PsiClass[] classes = ((PsiPackage)val).getClasses();
+            for (PsiClass aClass : classes) {
+              children.add(new CoverageListNode(aClass, bundle, packages, topLevelPackages, stateBean, filteredPackages, filteredClasses));
+            }
+            found = true;
+            break;
+          }
+        }
+        if (!found && !filteredClasses.isEmpty()) {
+          final PsiClass[] classes = ((PsiPackage)val).getClasses();
+          for (PsiClass aClass : classes) {
+            if (filteredClasses.contains(aClass.getQualifiedName())) {
+              children.add(new CoverageListNode(aClass, bundle, packages, topLevelPackages, stateBean, filteredPackages, filteredClasses));
+            }
           }
         }
       }
@@ -141,7 +162,8 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
     final PsiPackage[] subPackages = rootPackage.getSubPackages();
     for (PsiPackage aPackage : subPackages) {
       if (packages.containsKey(aPackage.getQualifiedName())) {
-        final CoverageListNode node = new CoverageListNode(aPackage, myData, packages, myTopLevelPackages, myStateBean);
+        final CoverageListNode node = new CoverageListNode(aPackage, myData, packages, myTopLevelPackages, myStateBean, myFilteredPackages,
+                                                           myFilteredClasses);
         children.add(node);
         collectSubPackages(children, aPackage, packages);
       }
