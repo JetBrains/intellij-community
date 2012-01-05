@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project;
  * @author peter
  */
 public class ExpandLiveTemplateByTabAction extends EditorAction {
-  protected ExpandLiveTemplateByTabAction() {
+  public ExpandLiveTemplateByTabAction() {
     super(new EditorWriteActionHandler() {
       public void executeWriteAction(Editor editor, DataContext dataContext) {
         Project project = editor.getProject();
