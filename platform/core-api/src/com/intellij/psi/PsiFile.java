@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A PSI element representing a file.
+ * <p/>
+ * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Architectural+Overview">IntelliJ IDEA Architectural Overview </a>
+ * for high-level overview.
  *
  * @see com.intellij.openapi.actionSystem.LangDataKeys#PSI_FILE
  * @see com.intellij.psi.PsiElement#getContainingFile()
