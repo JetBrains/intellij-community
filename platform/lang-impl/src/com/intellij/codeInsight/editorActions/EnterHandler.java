@@ -40,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -549,7 +550,10 @@ public class EnterHandler extends BaseEnterHandler {
       if (next == null && comment.getParent().getClass() == comment.getClass()) {
         next = comment.getParent().getNextSibling(); // expanding chameleon comment produces comment under comment
       }
-      if (!(next instanceof PsiWhiteSpace) || !next.getText().contains(LINE_SEPARATOR)) {
+      if (next != null) {
+        next = myFile.findElementAt(next.getTextRange().getStartOffset()); // maybe switch to another tree
+      }
+      if (next != null && (!FormatterUtil.containsWhiteSpacesOnly(next.getNode()) || !next.getText().contains(LINE_SEPARATOR))) {
         int lineBreakOffset = comment.getTextRange().getEndOffset();
         myDocument.insertString(lineBreakOffset, LINE_SEPARATOR);
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
