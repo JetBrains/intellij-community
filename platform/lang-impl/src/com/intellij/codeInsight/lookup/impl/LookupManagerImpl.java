@@ -106,7 +106,7 @@ public class LookupManagerImpl extends LookupManager {
 
   public LookupEx showLookup(final Editor editor,
                            @NotNull LookupElement[] items,
-                           final String prefix,
+                           @NotNull final String prefix,
                            @NotNull final LookupArranger arranger) {
     for (LookupElement item : items) {
       assert item != null;
@@ -118,7 +118,7 @@ public class LookupManagerImpl extends LookupManager {
 
   public LookupImpl createLookup(final Editor editor,
                                  @NotNull LookupElement[] items,
-                                 final String prefix,
+                                 @NotNull final String prefix,
                                  @NotNull final LookupArranger arranger) {
     hideActiveLookup();
 

@@ -120,7 +120,7 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     final LookupImpl lookup =
       (LookupImpl)LookupManager.getInstance(getProject()).createLookup(editor,
                                                                        calcLookupItems(lookupPrefix),
-                                                                       lookupPrefix != null ? lookupPrefix : "",
+                                                                       StringUtil.notNullize(lookupPrefix),
                                                                        LookupArranger.DEFAULT);
     final String advertisementText = getAdvertisementText();
     if (!StringUtil.isEmpty(advertisementText)) {
