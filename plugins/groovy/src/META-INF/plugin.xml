@@ -1023,6 +1023,10 @@
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
               text="dump groovy control flow"
               description="" internal="true"/>
+      <action id="DumpGroovyStubsAction"
+              class="org.jetbrains.plugins.groovy.actions.DumpGroovyStubsAction"
+              text="dump groovy stubs"
+              description="" internal="true"/>
       <add-to-group group-id="Internal"/>
     </group>
 

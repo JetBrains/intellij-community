@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
 import java.util.*;
@@ -143,7 +142,7 @@ public class GroovyToJavaGenerator {
     final ClassItemGenerator generator = new StubGenerator(new StubClassNameProvider(Collections.<VirtualFile>emptySet()));
     final StringBuilder buffer = new StringBuilder();
     if (method.isConstructor()) {
-      generator.writeConstructor(buffer, (GrMethod)method, false);
+      generator.writeConstructor(buffer, method, false);
     }
     else {
       generator.writeMethod(buffer, method);
@@ -151,4 +150,20 @@ public class GroovyToJavaGenerator {
     return buffer.toString();
   }
 
+  /**
+   * method for tests and debugging
+   */
+  public static StringBuilder generateStubs(PsiFile psiFile) {
+    final StringBuilder builder = new StringBuilder();
+    final Set<VirtualFile> files = Collections.singleton(psiFile.getViewProvider().getVirtualFile());
+    final Map<String, CharSequence> map = new GroovyToJavaGenerator(psiFile.getProject(), files).generateStubs((GroovyFile)psiFile);
+
+    for (CharSequence stubText : map.values()) {
+      builder.append(stubText);
+      builder.append("\n");
+      builder.append("---");
+      builder.append("\n");
+    }
+    return builder;
+  }
 }
