@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ReflectionUtil;
@@ -48,6 +49,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
   private final Application myApp;
   private IdeFrame myFrame;
+  @Nullable private Getter<DataContext> myDataContextProvider;
 
   public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager, @Nullable PresentationFactory factory) {
     myManager = actionManager;
@@ -57,6 +59,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
   public JPopupMenu getComponent() {
     return myMenu;
+  }
+
+  public void setDataContextProvider(@Nullable Getter<DataContext> dataContextProvider) {
+    myDataContextProvider = dataContextProvider;
   }
 
   private class MyMenu extends JPopupMenu {
@@ -85,7 +91,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       int x2 = Math.min(Math.max(0, x), component.getWidth() - 1); // fit x into [0, width-1]
       int y2 = Math.min(Math.max(0, y), component.getHeight() - 1); // fit y into [0, height-1]
 
-      myContext = DataManager.getInstance().getDataContext(component, x2, y2);
+      myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
       Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false);
       if (getComponentCount() == 0) {
         return;
