@@ -37,7 +37,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public String getPercentage(int columnIndex, AbstractTreeNode node) {
+  public String getPercentage(int columnIndex, AbstractTreeNode node, boolean flatten) {
     final Object value = node.getValue();
     if (value instanceof PsiClass) {
       final String qualifiedName = ((PsiClass)value).getQualifiedName();
@@ -47,9 +47,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       return myAnnotator.getClassLinePercentage(qualifiedName);
     }
     if (columnIndex == 1) {
-      return myAnnotator.getPackageClassPercentage((PsiPackage)value);
+      return myAnnotator.getPackageClassPercentage((PsiPackage)value, flatten);
     }
-    return myAnnotator.getPackageLinePercentage((PsiPackage)value);
+    return myAnnotator.getPackageLinePercentage((PsiPackage)value, flatten);
   }
 
   @Override
@@ -83,6 +83,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     for (CoverageSuite suite : bundle.getSuites()) {
       final List<PsiPackage> packages = ((JavaCoverageSuite)suite).getCurrentSuitePackages(project);
       for (PsiPackage aPackage : packages) {
+        if (!bundle.isTrackTestFolders() && aPackage.getDirectories(GlobalSearchScope.projectScope(project)).length == 0) continue;
         final CoverageListNode node = new CoverageListNode(aPackage, bundle, stateBean);
         topLevelNodes.add(node);
         collectSubPackages(topLevelNodes, aPackage, bundle, stateBean);
@@ -95,7 +96,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return topLevelNodes;
   }
 
-  private void collectSubPackages(List<AbstractTreeNode> children,
+  private static void collectSubPackages(List<AbstractTreeNode> children,
                                          PsiPackage rootPackage,
                                          final CoverageSuitesBundle data,
                                          final CoverageViewManager.StateBean stateBean) {

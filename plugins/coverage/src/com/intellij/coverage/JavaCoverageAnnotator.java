@@ -21,6 +21,7 @@ import java.util.Map;
  */
 public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<String, PackageAnnotator.PackageCoverageInfo>();
+  private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<String, PackageAnnotator.PackageCoverageInfo>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos =
     new HashMap<VirtualFile, PackageAnnotator.PackageCoverageInfo>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
@@ -65,6 +66,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     super.onSuiteChosen(newSuite);
 
     myPackageCoverageInfos.clear();
+    myFlattenPackageCoverageInfos.clear();
     myDirCoverageInfos.clear();
     myTestDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
@@ -93,6 +95,16 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
           new PackageAnnotator(aPackage).annotate(suite, new PackageAnnotator.Annotator() {
             public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
               myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
+            }
+
+            public void annotatePackage(String packageQualifiedName,
+                                        PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+                                        boolean flatten) {
+              if (flatten) {
+                myFlattenPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
+              } else {
+                annotatePackage(packageQualifiedName, packageCoverageInfo);
+              }
             }
 
             public void annotateSourceDirectory(VirtualFile dir,
@@ -157,14 +169,18 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return getCoverageInformationString(info, subCoverageActive);
   }
   
-  public String getPackageClassPercentage(final PsiPackage psiPackage) {
-    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = myPackageCoverageInfos.get(psiPackage.getQualifiedName());
+  public String getPackageClassPercentage(final PsiPackage psiPackage, boolean flatten) {
+    final String qualifiedName = psiPackage.getQualifiedName();
+    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = flatten ? myFlattenPackageCoverageInfos.get(qualifiedName) 
+                                                                             : myPackageCoverageInfos.get(qualifiedName);
     if (packageCoverageInfo == null) return null;
     return (int)((double)packageCoverageInfo.coveredClassCount/packageCoverageInfo.totalClassCount * 100) +"% (" + packageCoverageInfo.coveredClassCount + "/" + packageCoverageInfo.totalClassCount + ")"; 
   }
 
-  public String getPackageLinePercentage(final PsiPackage psiPackage) {
-    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = myPackageCoverageInfos.get(psiPackage.getQualifiedName());
+  public String getPackageLinePercentage(final PsiPackage psiPackage, boolean flatten) {
+    final String qualifiedName = psiPackage.getQualifiedName();
+    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = flatten ? myFlattenPackageCoverageInfos.get(qualifiedName) 
+                                                                             : myPackageCoverageInfos.get(qualifiedName);
     if (packageCoverageInfo == null) return null;
     return (int)((double)packageCoverageInfo.coveredLineCount/packageCoverageInfo.totalLineCount * 100) +"% (" + packageCoverageInfo.coveredLineCount + "/" + packageCoverageInfo.totalLineCount + ")"; 
   }
