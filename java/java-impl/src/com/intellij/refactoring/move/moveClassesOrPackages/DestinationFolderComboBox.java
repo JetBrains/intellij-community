@@ -177,7 +177,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     }
     final PsiDirectory selectedPsiDirectory = selectedItem.getDirectory();
     VirtualFile selectedDestination = selectedPsiDirectory.getVirtualFile();
-    if (showChooserWhenDefault && selectedDestination == myInitialTargetDirectory) {
+    if (showChooserWhenDefault && selectedDestination == myInitialTargetDirectory.getVirtualFile()) {
       selectedDestination = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, mySourceRoots, myInitialTargetDirectory);
     }
     if (selectedDestination == null) return null;
