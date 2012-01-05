@@ -18,7 +18,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.UIBundle;
 
 /**
@@ -51,5 +53,10 @@ public class RecentProjectsAction extends WelcomePopupAction {
   @Override
   public void update(final AnActionEvent e) {
     e.getPresentation().setVisible(RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0);
+  }
+
+  @Override
+  protected void showPopup(DataContext context, ListPopup popup) {
+    popup.showInBestPositionFor(context);
   }
 }

@@ -77,6 +77,10 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
                               true);
 
 
+    showPopup(context, popup);
+  }
+
+  protected void showPopup(DataContext context, ListPopup popup) {
     Component focusedComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
     if (focusedComponent != null) {
       popup.showUnderneathOf(focusedComponent);
@@ -95,5 +99,4 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
       popup.showInScreenCoordinates(focusedComponent.getParent(), point);
     }
   }
-
 }
