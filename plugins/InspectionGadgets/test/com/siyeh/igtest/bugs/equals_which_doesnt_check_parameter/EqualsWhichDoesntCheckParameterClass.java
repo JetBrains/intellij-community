@@ -79,3 +79,20 @@ class Five {
         return super.equals(obj);
     }
 }
+class Parent {
+  private String parentField;
+
+  public boolean equals(Object o) {
+    if (! getClass().isAssignableFrom(o.getClass()) {return false;}
+    return ((Parent)o).parentField.equals(parentField);
+  }
+}
+
+class Child {
+  private String childField;
+
+  public boolean equals(Object o) {
+    if (! super.equals(o)) {return false;}
+    return ((Child)o).childField.equals(childField);
+  }
+}
