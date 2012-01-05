@@ -1359,7 +1359,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return false;
   }
 
-  public void disposeComposite(EditorWithProviderComposite editor) {
+  public void disposeComposite(@NotNull EditorWithProviderComposite editor) {
     if (getAllEditors().length == 0) {
       setCurrentWindow(null);
     }
