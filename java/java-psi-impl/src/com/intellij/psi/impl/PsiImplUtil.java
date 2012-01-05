@@ -530,4 +530,8 @@ public class PsiImplUtil {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
   }
+
+  public static PsiElement handleMirror(PsiElement element) {
+    return element instanceof PsiMirrorElement ? ((PsiMirrorElement)element).getPrototype() : element;
+  }
 }

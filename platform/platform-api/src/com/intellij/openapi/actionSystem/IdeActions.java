@@ -72,6 +72,7 @@ public interface IdeActions {
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS = "EditorChooseLookupItemAlways";
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_REPLACE = "EditorChooseLookupItemReplace";
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT = "EditorChooseLookupItemCompleteStatement";
+  @NonNls String ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB = "ExpandLiveTemplateByTab";
 
   @NonNls String ACTION_LOOKUP_UP = "EditorLookupUp";
   @NonNls String ACTION_LOOKUP_DOWN = "EditorLookupDown";

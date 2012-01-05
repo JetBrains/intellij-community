@@ -122,7 +122,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public boolean startTemplate(@NotNull Editor editor, char shortcutChar) {
-    return startTemplate(editor, shortcutChar, null);
+    Runnable runnable = prepareTemplate(editor, shortcutChar, null);
+    if (runnable != null) {
+      runnable.run();
+    }
+    return runnable != null;
   }
 
   public void startTemplate(@NotNull final Editor editor, @NotNull Template template) {
@@ -232,9 +236,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return false;
   }
 
-  public boolean startTemplate(final Editor editor, char shortcutChar, final PairProcessor<String, String> processor) {
+  @Nullable
+  public Runnable prepareTemplate(final Editor editor, char shortcutChar, @Nullable final PairProcessor<String, String> processor) {
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
-    if (file == null) return false;
+    if (file == null) return null;
     TemplateSettings templateSettings = TemplateSettings.getInstance();
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, templateSettings);
@@ -243,14 +248,17 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       if (shortcutChar == customLiveTemplate.getShortcut()) {
         if (isApplicable(customLiveTemplate, editor, file)) {
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
-          String key = customLiveTemplate.computeTemplateKey(callback);
+          final String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {
             int caretOffset = editor.getCaretModel().getOffset();
             int offsetBeforeKey = caretOffset - key.length();
             CharSequence text = editor.getDocument().getCharsSequence();
             if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-              customLiveTemplate.expand(key, callback);
-              return true;
+              return new Runnable() {
+                public void run() {
+                  customLiveTemplate.expand(key, callback);
+                }
+              };
             }
           }
         }
@@ -288,7 +296,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
                                                           Editor editor,
-                                                          Character shortcutChar,
+                                                          @Nullable Character shortcutChar,
                                                           TemplateSettings templateSettings) {
     final Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
@@ -326,30 +334,34 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return candidate2Argument;
   }
 
-  public boolean startNonCustomTemplates(Map<TemplateImpl, String> template2argument,
-                                          Editor editor,
-                                          PairProcessor<String, String> processor) {
+  @Nullable
+  public Runnable startNonCustomTemplates(final Map<TemplateImpl, String> template2argument,
+                                          final Editor editor,
+                                          @Nullable final PairProcessor<String, String> processor) {
     final int caretOffset = editor.getCaretModel().getOffset();
     final Document document = editor.getDocument();
-    CharSequence text = document.getCharsSequence();
+    final CharSequence text = document.getCharsSequence();
 
     if (template2argument == null || template2argument.size() == 0) {
-      return false;
+      return null;
     }
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), myProject)) {
-      return false;
+      return null;
     }
 
-    if (template2argument.size() == 1) {
-      TemplateImpl template = template2argument.keySet().iterator().next();
-      String argument = template2argument.get(template);
-      int templateStart = getTemplateStart(template, argument, caretOffset, text);
-      startTemplateWithPrefix(editor, template, templateStart, processor, argument);
-    }
-    else {
-      ListTemplatesHandler.showTemplatesLookup(myProject, editor, template2argument);
-    }
-    return true;
+    return new Runnable() {
+      public void run() {
+        if (template2argument.size() == 1) {
+          TemplateImpl template = template2argument.keySet().iterator().next();
+          String argument = template2argument.get(template);
+          int templateStart = getTemplateStart(template, argument, caretOffset, text);
+          startTemplateWithPrefix(editor, template, templateStart, processor, argument);
+        }
+        else {
+          ListTemplatesHandler.showTemplatesLookup(myProject, editor, template2argument);
+        }
+      }
+    };
   }
 
   public static List<TemplateImpl> findMatchingTemplates(CharSequence text,

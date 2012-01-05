@@ -17,7 +17,7 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -43,11 +43,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     final PsiClass aClass = getElement();
     if (aClass == null) return Collections.emptyList();
 
-    Collection<PsiElement> members = new ArrayList<PsiElement>();
-    ContainerUtil.addAll(members, aClass.getFields());
-    ContainerUtil.addAll(members, aClass.getMethods());
-    ContainerUtil.addAll(members, aClass.getInnerClasses());
-    ContainerUtil.addAll(members, aClass.getInitializers());
+    LinkedHashSet<PsiElement> members = getOwnChildren(aClass);
     List<StructureViewTreeElement> children = new ArrayList<StructureViewTreeElement>(members.size());
 
     //aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
@@ -68,6 +64,21 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
       }
     }
     return children;
+  }
+
+  static LinkedHashSet<PsiElement> getOwnChildren(PsiClass aClass) {
+    LinkedHashSet<PsiElement> members = new LinkedHashSet<PsiElement>();
+    addPhysicalElements(aClass.getFields(), members);
+    addPhysicalElements(aClass.getMethods(), members);
+    addPhysicalElements(aClass.getInnerClasses(), members);
+    addPhysicalElements(aClass.getInitializers(), members);
+    return members;
+  }
+
+  private static void addPhysicalElements(PsiElement[] elements, LinkedHashSet<PsiElement> to) {
+    for (PsiElement element : elements) {
+      to.add(PsiImplUtil.handleMirror(element));
+    }
   }
 
   public Set<PsiClass> getParents() {

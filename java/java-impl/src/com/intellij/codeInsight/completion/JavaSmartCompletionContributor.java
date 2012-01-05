@@ -264,7 +264,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           for (PsiClassType ref : method.getThrowsList().getReferencedTypes()) {
             final PsiClass exception = ref.resolve();
             if (exception != null && throwsSet.add(exception)) {
-              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.INSERT_SPACE));
+              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.HUMBLE_SPACE));
             }
           }
         }
@@ -282,7 +282,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         if (tryBlock == null) return;
 
         for (final PsiClassType type : ExceptionUtil.getThrownExceptions(tryBlock.getStatements())) {
-          result.addElement(TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()), TailType.INSERT_SPACE));
+          result.addElement(TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()), TailType.HUMBLE_SPACE));
         }
       }
     });

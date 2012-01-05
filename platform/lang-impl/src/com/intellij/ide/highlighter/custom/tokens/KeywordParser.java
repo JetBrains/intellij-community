@@ -21,6 +21,9 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author dsl
@@ -28,39 +31,30 @@ import java.util.*;
 public class KeywordParser extends TokenParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.KeywordParser");
   private final List<Set<String>> myKeywordSets = new ArrayList<Set<String>>();
+  private final Pattern myPattern;
   private final boolean myIgnoreCase;
-  private final BitSet myFirstCharacters = new BitSet();
-  private final BitSet myCharacters = new BitSet();
 
   public KeywordParser(List<Set<String>> keywordSets, boolean ignoreCase) {
-    LOG.assertTrue(keywordSets.size() == CustomHighlighterTokenType.KEYWORD_TYPE_COUNT);
     myIgnoreCase = ignoreCase;
-    int maxLength = 0;
+    LOG.assertTrue(keywordSets.size() == CustomHighlighterTokenType.KEYWORD_TYPE_COUNT);
+    StringBuilder regex = new StringBuilder();
     for (Set<String> keywordSet : keywordSets) {
       myKeywordSets.add(getKeywordSet(keywordSet));
-      for (String s : keywordSet) {
-        maxLength = Math.max(maxLength, s.length());
-
-        final char firstChar = s.charAt(0);
-        if (ignoreCase) {
-          myFirstCharacters.set(Character.toUpperCase(firstChar), Character.toUpperCase(firstChar) + 1);
-          myFirstCharacters.set(Character.toLowerCase(firstChar), Character.toLowerCase(firstChar) + 1);
+      for (String word : keywordSet) {
+        if (regex.length() > 0) {
+          regex.append("|");
         }
-        else {
-          myFirstCharacters.set(firstChar, firstChar + 1);
-        }
-        for (int j = 0; j < s.length(); j++) {
-          final char currentChar = s.charAt(j);
-          if (ignoreCase) {
-            myCharacters.set(Character.toUpperCase(currentChar), Character.toUpperCase(currentChar) + 1);
-            myCharacters.set(Character.toLowerCase(currentChar), Character.toLowerCase(currentChar) + 1);
-          }
-          else {
-            myCharacters.set(currentChar, currentChar + 1);
-          }
-        }
+        regex.append(word);
       }
     }
+    Pattern pattern = null;
+    try {
+      pattern = Pattern.compile("(" + regex + ")($|[\\W].*)", (ignoreCase ? Pattern.CASE_INSENSITIVE : 0) | Pattern.DOTALL);
+    }
+    catch (PatternSyntaxException e) {
+      LOG.error(e);
+    }
+    myPattern = pattern;
   }
 
   private Set<String> getKeywordSet(Set<String> keywordSet) {
@@ -75,24 +69,22 @@ public class KeywordParser extends TokenParser {
     return result;
   }
 
-
   public boolean hasToken(int position) {
-    if (!myFirstCharacters.get(myBuffer.charAt(position))) return false;
-    final int start = position;
-    for (position++; position < myEndOffset; position++) {
-      final char c = myBuffer.charAt(position);
-      if (!myCharacters.get(c)) {
-        if (Character.isJavaIdentifierPart(c)) return false;
-        break;
-      }
+    if (myPattern == null) {
+      return false;
     }
 
-    final String keyword = myBuffer.subSequence(start, position).toString();
+    Matcher matcher = myPattern.matcher(myBuffer.subSequence(position, myBuffer.length()));
+    if (!matcher.matches()) {
+      return false;
+    }
+
+    String keyword = matcher.group(1);
     String testKeyword = myIgnoreCase ? keyword.toUpperCase() : keyword;
     for (int i = 0; i < myKeywordSets.size(); i++) {
       Set<String> keywordSet = myKeywordSets.get(i);
       if (keywordSet.contains(testKeyword)) {
-        myTokenInfo.updateData(start, position, getToken(i));
+        myTokenInfo.updateData(position, position + keyword.length(), getToken(i));
         return true;
       }
     }

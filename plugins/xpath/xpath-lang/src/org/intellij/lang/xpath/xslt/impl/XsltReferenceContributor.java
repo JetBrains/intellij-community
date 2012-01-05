@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ProcessingContext;
 import org.intellij.lang.xpath.psi.XPath2TypeElement;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -97,7 +96,7 @@ public class XsltReferenceContributor {
     public void registerQuickfix(HighlightInfo info, PsiReference reference) {
       final XmlAttributeValue valueElement = myAttribute.getValueElement();
       if (valueElement != null) {
-        QuickFixAction.registerQuickFixAction(info, new CreateNSDeclarationIntentionFix(valueElement, getCanonicalText(), (XmlFile)myAttribute.getContainingFile()) {
+        QuickFixAction.registerQuickFixAction(info, new CreateNSDeclarationIntentionFix(valueElement, getCanonicalText()) {
           @Override
           public boolean showHint(Editor editor) {
             return false;

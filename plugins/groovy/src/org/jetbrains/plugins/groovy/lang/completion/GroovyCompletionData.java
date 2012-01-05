@@ -85,19 +85,21 @@ public class GroovyCompletionData {
 
       addTypeDefinitionKeywords(result, position);
       for (String keyword : addExtendsImplements(position)) {
-        result.addElement(keyword(keyword, TailType.INSERT_SPACE));
+        result.addElement(keyword(keyword, TailType.HUMBLE_SPACE));
       }
 
       registerControlCompletion(position, result);
 
       if (parent instanceof GrExpression) {
-        addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.NEW, PsiKeyword.THIS, "as");
+        addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.THIS);
+        result.addElement(keyword(PsiKeyword.NEW, TailType.INSERT_SPACE));
+        result.addElement(keyword("as", TailType.HUMBLE_SPACE));
       }
 
       if (isInfixOperatorPosition(position)) {
         addKeywords(result, true, "in", PsiKeyword.INSTANCEOF);
       } else if (suggestThrows(position)) {
-        addKeywords(result, true, PsiKeyword.THROWS);
+        result.addElement(keyword(PsiKeyword.THROWS, TailType.INSERT_SPACE));
       } else if (suggestPrimitiveTypes(position)) {
         boolean inCast = psiElement()
           .afterLeaf(psiElement().withText("(").withParent(psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class)))
@@ -144,7 +146,7 @@ public class GroovyCompletionData {
       addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM);
     }
     if (afterAtInType(position)) {
-      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.INSERT_SPACE));
+      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.HUMBLE_SPACE));
     }
   }
 
@@ -185,7 +187,7 @@ public class GroovyCompletionData {
 
   public static void addKeywords(CompletionResultSet result, boolean space, String... keywords) {
     for (String s : keywords) {
-      result.addElement(keyword(s, space ? TailType.INSERT_SPACE : TailType.NONE));
+      result.addElement(keyword(s, space ? TailType.HUMBLE_SPACE : TailType.NONE));
     }
   }
 

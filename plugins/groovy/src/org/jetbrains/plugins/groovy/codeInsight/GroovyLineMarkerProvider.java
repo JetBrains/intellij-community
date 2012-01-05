@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -205,7 +206,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
                 if (superMethod instanceof PsiMirrorElement) {
                   
                 }
-                overridden.add(superMethod instanceof PsiMirrorElement ? ((PsiMirrorElement)superMethod).getPrototype() : superMethod);
+                overridden.add(PsiImplUtil.handleMirror(superMethod));
               }
             }
             return !methods.isEmpty();
@@ -219,9 +220,9 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     for (PsiElement element : overridden) {
       final Icon icon = OVERRIDEN_METHOD_MARKER_RENDERER;
       PsiElement range;
-
-      if (element instanceof PsiMirrorElement) element = ((PsiMirrorElement)element).getPrototype();
       
+      element = PsiImplUtil.handleMirror(element);
+
       if (element instanceof GrNamedElement) {
         range = ((GrNamedElement)element).getNameIdentifierGroovy();
       }

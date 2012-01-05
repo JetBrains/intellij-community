@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -50,6 +51,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -73,36 +75,41 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix");
 
   private final String myNamespacePrefix;
-  private final PsiElement myElement;
-  private final XmlFile myFile;
-  private final XmlToken myToken;
+  private final PsiAnchor myElement;
+  private final PsiAnchor myToken;
+
+  @NotNull
+  private XmlFile getFile() {
+    return (XmlFile)myElement.getFile();
+  }
 
   @Nullable
   public static CreateNSDeclarationIntentionFix createFix(@NotNull final PsiElement element, @NotNull final String namespacePrefix) {
     PsiFile file = element.getContainingFile();
-    return file instanceof XmlFile ? new CreateNSDeclarationIntentionFix(element, namespacePrefix, (XmlFile)file) : null;
+    return file instanceof XmlFile ? new CreateNSDeclarationIntentionFix(element, namespacePrefix) : null;
   }
 
   protected CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
-                                            @NotNull final String namespacePrefix, 
-                                            @NotNull XmlFile containingFile) {
-    this(element, namespacePrefix, null, containingFile);
+                                            @NotNull final String namespacePrefix) {
+    this(element, namespacePrefix, null);
   }
 
-  public CreateNSDeclarationIntentionFix(final PsiElement element,
+  public CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
                                          final String namespacePrefix,
-                                         @Nullable final XmlToken token,
-                                         @NotNull XmlFile containingFile) {
+                                         @Nullable final XmlToken token) {
     myNamespacePrefix = namespacePrefix;
-    myElement = element;
-    myFile = containingFile;
-    myToken = token;
+    myElement = PsiAnchor.create(element);
+    myToken = token == null ? null : PsiAnchor.create(token);
   }
 
   @NotNull
   public String getText() {
-    final String alias = StringUtil.capitalize(XmlExtension.getExtension(myFile).getNamespaceAlias(myFile));
+    final String alias = StringUtil.capitalize(getXmlExtension().getNamespaceAlias(getFile()));
     return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
+  }
+
+  private XmlExtension getXmlExtension() {
+    return XmlExtension.getExtension(getFile());
   }
 
   @NotNull
@@ -127,13 +134,15 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myElement.isValid();
+    PsiElement element = myElement.retrieve();
+    return element != null && element.isValid();
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!myElement.isValid() || !CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
-    final Set<String> set = XmlExtension.getExtension(myFile).guessUnboundNamespaces(myElement, myFile);
+    final PsiElement element = ObjectUtils.assertNotNull(myElement.retrieve());
+    final Set<String> set = getXmlExtension().guessUnboundNamespaces(element, getFile());
     final String[] namespaces = ArrayUtil.toStringArray(set);
     Arrays.sort(namespaces);
 
@@ -144,18 +153,18 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace) throws IncorrectOperationException {
           String prefix = myNamespacePrefix;
           if (StringUtil.isEmpty(prefix)) {
-            final XmlExtension extension = XmlExtension.getExtension(myFile);
-            final XmlFile xmlFile = extension.getContainingFile(myElement);
+            final XmlExtension extension = getXmlExtension();
+            final XmlFile xmlFile = extension.getContainingFile(element);
             prefix = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
             if (StringUtil.isNotEmpty(prefix)) {
               // namespace already declared
-              ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
+              ExtendedTagInsertHandler.qualifyWithPrefix(prefix, element);
               return;
             }
             else {
               prefix = ExtendedTagInsertHandler.suggestPrefix(xmlFile, namespace);
               if (!StringUtil.isEmpty(prefix)) {
-                ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
+                ExtendedTagInsertHandler.qualifyWithPrefix(prefix, element);
                 PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
               }
             }
@@ -177,7 +186,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   private String getTitle() {
-    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(XmlExtension.getExtension(myFile).getNamespaceAlias(myFile)));
+    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(getXmlExtension().getNamespaceAlias(getFile())));
   }
 
   public boolean startInWriteAction() {
@@ -185,27 +194,28 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public boolean showHint(final Editor editor) {
-
-    if (myToken == null || !myToken.isValid()) return false;
-    if (!XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS || !myElement.isValid() || myNamespacePrefix.length() == 0) {
+    XmlToken token = (XmlToken)myToken.retrieve();
+    if (token == null) return false;
+    if (!XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS || myNamespacePrefix.length() == 0) {
       return false;
     }
-    final Set<String> namespaces = XmlExtension.getExtension(myFile).guessUnboundNamespaces(myElement, myFile);
+    PsiElement element = ObjectUtils.assertNotNull(myElement.retrieve());
+    final Set<String> namespaces = getXmlExtension().guessUnboundNamespaces(element, getFile());
     if (!namespaces.isEmpty()) {
       final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
       final String title = getTitle();
-      final ImportNSAction action = new ImportNSAction(namespaces, myFile, myElement, editor, title);
-      if (myElement instanceof XmlTag) {
-        if (VisibleHighlightingPassFactory.calculateVisibleRange(editor).contains(myToken.getTextRange())) {
+      final ImportNSAction action = new ImportNSAction(namespaces, getFile(), element, editor, title);
+      if (element instanceof XmlTag) {
+        if (VisibleHighlightingPassFactory.calculateVisibleRange(editor).contains(token.getTextRange())) {
           HintManager.getInstance().showQuestionHint(editor, message,
-                                                     myToken.getTextOffset(),
-                                                     myToken.getTextOffset() + myNamespacePrefix.length(), action);
+                                                     token.getTextOffset(),
+                                                     token.getTextOffset() + myNamespacePrefix.length(), action);
           return true;        
         }
       } else {
         HintManager.getInstance().showQuestionHint(editor, message,
-                                                   myElement.getTextOffset(),
-                                                   myElement.getTextRange().getEndOffset(), action);
+                                                   element.getTextOffset(),
+                                                   element.getTextRange().getEndOffset(), action);
         return true;
       }
     }
