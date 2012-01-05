@@ -161,7 +161,7 @@ public class XsltNamespaceContext implements NamespaceContext {
 
         // TODO: verify API
         public MyCreateNSDeclarationAction(XmlElement xmlElement, String prefix, XmlFile xmlFile) {
-            super(xmlElement, prefix, xmlFile);
+            super(xmlElement, prefix);
             myXmlFile = xmlFile;
         }
 
