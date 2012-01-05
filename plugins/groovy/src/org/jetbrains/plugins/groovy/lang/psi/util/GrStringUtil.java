@@ -787,4 +787,11 @@ public class GrStringUtil {
       return factory.createLiteralFromValue(value);
     }
   }
+
+  public static boolean isRegex(GrLiteral literal) {
+    if (literal instanceof GrRegex) return true;
+
+    final IElementType elementType = literal.getFirstChild().getNode().getElementType();
+    return elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL;
+  }
 }

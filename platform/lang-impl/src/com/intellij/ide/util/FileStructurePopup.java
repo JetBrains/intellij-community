@@ -22,6 +22,7 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -39,13 +40,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -53,6 +52,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,6 +129,22 @@ public class FileStructurePopup implements Disposable {
       }
     };
     myTree = new Tree(new DefaultMutableTreeNode(myTreeStructure.getRootElement()));
+    myTree.setCellRenderer(new NodeRenderer(){
+      @Override
+      protected void doAppend(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText, boolean selected) {
+        SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, selected, this);
+      }
+
+      @Override
+      public void doAppend(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean selected) {
+        SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, selected, this);
+      }
+
+      @Override
+      public void doAppend(String fragment, boolean selected) {
+        SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, selected, this);
+      }
+    });
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
@@ -225,6 +241,7 @@ public class FileStructurePopup implements Disposable {
         if (!filter.equals(prefix)) {
           filter = prefix;
           myAbstractTreeBuilder.refilter(null, false, false);
+          myTree.repaint();
         }
         alarm.addRequest(this, 300);
       }

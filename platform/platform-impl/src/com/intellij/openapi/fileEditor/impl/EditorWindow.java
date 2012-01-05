@@ -277,7 +277,9 @@ public class EditorWindow {
           }
           else {
             myPanel.removeAll ();
-            editorManager.disposeComposite(editor);
+            if (editor != null) {
+              editorManager.disposeComposite(editor);
+            }
           }
 
           if (unsplit && getTabCount() == 0) {

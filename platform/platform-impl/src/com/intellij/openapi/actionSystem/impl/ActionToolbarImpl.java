@@ -798,13 +798,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     updateActions(true, false, false);
   }
 
-  private void updateActions(boolean now, final boolean transparrentOnly, final boolean forced) {
+  private void updateActions(boolean now, final boolean transparentOnly, final boolean forced) {
     final IdRunnable updateRunnable = new IdRunnable(this) {
       public void run() {
         myNewVisibleActions.clear();
         final DataContext dataContext = getDataContext();
 
-        Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager, transparrentOnly);
+        Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager, transparentOnly);
 
         if (forced || !myNewVisibleActions.equals(myVisibleActions)) {
           // should rebuild UI

@@ -377,6 +377,8 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresWithSpacesMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresToCamelCaseMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro"/>
 

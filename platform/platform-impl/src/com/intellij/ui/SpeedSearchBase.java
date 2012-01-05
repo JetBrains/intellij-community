@@ -78,12 +78,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     });
 
-    component.putClientProperty(SPEED_SEARCH_COMPONENT_MARKER, this);
+    installSupplyTo(component);
   }
 
   public static boolean hasActiveSpeedSearch(JComponent component) {
-    SpeedSearchBase speedSearch = (SpeedSearchBase)component.getClientProperty(SPEED_SEARCH_COMPONENT_MARKER);
-    return speedSearch != null && speedSearch.mySearchPopup != null && speedSearch.mySearchPopup.isVisible();
+    return getSupply(component) != null;
   }
 
   public void setClearSearchOnNavigateNoMatch(boolean clearSearchOnNavigateNoMatch) {

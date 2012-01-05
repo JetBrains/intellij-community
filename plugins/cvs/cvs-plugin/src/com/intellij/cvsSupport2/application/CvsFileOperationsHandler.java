@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@ package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -36,8 +35,6 @@ import java.io.IOException;
  * @author yole
  */
 public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsFileOperationsHandler");
-
   private final Project myProject;
   private final CvsStorageSupportingDeletionComponent myComponent;
   private boolean myInternalDelete = false;
@@ -54,7 +51,7 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
   private boolean processDeletedFile(final VirtualFile file) throws IOException {
     if (myInternalDelete) return false;
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-    if (vcs != CvsVcs2.getInstance(myProject)) return false;    
+    if (vcs != CvsVcs2.getInstance(myProject)) return false;
     file.putUserData(CvsStorageSupportingDeletionComponent.FILE_VCS, vcs);
     if (!CvsUtil.fileIsUnderCvs(file)) return false;
     myComponent.getDeleteHandler().addDeletedRoot(file);
@@ -99,7 +96,7 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
   private boolean doMoveRename(final VirtualFile file, final VirtualFile newParent, final String newName) throws IOException {
     if (!CvsUtil.fileIsUnderCvs(file)) return false;
     if (newParent == null) return false;
-    File newFile = new File(newParent.getPath(), newName);
+    final File newFile = new File(newParent.getPath(), newName);
     myComponent.getDeleteHandler().addDeletedRoot(file);
     if (!file.isDirectory()) {
       myComponent.getAddHandler().addFile(newFile);
@@ -108,14 +105,14 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     newFile.mkdir();
     copyDirectoryStructure(file, newFile);
     myComponent.getAddHandler().addFile(newFile);
-    DocumentReference ref = DocumentReferenceManager.getInstance().create(file);
+    final DocumentReference ref = DocumentReferenceManager.getInstance().create(file);
     UndoManager.getInstance(myProject).nonundoableActionPerformed(ref, false);
     return true;
   }
 
   private static void copyDirectoryStructure(final VirtualFile file, final File newFile) throws IOException {
     for(VirtualFile child: file.getChildren()) {
-      File newChild = new File(newFile, child.getName());
+      final File newChild = new File(newFile, child.getName());
       if (child.isDirectory()) {
         if (DeletedCVSDirectoryStorage.isAdminDir(child)) continue;
         newChild.mkdir();
@@ -135,6 +132,5 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     return false;
   }
 
-  public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
-  }
+  public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {}
 }

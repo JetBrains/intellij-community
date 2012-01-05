@@ -1266,4 +1266,19 @@ public class FileUtil {
 
     return _path;
   }
+
+  public static boolean isHashBangLine(CharSequence firstCharsIfText, String marker) {
+    if (firstCharsIfText == null) {
+      return false;
+    }
+    final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n');
+    if (lineBreak < 0) {
+      return false;
+    }
+    String firstLine = firstCharsIfText.subSequence(0, lineBreak).toString();
+    if (!firstLine.startsWith("#!")) {
+      return false;
+    }
+    return firstLine.contains(marker);
+  }
 }

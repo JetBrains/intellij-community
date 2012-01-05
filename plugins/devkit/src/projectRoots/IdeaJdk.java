@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.projectRoots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
@@ -28,7 +27,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
@@ -56,10 +58,8 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
   private static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
-  @NonNls private static final String JAVA_HOME_PROPERTY = "java.home";
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
-  @NonNls private static final String JRE_DIR_NAME = "jre";
   @NonNls private static final String PLUGINS_DIR = "plugins";
   @NonNls private static final String JAVAEE_DIR = "JavaEE";
   @NonNls private static final String JSF_DIR = "JSF";
@@ -107,6 +107,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     return true;
   }
 
+  @Nullable
   private static File getOpenApiJar(String home) {
     @NonNls final String openapiJar = "openapi.jar";
     @NonNls final String platformApiJar = "platform-api.jar";
@@ -155,6 +156,12 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     }
     else if (new File(sdkHome, "lib/webide.jar").exists()) {
       productName = "WebStorm/PhpStorm ";
+    }
+    else if (new File(sdkHome, "lib/flexide.jar").exists()) {
+      productName = "Astella ";
+    }
+    else if (new File(sdkHome, "license/AppCode_license.txt").exists()) {
+      productName = "AppCode ";
     }
     else {
       productName = "IDEA ";
@@ -304,7 +311,6 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
         }
       }
       addSources(new File(sdkHome), sdkModificator);
-      addDocs(new File(sdkHome), sdkModificator);
     }
   }
 
@@ -339,29 +345,6 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
         VirtualFile vFile = jarFileSystem.findFileByPath(path);
         sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
       }
-    }
-  }
-
-  private static void addDocs(File file, final SdkModificator sdkModificator) {
-    @NonNls final String help = "help";
-    @NonNls final String openapi = "openapi";
-    final File docFile = new File(new File(file, help), openapi);
-    if (docFile.exists() && docFile.isDirectory()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(docFile), JavadocOrderRootType.getInstance());}
-        }
-      );
-      return;
-    }
-    @NonNls final String openapiHelpJar = "openapihelp.jar";
-    File jarfile = new File(new File(file, help), openapiHelpJar);
-    if (jarfile.exists()) {
-      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-      String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + openapi;
-      jarFileSystem.setNoCopyJarForPath(path);
-      VirtualFile vFile = jarFileSystem.findFileByPath(path);
-      sdkModificator.addRoot(vFile, JavadocOrderRootType.getInstance());
     }
   }
 

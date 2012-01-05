@@ -73,6 +73,14 @@ public class GrIntroduceFieldTest extends LightCodeInsightFixtureTestCase {
   public void testAnonymousClass() {
     doTest(false, false, false, CUR_METHOD, false, null);
   }
+  
+  public void testAnonymous2() {
+    doTest(false, false, false, CONSTRUCTOR, false, null);
+  }
+
+  public void testAnonymous3() {
+    doTest(false, false, false, CONSTRUCTOR, false, null);
+  }
 
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,

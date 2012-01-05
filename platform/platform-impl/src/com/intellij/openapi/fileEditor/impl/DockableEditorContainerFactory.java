@@ -40,6 +40,10 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
 
   @Override
   public DockContainer createContainer() {
+    return createContainer(false);
+  }
+
+  private DockContainer createContainer(boolean loadingState) {
     final Ref<DockableEditorTabbedContainer> container = new Ref<DockableEditorTabbedContainer>();
     EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, myDockManager, false) {
       @Override
@@ -57,14 +61,16 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
         return DockManager.getInstance(project).getIdeFrame(container.get());
       }
     };
-    splitters.createCurrentWindow();
+    if (!loadingState) {
+      splitters.createCurrentWindow();
+    }
     container.set(new DockableEditorTabbedContainer(myProject, myDockManager, splitters, true));
     return container.get();
   }
 
   @Override
   public DockContainer loadContainerFrom(Element element) {
-    DockableEditorTabbedContainer container = (DockableEditorTabbedContainer)createContainer();
+    DockableEditorTabbedContainer container = (DockableEditorTabbedContainer)createContainer(true);
     container.getSplitters().readExternal(element.getChild("state"));
     return container;
   }

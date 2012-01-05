@@ -371,7 +371,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (PsiJavaPatterns.psiElement().inside(GrImportStatement.class).accepts(position)) {
       return false;
     }
-
+    if (position instanceof PsiComment) return false;
     PsiElement parent = position.getParent();
     if (parent instanceof GrReferenceElement) {
       return ((GrReferenceElement)parent).getQualifier() == null;

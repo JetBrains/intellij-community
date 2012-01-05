@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -129,7 +130,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       if (component != null && !component.isShowing()) {
         return;
       }
-      actionPerfomed(event);
+      actionPerformed(event);
       manager.queueActionPerformedEvent(myAction, dataContext, event);
     }
   }
@@ -138,10 +139,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return DataManager.getInstance().getDataContext();
   }
 
-  private void actionPerfomed(final AnActionEvent event) {
+  private void actionPerformed(final AnActionEvent event) {
     if (myAction instanceof ActionGroup && !(myAction instanceof CustomComponentAction) && ((ActionGroup)myAction).isPopup()) {
       final ActionManagerImpl am = (ActionManagerImpl)ActionManager.getInstance();
-      ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new MenuItemPresentationFactory() {
+      ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new MenuItemPresentationFactory() {
         @Override
         protected Presentation processPresentation(Presentation presentation) {
           if (myNoIconsInPopup) {
@@ -149,6 +150,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
             presentation.setHoveredIcon(null);
           }
           return presentation;
+        }
+      });
+      popupMenu.setDataContextProvider(new Getter<DataContext>() {
+        @Override
+        public DataContext get() {
+          return ActionButton.this.getDataContext();
         }
       });
       if (ActionPlaces.isToolbarPlace(event.getPlace())) {
