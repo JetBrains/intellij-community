@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Oct 22, 2006
- * Time: 9:48:08 PM
- */
 package com.intellij.util.messages;
 
 import com.intellij.openapi.Disposable;
@@ -38,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
  * </pre>
  * <p/>
  * Use <code>'com.intellij.openapi.components.ComponentManager#getMessageBus()'</code> to obtain one.
+ * <p/>
+ * Please see <a href="Wiki">http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Messaging+infrastructure</a>.
  */
 public interface MessageBus {
 
@@ -46,7 +42,7 @@ public interface MessageBus {
    * <p/>
    * Current method exposes parent bus (if any is defined).
    *
-   * @return    parent bus (if defined)
+   * @return parent bus (if defined)
    */
   @Nullable
   MessageBus getParent();
@@ -54,7 +50,7 @@ public interface MessageBus {
   /**
    * Allows to create new connection that is not bound to any {@link Disposable}.
    *
-   * @return    newly created connection
+   * @return newly created connection
    */
   @NotNull
   MessageBusConnection connect();
@@ -63,8 +59,8 @@ public interface MessageBus {
    * Allows to create new connection that is bound to the given {@link Disposable}. That means that returned connection
    * will be automatically {@link MessageBusConnection#dispose() released} if given {@link Disposable disposable parent} is collected.
    *
-   * @param parentDisposable  target parent disposable to which life cycle newly created connection shall be bound
-   * @return                  newly created connection which life cycle is bound to the given disposable parent
+   * @param parentDisposable target parent disposable to which life cycle newly created connection shall be bound
+   * @return newly created connection which life cycle is bound to the given disposable parent
    */
   @NotNull
   MessageBusConnection connect(@NotNull Disposable parentDisposable);
@@ -118,21 +114,25 @@ public interface MessageBus {
    * <p/>
    * <b>Thread-safety.</b>
    * All subscribers are notified sequentially from the calling thread.
+   * <p/>
    * <b>Memory management.</b>
    * Returned objects are very light-weight and stateless, so, they are cached by the message bus in <code>'per-topic'</code> manner.
    * That means that caller of this method is not obliged to keep returned reference along with the reference to the message for
    * further publishing. It's enough to keep reference to the message bus only and publish
    * like {@code 'messageBus.syncPublisher(targetTopic).targetMethod()'}.
    *
-   * @param topic  target topic
-   * @param <L>    {@link Topic#getListenerClass() business interface} of the target topic
-   * @return       publisher for target topic
+   * @param topic target topic
+   * @param <L>   {@link Topic#getListenerClass() business interface} of the target topic
+   * @return publisher for target topic
    */
   @NotNull
   <L> L syncPublisher(@NotNull Topic<L> topic);
 
+  /**
+   * @deprecated use {@link #syncPublisher(Topic)} instead
+   */
   @NotNull
-  @Deprecated // use syncPublisher instead
+  @Deprecated
   <L> L asyncPublisher(@NotNull Topic<L> topic);
 
   /**
