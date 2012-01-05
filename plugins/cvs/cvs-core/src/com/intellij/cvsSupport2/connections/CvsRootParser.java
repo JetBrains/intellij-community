@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.CvsBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,13 +78,13 @@ public final class CvsRootParser {
       result.REPOSITORY = rootString.substring(LOCAL.length());
       return result;
     }
-    final String suffix = result.extractMethod(rootString, result, check);
+    final String suffix = result.extractMethod(rootString, check);
     if (CvsMethod.LOCAL_METHOD.equals(result.METHOD)) {
       result.REPOSITORY = suffix;
       skipTrailingRepositorySlash(result);
     }
     else {
-      if (result.HOST != null && result.HOST.length() > 0 && result.USER_NAME != null && result.USER_NAME.length() > 0) {
+      if (result.HOST != null && !result.HOST.isEmpty() && result.USER_NAME != null && !result.USER_NAME.isEmpty()) {
         result.REPOSITORY = suffix.trim();
       }
       else if (suffix.contains("@") || suffix.contains(":")){
@@ -136,11 +137,12 @@ public final class CvsRootParser {
 
   private static void extractUserNameAndPassword(Matcher matcher, CvsRootParser cvsRoot) {
     final String userNameAndPwd = matcher.group(GROUP_USER_NAME_AND_PWD);
-    if (userNameAndPwd != null && cvsRoot.USER_NAME.length() == 0) {
+    if (userNameAndPwd != null && cvsRoot.USER_NAME.isEmpty()) {
       cvsRoot.USER_NAME = userNameAndPwd;
     }
   }
 
+  @Nullable
   private String tryToCutMethod(CvsMethod method, String cvsRoot) {
     final String methodEntry = methodEntry(method.getName());
     if (cvsRoot.startsWith(methodEntry)) {
@@ -174,8 +176,9 @@ public final class CvsRootParser {
   }
 
   private void setValue(final String paramName, final String paramValue) {
-    if (paramName.length() == 0 || paramValue.length() == 0) return;
-
+    if (paramName.isEmpty() || paramValue.isEmpty()) {
+      return;
+    }
     if (USERNAME_FIELD_NAME.equals(paramName)){
       USER_NAME = paramValue;
     }
@@ -194,25 +197,24 @@ public final class CvsRootParser {
     else if (PORT_FIELD_NAME.equals(paramName)){
       PORT= paramValue;
     }
-
   }
 
   private static String methodEntry(String method) {
     return ":" + method + ":";
   }
 
-  private String extractMethod(String rootString, CvsRootParser cvsRoot, boolean check) {
+  private String extractMethod(String rootString, boolean check) {
     for (CvsMethod cvsMethod : CvsMethod.AVAILABLE_METHODS) {
       final String tail = tryToCutMethod(cvsMethod, rootString);
       if (tail != null) {
-        cvsRoot.METHOD = cvsMethod;
+        METHOD = cvsMethod;
         return tail;
       }
     }
     if (check) {
       throw new CvsRootException(CvsBundle.message("message.error.invalid.cvs.root", rootString));
     }
-    cvsRoot.METHOD = CvsMethod.AVAILABLE_METHODS[0];
+    METHOD = CvsMethod.AVAILABLE_METHODS[0];
     if (!StringUtil.startsWithChar(rootString, ':')) return rootString;
     final int nextSep = rootString.indexOf(":", 1);
     if (nextSep < 0) {
