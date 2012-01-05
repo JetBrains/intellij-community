@@ -38,6 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
@@ -56,7 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -91,6 +91,24 @@ public class PsiImplUtil {
   private PsiImplUtil() {
   }
 
+  /**
+   * @return leading regex or null if it does not exist
+   */
+  @Nullable
+  private static GrLiteral getRegexAtTheBeginning(PsiElement expr) {
+    PsiElement fchild = expr;
+    while (fchild != null) {
+      if (fchild instanceof GrLiteral && GrStringUtil.isRegex((GrLiteral)fchild)) return (GrLiteral)fchild;
+      fchild = fchild.getFirstChild();
+    }
+    return null;
+  }
+
+  private static boolean isAfterIdentifier(PsiElement el) {
+    final PsiElement prev = GeeseUtil.getPreviousNonWhitespaceToken(el);
+    return prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mIDENT;
+  }
+
   public static GrExpression replaceExpression(GrExpression oldExpr, GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
@@ -100,15 +118,6 @@ public class PsiImplUtil {
       newExpr = factory.createMethodCallByAppCall(((GrApplicationStatement)newExpr));
     }
 
-    //regexes cannot be first argument of command call, try to replace it with simple string
-    if ((newExpr instanceof GrRegex ||
-         newExpr instanceof GrLiteral && (newExpr.getText().startsWith("/") || newExpr.getText().startsWith("$/"))) &&
-        oldParent instanceof GrCommandArgumentList &&
-        ((GrCommandArgumentList)oldParent).getAllArguments()[0] == oldExpr) {
-      final GrLiteral stringLiteral = GrStringUtil.createStringFromRegex((GrLiteral)newExpr);
-      return oldExpr.replaceWithExpression(stringLiteral, removeUnnecessaryParentheses);
-    }
-
     // Remove unnecessary parentheses
     if (removeUnnecessaryParentheses &&
         oldParent instanceof GrParenthesizedExpression &&
@@ -116,7 +125,22 @@ public class PsiImplUtil {
       return ((GrExpression)oldParent).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
     }
 
-    // check priorities
+    //regexes cannot be after identifier , try to replace it with simple string
+    if (getRegexAtTheBeginning(newExpr) != null && isAfterIdentifier(oldExpr)) {
+      final PsiElement copy = newExpr.copy();
+      final GrLiteral regex = getRegexAtTheBeginning(copy);
+      LOG.assertTrue(regex != null);
+      final GrLiteral stringLiteral = GrStringUtil.createStringFromRegex(regex);
+      if (regex == copy) {
+        return oldExpr.replaceWithExpression(stringLiteral, removeUnnecessaryParentheses);
+      }
+      else {
+        regex.replace(stringLiteral);
+        return oldExpr.replaceWithExpression((GrExpression)copy, removeUnnecessaryParentheses);
+      }
+    }
+
+    
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
     if (oldParent instanceof GrStringInjection) {
       if (newExpr instanceof GrString || newExpr instanceof GrLiteral && ((GrLiteral)newExpr).getValue() instanceof String) {
@@ -128,15 +152,20 @@ public class PsiImplUtil {
         return newExpr;
       }
     }
-    else if (PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class, false, GrCodeBlock.class) != null) {
+    
+    if (PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class, false, GrCodeBlock.class) != null) {
       final PsiElement replaced = oldExpr.replace(newExpr);
       final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(replaced, GrStringInjection.class);
       GrStringUtil.wrapInjection(stringInjection);
       return stringInjection.getClosableBlock();
     }
-    else if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
-      GrExpression result = addParenthesesIfNeeded(newExpr, oldExpr, (GrExpression)oldParent);
-      if (result != null) return result;
+    
+    //check priorities    
+    if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
+      GrExpression addedParenth = addParenthesesIfNeeded(newExpr, oldExpr, (GrExpression)oldParent);
+      if (newExpr != addedParenth) {
+        return oldExpr.replaceWithExpression(addedParenth, removeUnnecessaryParentheses);
+      }
     }
 
     //if replace closure argument with expression
@@ -148,9 +177,24 @@ public class PsiImplUtil {
       return ((GrMethodCallExpression)oldParent).replaceClosureArgument((GrClosableBlock)oldExpr, newExpr);
 
     }
-    else {
-      return (GrExpression)oldExpr.replace(newExpr);
+
+    newExpr = (GrExpression)oldExpr.replace(newExpr);
+
+    if (newExpr instanceof GrParenthesizedExpression) {
+      final GrCommandArgumentList commandArgList =
+        PsiTreeUtil.getParentOfType(oldParent, GrCommandArgumentList.class, true, GrCodeBlock.class, GrParenthesizedExpression.class);
+      if (commandArgList != null) {
+        final PsiElement[] args = commandArgList.getAllArguments();
+        if (PsiTreeUtil.isAncestor(args[0], newExpr, true)) {
+          final PsiElement parent = commandArgList.getParent();
+          LOG.assertTrue(parent instanceof GrApplicationStatement);
+
+          return (GrExpression)parent.replace(factory.createExpressionFromText(
+            ((GrApplicationStatement)parent).getInvokedExpression().getText() + "(" + commandArgList.getText() + ")"));
+        }
+      }
     }
+    return newExpr;
   }
 
   /**
@@ -163,40 +207,18 @@ public class PsiImplUtil {
     int parentPriorityLevel = getExprPriorityLevel(oldParent);
     int newPriorityLevel = getExprPriorityLevel(newExpr);
 
-    boolean isReplaced = false;
-
     if (parentPriorityLevel > newPriorityLevel) {
       newExpr = factory.createParenthesizedExpr(newExpr);
-      isReplaced = true;
     }
     else if (parentPriorityLevel == newPriorityLevel && parentPriorityLevel != 0) {
       if (oldParent instanceof GrBinaryExpression) {
         GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
         if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightOperand())) {
           newExpr = factory.createParenthesizedExpr(newExpr);
-          isReplaced = true;
         }
       }
     }
-    if (isReplaced) {
-      newExpr = (GrExpression)oldExpr.replace(newExpr);
-      final GrCommandArgumentList commandArgList =
-        PsiTreeUtil.getParentOfType(oldParent, GrCommandArgumentList.class, true, GrCodeBlock.class, GrParenthesizedExpression.class);
-      if (commandArgList == null) return newExpr;
-      final PsiElement[] args = commandArgList.getAllArguments();
-
-      if (PsiTreeUtil.isAncestor(args[0], newExpr, true)) {
-        final PsiElement parent = commandArgList.getParent();
-        LOG.assertTrue(parent instanceof GrApplicationStatement);
-
-        return (GrExpression)parent.replace(factory.createExpressionFromText(
-          ((GrApplicationStatement)parent).getInvokedExpression().getText() + "(" + commandArgList.getText() + ")"));
-
-      } else {
-        return newExpr;
-      }
-    }
-    return null;
+    return newExpr;
   }
 
   private static boolean isNotAssociative(GrBinaryExpression binaryExpression) {
