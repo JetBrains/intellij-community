@@ -38,10 +38,7 @@
       <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
       <implementation-class>com.intellij.coverage.CoveragePluginDataManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.coverage.view.CoverageViewManager</implementation-class>
-    </component>
+    </component>    
   </project-components>
   <actions>
     <group id="IDEACoverageMenu" popup="false">

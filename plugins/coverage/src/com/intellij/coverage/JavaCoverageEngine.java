@@ -2,6 +2,8 @@ package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
+import com.intellij.coverage.view.CoverageViewExtension;
+import com.intellij.coverage.view.JavaCoverageViewExtension;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -629,5 +631,10 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public String getPresentableText() {
     return "Java Coverage";
+  }
+
+  @Override
+  public CoverageViewExtension createCoverageViewExtension(Project project) {
+    return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project));
   }
 }
