@@ -87,8 +87,33 @@ public abstract class TailType {
       return "COMMA";
     }
   };
+  /**
+   * insert a space, overtype if already present
+   */
   public static final TailType SPACE = new CharTailType(' ');
+  /**
+   * always insert a space
+   */
   public static final TailType INSERT_SPACE = new CharTailType(' ', false);
+  /**
+   * insert a space unless there's one at the caret position already
+   */
+  public static final TailType HUMBLE_SPACE = new CharTailType(' ', false) {
+
+    @Override
+    public boolean isApplicable(@NotNull InsertionContext context) {
+      CharSequence text = context.getDocument().getCharsSequence();
+      if (text.length() > context.getTailOffset() && text.charAt(context.getTailOffset()) == ' ') {
+        return false;
+      }
+      return super.isApplicable(context);
+    }
+
+    @Override
+    public String toString() {
+      return "HUMBLE_SPACE";
+    }
+  };
   public static final TailType DOT = new CharTailType('.');
 
   public static final TailType CASE_COLON = new CharTailType(':');

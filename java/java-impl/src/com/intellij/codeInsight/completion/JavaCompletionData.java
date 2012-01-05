@@ -210,7 +210,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 // package keyword completion
     {
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, new StartElementFilter());
-      variant.addCompletion(PsiKeyword.PACKAGE);
+      variant.addCompletion(PsiKeyword.PACKAGE, TailType.INSERT_SPACE);
       registerVariant(variant);
     }
 
@@ -271,7 +271,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 // completion
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiClass.class, true);
-      variant.addCompletion(PsiKeyword.EXTENDS, TailType.INSERT_SPACE);
+      variant.addCompletion(PsiKeyword.EXTENDS, TailType.HUMBLE_SPACE);
       variant.excludeScopeClass(PsiAnonymousClass.class);
       variant.excludeScopeClass(PsiTypeParameter.class);
 
@@ -292,7 +292,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 // completion
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiClass.class, true);
-      variant.addCompletion(PsiKeyword.IMPLEMENTS, TailType.INSERT_SPACE);
+      variant.addCompletion(PsiKeyword.IMPLEMENTS, TailType.HUMBLE_SPACE);
       variant.excludeScopeClass(PsiAnonymousClass.class);
 
       registerVariant(variant);
@@ -304,7 +304,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
           psiElement(PsiIdentifier.class).afterLeaf(
             psiElement().withText(string().oneOf(",", "<")).withParent(PsiTypeParameterList.class))));
       //variant.includeScopeClass(PsiClass.class, true);
-      variant.addCompletion(PsiKeyword.EXTENDS, TailType.INSERT_SPACE);
+      variant.addCompletion(PsiKeyword.EXTENDS, TailType.HUMBLE_SPACE);
       registerVariant(variant);
     }
   }
@@ -412,7 +412,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
           return TailType.SEMICOLON;
         }
 
-        return TailType.INSERT_SPACE;
+        return TailType.HUMBLE_SPACE;
       }
       scope = scope.getParent();
     }
@@ -454,7 +454,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
     if (statement != null && statement.getTextRange().getStartOffset() == position.getTextRange().getStartOffset()) {
       if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).accepts(statement)) {
-        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.FINAL), TailType.INSERT_SPACE));
+        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.FINAL), TailType.HUMBLE_SPACE));
       }
     }
 
@@ -506,13 +506,13 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     if (INSIDE_PARAMETER_LIST.accepts(position) && !psiElement().afterLeaf(PsiKeyword.FINAL).accepts(position) && !AFTER_DOT.accepts(position)) {
-      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.INSERT_SPACE));
+      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.HUMBLE_SPACE));
     }
 
     if (CLASS_START.isAcceptable(position, position) &&
         PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class) == null) {
       for (String s : ModifierChooser.getKeywords(position)) {
-        result.addElement(new OverrideableSpace(createKeyword(position, s), TailType.INSERT_SPACE));
+        result.addElement(new OverrideableSpace(createKeyword(position, s), TailType.HUMBLE_SPACE));
       }
     }
 
@@ -589,11 +589,11 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         isStatementPosition(position)) {
       for (String primitiveType : PRIMITIVE_TYPES) {
         LookupElement keyword = createKeyword(position, primitiveType);
-        result.addElement(inCast ? keyword : new OverrideableSpace(keyword, TailType.INSERT_SPACE));
+        result.addElement(inCast ? keyword : new OverrideableSpace(keyword, TailType.HUMBLE_SPACE));
       }
     }
     if (declaration) {
-      result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.VOID), TailType.INSERT_SPACE));
+      result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.VOID), TailType.HUMBLE_SPACE));
     }
   }
 

@@ -1064,7 +1064,7 @@ class X {
   }
 
   public void testInnerClassStart() {
-    checkSingleItemCompletion 'class Foo { cl<caret> }', 'class Foo { class <caret> }'
+    checkSingleItemCompletion 'class Foo { cl<caret> }', 'class Foo { class<caret> }'
   }
 
   public void testPropertyBeforeAccessor() {
@@ -1114,8 +1114,8 @@ public class KeyVO {
 
   public void testSpaceTail() {
     checkCompletion 'class A <caret> ArrayList {}', ' ', 'class A extends <caret> ArrayList {}'
-    checkCompletion 'class A <caret> ArrayList {}', '\n', 'class A extends <caret> ArrayList {}'
-    checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements <caret> {}'
+    checkCompletion 'class A <caret> ArrayList {}', '\n', 'class A extends<caret> ArrayList {}'
+    checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements<caret> {}'
   }
 
   public void testPreferInterfacesInImplements() {

@@ -51,7 +51,7 @@ public class JavaAwareCompletionData extends CompletionData{
         if (context.shouldAddCompletionChar()) {
           return;
         }
-        if (tailType != TailType.NONE) {
+        if (tailType != TailType.NONE && tailType.isApplicable(context)) {
           tailType.processTail(context.getEditor(), context.getTailOffset());
         }
       }

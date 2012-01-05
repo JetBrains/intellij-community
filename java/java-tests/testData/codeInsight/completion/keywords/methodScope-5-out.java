@@ -1,5 +1,5 @@
 public class A{
- public void method(final <caret> String){
+ public void method(final<caret> String){
   
  }
 }
