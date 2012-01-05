@@ -18,7 +18,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -33,11 +33,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ListTemplatesHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
@@ -74,16 +74,28 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     showTemplatesLookup(project, editor, prefix, matchingTemplates);
   }
 
-  public static void showTemplatesLookup(final Project project, final Editor editor, String prefix, List<TemplateImpl> matchingTemplates) {
-    List<LookupElement> array = new ArrayList<LookupElement>();
-    for (TemplateImpl template : matchingTemplates) {
-      array.add(new LiveTemplateLookupElement(template, false));
-    }
-    LookupElement[] items = array.toArray(new LookupElement[array.size()]);
+  public static void showTemplatesLookup(final Project project, final Editor editor,
+                                         @NotNull String prefix, List<TemplateImpl> matchingTemplates) {
 
-    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, items, prefix, LookupArranger.DEFAULT);
-    lookup.addLookupListener(new MyLookupAdapter(project, editor, null));
-    lookup.showLookup();
+    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, prefix, LookupArranger.DEFAULT);
+    for (TemplateImpl template : matchingTemplates) {
+      lookup.addItem(createTemplateElement(template), new PlainPrefixMatcher(prefix));
+    }
+    
+    showLookup(lookup, null);
+  }
+
+  private static LiveTemplateLookupElement createTemplateElement(final TemplateImpl template) {
+    return new LiveTemplateLookupElement(template, false) {
+      @Override
+      public Set<String> getAllLookupStrings() {
+        String description = template.getDescription();
+        if (description == null) {
+          return super.getAllLookupStrings();
+        }
+        return CollectionFactory.newSet(getLookupString(), description);
+      }
+    };
   }
 
   private static String computePrefix(TemplateImpl template, String argument) {
@@ -98,13 +110,20 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   }
 
   public static void showTemplatesLookup(final Project project, final Editor editor, Map<TemplateImpl, String> template2Argument) {
-    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, null, LookupArranger.DEFAULT);
+    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "", LookupArranger.DEFAULT);
     for (TemplateImpl template : template2Argument.keySet()) {
       String prefix = computePrefix(template, template2Argument.get(template));
-      lookup.addItem(new LookupItem(template, prefix), new CamelHumpMatcher(prefix));
+      lookup.addItem(createTemplateElement(template), new PlainPrefixMatcher(prefix));
     }
 
+    showLookup(lookup, template2Argument);
+  }
+
+  private static void showLookup(LookupImpl lookup, @Nullable Map<TemplateImpl, String> template2Argument) {
+    Editor editor = lookup.getEditor();
+    Project project = editor.getProject();
     lookup.addLookupListener(new MyLookupAdapter(project, editor, template2Argument));
+    lookup.refreshUi(false);
     lookup.showLookup();
   }
 
