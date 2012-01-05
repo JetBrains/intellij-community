@@ -63,8 +63,13 @@ class PyDevFrontEnd:
 
 
     def update(self, globals, locals):
-        locals['_oh'] = self.ipython.user_ns['_oh']
-        self.ipython.user_global_ns = globals
+        ns = self.ipython.user_ns
+
+        for ind in ['_oh', '_ih', '_dh', '_sh', 'In', 'Out', 'get_ipython', 'exit', 'quit']:
+            locals[ind] = ns[ind]
+
+        self.ipython.user_global_ns.clear()
+        self.ipython.user_global_ns.update(globals)
         self.ipython.user_ns = locals
         
         
@@ -127,7 +132,7 @@ class PyDevFrontEnd:
                 return True #needs more
             else:
                 self._curr_exec_line += 1
-                self.ipython.run_cell(line)
+                self.ipython.run_cell(line, store_history=True)
                 #hist = self.ipython.history_manager.output_hist_reprs
                 #rep = hist.get(self._curr_exec_line, None)
                 #if rep is not None:
