@@ -44,7 +44,7 @@ public interface Document extends UserDataHolder {
   String PROP_WRITABLE = "writable";
 
   /**
-   * Retreives a copy of the document content. For obvious performance reasons use
+   * Retrieves a copy of the document content. For obvious performance reasons use
    * {@link #getCharsSequence()} whenever it's possible.
    *
    * @return document content.
