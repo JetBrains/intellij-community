@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
 * User: anna
@@ -23,7 +22,6 @@ import java.util.Map;
 */
 class CoverageListNode extends AbstractTreeNode {
   private CoverageSuitesBundle myBundle;
-  private final Map<String, List<String>> myPackages;
   private List<AbstractTreeNode> myTopLevelPackages;
   private CoverageViewManager.StateBean myStateBean;
   private List<String> myFilteredPackages;
@@ -31,7 +29,6 @@ class CoverageListNode extends AbstractTreeNode {
 
   public CoverageListNode(PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
-                          Map<String, List<String>> packages,
                           List<AbstractTreeNode> topLevelPackages,
                           CoverageViewManager.StateBean stateBean, List<String> filteredPackages, List<String> filteredClasses) {
     super(classOrPackage.getProject(), classOrPackage);
@@ -39,7 +36,6 @@ class CoverageListNode extends AbstractTreeNode {
     myFilteredClasses = filteredClasses;
     myName = classOrPackage.getName();
     myBundle = bundle;
-    myPackages = packages;
     myTopLevelPackages = topLevelPackages;
     myStateBean = stateBean;
   }
@@ -52,7 +48,7 @@ class CoverageListNode extends AbstractTreeNode {
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
     return (Collection<CoverageListNode>)Arrays.asList(
-      (CoverageListNode[])CoverageViewTreeStructure.getChildren(getValue(), myBundle, myPackages, myFilteredPackages, myFilteredClasses,
+      (CoverageListNode[])CoverageViewTreeStructure.getChildren(getValue(), myBundle, myFilteredPackages, myFilteredClasses,
                                                                 myTopLevelPackages, myStateBean));
   }
 
