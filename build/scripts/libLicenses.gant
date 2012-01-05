@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,8 +213,8 @@ libraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patch
 libraryLicense(name: "RMI Stubs", attachedTo: "xslt-debugger-engine", license: "Apache 2.0", url: "http://confluence.jetbrains.net/display/CONTEST/XSLT-Debugger", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Saxon-9HE", version: "9", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/", licenseUrl: "http://www.mozilla.org/MPL/")
 libraryLicense(name: "Saxon-6.5.5", version: "6.5.5", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/", licenseUrl: "http://www.mozilla.org/MPL/")
-libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-1.2.3.jar", version: "1.2.3", license: "Eclipse Public License", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
-libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-3.0.4.jar", version: "3.0.4", license: "Eclipse Public License", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
+libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-1.2.3.jar", version: "1.2.3", license: "Eclipse Public License v1.0", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
+libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-3.0.4.jar", version: "3.0.4", license: "Eclipse Public License v1.0", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
 libraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "SVN version, 1.1 branch as of 1 Oct 2007", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "Sequence", libraryName: "sequence-library.jar", version: "bundled with SVNKit", license: "", url:"http://www.syntevo.com", licenseUrl: "http://svn.jetbrains.org/idea/Trunk/bundled/svn4idea/lib/SEQUENCE-LICENSE")
 libraryLicense(name: "swingx", libraryName: "swingx", version: "1.6.2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
@@ -232,6 +232,8 @@ libraryLicense(name: "XStream", version: "1.2.1", license: "BSD", url: "http://x
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
 libraryLicense(name: "protobuf", version: "2.3.0", license: "New BSD", url: "http://code.google.com/p/protobuf/", licenseUrl: "http://code.google.com/p/protobuf/source/browse/trunk/COPYING.txt?r=367")
 libraryLicense(name: "Netty", libraryName: "Netty", version: "3.2.5", license: "Apache 2.0", url: "http://www.jboss.org/netty", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "JaCoCo", libraryName: "jacocoagent.jar", version: "0.5.5", license: "Eclipse Public License v1.0", url: "http://www.eclemma.org/jacoco/", licenseUrl: "http://www.eclipse.org/legal/epl-v10.html")
+libraryLicense(name: "JaCoCo", libraryName: "jacocoant.jar", version: "0.5.5", license: "Eclipse Public License v1.0", url: "http://www.eclemma.org/jacoco/", licenseUrl: "http://www.eclipse.org/legal/epl-v10.html")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")
