@@ -642,6 +642,9 @@
     <localInspection language="Groovy" shortName="GroovyRangeTypeCheck" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="incorrect.range.argument" groupName="Probable bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection"/>
+    <localInspection language="Groovy" shortName="NewInstanceOfSingleton" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="new.instance.of.singleton" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.NewInstanceOfSingletonInspection"/>
     <localInspection language="Groovy" shortName="GroovyLabeledStatement" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="check.labeled.statement" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection"/>
