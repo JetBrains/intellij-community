@@ -497,7 +497,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
+  public void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
     generateDescription(buffer, docComment);
     generateDeprecatedSection(buffer, docComment);
     generateSinceSection(buffer, docComment);
