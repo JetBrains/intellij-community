@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,13 @@ import java.util.HashSet;
 /**
  * author: lesya
  */
-
 class DeleteHandler {
 
   private final Collection<String> myDeletedFiles = new HashSet<String>();
   private final Collection<VirtualFile> myDeletedFilesParents = new HashSet<VirtualFile>();
-  private final Collection<String> myDeletedFilesPaths = new HashSet<String>();
   private final Project myProject;
   private final CvsStorageComponent myCvsStorageComponent;
   private final Collection<File> myFilesToDeleteEntry = new ArrayList<File>();
-
 
   public DeleteHandler(Project project, CvsStorageComponent cvsStorageComponent) {
     myProject = project;
@@ -73,7 +70,7 @@ class DeleteHandler {
       FileUtil.delete(new File(s));
     }
 
-    CvsContext context = new CvsContextAdapter() {
+    final CvsContext context = new CvsContextAdapter() {
       public Project getProject() {
         return myProject;
       }
@@ -91,8 +88,7 @@ class DeleteHandler {
   }
 
   private void collectAllDeletedFilesFrom(VirtualFile directory) {
-    VirtualFile[] children = directory.getChildren();
-
+    final VirtualFile[] children = directory.getChildren();
     if (children == null) return;
 
     for (VirtualFile child : children) {
@@ -107,7 +103,6 @@ class DeleteHandler {
 
   public void addDeletedRoot(VirtualFile file) {
     myDeletedFilesParents.add(file.getParent());
-    myDeletedFilesPaths.add(file.getPath());
     if (file.isDirectory()) {
       collectAllDeletedFilesFrom(file);
     }
@@ -116,18 +111,16 @@ class DeleteHandler {
         addFile(file);
       }
     }
-
   }
 
   public void removeDeletedRoot(VirtualFile file) {
     myDeletedFilesParents.remove(file.getParent());
-    myDeletedFilesPaths.remove(file.getPath());
     myDeletedFiles.remove(file.getPath());
     myFilesToDeleteEntry.remove(CvsVfsUtil.getFileFor(file));
   }
 
   private void addFile(VirtualFile file) {
-    VirtualFile adminDirectoryForFile = file.getParent().findChild(CvsUtil.CVS);
+    final VirtualFile adminDirectoryForFile = file.getParent().findChild(CvsUtil.CVS);
     if (adminDirectoryForFile != null) {
       if (CvsUtil.fileIsUnderCvs(file)) {
         if (CvsUtil.fileExistsInCvs(file)) {
@@ -138,9 +131,5 @@ class DeleteHandler {
         }
       }
     }
-
   }
-
 }
-
-
