@@ -825,4 +825,17 @@ def test() {
     assertTrue parameters.length == 1
     assertEquals "java.lang.Object", parameters[0].type.canonicalText
   }
+
+  public void testScriptMethodsInClass() {
+    def ref = configureByText('''
+class X {
+  def foo() {
+    scriptMetho<caret>d('1')
+  }
+}
+def scriptMethod(String s){}
+''')
+
+    assertNull(ref.resolve())
+  }
 }
