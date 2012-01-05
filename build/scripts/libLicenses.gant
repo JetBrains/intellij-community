@@ -232,8 +232,6 @@ libraryLicense(name: "XStream", version: "1.2.1", license: "BSD", url: "http://x
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
 libraryLicense(name: "protobuf", version: "2.3.0", license: "New BSD", url: "http://code.google.com/p/protobuf/", licenseUrl: "http://code.google.com/p/protobuf/source/browse/trunk/COPYING.txt?r=367")
 libraryLicense(name: "Netty", libraryName: "Netty", version: "3.2.5", license: "Apache 2.0", url: "http://www.jboss.org/netty", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
-libraryLicense(name: "JaCoCo", libraryName: "jacocoagent.jar", version: "0.5.5", license: "Eclipse Public License v1.0", url: "http://www.eclemma.org/jacoco/", licenseUrl: "http://www.eclipse.org/legal/epl-v10.html")
-libraryLicense(name: "JaCoCo", libraryName: "jacocoant.jar", version: "0.5.5", license: "Eclipse Public License v1.0", url: "http://www.eclemma.org/jacoco/", licenseUrl: "http://www.eclipse.org/legal/epl-v10.html")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")
