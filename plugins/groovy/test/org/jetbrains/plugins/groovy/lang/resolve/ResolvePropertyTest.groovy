@@ -659,12 +659,6 @@ set<caret>Foo(2)
     assertInstanceOf resolve("A.groovy"), GrAccessorMethod
   }
 
-  private PsiReference configureByText(String text) {
-    myFixture.configureByText 'a.groovy', text
-    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    return ref
-  }
-
   public void testJavaLoggingTransform() {
     myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
     def ref = configureByText("@groovy.util.logging.Log class Foo { { lo<caret>g.inf } }")

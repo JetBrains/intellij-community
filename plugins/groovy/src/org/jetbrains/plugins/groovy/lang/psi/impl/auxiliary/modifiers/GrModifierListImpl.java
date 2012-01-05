@@ -45,6 +45,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.ConstructorAnnotationsProcessor;
 
+import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.*;
+
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
@@ -168,6 +170,12 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
           if (modifier.equals(GrModifier.FINAL)) return true;
         }
       }
+    }
+
+    //top level classes cannot have private and protected modifiers
+    if (owner instanceof GrTypeDefinition && ((GrTypeDefinition)owner).getContainingClass() == null) {
+      if (modifier.equals(PROTECTED) || modifier.equals(PRIVATE)) return false;
+      if (modifier.equals(PACKAGE_LOCAL)) return modifierList.hasExplicitModifier(PRIVATE) || modifierList.hasExplicitModifier(PROTECTED);
     }
 
     if (modifierList.hasExplicitModifier(modifier)) {

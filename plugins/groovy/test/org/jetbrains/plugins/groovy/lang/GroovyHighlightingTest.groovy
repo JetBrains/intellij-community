@@ -574,4 +574,18 @@ class A {
 ''')
     myFixture.checkHighlighting(true, false, false)
   }
+  
+  void testPrivateTopLevelClassInJava() {
+    myFixture.addFileToProject('pack/Foo.groovy', 'package pack; private class Foo{}')
+    myFixture.configureByText('Abc.java', '''\
+import pack.<error descr="'pack.Foo' is not public in 'pack'. Cannot be accessed from outside package">Foo</error>;
+
+class Abc {
+  void foo() {
+    System.out.print(new <error descr="'pack.Foo' is not public in 'pack'. Cannot be accessed from outside package">Foo</error>());
+  }
+}''')
+
+    myFixture.testHighlighting(false, false, false)
+  }
 }

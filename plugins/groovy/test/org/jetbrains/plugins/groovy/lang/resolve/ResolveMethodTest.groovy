@@ -299,12 +299,6 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
-  private PsiReference configureByText(String text) {
-    myFixture.configureByText 'a.groovy', text
-    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    return ref
-  }
-
   public void testPartiallyDeclaredType() throws Exception {
     PsiReference ref = configureByFile("partiallyDeclaredType/A.groovy");
     PsiElement resolved = ref.resolve();

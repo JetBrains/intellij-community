@@ -16,15 +16,16 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.JavaResolveResult;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaReference;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.light.LightMethodBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import com.intellij.psi.JavaResolveResult
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.light.LightMethodBuilder
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author ven
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "resolve/javaToGroovy/";
+    return "${TestUtils.testDataPath}resolve/javaToGroovy/";
   }
 
   public void testField1() throws Exception {
@@ -50,27 +51,39 @@ public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
   public void testMethod1() throws Exception {
     PsiJavaReference ref = (PsiJavaReference) configureByFile("method1/A.java");
     JavaResolveResult resolveResult = ref.advancedResolve(false);
-    assertTrue(resolveResult.getElement() instanceof GrMethod);
-    assertTrue(resolveResult.isValidResult());
+    assertTrue(resolveResult.element instanceof GrMethod);
+    assertTrue(resolveResult.validResult);
   }
 
   public void testScriptMain() throws Exception {
     PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMain/A.java");
     JavaResolveResult resolveResult = ref.advancedResolve(false);
-    assertInstanceOf(resolveResult.getElement(), LightMethodBuilder.class);
-    assertTrue(resolveResult.isValidResult());
+    assertInstanceOf(resolveResult.element, LightMethodBuilder.class);
+    assertTrue(resolveResult.validResult);
   }
 
   public void testScriptMethod() throws Exception {
     PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMethod/A.java");
     JavaResolveResult resolveResult = ref.advancedResolve(false);
-    assertTrue(resolveResult.getElement() instanceof GrMethod);
-    assertTrue(resolveResult.isValidResult());
+    assertTrue(resolveResult.element instanceof GrMethod);
+    assertTrue(resolveResult.validResult);
   }
 
   public void testNoDGM() throws Exception {
     PsiJavaReference ref = (PsiJavaReference) configureByFile("noDGM/A.java");
-    assertNull(ref.advancedResolve(false).getElement());
+    assertNull(ref.advancedResolve(false).element);
+  }
+  
+  void testPrivateTopLevelClass() {
+    myFixture.addFileToProject('Foo.groovy', 'private class Foo{}')
+
+    def ref = configureByText('A.java', '''
+class A {
+  void foo() {
+    Object o = new Fo<caret>o();
+  }
+}''')
+    assertNotNull(ref.resolve())
   }
 
 }
