@@ -340,12 +340,7 @@ public class GroovyMarkerTypes {
           new CommonProcessors.CollectProcessor<PsiMethod>() {
             @Override
             public boolean process(PsiMethod psiMethod) {
-              if (psiMethod instanceof PsiMirrorElement) {
-                updateComponent(((PsiMirrorElement)psiMethod).getPrototype(), myRenderer.getComparator());
-              }
-              else {
-                updateComponent(psiMethod, myRenderer.getComparator());
-              }
+              updateComponent(com.intellij.psi.impl.PsiImplUtil.handleMirror(psiMethod), myRenderer.getComparator());
               return true;
             }
           });

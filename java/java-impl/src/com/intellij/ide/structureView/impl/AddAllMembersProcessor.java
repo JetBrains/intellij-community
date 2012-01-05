@@ -16,6 +16,7 @@
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
@@ -55,11 +56,11 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
         PsiMethod psiMethod = (PsiMethod)member;
         if (shouldAdd(psiMethod)) {
           mapMethodBySignature(psiMethod);
-          myAllMembers.add(psiMethod);
+          myAllMembers.add(PsiImplUtil.handleMirror(psiMethod));
         }
       }
       else {
-        myAllMembers.add(member);
+        myAllMembers.add(PsiImplUtil.handleMirror(member));
       }
     }
     return true;
