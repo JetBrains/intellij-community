@@ -42,12 +42,17 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (value instanceof PsiClass) {
       final String qualifiedName = ((PsiClass)value).getQualifiedName();
       if (columnIndex == 1) {
+        return "100% (1/1)";
+      } else if (columnIndex == 2){
         return myAnnotator.getClassMethodPercentage(qualifiedName);
       }
+      
       return myAnnotator.getClassLinePercentage(qualifiedName);
     }
     if (columnIndex == 1) {
       return myAnnotator.getPackageClassPercentage((PsiPackage)value, flatten);
+    } else if (columnIndex == 2) {
+      return myAnnotator.getPackageMethodPercentage((PsiPackage)value, flatten);
     }
     return myAnnotator.getPackageLinePercentage((PsiPackage)value, flatten);
   }

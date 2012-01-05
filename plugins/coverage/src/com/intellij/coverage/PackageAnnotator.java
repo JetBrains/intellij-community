@@ -67,6 +67,9 @@ public class PackageAnnotator {
     public int coveredClassCount;
     public int totalLineCount;
     public int coveredLineCount;
+
+    public int coveredMethodCount;
+    public int totalMethodCount;
   }
 
   public static class DirCoverageInfo extends PackageCoverageInfo {
@@ -205,6 +208,8 @@ public class PackageAnnotator {
             parentDir.coveredClassCount += coverageInfo.coveredClassCount;
             parentDir.totalLineCount += coverageInfo.totalLineCount;
             parentDir.coveredLineCount += coverageInfo.coveredLineCount;
+            parentDir.totalMethodCount += coverageInfo.totalMethodCount;
+            parentDir.coveredMethodCount += coverageInfo.coveredMethodCount;
           }
         }
       }
@@ -251,6 +256,9 @@ public class PackageAnnotator {
 
       flattenPackageCoverageInfo.coveredLineCount += coverageInfo.fullyCoveredLineCount + coverageInfo.partiallyCoveredLineCount;
       flattenPackageCoverageInfo.totalLineCount += coverageInfo.totalLineCount;
+      
+      flattenPackageCoverageInfo.coveredMethodCount += coverageInfo.coveredMethodCount;
+      flattenPackageCoverageInfo.totalMethodCount += coverageInfo.totalMethodCount;
     }
     
     PackageCoverageInfo packageCoverageInfo = getOrCreateCoverageInfo(packageCoverageMap, packageVMName);
@@ -259,6 +267,8 @@ public class PackageAnnotator {
       packageCoverageInfo.totalLineCount += dir.totalLineCount;
       packageCoverageInfo.coveredClassCount += dir.coveredClassCount;
       packageCoverageInfo.coveredLineCount += dir.coveredLineCount;
+      packageCoverageInfo.coveredMethodCount += dir.coveredMethodCount;
+      packageCoverageInfo.totalMethodCount += dir.totalMethodCount;
 
       if (isTestHierarchy) {
         annotator.annotateTestDirectory(dir.sourceRoot, dir, module);
@@ -320,6 +330,8 @@ public class PackageAnnotator {
 
       packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.fullyCoveredLineCount;
       packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
+      packageCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
+      packageCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
     } else {
       collectNonCoveredClassInfo(classFile, toplevelClassCoverageInfo, packageCoverageInfo);
     }

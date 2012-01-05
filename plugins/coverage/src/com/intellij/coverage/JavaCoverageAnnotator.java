@@ -176,6 +176,14 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     if (packageCoverageInfo == null) return null;
     return (int)((double)packageCoverageInfo.coveredClassCount/packageCoverageInfo.totalClassCount * 100) +"% (" + packageCoverageInfo.coveredClassCount + "/" + packageCoverageInfo.totalClassCount + ")"; 
   }
+  
+  public String getPackageMethodPercentage(PsiPackage psiPackage, boolean flatten) {
+    final String qualifiedName = psiPackage.getQualifiedName();
+    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = flatten ? myFlattenPackageCoverageInfos.get(qualifiedName) 
+                                                                             : myPackageCoverageInfos.get(qualifiedName);
+    if (packageCoverageInfo == null) return null;
+    return (int)((double)packageCoverageInfo.coveredMethodCount/packageCoverageInfo.totalMethodCount * 100) +"% (" + packageCoverageInfo.coveredMethodCount + "/" + packageCoverageInfo.totalMethodCount + ")";
+  }
 
   public String getPackageLinePercentage(final PsiPackage psiPackage, boolean flatten) {
     final String qualifiedName = psiPackage.getQualifiedName();
@@ -192,7 +200,6 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return (int)((double)coveredLines /info.totalLineCount * 100) +"% (" + coveredLines + "/" + info.totalLineCount + ")";
   }
   
-  //todo class percentage
   public String getClassMethodPercentage(String classFQName) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
     if (info == null) return null;
