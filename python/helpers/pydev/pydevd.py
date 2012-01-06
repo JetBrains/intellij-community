@@ -90,7 +90,8 @@ DONT_TRACE = {
               'pydevd_vars.py':1,
               'pydevd_vm_type.py':1,
               'pydevd.py':1 ,
-              'pydevd_psyco_stub.py':1
+              'pydevd_psyco_stub.py':1,
+              '_pydev_execfile.py':1
               }
 
 if IS_PY3K:
