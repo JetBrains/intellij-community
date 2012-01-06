@@ -50,11 +50,14 @@ class PyDBFrame:
 
           exception_breakpoint = get_exception_breakpoint(exception, dict(mainDebugger.exception_set), NOTIFY_ALWAYS)
           if exception_breakpoint is not None:
-              curr_func_name = frame.f_code.co_name
-              add_exception_to_frame(frame, (exception, value, trace))
-              self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
-              thread.additionalInfo.message = exception_breakpoint.qname
-              flag = True
+              if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
+                  curr_func_name = frame.f_code.co_name
+                  add_exception_to_frame(frame, (exception, value, trace))
+                  self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
+                  thread.additionalInfo.message = exception_breakpoint.qname
+                  flag = True
+              else:
+                  flag = False
           else:
               try:
                   if mainDebugger.django_exception_break and get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and just_raised(trace) and is_django_exception_break_context(frame):

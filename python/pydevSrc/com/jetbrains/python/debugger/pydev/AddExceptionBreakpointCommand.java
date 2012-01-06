@@ -17,16 +17,19 @@ public class AddExceptionBreakpointCommand extends ExceptionBreakpointCommand {
   @Override
   protected void buildPayload(Payload payload) {
     super.buildPayload(payload);
-    payload.add(myNotifyPolicy.isNotifyAlways()).add(myNotifyPolicy.isNotifyOnTerminate());
+    payload.add(myNotifyPolicy.isNotifyAlways() ? 1 : myNotifyPolicy.isNotifyOnlyOnFirst() ? 2 : 0)
+      .add(myNotifyPolicy.isNotifyOnTerminate());
   }
 
   public static class ExceptionBreakpointNotifyPolicy {
     private final boolean myNotifyAlways;
     private final boolean myNotifyOnTerminate;
+    private final boolean myNotifyOnlyOnFirst;
 
-    public ExceptionBreakpointNotifyPolicy(boolean notifyAlways, boolean notifyOnTerminate) {
+    public ExceptionBreakpointNotifyPolicy(boolean notifyAlways, boolean notifyOnTerminate, boolean notifyOnlyOnFirst) {
       myNotifyAlways = notifyAlways;
       myNotifyOnTerminate = notifyOnTerminate;
+      myNotifyOnlyOnFirst = notifyOnlyOnFirst;
     }
 
     public boolean isNotifyAlways() {
@@ -35,6 +38,10 @@ public class AddExceptionBreakpointCommand extends ExceptionBreakpointCommand {
 
     public boolean isNotifyOnTerminate() {
       return myNotifyOnTerminate;
+    }
+
+    public boolean isNotifyOnlyOnFirst() {
+      return myNotifyOnlyOnFirst;
     }
   }
 }

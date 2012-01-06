@@ -13,6 +13,8 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   @Attribute("notifyAlways")
   public boolean myNotifyAlways;
   @Attribute("notifyOnTerminate")
+  public boolean myNotifyOnlyOnFirst;
+  @Attribute("notifyOnTerminate")
   public boolean myNotifyOnTerminate;
 
 
@@ -52,12 +54,20 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     myNotifyAlways = notifyAlways;
   }
 
+  public boolean isNotifyOnlyOnFirst() {
+    return myNotifyOnlyOnFirst;
+  }
+
+  public void setNotifyOnlyOnFirst(boolean notifyOnlyOnFirst) {
+    myNotifyOnlyOnFirst = notifyOnlyOnFirst;
+  }
+
   @Override
   public ExceptionBreakpointCommand createAddCommand(RemoteDebugger debugger) {
     return ExceptionBreakpointCommand.addExceptionBreakpointCommand(debugger, getException(),
                                                                     new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(
                                                                       isNotifyAlways(),
-                                                                      isNotifyOnTerminate()));
+                                                                      isNotifyOnTerminate(), isNotifyOnlyOnFirst()));
   }
 
   @Override

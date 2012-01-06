@@ -100,6 +100,10 @@ public abstract class AbstractCommand {
       return doAdd(flag ? "1" : "0");
     }
 
+    public Payload add(int value) {
+      return doAdd(String.valueOf(value));
+    }
+
     public Payload add(String text) {
       return doAdd(text);
     }

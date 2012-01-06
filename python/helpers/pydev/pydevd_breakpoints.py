@@ -23,8 +23,13 @@ class ExceptionBreakpoint:
         else:
             self.name = None
 
+        self.notify_on_terminate = int(notify_on_terminate) == 1
+        self.notify_always = int(notify_always) > 0
+        self.notify_on_first_raise_only = int(notify_always) == 2
+
         self.type = exctype
-        self.notify = {NOTIFY_ALWAYS: notify_always, NOTIFY_ON_TERMINATE: notify_on_terminate}
+        self.notify = {NOTIFY_ALWAYS: self.notify_always, NOTIFY_ON_TERMINATE: self.notify_on_terminate}
+
 
     def __str__(self):
         return self.qname
@@ -69,6 +74,7 @@ def get_exception_name(exctype):
 
 def get_exception_breakpoint(exctype, exceptions, notify_class):
     name = get_exception_full_qname(exctype)
+    print ("Name %s"%name)
     exc = None
     if exceptions is not None:
         for k, e in exceptions.items():
@@ -108,7 +114,7 @@ def excepthook(exctype, value, tb):
     frame = frames[-1]
     thread.additionalInfo.exception = (exctype, value, tb)
     thread.additionalInfo.pydev_force_stop_at_exception = (frame, frames_byid)
-    thread.additionalInfo.message = exception_breakpoint.name
+    thread.additionalInfo.message = exception_breakpoint.qname
     #sys.exc_info = lambda : (exctype, value, traceback)
     debugger = GetGlobalDebugger()
     debugger.force_post_mortem_stop += 1
