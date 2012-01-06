@@ -21,12 +21,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Comparator;
 
 // do not run on build server
-@Bombed(year = 3000, month = 1, day = 1)
+@Bombed(year = 3000, month = Calendar.FEBRUARY, day = 1)
 public abstract class MavenPerformanceTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {

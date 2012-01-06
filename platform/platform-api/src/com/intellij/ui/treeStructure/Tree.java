@@ -298,7 +298,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   protected void processMouseEvent(MouseEvent e) {
     if (SystemInfo.isMac) {
       if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown() && e.getID() == MouseEvent.MOUSE_PRESSED) {
-        int modifiers = (e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK)) | InputEvent.BUTTON3_MASK;
+        int modifiers = e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK) | InputEvent.BUTTON3_MASK;
         e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(), true,
                            MouseEvent.BUTTON3);
       }
