@@ -671,7 +671,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
 
-    myActionGroup.addAction(new ScrollFromSourceAction());
+    if (!myAutoScrollFromSourceHandler.isAutoScrollMode()) {
+      myActionGroup.addAction(new ScrollFromSourceAction());
+    }
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       public void expandAll() {
 
@@ -1669,6 +1671,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           selectElementAtCaretNotLosingFocus(editor);
         }
       }
+      createToolbarActions();
+      updateTitleActions();
     }
 
     private class MySelectInContext implements SelectInContext {
