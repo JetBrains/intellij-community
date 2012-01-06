@@ -33,8 +33,12 @@ public class ColorUtil {
   private ColorUtil() {
   }
 
+  private static int shift(int colorComponent, double d) {
+    final int n = (int)(colorComponent * d);
+    return n > 255 ? 255 : n < 0 ? 0 : n;
+  }
   public static Color shift(Color c, double d) {
-    return new Color((int)(c.getRed() * d), (int)(c.getGreen() * d), (int)(c.getBlue() * d), c.getAlpha());
+    return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
   }
 
   public static Color withAlpha(Color c, double a) {
