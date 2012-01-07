@@ -46,7 +46,7 @@ public abstract class Language extends UserDataHolderBase {
   private final String myID;
   private final String[] myMimeTypes;
   private List<Language> myDialects = new ArrayList<Language>();
-  public static final Language ANY = new Language("") {
+  public static final Language ANY = new Language("*") {
     @Override
     public String toString() {
       //noinspection HardCodedStringLiteral

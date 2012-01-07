@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
@@ -71,6 +72,16 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       Language base = l.getBaseLanguage();
       if (base != null) {
         return allForLanguage(base);
+      }
+    }
+    if (l != Language.ANY) {
+      final List<T> all = allForLanguage(Language.ANY);
+      if (!all.isEmpty()) {
+        if (list.isEmpty()) {
+          return all;
+        }
+        list = new ArrayList<T>(list);
+        list.addAll(all);
       }
     }
     return list;
