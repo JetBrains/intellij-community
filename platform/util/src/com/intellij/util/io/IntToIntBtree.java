@@ -241,10 +241,6 @@ class IntToIntBtree {
       myBuffer = pagedFileStorage.getByteBuffer(address);
     }
 
-    protected final boolean getFlag(int mask) {
-      return (myBuffer.get(myAddressInBuffer) & mask) == mask;
-    }
-
     protected final void setFlag(int mask, boolean flag) {
       byte b = myBuffer.get(myAddressInBuffer);
       if (flag) b |= mask;
@@ -306,9 +302,8 @@ class IntToIntBtree {
     static final int MIN_ITEMS_TO_SHARE = 20;
 
     private boolean isIndexLeaf;
-    private boolean isIndexLeafSet;
+    private boolean flagsSet;
     private boolean isHashedLeaf;
-    private boolean isHashedLeafSet;
     private static final int LARGE_MOVE_THRESHOLD = 5;
 
     BtreeIndexNodeView(IntToIntBtree btree) {
@@ -318,8 +313,7 @@ class IntToIntBtree {
     @Override
     protected void syncWithStore() {
       super.syncWithStore();
-      isIndexLeafSet = false;
-      isHashedLeafSet = false;
+      flagsSet = false;
     }
 
     static final int HASH_FREE = 0;
@@ -413,11 +407,14 @@ class IntToIntBtree {
     static final int HASHED_LEAF_MASK = 0x2;
 
     final boolean isIndexLeaf() {
-      if (!isIndexLeafSet) {
-        isIndexLeaf = getFlag(INDEX_LEAF_MASK);
-        isIndexLeafSet = true;
-      }
+      if (!flagsSet) initFlags();
       return isIndexLeaf;
+    }
+
+    private void initFlags() {
+      byte flags = myBuffer.get(myAddressInBuffer);
+      isHashedLeaf = (flags & HASHED_LEAF_MASK) == HASHED_LEAF_MASK;
+      isIndexLeaf = (flags & INDEX_LEAF_MASK) == INDEX_LEAF_MASK;
     }
 
     void setIndexLeaf(boolean value) {
@@ -425,11 +422,8 @@ class IntToIntBtree {
       setFlag(INDEX_LEAF_MASK, value);
     }
 
-    final boolean isHashedLeaf() {
-      if (!isHashedLeafSet) {
-        isHashedLeaf = getFlag(HASHED_LEAF_MASK);
-        isHashedLeafSet = true;
-      }
+    private final boolean isHashedLeaf() {
+      if (!flagsSet) initFlags();
       return isHashedLeaf;
     }
 
