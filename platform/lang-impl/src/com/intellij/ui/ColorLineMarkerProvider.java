@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class ColorLineMarkerProvider implements LineMarkerProvider {
+public final class ColorLineMarkerProvider implements LineMarkerProvider {
   @Override
   public LineMarkerInfo getLineMarkerInfo(PsiElement element) {    
     for (ElementColorProvider colorProvider : ElementColorProvider.EP_NAME.getExtensions()) {
