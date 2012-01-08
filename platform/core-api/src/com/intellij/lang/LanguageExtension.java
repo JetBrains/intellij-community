@@ -43,7 +43,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @Override
   protected String keyToString(final Language key) {
-    return key == Language.ANY ? "*" : key.getID();
+    return key.getID();
   }
 
   @Nullable
