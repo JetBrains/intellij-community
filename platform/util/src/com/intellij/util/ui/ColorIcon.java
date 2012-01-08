@@ -63,4 +63,28 @@ public class ColorIcon extends EmptyIcon {
       g.drawRect(x, y, myColorSize, myColorSize);
     }
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    ColorIcon icon = (ColorIcon)o;
+
+    if (myBorder != icon.myBorder) return false;
+    if (myColorSize != icon.myColorSize) return false;
+    if (myColor != null ? !myColor.equals(icon.myColor) : icon.myColor != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myColor != null ? myColor.hashCode() : 0);
+    result = 31 * result + (myBorder ? 1 : 0);
+    result = 31 * result + myColorSize;
+    return result;
+  }
 }
