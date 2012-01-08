@@ -51,19 +51,61 @@ public class JavaColorProvider implements ElementColorProvider {
   @Nullable
   private static Color getColor(PsiExpressionList list) {
     try {
-    final PsiExpression[] args = list.getExpressions();
-    final PsiType[] types = list.getExpressionTypes();
-    if (types.length == 1 && types[0].equals(PsiType.INT)) {
-      final Object num = JavaConstantExpressionEvaluator.computeConstantExpression(args[0], true);
-      if (num instanceof Integer) {
-        return new Color(((Integer)num).intValue());
+      final PsiExpression[] args = list.getExpressions();
+      final PsiType[] types = list.getExpressionTypes();
+      ColorConstructors type = getConstructorType(types);
+      if (type != null) {
+        switch (type) {
+          case INT:      return new Color(  getInt(args[0]));
+          case INT_BOOL: return new Color(  getInt(args[0]), getBoolean(args[1]));
+          case INT_x3:   return new Color(  getInt(args[0]),     getInt(args[1]),   getInt(args[2]));
+          case INT_x4:   return new Color(  getInt(args[0]),     getInt(args[1]),   getInt(args[2]),   getInt(args[3]));
+          case FLOAT_x3: return new Color(getFloat(args[0]),   getFloat(args[1]), getFloat(args[2]));
+          case FLOAT_x4: return new Color(getFloat(args[0]),   getFloat(args[1]), getFloat(args[2]), getFloat(args[3]));
+        }
       }
     }
-    } catch (Exception ignore) {}
+    catch (Exception ignore) {
+    }
     return null;
+  }
+
+  @Nullable
+  private static ColorConstructors getConstructorType(PsiType[] types) {
+    int len = types.length;
+    if (len == 0) return null;
+
+    switch (len) {
+      case 1: return ColorConstructors.INT;
+      case 2: return ColorConstructors.INT_BOOL;
+      case 3: return PsiType.INT.equals(types[0]) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
+      case 4: return PsiType.INT.equals(types[0]) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
+    }
+
+    return null;
+  }
+
+  public static int getInt(PsiExpression expr) {
+    return ((Integer)getObject(expr)).intValue();
+  }
+
+  public static float getFloat(PsiExpression expr) {
+    return ((Float)getObject(expr)).floatValue();
+  }
+
+  public static boolean getBoolean(PsiExpression expr) {
+    return ((Boolean)getObject(expr)).booleanValue();
+  }
+
+  private static Object getObject(PsiExpression expr) {
+    return JavaConstantExpressionEvaluator.computeConstantExpression(expr, true);
   }
 
   @Override
   public void setColorTo(@NotNull PsiElement element, @NotNull Color color) {
+  }
+  
+  private enum ColorConstructors {
+    INT, INT_BOOL, INT_x3, INT_x4, FLOAT_x3, FLOAT_x4
   }
 }

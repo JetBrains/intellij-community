@@ -38,8 +38,6 @@
     <postStartupActivity implementation="com.intellij.platform.FilesystemToolwindowOpener"/>
     
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
-
-    <!--<codeInsight.lineMarkerProvider language="*" implementationClass="com.intellij.ui.ColorLineMarkerProvider"/>-->
   </extensions>
 
 </idea-plugin>

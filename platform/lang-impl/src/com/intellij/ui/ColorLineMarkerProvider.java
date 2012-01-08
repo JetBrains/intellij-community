@@ -57,12 +57,14 @@ public class ColorLineMarkerProvider implements LineMarkerProvider {
     public MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
       super(element, 
             element.getTextRange(), 
-            new ColorIcon(12, color), 
+            new ColorIcon(10, color),
             Pass.UPDATE_ALL, 
             FunctionUtil.<Object, String>nullConstant(), 
             new GutterIconNavigationHandler<PsiElement>() {
               @Override
               public void navigate(MouseEvent e, PsiElement elt) {
+                if (!elt.isWritable()) return;
+
                 final Editor editor = PsiUtilBase.findEditor(element);
                 assert editor != null;
                 final Color c = ColorChooser.chooseColor(editor.getComponent(), "Choose color", color, true);
