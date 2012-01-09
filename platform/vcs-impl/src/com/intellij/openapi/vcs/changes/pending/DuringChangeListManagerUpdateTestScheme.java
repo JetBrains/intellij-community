@@ -61,7 +61,7 @@ public class DuringChangeListManagerUpdateTestScheme {
 
     AbstractVcs vcsFound = projectLevelVcsManager.findVcsByName(vcs.getName());
     final VirtualFile[] roots = projectLevelVcsManager.getRootsUnderVcs(vcsFound);
-    assert roots.length == 1 : Arrays.asList(roots);
+    assert roots.length == 1 : Arrays.asList(roots) + "; " + vcs.getName() + "; " + vcsFound;
 
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     myClManager = ChangeListManager.getInstance(project);
