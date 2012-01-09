@@ -64,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -1322,9 +1323,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     Icon actualIcon = icon != null ? icon : type.getDefaultIcon();
 
+    final BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener)
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listenerWrapper)
         .setHideOnClickOutside(true).setHideOnFrameResize(false).createBalloon();
+    listenerWrapper.myBalloon = balloon;
     myWindow2Balloon.put(toolWindowId, balloon);
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
@@ -1848,6 +1851,25 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public void stretchHeight(ToolWindowImpl toolWindow, int value) {
     myToolWindowsPane.stretchHeight(toolWindow, value);
+  }
+
+  private static class BalloonHyperlinkListener implements HyperlinkListener {
+    private Balloon myBalloon;
+    private final HyperlinkListener myListener;
+
+    public BalloonHyperlinkListener(HyperlinkListener listener) {
+      myListener = listener;
+    }
+
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (myBalloon != null) {
+        myBalloon.hide();
+      }
+      if (myListener != null) {
+        myListener.hyperlinkUpdate(e);
+      }
+    }
   }
 
 
