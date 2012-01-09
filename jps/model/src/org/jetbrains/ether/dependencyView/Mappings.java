@@ -86,7 +86,7 @@ public class Mappings {
   }
 
   private void createImplementation(final File rootDir, final boolean isTransient) throws IOException {
-    if (! isTransient) {
+    if (!isTransient) {
       myContext = new DependencyContext(rootDir);
     }
 
@@ -578,11 +578,13 @@ public class Mappings {
 
     void affectAll(final DependencyContext.S className, final Collection<File> affectedFiles) {
       final Set<DependencyContext.S> dependants = (Set<DependencyContext.S>)myClassToClassDependency.get(className);
+      final DependencyContext.S sourceFile = myClassToSourceFile.get(className);
 
       if (dependants != null) {
         for (DependencyContext.S depClass : dependants) {
           final DependencyContext.S depFile = myClassToSourceFile.get(depClass);
-          if (depFile != null) {
+          
+          if (depFile != null && sourceFile != null && !depFile.equals(sourceFile)) {
             affectedFiles.add(new File(myContext.getValue(depFile)));
           }
         }
@@ -1299,9 +1301,9 @@ public class Mappings {
     }
 
     //final Set<ClassRepr> cl = (Set<ClassRepr>) delta.mySourceFileToClasses.get(new DependencyContext.S(352));
-    
+
     //System.out.println("There: " + (cl == null ? "wow..." : cl.size()));
-    
+
     myClassToSubclasses.putAll(delta.myClassToSubclasses);
     mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
     mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
@@ -1374,17 +1376,29 @@ public class Mappings {
         if (repr != null) {
           final DependencyContext.S className = repr.name;
 
-          for (UsageRepr.Usage u : localUsages.getUsages()) {
-            myClassToClassDependency.put(u.getOwner(), className);
-          }
-        }
-
-        if (repr != null) {
           myClassToSourceFile.put(repr.name, sourceFileNameS);
           mySourceFileToClasses.put(sourceFileNameS, repr);
 
           for (DependencyContext.S s : repr.getSupers()) {
             myClassToSubclasses.put(s, repr.name);
+          }
+
+          for (UsageRepr.Usage u : localUsages.getUsages()) {
+            final DependencyContext.S owner = u.getOwner();
+
+            if (!owner.equals(className)) {
+              final DependencyContext.S sourceFile = repr.getSourceFileName();
+              final DependencyContext.S ownerSourceFile = myClassToSourceFile.get(owner);
+
+              if (ownerSourceFile != null) {
+                if (!ownerSourceFile.equals(sourceFile)) {
+                  myClassToClassDependency.put(owner, className);
+                }
+              }
+              else {
+                myClassToClassDependency.put(owner, className);
+              }
+            }
           }
         }
 
@@ -1416,7 +1430,7 @@ public class Mappings {
       // only close if you own the context
       //final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(new DependencyContext.S(352));
       //System.out.println("Here: " + (classes == null ? "wow..." : classes.size()));
-        
+
       myContext.close();
     }
     else {
