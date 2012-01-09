@@ -24,9 +24,12 @@ import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -40,10 +43,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SpeedSearchComparator;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.ElementFilter;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
@@ -52,6 +57,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -240,8 +246,15 @@ public class FileStructurePopup implements Disposable {
 
         if (!filter.equals(prefix)) {
           filter = prefix;
-          myAbstractTreeBuilder.refilter(null, false, false);
-          myTree.repaint();
+          myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
+            @Override
+            public void run() {
+              myTree.repaint();
+              if (mySpeedSearch.isPopupActive()) {
+                mySpeedSearch.refreshSelection();
+              }
+            }
+          });          
         }
         alarm.addRequest(this, 300);
       }
@@ -270,9 +283,14 @@ public class FileStructurePopup implements Disposable {
       }
       if (!changed) {
         myAbstractTreeBuilder.getUi().select(node, null);
+        if (myAbstractTreeBuilder.getSelectedElements().isEmpty()) {
+          TreeUtil.selectFirstNode(myTree);
+        }
         return;
+
       }
     }
+    TreeUtil.selectFirstNode(myTree);
   }
 
   @Nullable
@@ -470,12 +488,13 @@ public class FileStructurePopup implements Disposable {
         FilteringTreeStructure structure = (FilteringTreeStructure)myAbstractTreeBuilder.getTreeStructure();
         if (structure == null) return;
         structure.rebuild();
-        myAbstractTreeBuilder.refilter(selection, true, false).doWhenDone(new Runnable() {
+        
+        final Object sel = selection;
+        myAbstractTreeBuilder.refilter(sel, true, false).doWhenProcessed(new Runnable() {
           @Override
           public void run() {
-            if (SpeedSearchBase.hasActiveSpeedSearch(myTree)) {
-              final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myTree);
-              if (supply != null && supply.isPopupActive()) supply.refreshSelection();
+            if (mySpeedSearch.isPopupActive()) {
+              mySpeedSearch.refreshSelection();
             }
           }
         });
@@ -554,7 +573,7 @@ public class FileStructurePopup implements Disposable {
           return true;
         }
 
-        final String text = value.toString();
+        final String text = getText(value);
         if (text == null) return false;
         final Iterable<TextRange> ranges = mySpeedSearch.matchingFragments(text);
         boolean matches = ranges != null && ranges.iterator().hasNext();
@@ -571,6 +590,27 @@ public class FileStructurePopup implements Disposable {
         
       } 
       return true;
+    }
+
+    @Nullable
+    private String getText(Object node) {
+      final String text = String.valueOf(node);
+      if (text != null) {
+        return text;
+      }
+
+      if (node instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
+        final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+        try {
+          final ItemPresentation presentation = ((StructureViewComponent.StructureViewTreeElementWrapper)node).getValue().getPresentation();
+          return presentation.getPresentableText();
+        }
+        finally {
+          token.finish();
+        }
+      }
+
+      return null;
     }
   }
 }
