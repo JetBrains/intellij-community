@@ -49,7 +49,6 @@ public class MavenImportNotifier extends MavenSimpleProjectComponent {
     myMavenProjectsManager.addManagerListener(new MavenProjectsManager.Listener() {
       public void activated() {
         init();
-        scheduleUpdate(false);
       }
 
       public void projectsScheduled() {
