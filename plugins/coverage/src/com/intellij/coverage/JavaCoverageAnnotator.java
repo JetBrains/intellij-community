@@ -151,6 +151,23 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   public String getPackageCoverageInformationString(final PsiPackage psiPackage,
                                                     @Nullable final Module module,
                                                     @NotNull final CoverageDataManager coverageDataManager) {
+    return getPackageCoverageInformationString(psiPackage, module, coverageDataManager, false);
+  }
+
+  /**
+   *
+   *
+   * @param psiPackage qualified name of a package to obtain coverage information for
+   * @param module optional parameter to restrict coverage to source directories of a certain module
+   * @param coverageDataManager
+   * @param flatten
+   * @return human-readable coverage information
+   */
+  @Nullable
+  public String getPackageCoverageInformationString(final PsiPackage psiPackage,
+                                                    @Nullable final Module module,
+                                                    @NotNull final CoverageDataManager coverageDataManager, 
+                                                    boolean flatten) {
     final boolean subCoverageActive = coverageDataManager.isSubCoverageActive();
     PackageAnnotator.PackageCoverageInfo info;
     if (module != null) {
@@ -164,35 +181,30 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       return getCoverageInformationString(result, subCoverageActive);
     }
     else {
-      info = myPackageCoverageInfos.get(psiPackage.getQualifiedName());
+      info = getPackageCoverageInfo(psiPackage, flatten);
     }
     return getCoverageInformationString(info, subCoverageActive);
   }
 
-  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(PsiPackage psiPackage) {
-    return myPackageCoverageInfos.get(psiPackage.getQualifiedName());
+  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(PsiPackage psiPackage, boolean flattenPackages) {
+    final String qualifiedName = psiPackage.getQualifiedName();
+    return flattenPackages ? myFlattenPackageCoverageInfos.get(qualifiedName) : myPackageCoverageInfos.get(qualifiedName);
   }
   
   public String getPackageClassPercentage(final PsiPackage psiPackage, boolean flatten) {
-    final String qualifiedName = psiPackage.getQualifiedName();
-    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = flatten ? myFlattenPackageCoverageInfos.get(qualifiedName) 
-                                                                             : myPackageCoverageInfos.get(qualifiedName);
+    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
     if (packageCoverageInfo == null) return null;
     return (int)((double)packageCoverageInfo.coveredClassCount/packageCoverageInfo.totalClassCount * 100) +"% (" + packageCoverageInfo.coveredClassCount + "/" + packageCoverageInfo.totalClassCount + ")"; 
   }
   
   public String getPackageMethodPercentage(PsiPackage psiPackage, boolean flatten) {
-    final String qualifiedName = psiPackage.getQualifiedName();
-    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = flatten ? myFlattenPackageCoverageInfos.get(qualifiedName) 
-                                                                             : myPackageCoverageInfos.get(qualifiedName);
+    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
     if (packageCoverageInfo == null) return null;
     return (int)((double)packageCoverageInfo.coveredMethodCount/packageCoverageInfo.totalMethodCount * 100) +"% (" + packageCoverageInfo.coveredMethodCount + "/" + packageCoverageInfo.totalMethodCount + ")";
   }
 
   public String getPackageLinePercentage(final PsiPackage psiPackage, boolean flatten) {
-    final String qualifiedName = psiPackage.getQualifiedName();
-    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = flatten ? myFlattenPackageCoverageInfos.get(qualifiedName) 
-                                                                             : myPackageCoverageInfos.get(qualifiedName);
+    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
     if (packageCoverageInfo == null) return null;
     return (int)((double)packageCoverageInfo.coveredLineCount/packageCoverageInfo.totalLineCount * 100) +"% (" + packageCoverageInfo.coveredLineCount + "/" + packageCoverageInfo.totalLineCount + ")"; 
   }

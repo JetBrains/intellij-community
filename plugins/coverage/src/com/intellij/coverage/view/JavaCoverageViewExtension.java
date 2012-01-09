@@ -25,13 +25,13 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public String getSummaryForNode(AbstractTreeNode node) {
+  public String getSummaryForNode(AbstractTreeNode node, CoverageViewManager.StateBean stateBean) {
     return "Coverage Summary for Package \'" + node.toString() + "\': " +
-           myAnnotator.getPackageCoverageInformationString((PsiPackage)node.getValue(), null, CoverageDataManager.getInstance(node.getProject()));
+           myAnnotator.getPackageCoverageInformationString((PsiPackage)node.getValue(), null, CoverageDataManager.getInstance(node.getProject()), stateBean.myFlattenPackages);
   }
 
   @Override
-  public String getSummaryForRootNode(AbstractTreeNode childNode) {
+  public String getSummaryForRootNode(AbstractTreeNode childNode, CoverageViewManager.StateBean stateBean) {
     final Object value = childNode.getValue();
     String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null, CoverageDataManager.getInstance(childNode.getProject()));
     if (coverageInformationString == null) {
@@ -40,9 +40,11 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       for (Object child : children) {
         final Object childValue = ((CoverageListNode)child).getValue();
         if (childValue instanceof PsiPackage) {
-          final PackageAnnotator.PackageCoverageInfo coverageInfo = myAnnotator.getPackageCoverageInfo((PsiPackage)childValue);
+          final PackageAnnotator.PackageCoverageInfo coverageInfo = myAnnotator.getPackageCoverageInfo((PsiPackage)childValue, stateBean.myFlattenPackages);
           if (coverageInfo != null) {
             info = JavaCoverageAnnotator.merge(info, coverageInfo);
+          } else {
+            return "Loading...";
           }
         }
       }
@@ -55,6 +57,10 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   public String getPercentage(int columnIndex, AbstractTreeNode node, boolean flatten) {
     final Object value = node.getValue();
     if (value instanceof PsiClass) {
+
+      //no coverage gathered
+      if (((PsiClass)value).isInterface()) return null;
+
       final String qualifiedName = ((PsiClass)value).getQualifiedName();
       if (columnIndex == 1) {
         return myAnnotator.isClassCovered(qualifiedName) ? "100% (1/1)" : "0% (0/1)";
