@@ -120,7 +120,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
       myRefilterQueue.cancelAllUpdates();
     }
     final ActionCallback callback = new ActionCallback();
-    getUi().cancelUpdate().doWhenDone(new Runnable() {
+    getUi().cancelUpdate().doWhenProcessed(new Runnable() {
       @Override
       public void run() {
         if (myRefilterQueue == null || now) {
@@ -155,7 +155,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
-    queueUpdate().doWhenDone(new Runnable() {
+    queueUpdate().doWhenProcessed(new Runnable() {
       public void run() {
         revalidateTree();
 
