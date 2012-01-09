@@ -105,7 +105,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                             int index,
                             boolean selected,
                             boolean hasFocus) {
-        if (itemWrapper != NULL_WRAPPER) {
+        if (itemWrapper != NULL_WRAPPER && itemWrapper != null) {
           setIcon(itemWrapper.getIcon(fileIndex));
 
           setText(getPresentableText(itemWrapper, project));
