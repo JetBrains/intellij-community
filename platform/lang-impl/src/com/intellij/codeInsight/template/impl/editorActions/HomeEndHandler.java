@@ -41,8 +41,8 @@ public abstract class HomeEndHandler extends EditorActionHandler {
         int offsetToMove = myIsHomeHandler ? range.getStartOffset() : range.getEndOffset();
         if (offsetToMove != caretOffset) {
           editor.getCaretModel().moveToOffset(offsetToMove);
-          editor.getSelectionModel().removeSelection();
         }
+        editor.getSelectionModel().removeSelection();
       } else {
         myOriginalHandler.execute(editor, dataContext);
       }
