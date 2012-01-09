@@ -4,17 +4,15 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 
-import java.util.List;
+import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.ide.ui.UISettings
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
 
-@SuppressWarnings({"ALL"})
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
 
@@ -273,6 +271,18 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     }
   }
 
+  public void testReallyAlphaSorting() {
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true;
+
+    try {
+      invokeCompletion(getTestName(false) + ".java");
+      assert myFixture.lookupElementStrings.sort() == myFixture.lookupElementStrings
+    }
+    finally {
+      UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
+    }
+  }
+
   public void testSortSameNamedVariantsByProximity() {
     myFixture.addClass("public class Bar {}");
     for (int i = 0; i < 10; i++) {
@@ -280,7 +290,6 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
       myFixture.addClass("public class Bar" + i + "Colleague {}");
     }
     myFixture.addClass("package bar; public class Bar {}");
-    final String path = getTestName(false) + ".java";
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
     assertPreferredItems(0, "Bar", "Bar");

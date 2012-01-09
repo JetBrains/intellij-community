@@ -435,7 +435,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     if (isAlphaSorted()) {
-      model.addAll(items);
+      final ArrayList<LookupElement> elements = new ArrayList<LookupElement>(items);
+      Collections.sort(elements, new Comparator<LookupElement>() {
+        @Override
+        public int compare(LookupElement o1, LookupElement o2) {
+          return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
+        }
+      });
+      model.addAll(elements);
     } else if (limitRelevance()) {
       model.addAll(addRemainingItemsLexicographically(model, items));
     } else  {
