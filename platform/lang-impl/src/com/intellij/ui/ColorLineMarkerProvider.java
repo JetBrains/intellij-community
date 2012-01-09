@@ -19,6 +19,8 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -69,7 +71,13 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
                 assert editor != null;
                 final Color c = ColorChooser.chooseColor(editor.getComponent(), "Choose color", color, true);
                 if (c != null) {
-                  colorProvider.setColorTo(element, c);
+                  AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(ColorLineMarkerProvider.class);
+                  try {
+                    colorProvider.setColorTo(element, c);
+                  }
+                  finally {
+                    token.finish();
+                  }
                 }
               }
             }, 

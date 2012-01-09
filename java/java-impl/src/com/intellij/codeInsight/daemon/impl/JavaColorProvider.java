@@ -103,6 +103,56 @@ public class JavaColorProvider implements ElementColorProvider {
 
   @Override
   public void setColorTo(@NotNull PsiElement element, @NotNull Color color) {
+    PsiExpressionList argumentList = ((PsiNewExpression)element).getArgumentList();
+    assert argumentList != null;
+    
+    PsiExpression[] expr = argumentList.getExpressions();
+    ColorConstructors type = getConstructorType(argumentList.getExpressionTypes());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+    
+    assert type != null;
+
+    switch (type) {
+      case INT:        
+      case INT_BOOL:
+        replaceInt(expr[0], color.getRGB());
+        return;
+      case INT_x3:        
+      case INT_x4:
+        replaceInt(expr[0], color.getRed());
+        replaceInt(expr[1], color.getGreen());
+        replaceInt(expr[2], color.getBlue());
+        if (type == ColorConstructors.INT_x4) {
+          replaceInt(expr[3], color.getAlpha());
+        } else if (color.getAlpha() != 255) {
+          //todo add alpha
+        }
+        return;
+      case FLOAT_x3:
+      case FLOAT_x4:
+        float[] rgba = color.getColorComponents(null);
+        replaceFloat(expr[0], rgba[0]);
+        replaceFloat(expr[1], rgba[1]);
+        replaceFloat(expr[2], rgba[2]);
+        if (type == ColorConstructors.FLOAT_x4) {
+          replaceFloat(expr[3], rgba.length == 4 ? rgba[3] : 0f);
+        } else if (color.getAlpha() != 255) {
+          //todo add alpha
+        }
+    }
+  }
+  
+  private static void replaceInt(PsiExpression expr, int newValue) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
+    if (getInt(expr) != newValue) {
+      expr.replace(factory.createExpressionFromText(String.valueOf(newValue), null));
+    }
+  }
+  private static void replaceFloat(PsiExpression expr, float newValue) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
+    if (getFloat(expr) != newValue) {
+      expr.replace(factory.createExpressionFromText(String.valueOf(newValue) + "f", null));
+    }
   }
   
   private enum ColorConstructors {
