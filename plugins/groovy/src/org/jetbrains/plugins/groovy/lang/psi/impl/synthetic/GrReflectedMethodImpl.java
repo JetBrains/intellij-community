@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -62,10 +63,12 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   public GrReflectedMethodImpl(GrMethod baseMethod, int optionalParams, PsiClassType categoryType) {
     super(baseMethod.getManager(), baseMethod.getLanguage(), baseMethod.getName(),
           new GrLightParameterListBuilder(baseMethod.getManager(), baseMethod.getLanguage()),
-          new GrLightModifierList(baseMethod)
+          new GrLightModifierList(baseMethod), new LightReferenceList(baseMethod.getManager()),  
+          new LightTypeParameterListBuilder(baseMethod.getManager(), baseMethod.getLanguage())
     );
+    
     initParameterList(baseMethod, optionalParams, categoryType);
-
+    initTypeParameterList(baseMethod);
     initModifiers(baseMethod, categoryType != null);
     initThrowsList(baseMethod);
     setContainingClass(baseMethod.getContainingClass());
@@ -73,6 +76,12 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     setConstructor(baseMethod.isConstructor());
 
     myBaseMethod = baseMethod;
+  }
+
+  private void initTypeParameterList(GrMethod method) {
+    for (PsiTypeParameter parameter : method.getTypeParameters()) {
+      addTypeParameter(parameter);
+    }
   }
 
   private void initThrowsList(GrMethod baseMethod) {

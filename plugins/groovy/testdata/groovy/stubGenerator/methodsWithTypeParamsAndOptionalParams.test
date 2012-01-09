@@ -1,0 +1,21 @@
+def <T> T foo(String s = null){}
+-----
+public class methodsWithTypeParamsAndOptionalParams extends groovy.lang.Script {
+public static void main(java.lang.String[] args) {
+return ;
+}
+
+public java.lang.Object run() {
+return null;
+}
+
+public <T> T foo(java.lang.String s) {
+return null;
+}
+
+public <T> T foo() {
+return null;
+}
+
+}
+---
