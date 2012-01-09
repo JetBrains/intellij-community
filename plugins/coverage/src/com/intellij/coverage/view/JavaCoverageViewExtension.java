@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -20,27 +21,32 @@ import java.util.*;
 public class JavaCoverageViewExtension extends CoverageViewExtension {
   private JavaCoverageAnnotator myAnnotator;
 
-  public JavaCoverageViewExtension(JavaCoverageAnnotator annotator) {
+  public JavaCoverageViewExtension(JavaCoverageAnnotator annotator,
+                                   Project project,
+                                   CoverageSuitesBundle suitesBundle,
+                                   CoverageViewManager.StateBean stateBean) {
+    super(project, suitesBundle, stateBean);
     myAnnotator = annotator;
   }
 
   @Override
-  public String getSummaryForNode(AbstractTreeNode node, CoverageViewManager.StateBean stateBean) {
+  public String getSummaryForNode(AbstractTreeNode node) {
     return "Coverage Summary for Package \'" + node.toString() + "\': " +
-           myAnnotator.getPackageCoverageInformationString((PsiPackage)node.getValue(), null, CoverageDataManager.getInstance(node.getProject()), stateBean.myFlattenPackages);
+           myAnnotator.getPackageCoverageInformationString((PsiPackage)node.getValue(), null, myCoverageDataManager, myStateBean.myFlattenPackages);
   }
 
   @Override
-  public String getSummaryForRootNode(AbstractTreeNode childNode, CoverageViewManager.StateBean stateBean) {
+  public String getSummaryForRootNode(AbstractTreeNode childNode) {
     final Object value = childNode.getValue();
-    String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null, CoverageDataManager.getInstance(childNode.getProject()));
+    String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null,
+                                                                                       myCoverageDataManager);
     if (coverageInformationString == null) {
       PackageAnnotator.PackageCoverageInfo info = new PackageAnnotator.PackageCoverageInfo();
       final Collection children = childNode.getChildren();
       for (Object child : children) {
         final Object childValue = ((CoverageListNode)child).getValue();
         if (childValue instanceof PsiPackage) {
-          final PackageAnnotator.PackageCoverageInfo coverageInfo = myAnnotator.getPackageCoverageInfo((PsiPackage)childValue, stateBean.myFlattenPackages);
+          final PackageAnnotator.PackageCoverageInfo coverageInfo = myAnnotator.getPackageCoverageInfo((PsiPackage)childValue, myStateBean.myFlattenPackages);
           if (coverageInfo != null) {
             info = JavaCoverageAnnotator.merge(info, coverageInfo);
           } else {
@@ -54,7 +60,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public String getPercentage(int columnIndex, AbstractTreeNode node, boolean flatten) {
+  public String getPercentage(int columnIndex, AbstractTreeNode node) {
     final Object value = node.getValue();
     if (value instanceof PsiClass) {
 
@@ -70,6 +76,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       
       return myAnnotator.getClassLinePercentage(qualifiedName);
     }
+    final boolean flatten = myStateBean.myFlattenPackages;
     if (columnIndex == 1) {
       return myAnnotator.getPackageClassPercentage((PsiPackage)value, flatten);
     } else if (columnIndex == 2) {
@@ -79,8 +86,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public PsiElement getElementToSelect(VirtualFile virtualFile, Project project) {
-    final PsiElement psiElement = super.getElementToSelect(virtualFile, project);
+  public PsiElement getElementToSelect(VirtualFile virtualFile) {
+    final PsiElement psiElement = super.getElementToSelect(virtualFile);
     if (psiElement instanceof PsiClassOwner) {
       final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
       if (classes.length > 0) return classes[0];
@@ -99,24 +106,24 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public AbstractTreeNode createRootNode(CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean, Project project) {
-    return new CoverageListRootNode(JavaPsiFacade.getInstance(project).findPackage(""), bundle, stateBean);
+  public AbstractTreeNode createRootNode() {
+    return new CoverageListRootNode(JavaPsiFacade.getInstance(myProject).findPackage(""), mySuitesBundle, myStateBean);
   }
 
   @Override
-  public List<AbstractTreeNode> createTopLevelNodes(CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean, Project project) {
+  public List<AbstractTreeNode> createTopLevelNodes() {
     final List<AbstractTreeNode> topLevelNodes = new ArrayList<AbstractTreeNode>();
-    for (CoverageSuite suite : bundle.getSuites()) {
-      final List<PsiPackage> packages = ((JavaCoverageSuite)suite).getCurrentSuitePackages(project);
+    for (CoverageSuite suite : mySuitesBundle.getSuites()) {
+      final List<PsiPackage> packages = ((JavaCoverageSuite)suite).getCurrentSuitePackages(myProject);
       for (PsiPackage aPackage : packages) {
-        if (aPackage.getDirectories(getSearchScope(bundle, project)).length == 0) continue;
-        final CoverageListNode node = new CoverageListNode(aPackage, bundle, stateBean);
+        if (aPackage.getDirectories(getSearchScope(mySuitesBundle, myProject)).length == 0) continue;
+        final CoverageListNode node = new CoverageListNode(aPackage, mySuitesBundle, myStateBean);
         topLevelNodes.add(node);
-        collectSubPackages(topLevelNodes, aPackage, bundle, stateBean);
+        collectSubPackages(topLevelNodes, aPackage, mySuitesBundle, myStateBean);
       }
-      final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(project);
+      final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
       for (PsiClass aClass : classes) {
-        topLevelNodes.add(new CoverageListNode(aClass, bundle, stateBean));
+        topLevelNodes.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
       }
     }
     return topLevelNodes;
@@ -162,9 +169,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
 
   @Override
-  public List<AbstractTreeNode> getChildrenNodes(final AbstractTreeNode node,
-                                                 final CoverageSuitesBundle suitesBundle,
-                                                 final CoverageViewManager.StateBean stateBean) {
+  public List<AbstractTreeNode> getChildrenNodes(final AbstractTreeNode node) {
     List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();
@@ -174,21 +179,21 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       if (val instanceof PsiPackage) {
         boolean found = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
-            return isInCoverageScope((PsiPackage)val, suitesBundle); 
+            return isInCoverageScope((PsiPackage)val, mySuitesBundle); 
           }
         });
-        if (!stateBean.myFlattenPackages) {
-          collectSubPackages(children, (PsiPackage)val, suitesBundle, stateBean);
+        if (!myStateBean.myFlattenPackages) {
+          collectSubPackages(children, (PsiPackage)val, mySuitesBundle, myStateBean);
         }
 
         final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
           public PsiClass[] compute() {
-            return ((PsiPackage)val).getClasses(getSearchScope(suitesBundle, node.getProject()));
+            return ((PsiPackage)val).getClasses(getSearchScope(mySuitesBundle, node.getProject()));
           }
         });
         if (found) {
           for (PsiClass aClass : classes) {
-            children.add(new CoverageListNode(aClass, suitesBundle, stateBean));
+            children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }
         else {                                                                        
@@ -198,9 +203,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
                 return aClass.getQualifiedName(); 
               }
             });
-            for (CoverageSuite suite : suitesBundle.getSuites()) {
+            for (CoverageSuite suite : mySuitesBundle.getSuites()) {
               if (((JavaCoverageSuite)suite).isClassFiltered(classFQName)) {
-                children.add(new CoverageListNode(aClass, suitesBundle, stateBean));
+                children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
               }
             }
           }
@@ -211,6 +216,16 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       }
     }
     return children;
+  }
+
+  @Override
+  public ColumnInfo[] createColumnInfos() {
+    return new ColumnInfo[]{
+      new ElementColumnInfo(), 
+      new PercentageCoverageColumnInfo(1, "Class, %", mySuitesBundle, myStateBean), 
+      new PercentageCoverageColumnInfo(2, "Method, %", mySuitesBundle, myStateBean),
+      new PercentageCoverageColumnInfo(3, "Line, %", mySuitesBundle, myStateBean)
+    };
   }
 
   public static boolean isInCoverageScope(PsiElement element, CoverageSuitesBundle suitesBundle) {
@@ -234,12 +249,17 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public boolean canSelectInCoverageView(VirtualFile file, Project project, CoverageSuitesBundle bundle) {
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+  public boolean canSelectInCoverageView(VirtualFile file) {
+    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile instanceof PsiClassOwner) {
       final String packageName = ((PsiClassOwner)psiFile).getPackageName();
-      return isInCoverageScope(JavaPsiFacade.getInstance(project).findPackage(packageName), bundle);
+      return isInCoverageScope(JavaPsiFacade.getInstance(myProject).findPackage(packageName), mySuitesBundle);
     }
     return false;
+  }
+
+  @Override
+  public boolean supportFlattenPackages() {
+    return true;
   }
 }
