@@ -801,6 +801,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private void updateActions(boolean now, final boolean transparentOnly, final boolean forced) {
     final IdRunnable updateRunnable = new IdRunnable(this) {
       public void run() {
+        if (!isVisible()) {
+          return;
+        }
+
         myNewVisibleActions.clear();
         final DataContext dataContext = getDataContext();
 
