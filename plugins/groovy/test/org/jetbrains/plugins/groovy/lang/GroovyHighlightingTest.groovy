@@ -398,15 +398,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testTupleConstructorAttributes() throws Exception {
-    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {" +
-                       "    java.lang.String excludes() default \"\";\n" +
-                       "    boolean includeFields() default false;\n" +
-                       "    boolean includeProperties() default true;\n" +
-                       "    boolean includeSuperFields() default false;\n" +
-                       "    boolean includeSuperProperties() default false;\n" +
-                       "    boolean callSuper() default false;\n" +
-                       "    boolean force() default false;" +
-                       "}");
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
@@ -519,6 +510,29 @@ class Bar {{
   new Foo(2);
   new Foo(2, "3");
   new Foo<error>(2, "3", 9)</error>;
+}}'''
+    myFixture.checkHighlighting(false, false, false)
+  }
+
+  public void testInheritConstructorsFromJava() throws Exception {
+    myFixture.addFileToProject "a.groovy", '''
+class Person {
+  Person(String first, String last) { }
+  Person(String first, String last, String address) { }
+  Person(String first, String last, int zip) { }
+}
+
+@groovy.transform.InheritConstructors
+class PersonAge extends Person {
+  PersonAge(String first, String last, int zip) { }
+}
+'''
+    myFixture.configureByText 'a.java', '''
+class Bar {{
+  new PersonAge("a", "b");
+  new PersonAge("a", "b", "c");
+  new PersonAge("a", "b", 239);
+  new PersonAge<error>(2, "3", 9)</error>;
 }}'''
     myFixture.checkHighlighting(false, false, false)
   }
