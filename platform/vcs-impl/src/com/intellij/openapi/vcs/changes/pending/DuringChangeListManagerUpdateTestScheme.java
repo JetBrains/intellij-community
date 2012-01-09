@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 public class DuringChangeListManagerUpdateTestScheme {
@@ -59,7 +60,8 @@ public class DuringChangeListManagerUpdateTestScheme {
     projectLevelVcsManager.setDirectoryMappings(list);
 
     AbstractVcs vcsFound = projectLevelVcsManager.findVcsByName(vcs.getName());
-    assert projectLevelVcsManager.getRootsUnderVcs(vcsFound).length == 1: "size: " + projectLevelVcsManager.getRootsUnderVcs(vcsFound).length;
+    final VirtualFile[] roots = projectLevelVcsManager.getRootsUnderVcs(vcsFound);
+    assert roots.length == 1 : Arrays.asList(roots);
 
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     myClManager = ChangeListManager.getInstance(project);
