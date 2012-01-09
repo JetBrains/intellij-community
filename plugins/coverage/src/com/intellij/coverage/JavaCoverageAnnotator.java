@@ -130,7 +130,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  private static String getCoverageInformationString(PackageAnnotator.PackageCoverageInfo info, boolean subCoverageActive) {
+  public static String getCoverageInformationString(PackageAnnotator.PackageCoverageInfo info, boolean subCoverageActive) {
     if (info == null) return null;
     if (info.totalClassCount == 0 || info.totalLineCount == 0) return null;
     if (subCoverageActive) {
@@ -167,6 +167,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       info = myPackageCoverageInfos.get(psiPackage.getQualifiedName());
     }
     return getCoverageInformationString(info, subCoverageActive);
+  }
+
+  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(PsiPackage psiPackage) {
+    return myPackageCoverageInfos.get(psiPackage.getQualifiedName());
   }
   
   public String getPackageClassPercentage(final PsiPackage psiPackage, boolean flatten) {
@@ -211,8 +215,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return info != null && info.coveredMethodCount > 0;
   }
   
-  private static PackageAnnotator.PackageCoverageInfo merge(final PackageAnnotator.PackageCoverageInfo info,
-                                                            final PackageAnnotator.PackageCoverageInfo testInfo) {
+  public static PackageAnnotator.PackageCoverageInfo merge(final PackageAnnotator.PackageCoverageInfo info,
+                                                           final PackageAnnotator.PackageCoverageInfo testInfo) {
     if (info == null) return testInfo;
     if (testInfo == null) return info;
     final PackageAnnotator.PackageCoverageInfo coverageInfo = new PackageAnnotator.PackageCoverageInfo();

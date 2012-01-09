@@ -33,8 +33,22 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public String getSummaryForRootNode(AbstractTreeNode childNode) {
     final Object value = childNode.getValue();
-    return "Coverage Summary for \'all classes in scope\': " + myAnnotator.getPackageCoverageInformationString(
-      (PsiPackage)value, null, CoverageDataManager.getInstance(childNode.getProject()));
+    String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null, CoverageDataManager.getInstance(childNode.getProject()));
+    if (coverageInformationString == null) {
+      PackageAnnotator.PackageCoverageInfo info = new PackageAnnotator.PackageCoverageInfo();
+      final Collection children = childNode.getChildren();
+      for (Object child : children) {
+        final Object childValue = ((CoverageListNode)child).getValue();
+        if (childValue instanceof PsiPackage) {
+          final PackageAnnotator.PackageCoverageInfo coverageInfo = myAnnotator.getPackageCoverageInfo((PsiPackage)childValue);
+          if (coverageInfo != null) {
+            info = JavaCoverageAnnotator.merge(info, coverageInfo);
+          }
+        }
+      }
+      coverageInformationString = JavaCoverageAnnotator.getCoverageInformationString(info, false);
+    }
+    return "Coverage Summary for \'all classes in scope\': " + coverageInformationString;
   }
 
   @Override
