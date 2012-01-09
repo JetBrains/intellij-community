@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -88,7 +89,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     for (CoverageSuite suite : bundle.getSuites()) {
       final List<PsiPackage> packages = ((JavaCoverageSuite)suite).getCurrentSuitePackages(project);
       for (PsiPackage aPackage : packages) {
-        if (!bundle.isTrackTestFolders() && aPackage.getDirectories(GlobalSearchScope.projectScope(project)).length == 0) continue;
+        if (aPackage.getDirectories(getSearchScope(bundle, project)).length == 0) continue;
         final CoverageListNode node = new CoverageListNode(aPackage, bundle, stateBean);
         topLevelNodes.add(node);
         collectSubPackages(topLevelNodes, aPackage, bundle, stateBean);
@@ -101,14 +102,18 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return topLevelNodes;
   }
 
+  private static GlobalSearchScope getSearchScope(CoverageSuitesBundle bundle, Project project) {
+    return bundle.isTrackTestFolders() ? GlobalSearchScope.projectScope(project) : GlobalSearchScopes.projectProductionScope(project);
+  }
+  
   private static void collectSubPackages(List<AbstractTreeNode> children,
                                          final PsiPackage rootPackage,
                                          final CoverageSuitesBundle data,
                                          final CoverageViewManager.StateBean stateBean) {
-    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(rootPackage.getProject());
+    final GlobalSearchScope searchScope = getSearchScope(data, rootPackage.getProject());
     final PsiPackage[] subPackages = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage[]>() {
       public PsiPackage[] compute() {
-        return rootPackage.getSubPackages(); 
+        return rootPackage.getSubPackages(searchScope); 
       }
     });
     for (final PsiPackage aPackage : subPackages) {
@@ -137,9 +142,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
 
   @Override
-  public List<AbstractTreeNode> getChildrenNodes(AbstractTreeNode node,
+  public List<AbstractTreeNode> getChildrenNodes(final AbstractTreeNode node,
                                                  final CoverageSuitesBundle suitesBundle,
-                                                 CoverageViewManager.StateBean stateBean) {
+                                                 final CoverageViewManager.StateBean stateBean) {
     List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();
@@ -158,7 +163,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
         final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
           public PsiClass[] compute() {
-            return ((PsiPackage)val).getClasses();
+            return ((PsiPackage)val).getClasses(getSearchScope(suitesBundle, node.getProject()));
           }
         });
         if (found) {
@@ -197,7 +202,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       Collections.addAll(filteredClasses, ((JavaCoverageSuite)suite).getFilteredClassNames());
     }
     if (!filteredClasses.isEmpty()) {
-      final PsiClass[] classes = psiPackage.getClasses(GlobalSearchScope.projectScope(psiPackage.getProject()));
+      final PsiClass[] classes = psiPackage.getClasses(getSearchScope(suitesBundle, psiPackage.getProject()));
       for (PsiClass psiClass : classes) {
         final String classFQName = psiClass.getQualifiedName();
         for (CoverageSuite suite : suitesBundle.getSuites()) {
