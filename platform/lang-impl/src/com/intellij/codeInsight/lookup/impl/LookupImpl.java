@@ -1499,7 +1499,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     private void layoutStatusIcons() {
       int adHeight = myAdComponent.getAdComponent().getPreferredSize().height;
-      Dimension buttonSize = adHeight > 0 ? new Dimension(0, 0) : new Dimension(relevanceSortIcon.getIconWidth(), relevanceSortIcon.getIconHeight());
+      Dimension buttonSize = adHeight > 0 || !mySortingLabel.isVisible() ? new Dimension(0, 0) : new Dimension(relevanceSortIcon.getIconWidth(), relevanceSortIcon.getIconHeight());
       myScrollBarIncreaseButton.setPreferredSize(buttonSize);
       myScrollBarIncreaseButton.setMinimumSize(buttonSize);
       myScrollBarIncreaseButton.setMaximumSize(buttonSize);
