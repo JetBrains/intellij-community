@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
@@ -108,7 +107,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         if (itemWrapper != NULL_WRAPPER && itemWrapper != null) {
           setIcon(itemWrapper.getIcon(fileIndex));
 
-          setText(getPresentableText(itemWrapper, project));
+          setText(itemWrapper.getRelativeToProjectPath());
         }
         else {
           setText(LEAVE_IN_SAME_SOURCE_ROOT);
@@ -159,14 +158,6 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         }
       }
     });
-  }
-
-  private static String getPresentableText(DirectoryChooser.ItemWrapper itemWrapper, Project project) {
-    final PsiDirectory directory = itemWrapper.getDirectory();
-    final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
-    return virtualFile != null
-                  ? ProjectUtil.calcRelativeToProjectPath(virtualFile, project, true, true)
-                  : itemWrapper.getPresentableUrl();
   }
 
   @Nullable
@@ -257,7 +248,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       public int compare(DirectoryChooser.ItemWrapper o1, DirectoryChooser.ItemWrapper o2) {
         if (o1 == NULL_WRAPPER) return -1;
         if (o2 == NULL_WRAPPER) return 1;
-        return getPresentableText(o1, project).compareToIgnoreCase(getPresentableText(o2, project));
+        return o1.getRelativeToProjectPath().compareToIgnoreCase(o2.getRelativeToProjectPath());
       }
     });
     comboBox.setModel(new CollectionComboBoxModel(items, selection));

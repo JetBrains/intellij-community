@@ -22,6 +22,7 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -309,6 +310,8 @@ public class DirectoryChooser extends DialogWrapper {
     private PathFragment[] myFragments;
     private final String myPostfix;
 
+    private String myRelativeToProjectPath = null;
+
     public ItemWrapper(PsiDirectory directory, String postfix) {
       myDirectory = directory;
       myPostfix = postfix != null && postfix.length() > 0 ? postfix : null;
@@ -353,6 +356,17 @@ public class DirectoryChooser extends DialogWrapper {
 
     public PsiDirectory getDirectory() {
       return myDirectory;
+    }
+
+    public String getRelativeToProjectPath() {
+      if (myRelativeToProjectPath == null) {
+        final PsiDirectory directory = getDirectory();
+        final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
+        myRelativeToProjectPath = virtualFile != null
+               ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, true)
+               : getPresentableUrl();
+      }
+      return myRelativeToProjectPath;
     }
   }
 
