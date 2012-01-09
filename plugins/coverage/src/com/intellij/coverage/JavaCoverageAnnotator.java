@@ -205,6 +205,11 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     if (info == null) return null;
     return (int)((double)info.coveredMethodCount /info.totalMethodCount * 100) +"% (" + info.coveredMethodCount + "/" + info.totalMethodCount + ")";
   }
+
+  public boolean isClassCovered(String classFQName) {
+    final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+    return info != null && info.coveredMethodCount > 0;
+  }
   
   private static PackageAnnotator.PackageCoverageInfo merge(final PackageAnnotator.PackageCoverageInfo info,
                                                             final PackageAnnotator.PackageCoverageInfo testInfo) {
