@@ -374,6 +374,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void updateImmediately() {
+    if (DEBUG) {
+      System.out.println("ChangeListManagerImpl.updateImmediately");
+    }
+
     final DataHolder dataHolder;
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -499,6 +503,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
 
     for (final VcsDirtyScope scope : scopes) {
+      if (DEBUG) {
+        System.out.println("ChangeListManagerImpl.iterateScopes: scope = " + scope);
+      }
       myUpdateChangesProgressIndicator.checkCanceled();
 
       final AbstractVcs vcs = scope.getVcs();

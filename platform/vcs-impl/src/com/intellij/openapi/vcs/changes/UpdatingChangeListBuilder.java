@@ -70,6 +70,10 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("UpdatingChangeListBuilder.processChangeInList: change = [" + change + "], changeList = [" + changeList + "], vcsKey = [" + vcsKey + "]");
+    }
+
     checkIfDisposed();
 
     LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
