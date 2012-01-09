@@ -23,13 +23,11 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
@@ -226,31 +224,16 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
-    if (isDirectoryVersioningSupported()) {
-      processMovedFile(file, newParentPath, newName);
-      return;
-    }
-
-    processMovedChildren(file, newParentPath, newName, new PairConsumer<VirtualFile, String>() {
-      @Override
-      public void consume(VirtualFile file, String newPath) {
-        processMovedFile(file, StringUtil.getPackageName(newPath, '/'), StringUtil.getShortName(newPath, '/'));
-      }
-    });
-  }
-
-  public static void processMovedChildren(VirtualFile file,
-                                          String newParentPath,
-                                          String newName,
-                                          PairConsumer<VirtualFile, String> consumer) {
-    if (file.isDirectory()) {
+    if (file.isDirectory() && !isDirectoryVersioningSupported()) {
       VirtualFile[] children = file.getChildren();
-      for (VirtualFile child : children) {
-        processMovedChildren(child, newParentPath + "/" + newName, child.getName(), consumer);
+      if (children != null) {
+        for (VirtualFile child : children) {
+          addFileToMove(child, newParentPath + "/" + newName, child.getName());
+        }
       }
     }
     else {
-      consumer.consume(file, newParentPath + "/" + newName);
+      processMovedFile(file, newParentPath, newName);
     }
   }
 
