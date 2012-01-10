@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.committed.MockDelayingChangeProvider;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -61,7 +62,7 @@ public class DuringChangeListManagerUpdateTestScheme {
 
     AbstractVcs vcsFound = projectLevelVcsManager.findVcsByName(vcs.getName());
     final VirtualFile[] roots = projectLevelVcsManager.getRootsUnderVcs(vcsFound);
-    assert roots.length == 1 : Arrays.asList(roots) + "; " + vcs.getName() + "; " + vcsFound;
+    assert roots.length == 1 : Arrays.asList(roots) + "; " + vcs.getName() + "; " + Arrays.toString(AllVcses.getInstance(project).getAll());
 
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     myClManager = ChangeListManager.getInstance(project);
