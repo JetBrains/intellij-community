@@ -407,7 +407,7 @@ public class Splitter extends JPanel {
    *
    * @param component
    */
-  public void setFirstComponent(JComponent component) {
+  public void setFirstComponent(@Nullable JComponent component) {
     if (myFirstComponent != component) {
       if (myFirstComponent != null) {
         remove(myFirstComponent);
