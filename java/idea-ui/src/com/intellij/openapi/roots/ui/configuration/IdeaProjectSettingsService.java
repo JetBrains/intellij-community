@@ -49,6 +49,15 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     });
   }
 
+  public void openGlobalLibraries() {
+    final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
+      public void run() {
+        config.selectGlobalLibraries(true);
+      }
+    });
+  }
+
   @Override
   public boolean canOpenModuleSettings() {
     return true;
