@@ -710,7 +710,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         myDragging = true;
         final ToolWindowAnchor anchor = myInfo.getAnchor();
         final boolean isVertical = anchor == ToolWindowAnchor.TOP || anchor == ToolWindowAnchor.BOTTOM;
-        setCursor(isVertical ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
+        setCursor(isVertical ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
         final Point point = e.getPoint();
 
         final Container windowPane = InternalDecorator.this.getParent();
