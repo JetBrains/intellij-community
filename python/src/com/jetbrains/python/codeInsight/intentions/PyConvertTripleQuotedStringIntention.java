@@ -67,12 +67,13 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
         // There possible situation that several triple quoted string are situated together
         String firstNode = nodes.get(0).getText();
         strBuilder.append(firstNode.substring(0, firstNode.length()-3));
-        for (int i = 1; i != nodes.size()-1; ++i) {
+        for (int i = 1; i != nodes.size(); ++i) {
           ASTNode node = nodes.get(i);
           String text = node.getText();
-          strBuilder.append(text.substring(3, text.length()-3));
+          if (text.length() > 3)
+            strBuilder.append(text.substring(3, text.length()-3));
         }
-        strBuilder.append(nodes.get(nodes.size()-1).getText().substring(3));
+        strBuilder.append(firstNode.substring(0, 3));
       }
       String stringText = strBuilder.toString();
       String[] subStrings = stringText.split("\n");
