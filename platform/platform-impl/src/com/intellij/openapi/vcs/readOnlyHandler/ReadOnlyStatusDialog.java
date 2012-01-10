@@ -1,6 +1,7 @@
 
 package com.intellij.openapi.vcs.readOnlyHandler;
 
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -65,12 +66,12 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   }
 
   protected boolean isToBeShown() {
-    return ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG;
+    return ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG;
   }
 
   protected void setToBeShown(boolean value, boolean onOk) {
     if (onOk) {
-      ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG = value;
+      ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG = value;
     }
   }
 
