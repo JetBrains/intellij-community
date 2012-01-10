@@ -367,8 +367,11 @@ public class PyTypeChecker {
           final PyNamedParameter param = parameters[1].getAsNamed();
           if (param != null) {
             final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
-            arguments.put(expr.getIndexExpression(), param);
-            return new AnalyzeCallResults(function, expr.getOperand(), arguments);
+            final PyExpression arg = expr.getIndexExpression();
+            if (arg != null) {
+              arguments.put(arg, param);
+              return new AnalyzeCallResults(function, expr.getOperand(), arguments);
+            }
           }
         }
       }
