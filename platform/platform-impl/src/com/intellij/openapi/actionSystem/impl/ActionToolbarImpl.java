@@ -643,7 +643,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<Rectangle>();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
-
+    if (bounds.isEmpty()) return new Dimension(0, 0);
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
