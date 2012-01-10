@@ -6,6 +6,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -63,6 +64,16 @@ public abstract class AbstractStateStorage<Key, T> {
     }
     else {
       remove(key);
+    }
+  }
+
+  public void appendData(final Key key, final T data) throws Exception {
+    synchronized (myDataLock) {
+      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+        public void append(DataOutput out) throws IOException {
+          myStateExternalizer.save(out, data);
+        }
+      });
     }
   }
 

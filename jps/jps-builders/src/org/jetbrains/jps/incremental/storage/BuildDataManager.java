@@ -2,10 +2,10 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.jps.incremental.Builder;
-import org.jetbrains.jps.incremental.BuilderCategory;
-import org.jetbrains.jps.incremental.BuilderRegistry;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.incremental.Paths;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,122 +18,175 @@ import java.util.Map;
  */
 public class BuildDataManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
-  private static final String TIMESTAMP_STORAGE = "stamps";
-  private static final String OUTPUTS_STORAGE = "out-src";
+  private static final String SRC_TO_OUTPUTS_STORAGE = "src-out";
+  private static final String SRC_TO_FORM_STORAGE = "src-form";
+  private static final String MAPPINGS_STORAGE = "mappings";
   private final String myProjectName;
 
-  private final Map<String, TimestampStorage> myBuilderToStampStorageMap = new HashMap<String, TimestampStorage>();
-  private final OutputToSourceMapping myOutputToSourceMap;
+  private final Object mySourceToOutputLock = new Object();
+  private final Map<String, SourceToOutputMapping> myProductionSourceToOutputs = new HashMap<String, SourceToOutputMapping>();
+  private final Map<String, SourceToOutputMapping> myTestSourceToOutputs = new HashMap<String, SourceToOutputMapping>();
 
-  public BuildDataManager(String projectName)  {
+  private final SourceToFormMapping mySrcToFormMap;
+  private final Mappings myMappings;
+
+  public BuildDataManager(String projectName) throws ProjectBuildException {
     myProjectName = projectName;
-    myOutputToSourceMap = createOutputToSourceMap();
-  }
-
-  private OutputToSourceMapping createOutputToSourceMap() {
-    final File root = getOutputToSourceStorageRoot();
-    final File dataFile = new File(root, "data");
     try {
-      return new OutputToSourceMapping(dataFile);
+      mySrcToFormMap = createStorage(getSourceToFormsRoot(), new StorageFactory<SourceToFormMapping>() {
+        public SourceToFormMapping create(File dataFile) throws Exception {
+          return new SourceToFormMapping(dataFile);
+        }
+      });
+
+      final File mappingsRoot = getMappingsRoot();
+      myMappings = createStorage(mappingsRoot, new StorageFactory<Mappings>() {
+        public Mappings create(File dataFile) throws Exception {
+          return new Mappings(mappingsRoot);
+        }
+      });
     }
     catch (Exception e) {
-      FileUtil.delete(root);
       try {
-        return new OutputToSourceMapping(dataFile);
+        clean();
       }
-      catch (Exception e1) {
-        throw new RuntimeException(e1);
+      catch (IOException ignored) {
+        LOG.info(ignored);
       }
+      throw new ProjectBuildException(e);
     }
   }
 
-  public TimestampStorage getTimestampStorage(String builderName) throws Exception {
-    synchronized (myBuilderToStampStorageMap) {
-      TimestampStorage storage = myBuilderToStampStorageMap.get(builderName);
-      if (storage == null) {
-        storage = new TimestampStorage(new File(getTimestampsStorageRoot(builderName), "data"));
-        myBuilderToStampStorageMap.put(builderName, storage);
+  public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws Exception {
+    final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
+    SourceToOutputMapping mapping;
+    synchronized (mySourceToOutputLock) {
+      mapping = storageMap.get(moduleName);
+      if (mapping == null) {
+        mapping = createStorage(getSourceToOutputRoot(moduleName, testSources), new StorageFactory<SourceToOutputMapping>() {
+          public SourceToOutputMapping create(File dataFile) throws Exception {
+            return new SourceToOutputMapping(dataFile);
+          }
+        });
+        storageMap.put(moduleName, mapping);
       }
-      return storage;
     }
+    return mapping;
   }
 
-  public OutputToSourceMapping getOutputToSourceStorage() {
-    return myOutputToSourceMap;
+  public SourceToFormMapping getSourceToFormMap() {
+    return mySrcToFormMap;
   }
 
-  public void clean() {
-    synchronized (myBuilderToStampStorageMap) {
+  public Mappings getMappings() {
+    return myMappings;
+  }
+
+  public void clean() throws IOException {
+    try {
+      synchronized (mySourceToOutputLock) {
+        closeOutputToSourceStorages();
+        FileUtil.delete(getSourceToOutputsRoot());
+      }
+    }
+    finally {
       try {
-        final BuilderRegistry registry = BuilderRegistry.getInstance();
-        for (BuilderCategory category : BuilderCategory.values()) {
-          for (Builder builder : registry.getBuilders(category)) {
-            cleanTimestampStorage(builder.getName());
+        wipeStorage(getSourceToFormsRoot(), mySrcToFormMap);
+      }
+      finally {
+        final Mappings mappings = myMappings;
+        if (mappings != null) {
+          synchronized (mappings) {
+            mappings.clean();
           }
         }
       }
-      finally {
-        myOutputToSourceMap.wipe();
-      }
     }
-  }
-
-  private void cleanTimestampStorage(String builderName) {
-    final TimestampStorage storage = myBuilderToStampStorageMap.remove(builderName);
-    if (storage != null) {
-      try {
-        storage.close();
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-    }
-    FileUtil.delete(Paths.getBuilderDataRoot(myProjectName, builderName));
   }
 
   public void close() {
     try {
-      closeTimestampStorages();
+      synchronized (mySourceToOutputLock) {
+        closeOutputToSourceStorages();
+      }
     }
     finally {
-      synchronized (myOutputToSourceMap) {
+      try {
+        closeStorage(getSourceToFormsRoot(), mySrcToFormMap);
+      }
+      finally {
+        final Mappings mappings = myMappings;
+        if (mappings != null) {
+          synchronized (mappings) {
+            mappings.close();
+          }
+        }
+      }
+    }
+  }
+
+  private void closeOutputToSourceStorages() {
+    for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
+      closeStorage(getSourceToOutputRoot(entry.getKey(), false), entry.getValue());
+    }
+    for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
+      closeStorage(getSourceToOutputRoot(entry.getKey(), true), entry.getValue());
+    }
+  }
+
+  public File getSourceToFormsRoot() {
+    return new File(Paths.getDataStorageRoot(myProjectName), SRC_TO_FORM_STORAGE);
+  }
+
+  public File getSourceToOutputRoot(String moduleName, boolean forTests) {
+    return new File(getSourceToOutputsRoot(), (forTests? "tests" : "production") + "/" + moduleName);
+  }
+
+  private File getSourceToOutputsRoot() {
+    return new File(Paths.getDataStorageRoot(myProjectName), SRC_TO_OUTPUTS_STORAGE);
+  }
+
+  public File getMappingsRoot() {
+    return new File(Paths.getDataStorageRoot(myProjectName), MAPPINGS_STORAGE);
+  }
+
+  private interface StorageFactory<T> {
+    T create(File dataFile) throws Exception;
+  }
+
+  private static <T> T createStorage(File root, StorageFactory<T> factory) throws Exception {
+    final File dataFile = new File(root, "data");
+    try {
+      return factory.create(dataFile);
+    }
+    catch (Exception e) {
+      FileUtil.delete(root);
+      return factory.create(dataFile);
+    }
+  }
+
+  private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
+    if (storage != null) {
+      synchronized (storage) {
+        storage.wipe();
+      }
+    }
+    else {
+      FileUtil.delete(root);
+    }
+  }
+
+  private static void closeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
+    if (storage != null) {
+      synchronized (storage) {
         try {
-          myOutputToSourceMap.close();
+          storage.close();
         }
         catch (IOException e) {
           LOG.error(e);
-          FileUtil.delete(getOutputToSourceStorageRoot());
+          FileUtil.delete(root);
         }
       }
     }
-  }
-
-  private void closeTimestampStorages() {
-    synchronized (myBuilderToStampStorageMap) {
-      try {
-        for (Map.Entry<String, TimestampStorage> entry : myBuilderToStampStorageMap.entrySet()) {
-          final TimestampStorage storage = entry.getValue();
-          try {
-            storage.close();
-          }
-          catch (IOException e) {
-            LOG.error(e);
-            final String builderName = entry.getKey();
-            FileUtil.delete(getTimestampsStorageRoot(builderName));
-          }
-        }
-      }
-      finally {
-        myBuilderToStampStorageMap.clear();
-      }
-    }
-  }
-
-  public File getOutputToSourceStorageRoot() {
-    return new File(Paths.getDataStorageRoot(myProjectName), OUTPUTS_STORAGE);
-  }
-
-  public File getTimestampsStorageRoot(String builderName) {
-    return new File(Paths.getBuilderDataRoot(myProjectName, builderName), TIMESTAMP_STORAGE);
   }
 }

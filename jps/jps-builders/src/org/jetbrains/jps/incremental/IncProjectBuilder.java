@@ -2,12 +2,14 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PersistentEnumerator;
-import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
+import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
+import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,64 +23,65 @@ import java.util.*;
 public class IncProjectBuilder {
   public static final String JPS_SERVER_NAME = "JPS BUILD";
 
-  private final String myProjectName;
+  private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
-  private final Mappings myMappings;
+  private final MessageHandler myMessageDispatcher = new MessageHandler() {
+    public void processMessage(BuildMessage msg) {
+      for (MessageHandler h : myMessageHandlers) {
+        h.processMessage(msg);
+      }
+    }
+  };
 
-  public IncProjectBuilder(String projectName,
-                           Project project,
-                           final Mappings mappings,
-                           BuilderRegistry builderRegistry) {
-    myProjectName = projectName;
+  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry) {
+    myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
-    myProductionChunks = new ProjectChunks(project, ClasspathKind.PRODUCTION_COMPILE);
-    myTestChunks = new ProjectChunks(project, ClasspathKind.TEST_COMPILE);
-    myMappings = mappings;
+    myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
+    myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
   }
 
   public void addMessageHandler(MessageHandler handler) {
     myMessageHandlers.add(handler);
   }
   
-  // todo: pass dirty and removed sources from outside
-  
-  
-  public void build(CompileScope scope, final boolean isMake) {
-
-    final CompileContext context = createContext(scope, isMake);
+  public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild) {
+    CompileContext context = null;
     try {
       try {
+        context = createContext(scope, isMake, isProjectRebuild);
         runBuild(context);
       }
       catch (ProjectBuildException e) {
         if (e.getCause() instanceof PersistentEnumerator.CorruptedException) {
           // force rebuild
-          context.processMessage(new CompilerMessage(
+          myMessageDispatcher.processMessage(new CompilerMessage(
             JPS_SERVER_NAME, BuildMessage.Kind.INFO,
             "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
           );
-          runBuild(createContext(new CompileScope(scope.getProject()), false));
+          context = createContext(new CompileScope(scope.getProject()), false, true);
+          runBuild(context);
         }
         else {
           throw e;
         }
       }
-
     }
     catch (ProjectBuildException e) {
       final Throwable cause = e.getCause();
       if (cause == null) {
-        context.processMessage(new ProgressMessage(e.getMessage()));
+        myMessageDispatcher.processMessage(new ProgressMessage(e.getMessage()));
       }
       else {
-        context.processMessage(new CompilerMessage(JPS_SERVER_NAME, cause));
+        myMessageDispatcher.processMessage(new CompilerMessage(JPS_SERVER_NAME, cause));
       }
     }
     finally {
-      context.getBuildDataManager().close();
+      if (context != null) {
+        context.getDataManager().close();
+      }
       cleanupJavacNameTable();
     }
   }
@@ -95,7 +98,7 @@ public class IncProjectBuilder {
   }
 
   private void runBuild(CompileContext context) throws ProjectBuildException {
-    if (!context.isMake()) {
+    if (context.isProjectRebuild()) {
       cleanOutputRoots(context);
     }
 
@@ -114,85 +117,70 @@ public class IncProjectBuilder {
     runTasks(context, myBuilderRegistry.getAfterTasks());
   }
 
-  private CompileContext createContext(CompileScope scope, boolean isMake) {
+  private CompileContext createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {
+    final String projectName = myProjectDescriptor.projectName;
+    final TimestampStorage tsStorage = myProjectDescriptor.timestamps.getStorage();
+    final FSState fsState = myProjectDescriptor.fsState;
     return new CompileContext(
-      scope, myProjectName, isMake, myMappings, myProductionChunks, myTestChunks, new MessageHandler() {
-
-      public void processMessage(BuildMessage msg) {
-        for (MessageHandler h : myMessageHandlers) {
-          h.processMessage(msg);
-        }
-      }
-    });
+      projectName, scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, tsStorage, myMessageDispatcher
+    );
   }
 
   private static void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
-    final CompileScope scope = context.getScope();
-    final Collection<Module> allProjectModules = scope.getProject().getModules().values();
-    final Collection<Module> modulesToClean = new HashSet<Module>(scope.getAffectedModules());
+    // whole project is affected
+    try {
+      context.getDataManager().clean();
+    }
+    catch (IOException e) {
+      throw new ProjectBuildException("Error cleaning compiler storages", e);
+    }
 
-    final Set<Module> allModules = new HashSet<Module>(allProjectModules);
-    allModules.removeAll(modulesToClean);
-    if (allModules.isEmpty()) {
-      // whole project is affected
-      context.getBuildDataManager().clean();
-      try {
-        context.getMappings().clean();
+    final Collection<Module> modulesToClean = context.getProject().getModules().values();
+    final Set<File> toDelete = new HashSet<File>();
+    final Set<File> allSourceRoots = new HashSet<File>();
+
+    for (Module module : modulesToClean) {
+      final File out = context.getProjectPaths().getModuleOutputDir(module, false);
+      if (out != null) {
+        toDelete.add(out);
       }
-      catch (IOException e) {
-        throw new ProjectBuildException(e);
+      final File testOut = context.getProjectPaths().getModuleOutputDir(module, true);
+      if (testOut != null) {
+        toDelete.add(testOut);
+      }
+      final List<RootDescriptor> moduleRoots = context.getModuleRoots(module);
+      for (RootDescriptor d : moduleRoots) {
+        allSourceRoots.add(d.root);
       }
     }
 
-    if (!modulesToClean.isEmpty()) {
-      final Set<File> toDelete = new HashSet<File>();
-      final Set<File> allSourceRoots = new HashSet<File>();
-      for (Module module : modulesToClean) {
-        final File out = context.getProjectPaths().getModuleOutputDir(module, false);
-        if (out != null) {
-          toDelete.add(out);
-        }
-        final File testOut = context.getProjectPaths().getModuleOutputDir(module, true);
-        if (testOut != null) {
-          toDelete.add(testOut);
-        }
+    // check that output and source roots are not overlapping
+    for (File outputRoot : toDelete) {
+      boolean okToDelete = true;
+      if (PathUtil.isUnder(allSourceRoots, outputRoot)) {
+        okToDelete = false;
       }
-      for (Module module : allProjectModules) {
-        for (Object root : module.getSourceRoots()) {
-          allSourceRoots.add(new File((String)root));
-        }
-        for (Object root : module.getTestRoots()) {
-          allSourceRoots.add(new File((String)root));
-        }
-      }
-      // check that output and source roots are not overlapping
-      for (File outputRoot : toDelete) {
-        boolean okToDelete = true;
-        if (PathUtil.isUnder(allSourceRoots, outputRoot)) {
-          okToDelete = false;
-        }
-        else {
-          final Set<File> _outRoot = Collections.singleton(outputRoot);
-          for (File srcRoot : allSourceRoots) {
-            if (PathUtil.isUnder(_outRoot, srcRoot)) {
-              okToDelete = false;
-              break;
-            }
+      else {
+        final Set<File> _outRoot = Collections.singleton(outputRoot);
+        for (File srcRoot : allSourceRoots) {
+          if (PathUtil.isUnder(_outRoot, srcRoot)) {
+            okToDelete = false;
+            break;
           }
         }
-        if (okToDelete) {
-          context.processMessage(new ProgressMessage("Cleaning " + outputRoot.getPath()));
-          // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
-          final File[] children = outputRoot.listFiles();
-          if (children != null) {
-            for (File child : children) {
-              FileUtil.delete(child);
-            }
+      }
+      if (okToDelete) {
+        context.processMessage(new ProgressMessage("Cleaning " + outputRoot.getPath()));
+        // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
+        final File[] children = outputRoot.listFiles();
+        if (children != null) {
+          for (File child : children) {
+            FileUtil.delete(child);
           }
         }
-        else {
-          context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
-        }
+      }
+      else {
+        context.processMessage(new CompilerMessage(JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
       }
     }
   }
@@ -214,25 +202,47 @@ public class IncProjectBuilder {
 
   private void buildChunk(CompileContext context, ModuleChunk chunk) throws ProjectBuildException{
     try {
-         // TODO: check how the output-source storage is filled and!
+      context.ensureFSStateInitialized(chunk);
       if (context.isMake()) {
         // cleanup outputs
+        final Set<String> allChunkRemovedSources = new HashSet<String>();
+        final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
 
-        // todo: use removed paths passed from IDEA?
-        final OutputToSourceMapping storage = context.getBuildDataManager().getOutputToSourceStorage();
-        final HashSet<String> allChunkRemovedSources = new HashSet<String>();
         for (Module module : chunk.getModules()) {
-          final File moduleOutput = context.getProjectPaths().getModuleOutputDir(module, context.isCompilingTests());
-          if (moduleOutput != null && moduleOutput.exists()) {
-            deleteOutputsOfRemovedSources(moduleOutput, storage, allChunkRemovedSources);
+          final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module, context.isCompilingTests());
+          allChunkRemovedSources.addAll(deletedPaths);
+
+          final String moduleName = module.getName().toLowerCase(Locale.US);
+          final SourceToOutputMapping sourceToOutputStorage = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
+          // actually delete outputs associated with removed paths
+          for (String deletedSource : deletedPaths) {
+            // deleting outputs corresponding to non-existing source
+            final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
+            if (outputs != null) {
+              for (String output : outputs) {
+                FileUtil.delete(new File(output));
+              }
+              sourceToOutputStorage.remove(deletedSource);
+            }
+            // check if deleted source was associated with a form
+            final String formPath = sourceToFormMap.getState(deletedSource);
+            if (formPath != null) {
+              final File formFile = new File(formPath);
+              if (formFile.exists()) {
+                context.markDirty(formFile);
+              }
+              sourceToFormMap.remove(deletedSource);
+            }
           }
         }
-
         Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
+        for (Module module : chunk.getModules()) {
+          myProjectDescriptor.fsState.clearDeletedPaths(module, context.isCompilingTests());
+        }
       }
 
       for (BuilderCategory category : BuilderCategory.values()) {
-        runBuilders(context, chunk, myBuilderRegistry.getBuilders(category));
+        runBuilders(context, chunk, category);
       }
     }
     catch (ProjectBuildException e) {
@@ -242,20 +252,36 @@ public class IncProjectBuilder {
       throw new ProjectBuildException(e);
     }
     finally {
-      for (BuilderCategory category : BuilderCategory.values()) {
-        for (Builder builder : myBuilderRegistry.getBuilders(category)) {
-          builder.cleanupResources(context, chunk);
+      try {
+        for (BuilderCategory category : BuilderCategory.values()) {
+          for (Builder builder : myBuilderRegistry.getBuilders(category)) {
+            builder.cleanupResources(context, chunk);
+          }
         }
       }
-      context.onChunkBuildComplete(chunk);
-      Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
+      finally {
+        try {
+          context.onChunkBuildComplete(chunk);
+        }
+        catch (Exception e) {
+          throw new ProjectBuildException(e);
+        }
+        finally {
+          Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
+        }
+      }
     }
   }
 
-  private static void runBuilders(CompileContext context, ModuleChunk chunk, List<Builder> builders) throws ProjectBuildException {
+  private void runBuilders(CompileContext context, ModuleChunk chunk, BuilderCategory category) throws ProjectBuildException {
+    final List<Builder> builders = myBuilderRegistry.getBuilders(category);
+    if (builders.isEmpty()) {
+      return;
+    }
     boolean nextPassRequired;
     do {
       nextPassRequired = false;
+      context.beforeNextCompileRound(chunk);
       for (Builder builder : builders) {
         final Builder.ExitCode buildResult = builder.build(context, chunk);
         if (buildResult == Builder.ExitCode.ABORT) {
@@ -268,29 +294,4 @@ public class IncProjectBuilder {
     }
     while (nextPassRequired);
   }
-
-  private static void deleteOutputsOfRemovedSources(File file, final OutputToSourceMapping outputToSourceStorage, Set<String> removedSources) throws Exception {
-    if (file.isDirectory()) {
-      final File[] files = file.listFiles();
-      if (files != null) {
-        for (File child : files) {
-          deleteOutputsOfRemovedSources(child, outputToSourceStorage, removedSources);
-        }
-      }
-    }
-    else {
-      final String outPath = file.getPath();
-      final String srcPath = outputToSourceStorage.getState(outPath);
-      if (srcPath != null) { // if we know about the association
-        final File srcFile = new File(srcPath);
-        // todo: optimize
-        if (!srcFile.exists()) {
-          removedSources.add(srcPath);
-          FileUtil.delete(file);
-          outputToSourceStorage.remove(outPath);
-        }
-      }
-    }
-  }
-
 }

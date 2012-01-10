@@ -36,6 +36,7 @@ message Message {
         MAKE = 2;
         CLEAN = 3;
         CANCEL = 4;
+        FORCED_COMPILATION = 5;
       }
       required Type command_type = 1;
       optional string project_id = 2;
