@@ -39,7 +39,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
   protected String myFolderName = "";
   protected TestType myTestType = TestType.TEST_SCRIPT;
 
-  private String myShortScriptName = "";
   private String myPattern = ""; // pattern for modules in folder to match against
   private boolean usePattern = false;
 
@@ -121,10 +120,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
   public void setTestType(TestType testType) {
     myTestType = testType;
-  }
-
-  public void setShortName(String name) {
-    myShortScriptName = name;
   }
 
   public String getPattern() {
@@ -223,7 +218,11 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
       case TEST_METHOD:
         return getTitle() + " in " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
-        return getTitle() + " in " + myShortScriptName;
+        String name = new File(getScriptName()).getName();
+        if (name.endsWith(".py")) {
+          name = name.substring(0, name.length() - 3);
+        }
+        return getTitle() + " in " + name;
       case TEST_FOLDER:
         return getTitle() + " in " + FileUtil.toSystemDependentName(myFolderName);
       case TEST_FUNCTION:
@@ -247,6 +246,7 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             setWorkingDirectory(newPath);
             if (myTestType == TestType.TEST_FOLDER) {
               myFolderName = newPath;
+              setName(suggestedName());
             }
           }
 
@@ -256,6 +256,7 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             setWorkingDirectory(systemDependant);
             if (myTestType == TestType.TEST_FOLDER) {
               myFolderName = systemDependant;
+              setName(suggestedName());
             }
           }
         };
@@ -279,12 +280,14 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             VirtualFile virtualFile = ((PsiFile)newElement).getVirtualFile();
             if (virtualFile != null) {
               myScriptName = FileUtil.toSystemDependentName(virtualFile.getPath());
+              setName(suggestedName());
             }
           }
 
           @Override
           public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
             myScriptName = FileUtil.toSystemDependentName(oldQualifiedName);
+            setName(suggestedName());
           }
         };
       }
@@ -294,11 +297,13 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
           @Override
           protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
             myClassName = ((PyClass) newElement).getName();
+            setName(suggestedName());
           }
 
           @Override
           public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
             myClassName = oldQualifiedName;
+            setName(suggestedName());
           }
         };
       }
@@ -311,6 +316,7 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             @Override
             protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
               myMethodName = ((PyFunction) newElement).getName();
+              setName(suggestedName());
             }
 
             @Override
@@ -318,6 +324,7 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
               final int methodIdx = oldQualifiedName.indexOf("#") + 1;
               if (methodIdx > 0 && methodIdx < oldQualifiedName.length()) {
                 myMethodName = oldQualifiedName.substring(methodIdx);
+                setName(suggestedName());
               }
             }
           };
