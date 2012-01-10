@@ -109,7 +109,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
         javaText.append("if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"[^,]+\\\\$\\\\$[A-Za-z0-9]{8}\\\\.[^,]+\\\\(" + s + ":\\\\d+\\\\), .+com\\\\.springsource\\\\.loaded\\\\..+\")) {\n");
         javaText.append("  |thiz0 = thiz;\n");
         javaText.append(" } else {\n");
-        javaText.append("  |thiz0 = this.getClass();\n");
+        javaText.append("  |thiz0 = this;\n");
         javaText.append(" }\n");
       }
     }
