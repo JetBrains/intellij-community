@@ -409,6 +409,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     if (myEditor == null) {
       myEditor = createEditor();
+      myEditor.getScrollPane().setBorder(null);
       myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
       requestFlushImmediately();
       myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
