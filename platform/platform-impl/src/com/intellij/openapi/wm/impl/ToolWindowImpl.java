@@ -185,7 +185,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     }
   }
 
-  public final void hide(final Runnable runnable) {
+  public final void hide(@Nullable final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.hideToolWindow(myId, false);
     if (runnable != null) {
@@ -434,7 +434,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   public void showContentPopup(InputEvent inputEvent) {
-    myContentUI.toggleContentPopup(inputEvent);
+    myContentUI.toggleContentPopup();
   }
 
   @Override

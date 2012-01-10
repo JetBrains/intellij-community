@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
@@ -259,7 +260,27 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return true;
   }
 
-  void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
+  @Override
+  public String getCloseActionName() {
+    return getCurrentLayout().getCloseActionName();
+  }
+
+  @Override
+  public String getCloseAllButThisActionName() {
+    return getCurrentLayout().getCloseAllButThisActionName();
+  }
+
+  @Override
+  public String getPreviousContentActionName() {
+    return getCurrentLayout().getPreviousContentActionName();
+  }
+
+  @Override
+  public String getNextContentActionName() {
+    return getCurrentLayout().getNextContentActionName();
+  }
+
+  static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
     if (c.getClientProperty(ui) != null) return;
 
 
@@ -311,7 +332,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private void initActionGroup(DefaultActionGroup group, final Content content) {
-    group.add(myShowContent);
     group.addSeparator();
     group.add(new TabbedContentAction.CloseAction(content));
     group.add(myCloseAllAction);
@@ -324,6 +344,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     group.add(myNextTabAction);
     group.add(myPreviousTabAction);
+    group.add(myShowContent);
     group.addSeparator();
   }
 
@@ -422,7 +443,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return getCurrentLayout() == layout;
   }
 
-  public void toggleContentPopup(InputEvent inputEvent) {
+  public void toggleContentPopup() {
     if (myShouldNotShowPopup) {
       myShouldNotShowPopup = false;
       return;

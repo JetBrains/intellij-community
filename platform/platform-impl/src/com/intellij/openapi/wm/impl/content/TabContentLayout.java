@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -458,5 +459,24 @@ class TabContentLayout extends ContentLayout {
 
   public Component getComponentFor(Content content) {
     return myContent2Tabs.get(content);
+  }
+
+  @Override
+  public String getCloseActionName() {
+    return UIBundle.message("tabbed.pane.close.tab.action.name");
+  }
+
+  @Override
+  public String getCloseAllButThisActionName() {
+    return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
+  }
+  @Override
+  public String getPreviousContentActionName() {
+    return "Select Previous Tab";
+  }
+
+  @Override
+  public String getNextContentActionName() {
+    return "Select Next Tab";
   }
 }

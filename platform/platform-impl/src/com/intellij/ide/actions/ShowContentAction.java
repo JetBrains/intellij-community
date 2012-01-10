@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,11 @@ public class ShowContentAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(getWindow(e) != null);
+    final ToolWindow window = getWindow(e);
+    e.getPresentation().setEnabled(window != null);
+    e.getPresentation().setText(window == null || window.getContentUiType() == ToolWindowContentUiType.TABBED
+                                ? "Show List of Tabs"
+                                : "Show List of Views");
   }
 
   @Override
