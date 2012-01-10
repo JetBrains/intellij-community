@@ -21,12 +21,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+/**
+ * Basic interface for requesting sending focus commands to <code>IdeFocusManager</code>
+ */
 public interface FocusRequestor extends Disposable {
 
   /**
    * Requests focus on a component
-   * @param c
-   * @param forced
+   * @param c - component to reqiest focus to
+   * @param forced - if true - focus request is explicit, must be fulfilled, if false - can be dropped
    * @return action callback that either notifies when the focus was obtained or focus request was droppped
    */
   @NotNull
@@ -34,8 +37,7 @@ public interface FocusRequestor extends Disposable {
 
   /**
    * Runs a request focus command, actual focus request is defined by the user in the command itself
-   * @param command
-   * @param forced
+   * @param forced - if true - focus request is explicit, must be fulfilled, if false - can be dropped
    * @return action callback that either notifies when the focus was obtained or focus request was droppped
    */
   @NotNull
