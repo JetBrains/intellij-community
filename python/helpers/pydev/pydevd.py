@@ -90,7 +90,8 @@ DONT_TRACE = {
               'pydevd_vars.py':1,
               'pydevd_vm_type.py':1,
               'pydevd.py':1 ,
-              'pydevd_psyco_stub.py':1
+              'pydevd_psyco_stub.py':1,
+              '_pydev_execfile.py':1
               }
 
 if IS_PY3K:
@@ -663,17 +664,16 @@ class PyDB:
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
                     exception, notify_always, notify_on_terminate = text.split('\t', 2)
 
-                    is_notify_always = int(notify_always) == 1
-                    is_notify_on_terminate = int(notify_on_terminate) == 1
+                    eb = ExceptionBreakpoint(exception, notify_always, notify_on_terminate)
 
-                    self.exception_set[exception] = ExceptionBreakpoint(exception, is_notify_always, is_notify_on_terminate)
+                    self.exception_set[exception] = eb
 
-                    if is_notify_on_terminate:
+                    if eb.notify_on_terminate:
                         update_exception_hook(self)
                     if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
-                        pydev_log.error("Exceptions to hook on terminate: %s\n" % (self.always_exception_set,))
+                        pydev_log.error("Exceptions to hook on terminate: %s\n" % (self.exception_set,))
 
-                    if is_notify_always:
+                    if eb.notify_always:
                         self.always_exception_set.add(exception)
                         if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                             pydev_log.error("Exceptions to hook always: %s\n" % (self.always_exception_set,))
@@ -903,6 +903,9 @@ class PyDB:
             return additionalInfo.CreateDbFrame((self, filename, additionalInfo, t, frame)).trace_dispatch(frame, event, arg)
 
         except SystemExit:
+            return None
+
+        except TypeError:
             return None
 
         except Exception:

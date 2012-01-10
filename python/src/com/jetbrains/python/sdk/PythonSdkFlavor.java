@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,20 +25,20 @@ import java.util.regex.Pattern;
 public abstract class PythonSdkFlavor {
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
-  public static String appendSystemPythonPath(String pythonPath) {
-    String syspath = System.getenv(PYTHONPATH);
+  public static Collection<String> appendSystemPythonPath(Collection<String> pythonPath) {
+    String syspath = System.getenv(PythonEnvUtil.PYTHONPATH);
     if (syspath != null) {
-      pythonPath += File.pathSeparator + syspath;
+      pythonPath.addAll(Lists.newArrayList(syspath.split(File.pathSeparator)));
     }
     return pythonPath;
   }
 
-  public static void initPythonPath(Map<String, String> envs, boolean passParentEnvs, List<String> pythonPathList) {
-    String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
-    if (passParentEnvs && !envs.containsKey(PYTHONPATH)) {
-      pythonPath = appendSystemPythonPath(pythonPath);
+
+  public static void initPythonPath(Map<String, String> envs, boolean passParentEnvs, Collection<String> pythonPathList) {
+    if (passParentEnvs && !envs.containsKey(PythonEnvUtil.PYTHONPATH)) {
+      pythonPathList = appendSystemPythonPath(pythonPathList);
     }
-    addToPythonPath(envs, pythonPath);
+    PythonEnvUtil.addToPythonPath(envs, pythonPathList);
   }
 
   public Collection<String> suggestHomePaths() {
@@ -125,32 +126,27 @@ public abstract class PythonSdkFlavor {
   }
 
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    addToEnv(cmd, PYTHONPATH, appendSystemPythonPath(StringUtil.join(path, File.pathSeparator)));
+    addToEnv(cmd, PythonEnvUtil.PYTHONPATH, appendSystemPythonPath(path));
+  }
+
+  public static void addToEnv(GeneralCommandLine cmd, final String key, Collection<String> values) {
+    Map<String, String> envs = getEnv(cmd);
+    PythonEnvUtil.addToEnv(envs, key, values);
   }
 
   public static void addToEnv(GeneralCommandLine cmd, final String key, String value) {
+    Map<String, String> envs = getEnv(cmd);
+    PythonEnvUtil.addToEnv(envs, key, value);
+  }
+
+  private static Map<String, String> getEnv(GeneralCommandLine cmd) {
     Map<String, String> envs = cmd.getEnvParams();
     if (envs == null) {
       envs = new HashMap<String, String>();
       cmd.setEnvParams(envs);
     }
-    addToEnv(envs, key, value);
+    return envs;
   }
-
-  public static void addToPythonPath(Map<String, String> envs, String value) {
-    addToEnv(envs, PYTHONPATH, value);
-  }
-
-  public static void addToEnv(Map<String, String> envs, String key, String value) {
-    if (envs.containsKey(key)) {
-      envs.put(key, value + File.pathSeparatorChar + envs.get(key));
-    }
-    else {
-      envs.put(key, value);
-    }
-  }
-
-  public static final String PYTHONPATH = "PYTHONPATH";
 
   @SuppressWarnings({"MethodMayBeStatic"})
   public void addPredefinedEnvironmentVariables(Map<String, String> envs) {

@@ -1,16 +1,21 @@
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Sets;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author traff
  */
 public class PythonEnvUtil {
+  public static final String PYTHONPATH = "PYTHONPATH";
+
   private PythonEnvUtil() {
   }
 
@@ -49,11 +54,37 @@ public class PythonEnvUtil {
   @NotNull
   public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
     if (source != null) {
-      source = value + File.pathSeparator + source;
+      Set<String> vals = Sets.newHashSet(source.split(File.pathSeparator));
+      if (!vals.contains(value)) {
+        return value + File.pathSeparatorChar + source;
+      }
+      else {
+        return source;
+      }
+    }
+    return value;
+  }
+
+  public static void addToEnv(Map<String, String> envs, String key, Collection<String> values) {
+    for (String val: values) {
+      addToEnv(envs, key, val);
+    }
+  }
+
+  public static void addToEnv(Map<String, String> envs, String key, String value) {
+    if (envs.containsKey(key)) {
+      envs.put(key, appendToPathEnvVar(envs.get(key), value));
     }
     else {
-      source = value;
+      envs.put(key, value);
     }
-    return source;
+  }
+
+  public static void addToPythonPath(Map<String, String> envs, Collection<String> values) {
+    addToEnv(envs, PYTHONPATH, values);
+  }
+
+  public static void addToPythonPath(Map<String, String> envs, String value) {
+    addToEnv(envs, PYTHONPATH, value);
   }
 }

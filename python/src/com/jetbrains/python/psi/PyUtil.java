@@ -121,7 +121,7 @@ public class PyUtil {
   @Nullable
   public static PyExpression flattenParens(@Nullable PyExpression expr) {
     while (expr instanceof PyParenthesizedExpression) {
-      expr = ((PyParenthesizedExpression) expr).getContainedExpression();
+      expr = ((PyParenthesizedExpression)expr).getContainedExpression();
     }
     return expr;
   }
@@ -135,18 +135,18 @@ public class PyUtil {
     for (PyExpression exp : targets) {
       if (exp instanceof PyParenthesizedExpression) {
         final PyParenthesizedExpression parex = (PyParenthesizedExpression)exp;
-        _unfoldParenExprs(new PyExpression[] { parex.getContainedExpression() }, receiver, unfoldListLiterals, unfoldStarExpressions);
+        _unfoldParenExprs(new PyExpression[]{parex.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyTupleExpression) {
         final PyTupleExpression tupex = (PyTupleExpression)exp;
         _unfoldParenExprs(tupex.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyListLiteralExpression && unfoldListLiterals) {
-        final PyListLiteralExpression listLiteral = (PyListLiteralExpression) exp;
+        final PyListLiteralExpression listLiteral = (PyListLiteralExpression)exp;
         _unfoldParenExprs(listLiteral.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
-        _unfoldParenExprs(new PyExpression[] { ((PyStarExpression) exp).getExpression() }, receiver, unfoldListLiterals, unfoldStarExpressions);
+        _unfoldParenExprs(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp != null) {
         receiver.add(exp);
@@ -488,7 +488,7 @@ public class PyUtil {
       if (nextSibling instanceof PyExpressionStatement) {
         final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();
         if (expression instanceof PyStringLiteralExpression) {
-          return (PyStringLiteralExpression) expression;
+          return (PyStringLiteralExpression)expression;
         }
       }
     }
@@ -517,7 +517,7 @@ public class PyUtil {
 
   private static boolean isNameEqualsMain(PyExpression condition) {
     if (condition instanceof PyParenthesizedExpression) {
-      return isNameEqualsMain(((PyParenthesizedExpression) condition).getContainedExpression());
+      return isNameEqualsMain(((PyParenthesizedExpression)condition).getContainedExpression());
     }
     if (condition instanceof PyBinaryExpression) {
       PyBinaryExpression binaryExpression = (PyBinaryExpression)condition;
@@ -534,18 +534,19 @@ public class PyUtil {
 
   /**
    * Searhes for a method wrapping given element.
+   *
    * @param start element presumably inside a method
    * @param deep  if true, allow 'start' to be inside functions nested in a method; else, 'start' must be directly inside a method.
    * @return if not 'deep', [0] is the method and [1] is the class; if 'deep', first several elements may be the nested functions,
-   * the last but one is the method, and the last is the class.
+   *         the last but one is the method, and the last is the class.
    */
   @Nullable
   public static List<PsiElement> searchForWrappingMethod(PsiElement start, boolean deep) {
     PsiElement seeker = start;
     List<PsiElement> ret = new ArrayList<PsiElement>(2);
     while (seeker != null) {
-       PyFunction func = PsiTreeUtil.getParentOfType(seeker, PyFunction.class, true, PyClass.class);
-       if (func != null) {
+      PyFunction func = PsiTreeUtil.getParentOfType(seeker, PyFunction.class, true, PyClass.class);
+      if (func != null) {
         PyClass cls = func.getContainingClass();
         if (cls != null) {
           ret.add(func);
@@ -556,9 +557,13 @@ public class PyUtil {
           ret.add(func);
           seeker = func;
         }
-        else return null; // no immediate class
+        else {
+          return null; // no immediate class
+        }
       }
-      else return null; // no function
+      else {
+        return null; // no function
+      }
     }
     return null;
   }
@@ -617,8 +622,8 @@ public class PyUtil {
 
   @Nullable
   public static PsiElement turnInitIntoDir(PsiElement target) {
-    if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile) target).getName())) {
-      return ((PyFile) target).getContainingDirectory();
+    if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile)target).getName())) {
+      return ((PyFile)target).getContainingDirectory();
     }
     return target;
   }
@@ -657,8 +662,12 @@ public class PyUtil {
     boolean jump_over = false;
     while (parent != null) {
       if (parent instanceof PyClass || parent instanceof Callable) {
-        if (jump_over) jump_over = false;
-        else return parent;
+        if (jump_over) {
+          jump_over = false;
+        }
+        else {
+          return parent;
+        }
       }
       else if (parent instanceof PyDecoratorList) {
         // decorators PSI is inside decorated things but their namespace is outside
@@ -691,6 +700,7 @@ public class PyUtil {
 
   /**
    * Peels argument expression of parentheses and of keyword argument wrapper
+   *
    * @param expr an item of getArguments() array
    * @return expression actually passed as argument
    */
@@ -754,7 +764,7 @@ public class PyUtil {
   @Nullable
   public static List<String> strListValue(PyExpression value) {
     while (value instanceof PyParenthesizedExpression) {
-      value = ((PyParenthesizedExpression) value).getContainedExpression();
+      value = ((PyParenthesizedExpression)value).getContainedExpression();
     }
     if (value instanceof PySequenceExpression) {
       final PyExpression[] elements = ((PySequenceExpression)value).getElements();
@@ -763,7 +773,7 @@ public class PyUtil {
         if (!(element instanceof PyStringLiteralExpression)) {
           return null;
         }
-        result.add(((PyStringLiteralExpression) element).getStringValue());
+        result.add(((PyStringLiteralExpression)element).getStringValue());
       }
       return result;
     }
@@ -772,7 +782,7 @@ public class PyUtil {
 
   @Nullable
   public static String strValue(@Nullable PyExpression expression) {
-    return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression) expression).getStringValue() : null;
+    return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression)expression).getStringValue() : null;
   }
 
   @NotNull
@@ -789,7 +799,7 @@ public class PyUtil {
   }
 
   /**
-   * @param what thing to search for
+   * @param what     thing to search for
    * @param variants things to search among
    * @return true iff what.equals() one of the variants.
    */
@@ -836,7 +846,17 @@ public class PyUtil {
   }
 
   public static boolean isExceptionClass(PyClass pyClass) {
-    return pyClass.isSubclass("exceptions.BaseException");
+    if (isBaseException(pyClass.getQualifiedName())) {
+      return true;
+    }
+    for (PyClassRef superclass : pyClass.iterateAncestors()) {
+      if (isBaseException(superclass.getQualifiedName())) return true;
+    }
+    return false;
+  }
+
+  private static boolean isBaseException(String name) {
+    return name != null && name.contains("BaseException");
   }
 
   public static class MethodFlags {
@@ -915,19 +935,23 @@ public class PyUtil {
         PyExpression[] args = node.getArguments();
         if (args.length > 0) {
           String firstArg = args[0].getText();
-          if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF+"."+PyNames.CLASS))
-              return true;
+          if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF + "." + PyNames.CLASS)) {
+            return true;
+          }
           for (PyClass s : klass.iterateAncestorClasses()) {
-            if (firstArg.equals(s.getName()))
+            if (firstArg.equals(s.getName())) {
               return true;
+            }
           }
         }
-        else
+        else {
           return true;
+        }
       }
     }
     return false;
   }
+
   @NotNull
   public static PyFile getOrCreateFile(String path, Project project) {
     final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
@@ -963,32 +987,41 @@ public class PyUtil {
 
   /**
    * counts elements in iterable
+   *
    * @param expression to count containing elements (iterable)
    * @return element count
    */
   public static int getElementsCount(PyExpression expression, TypeEvalContext evalContext) {
     int valuesLength = -1;
     PyType type = expression.getType(evalContext);
-    if (type instanceof PyTupleType)
+    if (type instanceof PyTupleType) {
       valuesLength = ((PyTupleType)type).getElementCount();
-    else if (type instanceof PyNamedTupleType)
+    }
+    else if (type instanceof PyNamedTupleType) {
       valuesLength = ((PyNamedTupleType)type).getElementCount();
-    else if (expression instanceof PySequenceExpression)
+    }
+    else if (expression instanceof PySequenceExpression) {
       valuesLength = ((PySequenceExpression)expression).getElements().length;
-    else if (expression instanceof PyDictLiteralExpression)
+    }
+    else if (expression instanceof PyDictLiteralExpression) {
       valuesLength = ((PyDictLiteralExpression)expression).getElements().length;
-    else if (expression instanceof PyStringLiteralExpression)
+    }
+    else if (expression instanceof PyStringLiteralExpression) {
       valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
-    else if (expression instanceof PyNumericLiteralExpression)
+    }
+    else if (expression instanceof PyNumericLiteralExpression) {
       valuesLength = 1;
+    }
     else if (expression instanceof PyCallExpression) {
       PyCallExpression call = (PyCallExpression)expression;
-      if (call.isCalleeText("dict"))
+      if (call.isCalleeText("dict")) {
         valuesLength = call.getArguments().length;
+      }
       else if (call.isCalleeText("tuple")) {
         PyExpression[] arguments = call.getArguments();
-        if (arguments.length > 0 && arguments[0] instanceof PySequenceExpression)
+        if (arguments.length > 0 && arguments[0] instanceof PySequenceExpression) {
           valuesLength = ((PySequenceExpression)arguments[0]).getElements().length;
+        }
       }
     }
     return valuesLength;

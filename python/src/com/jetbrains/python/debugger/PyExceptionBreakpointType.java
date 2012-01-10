@@ -73,10 +73,8 @@ public class PyExceptionBreakpointType
       assert qualifiedName != null : "Qualified name of the class shouldn't be null";
       return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<PyExceptionBreakpointProperties>>() {
         public XBreakpoint<PyExceptionBreakpointProperties> compute() {
-          XBreakpoint<PyExceptionBreakpointProperties> breakpoint =
-            XDebuggerManager.getInstance(project).getBreakpointManager()
-              .addBreakpoint(PyExceptionBreakpointType.this, new PyExceptionBreakpointProperties(qualifiedName));
-          return breakpoint;
+          return XDebuggerManager.getInstance(project).getBreakpointManager()
+            .addBreakpoint(PyExceptionBreakpointType.this, new PyExceptionBreakpointProperties(qualifiedName));
         }
       });
     }
@@ -135,6 +133,7 @@ public class PyExceptionBreakpointType
     PyExceptionBreakpointProperties p = new PyExceptionBreakpointProperties(BASE_EXCEPTION);
     p.setNotifyOnTerminate(true);
     p.setNotifyAlways(false);
+    p.setNotifyAlways(false);
     return p;
   }
 
@@ -148,12 +147,14 @@ public class PyExceptionBreakpointType
     extends XBreakpointCustomPropertiesPanel<XBreakpoint<PyExceptionBreakpointProperties>> {
     private JCheckBox myNotifyOnTerminateCheckBox;
     private JCheckBox myNotifyAlwaysCheckBox;
+    private JCheckBox myNotifyOnlyOnFirstCheckBox;
 
     @NotNull
     @Override
     public JComponent getComponent() {
       myNotifyOnTerminateCheckBox = new JCheckBox("On termination");
       myNotifyAlwaysCheckBox = new JCheckBox("On raise at each level of call chain");
+      myNotifyOnlyOnFirstCheckBox = new JCheckBox("On raise at top of call chain");
 
       Box notificationsBox = Box.createVerticalBox();
       JPanel panel = new JPanel(new BorderLayout());
@@ -162,6 +163,10 @@ public class PyExceptionBreakpointType
       panel = new JPanel(new BorderLayout());
       panel.add(myNotifyAlwaysCheckBox, BorderLayout.NORTH);
       notificationsBox.add(panel);
+      panel = new JPanel(new BorderLayout());
+      panel.add(myNotifyOnlyOnFirstCheckBox, BorderLayout.NORTH);
+      notificationsBox.add(panel);
+
 
       panel = new JPanel(new BorderLayout());
       JPanel innerPanel = new JPanel(new BorderLayout());
@@ -173,23 +178,22 @@ public class PyExceptionBreakpointType
 
       ActionListener listener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          if (!myNotifyOnTerminateCheckBox.isSelected() && !myNotifyAlwaysCheckBox.isSelected()) {
-            Object source = e.getSource();
-            JCheckBox toCheck = null;
-            if (myNotifyOnTerminateCheckBox.equals(source)) {
-              toCheck = myNotifyAlwaysCheckBox;
+          Object source = e.getSource();
+
+          if (myNotifyAlwaysCheckBox.isSelected() && myNotifyOnlyOnFirstCheckBox.isSelected()) {
+            if (myNotifyAlwaysCheckBox.equals(source)) {
+              myNotifyOnlyOnFirstCheckBox.setSelected(false);
             }
-            else if (myNotifyAlwaysCheckBox.equals(source)) {
-              toCheck = myNotifyOnTerminateCheckBox;
-            }
-            if (toCheck != null) {
-              toCheck.setSelected(true);
+            else if (myNotifyOnlyOnFirstCheckBox.equals(source)
+              ) {
+              myNotifyAlwaysCheckBox.setSelected(false);
             }
           }
         }
       };
       myNotifyOnTerminateCheckBox.addActionListener(listener);
       myNotifyAlwaysCheckBox.addActionListener(listener);
+      myNotifyOnlyOnFirstCheckBox.addActionListener(listener);
       return panel;
     }
 
@@ -197,12 +201,16 @@ public class PyExceptionBreakpointType
     public void saveTo(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
       breakpoint.getProperties().setNotifyAlways(myNotifyAlwaysCheckBox.isSelected());
       breakpoint.getProperties().setNotifyOnTerminate(myNotifyOnTerminateCheckBox.isSelected());
+      breakpoint.getProperties().setNotifyOnlyOnFirst(myNotifyOnlyOnFirstCheckBox.isSelected());
     }
 
     @Override
     public void loadFrom(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
       myNotifyAlwaysCheckBox.setSelected(breakpoint.getProperties().isNotifyAlways());
       myNotifyOnTerminateCheckBox.setSelected(breakpoint.getProperties().isNotifyOnTerminate());
+      myNotifyOnlyOnFirstCheckBox.setSelected(breakpoint.getProperties().isNotifyOnlyOnFirst());
     }
   }
 }
+
+
