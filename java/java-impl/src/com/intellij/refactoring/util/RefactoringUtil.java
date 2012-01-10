@@ -923,6 +923,24 @@ public class RefactoringUtil {
     return false;
   }
 
+  public static boolean inImportStatement(PsiReference ref, PsiElement element) {
+    if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) != null) return true;
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PsiJavaFile) {
+      final PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
+      if (importList != null) {
+        final TextRange refRange = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
+        for (PsiImportStatementBase importStatementBase : importList.getAllImportStatements()) {
+          final TextRange textRange = importStatementBase.getTextRange();
+          if (textRange.contains(refRange)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public static interface ImplicitConstructorUsageVisitor {
     void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor);
 
