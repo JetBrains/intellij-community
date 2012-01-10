@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -128,7 +129,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           child = composeCodeBlock(result, child, indent, myChildrenIndent, childWrap);
         }
         else {
-          child = processChild(result, child, childAlignment, childWrap, indent);
+          child = processChild(result, child, chooseAlignment(child, childAlignment), childWrap, indent);
         }
       }
       if (child != null) {
@@ -137,6 +138,26 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
   }
 
+  @Nullable
+  private Alignment chooseAlignment(@NotNull ASTNode child, @Nullable Alignment defaultAlignment) {
+    if (defaultAlignment != null) {
+      return defaultAlignment;
+    }
+    // Take special care about anonymous classes.
+    if (child.getElementType() != JavaTokenType.RBRACE) {
+      return defaultAlignment;
+    }
+    final ASTNode parent = child.getTreeParent();
+    if (parent == null || parent.getElementType() != JavaElementType.ANONYMOUS_CLASS) {
+      return defaultAlignment;
+    }
+    final ASTNode whiteSpaceCandidate = parent.getTreePrev();
+    if (whiteSpaceCandidate == null || whiteSpaceCandidate.getElementType() != TokenType.WHITE_SPACE) {
+      return defaultAlignment;
+    }
+    return StringUtil.countNewLines(whiteSpaceCandidate.getChars()) > 0 ? myAlignment : defaultAlignment;
+  }
+  
   @Nullable
   private ASTNode processCaseAndStatementAfter(final ArrayList<Block> result,
                                                ASTNode child,
