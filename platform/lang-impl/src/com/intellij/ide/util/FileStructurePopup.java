@@ -43,10 +43,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -397,7 +394,9 @@ public class FileStructurePopup implements Disposable {
     }
     myPrefferedWidth = Math.max(comboPanel.getPreferredSize().width, 350);
     panel.add(comboPanel, BorderLayout.NORTH);
-    panel.add(ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree());
+    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+    panel.add(scrollPane, BorderLayout.CENTER);
     panel.add(createSouthPanel(), BorderLayout.SOUTH);
 
     return panel;
