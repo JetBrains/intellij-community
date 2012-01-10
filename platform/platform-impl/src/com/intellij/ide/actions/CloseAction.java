@@ -37,9 +37,8 @@ public class CloseAction extends AnAction implements DumbAware {
     e.getData(CloseTarget.KEY).close();
   }
 
-  public static interface CloseTarget {
-
-    public static DataKey<CloseTarget> KEY = DataKey.create("GenericClosable");
+  public interface CloseTarget {
+    DataKey<CloseTarget> KEY = DataKey.create("GenericClosable");
 
     void close();
   }
