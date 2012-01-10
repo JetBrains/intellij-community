@@ -20,7 +20,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightMirrorMethod;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -154,35 +157,20 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
   /**
    *  The key method of contributor. It collects all delegating methods of clazz
    *
-   * If the return value is null, the result can be cached. It means that no already processed classes was touched by current processing. In
-   * other case some delegated methods can be missed.
-   *
    * @param clazz class to process
    * @param processed already visited classes
    * @param collector result collection
-   * @return classes which were visited during current processing and were in processed at the very beginning of processing
    */
-  @Nullable
-  private static Set<PsiClass> process(PsiClass clazz,
-                                       PsiSubstitutor superClassSubsitutor,
-                                       Set<PsiClass> processed,
-                                       List<PsiMethod> collector,
-                                       GrTypeDefinition classToDelegateTo) {
-    final CachedValue<PsiMethod[]> data = clazz.getUserData(CACHED_DELEGATED_METHODS);
-    if (data != null) {
-      ContainerUtil.addAll(collector, data.getValue());
-      return null;
-    }
-
-    final Set<PsiClass> myProcessed = new HashSet<PsiClass>();
-    myProcessed.addAll(processed);
-
-    Set<PsiClass> alreadyVisited = null;
+  private static void process(PsiClass clazz,
+                              PsiSubstitutor superClassSubsitutor,
+                              Set<PsiClass> processed,
+                              List<PsiMethod> collector,
+                              GrTypeDefinition classToDelegateTo) {
     final List<PsiMethod> result = new ArrayList<PsiMethod>();
 
     //process super methods before delegated methods
     for (PsiClassType superType : clazz.getSuperTypes()) {
-      alreadyVisited = processClassInner(superType, superClassSubsitutor, true, result, classToDelegateTo, processed, alreadyVisited);
+      processClassInner(superType, superClassSubsitutor, true, result, classToDelegateTo, processed);
     }
 
     if (clazz instanceof GrTypeDefinition) {
@@ -194,64 +182,36 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
         final PsiType type = field.getDeclaredType();
         if (!(type instanceof PsiClassType)) continue;
 
-        alreadyVisited = processClassInner((PsiClassType)type, superClassSubsitutor, shouldDelegateDeprecated(delegate), result, classToDelegateTo, processed, alreadyVisited);
+        processClassInner((PsiClassType)type, superClassSubsitutor, shouldDelegateDeprecated(delegate), result, classToDelegateTo, processed);
       }
     }
 
     collector.addAll(result);
-
-    if (alreadyVisited == null || !ContainerUtil.intersects(myProcessed, alreadyVisited)) {
-      final CachedValue<PsiMethod[]> value =
-        CachedValuesManager.getManager(clazz.getProject()).createCachedValue(new CachedValueProvider<PsiMethod[]>() {
-          @Override
-          public Result<PsiMethod[]> compute() {
-            return Result.create(result.toArray(new PsiMethod[result.size()]), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-          }
-        });
-      clazz.putUserData(CACHED_DELEGATED_METHODS, value);
-    }
-    
-    return alreadyVisited;
   }
 
-  @Nullable
-  private static Set<PsiClass> processClassInner(PsiClassType type,
-                                                 PsiSubstitutor superClassSubstitutor,
-                                                 boolean deprecated,
-                                                 List<PsiMethod> result,
-                                                 GrTypeDefinition classToDelegateTo,
-                                                 Set<PsiClass> processed,
-                                                 @Nullable Set<PsiClass> alreadyVisited) {
+  private static void processClassInner(PsiClassType type,
+                                        PsiSubstitutor superClassSubstitutor,
+                                        boolean deprecated,
+                                        List<PsiMethod> result,
+                                        GrTypeDefinition classToDelegateTo,
+                                        Set<PsiClass> processed) {
     final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
-    if (psiClass == null) return alreadyVisited;
+    if (psiClass == null) return;
+
     final String qname = psiClass.getQualifiedName();
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) return alreadyVisited;
-    if (GroovyCommonClassNames.GROOVY_OBJECT.equals(qname)) return alreadyVisited;
-    if (GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname)) return alreadyVisited;
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) return;
+    if (GroovyCommonClassNames.GROOVY_OBJECT.equals(qname)) return;
+    if (GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname)) return;
 
     final PsiSubstitutor substitutor = TypesUtil.composeSubstitutors(resolveResult.getSubstitutor(), superClassSubstitutor);
 
 
-    if (processed.contains(psiClass)) {
-      if (alreadyVisited == null) alreadyVisited = new HashSet<PsiClass>();
-      alreadyVisited.add(psiClass);
-      return alreadyVisited;
-    }
+    if (processed.contains(psiClass)) return;
     processed.add(psiClass);
 
     collectMethods(psiClass, substitutor, deprecated, classToDelegateTo, result);
-    final Set<PsiClass> _alreadyVisited = process(psiClass, substitutor, processed, result, classToDelegateTo);
-
-    if (_alreadyVisited != null) {
-      if (alreadyVisited == null) {
-        alreadyVisited = _alreadyVisited;
-      }
-      else {
-        alreadyVisited.addAll(_alreadyVisited);
-      }
-    }
-    return alreadyVisited;
+    process(psiClass, substitutor, processed, result, classToDelegateTo);
   }
 
   private static void collectMethods(PsiClass currentClass,

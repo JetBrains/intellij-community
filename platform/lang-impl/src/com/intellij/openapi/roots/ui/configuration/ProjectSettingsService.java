@@ -42,6 +42,9 @@ public class ProjectSettingsService {
   public void openProjectSettings() {
   }
 
+  public void openGlobalLibraries() {
+  }
+
   public void openModuleSettings(final Module module) {
   }
 
