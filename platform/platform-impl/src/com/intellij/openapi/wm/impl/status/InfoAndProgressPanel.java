@@ -338,7 +338,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     final JPanel inlinePanel = new JPanel(new BorderLayout());
 
-    inline.getComponent().setBorder(new EmptyBorder(0, 0, 0, 2));
+    inline.getComponent().setBorder(new EmptyBorder(1, 0, 0, 2));
     final JComponent inlineComponent = inline.getComponent();
     inlineComponent.setOpaque(false);
     inlinePanel.add(inlineComponent, BorderLayout.CENTER);
