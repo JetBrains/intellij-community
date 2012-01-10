@@ -43,6 +43,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -533,4 +535,26 @@ public class GrClassImplUtil {
     return true;
   }
 
+  public static void addExpandingReflectedMethods(List<PsiMethod> result, PsiMethod method) {
+    if (method instanceof GrMethod) {
+      final GrReflectedMethod[] reflectedMethods = ((GrMethod)method).getReflectedMethods();
+      if (reflectedMethods.length > 0) {
+        result.addAll(Arrays.asList(reflectedMethods));
+        return;
+      }
+    }
+    result.add(method);
+  }
+
+  public static void collectMethodsFromBody(@NotNull GrTypeDefinitionBody body, List<PsiMethod> result) {
+    for (GrMethod method : body.getMethods()) {
+      addExpandingReflectedMethods(result, method);
+    }
+
+    for (GrField field : body.getFields()) {
+      if (!field.isProperty()) continue;
+      ContainerUtil.addAll(result, field.getGetters());
+      ContainerUtil.addIfNotNull(result, field.getSetter());
+    }
+  }
 }

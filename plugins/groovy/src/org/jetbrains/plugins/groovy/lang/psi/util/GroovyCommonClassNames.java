@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 public final class GroovyCommonClassNames {
 
   @NonNls public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
+  @NonNls public static final String GROOVY_OBJECT = "groovy.lang.GroovyObject";
   @NonNls public static final String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
   @NonNls public static final String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObject";
   @NonNls public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";

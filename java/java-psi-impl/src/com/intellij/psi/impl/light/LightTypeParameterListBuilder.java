@@ -29,7 +29,7 @@ public class LightTypeParameterListBuilder extends LightElement implements PsiTy
   private final List<PsiTypeParameter> myParameters = new ArrayList<PsiTypeParameter>();
   private PsiTypeParameter[] cached = null;
 
-  protected LightTypeParameterListBuilder(PsiManager manager, final Language language) {
+  public LightTypeParameterListBuilder(PsiManager manager, final Language language) {
     super(manager, language);
   }
 
