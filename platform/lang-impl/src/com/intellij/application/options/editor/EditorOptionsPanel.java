@@ -82,6 +82,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbUseCustomSoftWrapIndent;
   private JTextField myCustomSoftWrapIndent;
   private JCheckBox myCbShowAllSoftWraps;
+  private JCheckBox myPreselectCheckBox;
 
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
@@ -169,6 +170,7 @@ public class EditorOptionsPanel {
     myCommandsHistoryLimitField.setText(Integer.toString(uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT));
 
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
+    myPreselectCheckBox.setSelected(editorSettings.isPreselectRename());
 
     myShowReformatCodeDialogCheckBox.setSelected(editorSettings.getOptions().SHOW_REFORMAT_DIALOG);
     myShowOptimizeImportsDialogCheckBox.setSelected(editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG);
@@ -240,6 +242,7 @@ public class EditorOptionsPanel {
     editorSettings.setRefrainFromScrolling(myRbPreferMovingCaret.isSelected());
 
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
+    editorSettings.setPreselectRename(myPreselectCheckBox.isSelected());
 
     editorSettings.getOptions().SHOW_REFORMAT_DIALOG = myShowReformatCodeDialogCheckBox.isSelected();
     editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG = myShowOptimizeImportsDialogCheckBox.isSelected();
@@ -350,6 +353,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
     isModified |= isModified(myCommandsHistoryLimitField, UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT);
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
+    isModified |= isModified(myPreselectCheckBox, editorSettings.isPreselectRename());
 
     isModified |= isModified(myShowReformatCodeDialogCheckBox, editorSettings.getOptions().SHOW_REFORMAT_DIALOG);
     isModified |= isModified(myShowOptimizeImportsDialogCheckBox, editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG);

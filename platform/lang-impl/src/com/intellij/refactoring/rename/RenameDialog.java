@@ -23,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -119,7 +118,7 @@ public class RenameDialog extends RefactoringDialog {
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
       @Override
       protected boolean shouldSelectAll() {
-        return Registry.is("rename.preselect");
+        return myEditor.getSettings().isPreselectRename();
       }
     };
     if (myPsiElement instanceof PsiFile && myEditor == null) {

@@ -75,6 +75,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsAllSoftWrapsShown                   = null;
   private Boolean myUseCustomSoftWrapIndent               = null;
   private Integer myCustomSoftWrapIndent                  = null;
+  private Boolean myRenamePreselect                       = null;
 
   public SettingsImpl(@Nullable EditorEx editor) {
     myEditor = editor;
@@ -511,5 +512,15 @@ public class SettingsImpl implements EditorSettings {
     if (myEditor != null) {
       myEditor.reinitSettings();
     }
+  }
+
+  @Override
+  public boolean isPreselectRename() {
+    return myRenamePreselect == null ? EditorSettingsExternalizable.getInstance().isPreselectRename() : myRenamePreselect;
+  }
+
+  @Override
+  public void setPreselectRename(boolean val) {
+    myRenamePreselect = val;
   }
 }
