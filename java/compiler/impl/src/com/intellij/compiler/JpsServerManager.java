@@ -82,8 +82,10 @@ public class JpsServerManager implements ApplicationComponent{
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
   });
+  private final ProjectManager myProjectManager;
 
-  public JpsServerManager(ProjectManager projectManager) {
+  public JpsServerManager(final ProjectManager projectManager) {
+    myProjectManager = projectManager;
     final String systemPath = PathManager.getSystemPath();
     File system = new File(systemPath);
     try {
@@ -106,6 +108,40 @@ public class JpsServerManager implements ApplicationComponent{
 
   public static JpsServerManager getInstance() {
     return ApplicationManager.getApplication().getComponent(JpsServerManager.class);
+  }
+
+  public void notifyFilesChanged(Collection<String> paths) {
+    sendNotification(paths, false);
+  }
+
+  public void notifyFilesDeleted(Collection<String> paths) {
+    sendNotification(paths, true);
+  }
+
+  private void sendNotification(Collection<String> paths, final boolean isDeleted) {
+    final Client client = myClient;
+    if (client != null && client.isConnected()) {
+      final Project[] openProjects = myProjectManager.getOpenProjects();
+      if (openProjects.length > 0) {
+        final Collection<String> changed, deleted;
+        if (isDeleted) {
+          changed = Collections.emptyList();
+          deleted = paths;
+        }
+        else {
+          changed = paths;
+          deleted = Collections.emptyList();
+        }
+        for (Project project : openProjects) {
+          try {
+            client.sendFSEvent(project.getLocation(), changed, deleted);
+          }
+          catch (Exception e) {
+            LOG.info(e);
+          }
+        }
+      }
+    }
   }
 
   @Nullable
@@ -309,8 +345,6 @@ public class JpsServerManager implements ApplicationComponent{
   //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
   //}
 
-
-
   private Process launchServer(int port) throws ExecutionException {
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
@@ -331,7 +365,7 @@ public class JpsServerManager implements ApplicationComponent{
 
     // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
+    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");

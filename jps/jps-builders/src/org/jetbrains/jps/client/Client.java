@@ -112,6 +112,12 @@ public class Client {
     return sendRequest(ProtoUtil.createReloadProjectRequest(projectPaths), null);
   }
 
+  @NotNull
+  public RequestFuture sendFSEvent(String projectPath, Collection<String> changedPaths, Collection<String> deletedPaths) throws Exception {
+    checkConnected();
+    return sendRequest(ProtoUtil.createFSEvent(projectPath, changedPaths, deletedPaths), null);
+  }
+
   private void checkConnected() throws Exception {
     if (myState.get() != State.CONNECTED) {
       throw new Exception("Client not connected");

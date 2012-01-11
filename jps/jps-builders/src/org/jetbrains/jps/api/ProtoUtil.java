@@ -69,6 +69,14 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.RELOAD_PROJECT_COMMAND).setReloadProjectCommand(builder.build()).build();
   }
 
+  public static JpsRemoteProto.Message.Request createFSEvent(String projectPath, Collection<String> changedPaths, Collection<String> deletedPaths) {
+    final JpsRemoteProto.Message.Request.FSEvent.Builder builder = JpsRemoteProto.Message.Request.FSEvent.newBuilder();
+    builder.setProjectId(projectPath);
+    builder.addAllChangedPaths(changedPaths);
+    builder.addAllDeletedPaths(deletedPaths);
+    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.FS_EVENT).setFsEvent(builder.build()).build();
+  }
+
   public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars, List<GlobalLibrary> sdkAndLibs) {
     final JpsRemoteProto.Message.Request.SetupCommand.Builder cmdBuilder = JpsRemoteProto.Message.Request.SetupCommand.newBuilder();
 
