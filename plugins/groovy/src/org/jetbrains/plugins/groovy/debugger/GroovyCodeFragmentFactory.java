@@ -233,9 +233,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       }
 
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
-        if (refElement.getQualifier() != null) {
-          super.visitCodeReferenceElement(refElement);
-        } else {
+        super.visitCodeReferenceElement(refElement);
+        if (refElement.getQualifier() == null) {
           PsiElement resolved = refElement.resolve();
           if (resolved instanceof PsiClass) {
             String qName = ((PsiClass)resolved).getQualifiedName();

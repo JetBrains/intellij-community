@@ -286,7 +286,7 @@ new Runnable() {
     return result
   }
 
-  private String eval(final String codeText, String expected) throws EvaluateException {
+  private void eval(final String codeText, String expected) throws EvaluateException {
 
     Semaphore semaphore = new Semaphore()
     semaphore.down()
