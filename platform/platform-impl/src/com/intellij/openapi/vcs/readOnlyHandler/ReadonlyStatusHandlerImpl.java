@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -102,7 +103,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       new ReadOnlyStatusDialog(myProject, fileInfos).show();
     }
     else {
-      processFiles(new ArrayList<FileInfo>(Arrays.asList(fileInfos))); // the collection passed is modified
+      processFiles(new ArrayList<FileInfo>(Arrays.asList(fileInfos)), null); // the collection passed is modified
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
     return createResultStatus(files);
@@ -131,7 +132,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     return fileInfos.toArray(new FileInfo[fileInfos.size()]);
   }
 
-  public static void processFiles(final List<FileInfo> fileInfos) {
+  public static void processFiles(final List<FileInfo> fileInfos, @Nullable String changelist) {
     FileInfo[] copy = fileInfos.toArray(new FileInfo[fileInfos.size()]);
     MultiValuesMap<HandleType, VirtualFile> handleTypeToFile = new MultiValuesMap<HandleType, VirtualFile>();
     for (FileInfo fileInfo : copy) {
@@ -139,7 +140,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
 
     for (HandleType handleType : handleTypeToFile.keySet()) {
-      handleType.processFiles(handleTypeToFile.get(handleType));
+      handleType.processFiles(handleTypeToFile.get(handleType), changelist == null ? handleType.getDefaultChangelist() : changelist);
     }
 
     for (FileInfo fileInfo : copy) {
@@ -169,7 +170,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     @NotNull
     public String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (myReadonlyFiles.length > 1) {
           for (VirtualFile file : myReadonlyFiles) {
             buf.append('\n');

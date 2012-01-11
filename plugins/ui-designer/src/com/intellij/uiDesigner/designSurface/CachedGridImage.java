@@ -103,7 +103,7 @@ public class CachedGridImage {
         g2d.setColor(Painter.NON_SELECTED_GRID_COLOR);
       }
 
-      g2d.setStroke(new BasicStroke(1.0f, 0, 0, 1.0f, ourDashes, 0.0f));
+      g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f, ourDashes, 0.0f));
 
       if (myHorzGridLines.length > 0) {
         int lastLine = (container.getDelegee().getHeight() - myHorzGridLines [myHorzGridLines.length-1] > 4)

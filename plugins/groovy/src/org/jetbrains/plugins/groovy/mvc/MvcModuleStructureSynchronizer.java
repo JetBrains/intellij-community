@@ -227,6 +227,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (myActions) {
       if (myActions.isEmpty()) {
+        if (myProject.isDisposed()) return;
         StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
           public void run() {
             ApplicationManager.getApplication().invokeLater(new Runnable() {

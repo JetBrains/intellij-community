@@ -3,7 +3,6 @@ package org.jetbrains.jps.server;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
-import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.JavaSdk;
 import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
@@ -14,12 +13,9 @@ import org.jetbrains.jps.api.GlobalLibrary;
 import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -32,7 +28,7 @@ class ServerState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.server.ServerState");
   public static final String IDEA_PROJECT_DIRNAME = ".idea";
 
-  private final Map<String, Project> myProjects = new HashMap<String, Project>();
+  private final Map<String, ProjectDescriptor> myProjects = new HashMap<String, ProjectDescriptor>();
 
   private final Object myConfigurationLock = new Object();
   private final Map<String, String> myPathVariables = new HashMap<String, String>();
@@ -40,6 +36,9 @@ class ServerState {
 
   public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars) {
     synchronized (myConfigurationLock) {
+      for (ProjectDescriptor descriptor : myProjects.values()) {
+        descriptor.close();
+      }
       myProjects.clear(); // projects should be reloaded against the latest data
       myGlobalLibraries.clear();
       myGlobalLibraries.addAll(libs);
@@ -48,9 +47,44 @@ class ServerState {
     }
   }
 
+  public void notifyFileChanged(String projectPath, File file, RootDescriptor rd) {
+    try {
+      final ProjectDescriptor d;
+      synchronized (myConfigurationLock) {
+        d = myProjects.get(projectPath);
+      }
+      if (d != null) {
+        d.fsState.markDirty(file, rd, d.timestamps.getStorage());
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e); // todo
+    }
+  }
+
+  public void notifyFileDeleted(String projectPath, Module module, String filePath, final boolean isTest) {
+    try {
+      final ProjectDescriptor d;
+      synchronized (myConfigurationLock) {
+        d = myProjects.get(projectPath);
+      }
+      if (d != null) {
+        d.fsState.registerDeleted(module, FileUtil.toCanonicalPath(filePath), isTest, d.timestamps.getStorage());
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e); // todo
+    }
+  }
+
   public void clearProjectCache(Collection<String> projectPaths) {
     synchronized (myConfigurationLock) {
-      myProjects.keySet().removeAll(projectPaths);
+      for (String projectPath : projectPaths) {
+        final ProjectDescriptor descriptor = myProjects.remove(projectPath);
+        if (descriptor != null) {
+          descriptor.close();
+        }
+      }
     }
   }
 
@@ -58,29 +92,18 @@ class ServerState {
     final String projectName = getProjectName(projectPath);
     BuildType buildType = params.buildType;
 
-    Project project;
+    ProjectDescriptor descriptor;
     synchronized (myConfigurationLock) {
-      project = myProjects.get(projectPath);
-      if (project == null) {
-        project = loadProject(projectPath, params);
-        myProjects.put(projectPath, project);
+      descriptor = myProjects.get(projectPath);
+      if (descriptor == null) {
+        final Project project = loadProject(projectPath, params);
+        final FSState fsState = new FSState();
+        descriptor = new ProjectDescriptor(projectName, project, fsState, new ProjectTimestamps(projectName));
+        myProjects.put(projectPath, descriptor);
       }
     }
 
-    Mappings mappings = null;
-    final File mappingsRoot = Paths.getMappingsStorageRoot(projectName);
-    try {
-      mappings = new Mappings(mappingsRoot);
-    }
-    catch (FileNotFoundException e) {
-      mappings = new Mappings(mappingsRoot);
-    }
-    catch (IOException e) {
-      FileUtil.delete(mappingsRoot);
-      msgHandler.processMessage(new CompilerMessage(IncProjectBuilder.JPS_SERVER_NAME, BuildMessage.Kind.WARNING, "Problems reading dependency information, rebuild required: " + e.getMessage()));
-      mappings = new Mappings(mappingsRoot);
-      buildType = BuildType.REBUILD;
-    }
+    final Project project = descriptor.project;
 
     try {
       final List<Module> toCompile = new ArrayList<Module>();
@@ -97,17 +120,21 @@ class ServerState {
 
       final CompileScope compileScope = new CompileScope(project, toCompile);
 
-      final IncProjectBuilder builder = new IncProjectBuilder(projectName, project, mappings, BuilderRegistry.getInstance());
+      final IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance());
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
       }
       switch (buildType) {
-        case REBUILD:
-          builder.build(compileScope, false);
+        case PROJECT_REBUILD:
+          builder.build(compileScope, false, true);
+          break;
+
+        case FORCED_COMPILATION:
+          builder.build(compileScope, false, false);
           break;
 
         case MAKE:
-          builder.build(compileScope, true);
+          builder.build(compileScope, true, false);
           break;
 
         case CLEAN:
@@ -117,9 +144,6 @@ class ServerState {
       }
     }
     finally {
-      if (mappings != null) {
-        mappings.close();
-      }
       clearZipIndexCache();
     }
   }

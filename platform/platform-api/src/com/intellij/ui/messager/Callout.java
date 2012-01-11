@@ -64,7 +64,7 @@ public class Callout {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void main(String[] args) {
     JFrame frame = new JFrame("Portlet Test");
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     frame.setLocation(300, 300);
     frame.setSize(200, 200);
 

@@ -668,17 +668,17 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       super.processMouseEvent(e);
       switch (e.getID()) {
         case MouseEvent.MOUSE_ENTERED:
-          setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
+          setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
           break;
         case MouseEvent.MOUSE_EXITED:
           if (!myDragging) {
-            setCursor(Cursor.getPredefinedCursor(0));
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
           }
           break;
         case MouseEvent.MOUSE_PRESSED:
           if (isInside(e.getPoint())) {
             myWasPressedOnMe = true;
-            setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
+            setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
             e.consume();
           } else {
             myWasPressedOnMe = false;

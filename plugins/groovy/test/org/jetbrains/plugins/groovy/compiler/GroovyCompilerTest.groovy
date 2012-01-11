@@ -317,7 +317,10 @@ public class Transf implements ASTTransformation {
 class Foo {
   static class Bar {}
 }"""
-    myFixture.addFileToProject "AJava.java", "public class AJava extends Foo.Bar {}"
+    def javaFile = myFixture.addFileToProject("AJava.java", "public class AJava extends Foo.Bar {}")
+    assertEmpty make()
+    
+    touch(javaFile.virtualFile)
     assertEmpty make()
   }
 

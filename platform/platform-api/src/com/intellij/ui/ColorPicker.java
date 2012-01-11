@@ -460,7 +460,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
 
   public static void main(String[] args) {
     final JFrame frame = new JFrame();
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
     frame.getContentPane().add(new ColorPicker(null, false));
 

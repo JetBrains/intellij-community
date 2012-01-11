@@ -19,15 +19,11 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * author: lesya
- * 
- * @deprecated use one of {@link com.intellij.openapi.ui.Messages} methods instead.
  */
-@Deprecated
 public abstract class OptionsDialog extends DialogWrapper  {
 
   protected final Project myProject;
@@ -76,10 +72,6 @@ public abstract class OptionsDialog extends DialogWrapper  {
     super(parent, canBeParent);
     myProject = null;
     setDoNotAskOption(new MyDoNotAsk());
-  }
-
-  public static JPanel addDoNotShowCheckBox(JComponent southPanel, JCheckBox checkBox) {
-    return DialogWrapper.addDoNotShowCheckBox(southPanel, checkBox);
   }
 
   public static boolean shiftIsPressed(int inputEventModifiers) {

@@ -2,17 +2,13 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.ether.dependencyView.ClassRepr;
 import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.PathUtil;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -37,10 +33,6 @@ public abstract class Builder {
     ALL_COMPILED_FILES_KEY.set(context, null);
   }
 
-  public static boolean isFileDirty(File file, CompileContext context, TimestampStorage tsStorage) throws Exception {
-    return !context.isMake() || tsStorage.getStamp(file) != file.lastModified();
-  }
-
   /**
    * @param context
    * @param delta
@@ -53,14 +45,13 @@ public abstract class Builder {
   public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws Exception {
     boolean additionalPassRequired = false;
 
-    final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(getName());
     final Set<String> removedPaths = getRemovedPaths(context);
 
-    final Mappings globalMappings = context.getMappings();
+    final Mappings globalMappings = context.getDataManager().getMappings();
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (globalMappings) {
-      if (context.isMake()) {
+      if (!context.isProjectRebuild()) {
         final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
         final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
@@ -80,54 +71,56 @@ public abstract class Builder {
         if (incremental) {
           final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
           newlyAffectedFiles.removeAll(affectedBeforeDif);
+          // todo: temp code
+          for (String removedPath : removedPaths) {
+            newlyAffectedFiles.remove(new File(removedPath));
+          }
           if (!newlyAffectedFiles.isEmpty()) {
             for (File file : newlyAffectedFiles) {
-              tsStorage.markDirty(file);
+              context.markDirty(file);
             }
-            additionalPassRequired = chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+            additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
           }
         }
         else {
-          additionalPassRequired = true;
-          context.setDirty(chunk, true);
+          additionalPassRequired = context.isMake();
+          context.markDirty(chunk);
         }
       }
 
       globalMappings.integrate(delta, successfullyCompiled, removedPaths);
-      for (File file : successfullyCompiled) {
-        tsStorage.saveStamp(file);
-      }
     }
 
     return additionalPassRequired;
   }
 
   // delete all class files that according to mappings correspond to given sources
-  public static void deleteCorrespondingClasses(CompileContext context, Collection<File> sources) {
-    if (context.isMake() && !sources.isEmpty()) {
-      final Mappings mappings = context.getMappings();
-      for (File file : sources) {
-        final Set<ClassRepr> classes = mappings.getClasses(FileUtil.toSystemIndependentName(file.getPath()));
-        if (classes != null) {
-          for (ClassRepr aClass : classes) {
-            final String fileName = aClass.getFileName();
-            if (fileName != null) {
-              FileUtil.delete(new File(fileName));
-            }
+  public static void deleteCorrespondingOutputFiles(CompileContext context, Map<File, Module> sources) throws Exception {
+    if (!context.isProjectRebuild() && !sources.isEmpty()) {
+      for (Map.Entry<File, Module> pair : sources.entrySet()) {
+        final File file = pair.getKey();
+        final String srcPath = file.getPath();
+        final String moduleName = pair.getValue().getName().toLowerCase(Locale.US);
+        final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
+        final Collection<String> outputs = srcToOut.getState(srcPath);
+        if (outputs != null) {
+          for (String output : outputs) {
+            FileUtil.delete(new File(output));
           }
+          srcToOut.remove(srcPath);
         }
       }
     }
   }
 
   private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws Exception {
-    final Set<File> chunkRoots = new HashSet<File>();
-    for (String r : context.isCompilingTests() ? chunk.getTestRoots() : chunk.getSourceRoots()) {
-      chunkRoots.add(new File(r));
-    }
-    for (File file : affected) {
-      if (PathUtil.isUnder(chunkRoots, file)) {
-        return true;
+    final Set<Module> chunkModules = new HashSet<Module>(chunk.getModules());
+    if (!chunkModules.isEmpty()) {
+      for (File file : affected) {
+        final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
+        if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.module)) {
+          return true;
+        }
       }
     }
     return false;

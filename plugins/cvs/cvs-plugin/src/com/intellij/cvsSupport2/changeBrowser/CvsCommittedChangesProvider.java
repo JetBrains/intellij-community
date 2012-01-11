@@ -218,7 +218,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       Date dateFrom = settings.getDateAfterFilter();
       if (dateFrom == null) {
         final Calendar calendar = Calendar.getInstance();
-        calendar.set(1970, 2, 2);
+        calendar.set(1970, Calendar.MARCH, 2);
         dateFrom = calendar.getTime();
       }
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
@@ -265,7 +265,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     Date dateFrom = settings.getDateAfterFilter();
     if (dateFrom == null) {
       final Calendar calendar = Calendar.getInstance();
-      calendar.set(1970, 2, 2);
+      calendar.set(1970, Calendar.MARCH, 2);
       dateFrom = calendar.getTime();
     }
     final List<LogInformationWrapper> log = new ArrayList<LogInformationWrapper>();

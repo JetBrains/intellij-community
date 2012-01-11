@@ -23,6 +23,7 @@ import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.PropertyOwner;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvider<JavaAnonymousClassTreeElement> {
+public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvider<JavaAnonymousClassTreeElement>, PropertyOwner {
   public static final String ID = "SHOW_ANONYMOUS";
 
   @Override
@@ -66,7 +67,7 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
 
   @Override
   public Shortcut[] getShortcut() {
-    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta A" : "control A")};
+    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta I" : "control I")};
   }
 
   @NotNull
@@ -79,5 +80,11 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
   @Override
   public String getName() {
     return ID;
+  }
+
+  @NotNull
+  @Override
+  public String getPropertyName() {
+    return "java.anonymous.provider";
   }
 }

@@ -41,6 +41,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -107,6 +108,28 @@ class RunConfigurable extends BaseConfigurable {
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
+    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
+      public String convert(TreePath o) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+          return ((RunnerAndConfigurationSettingsImpl)userObject).getName();
+        }
+        else if (userObject instanceof SingleConfigurationConfigurable) {
+          return ((SingleConfigurationConfigurable)userObject).getNameText();
+        }
+        else {
+          if (userObject instanceof ConfigurationType) {
+            return ((ConfigurationType)userObject).getDisplayName();
+          }
+          else if (userObject instanceof String) {
+            return (String)userObject;
+          }
+        }
+        return o.toString();
+      }
+    });
     PopupHandler.installFollowingSelectionTreePopup(myTree, createActionsGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
@@ -555,21 +578,33 @@ class RunConfigurable extends BaseConfigurable {
     final RunManagerImpl manager = getRunManager();
     final ArrayList<RunConfigurationBean> stableConfigurations = new ArrayList<RunConfigurationBean>();
     if (typeNode != null) {
+      final Set<String> names = new HashSet<String>();
       for (int i = 0; i < typeNode.getChildCount(); i++) {
-        final Object userObject = ((DefaultMutableTreeNode)typeNode.getChildAt(i)).getUserObject();
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)typeNode.getChildAt(i);
+        final Object userObject = node.getUserObject();
+        RunConfigurationBean configurationBean = null;
         if (userObject instanceof SingleConfigurationConfigurable) {
           final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
           final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)configurable.getSettings();
           if (manager.isTemporary(settings)) {
             applyConfiguration(typeNode, configurable);
           }
-          stableConfigurations.add(new RunConfigurationBean(configurable));
+          configurationBean = new RunConfigurationBean(configurable);
         }
         else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
           RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)userObject;
-            stableConfigurations.add(new RunConfigurationBean(settings,
-                                                              manager.isConfigurationShared(settings),
-                                                              manager.getBeforeRunTasks(settings.getConfiguration())));
+          configurationBean = new RunConfigurationBean(settings,
+                                                       manager.isConfigurationShared(settings),
+                                                       manager.getBeforeRunTasks(settings.getConfiguration()));
+          
+        }
+        if (configurationBean != null) {
+          final String nameText = configurationBean.getConfigurable().getNameText();
+          if (!names.add(nameText)) {
+            TreeUtil.selectNode(myTree, node);
+            throw new ConfigurationException("Configuration with name \'" + nameText + "\' already exist");
+          }
+          stableConfigurations.add(configurationBean);
         }
       }
     }

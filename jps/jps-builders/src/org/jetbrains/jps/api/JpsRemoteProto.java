@@ -778,6 +778,7 @@ public final class JpsRemoteProto {
           MAKE(1, 2),
           CLEAN(2, 3),
           CANCEL(3, 4),
+          FORCED_COMPILATION(4, 5),
           ;
           
           
@@ -789,6 +790,7 @@ public final class JpsRemoteProto {
               case 2: return MAKE;
               case 3: return CLEAN;
               case 4: return CANCEL;
+              case 5: return FORCED_COMPILATION;
               default: return null;
             }
           }
