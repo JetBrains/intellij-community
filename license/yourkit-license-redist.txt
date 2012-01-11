@@ -1,7 +1,9 @@
 The following files can be redistributable under the license below:
 
 yjpagent.dll
-libyjpagent.so
+yjpagent64.dll
+libyjpagent-linux.so
+libyjpagent-linux64.so
 libyjpagent.jnilib
 yjp-controller-api-redist.jar
 
