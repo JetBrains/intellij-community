@@ -140,23 +140,32 @@ public class UpdateRequestsQueue {
 
   @TestOnly
   public void waitUntilRefreshed() {
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    synchronized (myLock) {
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          semaphore.up();
+    while (true) {
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      synchronized (myLock) {
+        final Runnable runnable = new Runnable() {
+          @Override
+          public void run() {
+            semaphore.up();
+          }
+        };
+        if (myRequestSubmitted && !myStopped) {
+          myWaitingUpdateCompletionQueue.add(runnable);
+        } else {
+          runnable.run();
         }
-      };
-      if (myRequestSubmitted && !myStopped) {
-        myWaitingUpdateCompletionQueue.add(runnable);
-      } else {
-        runnable.run();
       }
-    }
-    if (!semaphore.waitFor(10000)) {
-      LOG.error("Too long VCS update");
+      if (!semaphore.waitFor(10000)) {
+        LOG.error("Too long VCS update");
+        return;
+      }
+
+      synchronized (myLock) {
+        if (!myRequestSubmitted || myStopped) {
+          return;
+        }
+      }
     }
   }
 
