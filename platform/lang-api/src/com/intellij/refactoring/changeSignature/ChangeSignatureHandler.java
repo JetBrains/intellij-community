@@ -15,11 +15,14 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,4 +36,6 @@ public interface ChangeSignatureHandler extends RefactoringActionHandler {
 
   @Nullable
   PsiElement findTargetMember(PsiElement element);
+
+  void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext);
 }

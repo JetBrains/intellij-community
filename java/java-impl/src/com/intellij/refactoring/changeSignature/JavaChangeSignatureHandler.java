@@ -63,9 +63,9 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     }
   }
 
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, @Nullable final DataContext dataContext) {
     if (elements.length != 1) return;
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = dataContext != null ? PlatformDataKeys.EDITOR.getData(dataContext) : null;
     invokeOnElement(project, editor, elements[0]);
   }
 
@@ -76,7 +76,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {
-      invoke(newMethod, project, editor);
+      ChangeSignatureUtil.invokeChangeSignatureOn(newMethod, project);
       return;
     }
 
