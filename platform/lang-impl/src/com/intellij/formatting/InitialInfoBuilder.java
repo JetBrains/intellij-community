@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -371,7 +371,7 @@ class InitialInfoBuilder {
       final FormattingDocumentModelImpl modelImpl = (FormattingDocumentModelImpl)model;
       buffer.append("Psi Tree:\n");
       final PsiFile file = modelImpl.getFile();
-      final PsiFile[] roots = file.getPsiRoots();
+      final List<PsiFile> roots = file.getViewProvider().getAllFiles();
       for (PsiFile root : roots) {
         buffer.append("Root ");
         DebugUtil.treeToBuffer(buffer, root.getNode(), 0, false, true, true, true);
@@ -383,7 +383,7 @@ class InitialInfoBuilder {
   }
 
   /**
-   * We want to wrap {@link Block code blocks} sequentially, hence, need to store a processing state and continure from the point
+   * We want to wrap {@link Block code blocks} sequentially, hence, need to store a processing state and continue from the point
    * where we stopped the processing last time.
    * <p/>
    * Current class defines common contract for the state required for such a processing.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.util.TextRange;
 public class DependantSpacingImpl extends SpacingImpl {
   private final TextRange myDependency;
   private static final int DEPENDENCE_CONTAINS_LF_MASK = 0x10;
-  private static final int LF_WAS_USED_MASK = 0x20;
+  private static final int DEPENDENT_REGION_LF_CHANGED_MASK = 0x20;
 
   public DependantSpacingImpl(final int minSpaces,
                               final int maxSpaces,
@@ -50,7 +50,10 @@ public class DependantSpacingImpl extends SpacingImpl {
   }
 
   public void refresh(FormatProcessor formatter) {
-    final boolean value = wasLFUsed() || formatter.containsLineFeeds(myDependency);
+    if (isDependentRegionChanged()) {
+      return;
+    }
+    final boolean value = formatter.containsLineFeeds(myDependency);
     if (value) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
     else myFlags &= ~DEPENDENCE_CONTAINS_LF_MASK;
   }
@@ -59,13 +62,22 @@ public class DependantSpacingImpl extends SpacingImpl {
     return myDependency;
   }
 
-  public final void setLFWasUsed(final boolean value) {
-    if (value) myFlags |= LF_WAS_USED_MASK;
-    else myFlags &=~ LF_WAS_USED_MASK;
+  /**
+   * Allows to answer whether the target dependent regions has been changed during formatting.
+   * 
+   * @return    <code>true</code> if target dependent region has been changed during formatting; <code>false</code> otherwise
+   */
+  public final boolean isDependentRegionChanged() {
+    return (myFlags & DEPENDENT_REGION_LF_CHANGED_MASK) != 0;
   }
 
-  public final boolean wasLFUsed() {
-    return (myFlags & LF_WAS_USED_MASK) != 0;
+  /**
+   * Allows to set {@link #isDependentRegionChanged() 'dependent region changed'} property.
+   */
+  public final void setDependentRegionChanged() {
+    myFlags |= DEPENDENT_REGION_LF_CHANGED_MASK;
+    if (getMinLineFeeds() <= 0) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
+    else myFlags &=~DEPENDENCE_CONTAINS_LF_MASK;
   }
 
   @Override
