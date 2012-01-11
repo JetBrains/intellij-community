@@ -121,8 +121,9 @@ public class IncProjectBuilder {
     final String projectName = myProjectDescriptor.projectName;
     final TimestampStorage tsStorage = myProjectDescriptor.timestamps.getStorage();
     final FSState fsState = myProjectDescriptor.fsState;
+    final ModuleRootsIndex rootsIndex = myProjectDescriptor.rootsIndex;
     return new CompileContext(
-      projectName, scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, tsStorage, myMessageDispatcher
+      projectName, scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, tsStorage, myMessageDispatcher, rootsIndex
     );
   }
 

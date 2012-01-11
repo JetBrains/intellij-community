@@ -9,6 +9,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,7 +81,19 @@ class ServerMessageHandler extends SimpleChannelHandler {
             }
           });
           break;
-
+        case FS_EVENT:
+          final JpsRemoteProto.Message.Request.FSEvent fsEvent = request.getFsEvent();
+          final String projectId = fsEvent.getProjectId();
+          final ProjectDescriptor pd = facade.getProjectDescriptor(projectId);
+          if (pd != null) {
+            for (String path : fsEvent.getChangedPathsList()) {
+              facade.notifyFileChanged(pd, new File(path));
+            }
+            for (String path : fsEvent.getDeletedPathsList()) {
+              facade.notifyFileDeleted(pd, new File(path));
+            }
+          }
+          break;
         default:
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unknown request: " + message));
       }

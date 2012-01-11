@@ -3,6 +3,7 @@ package org.jetbrains.jps.server;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JavaSdk;
 import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
@@ -47,14 +48,11 @@ class ServerState {
     }
   }
 
-  public void notifyFileChanged(String projectPath, File file, RootDescriptor rd) {
+  public void notifyFileChanged(ProjectDescriptor pd, File file) {
     try {
-      final ProjectDescriptor d;
-      synchronized (myConfigurationLock) {
-        d = myProjects.get(projectPath);
-      }
-      if (d != null) {
-        d.fsState.markDirty(file, rd, d.timestamps.getStorage());
+      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+      if (rd != null) {
+        pd.fsState.markDirty(file, rd, pd.timestamps.getStorage());
       }
     }
     catch (Exception e) {
@@ -62,19 +60,25 @@ class ServerState {
     }
   }
 
-  public void notifyFileDeleted(String projectPath, Module module, String filePath, final boolean isTest) {
+  public void notifyFileDeleted(final ProjectDescriptor pd, File file) {
     try {
-      final ProjectDescriptor d;
-      synchronized (myConfigurationLock) {
-        d = myProjects.get(projectPath);
-      }
-      if (d != null) {
-        d.fsState.registerDeleted(module, FileUtil.toCanonicalPath(filePath), isTest, d.timestamps.getStorage());
+      final RootDescriptor moduleAndRoot = pd.rootsIndex.getModuleAndRoot(file);
+      if (moduleAndRoot != null) {
+        pd.fsState.registerDeleted(moduleAndRoot.module, FileUtil.toCanonicalPath(file.getPath()), moduleAndRoot.isTestRoot, pd.timestamps.getStorage());
       }
     }
     catch (Exception e) {
       LOG.error(e); // todo
     }
+  }
+
+  @Nullable
+  public ProjectDescriptor getProjectDescriptor(String projectPath) {
+    final ProjectDescriptor pd;
+    synchronized (myConfigurationLock) {
+      pd = myProjects.get(projectPath);
+    }
+    return pd;
   }
 
   public void clearProjectCache(Collection<String> projectPaths) {

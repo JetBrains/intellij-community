@@ -28,6 +28,7 @@ message Message {
       SHUTDOWN_COMMAND = 2;
       SETUP_COMMAND = 3;
       RELOAD_PROJECT_COMMAND = 4;
+      FS_EVENT = 5;
     }
 
     message CompilationRequest {
@@ -72,11 +73,18 @@ message Message {
       repeated string project_id = 1;
     }
 
+    message FSEvent {
+      required string project_id = 1;
+      repeated string changed_paths = 2;
+      repeated string deleted_paths = 3;
+    }
+
     required Type request_type = 1;
     optional CompilationRequest compile_request = 2;
     optional ShutdownCommand shutdown_command = 3;
     optional SetupCommand setup_command = 4;
     optional ReloadProjectCommand reload_project_command = 5;
+    optional FSEvent fs_event = 6;
   }
 
   message Response {

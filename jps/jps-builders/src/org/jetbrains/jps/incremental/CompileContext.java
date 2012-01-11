@@ -1,7 +1,6 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
@@ -28,9 +27,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final MessageHandler myDelegateMessageHandler;
   private volatile boolean myCompilingTests = false;
   private final BuildDataManager myDataManager;
-
-  private final Map<File, RootDescriptor> myRootToModuleMap = new HashMap<File, RootDescriptor>();
-  private final Map<Module, List<RootDescriptor>> myModuleToRootsMap = new HashMap<Module, List<RootDescriptor>>();
+  private final ModuleRootsIndex myRootsIndex;
 
   private final ProjectPaths myProjectPaths;
   private volatile boolean myErrorsFound = false;
@@ -42,7 +39,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
                         boolean isProjectRebuild,
                         ProjectChunks productionChunks,
                         ProjectChunks testChunks,
-                        FSState fsState, TimestampStorage tsStorage, MessageHandler delegateMessageHandler) throws ProjectBuildException {
+                        FSState fsState, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex) throws ProjectBuildException {
     myTsStorage = tsStorage;
     myCompilationStartStamp = System.currentTimeMillis();
     myScope = scope;
@@ -55,25 +52,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myDataManager = new BuildDataManager(projectName);
     final Project project = scope.getProject();
     myProjectPaths = new ProjectPaths(project);
-    for (Module module : project.getModules().values()) {
-      List<RootDescriptor> moduleRoots = myModuleToRootsMap.get(module);
-      if (moduleRoots == null) {
-        moduleRoots = new ArrayList<RootDescriptor>();
-        myModuleToRootsMap.put(module, moduleRoots);
-      }
-      for (String r : module.getSourceRoots()) {
-        final File root = new File(FileUtil.toCanonicalPath(r));
-        final RootDescriptor descriptor = new RootDescriptor(module, root, false);
-        myRootToModuleMap.put(root, descriptor);
-        moduleRoots.add(descriptor);
-      }
-      for (String r : module.getTestRoots()) {
-        final File root = new File(FileUtil.toCanonicalPath(r));
-        final RootDescriptor descriptor = new RootDescriptor(module, root, true);
-        myRootToModuleMap.put(root, descriptor);
-        moduleRoots.add(descriptor);
-      }
-    }
+    myRootsIndex = rootsIndex;
   }
 
   public Project getProject() {
@@ -153,7 +132,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       if (!myErrorsFound) {
         final boolean compilingTests = isCompilingTests();
         for (Module module : chunk.getModules()) {
-          final List<RootDescriptor> roots = myModuleToRootsMap.get(module);
+          final List<RootDescriptor> roots = myRootsIndex.getModuleRoots(module);
           for (RootDescriptor descriptor : roots) {
             if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {
               myFsState.markAllUpToDate(descriptor, myTsStorage, myCompilationStartStamp);
@@ -226,21 +205,12 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   @Nullable
   public RootDescriptor getModuleAndRoot(File file) {
-    File current = file;
-    while (current != null) {
-      final RootDescriptor descriptor = myRootToModuleMap.get(current);
-      if (descriptor != null) {
-        return descriptor;
-      }
-      current = FileUtil.getParentFile(current);
-    }
-    return null;
+    return myRootsIndex.getModuleAndRoot(file);
   }
 
   @NotNull
   public List<RootDescriptor> getModuleRoots(Module module) {
-    final List<RootDescriptor> rootDescriptors = myModuleToRootsMap.get(module);
-    return rootDescriptors != null? Collections.unmodifiableList(rootDescriptors) : Collections.<RootDescriptor>emptyList();
+    return myRootsIndex.getModuleRoots(module);
   }
 
   private static enum DirtyMarkScope{
