@@ -599,7 +599,8 @@ class RunConfigurable extends BaseConfigurable {
           
         }
         if (configurationBean != null) {
-          final String nameText = configurationBean.getConfigurable().getNameText();
+          final SingleConfigurationConfigurable configurable = configurationBean.getConfigurable();
+          final String nameText = configurable != null ? configurable.getNameText() : configurationBean.getSettings().getName();
           if (!names.add(nameText)) {
             TreeUtil.selectNode(myTree, node);
             throw new ConfigurationException("Configuration with name \'" + nameText + "\' already exist");
