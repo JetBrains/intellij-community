@@ -15,20 +15,23 @@
  */
 package com.intellij.openapi.vcs.readOnlyHandler;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class HandleType {
   private final String myName;
   private final boolean myUseVcs;
 
   public static final HandleType USE_FILE_SYSTEM = new HandleType(VcsBundle.message("handle.ro.file.status.type.using.file.system"), false) {
-    public void processFiles(final Collection<VirtualFile> virtualFiles) {
+    public void processFiles(final Collection<VirtualFile> virtualFiles, String changelist) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
@@ -77,5 +80,14 @@ public abstract class HandleType {
     return result;
   }
 
-  public abstract void processFiles(final Collection<VirtualFile> virtualFiles);
+  public abstract void processFiles(final Collection<VirtualFile> virtualFiles, @Nullable String changelist);
+  
+  public List<String> getChangelists() {
+    return Collections.emptyList();
+  }
+  
+  @Nullable
+  public String getDefaultChangelist() {
+    return null;
+  }
 }

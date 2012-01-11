@@ -448,7 +448,7 @@ public class FileTreeModelBuilder {
     PackageDependenciesNode directoryNode = myModuleDirNodes.get(virtualFile);
     if (directoryNode != null) {
       if (myCompactEmptyMiddlePackages) {
-        DirectoryNode nestedNode = ((DirectoryNode)directoryNode).getCompactedDirNode();
+        final DirectoryNode nestedNode = ((DirectoryNode)directoryNode).getCompactedDirNode();
         if (nestedNode != null) { //decompact
           boolean expand = false;
           if (myTree != null){
@@ -465,7 +465,12 @@ public class FileTreeModelBuilder {
           parentWrapper.add(nestedNode);
           nestedNode.removeUpReference();
           if (myTree != null && expand) {
-            myTree.expandPath(new TreePath(nestedNode.getPath()));
+            final Runnable expandRunnable = new Runnable() {
+              public void run() {
+                myTree.expandPath(new TreePath(nestedNode.getPath()));
+              }
+            };
+            SwingUtilities.invokeLater(expandRunnable);
           }
           return parentWrapper;
         }

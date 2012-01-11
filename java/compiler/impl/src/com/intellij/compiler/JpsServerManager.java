@@ -58,7 +58,8 @@ import org.jetbrains.jps.client.Client;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -330,7 +331,7 @@ public class JpsServerManager implements ApplicationComponent{
 
     // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
+    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5008");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");

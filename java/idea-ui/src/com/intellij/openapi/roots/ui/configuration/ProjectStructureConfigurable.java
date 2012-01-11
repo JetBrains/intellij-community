@@ -413,6 +413,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return navigateTo(place, requestFocus);
   }
 
+  public ActionCallback selectGlobalLibraries(final boolean requestFocus) {
+    Place place = createPlaceFor(myGlobalLibrariesConfig);
+    return navigateTo(place, requestFocus);
+  }
+
   public ActionCallback selectProjectOrGlobalLibrary(@NotNull Library library, boolean requestFocus) {
     Place place = createProjectOrGlobalLibraryPlace(library);
     return navigateTo(place, requestFocus);

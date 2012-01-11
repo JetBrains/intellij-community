@@ -133,10 +133,6 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
-  }
-
-  @Override
   public boolean isFocusBeingTransferred() {
     return false;
   }

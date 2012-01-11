@@ -5,5 +5,5 @@ package org.jetbrains.jps.api;
 *         Date: 9/10/11
 */
 public enum BuildType {
-  REBUILD, MAKE, CLEAN
+  PROJECT_REBUILD, FORCED_COMPILATION, MAKE, CLEAN
 }

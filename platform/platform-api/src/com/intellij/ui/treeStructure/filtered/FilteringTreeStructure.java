@@ -39,11 +39,17 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   private final Map<Object, FilteringNode> myDescriptors2Nodes = new HashMap<Object, FilteringNode>();
 
   public FilteringTreeStructure(ElementFilter filter, AbstractTreeStructure originalStructure) {
+    this(filter, originalStructure, true);
+  }
+
+  public FilteringTreeStructure(ElementFilter filter, AbstractTreeStructure originalStructure, boolean initNow) {
     //noinspection unchecked
     myFilter = filter;
     myBaseStructure = originalStructure;
     myRoot = new FilteringNode(null, myBaseStructure.getRootElement());
-    rebuild();
+    if (initNow) {
+      rebuild();
+    }
   }
 
   public void rebuild() {

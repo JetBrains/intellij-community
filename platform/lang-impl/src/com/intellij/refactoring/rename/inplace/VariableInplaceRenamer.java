@@ -63,7 +63,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -465,7 +464,7 @@ public class VariableInplaceRenamer {
   }
 
   protected boolean shouldSelectAll() {
-    if (Registry.is("rename.preselect")) return true;
+    if (myEditor.getSettings().isPreselectRename()) return true;
     final Boolean selectAll = myEditor.getUserData(RenameHandlerRegistry.SELECT_ALL);
     return selectAll != null && selectAll.booleanValue();
   }

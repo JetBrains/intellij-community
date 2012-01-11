@@ -63,7 +63,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -78,7 +77,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.*;
 
 /**
  * @author ilyas
@@ -240,7 +244,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
-    return GrClassImplUtil.isClassEquivalentTo(this, another);
+    return isClassEquivalentTo(this, another);
   }
 
   public boolean isInterface() {
@@ -363,15 +367,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
           GrTypeDefinitionBody body = getBody();
           List<PsiMethod> result = new ArrayList<PsiMethod>();
           if (body != null) {
-            for (GrMethod method : body.getMethods()) {
-              addExpandingReflectedMethods(result, method);
-            }
-
-            for (GrField field : body.getFields()) {
-              if (!field.isProperty()) continue;
-              ContainerUtil.addAll(result, field.getGetters());
-              ContainerUtil.addIfNotNull(result, field.getSetter());
-            }
+            collectMethodsFromBody(body, result);
           }
 
           for (PsiMethod method : AstTransformContributor.runContributorsForMethods(GrTypeDefinitionImpl.this)) {
@@ -390,17 +386,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
 
     return cached.getValue();
-  }
-
-  private static void addExpandingReflectedMethods(List<PsiMethod> result, PsiMethod method) {
-    if (method instanceof GrMethod) {
-      final GrReflectedMethod[] reflectedMethods = ((GrMethod)method).getReflectedMethods();
-      if (reflectedMethods.length > 0) {
-        result.addAll(Arrays.asList(reflectedMethods));
-        return;
-      }
-    }
-    result.add(method);
   }
 
   @NotNull

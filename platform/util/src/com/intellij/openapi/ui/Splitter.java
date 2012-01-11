@@ -20,6 +20,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -406,7 +407,7 @@ public class Splitter extends JPanel {
    *
    * @param component
    */
-  public void setFirstComponent(JComponent component) {
+  public void setFirstComponent(@Nullable JComponent component) {
     if (myFirstComponent != component) {
       if (myFirstComponent != null) {
         remove(myFirstComponent);
@@ -437,7 +438,7 @@ public class Splitter extends JPanel {
    *
    * @param component
    */
-  public void setSecondComponent(JComponent component) {
+  public void setSecondComponent(@Nullable JComponent component) {
     if (mySecondComponent != component) {
       if (mySecondComponent != null) {
         remove(mySecondComponent);

@@ -74,11 +74,6 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
     getGlobalInstance().typeAheadUntil(done);
   }
 
-  @Override
-  public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
-    getGlobalInstance().suspendKeyProcessingUntil(done);
-  }
-
 
   public ActionCallback requestDefaultFocus(boolean forced) {
     return myToolWindowManager.requestDefaultFocus(forced);

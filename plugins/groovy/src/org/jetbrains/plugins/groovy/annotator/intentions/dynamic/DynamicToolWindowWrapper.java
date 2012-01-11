@@ -249,7 +249,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.setTreeCellRenderer(treeCellRenderer);
 
     myTreeTable.setRootVisible(false);
-    myTreeTable.setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
+    myTreeTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor();
 

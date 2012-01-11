@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
@@ -252,8 +251,9 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     }
     GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
     if (typeElement == null) {
-      GrModifierList list = getModifierList();
-      newTypeElement = (GrTypeElement)addAfter(newTypeElement, list);
+      PsiElement anchor = getTypeParameterList();
+      if (anchor == null) anchor = getModifierList();
+      newTypeElement = (GrTypeElement)addAfter(newTypeElement, anchor);
     }
     else {
       newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);

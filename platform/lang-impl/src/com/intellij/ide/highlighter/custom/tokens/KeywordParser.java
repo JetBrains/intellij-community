@@ -49,7 +49,7 @@ public class KeywordParser extends TokenParser {
     }
     Pattern pattern = null;
     try {
-      pattern = Pattern.compile("(" + regex + ")($|[\\W].*)", (ignoreCase ? Pattern.CASE_INSENSITIVE : 0) | Pattern.DOTALL);
+      pattern = Pattern.compile("(" + regex + ")($|[\\W])", (ignoreCase ? Pattern.CASE_INSENSITIVE : 0) | Pattern.DOTALL);
     }
     catch (PatternSyntaxException e) {
       LOG.error(e);
@@ -75,7 +75,7 @@ public class KeywordParser extends TokenParser {
     }
 
     Matcher matcher = myPattern.matcher(myBuffer.subSequence(position, myBuffer.length()));
-    if (!matcher.matches()) {
+    if (!matcher.lookingAt()) {
       return false;
     }
 

@@ -20,14 +20,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author Elena Shaverdova
@@ -43,6 +42,15 @@ public final class ScriptRunnerUtil {
       return ProcessOutputTypes.STDOUT.equals(key);
     }
   };
+
+  public static final Condition<Key> STDERR_OUTPUT_KEY_FILTER = new Condition<Key>() {
+    @Override
+    public boolean value(Key key) {
+      return ProcessOutputTypes.STDERR.equals(key);
+    }
+  };
+
+  public static final Condition<Key> STDOUT_OR_STDERR_OUTPUT_KEY_FILTER = Conditions.or(STDOUT_OUTPUT_KEY_FILTER, STDERR_OUTPUT_KEY_FILTER);
 
   private static final int DEFAULT_TIMEOUT = 30000;
 
@@ -93,14 +101,10 @@ public final class ScriptRunnerUtil {
   public static OSProcessHandler execute(@NotNull String exePath,
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
-                                         String[] parameters,
-                                         @Nullable Map<String, String> environmentParams) throws ExecutionException {
+                                         String[] parameters) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.setPassParentEnvs(true);
-    if (environmentParams != null) {
-      commandLine.setEnvParams(environmentParams);
-    }
     if (scriptFile != null) {
       commandLine.addParameter(scriptFile.getPresentableUrl());
     }
@@ -135,7 +139,7 @@ public final class ScriptRunnerUtil {
                                                                   ScriptOutputType scriptOutputType,
                                                                   @NonNls String... parameters)
     throws ExecutionException {
-    final OSProcessHandler processHandler = execute(exePathString, workingDirectory, scriptFile, parameters, null);
+    final OSProcessHandler processHandler = execute(exePathString, workingDirectory, scriptFile, parameters);
 
     final StringBuilder standardOutput = scriptOutputType.readStandardOutput() ? new StringBuilder() : null;
     final StringBuilder errorOutput = scriptOutputType.readErrorOutput() ? new StringBuilder() : null;

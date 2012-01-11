@@ -26,6 +26,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
+/**
+ * The container class for focus requests for <code>IdeFocusManager</code>
+ * @see IdeFocusManager
+ */
 public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   protected Component myDominationComponent;
   private Throwable myAllocation;

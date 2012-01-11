@@ -55,6 +55,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -1290,6 +1291,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     });
+  }
+
+  @TestOnly
+  public void waitUntilRefreshed() {
+    myUpdater.waitUntilRefreshed();
   }
 
   /**

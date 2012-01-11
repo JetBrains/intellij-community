@@ -602,4 +602,26 @@ class Abc {
 
     myFixture.testHighlighting(false, false, false)
   }
+
+  void testDelegateToMethodWithItsOwnTypeParams() {
+    myFixture.configureByText('a.groovy', '''\
+interface I<S> {
+    def <T> void foo(List<T> a);
+}
+
+class Foo {
+    @Delegate private I list
+}
+
+<error descr="Method 'foo' is not implemented">class Bar implements I</error> {
+  def <T> void foo(List<T> a){}
+}
+
+class Baz implements I {
+  def void foo(List a){}
+}
+''')
+
+    myFixture.testHighlighting(false, false, false)
+  }
 }

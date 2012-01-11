@@ -103,6 +103,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
       // todo
       case CLEAN:
       case MAKE:
+      case FORCED_COMPILATION:
       case REBUILD: {
         final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, compileRequest.getModuleNameList());
         if (myBuildsInProgress.putIfAbsent(projectId, task) == null) {
@@ -235,8 +236,9 @@ class ServerMessageHandler extends SimpleChannelHandler {
     switch (compileType) {
       case CLEAN: return BuildType.CLEAN;
       case MAKE: return BuildType.MAKE;
-      case REBUILD: return BuildType.REBUILD;
+      case REBUILD: return BuildType.PROJECT_REBUILD;
+      case FORCED_COMPILATION: return BuildType.FORCED_COMPILATION;
     }
-    return null;
+    return BuildType.MAKE; // use make by default
   }
 }

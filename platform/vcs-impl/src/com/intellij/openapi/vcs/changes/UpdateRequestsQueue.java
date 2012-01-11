@@ -25,7 +25,9 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -134,6 +136,28 @@ public class UpdateRequestsQueue {
       runnable.run();
     }
     LOG.debug("Stop finished for project: " + myProject.getName());
+  }
+
+  @TestOnly
+  public void waitUntilRefreshed() {
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    synchronized (myLock) {
+      final Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          semaphore.up();
+        }
+      };
+      if (myRequestSubmitted && !myStopped) {
+        myWaitingUpdateCompletionQueue.add(runnable);
+      } else {
+        runnable.run();
+      }
+    }
+    if (!semaphore.waitFor(10000)) {
+      LOG.error("Too long VCS update");
+    }
   }
 
   public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,

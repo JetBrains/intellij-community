@@ -9,11 +9,11 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.OutputToSourceMapping;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  * @author Eugene Zhuravlev
@@ -47,25 +47,21 @@ public class ResourcesBuilder extends Builder{
       ResourcePatterns.KEY.set(context, patterns = new ResourcePatterns(context.getProject()));
     }
     try {
-      final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
-      final OutputToSourceMapping outputToSourceMapping = context.getBuildDataManager().getOutputToSourceStorage();
       final ResourcePatterns finalPatterns = patterns;
       // todo: process all files in case of rebuild or wholeModuleDirty
       // todo: otherwise avoid traverwing the whole module and use dirty file list taken from params
-      context.processFiles(chunk, new FileProcessor() {
+      context.processFilesToRecompile(chunk, new FileProcessor() {
         public boolean apply(final Module module, final File file, final String sourceRoot) throws Exception {
           if (finalPatterns.isResourceFile(file, sourceRoot)) {
-            if (isFileDirty(file, context, tsStorage)) {
-              try {
-                context.processMessage(new ProgressMessage("Copying " + file.getPath()));
-                copyResource(context, module, file, sourceRoot, outputToSourceMapping);
-              }
-              catch (IOException e) {
-                LOG.info(e);
-                context.processMessage(new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())));
-                return false;
-              }
-              tsStorage.saveStamp(file);
+            try {
+              context.processMessage(new ProgressMessage("Copying " + file.getPath()));
+              final String moduleName = module.getName().toLowerCase(Locale.US);
+              copyResource(context, module, file, sourceRoot, context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests()));
+            }
+            catch (IOException e) {
+              LOG.info(e);
+              context.processMessage(new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())));
+              return false;
             }
           }
           return true;
@@ -83,7 +79,7 @@ public class ResourcesBuilder extends Builder{
                                    Module module,
                                    File file,
                                    String sourceRoot,
-                                   final OutputToSourceMapping outputToSourceMapping) throws Exception {
+                                   final SourceToOutputMapping outputToSourceMapping) throws Exception {
     final String outputRoot = context.isCompilingTests() ? module.getTestOutputPath() : module.getOutputPath();
     final String relativePath = FileUtil.getRelativePath(sourceRoot, FileUtil.toSystemIndependentName(file.getPath()), '/');
     final String prefix = module.getSourceRootPrefixes().get(sourceRoot);
@@ -98,7 +94,7 @@ public class ResourcesBuilder extends Builder{
     final String outputPath = targetPath.toString();
     FileUtil.copyContent(file, new File(outputPath));
     try {
-      outputToSourceMapping.update(outputPath, file.getPath());
+      outputToSourceMapping.update(file.getPath(), outputPath);
     }
     catch (Exception e) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, e));
