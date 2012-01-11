@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.CompilerExcludes;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
@@ -60,15 +61,21 @@ public class FSState {
     final FilesDelta delta = getDelta(rd.module);
     final Set<File> files = delta.clearRecompile(rd.root, rd.isTestRoot);
     if (files != null) {
+      final CompilerExcludes excludes = rd.module.getProject().getCompilerConfiguration().getExcludes();
       for (File file : files) {
-        final long stamp = file.lastModified();
-        if (stamp > compilationStartStamp) {
-          // if the file was modified after the compilation had started,
-          // do not save the stamp considering file dirty
-          delta.markRecompile(rd.root, rd.isTestRoot, file);
+        if (!excludes.isExcluded(file)) {
+          final long stamp = file.lastModified();
+          if (stamp > compilationStartStamp) {
+            // if the file was modified after the compilation had started,
+            // do not save the stamp considering file dirty
+            delta.markRecompile(rd.root, rd.isTestRoot, file);
+          }
+          else {
+            tsStorage.saveStamp(file, stamp);
+          }
         }
         else {
-          tsStorage.saveStamp(file, stamp);
+          tsStorage.remove(file);
         }
       }
     }
@@ -79,10 +86,14 @@ public class FSState {
     final FilesDelta lastRoundDelta = myLastRoundDelta;
     final FilesDelta delta = lastRoundDelta != null? lastRoundDelta : getDelta(module);
     final Map<File, Set<File>> data = delta.getSourcesToRecompile(forTests);
+    final CompilerExcludes excludes = module.getProject().getCompilerConfiguration().getExcludes();
     synchronized (data) {
       for (Map.Entry<File, Set<File>> entry : data.entrySet()) {
         final String root = FileUtil.toSystemIndependentName(entry.getKey().getPath());
         for (File file : entry.getValue()) {
+          if (excludes.isExcluded(file)) {
+            continue;
+          }
           if (!processor.apply(module, file, root)) {
             return false;
           }

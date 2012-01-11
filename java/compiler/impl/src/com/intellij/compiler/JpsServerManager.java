@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -97,6 +98,12 @@ public class JpsServerManager implements ApplicationComponent{
     mySystemDirectory = system;
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
+    final MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    appConnection.subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
+      public void saved(@NotNull Project project) {
+        sendReloadRequest(project);
+      }
+    });
 
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
@@ -118,29 +125,55 @@ public class JpsServerManager implements ApplicationComponent{
     sendNotification(paths, true);
   }
 
-  private void sendNotification(Collection<String> paths, final boolean isDeleted) {
-    final Client client = myClient;
-    if (client != null && client.isConnected()) {
-      final Project[] openProjects = myProjectManager.getOpenProjects();
-      if (openProjects.length > 0) {
-        final Collection<String> changed, deleted;
-        if (isDeleted) {
-          changed = Collections.emptyList();
-          deleted = paths;
-        }
-        else {
-          changed = paths;
-          deleted = Collections.emptyList();
-        }
-        for (Project project : openProjects) {
-          try {
-            client.sendFSEvent(project.getLocation(), changed, deleted);
+  public void sendReloadRequest(final Project project) {
+    myTaskExecutor.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final Client client = ensureServerRunningAndClientConnected(false);
+          if (client != null) {
+            client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
           }
-          catch (Exception e) {
-            LOG.info(e);
-          }
+        }
+        catch (Throwable e) {
+          LOG.info(e);
         }
       }
+    });
+  }
+
+  private void sendNotification(final Collection<String> paths, final boolean isDeleted) {
+    try {
+      final Client client = ensureServerRunningAndClientConnected(false);
+      if (client != null) {
+        myTaskExecutor.submit(new Runnable() {
+          public void run() {
+            final Project[] openProjects = myProjectManager.getOpenProjects();
+            if (openProjects.length > 0) {
+              final Collection<String> changed, deleted;
+              if (isDeleted) {
+                changed = Collections.emptyList();
+                deleted = paths;
+              }
+              else {
+                changed = paths;
+                deleted = Collections.emptyList();
+              }
+              for (Project project : openProjects) {
+                try {
+                  client.sendFSEvent(project.getLocation(), changed, deleted);
+                }
+                catch (Exception e) {
+                  LOG.info(e);
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    catch (Throwable th) {
+      LOG.error(th); // should not happen
     }
   }
 
@@ -457,7 +490,7 @@ public class JpsServerManager implements ApplicationComponent{
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         public void beforeRootsChange(final ModuleRootEvent event) {
-          sendReloadRequest(project, false);
+          sendReloadRequest(project);
         }
 
         public void rootsChanged(final ModuleRootEvent event) {
@@ -477,11 +510,10 @@ public class JpsServerManager implements ApplicationComponent{
           });
         }
       });
-
     }
 
     public void projectClosing(Project project) {
-      sendReloadRequest(project, false);
+      sendReloadRequest(project);
     }
 
     public void projectClosed(Project project) {
@@ -489,23 +521,6 @@ public class JpsServerManager implements ApplicationComponent{
       if (conn != null) {
         conn.disconnect();
       }
-    }
-
-    private void sendReloadRequest(final Project project, final boolean forceRestart) {
-      myTaskExecutor.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            final Client client = ensureServerRunningAndClientConnected(forceRestart);
-            if (client != null) {
-              client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
-            }
-          }
-          catch (Throwable e) {
-            LOG.info(e);
-          }
-        }
-      });
     }
   }
 }

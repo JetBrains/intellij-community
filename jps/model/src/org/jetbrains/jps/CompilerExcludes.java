@@ -1,5 +1,7 @@
 package org.jetbrains.jps;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,16 +27,18 @@ public class CompilerExcludes {
       return true;
     }
 
-    File parent = file.getParentFile();
-    if (myDirectories.contains(parent)) {
-      return true;
-    }
-
-    while (parent != null) {
-      if (myRecursivelyExcludedDirectories.contains(parent)) {
+    if (!myDirectories.isEmpty() || !myRecursivelyExcludedDirectories.isEmpty()) { // optimization
+      File parent = FileUtil.getParentFile(file);
+      if (myDirectories.contains(parent)) {
         return true;
       }
-      parent = parent.getParentFile();
+
+      while (parent != null) {
+        if (myRecursivelyExcludedDirectories.contains(parent)) {
+          return true;
+        }
+        parent = FileUtil.getParentFile(parent);
+      }
     }
     return false;
   }

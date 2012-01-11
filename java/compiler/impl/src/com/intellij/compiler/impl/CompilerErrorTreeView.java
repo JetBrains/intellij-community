@@ -107,6 +107,14 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
         ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true, myProject);
         ((CompilerConfigurationImpl) CompilerConfiguration.getInstance(myProject)).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
         FileStatusManager.getInstance(myProject).fileStatusesChanged();
+        final Project project = myProject;
+        SwingUtilities.invokeLater(new Runnable() { // this will cause jps compile server to reload project configuration
+          public void run() {
+            if (!project.isDisposed()) {
+              project.save();
+            }
+          }
+        });
       }
     }
 
