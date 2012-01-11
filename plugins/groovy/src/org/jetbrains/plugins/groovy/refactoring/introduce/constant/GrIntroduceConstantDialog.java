@@ -352,7 +352,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     if (myDefaultTargetClass == null ||
         !targetClassName.isEmpty() && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
       final Module module = ModuleUtil.findModuleForPsiElement(myContext.place);
-      newClass = JavaPsiFacade.getInstance(myContext.project).findClass(targetClassName, module.getModuleScope());
+      newClass = JavaPsiFacade.getInstance(myContext.project).findClass(targetClassName, GlobalSearchScope.projectScope(myContext.project));
       if (newClass == null) {
         if (Messages.showOkCancelDialog(myContext.project, GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
                                         IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != OK_EXIT_CODE) {
@@ -429,7 +429,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   @Nullable
   private static PsiClass getTargetClass(String qualifiedName, PsiDirectory baseDirectory, Project project, Module module) {
-    GlobalSearchScope scope = module.getModuleScope();
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+
     PsiClass targetClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
     if (targetClass != null) return targetClass;
 
