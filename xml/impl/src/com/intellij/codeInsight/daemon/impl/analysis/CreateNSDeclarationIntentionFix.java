@@ -194,6 +194,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public boolean showHint(final Editor editor) {
+    if (myToken == null) return false;
     XmlToken token = (XmlToken)myToken.retrieve();
     if (token == null) return false;
     if (!XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS || myNamespacePrefix.length() == 0) {
