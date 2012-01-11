@@ -23,6 +23,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
+import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -30,6 +31,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -49,6 +52,7 @@ import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -58,17 +62,20 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
 
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
+  @Nullable private final Editor myEditor;
   private final int myStartOffset;
   private final int myEndOffset;
   private final boolean myUpdateAll;
 
   public LineMarkersPass(@NotNull Project project,
                          @NotNull PsiFile file,
+                         @Nullable Editor editor,
                          @NotNull Document document,
                          int startOffset,
                          int endOffset,
                          boolean updateAll) {
     super(project, document, GeneralHighlightingPass.PRESENTABLE_NAME, file, false);
+    myEditor = editor;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;
@@ -92,7 +99,17 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
       //long time = System.currentTimeMillis();
-      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+      int start = myStartOffset;
+      int end = myEndOffset;
+      //if (myEditor != null) {
+      //  final int startLine = myEditor.offsetToLogicalPosition(start).line;
+      //  final int endLine = myEditor.offsetToLogicalPosition(end).line;
+      //  if (startLine != endLine) {
+      //    start = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(startLine, 0)));
+      //    end = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(endLine + 1, 0))) - 1;
+      //  }
+      //}
+      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, start, end);
       if (elements.isEmpty()) {
         elements = Collections.singletonList(psiRoot);
       }
@@ -101,7 +118,40 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
       collectLineMarkersForInjected(lineMarkers, elements, this, myFile, progress);
     }
 
-    myMarkers = lineMarkers;
+    myMarkers = mergeLineMarkers(lineMarkers);
+  }
+
+  private List<LineMarkerInfo> mergeLineMarkers(List<LineMarkerInfo> markers) {    
+    List<MergeableLineMarkerInfo> forMerge = new ArrayList<MergeableLineMarkerInfo>();
+    final Iterator<LineMarkerInfo> iterator = markers.iterator();
+    while (iterator.hasNext()) {
+      final LineMarkerInfo marker = iterator.next();
+          
+      if (marker instanceof MergeableLineMarkerInfo) {
+        iterator.remove();
+        forMerge.add((MergeableLineMarkerInfo)marker);
+      }
+    }
+
+    if (forMerge.isEmpty() || myEditor == null) return markers;
+
+    final List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>(markers);
+    final HashMap<Integer, List<MergeableLineMarkerInfo>> map = new HashMap<Integer, List<MergeableLineMarkerInfo>>();
+    for (MergeableLineMarkerInfo info : forMerge) {
+      final LogicalPosition position = myEditor.offsetToLogicalPosition(info.startOffset);
+      List<MergeableLineMarkerInfo> infos = map.get(position.line);
+      if (infos == null) {
+        infos = new ArrayList<MergeableLineMarkerInfo>();
+        map.put(position.line, infos);
+      }
+      infos.add(info);
+    }
+
+    for (List<MergeableLineMarkerInfo> infos : map.values()) {
+      result.addAll(MergeableLineMarkerInfo.merge(infos));
+    }
+
+    return result;
   }
 
   public static List<LineMarkerProvider> getMarkerProviders(Language language, Project project) {
