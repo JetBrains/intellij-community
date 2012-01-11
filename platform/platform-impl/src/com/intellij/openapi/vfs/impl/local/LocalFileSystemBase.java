@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,6 +186,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public boolean isSpecialFile(@NotNull final VirtualFile file) {
+    if (!SystemInfo.isUnix) return false;
     final File ioFile = convertToIOFile(file);
     return ioFile.exists() && !ioFile.isFile() && !ioFile.isDirectory();
   }
