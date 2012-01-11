@@ -96,10 +96,7 @@ public abstract class AbstractVcsTestCase {
 
     CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
     ProcessOutput result = handler.runProcess(60*1000);
-    if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for VCS client to finish execution");
-    }
-    if (myTraceClient) {
+    if (myTraceClient || result.isTimeout()) {
       System.out.println("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
       if (out.length() > 0) {
@@ -109,6 +106,9 @@ public abstract class AbstractVcsTestCase {
       if (err.length() > 0) {
         System.out.println("*** error:\n" + err);
       }
+    }
+    if (result.isTimeout()) {
+      throw new RuntimeException("Timeout waiting for VCS client to finish execution");
     }
     return result;
   }
