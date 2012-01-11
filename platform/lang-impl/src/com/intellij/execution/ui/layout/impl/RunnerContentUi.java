@@ -460,6 +460,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       final AnAction[] actions = groupToBuild.getChildren(null);
       if (!Arrays.equals(actions, myContextActions.get(entry.getKey()))) {
         ActionToolbar tb = myActionManager.createActionToolbar(myActionsPlace, groupToBuild, true);
+        tb.getComponent().setBorder(null);
         tb.setTargetComponent(contextComponent);
         eachPlaceholder.setContent(tb.getComponent());
       }
@@ -478,6 +479,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (Map.Entry<GridImpl, Wrapper> entry : myMinimizedButtonsPlaceholder.entrySet()) {
       Wrapper eachPlaceholder = entry.getValue();
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true);
+      tb.getComponent().setBorder(null);
       tb.setReservePlaceAutoPopupIcon(false);
       JComponent minimized = tb.getComponent();
       eachPlaceholder.setContent(minimized);
