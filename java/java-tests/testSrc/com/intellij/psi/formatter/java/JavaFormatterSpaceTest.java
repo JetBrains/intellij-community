@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.psi.formatter.java;
+
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
@@ -301,6 +303,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   public void testSpacesBeforeResourceList() throws Exception {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
     getSettings().SPACE_BEFORE_TRY_PARENTHESES = true;
     getSettings().SPACE_BEFORE_TRY_LBRACE = true;
