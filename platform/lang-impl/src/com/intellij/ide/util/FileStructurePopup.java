@@ -92,7 +92,7 @@ public class FileStructurePopup implements Disposable {
   private String myTitle;
   private TreeSpeedSearch mySpeedSearch;
   private SmartTreeStructure myTreeStructure;
-  private int myPrefferedWidth;
+  private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
@@ -220,7 +220,7 @@ public class FileStructurePopup implements Disposable {
 
     ((AbstractPopup)myPopup).setShowHints(true);
     if (shouldSetWidth) {
-      myPopup.setSize(new Dimension(myPrefferedWidth + 10, myPopup.getSize().height));
+      myPopup.setSize(new Dimension(myPreferredWidth + 10, myPopup.getSize().height));
     }
     myAbstractTreeBuilder.expandAll(new Runnable() {
       @Override
@@ -396,7 +396,7 @@ public class FileStructurePopup implements Disposable {
     for (FileStructureNodeProvider provider : fileStructureNodeProviders) {
       addCheckbox(comboPanel, provider);
     }
-    myPrefferedWidth = Math.max(comboPanel.getPreferredSize().width, 350);
+    myPreferredWidth = Math.max(comboPanel.getPreferredSize().width, 350);
     panel.add(comboPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree());
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
@@ -585,15 +585,6 @@ public class FileStructurePopup implements Disposable {
       }
     }
   }
-
-  //private class MyFilter extends ElementFilter.Active.Impl<StructureViewComponent.StructureViewTreeElementWrapper> {
-  //
-  //  @Override
-  //  public boolean shouldBeShowing(StructureViewComponent.StructureViewTreeElementWrapper value) {
-  //    return true;
-  //  }
-  //}
-
 
   private class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter = null;
