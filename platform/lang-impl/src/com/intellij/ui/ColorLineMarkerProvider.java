@@ -19,17 +19,20 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -54,11 +57,11 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
   public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
   }
   
-  private static class MyInfo extends LineMarkerInfo<PsiElement> {
+  private static class MyInfo extends MergeableLineMarkerInfo<PsiElement> {
 
     public MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
       super(element, 
-            element.getTextRange(), 
+            element.getTextRange(),
             new ColorIcon(10, color),
             Pass.UPDATE_ALL, 
             FunctionUtil.<Object, String>nullConstant(), 
@@ -82,6 +85,16 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
               }
             }, 
             GutterIconRenderer.Alignment.RIGHT);
+    }
+
+    @Override
+    public boolean canMergeWith(MergeableLineMarkerInfo<?> info) {
+      return info instanceof MyInfo;
+    }
+
+    @Override
+    public Icon getCommonIcon(List<MergeableLineMarkerInfo> infos) {
+      return IconLoader.getIcon("/gutter/colors.png");
     }
   }
 }
