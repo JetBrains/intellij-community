@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -31,7 +31,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
   public void testChainedMethodsAlignment() throws Exception {
     // Inspired by IDEA-30369
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
     doTest();
   }
@@ -93,7 +93,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
   public void testArrayInitializer() throws IncorrectOperationException {
     // Inspired by IDEADEV-16136
-    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true;
 
     doTextTest(
@@ -153,8 +153,8 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
   public void testFieldInColumnsAlignment() {
     // Inspired by IDEA-55147
     getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    getSettings().FIELD_ANNOTATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
-    getSettings().VARIABLE_ANNOTATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+    getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getSettings().VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
     doTextTest(
       "public class FormattingTest {\n" +

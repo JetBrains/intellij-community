@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -91,9 +90,35 @@ class FormatProcessor {
 
   private LeafBlockWrapper myFirstTokenBlock;
   private LeafBlockWrapper myLastTokenBlock;
-  
-  private SortedMap<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependencies =
-    new TreeMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>(new Comparator<TextRange>() {
+
+  /**
+   * Formatter provides a notion of {@link DependantSpacingImpl dependent spacing}, i.e. spacing that insist on line feed if target
+   * dependent region contains line feed.
+   * <p/>
+   * Example:
+   * <pre>
+   *       int[] data = {1, 2, 3};
+   * </pre>
+   * We want to keep that in one line with possible but place curly braces on separate lines if the width is not enough:
+   * <pre>
+   *      int[] data = {    | &lt; right margin
+   *          1, 2, 3       |
+   *      }                 |
+   * </pre>
+   * There is a possible case that particular block has dependent spacing property that targets region that lays beyond the
+   * current block. E.g. consider example above - <code>'1'</code> block has dependent spacing that targets the whole
+   * <code>'{1, 2, 3}'</code> block. So, it's not possible to answer whether line feed should be used during processing block
+   * <code>'1'</code>.
+   * <p/>
+   * We store such 'forward dependencies' at the current collection where the key is the range of the target 'dependent forward
+   * region' and value is dependent spacing object.
+   * <p/>
+   * Every time we detect that formatter changes 'has line feeds' status of such dependent region, we
+   * {@link DependantSpacingImpl#setDependentRegionChanged() mark} the dependent spacing as changed and schedule one more
+   * formatting iteration.
+   */
+  private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
+    new TreeMap<TextRange, DependantSpacingImpl>(new Comparator<TextRange>() {
       public int compare(final TextRange o1, final TextRange o2) {
         int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
 
@@ -434,37 +459,33 @@ class FormatProcessor {
   }
 
   private boolean shouldReformatBecauseOfBackwardDependency(TextRange changed) {
-    final SortedMap<TextRange, Pair<AbstractBlockWrapper, Boolean>> sortedHeadMap = myPreviousDependencies.tailMap(changed);
+    final SortedMap<TextRange, DependantSpacingImpl> sortedHeadMap = myPreviousDependencies.tailMap(changed);
 
-    for (final Map.Entry<TextRange, Pair<AbstractBlockWrapper, Boolean>> entry : sortedHeadMap.entrySet()) {
+    boolean result = false;
+    for (final Map.Entry<TextRange, DependantSpacingImpl> entry : sortedHeadMap.entrySet()) {
       final TextRange textRange = entry.getKey();
 
       if (textRange.contains(changed)) {
-        final Pair<AbstractBlockWrapper, Boolean> pair = entry.getValue();
-        final boolean containedLineFeeds = pair.getSecond().booleanValue();
+        final DependantSpacingImpl dependentSpacing = entry.getValue();
+        final boolean containedLineFeeds = dependentSpacing.getMinLineFeeds() > 0;
         final boolean containsLineFeeds = containsLineFeeds(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
-          return true;
+          dependentSpacing.setDependentRegionChanged();
+          result = true;
         }
       }
     }
-    return false;
+    return result;
   }
 
   private void saveDependency(final SpacingImpl spaceProperty) {
     final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
     final TextRange dependency = dependantSpaceProperty.getDependency();
-    if (dependantSpaceProperty.wasLFUsed()) {
-      myPreviousDependencies.put(dependency, new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
+    if (dependantSpaceProperty.isDependentRegionChanged()) {
+      return;
     }
-    else {
-      final boolean value = containsLineFeeds(dependency);
-      if (value) {
-        dependantSpaceProperty.setLFWasUsed(true);
-      }
-      myPreviousDependencies.put(dependency, new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, value));
-    }
+    myPreviousDependencies.put(dependency, dependantSpaceProperty);
   }
 
   private static boolean shouldSaveDependency(final SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
@@ -1293,6 +1314,7 @@ class FormatProcessor {
       }
       else {
         myAlignAgain.clear();
+        myPreviousDependencies.clear();
         myCurrentBlock = myFirstTokenBlock;
       }
     }
