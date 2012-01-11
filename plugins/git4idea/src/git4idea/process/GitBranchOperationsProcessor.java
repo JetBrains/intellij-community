@@ -68,7 +68,6 @@ public final class GitBranchOperationsProcessor {
 
   private final Project myProject;
   private final GitRepository myRepository;
-  private final VirtualFile myRoot;
   @Nullable private final Runnable myCallInAwtAfterExecution;
 
   public GitBranchOperationsProcessor(@NotNull GitRepository repository) {
@@ -79,7 +78,6 @@ public final class GitBranchOperationsProcessor {
     myProject = repository.getProject();
     myRepository = repository;
     myCallInAwtAfterExecution = callInAwtAfterExecution;
-    myRoot = myRepository.getRoot();
   }
 
   /**
@@ -125,14 +123,14 @@ public final class GitBranchOperationsProcessor {
     GitConflictResolver.Params params = new GitConflictResolver.Params().
       setMergeDescription("The following files have unresolved conflicts. You need to resolve them before checking out.").
       setErrorNotificationTitle("Can't create new branch");
-    return new GitConflictResolver(myProject, Collections.singleton(myRoot), params);
+    return new GitConflictResolver(myProject, Collections.singleton(myRepository.getRoot()), params);
   }
 
   /**
    * Creates and checks out a new local branch starting from the given reference:
    * {@code git checkout -b <branchname> <start-point>}. <br/>
    * If the reference is a remote branch, and the tracking is wanted, pass {@code true} in the "track" parameter.
-   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, Runnable)}.
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String)}.
    *
    * @param newBranchName     Name of new local branch.
    * @param startPoint        Reference to checkout.
@@ -167,9 +165,9 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
-    final GitMessageWithFilesDetector checkoutListener = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, myRoot);
+    final GitMessageWithFilesDetector checkoutListener = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, myRepository.getRoot());
     GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
-    GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY, myRoot);
+    GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY, myRepository.getRoot());
 
     GitCommandResult result = Git.checkout(myRepository, reference, newBranch, checkoutListener, unmergedDetector, untrackedOverwrittenByCheckout);
     if (result.success()) {
@@ -260,7 +258,7 @@ public final class GitBranchOperationsProcessor {
    */
   private boolean saveOrNotify(GitChangesSaver saver) {
     try {
-      saver.saveLocalChanges(Collections.singleton(myRoot));
+      saver.saveLocalChanges(Collections.singleton(myRepository.getRoot()));
       return true;
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
