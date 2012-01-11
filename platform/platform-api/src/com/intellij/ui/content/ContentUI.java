@@ -30,4 +30,9 @@ public interface ContentUI extends Disposable {
   void beforeDispose();
 
   boolean canChangeSelectionTo(Content content, boolean implicit);
+
+  String getCloseActionName();
+  String getCloseAllButThisActionName();
+  String getPreviousContentActionName();
+  String getNextContentActionName();
 }

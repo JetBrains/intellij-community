@@ -91,6 +91,10 @@ public interface ContentManager extends Disposable, BusyObject {
    * @since 5.1
    */
   String getCloseAllButThisActionName();
+  
+  String getPreviousContentActionName();
+
+  String getNextContentActionName();
 
   List<AnAction> getAdditionalPopupActions(@NotNull  Content content);
 

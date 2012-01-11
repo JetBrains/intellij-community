@@ -147,6 +147,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(myManager.getContentCount() > 1);
+      e.getPresentation().setText(myManager.getNextContentActionName());
     }
   }
 
@@ -161,6 +162,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(myManager.getContentCount() > 1);
+      e.getPresentation().setText(myManager.getPreviousContentActionName());
     }
   }
 

@@ -173,7 +173,9 @@ public class PagedFileStorage implements Forceable {
       @NotNull
       private ByteBufferWrapper createValue(Integer key) {
         checkThreadAccess();
-        PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(key & FILE_INDEX_MASK);
+        final int storageIndex = key & FILE_INDEX_MASK;
+        PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
+        assert owner != null: "No storage for index " + storageIndex;
         int off = (key & MAX_PAGES_COUNT) * owner.myPageSize;
         if (off > owner.length()) {
           throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + owner.length());

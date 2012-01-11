@@ -366,12 +366,21 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public String getCloseActionName() {
-    return UIBundle.message("tabbed.pane.close.tab.action.name");
+    return myUI.getCloseActionName();
   }
 
-
   public String getCloseAllButThisActionName() {
-    return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
+    return myUI.getCloseAllButThisActionName();
+  }
+
+  @Override
+  public String getPreviousContentActionName() {
+    return myUI.getPreviousContentActionName();
+  }
+
+  @Override
+  public String getNextContentActionName() {
+    return myUI.getNextContentActionName();
   }
 
   public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) {

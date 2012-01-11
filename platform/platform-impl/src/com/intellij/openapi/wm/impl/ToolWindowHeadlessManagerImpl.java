@@ -198,6 +198,17 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) { return Collections.emptyList(); }
     public String getCloseActionName() { return "close"; }
     public String getCloseAllButThisActionName() { return "closeallbutthis"; }
+
+    @Override
+    public String getPreviousContentActionName() {
+      return "previous";
+    }
+
+    @Override
+    public String getNextContentActionName() {
+      return "next";
+    }
+
     public JComponent getComponent() { return new JLabel(); }
     public Content getContent(final JComponent component) { return null; }
     @Nullable

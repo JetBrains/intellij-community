@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -459,6 +460,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       final AnAction[] actions = groupToBuild.getChildren(null);
       if (!Arrays.equals(actions, myContextActions.get(entry.getKey()))) {
         ActionToolbar tb = myActionManager.createActionToolbar(myActionsPlace, groupToBuild, true);
+        tb.getComponent().setBorder(null);
         tb.setTargetComponent(contextComponent);
         eachPlaceholder.setContent(tb.getComponent());
       }
@@ -477,6 +479,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (Map.Entry<GridImpl, Wrapper> entry : myMinimizedButtonsPlaceholder.entrySet()) {
       Wrapper eachPlaceholder = entry.getValue();
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true);
+      tb.getComponent().setBorder(null);
       tb.setReservePlaceAutoPopupIcon(false);
       JComponent minimized = tb.getComponent();
       eachPlaceholder.setContent(minimized);
@@ -648,6 +651,26 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
 
     return true;
+  }
+
+  @Override
+  public String getCloseActionName() {
+    return UIBundle.message("tabbed.pane.close.tab.action.name");
+  }
+
+  @Override
+  public String getCloseAllButThisActionName() {
+    return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
+  }
+
+  @Override
+  public String getPreviousContentActionName() {
+    return "Select Previous Tab";
+  }
+
+  @Override
+  public String getNextContentActionName() {
+    return "Select Next Tab";
   }
 
   public void dispose() {

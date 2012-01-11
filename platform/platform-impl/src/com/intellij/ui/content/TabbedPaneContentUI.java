@@ -17,10 +17,7 @@ package com.intellij.ui.content;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TabbedPane;
-import com.intellij.ui.TabbedPaneImpl;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
@@ -322,6 +319,26 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
   public boolean canChangeSelectionTo(Content content, boolean implicit) {
     return true;
+  }
+
+  @Override
+  public String getCloseActionName() {
+    return UIBundle.message("tabbed.pane.close.tab.action.name");
+  }
+
+  @Override
+  public String getCloseAllButThisActionName() {
+    return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
+  }
+
+  @Override
+  public String getPreviousContentActionName() {
+    return "Select Previous Tab";
+  }
+
+  @Override
+  public String getNextContentActionName() {
+    return "Select Next Tab";
   }
 
   public void dispose() {
