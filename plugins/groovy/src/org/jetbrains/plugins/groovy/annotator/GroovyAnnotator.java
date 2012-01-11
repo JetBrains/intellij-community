@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.annotator;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -254,6 +255,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
       registerReferenceFixes(referenceExpression, annotation);
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(referenceExpression, new QuickFixActionRegistrarAdapter(annotation));
+      OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(annotation), referenceExpression);
 
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
@@ -1621,6 +1623,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         registerCreateClassByTypeFix(refElement, annotation);
         registerAddImportFixes(refElement, annotation);
         UnresolvedReferenceQuickFixProvider.registerReferenceFixes(refElement, new QuickFixActionRegistrarAdapter(annotation));
+        OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(annotation), refElement);
       }
     }
     else if (!resolveResult.isAccessible()) {
