@@ -225,7 +225,6 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     if (parent == null) return false;
 
     cfg.setScriptName(vFile.getPath());
-    cfg.setShortName(containingFile.getName());
 
     if (StringUtil.isEmptyOrSpaces(cfg.getWorkingDirectory()))
       cfg.setWorkingDirectory(parent.getPath());
