@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -105,7 +106,11 @@ public class ActionUninstallPlugin extends AnAction implements DumbAware {
 
     try {
       PluginInstaller.prepareToUninstall(pluginId);
-      PluginManagerUISettings.getInstance().myInstalledPlugins.remove(pluginId.getIdString());
+      final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().myInstalledPlugins;
+      final String pluginIdString = pluginId.getIdString();
+      while (installedPlugins.contains(pluginIdString)) {
+        installedPlugins.remove(pluginIdString);
+      }
       host.setRequireShutdown(descriptor.isEnabled());
       pluginTable.updateUI();
     }
