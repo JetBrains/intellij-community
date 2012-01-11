@@ -520,3 +520,11 @@ def test_dict_generics(d):
     d2 = dict(xs)
     for k, v in d2.items():
         print k + <warning descr="Expected type 'one of (int, long, float, complex)', got 'unicode' instead">v</warning>
+
+
+# PY-5474
+def test_bad_subsription_expr():
+    x = r"""\x""
+    r"""[<error descr="']' expected">\</error><error descr="Statement expected, found Py:BACKSLASH">t</error><error descr="End of statement expected">\</error><error descr="Statement expected, found Py:BACKSLASH">r</error><error descr="End of statement expected">\</error><error descr="Statement expected, found Py:BACKSLASH">v</error><error descr="End of statement expected">]</error><error descr="Statement expected, found Py:RBRACKET">"</error>""
+    """
+

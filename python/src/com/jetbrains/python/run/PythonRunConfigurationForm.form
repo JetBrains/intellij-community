@@ -65,7 +65,7 @@
           <component id="b2194" class="javax.swing.JCheckBox" binding="myAttachDebuggerToSubprocess">
             <constraints border-constraint="South"/>
             <properties>
-              <text value="Attach to subprocess automaticly while debugging"/>
+              <text value="Attach to subprocess automatically while debugging"/>
             </properties>
           </component>
           <vspacer id="a7c4">
