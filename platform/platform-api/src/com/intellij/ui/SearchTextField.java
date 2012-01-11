@@ -152,13 +152,13 @@ public class SearchTextField extends JPanel {
         myToggleHistoryLabel.setBackground(myTextField.getBackground());
         myClearFieldLabel.setBackground(myTextField.getBackground());
 
-        setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), originalBorder));
+        setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0), originalBorder));
 
         myTextField.setOpaque(true);
         myTextField.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
       }
       else {
-        setBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0));
+        setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
       }
     }
 
