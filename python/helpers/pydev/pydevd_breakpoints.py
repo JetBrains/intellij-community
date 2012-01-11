@@ -74,7 +74,6 @@ def get_exception_name(exctype):
 
 def get_exception_breakpoint(exctype, exceptions, notify_class):
     name = get_exception_full_qname(exctype)
-    print ("Name %s"%name)
     exc = None
     if exceptions is not None:
         for k, e in exceptions.items():
