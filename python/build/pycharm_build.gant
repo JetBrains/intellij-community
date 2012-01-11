@@ -4,6 +4,7 @@ import org.jetbrains.jps.Module
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
 includeTool << Jps
@@ -14,7 +15,6 @@ requireProperty("buildNumber", requireProperty("build.number", snapshot))
 ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
 
 setProperty("system_selector", "PyCharm${p("component.version.major")}0")
-
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
@@ -81,50 +81,40 @@ class Paths {
 
   def Paths(String home) {
     sandbox = "$home/out/pycharm"
+
     distAll = "$sandbox/layout"
     distWin = "$sandbox/win"
     distMac = "$sandbox/mac"
     distUnix = "$sandbox/unix"
+    artifacts = "$home/out/pycharm/artifacts"
 
     ideaSystem = "$sandbox/system"
     ideaConfig = "$sandbox/config"
-
-    artifacts = "$home/out/pycharm/artifacts"
   }
 }
 
 setProperty("paths", new Paths(home))
-
-def sandbox = "$home/out/pycharm";
-
 setProperty("buildName", "PY-$buildNumber")
 
 target('default': "Build artifacts") {
-
   def modules = [
           "python", "python-ide", "python-pydev", "colorSchemes", platformApiModules(), platformImplementationModules(), pluginFilter
   ].flatten()
 
   loadProject()
 
-//  project.dryRun = true
   project.stage("Cleaning up sandbox folder")
 
-  project.targetFolder = "$sandbox/classes"
+  project.targetFolder = "${paths.sandbox}/classes"
   project.dryRun = dryRun
 
   if (!dryRun) {
-    forceDelete(sandbox)
-    ant.mkdir(dir: sandbox)
+    forceDelete(paths.sandbox)
+    ant.mkdir(dir: paths.sandbox)
   }
 
   ant.tstamp() {
     format(property: "todayYear", pattern: "yyyy")
-  }
-
-  if (isEap()) {
-    binding.setVariable("common_vmoptions",
-                        "$common_vmoptions -XX:+HeapDumpOnOutOfMemoryError -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
   }
 
   ant.patternset(id: "resources.included") {
@@ -185,118 +175,57 @@ target('default': "Build artifacts") {
   usedJars.add("$home/community/lib/jgoodies-common-1.2.1.jar")
   usedJars.add("$home/community/lib/jgoodies-looks-2.4.2.jar")
 
-  build_searchable_options()
-  wire_build_date(buildName)
+  buildSearchableOptions("${project["platform-resources"].output}/search", ["$home/build/idea.license", "$home/build/pycharm.license"], {
+    project["python-ide"].runtimeClasspath().each {
+      pathelement(location: it)
+    }
+  }, "-Didea.platform.prefix=Python -Didea.no.jre.check=true")
+
+  if (!dryRun) {
+    wireBuildDate(buildName, appInfoFile())
+  }
+
   LayoutInfo layoutInfo = layoutFull(paths.distAll, usedJars)
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
 
   egg = buildDebuggerEgg(paths.sandbox, "$home/python", buildName)
-
   ant.copy(file: egg, todir: paths.distAll)
 
   scramble()
 
-  layoutWin(paths.distWin)
-  layoutUnix(paths.distUnix)
-  layoutMac(buildName: buildName,
-            version: "1.0",
-            system_selector: system_selector,
-            paths.distMac)
+  Map args = [
+          buildNumber: buildName,
+          system_selector: system_selector,
+          ide_jvm_args: "-Didea.platform.prefix=Python -Didea.no.jre.check=true"]
 
-  buildExe()
+  layoutWin(args, paths.distWin)
+  layoutUnix(args, paths.distUnix)
+  layoutMac(args, paths.distMac)
 
-  ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
+  ant.echo(message: buildName, file: "${paths.sandbox}/layout/build.txt")
 
-  def root = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
+  buildExe("$home/python/build/pycharm.exe4j", system_selector)
+  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
+  buildNSIS([paths.distAll, paths.distWin],
+            "$home/python/build/strings.nsi", "$home/python/build/paths.nsi",
+            "pycharm", false, true, system_selector)
 
-  ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
-    tarfileset(dir: paths.distAll, prefix: root) {
-      exclude(name: "bin/idea.properties")
-    }
-    tarfileset(dir: paths.distMac, prefix: root) {
-      exclude(name: "bin/*.sh")
-      exclude(name: "bin/idea.properties")
-      exclude(name: "Contents/MacOS/idea")
-    }
-    tarfileset(dir: paths.distMac, filemode: "755", prefix: root) {
-      include(name: "bin/*.sh")
-      include(name: "Contents/MacOS/idea")
-    }
-  }
-  executeExternalAnt("file.name": "pycharm",
-                     "dmg.image.name" : "${home}/python/build/DMG_background.png",
-                     "$home/build/buildDmg.xml")
+  String tarRoot = isEap() ? "pycharm-$buildNumber" : "pycharm-${p("component.version.major")}.${p("component.version.minor")}"
+  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
-  buildTarGz()
-
-  ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.zip") {
-    fileset(dir: paths.distAll)
-    fileset(dir: paths.distWin)
-  }
-
-  def installer = includeFile("$home/build/scripts/nsis_installer.gant")
-  installer.nsis_installer([paths.distAll, paths.distWin],
-                           "$home/python/build/strings.nsi",
-                           "$home/python/build/paths.nsi",
-                           "pycharm", false, true, system_selector)
+  String macAppRoot = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll, paths.distMac])
+  buildDmg("pycharm", "${home}/python/build/DMG_background.png")
 }
 
-def build_searchable_options() {
-  def dest_dir = "${project["platform-resources"].output}/search"
-  project.stage("Building searchable options")
-  ant.mkdir(dir: "${dest_dir}/search")
-  ant.copy(file: "$home/build/idea.license", todir: paths.ideaSystem)
-  ant.copy(file: "$home/build/pycharm.license", todir: paths.ideaSystem)
-  ant.java(classname: "com.intellij.idea.Main", fork: "true") {
-    jvmarg(line: "-ea -Xmx250m -Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig} -Didea.platform.prefix=Python -Didea.no.jre.check=true")
-    jvmarg(value: "-Xbootclasspath/a:${boot.output}")
-    arg(line: "traverseUI ${dest_dir}/searchableOptions.xml")
-
-    classpath() {
-      project["python-ide"].runtimeClasspath().each {
-        pathelement(location: it)
-      }
-    }
-  }
-}
-
-def zkmScramble(String script, String dir, String jarName) {
-  ant.java(classname: "ZKM", fork: "true", failonerror: "true") {
-    jvmarg(value: "-Xmx1100m")
-    arg(value: "-v")
-    arg(value: script)
-    classpath {
-      fileset(dir: dir) {
-        include(name: "*.jar")
-        exclude(name: jarName)
-      }
-
-      fileset(dir: "$home/lib") {
-        include(name: "*.jar")
-      }
-      fileset(dir: "$home/community/lib") {
-        include(name: "*.jar")
-      }
-      fileset(dir: "$home/community/xml/relaxng/lib", includes: "*.jar")
-
-      pathelement(location: "$home/build/lib/ZKM.jar")
-    }
-  }
-
-  ant.delete(file: "$dir/${jarName}.BACKUP", failonerror: "false")
-}
-
-def scramble() {
-  ant.copy(file: "$home/build/conf/script.zkm.stub", tofile: "$paths.sandbox/script.zkm", overwrite: "true") {
-    filterset(begintoken: "__", endtoken: "__") {
-      filter(token: "CLASSES", value: "\"${paths.distAll}/lib/pycharm.jar\"")
-      filter(token: "SCRAMBLED_CLASSES", value: "${paths.distAll}/")
-      filter(token: "INCREMENTAL", value: "")
-    }
-  }
+private scramble() {
+  copyAndPatchFile("$home/build/conf/script.zkm.stub", "${paths.sandbox}/script.zkm",
+                   ["CLASSES": "\"${paths.distAll}/lib/pycharm.jar\"", "SCRAMBLED_CLASSES": paths.distAll, "INCREMENTAL": ""])
   ant.mkdir(dir: "$paths.artifacts/pycharm.unscrambled")
   ant.copy(file: "$paths.distAll/lib/pycharm.jar", todir: "$paths.artifacts/pycharm.unscrambled")
+
   zkmScramble("$paths.sandbox/script.zkm", "$paths.distAll/lib", "pycharm.jar")
+
   ant.move(file: "$paths.distAll/pycharm.jar", todir: "$paths.distAll/lib")
   ant.zip(destfile: "$paths.artifacts/logs.zip") {
     fileset(file: "ChangeLog.txt")
@@ -307,74 +236,11 @@ def scramble() {
   ant.delete(file: "ZKM_log.txt")
 }
 
-String appInfoFile() {
+private String appInfoFile() {
   return "$home/out/pycharm/classes/production/python-ide/idea/PythonApplicationInfo.xml"
 }
 
-void wire_build_date(String buildName) {
-  if (!dryRun) {
-    ant.replace(token: "__BUILD_NUMBER__", value: buildName, file: appInfoFile())
-    ant.replace(token: "__BUILD_DATE__", value: DSTAMP, file: appInfoFile())
-  }
-}
-
-def buildExe() {
-  if (!isMac()) {
-    ant.mkdir(dir: paths.distWin)
-    executeExternalAnt(
-            "config.file": "$home/python/build/pycharm.exe4j",
-            "output.file": "pycharm.exe",
-            "system_selector" : system_selector,
-            "$home/build/buildLauncher.xml")
-  }
-  else {
-    project.warning("Building .exe executable skipped")
-  }
-}
-
-def buildTarGz() {
-  project.stage("tar.gz")
-  def tarRoot = isEap() ? "pycharm-$buildNumber" : "pycharm-${p("component.version.major")}.${p("component.version.minor")}"
-  def tarPath = "$paths.artifacts/pycharm${buildName}.tar"
-  ant.echo(file: "$paths.distUnix/bin/pycharm.vmoptions", message: vmoptions32().replace(' ', '\n').replace("agentlib:yjpagent", "agentlib:yjpagent\$BITS"))
-  ant.tar(tarfile: tarPath) {
-    tarfileset(dir: paths.distAll, prefix: tarRoot) {
-      exclude(name: "**/*.dll")
-      exclude(name: "bin/*.sh")
-    }
-    tarfileset(dir: "$home/bin", prefix: "$tarRoot/bin") {
-      include(name: "libyjpagent*.so")
-    }
-    tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin") {
-      exclude(name: "libbreakgen*")
-      exclude(name: "fsnotifier*")
-    }
-    tarfileset(dir: "$home/community/bin/linux", filemode: "755", prefix: "$tarRoot/bin") {
-      include(name: "fsnotifier*")
-    }
-    tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
-      include(name: "inspect*.sh")
-    }
-    tarfileset(dir: "$paths.distUnix/bin", filemode: "755", prefix: "$tarRoot/bin") {
-      include(name: "pycharm.sh")
-    }
-    tarfileset(dir: "$paths.distUnix/bin", prefix: "$tarRoot/bin") {
-      include(name: "pycharm.vmoptions")
-    }
-    tarfileset(dir: "$home/python/resources", prefix: "$tarRoot/bin") {
-      include(name: "PyCharm_16.png")
-      include(name: "PyCharm_32.png")
-      include(name: "PyCharm_48.png")
-      include(name: "PyCharm_128.png")
-    }
-    tarfileset(dir: "$home/python/help", includes: "pycharmhelp.jar", prefix: "$tarRoot/help")
-  }
-
-  ant.gzip(src: tarPath, zipfile: "${tarPath}.gz")
-  ant.delete(file: tarPath)
-}
-
-def layoutFull(String target, Set usedJars) {
+private layoutFull(String target, Set usedJars) {
   def openapiModules = platformApiModules()
   def implementationModules = [platformImplementationModules(), "python", "python-ide"].flatten()
 
@@ -486,20 +352,61 @@ def layoutFull(String target, Set usedJars) {
         exclude(name: "idea.properties")
         exclude(name: "appletviewer.policy")
       }
-      fileset(dir: "$home/python/build") {
-        include(name: "idea.properties")
+    }
+  }
+  copyPropertiesFile("$home/python/build/idea.properties", target)
+
+  return result
+}
+
+private layoutWin(Map args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/community/bin/win") {
+        exclude(name: "breakgen*")
+      }
+      fileset(file: "$home/bin/yjpagent.dll")
+    }
+
+    dir("skeletons") {
+      fileset(dir: "$home/python/skeletons") {
+        include(name: "skeletons-win*.zip")
       }
     }
   }
 
-  patchPropertiesFile(target)
-  return result
+  winScripts(target, "$home/community", "pycharm.bat", args)
+  winVMOptions(target, args.system_selector, "pycharm.exe")
+
+  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
 }
 
-def layoutMac(Map args, String target) {
+private layoutUnix(Map args, String target) {
   layout(target) {
     dir("bin") {
-      fileset(dir: "$home/bin", includes: "*.jnilib")
+      fileset(dir: "$home/community/bin/linux") {
+        exclude(name: "libbreakgen*")
+      }
+      fileset(dir: "$home/bin") {
+        include(name: "*.so")
+      }
+    }
+  }
+
+  ant.copy(file: "$home/python/resources/PyCharm_128.png", tofile: "$target/bin/pycharm.png")
+
+  unixScripts(target, "$home/community", "pycharm.sh", args)
+  unixVMOptions(target, "pycharm")
+
+  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
+}
+
+private layoutMac(Map _args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/bin") {
+        include(name: "*.jnilib")
+      }
     }
 
     dir("skeletons") {
@@ -509,97 +416,13 @@ def layoutMac(Map args, String target) {
     }
   }
 
-  args.buildNumber = buildName
-  args["executable"] = "pycharm"
-  args["icns"] = "$home/python/resources/PyCharm.icns"
-  args["bundle_name"] = "PyCharm"
-  args["bundleIdentifier"] = "com.jetbrains.pycharm"
-  args["platform_prefix"] = "Python"
-  args["idea.properties.path"] = "$home/python/build/idea.properties"
-  args["idea.properties"] = ["ide.mac.useNativeClipboard":"false"];
-
+  Map args = new HashMap(_args)
+  args.icns = "$home/python/resources/PyCharm.icns"
+  args.bundleIdentifier = "com.jetbrains.pycharm"
+  args.platform_prefix = "Python"
+  args."idea.properties.path" = "$home/python/build/idea.properties"
+  args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
   layoutMacApp(target, "$home/community", args)
 
-  ant.copy(file: "$home/python/help/pycharmhelp_mac.jar", tofile: "$target/help/pycharmhelp.jar")
-}
-
-def layoutWin(String target) {
-  layout(target) {
-    dir("bin") {
-      fileset(dir: "$home/bin") {
-        include(name: "yjpagent.dll")
-      }
-      fileset(dir: "$home/community/bin/win") {
-        exclude(name: "breakgen*")
-        exclude(name: "idea.bat")
-      }
-      fileset(dir: "$home/python/build") {
-        include(name: "pycharm.bat")
-      }
-    }
-    dir("skeletons") {
-      fileset(dir: "$home/python/skeletons") {
-        include(name: "skeletons-win*.zip")
-      }
-    }
-  }
-
-  ant.replace(file: "$target/bin/pycharm.bat") {
-    replacefilter(token: "@@system_selector@@", value: system_selector)
-  }
-  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
-  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions32().replace(' ', '\n'))
-}
-
-def layoutUnix(String target) {
-  ant.copy(file: "$home/python/build/pycharm.sh", todir: "$target/bin")
-  ant.replace(file: "$target/bin/pycharm.sh") {
-    replacefilter(token: "@@isEap@@", value: isEap())
-    replacefilter(token: "@@system_selector@@", value: system_selector)
-  }
-}
-
-def set(Map args, String key, Object value) {
-  if (!args.containsKey(key)) {
-    args[key] = value
-  }
-}
-
-def executeExternalAnt(Map args, String file) {
-  set(args, "build.number", buildName)
-  set(args, "project.home", home)
-  set(args, "artifacts.path", paths.artifacts)
-  set(args, "dist.win", paths.distWin)
-  //set(args, "dist.all", paths.distAll)
-
-  //set(args, "dist.all.15", paths.distAll15)
-  //set(args, "dist.all.16", paths.distAll16)
-  set(args, "sandbox.path", "$home/out/pycharm")
-  set(args, "component.version.major", getProperty("component.version.major"))
-  set(args, "component.version.minor", "\"" + getProperty("component.version.minor") + "\"")
-
-  ant.java(failonerror: "true", classname: "org.apache.tools.ant.Main", fork: "true") {
-    args.each { String key, String value ->
-      jvmarg(line: "-D$key=$value")
-    }
-
-    jvmarg(line: "-Xmx250m")
-
-    classpath {
-      fileset(dir: "$home/build/lib") {
-        include(name: "commons-net-1.4.1.jar")
-        include(name: "jsch-0.1.43.jar")
-      }
-
-      fileset(dir: "$ch/lib/ant/lib") {
-        include(name: "*.jar")
-      }
-
-      fileset(file: "$jdk16/lib/tools.jar")
-      fileset(file: "$ch/lib/oromatcher.jar")
-    }
-
-    arg(value: "-f")
-    arg(value: file)
-  }
+  ant.copy(file: "$home/python/help/pycharmhelp_mac.jar", tofile: "$target/help/pycharmhelp.jar", failonerror: false)
 }
