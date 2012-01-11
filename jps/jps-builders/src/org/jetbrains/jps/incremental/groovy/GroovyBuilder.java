@@ -91,7 +91,7 @@ public class GroovyBuilder extends Builder {
       String encoding = "UTF-8"; //todo encoding
       List<String> patchers = Collections.emptyList(); //todo patchers
       GroovycOSProcessHandler.fillFileWithGroovycParameters(
-        tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths, moduleOutputPath, class2Src, encoding, patchers
+        tempFile, FileUtil.toCanonicalPath(dir.getPath()), toCompilePaths, FileUtil.toSystemDependentName(moduleOutputPath), class2Src, encoding, patchers
       );
 
       if (myForStubs) {
