@@ -41,7 +41,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
       if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
         projectSettingsManager.loadState(legacySettingsManager.getState());
-        projectSettingsManager.USE_PER_PROJECT_SETTINGS = true;
         LOG.info("Imported old project code style settings.");
       }
     }
