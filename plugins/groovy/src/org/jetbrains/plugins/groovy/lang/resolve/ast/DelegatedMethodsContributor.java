@@ -264,17 +264,20 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     builder.addModifier(PsiModifier.PUBLIC);
 
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-    for (PsiTypeParameter typeParameter : typeParameters) {
-      builder.addTypeParameter(typeParameter);
-    }
-
-    final PsiParameter[] originalParameters = method.getParameterList().getParameters();
 
     final PsiClass containingClass = method.getContainingClass();
     boolean isRaw = containingClass != null && PsiUtil.isRawSubstitutor(containingClass, substitutor);
     if (isRaw) {
       substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
     }
+
+    if (!isRaw) {
+      for (PsiTypeParameter typeParameter : typeParameters) {
+        builder.addTypeParameter(typeParameter);
+      }
+    }
+
+    final PsiParameter[] originalParameters = method.getParameterList().getParameters();
 
     for (int i = 0; i < originalParameters.length; i++) {
       PsiParameter originalParameter = originalParameters[i];

@@ -112,6 +112,10 @@ public class GeneratorTest extends LightGroovyTestCase {
   public void testMethodsWithTypeParamsAndOptionalParams() {
     doTest();
   }
+  
+  public void testMethodWithItsOwnTypeParams(){
+    doTest();
+  }
 
   public void doTest() {
     final String relTestPath = getTestName(true) + ".test";
