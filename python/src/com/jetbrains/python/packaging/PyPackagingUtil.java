@@ -20,12 +20,13 @@ public class PyPackagingUtil {
   public final static int ERROR_WRONG_USAGE = 1;
   public final static int ERROR_NO_PACKAGING_TOOLS = 2;
   public final static int ERROR_INVALID_SDK = -1;
-  public final static int ERROR_TIMEOUT = -2;
-  public final static int ERROR_INVALID_OUTPUT = -3;
+  public final static int ERROR_HELPER_NOT_FOUND = -2;
+  public final static int ERROR_TIMEOUT = -3;
+  public final static int ERROR_INVALID_OUTPUT = -4;
 
   private static final String PACKAGING_TOOL = "packaging_tool.py";
   private static final String VIRTUALENV = "virtualenv.py";
-  private static final int TIMEOUT = 30000;
+  private static final int TIMEOUT = 10 * 60 * 1000;
   private static final Logger LOG = Logger.getInstance("#" + PyPackagingUtil.class.getName());
   private static PyPackagingUtil ourInstance = null;
 
@@ -36,8 +37,7 @@ public class PyPackagingUtil {
 
   @NotNull
   public static String createVirtualEnv(@NotNull Sdk sdk, @NotNull String desinationDir) throws PyExternalProcessException {
-    final String virtualenv = PythonHelpersLocator.getHelperPath(VIRTUALENV);
-    runPythonHelper(sdk, list(virtualenv, "--never-download", "--distribute", desinationDir));
+    runPythonHelper(sdk, VIRTUALENV, list("--never-download", "--distribute", desinationDir));
     // TODO: Return the path to the virtualenv interpreter
     return desinationDir;
   }
@@ -60,8 +60,7 @@ public class PyPackagingUtil {
     if (cached != null) {
       return cached;
     }
-    final String packagingTool = PythonHelpersLocator.getHelperPath(PACKAGING_TOOL);
-    final String output = runPythonHelper(sdk, list(packagingTool, "list"));
+    final String output = runPythonHelper(sdk, PACKAGING_TOOL, list("list"));
     final List<PyPackage> packages = parsePackagingToolOutput(output);
     myPackagesCache.put(sdk, packages);
     return packages;
@@ -76,16 +75,23 @@ public class PyPackagingUtil {
   }
 
   @NotNull
-  private static String runPythonHelper(@NotNull Sdk sdk, @NotNull List<String> cmd) throws PyExternalProcessException {
+  private static String runPythonHelper(@NotNull Sdk sdk,
+                                        @NotNull String helper,
+                                        @NotNull List<String> args) throws PyExternalProcessException {
     final String homePath = sdk.getHomePath();
     if (homePath == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find interpreter for SDK");
     }
+    final String helperPath = PythonHelpersLocator.getHelperPath(helper);
+    if (helperPath == null) {
+      throw new PyExternalProcessException(ERROR_HELPER_NOT_FOUND, String.format("Cannot find helper tool: '%s'", helper));
+    }
     final String parentDir = new File(homePath).getParent();
     final List<String> cmdline = new ArrayList<String>();
     cmdline.add(homePath);
-    cmdline.addAll(cmd);
-    ProcessOutput output = SdkUtil.getProcessOutput(parentDir, cmdline.toArray(new String[cmdline.size()]), null, TIMEOUT);
+    cmdline.add(helperPath);
+    cmdline.addAll(args);
+    ProcessOutput output = SdkUtil.getProcessOutput(parentDir, cmdline.toArray(new String[cmdline.size()]), TIMEOUT);
     final int retcode = output.getExitCode();
     if (output.isTimeout()) {
       throw new PyExternalProcessException(ERROR_TIMEOUT, "Timed out");
@@ -113,7 +119,7 @@ public class PyPackagingUtil {
     for (String line : lines) {
       final List<String> fields = StringUtil.split(line, "\t");
       if (fields.size() < 3) {
-        throw new PyExternalProcessException(ERROR_WRONG_USAGE, String.format("Invalid output format of '%s'", PACKAGING_TOOL));
+        throw new PyExternalProcessException(ERROR_INVALID_OUTPUT, String.format("Invalid output format of '%s'", PACKAGING_TOOL));
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
