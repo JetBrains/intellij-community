@@ -72,6 +72,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   private void processOneLine(String line) {
     int indentSize = IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false);
+    line = StringUtil.trimTrailing(line);
     if (StringUtil.isEmptyOrSpaces(line)) {
       doProcessLine("\n");
     }
