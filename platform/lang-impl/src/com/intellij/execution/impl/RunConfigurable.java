@@ -473,7 +473,7 @@ class RunConfigurable extends BaseConfigurable {
     group.add(new MyCopyAction());
     group.add(new MySaveAction());
     group.add(new AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
-                           ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"), EDIT_DEFAULTS_ICON) {
+                           "Edit default settings", EDIT_DEFAULTS_ICON) {
       public void actionPerformed(final AnActionEvent e) {
         TreeNode defaults = TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot);
         if (defaults != null) {
