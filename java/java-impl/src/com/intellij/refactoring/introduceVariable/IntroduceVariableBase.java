@@ -573,7 +573,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                   IntroduceVariableBase.REFACTORING_NAME);
                   renamer.initInitialText(expressionText);
                   PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-                  renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
+                  renamer.performInplaceRefactoring(new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }
               }
             }

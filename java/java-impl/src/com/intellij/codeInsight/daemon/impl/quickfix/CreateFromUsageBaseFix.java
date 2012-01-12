@@ -157,6 +157,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     VisibilityUtil.setVisibility(list, getVisibility(parentClass, targetClass));
   }
 
+  @PsiModifier.ModifierConstant
   protected String getVisibility(PsiClass parentClass, PsiClass targetClass) {
     if (parentClass != null && (parentClass.equals(targetClass) || PsiTreeUtil.isAncestor(targetClass, parentClass, true))) {
       return PsiModifier.PRIVATE;

@@ -187,7 +187,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       }
 
       GroovycOSProcessHandler
-        .fillFileWithGroovycParameters(fileWithParameters, outputDir.getPath(), paths2Compile, finalOutputDir.getPath(),
+        .fillFileWithGroovycParameters(fileWithParameters, outputDir.getPath(), paths2Compile, FileUtil.toSystemDependentName(finalOutputDir.getPath()),
                                        class2Src, encoding, patchers);
 
       parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");

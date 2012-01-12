@@ -20,13 +20,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ik, dsl
  */
 public class MethodCandidateInfo extends CandidateInfo{
-  private int myApplicabilityLevel = 0;
+  @ApplicabilityLevelConstant private int myApplicabilityLevel = 0;
   private final PsiElement myArgumentList;
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
@@ -65,6 +66,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return getApplicabilityLevel() != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
+  @ApplicabilityLevelConstant
   private int getApplicabilityLevelInner() {
     if (myArgumentTypes == null) return ApplicabilityLevel.NOT_APPLICABLE;
 
@@ -74,6 +76,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
 
+  @ApplicabilityLevelConstant
   public int getApplicabilityLevel() {
     if(myApplicabilityLevel == 0){
       myApplicabilityLevel = getApplicabilityLevelInner();
@@ -149,5 +152,9 @@ public class MethodCandidateInfo extends CandidateInfo{
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;
     public static final int FIXED_ARITY = 3;
+  }
+
+  @MagicConstant(intValues = {ApplicabilityLevel.NOT_APPLICABLE, ApplicabilityLevel.VARARGS, ApplicabilityLevel.FIXED_ARITY})
+  public @interface ApplicabilityLevelConstant {
   }
 }

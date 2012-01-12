@@ -68,6 +68,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.Processor;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -82,7 +83,7 @@ import java.util.List;
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private final TextAttributes ourReferenceAttributes;
   private HighlightersSet myHighlighter;
-  private int myStoredModifiers = 0;
+  @JdkConstants.InputEventMask private int myStoredModifiers = 0;
   private TooltipProvider myTooltipProvider = null;
   private final FileEditorManager myFileEditorManager;
 
@@ -204,7 +205,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return "CtrlMouseHandler";
   }
 
-  private static BrowseMode getBrowseMode(final int modifiers) {
+  private static BrowseMode getBrowseMode(@JdkConstants.InputEventMask int modifiers) {
     if (modifiers != 0) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
       if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
@@ -215,7 +216,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return BrowseMode.None;
   }
 
-  private static boolean matchMouseShortcut(final Keymap activeKeymap, final int modifiers, final String actionId) {
+  private static boolean matchMouseShortcut(final Keymap activeKeymap, @JdkConstants.InputEventMask int modifiers, final String actionId) {
     final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
       if (shortcut instanceof MouseShortcut) {

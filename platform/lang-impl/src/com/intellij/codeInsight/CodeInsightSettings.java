@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,12 +77,14 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
   public int AUTO_LOOKUP_DELAY = 0;
 
-  public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER; // ALL, NONE or FIRST_LETTER
+  @MagicConstant(intValues = {ALL, NONE, FIRST_LETTER})
+  public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER;
   public static final int ALL = 1;
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
 
-  public int AUTOPOPUP_FOCUS_POLICY = SMART; // NEVER, SMART or ALWAYS
+  @MagicConstant(intValues = {NEVER, SMART, ALWAYS})
+  public int AUTOPOPUP_FOCUS_POLICY = SMART;
   public static final int NEVER = 1;
   public static final int SMART = 2;
   public static final int ALWAYS = 3;
@@ -130,7 +133,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
-  @Property(surroundWithTag = false) @AbstractCollection(
+  @Property(surroundWithTag = false)
+  @AbstractCollection(
     surroundWithTag = false,
     elementTag = "EXCLUDED_PACKAGE",
     elementValueAttribute = "NAME")

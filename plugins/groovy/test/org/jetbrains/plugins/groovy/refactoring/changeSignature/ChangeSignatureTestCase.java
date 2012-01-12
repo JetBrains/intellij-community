@@ -32,7 +32,7 @@ import java.util.Arrays;
  * @author Maxim.Medvedev
  */
 public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTestCase {
-  void executeRefactoring(String newVisibility,
+  void executeRefactoring(@PsiModifier.ModifierConstant String newVisibility,
                           String newName,
                           String newReturnType,
                           GenParams genParams,

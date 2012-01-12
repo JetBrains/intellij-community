@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -331,9 +332,12 @@ public class CommonCodeStyleSettings {
   public static final int NEXT_LINE_SHIFTED2 = 4;
   public static final int NEXT_LINE_IF_WRAPPED = 5;
 
-  public int BRACE_STYLE = 1;
-  public int CLASS_BRACE_STYLE = 1;
-  public int METHOD_BRACE_STYLE = 1;
+  @MagicConstant(intValues = {END_OF_LINE, NEXT_LINE, NEXT_LINE_SHIFTED, NEXT_LINE_SHIFTED2, NEXT_LINE_IF_WRAPPED})
+  public @interface BraceStyleConstant {}
+
+  @BraceStyleConstant public int BRACE_STYLE = END_OF_LINE;
+  @BraceStyleConstant public int CLASS_BRACE_STYLE = END_OF_LINE;
+  @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;
 
   /**
    * Defines if 'flying geese' style should be used for curly braces formatting, e.g. if we want to format code like

@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class ScrollUtil {
   }
 
   @Nullable
-  private static JScrollBar findScrollBar(JComponent c, int orientation) {
+  private static JScrollBar findScrollBar(JComponent c, @JdkConstants.AdjustableOrientation int orientation) {
     if (c == null) return null;
     if (c instanceof JScrollBar && ((JScrollBar)c).getOrientation() == orientation) {
       return (JScrollBar)c;

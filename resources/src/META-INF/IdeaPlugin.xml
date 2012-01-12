@@ -515,6 +515,9 @@
     <localInspection language="JAVA" shortName="JavacQuirks" bundle="messages.InspectionsBundle" key="inspection.compiler.javac.quirks.name"
                      groupName="Compiler issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.compiler.JavacQuirksInspection" />
+    <localInspection language="JAVA" shortName="MagicConstant" displayName="Magic Constant"
+                     groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection" />
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>

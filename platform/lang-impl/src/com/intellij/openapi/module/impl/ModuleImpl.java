@@ -279,7 +279,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   @NotNull
-  public GlobalSearchScope getCachedScope(int options) {
+  public GlobalSearchScope getCachedScope(@ModuleWithDependenciesScope.ScopeConstant int options) {
     GlobalSearchScope scope = myScopeCache.get(options);
     if (scope == null) {
       scope = new ModuleWithDependenciesScope(this, options);

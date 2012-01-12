@@ -185,11 +185,6 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     return "IntroduceField";
   }
 
-  @Override
-    protected String getCommandName() {
-      return IntroduceFieldHandler.REFACTORING_NAME;
-    }
-
   public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
       return myIntroduceFieldPanel.getInitializerPlace();
     }

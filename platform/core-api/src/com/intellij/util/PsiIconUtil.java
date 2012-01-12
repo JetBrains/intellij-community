@@ -22,6 +22,7 @@ package com.intellij.util;
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ import javax.swing.*;
 public class PsiIconUtil {
 
   @Nullable
-  public static Icon getProvidersIcon(PsiElement element, int flags) {
+  public static Icon getProvidersIcon(PsiElement element, @Iconable.IconFlags int flags) {
     final boolean dumb = DumbService.getInstance(element.getProject()).isDumb();
     for (final IconProvider iconProvider : getIconProviders()) {
       if (dumb && !DumbService.isDumbAware(iconProvider)) {

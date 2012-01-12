@@ -1113,6 +1113,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     public int            rangeEndOffset;
     public int            tokenStartOffset;
     public int            tokenEndOffset;
+    @TextAttributes.FontStyle
     public int            fontType;
     public boolean        notifyListenersOnLineStartPosition;
     public boolean        skipToLineEnd;
@@ -1139,7 +1140,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       return getSpaceWidth(fontType);
     }
     
-    public int getSpaceWidth(int fontType) {
+    public int getSpaceWidth(@TextAttributes.FontStyle int fontType) {
       int result = fontType2spaceWidth.get(fontType);
       if (result <= 0) {
         result = EditorUtil.getSpaceWidth(fontType, myEditor);

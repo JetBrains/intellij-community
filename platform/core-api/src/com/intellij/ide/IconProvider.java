@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,5 +38,5 @@ public abstract class IconProvider {
    * @see com.intellij.openapi.util.Iconable
    */
   @Nullable
-  public abstract Icon getIcon(@NotNull PsiElement element, int flags);
+  public abstract Icon getIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags);
 }

@@ -1078,6 +1078,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     boolean isAfterIncomplete = false;
 
     ASTNode prev = child;
+    boolean afterAnonymousClass = false;
     while (child != null) {
       isAfterIncomplete = isAfterIncomplete || child.getElementType() == TokenType.ERROR_ELEMENT ||
                           child.getElementType() == JavaElementType.EMPTY_EXPRESSION;
@@ -1087,7 +1088,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         }
         else if (child.getElementType() == to) {
           result.add(createJavaBlock(child, mySettings,
-                                     externalIndent,
+                                     isAfterIncomplete && !afterAnonymousClass ? internalIndent : externalIndent,
                                      null,
                                      isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment));
           return child;
@@ -1103,6 +1104,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           }
         }
         isAfterIncomplete = false;
+        if (child.getElementType() != JavaTokenType.COMMA) {
+          afterAnonymousClass = isAnonymousClass(child);
+        }
       }
       prev = child;
       child = child.getTreeNext();

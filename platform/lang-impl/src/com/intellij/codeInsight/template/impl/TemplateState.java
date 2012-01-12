@@ -54,7 +54,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.HashMap;
@@ -505,7 +505,7 @@ public class TemplateState implements Disposable {
     final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(myEditor, lookupItems);
     if (lookup == null) return;
 
-    if (CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && myEditor.getUserData(VariableInplaceRenamer.INPLACE_RENAMER) == null) {
+    if (CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && myEditor.getUserData(InplaceRefactoring.INPLACE_RENAMER) == null) {
       lookup.setStartCompletionWhenNothingMatches(true);
     }
 

@@ -17,18 +17,24 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiFormatUtil extends PsiFormatUtilBase {
+  @MagicConstant(flags = {SHOW_MODIFIERS, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_MODIFIERS, SHOW_INITIALIZER, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
+  public @interface FormatVariableOptions {}
 
-  public static String formatVariable(PsiVariable variable, int options, PsiSubstitutor substitutor){
+  public static String formatVariable(PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor){
     StringBuilder buffer = new StringBuilder();
     formatVariable(variable, options, substitutor,buffer);
     return buffer.toString();
   }
-  private static void formatVariable(PsiVariable variable, int options, PsiSubstitutor substitutor,StringBuilder buffer){
+  private static void formatVariable(PsiVariable variable,
+                                     @FormatVariableOptions int options,
+                                     PsiSubstitutor substitutor,
+                                     @NotNull StringBuilder buffer){
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       formatModifiers(variable, options,buffer);
     }
@@ -97,16 +103,20 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
   }
 
-  public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, int options, int parameterOptions){
+  public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, @FormatMethodOptions int options, @FormatVariableOptions int parameterOptions){
     return formatMethod(method, substitutor, options, parameterOptions, MAX_PARAMS_TO_SHOW);
   }
 
-  public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, int options, int parameterOptions, int maxParametersToShow){
+  public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, @FormatMethodOptions int options, @FormatVariableOptions int parameterOptions, int maxParametersToShow){
     StringBuilder buffer = new StringBuilder();
     formatMethod(method, substitutor, options, parameterOptions, maxParametersToShow,buffer);
     return buffer.toString();
   }
-  private static void formatMethod(PsiMethod method, PsiSubstitutor substitutor, int options, int parameterOptions, int maxParametersToShow, StringBuilder buffer){
+
+  @MagicConstant(flags = {SHOW_MODIFIERS, MODIFIERS_AFTER, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_PARAMETERS, SHOW_THROWS, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
+  public @interface FormatMethodOptions {}
+
+  private static void formatMethod(PsiMethod method, PsiSubstitutor substitutor, @FormatMethodOptions int options, @FormatVariableOptions int parameterOptions, int maxParametersToShow, StringBuilder buffer){
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       formatModifiers(method, options,buffer);
     }
@@ -177,7 +187,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
     if ((options & SHOW_THROWS) != 0){
       String throwsText = formatReferenceList(method.getThrowsList(), options);
-      if (throwsText.length() > 0){
+      if (!throwsText.isEmpty()){
         appendSpaceIfNeeded(buffer);
         //noinspection HardCodedStringLiteral
         buffer.append("throws ");
@@ -186,7 +196,12 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
   }
 
-  @NotNull public static String formatClass(@NotNull PsiClass aClass, int options){
+
+  @MagicConstant(flags = {SHOW_MODIFIERS, SHOW_NAME, SHOW_ANONYMOUS_CLASS_VERBOSE, SHOW_FQ_NAME, MODIFIERS_AFTER, SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY})
+  public @interface FormatClassOptions {}
+
+  @NotNull
+  public static String formatClass(@NotNull PsiClass aClass, @FormatClassOptions int options){
     StringBuilder buffer = new StringBuilder();
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       formatModifiers(aClass, options,buffer);
@@ -222,14 +237,14 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
     if ((options & SHOW_EXTENDS_IMPLEMENTS) != 0){
       String extendsText = formatReferenceList(aClass.getExtendsList(), options);
-      if (extendsText.length() > 0){
+      if (!extendsText.isEmpty()){
         appendSpaceIfNeeded(buffer);
         //noinspection HardCodedStringLiteral
         buffer.append("extends ");
         buffer.append(extendsText);
       }
       String implementsText = formatReferenceList(aClass.getImplementsList(), options);
-      if (implementsText.length() > 0){
+      if (!implementsText.isEmpty()){
         appendSpaceIfNeeded(buffer);
         //noinspection HardCodedStringLiteral
         buffer.append("implements ");
@@ -340,7 +355,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return buffer.toString();
   }
 
-  public static String formatType(PsiType type, int options, PsiSubstitutor substitutor){
+  public static String formatType(PsiType type, int options, @NotNull PsiSubstitutor substitutor){
     type = substitutor.substitute(type);
     if ((options & SHOW_RAW_TYPE) != 0) {
       type = TypeConversionUtil.erasure(type);
@@ -367,6 +382,11 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
 
   @Nullable
   public static String getExternalName(PsiModifierListOwner owner, final boolean showParamName) {
+    return getExternalName(owner, showParamName, MAX_PARAMS_TO_SHOW);
+  }
+
+  @Nullable
+  public static String getExternalName(PsiModifierListOwner owner, final boolean showParamName, int maxParamsToShow) {
     final StringBuilder builder = new StringBuilder();
     if (owner instanceof PsiClass) {
       ClassUtil.formatClassName((PsiClass)owner, builder);
@@ -379,7 +399,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       builder.append(" ");
       formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY,
                    SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                   showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_FQ_CLASS_NAMES, MAX_PARAMS_TO_SHOW, builder);
+                   showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_FQ_CLASS_NAMES, maxParamsToShow, builder);
     }
     else if (owner instanceof PsiField) {
       builder.append(" ").append(((PsiField)owner).getName());
@@ -392,7 +412,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         builder.append(" ");
         formatMethod(psiMethod, PsiSubstitutor.EMPTY,
                      SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                     showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_FQ_CLASS_NAMES, MAX_PARAMS_TO_SHOW, builder);
+                     showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_FQ_CLASS_NAMES, maxParamsToShow, builder);
         builder.append(" ");
 
         if (showParamName) {
@@ -415,7 +435,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   public static String getPackageDisplayName(@NotNull final PsiClass psiClass) {
     @NonNls String packageName = psiClass.getQualifiedName();
     packageName = packageName == null || packageName.lastIndexOf('.') <= 0 ? "" : packageName.substring(0, packageName.lastIndexOf('.'));
-    if (packageName.length() == 0) {
+    if (packageName.isEmpty()) {
       packageName = "default package";
     }
     return packageName;

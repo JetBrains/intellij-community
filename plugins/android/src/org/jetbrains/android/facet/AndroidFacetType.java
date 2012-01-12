@@ -20,7 +20,6 @@ import com.intellij.facet.FacetType;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import org.jetbrains.android.newProject.AndroidModuleType;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +51,7 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
   }
 
   public boolean isSuitableModuleType(ModuleType moduleType) {
-    return moduleType instanceof JavaModuleType || moduleType instanceof AndroidModuleType;
+    return moduleType instanceof JavaModuleType;
   }
 
   public Icon getIcon() {

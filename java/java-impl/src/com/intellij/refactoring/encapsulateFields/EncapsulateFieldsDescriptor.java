@@ -20,9 +20,9 @@
  */
 package com.intellij.refactoring.encapsulateFields;
 
-import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.Nullable;
 
 public interface EncapsulateFieldsDescriptor {
@@ -44,10 +44,10 @@ public interface EncapsulateFieldsDescriptor {
 
   boolean isToUseAccessorsWhenAccessible();
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   String getFieldsVisibility();
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   String getAccessorsVisibility();
 
   int getJavadocPolicy();

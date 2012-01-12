@@ -36,7 +36,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -195,7 +195,7 @@ public abstract class UsefulTestCase extends TestCase {
     myOldCodeStyleSettings = null;
 
     try {
-      VariableInplaceRenamer.checkCleared();
+      InplaceRefactoring.checkCleared();
     }
     catch (AssertionError e) {
       result.add(e);

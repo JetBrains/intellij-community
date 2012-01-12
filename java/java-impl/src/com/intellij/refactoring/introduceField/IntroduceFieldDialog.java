@@ -101,7 +101,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     return myCentralPanel.getInitializerPlace();
   }
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   public String getFieldVisibility() {
     return myCentralPanel.getFieldVisibility();
   }

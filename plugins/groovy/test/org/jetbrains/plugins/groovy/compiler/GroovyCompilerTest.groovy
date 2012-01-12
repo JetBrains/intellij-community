@@ -154,6 +154,12 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertEmpty(make());
   }
 
+  public void testJavaDependsOnGroovyEnum() throws Throwable {
+    myFixture.addFileToProject("Foo.groovy", "enum Foo { FOO }")
+    myFixture.addClass("class Bar { Foo f; }")
+    assertEmpty(make())
+  }
+
   public void testDeleteTransitiveJavaClass() throws Throwable {
     myFixture.addClass("public interface IFoo { int foo(); }");
     myFixture.addClass("public class Foo implements IFoo {" +
@@ -484,11 +490,11 @@ class Indirect {
     assert oldBaseStamp == findClassFile("Base").modificationStamp
   }
 
-  public static class IdeaMode extends GroovyCompilerTest {
+  public static class IdeaModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }
 
-  public static class JpsMode extends GroovyCompilerTest {
+  public static class JpsModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { true }
 
     @Override

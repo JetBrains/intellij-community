@@ -203,7 +203,6 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     return parameters.toArray(new GrParameterInfo[parameters.size()]);
   }
 
-  @Modifier
   public String getNewVisibility() {
     return visibilityModifier;
   }

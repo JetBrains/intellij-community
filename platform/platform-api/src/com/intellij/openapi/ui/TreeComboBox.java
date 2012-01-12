@@ -40,10 +40,10 @@ import java.util.List;
  * User: spLeaner
  */
 public class TreeComboBox extends ComboBoxWithWidePopup {
-  final static int INDENT = UIUtil.getTreeLeftChildIndent();
+  private static final int INDENT = UIUtil.getTreeLeftChildIndent();
   private TreeModel myTreeModel;
-  private String myDefaultText;
-  private boolean myShowRootNode;
+  private final String myDefaultText;
+  private final boolean myShowRootNode;
 
   public TreeComboBox(@NotNull final TreeModel model) {
     this(model, true);
@@ -82,12 +82,12 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
 
     private boolean mySelected;
     private boolean myInList;
-    private JComboBox myComboBox;
+    private final JComboBox myComboBox;
     private boolean myChecked;
     private boolean myEditable;
-    private boolean myUnderAquaLookAndFeel;
-    private boolean myShowRootNode;
-    private String myDefaultText;
+    private final boolean myUnderAquaLookAndFeel;
+    private final boolean myShowRootNode;
+    private final String myDefaultText;
 
     private TreeListCellRenderer(@NotNull final JComboBox comboBox, final boolean showRootNode, @Nullable final String defaultText) {
       myComboBox = comboBox;
@@ -100,7 +100,8 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private static Icon getValueIcon(final Object value, final int index) {
       if (value instanceof CustomPresentation) {
         return ((CustomPresentation)value).getIcon(index, Iconable.ICON_FLAG_OPEN);
-      } else if (value instanceof Iconable) {
+      }
+      if (value instanceof Iconable) {
         return ((Iconable)value).getIcon(Iconable.ICON_FLAG_OPEN);
       }
 
@@ -108,7 +109,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     }
 
     private TreeModelWrapper getTreeModelWrapper() {
-      return ((TreeModelWrapper)myComboBox.getModel());
+      return (TreeModelWrapper)myComboBox.getModel();
     }
 
     @Override
@@ -131,10 +132,11 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
       int indent = 0;
       if (myInList) {
         final TreePath path = getTreeModelWrapper().getPathForRow(index);
-        indent = path == null ? 0 : (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) * ((UIUtil.isUnderAquaLookAndFeel() ? 2 : 1) * INDENT);
+        indent = path == null ? 0 : (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) *
+                                    (UIUtil.isUnderAquaLookAndFeel() ? 2 : 1) * INDENT;
       }
 
-      setIpad(new Insets(1, !myInList || myEditable ? (myUnderAquaLookAndFeel ? 0 : 5)  : (myUnderAquaLookAndFeel ? 23 : 5) + indent, 1, 5));
+      setIpad(new Insets(1, !myInList || myEditable ? myUnderAquaLookAndFeel ? 0 : 5 : (myUnderAquaLookAndFeel ? 23 : 5) + indent, 1, 5));
 
       setIcon(getValueIcon(value, index));
       setIconOpaque(!myUnderAquaLookAndFeel);
@@ -193,10 +195,10 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
   }
 
   private static class TreeModelWrapper extends AbstractListModel implements ComboBoxModel {
-    private TreeModel myTreeModel;
+    private final TreeModel myTreeModel;
     private Object mySelectedItem;
-    private boolean myShowRootNode;
-    private List<TreeNode> myTreeModelAsList = new ArrayList<TreeNode>();
+    private final boolean myShowRootNode;
+    private final List<TreeNode> myTreeModelAsList = new ArrayList<TreeNode>();
 
     private TreeModelWrapper(@NotNull final TreeModel treeModel, final boolean showRootNode) {
       myTreeModel = treeModel;
@@ -293,8 +295,8 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     }
 
     public boolean hasMoreElements() {
-      return (!myStack.empty() &&
-              myStack.peek().hasMoreElements());
+      return !myStack.empty() &&
+              myStack.peek().hasMoreElements();
     }
 
     public Object nextElement() {
@@ -313,7 +315,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
 
   public interface CustomPresentation {
     void append(SimpleColoredComponent component, int index);
-    Icon getIcon(int index, int flags);
+    Icon getIcon(int index, @Iconable.IconFlags int flags);
   }
 
 }

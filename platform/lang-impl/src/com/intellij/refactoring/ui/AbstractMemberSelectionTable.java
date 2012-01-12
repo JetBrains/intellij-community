@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -376,7 +377,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
   }
 
-  protected Icon getMemberIcon(M memberInfo, int flags) {
+  protected Icon getMemberIcon(M memberInfo, @Iconable.IconFlags int flags) {
     return memberInfo.getMember().getIcon(flags);
   }
 

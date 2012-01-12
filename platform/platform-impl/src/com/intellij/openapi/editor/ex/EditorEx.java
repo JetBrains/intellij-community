@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +66,7 @@ public interface EditorEx extends Editor {
   int VERTICAL_SCROLLBAR_LEFT = 0;
   int VERTICAL_SCROLLBAR_RIGHT = 1;
 
-  void setVerticalScrollbarOrientation(int type);
+  void setVerticalScrollbarOrientation(@MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT}) int type);
 
   void setVerticalScrollbarVisible(boolean b);
 

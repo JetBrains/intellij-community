@@ -105,6 +105,14 @@ public class Patches {
   public static final boolean APPLE_BUG_ID_5359442 = SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.5.0_16"));
 
   /**
+   * Lion eAWT FullScreen mode leads to visual artifacts
+   *
+   * @see com.intellij.util.concurrency.LockFactory
+   */
+  public static final boolean APPLE_BUG_ID_10207064 =
+    SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.6.0_30"));
+
+  /**
    * Index out of bounds at apple.laf.AquaTabbedPaneUI.tabForCoordinate
    * http://www.jetbrains.net/jira/browse/IDEADEV-15769
    */

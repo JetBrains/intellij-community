@@ -44,8 +44,8 @@ import java.util.regex.Pattern;
 )
 public class SliceManager implements PersistentStateComponent<SliceManager.StoredSettingsBean> {
   private final Project myProject;
-  private final ContentManager myBackContentManager;
-  private final ContentManager myForthContentManager;
+  private ContentManager myBackContentManager;
+  private ContentManager myForthContentManager;
   private volatile boolean myCanceled;
   private final StoredSettingsBean myStoredSettings = new StoredSettingsBean();
   private static final String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
@@ -60,15 +60,8 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     return ServiceManager.getService(project, SliceManager.class);
   }
 
-  public SliceManager(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager, final PsiManager psiManager) {
+  public SliceManager(@NotNull Project project, PsiManager psiManager) {
     myProject = project;
-    ToolWindow backToolWindow = toolWindowManager.registerToolWindow(BACK_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
-    myBackContentManager = backToolWindow.getContentManager();
-    new ContentManagerWatcher(backToolWindow, myBackContentManager);
-
-    ToolWindow forthToolWindow = toolWindowManager.registerToolWindow(FORTH_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
-    myForthContentManager = forthToolWindow.getContentManager();
-    new ContentManagerWatcher(forthToolWindow, myForthContentManager);
 
     psiManager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
@@ -103,6 +96,24 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     }, project);
   }
 
+  private ContentManager getContentManager(boolean dataFlowToThis) {
+    if (dataFlowToThis) {
+      if (myBackContentManager == null) {
+        ToolWindow backToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(BACK_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject);
+        myBackContentManager = backToolWindow.getContentManager();
+        new ContentManagerWatcher(backToolWindow, myBackContentManager);
+      }
+      return myBackContentManager;
+    }
+
+    if (myForthContentManager == null) {
+      ToolWindow forthToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(FORTH_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject);
+      myForthContentManager = forthToolWindow.getContentManager();
+      new ContentManagerWatcher(forthToolWindow, myForthContentManager);
+    }
+    return myForthContentManager;
+  }
+
   private void cancel() {
     myCanceled = true;
   }
@@ -121,7 +132,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
 
   public void createToolWindow(final boolean dataFlowToThis, final SliceRootNode rootNode, boolean splitByLeafExpressions, String displayName) {
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
-    final ContentManager contentManager = dataFlowToThis ? myBackContentManager : myForthContentManager;
+    final ContentManager contentManager = getContentManager(dataFlowToThis);
     final Content[] myContent = new Content[1];
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID);
     final SlicePanel slicePanel = new SlicePanel(myProject, dataFlowToThis, rootNode, splitByLeafExpressions, toolWindow) {

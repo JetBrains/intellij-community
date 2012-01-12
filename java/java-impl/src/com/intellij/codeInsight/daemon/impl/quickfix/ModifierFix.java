@@ -43,13 +43,13 @@ import java.util.List;
 public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix");
 
-  @Modifier private final String myModifier;
+  @PsiModifier.ModifierConstant private final String myModifier;
   private final boolean myShouldHave;
   private final boolean myShowContainingClass;
   private final String myName;
   private final SmartPsiElementPointer<PsiVariable> myVariable;
 
-  public ModifierFix(PsiModifierList modifierList, @Modifier @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
+  public ModifierFix(PsiModifierList modifierList, @PsiModifier.ModifierConstant @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
     super(modifierList);
     myModifier = modifier;
     myShouldHave = shouldHave;
@@ -58,7 +58,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     myVariable = null;
   }
 
-  public ModifierFix(@NotNull PsiModifierListOwner owner, @Modifier @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
+  public ModifierFix(@NotNull PsiModifierListOwner owner, @PsiModifier.ModifierConstant @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
     super(owner.getModifierList());
     myModifier = modifier;
     myShouldHave = shouldHave;

@@ -132,12 +132,16 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
 
     try {
       if (isLocal(index)) {
-        indicator.setIndeterminate(true);
-        try {
-          myIndexer.scan(index, new MyScanningListener(indicator), false);
-        }
-        finally {
-          indicator.setIndeterminate(false);
+        File repository = index.getRepository();
+
+        if (repository != null && repository.exists()) {
+          indicator.setIndeterminate(true);
+          try {
+            myIndexer.scan(index, new MyScanningListener(indicator), false);
+          }
+          finally {
+            indicator.setIndeterminate(false);
+          }
         }
       }
       else {

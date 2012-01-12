@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1133,7 +1134,7 @@ public abstract class DialogWrapper {
    * @throws java.lang.IllegalArgumentException
    *          if <code>alignment</code> isn't acceptable
    */
-  protected final void setButtonsAlignment(int alignment) {
+  protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     if (SwingConstants.CENTER != alignment && SwingConstants.RIGHT != alignment) {
       throw new IllegalArgumentException("unknown alignment: " + alignment);
     }
