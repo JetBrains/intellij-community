@@ -192,6 +192,8 @@ public class XmlRefCountHolder {
     @Override
     public void visitXmlTag(XmlTag tag) {
       myHolder.addUsedPrefix(tag.getNamespacePrefix());
+      String text = tag.getValue().getTrimmedText();
+      detectPrefix(text);
       super.visitXmlTag(tag);
     }
 
@@ -242,13 +244,17 @@ public class XmlRefCountHolder {
       }
 
       String s = value.getValue();
+      detectPrefix(s);
+      super.visitXmlAttributeValue(value);
+    }
+
+    private void detectPrefix(String s) {
       if (s != null) {
         int pos = s.indexOf(':');
         if (pos > 0) {
           myHolder.addUsedPrefix(s.substring(0, pos));
         }
       }
-      super.visitXmlAttributeValue(value);
     }
 
     private void updateMap(@NotNull final XmlAttribute attribute, @NotNull final XmlAttributeValue value, final boolean soft) {
