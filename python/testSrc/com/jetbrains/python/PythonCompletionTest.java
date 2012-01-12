@@ -500,6 +500,10 @@ public class PythonCompletionTest extends PyTestCase {
     doMultiFileTest();
   }
   
+  public void testKeywordArgumentsForImplicitCall() {
+    doTest();
+  }
+  
   public void testTypeMembers() {  // PY-5311
     myFixture.configureByText(PythonFileType.INSTANCE, "a = 'string'\n" +
                                                        "a.<caret>");
