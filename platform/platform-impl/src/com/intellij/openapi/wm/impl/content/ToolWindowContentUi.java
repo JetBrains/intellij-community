@@ -30,7 +30,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
@@ -332,6 +331,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private void initActionGroup(DefaultActionGroup group, final Content content) {
+    if (content == null) {
+      return;
+    }
     group.addSeparator();
     group.add(new TabbedContentAction.CloseAction(content));
     group.add(myCloseAllAction);
