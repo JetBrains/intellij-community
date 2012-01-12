@@ -1159,6 +1159,10 @@ class Foo {{
     assert myFixture.lookupElementStrings.size() >= 2
     type '.'
     assert lookup
+    edt { myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf('lang')) }
+    assert !lookup
+    type 'i'
+    assert 'io' in myFixture.lookupElementStrings
   }
 
 
