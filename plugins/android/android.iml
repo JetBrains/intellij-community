@@ -54,6 +54,7 @@
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
     <orderEntry type="module" module-name="IntentionPowerPackPlugin" />
+    <orderEntry type="module" module-name="testng" />
   </component>
 </module>
 

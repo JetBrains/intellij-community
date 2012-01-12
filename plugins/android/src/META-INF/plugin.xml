@@ -77,6 +77,7 @@
   <depends>IntentionPowerPack</depends>
 
   <depends optional="true" config-file="maven-support.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="test-ng.xml">TestNG-J</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -184,5 +185,6 @@
 
   <extensionPoints>
     <extensionPoint name="mavenProvider" interface="org.jetbrains.android.maven.AndroidMavenProvider"/>
+    <extensionPoint name="lightBuildProvider" interface="org.jetbrains.android.compiler.AndroidLightBuildProvider"/>
   </extensionPoints>
 </idea-plugin>
