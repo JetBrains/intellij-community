@@ -90,10 +90,10 @@ public abstract class ComparisonPolicy {
       boolean atBeginning = true;
       for (int i = 0; i < strings.length; i++) {
         String string = strings[i];
-        String wrapper = atBeginning ? trimLeading(string) : string;
+        String wrapper = atBeginning ? StringUtil.trimLeading(string) : string;
         if (StringUtil.endsWithChar(wrapper, '\n')) {
           atBeginning = true;
-          wrapper = trimTrailing(wrapper);
+          wrapper = StringUtil.trimTrailing(wrapper);
         }
         else {
           atBeginning = false;
@@ -103,17 +103,7 @@ public abstract class ComparisonPolicy {
       return result;
     }
 
-    private String trimLeading(String string) {
-      int index = 0;
-      while (index < string.length() && Character.isWhitespace(string.charAt(index))) index++;
-      return string.substring(index);
-    }
 
-    private String trimTrailing(String string) {
-      int index = string.length() - 1;
-      while (index >= 0 && Character.isWhitespace(string.charAt(index))) index--;
-      return string.substring(0, index + 1);
-    }
 
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
