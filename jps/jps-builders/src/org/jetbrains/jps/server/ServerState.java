@@ -37,7 +37,10 @@ class ServerState {
 
   public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars) {
     synchronized (myConfigurationLock) {
-      for (ProjectDescriptor descriptor : myProjects.values()) {
+      for (Map.Entry<String, ProjectDescriptor> entry : myProjects.entrySet()) {
+        final String projectPath = entry.getKey();
+        final ProjectDescriptor descriptor = entry.getValue();
+        LOG.info("Global configuration changed: Closing descriptor for project " + projectPath);
         descriptor.close();
       }
       myProjects.clear(); // projects should be reloaded against the latest data
@@ -85,7 +88,9 @@ class ServerState {
     synchronized (myConfigurationLock) {
       for (String projectPath : projectPaths) {
         final ProjectDescriptor descriptor = myProjects.remove(projectPath);
+        LOG.info("Clearing descriptor for project " + projectPath);
         if (descriptor != null) {
+          LOG.info("Closing descriptor for project " + projectPath);
           descriptor.close();
         }
       }
@@ -100,6 +105,7 @@ class ServerState {
     synchronized (myConfigurationLock) {
       descriptor = myProjects.get(projectPath);
       if (descriptor == null) {
+        LOG.info("Creating project descriptor for project " + projectPath);
         final Project project = loadProject(projectPath, params);
         final FSState fsState = new FSState();
         descriptor = new ProjectDescriptor(projectName, project, fsState, new ProjectTimestamps(projectName));
