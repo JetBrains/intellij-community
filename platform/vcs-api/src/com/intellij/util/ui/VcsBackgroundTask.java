@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -46,6 +47,9 @@ public abstract class VcsBackgroundTask<T> extends Task.ConditionalModal {
         process(item);
       }
       catch(VcsException ex) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          throw new RuntimeException(ex);
+        }
         myExceptions.add(ex);
       }
     }
