@@ -57,10 +57,13 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   protected static final String LOCALHOST = "localhost";
   private final ConfigurationModuleSelector myModuleSelector;
 
-
   public RemoteConfigurable(final Project project) {
+    myHelpArea.setLabelText(ExecutionBundle.message("remote.configuration.remote.debugging.allows.you.to.connect.idea.to.a.running.jvm.label"));
+    myHelpArea.setToolbarVisible();
+
     myJDK13HelpArea.setLabelText(ExecutionBundle.message("environment.variables.helper.use.arguments.jdk13.label"));
-    
+    myJDK13HelpArea.setToolbarVisible();
+
     final ButtonGroup transportGroup = new ButtonGroup();
     transportGroup.add(myRbSocket);
     transportGroup.add(myRbShmem);
