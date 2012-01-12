@@ -17,6 +17,7 @@
 package org.jetbrains.android.facet;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -216,19 +217,21 @@ public class AndroidRootUtil {
             final Library library = libraryOrderEntry.getLibrary();
             if (library != null && (!exportedLibrariesOnly || libraryOrderEntry.isExported())) {
               for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-                if (file.exists()) {
-                  if (file.isDirectory()) {
-                    collectClassFilesAndJars(file, libraries, new HashSet<VirtualFile>());
+                if (!file.exists()) {
+                  continue;
+                }
+
+                if (file.getFileType() instanceof ArchiveFileType) {
+                  if (file.getFileSystem() instanceof JarFileSystem) {
+                    VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+                    if (localFile != null) libraries.add(localFile);
                   }
                   else {
-                    if (file.getFileSystem() instanceof JarFileSystem) {
-                      VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
-                      if (localFile != null) libraries.add(localFile);
-                    }
-                    else {
-                      libraries.add(file);
-                    }
+                    libraries.add(file);
                   }
+                }
+                else if (file.isDirectory()) {
+                  collectClassFilesAndJars(file, libraries, new HashSet<VirtualFile>());
                 }
               }
             }
