@@ -216,7 +216,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     PsiMethod constructor = factory.createConstructor();
     constructor.setName(aClass.getName());
-    @Modifier String modifier = getConstructorModifier(aClass);
+    String modifier = getConstructorModifier(aClass);
     if (modifier != null) {
       PsiUtil.setModifierProperty(constructor, modifier, true);
     }
@@ -296,9 +296,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return constructor;
   }
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   public static String getConstructorModifier(final PsiClass aClass) {
-    @Modifier String modifier = PsiModifier.PUBLIC;
+    String modifier = PsiModifier.PUBLIC;
 
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
       modifier =  PsiModifier.PROTECTED;

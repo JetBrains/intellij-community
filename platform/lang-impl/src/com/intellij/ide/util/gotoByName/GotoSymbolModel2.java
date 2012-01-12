@@ -17,7 +17,9 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
+import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameRegistry;
+import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -30,6 +32,8 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
+  private String[] mySeparators;
+  
   public GotoSymbolModel2(Project project) {
     super(project, ChooseByNameRegistry.getInstance().getSymbolModelContributors());
   }
@@ -81,6 +85,13 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   }
 
   public String getFullName(final Object element) {
+    for(ChooseByNameContributor c: getContributors()) {
+      if (c instanceof GotoClassContributor) {
+        String result = ((GotoClassContributor) c).getQualifiedName((NavigationItem) element);
+        if (result != null) return result;
+      }
+    }
+
     if (element instanceof PsiElement) {
       final PsiElement psiElement = (PsiElement)element;
 
@@ -93,7 +104,10 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
 
   @NotNull
   public String[] getSeparators() {
-    return new String[] {"."};
+    if (mySeparators == null) {
+      mySeparators = GotoClassModel2.getSeparatorsFromContributors(getContributors());
+    }
+    return mySeparators;
   }
 
   @Override

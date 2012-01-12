@@ -23,6 +23,7 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.BorderType;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -301,6 +302,7 @@ public final class Painter {
     return x >= r.x - R && x <= r.x + R && y >= r.y - R && y <= r.y + R;
   }
 
+  @JdkConstants.CursorType
   public static int getResizeCursor(final int resizeMask){
     if (resizeMask == (WEST_MASK | NORTH_MASK)) {
       return Cursor.NW_RESIZE_CURSOR;

@@ -18,9 +18,10 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PlaceProvider;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   @NotNull private final DataContext myDataContext;
   @NotNull private final String myPlace;
   @NotNull private final Presentation myPresentation;
-  private final int myModifiers;
+  @JdkConstants.InputEventMask private final int myModifiers;
   private boolean myWorksInInjected;
   @NonNls private static final String ourInjectedPrefix = "$injected$.";
   private static final Map<String, String> ourInjectedIds = new HashMap<String, String>();
@@ -54,7 +55,7 @@ public class AnActionEvent implements PlaceProvider<String> {
     @NotNull @NonNls String place,
     @NotNull Presentation presentation,
     ActionManager actionManager,
-    int modifiers
+    @JdkConstants.InputEventMask int modifiers
   ){
     // TODO[vova,anton] make this constructor package local. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
@@ -159,6 +160,7 @@ public class AnActionEvent implements PlaceProvider<String> {
    * Returns the modifier keys held down during this action event.
    * @return the modifier keys.
    */
+  @JdkConstants.InputEventMask
   public int getModifiers() {
     return myModifiers;
   }

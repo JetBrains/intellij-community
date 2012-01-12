@@ -40,8 +40,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +165,7 @@ public class CodeInsightTestUtil {
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
     try {
       templateManager.setTemplateTesting(true);
-      VariableInplaceRenamer renamer = handler.doRename(elementAtCaret, editor, null);
+      InplaceRefactoring renamer = handler.doRename(elementAtCaret, editor, null);
       if (editor instanceof EditorWindow) {
         editor = ((EditorWindow)editor).getDelegate();
       }

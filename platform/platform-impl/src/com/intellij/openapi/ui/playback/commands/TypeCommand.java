@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
-import com.intellij.openapi.ui.playback.commands.KeyStokeMap;
 import com.intellij.openapi.util.registry.Registry;
+import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,9 +28,9 @@ public abstract class TypeCommand extends AbstractCommand {
 
   public TypeCommand(String text, int line) {
     super(text, line);
-  }
+    }
 
-  protected void type(Robot robot, int code, int modfiers) {
+  protected void type(Robot robot, int code, @JdkConstants.InputEventMask int modfiers) {
     type(robot, KeyStroke.getKeyStroke(code, modfiers));
   }
 

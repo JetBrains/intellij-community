@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.util.Pair;
+import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,7 +105,7 @@ public class TableScrollingUtil {
   }
 
 
-  public static void moveDown(JTable list, final int modifiers) {
+  public static void moveDown(JTable list, @JdkConstants.InputEventMask int modifiers) {
     int size = list.getModel().getRowCount();
     if (size == 0) {
       return;
@@ -134,7 +135,7 @@ public class TableScrollingUtil {
     }
   }
 
-  public static void moveUp(JTable list, int modifiers) {
+  public static void moveUp(JTable list, @JdkConstants.InputEventMask int modifiers) {
     int size = list.getModel().getRowCount();
     final ListSelectionModel selectionModel = list.getSelectionModel();
     int index = selectionModel.getMinSelectionIndex();

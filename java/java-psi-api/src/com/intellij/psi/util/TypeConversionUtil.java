@@ -57,7 +57,7 @@ public class TypeConversionUtil {
   public static final int SHORT_RANK = 2;
   public static final int CHAR_RANK = 3;
   public static final int INT_RANK = 4;
-  private static final int LONG_RANK = 5;
+  public static final int LONG_RANK = 5;
   private static final int FLOAT_RANK = 6;
   private static final int DOUBLE_RANK = 7;
   private static final int BOOL_RANK = 10;
@@ -540,18 +540,16 @@ public class TypeConversionUtil {
     if (i == JavaTokenType.MINUSMINUS || i == JavaTokenType.PLUSPLUS) {
       return typeRank <= MAX_NUMERIC_RANK;
     }
-    else if (i == JavaTokenType.MINUS || i == JavaTokenType.PLUS) {
+    if (i == JavaTokenType.MINUS || i == JavaTokenType.PLUS) {
       return typeRank <= MAX_NUMERIC_RANK;
     }
-    else if (i == JavaTokenType.TILDE) {
+    if (i == JavaTokenType.TILDE) {
       return typeRank <= LONG_RANK;
     }
-    else if (i == JavaTokenType.EXCL) {
+    if (i == JavaTokenType.EXCL) {
       return typeRank == BOOL_RANK;
     }
-    else {
-      LOG.error("unknown token: " + token);
-    }
+    LOG.error("unknown token: " + token);
     return true;
   }
 

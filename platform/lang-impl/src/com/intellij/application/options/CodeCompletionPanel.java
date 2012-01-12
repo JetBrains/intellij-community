@@ -23,6 +23,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
+import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -172,8 +173,8 @@ public class CodeCompletionPanel {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     boolean isModified = false;
 
-    isModified |= (getCaseSensitiveValue() != codeInsightSettings.COMPLETION_CASE_SENSITIVE);
-    isModified |= (getFocusLookupValue() != codeInsightSettings.AUTOPOPUP_FOCUS_POLICY);
+    isModified |= getCaseSensitiveValue() != codeInsightSettings.COMPLETION_CASE_SENSITIVE;
+    isModified |= getFocusLookupValue() != codeInsightSettings.AUTOPOPUP_FOCUS_POLICY;
 
     isModified |= isModified(myCbOnCodeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     isModified |= isModified(myCbOnSmartTypeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
@@ -214,6 +215,7 @@ public class CodeCompletionPanel {
     return value;
   }
 
+  @MagicConstant(intValues = {CodeInsightSettings.ALL, CodeInsightSettings.NONE, CodeInsightSettings.FIRST_LETTER})
   private int getCaseSensitiveValue() {
     Object value = myCaseSensitiveCombo.getSelectedItem();
     if (CASE_SENSITIVE_ALL.equals(value)){
@@ -227,6 +229,7 @@ public class CodeCompletionPanel {
     }
   }
 
+  @MagicConstant(intValues = {CodeInsightSettings.NEVER, CodeInsightSettings.SMART, CodeInsightSettings.ALWAYS})
   private int getFocusLookupValue() {
     return myFocusLookup.getSelectedIndex() + 1;
   }

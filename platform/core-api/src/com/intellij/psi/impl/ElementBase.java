@@ -100,7 +100,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @Nullable
-  private Icon computeIcon(final int flags) {
+  private Icon computeIcon(@Iconable.IconFlags int flags) {
     PsiElement psiElement = (PsiElement)this;
     if (!psiElement.isValid()) return null;
 
@@ -125,7 +125,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @Nullable
-  private static Icon computeIconNow(PsiElement element, int flags) {
+  private static Icon computeIconNow(PsiElement element, @Iconable.IconFlags int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(element, providersIcon, flags);
@@ -207,6 +207,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return pointer.getElement();
     }
 
+    @Iconable.IconFlags
     public int getFlags() {
       return (Integer)getEqualityObjects()[1];
     }
@@ -272,7 +273,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return baseIcon;
   }
 
-  public static int transformFlags(PsiElement element, int _flags) {
+  public static int transformFlags(PsiElement element, @IconFlags int _flags) {
     int flags = _flags & ~ICON_FLAG_READ_STATUS;
     final boolean isLocked = (_flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;

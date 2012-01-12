@@ -101,7 +101,7 @@ public class GroovyAccessibilityInspection extends BaseInspection {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       PsiModifierList modifierListCopy = facade.getElementFactory().createFieldFromText("int a;", null).getModifierList();
       modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
-      @Modifier String minModifier = PsiModifier.PROTECTED;
+      String minModifier = PsiModifier.PROTECTED;
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
         minModifier = PsiModifier.PUBLIC;
       }

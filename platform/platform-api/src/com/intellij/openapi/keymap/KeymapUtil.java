@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,12 +71,12 @@ public class KeymapUtil {
       KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
 
       String acceleratorText = getKeystrokeText(keyboardShortcut.getFirstKeyStroke());
-      if (acceleratorText.length() > 0) {
+      if (!acceleratorText.isEmpty()) {
         s = acceleratorText;
       }
 
       acceleratorText = getKeystrokeText(keyboardShortcut.getSecondKeyStroke());
-      if (acceleratorText.length() > 0) {
+      if (!acceleratorText.isEmpty()) {
         s += ", " + acceleratorText;
       }
     }
@@ -107,7 +108,7 @@ public class KeymapUtil {
    * @param clickCount    target clicks count
    * @return string representation of passed mouse shortcut.
    */
-  public static String getMouseShortcutText(int button, int modifiers, int clickCount) {
+  public static String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
     // Modal keys
 
     final int buttonNum;
@@ -140,7 +141,8 @@ public class KeymapUtil {
     }
   }
 
-  private static int mapNewModifiers(int modifiers) {
+  @JdkConstants.InputEventMask
+  private static int mapNewModifiers(@JdkConstants.InputEventMask int modifiers) {
     if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
       modifiers |= InputEvent.SHIFT_MASK;
     }
@@ -178,7 +180,7 @@ public class KeymapUtil {
     return acceleratorText.trim();
   }
 
-  private static String getModifiersText(int modifiers) {
+  private static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     if (SystemInfo.isMac) {
       try {
         Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
@@ -195,7 +197,7 @@ public class KeymapUtil {
     }
 
     final String keyModifiersText = KeyEvent.getKeyModifiersText(modifiers);
-    if (keyModifiersText.length() > 0) {
+    if (!keyModifiersText.isEmpty()) {
       return keyModifiersText + "+";
     } else {
       return keyModifiersText;
@@ -274,7 +276,7 @@ public class KeymapUtil {
     return new MouseShortcut(button, modifiers, clickCount);
   }
 
-  public static String getKeyModifiersTextForMacOSLeopard(int modifiers) {
+  public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
       if ((modifiers & InputEvent.META_MASK) != 0) {
           buf.append(Toolkit.getProperty("AWT.meta", "Meta"));
@@ -322,7 +324,7 @@ public class KeymapUtil {
 
     final int code = keyEvent.getKeyCode();
 
-    return code == KeyEvent.VK_META || code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_SHIFT | code == KeyEvent.VK_ALT;
+    return code == KeyEvent.VK_META || code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_ALT;
   }
 
   private static void updateTooltipRequestKey(RegistryValue value) {
@@ -332,7 +334,7 @@ public class KeymapUtil {
     ourOtherTooltipKeys.clear();
 
     processKey(text.contains("meta"), InputEvent.META_MASK);
-    processKey(text.contains("control") | text.contains("ctrl"), InputEvent.CTRL_MASK);
+    processKey(text.contains("control") || text.contains("ctrl"), InputEvent.CTRL_MASK);
     processKey(text.contains("shift"), InputEvent.SHIFT_MASK);
     processKey(text.contains("alt"), InputEvent.ALT_MASK);
 
@@ -360,7 +362,7 @@ public class KeymapUtil {
   }
 
   @Nullable
-  public static KeyStroke getKeyStroke(final @NotNull ShortcutSet shortcutSet) {
+  public static KeyStroke getKeyStroke(@NotNull final ShortcutSet shortcutSet) {
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
     if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut)) return null;
     final KeyboardShortcut shortcut = (KeyboardShortcut)shortcuts[0];

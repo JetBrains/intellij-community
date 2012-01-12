@@ -185,7 +185,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
                         }
 
                         if (color != null) {
-                          updatePreview(color, true);
+                          updatePreview(color, false);
                         }
                       }
                       else {
@@ -256,6 +256,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       forEveryKey(new PairFunction<JTextField, Pair<String, String>, Boolean>() {
                     @Override
                     public Boolean fun(JTextField _c, Pair<String, String> pair) {
+                      if (_c.hasFocus()) return true;
                       final String R = Integer.toHexString(c.getRed());
                       final String G = Integer.toHexString(c.getGreen());
                       final String B = Integer.toHexString(c.getBlue());

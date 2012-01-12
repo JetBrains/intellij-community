@@ -283,7 +283,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     return (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(factoryMethod);
   }
 
-  @Modifier private String getDefaultFactoryVisibility() {
+  @PsiModifier.ModifierConstant
+  private String getDefaultFactoryVisibility() {
     final PsiModifierList modifierList;
     if (myConstructor != null) {
       modifierList = myConstructor.getModifierList();

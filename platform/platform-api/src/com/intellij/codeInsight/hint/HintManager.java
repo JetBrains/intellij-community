@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.awt.RelativePoint;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,6 +38,9 @@ public abstract class HintManager {
   public static final short RIGHT = 4;
   public static final short RIGHT_UNDER = 5;
   public static final short DEFAULT = 6;
+  @MagicConstant(intValues = {ABOVE, UNDER, LEFT, RIGHT, RIGHT_UNDER, DEFAULT})
+  public @interface PositionFlags {}
+
 
   // Constants for 'flags' parameters
   public static final int HIDE_BY_ESCAPE = 0x01;
@@ -49,10 +53,13 @@ public abstract class HintManager {
   public static final int UPDATE_BY_SCROLLING = 0x80;
   public static final int HIDE_BY_MOUSEOVER = 0x100;
 
-  public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout);
+  @MagicConstant(flags = {HIDE_BY_ESCAPE, HIDE_BY_ANY_KEY, HIDE_BY_LOOKUP_ITEM_CHANGE, HIDE_BY_TEXT_CHANGE, HIDE_BY_OTHER_HINT, HIDE_BY_SCROLLING, HIDE_IF_OUT_OF_EDITOR, UPDATE_BY_SCROLLING, HIDE_BY_MOUSEOVER})
+  public @interface HideFlags {}
+
+  public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, @HideFlags int flags, int timeout);
 
   public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text);
-  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text, short position);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position);
 
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text);
 
@@ -60,9 +67,9 @@ public abstract class HintManager {
 
   public abstract void showQuestionHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @NotNull QuestionAction action);
 
-  public abstract boolean hideHints(int mask, boolean onlyOne, boolean editorChanged);
+  public abstract boolean hideHints(@HideFlags int mask, boolean onlyOne, boolean editorChanged);
 
-  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, short constraint, int flags, int timeout);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @PositionFlags short constraint, @HideFlags int flags, int timeout);
 
   public abstract void hideAllHints();
 

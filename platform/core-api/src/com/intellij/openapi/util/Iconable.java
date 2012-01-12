@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.HashMap;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,8 +28,10 @@ public interface Iconable {
   int ICON_FLAG_OPEN = 0x0004;
   int ICON_FLAG_CLOSED = 0x0008;
 
-  Icon getIcon(int flags);
+  @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_OPEN, ICON_FLAG_CLOSED, ICON_FLAG_READ_STATUS})
+  @interface IconFlags {}
 
+  Icon getIcon(@IconFlags int flags);
 
   class LastComputedIcon {
     private static final Key<Map<Integer, Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");

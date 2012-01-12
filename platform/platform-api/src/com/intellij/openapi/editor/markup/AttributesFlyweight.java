@@ -33,7 +33,7 @@ public class AttributesFlyweight {
   @NotNull
   public static AttributesFlyweight create(Color foreground,
                                            Color background,
-                                           int fontType,
+                                           @TextAttributes.FontStyle int fontType,
                                            Color effectColor,
                                            EffectType effectType,
                                            Color errorStripeColor) {
@@ -43,6 +43,7 @@ public class AttributesFlyweight {
 
   private final Color      myForeground;
   private final Color      myBackground;
+  @TextAttributes.FontStyle
   private final int        myFontType;
   private final Color      myEffectColor ;
   private final EffectType myEffectType;
@@ -50,7 +51,7 @@ public class AttributesFlyweight {
 
   private AttributesFlyweight(Color foreground,
                       Color background,
-                      int fontType,
+                      @TextAttributes.FontStyle int fontType,
                       Color effectColor,
                       EffectType effectType,
                       Color errorStripeColor) {
@@ -81,6 +82,7 @@ public class AttributesFlyweight {
     return myBackground;
   }
 
+  @TextAttributes.FontStyle
   public int getFontType() {
     return myFontType;
   }
@@ -105,7 +107,7 @@ public class AttributesFlyweight {
     return create(myForeground, back, myFontType, myEffectColor, myEffectType, myErrorStripeColor);
   }
 
-  public AttributesFlyweight withFontType(int fontType) {
+  public AttributesFlyweight withFontType(@TextAttributes.FontStyle int fontType) {
     return create(myForeground, myBackground, fontType, myEffectColor, myEffectType, myErrorStripeColor);
   }
 

@@ -32,7 +32,9 @@ import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.ui.InspectionsConfigTreeComparator;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -41,6 +43,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import java.util.Comparator;
 
 public class InspectionResultsViewComparator implements Comparator {
+  private static final Logger LOG = Logger.getInstance("#" + InspectionResultsViewComparator.class.getName());
+
   public int compare(Object o1, Object o2) {
     InspectionTreeNode node1 = (InspectionTreeNode)o1;
     InspectionTreeNode node2 = (InspectionTreeNode)o2;
@@ -50,21 +54,32 @@ public class InspectionResultsViewComparator implements Comparator {
       final InspectionSeverityGroupNode groupNode2 = (InspectionSeverityGroupNode)node2;
       return -SeverityRegistrar.getInstance(groupNode1.getProject()).compare(groupNode1.getSeverityLevel().getSeverity(), groupNode2.getSeverityLevel().getSeverity());
     }
+    if (node1 instanceof InspectionSeverityGroupNode) return -1;
+    if (node2 instanceof InspectionSeverityGroupNode) return 1;
 
     if (node1 instanceof InspectionGroupNode && node2 instanceof InspectionGroupNode) {
       return ((InspectionGroupNode)node1).getGroupTitle().compareToIgnoreCase(((InspectionGroupNode)node2).getGroupTitle());
     }
+    if (node1 instanceof InspectionGroupNode) return -1;
+    if (node2 instanceof InspectionGroupNode) return 1;
+
+    if (node1 instanceof InspectionNode && node2 instanceof InspectionNode)
+      return InspectionsConfigTreeComparator.getDisplayTextToSort(node1.toString())
+        .compareToIgnoreCase(InspectionsConfigTreeComparator.getDisplayTextToSort(node2.toString()));
+    if (node1 instanceof InspectionNode) return -1;
+    if (node2 instanceof InspectionNode) return 1;
+    
+    if (node1 instanceof InspectionModuleNode && node2 instanceof InspectionModuleNode) {
+      return Comparing.compare(node1.toString(), node2.toString());
+    }
+    if (node1 instanceof InspectionModuleNode) return -1;
+    if (node2 instanceof InspectionModuleNode) return 1;
 
     if (node1 instanceof InspectionPackageNode && node2 instanceof InspectionPackageNode) {
       return ((InspectionPackageNode)node1).getPackageName().compareToIgnoreCase(((InspectionPackageNode)node2).getPackageName());
     }
-
-    if (node1 instanceof InspectionNode && node2 instanceof InspectionNode)
-      return InspectionsConfigTreeComparator.getDisplayTextToSort(node1.toString())
-      .compareToIgnoreCase(InspectionsConfigTreeComparator.getDisplayTextToSort(node2.toString()));
-
-    if (node1 instanceof InspectionNode) return -1;
-    if (node2 instanceof InspectionNode) return 1;
+    if (node1 instanceof InspectionPackageNode) return -1;
+    if (node2 instanceof InspectionPackageNode) return 1;
 
     if (node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode ||
         node1 instanceof OfflineProblemDescriptorNode && node2 instanceof OfflineProblemDescriptorNode) {
@@ -97,7 +112,8 @@ public class InspectionResultsViewComparator implements Comparator {
       if (descriptor1 != null && descriptor2 != null) {
         return descriptor1.getDescriptionTemplate().compareToIgnoreCase(descriptor2.getDescriptionTemplate());
       }
-      return 0;
+      if (descriptor1 == null) return descriptor2 == null ? 0 : -1;
+      return 1;
     }
 
     if (node1 instanceof RefElementNode && node2 instanceof ProblemDescriptionNode) {
@@ -116,6 +132,7 @@ public class InspectionResultsViewComparator implements Comparator {
       return -compareEntities(((RefElementNode)node2).getElement(), ((ProblemDescriptionNode)node1).getElement());
     }
 
+    LOG.error("node1: " + node1 + ", node2: " + node2);
     return 0;
   }
 

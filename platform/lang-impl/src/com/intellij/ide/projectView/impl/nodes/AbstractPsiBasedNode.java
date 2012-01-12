@@ -164,6 +164,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     }
   }
 
+  @Iconable.IconFlags
   protected int getIconableFlags() {
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()) {

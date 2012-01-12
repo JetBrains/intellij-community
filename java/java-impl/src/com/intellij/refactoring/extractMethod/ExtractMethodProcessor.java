@@ -55,10 +55,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
@@ -128,7 +125,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected boolean myIsChainedConstructor;
   private DuplicatesFinder myDuplicatesFinder;
   private List<Match> myDuplicates;
-  @Modifier private String myMethodVisibility = PsiModifier.PRIVATE;
+  @PsiModifier.ModifierConstant private String myMethodVisibility = PsiModifier.PRIVATE;
   protected boolean myGenerateConditionalExit;
   private PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
@@ -185,7 +182,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
   /**
@@ -524,12 +521,12 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(PsiUtilBase.toPsiElementArray(elements), myInputVariables.copy(),
+      myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
                                                 new ArrayList<PsiVariable>());
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
     else if (elements.size() > 0){
-      myDuplicatesFinder = new DuplicatesFinder(PsiUtilBase.toPsiElementArray(elements), myInputVariables.copy(),
+      myDuplicatesFinder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
                                                 myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null,
                                                 Arrays.asList(myOutputVariables));
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);

@@ -22,6 +22,7 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.util.ParameterTablePanel;
 
 public abstract class AbstractExtractDialog extends DialogWrapper {
@@ -34,6 +35,7 @@ public abstract class AbstractExtractDialog extends DialogWrapper {
 
   public abstract ParameterTablePanel.VariableData[] getChosenParameters();
 
+  @PsiModifier.ModifierConstant
   public abstract String getVisibility();
 
   public abstract boolean isMakeStatic();

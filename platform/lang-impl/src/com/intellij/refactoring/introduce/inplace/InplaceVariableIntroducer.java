@@ -25,20 +25,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +50,7 @@ import java.util.List;
  * User: anna
  * Date: 3/15/11
  */
-public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInplaceRenamer {
+public abstract class InplaceVariableIntroducer<E extends PsiElement> extends InplaceRefactoring {
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
 
   protected E myExpr;
@@ -66,13 +62,14 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
   protected Balloon myBalloon;
   protected String myTitle;
   protected RelativePoint myTarget;
+  private RangeMarker myCaretRangeMarker;
 
   public InplaceVariableIntroducer(PsiNamedElement elementToRename,
                                    Editor editor,
                                    Project project,
                                    String title, E[] occurrences, 
                                    @Nullable E expr) {
-    super(elementToRename, editor, project);
+    super(editor, elementToRename, project);
     myTitle = title;
     myOccurrences = occurrences;
     myExpr = expr;
@@ -86,8 +83,8 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
   }
 
   @Override
-  protected int getOffsetForCaret(RangeMarker rangeMarker, int offset) {
-    return rangeMarker.isValid() ? rangeMarker.getStartOffset() : offset;
+  protected int restoreCaretOffset(int offset) {
+    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
   }
 
   @Override
@@ -141,8 +138,28 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
   }
 
   @Override
-  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
-    final boolean result = super.performInplaceRename(processTextOccurrences, nameSuggestions);
+  protected boolean performRefactoring() {
+    return false;
+  }
+
+  @Override
+  protected void beforeTemplateStart() {
+    myCaretRangeMarker = myEditor.getDocument()
+          .createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
+  }
+
+  @Override
+  protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
+  }
+
+  @Override
+  protected String getCommandName() {
+    return myTitle;
+  }
+
+  @Override
+  public boolean performInplaceRefactoring(LinkedHashSet<String> nameSuggestions) {
+    final boolean result = super.performInplaceRefactoring(nameSuggestions);
     if (result) {
       if (myBalloon == null) {
         showBalloon();
@@ -225,21 +242,7 @@ public class InplaceVariableIntroducer<E extends PsiElement> extends VariableInp
         }
       }
     }
-    return super.createLookupItems(lookupItems, name);
+    return lookupItems;
   }
 
-  @Override
-  protected TextRange preserveSelectedRange(SelectionModel selectionModel) {
-    return null;
-  }
-
-  @Override
-  protected void performOnInvalidIdentifier(String newName, LinkedHashSet<String> nameSuggestions) {
-    //move logic to performRefactoring
-  }
-
-  @Override
-  protected boolean performAutomaticRename() {
-    return false;
-  }
 }

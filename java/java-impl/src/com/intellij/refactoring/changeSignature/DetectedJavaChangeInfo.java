@@ -43,7 +43,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
   private PsiMethod mySuperMethod;
   private String[] myModifiers;
 
-  DetectedJavaChangeInfo(String newVisibility,
+  DetectedJavaChangeInfo(@PsiModifier.ModifierConstant String newVisibility,
                          PsiMethod method,
                          CanonicalTypes.Type newType,
                          @NotNull ParameterInfoImpl[] newParms,

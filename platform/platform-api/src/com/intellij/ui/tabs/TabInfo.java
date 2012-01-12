@@ -295,7 +295,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myEnabled;
   }
 
-  public TabInfo setDefaultStyle(final int style) {
+  public TabInfo setDefaultStyle(@SimpleTextAttributes.StyleAttributeConstant int style) {
     myDefaultStyle = style;
     myDefaultAttributes = null;
     update();

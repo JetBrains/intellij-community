@@ -145,7 +145,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       if (document == null) continue;
       final XmlTag rootTag = document.getRootTag();
       if (rootTag == null) continue;
-      final String externalName = PsiFormatUtil.getExternalName(listOwner, false);
+      final String externalName = getExternalName(listOwner, false);
       final String oldExternalName = getNormalizedExternalName(listOwner);
       for (final XmlTag tag : rootTag.getSubTags()) {
         final String className = tag.getAttributeValue("name");
@@ -177,6 +177,10 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       }
     }
     return result;
+  }
+
+  private static String getExternalName(PsiModifierListOwner listOwner, boolean showParamName) {
+    return PsiFormatUtil.getExternalName(listOwner, showParamName, Integer.MAX_VALUE);
   }
 
 
@@ -317,7 +321,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
           if (document != null) {
             final XmlTag rootTag = document.getRootTag();
             if (rootTag != null) {
-              final String externalName = PsiFormatUtil.getExternalName(listOwner, false);
+              final String externalName = getExternalName(listOwner, false);
               final String oldExternalName = getNormalizedExternalName(listOwner);
               for (final XmlTag tag : rootTag.getSubTags()) {
                 final String className = tag.getAttributeValue("name");
@@ -445,7 +449,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
         final XmlTag rootTag = document.getRootTag();
-        final String externalName = PsiFormatUtil.getExternalName(listOwner, false);
+        final String externalName = getExternalName(listOwner, false);
         if (rootTag != null) {
           for (XmlTag tag : rootTag.getSubTags()) {
             if (Comparing.strEqual(tag.getAttributeValue("name"), externalName)) {
@@ -603,7 +607,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   @Nullable
   private static String getNormalizedExternalName(PsiModifierListOwner owner) {
-    String externalName = PsiFormatUtil.getExternalName(owner);
+    String externalName = getExternalName(owner, true);
     if (externalName != null) {
       if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);

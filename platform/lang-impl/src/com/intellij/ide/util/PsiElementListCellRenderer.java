@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -192,6 +193,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @Nullable
   protected abstract String getContainerText(T element, final String name);
 
+  @Iconable.IconFlags
   protected abstract int getIconFlags();
 
   protected Icon getIcon(PsiElement element) {

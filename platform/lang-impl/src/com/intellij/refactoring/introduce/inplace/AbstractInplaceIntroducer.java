@@ -40,11 +40,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DottedBorder;
 import com.intellij.util.ui.PositionTracker;
@@ -70,7 +69,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected final String myExprText;
   private final String myLocalName;
 
-  protected String myConstantName;
   public static final Key<AbstractInplaceIntroducer> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
 
   private EditorEx myPreview;
@@ -169,13 +167,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected abstract String getActionName();
 
   /**
-   * Returns the name of the command performed by the refactoring.
-   *
-   * @return command name
-   */
-  protected abstract String getCommandName();
-
-  /**
    * Creates an initial version of the declaration for the introduced element. Note that this method is not called in a write action
    * and most likely needs to create one itself.
    *
@@ -231,7 +222,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           initOccurrencesMarkers();
           setElementToRename(variable);
           updateTitle(getVariable());
-          started = AbstractInplaceIntroducer.super.performInplaceRename(false, nameSuggestions);
+          started = AbstractInplaceIntroducer.super.performInplaceRefactoring(nameSuggestions);
           if (started) {
             myDocumentAdapter = new DocumentAdapter() {
               @Override
@@ -239,7 +230,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
                 if (myPreview == null) return;
                 final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
                 if (templateState != null) {
-                  final TextResult value = templateState.getVariableValue(VariableInplaceRenamer.PRIMARY_VARIABLE_NAME);
+                  final TextResult value = templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME);
                   if (value != null) {
                     updateTitle(getVariable(), value.getText());
                   }
@@ -320,7 +311,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   public String getInputName() {
-    return myConstantName;
+    return myInsertedName;
   }
 
 
@@ -367,12 +358,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   @Override
-  protected boolean appendAdditionalElement(List<Pair<PsiElement, TextRange>> stringUsages) {
-    return true;
-  }
-
-  @Override
-  protected void collectAdditionalElementsToRename(boolean processTextOccurrences, List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (E expression : getOccurrences()) {
         stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
@@ -425,7 +411,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   protected void restoreState(final V psiField) {
-    myConstantName = psiField.getName();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final PsiFile containingFile = psiField.getContainingFile();
@@ -480,29 +465,32 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   @Override
-  protected void moveOffsetAfter(boolean success) {
-    if (success) {
-      if (getLocalVariable() == null && myExpr == null ||
-          getInputName() == null ||
-          getLocalVariable() != null && !getLocalVariable().isValid() ||
-          myExpr != null && !myExpr.isValid()) {
-        super.moveOffsetAfter(false);
-        return;
-      }
-      if (getLocalVariable() != null) {
-        new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-          @Override
-          protected void run(Result result) throws Throwable {
-            getLocalVariable().setName(myLocalName);
-          }
-        }.execute();
-      }
-      performIntroduce();
-      V variable = getVariable();
-      if (variable != null) {
-        saveSettings(variable);
-      }
+  protected boolean performRefactoring() {
+    if (getLocalVariable() == null && myExpr == null ||
+        getInputName() == null ||
+        getLocalVariable() != null && !getLocalVariable().isValid() ||
+        myExpr != null && !myExpr.isValid()) {
+      super.moveOffsetAfter(false);
+      return false;
     }
+    if (getLocalVariable() != null) {
+      new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          getLocalVariable().setName(myLocalName);
+        }
+      }.execute();
+    }
+    performIntroduce();
+    V variable = getVariable();
+    if (variable != null) {
+      saveSettings(variable);
+    }
+    return false;
+  }
+
+  @Override
+  protected void moveOffsetAfter(boolean success) {
     if (getLocalVariable() != null && getLocalVariable().isValid()) {
       myEditor.getCaretModel().moveToOffset(getLocalVariable().getTextOffset());
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -550,11 +538,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       };
       CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), getCommandName());
     }
-  }
-
-  @Override
-  protected void restoreStateBeforeDialogWouldBeShown() {
-    stopIntroduce(InjectedLanguageUtil.getTopLevelEditor(myEditor));
   }
 
   @Override

@@ -91,7 +91,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testChangeVisibilityAndName() throws Exception {
-    doTest("protected", "newName", null, new SimpleInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PROTECTED, "newName", null, new SimpleInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
   }
 
   public void testImplicitConstructorInConstructor() throws Exception {
@@ -112,7 +112,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testOverriders() throws Exception {
-    doTest("public", "bar", null, new SimpleInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PUBLIC, "bar", null, new SimpleInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
   }
 
   public void testParameterRename() throws Exception {
@@ -140,7 +140,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testAddException() throws Exception {
-    doTest("public", null, "",
+    doTest(PsiModifier.PUBLIC, null, "",
            new SimpleInfo[]{new SimpleInfo(0)},
            new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
            false
@@ -148,7 +148,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testExceptionCaughtInUsage() throws Exception {
-    doTest("public", null, "",
+    doTest(PsiModifier.PUBLIC, null, "",
            new SimpleInfo[]{new SimpleInfo(0)},
            new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
            false
@@ -156,7 +156,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testExceptionInClosableBlock() throws Exception {
-    doTest("public", null, "",
+    doTest(PsiModifier.PUBLIC, null, "",
            new SimpleInfo[]{new SimpleInfo(0)},
            new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
            false
@@ -164,12 +164,12 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testGenerateDelegateForConstructor() throws Exception {
-    doTest("public", "Foo", null, new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)},
+    doTest(PsiModifier.PUBLIC, "Foo", null, new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)},
            new ThrownExceptionInfo[0], true);
   }
 
   public void testGenerateDelegateForAbstract() throws Exception {
-    doTest("public", "foo", null, new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)},
+    doTest(PsiModifier.PUBLIC, "foo", null, new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)},
            new ThrownExceptionInfo[0], true);
   }
 
@@ -231,18 +231,18 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
 
 
   private void doTest(SimpleInfo... parameterInfos) {
-    doTest("public", null, null, parameterInfos, new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PUBLIC, null, null, parameterInfos, new ThrownExceptionInfo[0], false);
   }
 
   private void doTest(String newReturnType, SimpleInfo[] parameterInfos) {
-    doTest("public", null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], false);
   }
 
   private void doTest(String newReturnType, SimpleInfo[] parameterInfos, final boolean generateDelegate) {
-    doTest("public", null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
+    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
 
-  private void doTest(String newVisibility,
+  private void doTest(@PsiModifier.ModifierConstant String newVisibility,
                       @Nullable String newName,
                       @Nullable String newReturnType,
                       SimpleInfo[] parameterInfo,

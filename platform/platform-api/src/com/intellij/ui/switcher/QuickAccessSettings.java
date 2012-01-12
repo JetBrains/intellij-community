@@ -30,10 +30,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
@@ -128,7 +130,7 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
     }
   }
 
-  private void reassignActionShortcut(String actionId, int modifiers, int actionCode) {
+  private void reassignActionShortcut(String actionId, @JdkConstants.InputEventMask int modifiers, int actionCode) {
     removeShortcuts(actionId);
     if (modifiers > 0) {
       myKeymap.addShortcut(actionId, new KeyboardShortcut(KeyStroke.getKeyStroke(actionCode, modifiers), null));
@@ -144,17 +146,18 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
     }
   }
 
+  @JdkConstants.InputEventMask
   int getModiferMask(Set<String> codeTexts) {
     int mask = 0;
     for (String each : codeTexts) {
       if ("control".equals(each)) {
-        mask |= KeyEvent.CTRL_MASK;
+        mask |= InputEvent.CTRL_MASK;
       } else if ("shift".equals(each)) {
-        mask |= KeyEvent.SHIFT_MASK;
+        mask |= InputEvent.SHIFT_MASK;
       } else if ("alt".equals(each)) {
-        mask |= KeyEvent.ALT_MASK;
+        mask |= InputEvent.ALT_MASK;
       } else if ("meta".equals(each)) {
-        mask |= KeyEvent.META_MASK;
+        mask |= InputEvent.META_MASK;
       }
     }
 
@@ -163,18 +166,18 @@ public class QuickAccessSettings implements ApplicationComponent, KeymapManagerL
 
   public static Set<Integer> getModifiersVKs(int mask) {
     Set<Integer> codes = new HashSet<Integer>();
-    if ((mask & KeyEvent.SHIFT_MASK) > 0) {
+    if ((mask & InputEvent.SHIFT_MASK) > 0) {
       codes.add(KeyEvent.VK_SHIFT);
     }
-    if ((mask & KeyEvent.CTRL_MASK) > 0) {
+    if ((mask & InputEvent.CTRL_MASK) > 0) {
       codes.add(KeyEvent.VK_CONTROL);
     }
 
-    if ((mask & KeyEvent.META_MASK) > 0) {
+    if ((mask & InputEvent.META_MASK) > 0) {
       codes.add(KeyEvent.VK_META);
     }
 
-    if ((mask & KeyEvent.ALT_MASK) > 0) {
+    if ((mask & InputEvent.ALT_MASK) > 0) {
       codes.add(KeyEvent.VK_ALT);
     }
 

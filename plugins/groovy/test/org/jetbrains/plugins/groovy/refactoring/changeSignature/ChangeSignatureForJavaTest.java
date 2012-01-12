@@ -223,7 +223,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
 
-  private void doTest(String newVisibility,
+  private void doTest(@PsiModifier.ModifierConstant String newVisibility,
                       String newName,
                       String newReturnType,
                       ParameterInfoImpl[] parameterInfo,
@@ -232,11 +232,11 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
     doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo), generateDelegate);
   }
 
-  private void doTest(String newVisibility, String newName, @NonNls String newReturnType, GenParams gen, final boolean generateDelegate) throws Exception {
+  private void doTest(@PsiModifier.ModifierConstant String newVisibility, String newName, @NonNls String newReturnType, GenParams gen, final boolean generateDelegate) throws Exception {
     doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
   }
 
-  private void doTest(String newVisibility, String newName, String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
+  private void doTest(@PsiModifier.ModifierConstant String newVisibility, String newName, String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
     myFixture.configureByFile(getTestName(false) +".groovy");
     myFixture.configureByFile(getTestName(false) + ".java");
     final PsiElement targetElement = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);

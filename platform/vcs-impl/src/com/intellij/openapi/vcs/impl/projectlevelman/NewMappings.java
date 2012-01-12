@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
@@ -258,11 +257,6 @@ public class NewMappings {
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     final String vcsName = vcs.getName();
 
-    if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("NewMappings.getMappingsAsFilesUnderVcs");
-      System.out.println("vcsName = " + vcsName);
-    }
-
     final List<VcsDirectoryMapping> mappings;
     synchronized (myLock) {
       final List<VcsDirectoryMapping> vcsMappings = myVcsToPaths.get(vcsName);
@@ -276,11 +270,6 @@ public class NewMappings {
         myDefaultVcsRootPolicy.addDefaultVcsRoots(this, vcsName, result);
       } else {
         final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
-        if (ChangeListManagerImpl.DEBUG) {
-          System.out.println("NewMappings.getMappingsAsFilesUnderVcs");
-          System.out.println("mapping.getDirectory() = " + mapping.getDirectory());
-          System.out.println("file = " + file);
-        }
         if (file != null) {
           result.add(file);
         }

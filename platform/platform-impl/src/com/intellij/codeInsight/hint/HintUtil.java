@@ -17,12 +17,12 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -139,7 +139,7 @@ public class HintUtil {
     return createAdComponent(bottomText, border, SwingUtilities.LEFT);
   }
 
-  public static JLabel createAdComponent(final String bottomText, final Border border, int alignment) {
+  public static JLabel createAdComponent(final String bottomText, final Border border, @JdkConstants.HorizontalAlignment int alignment) {
     JLabel label = new JLabel();
     label.setText(bottomText);
     label.setHorizontalAlignment(alignment);
