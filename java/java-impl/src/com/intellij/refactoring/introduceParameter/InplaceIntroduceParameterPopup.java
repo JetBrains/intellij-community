@@ -287,10 +287,6 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     return "IntroduceParameter";
   }
 
-  public String getCommandName() {
-    return IntroduceParameterHandler.REFACTORING_NAME;
-  }
-
   private void normalizeParameterIdxAccordingToRemovedParams(TIntArrayList parametersToRemove) {
     parametersToRemove.forEach(new TIntProcedure() {
       @Override

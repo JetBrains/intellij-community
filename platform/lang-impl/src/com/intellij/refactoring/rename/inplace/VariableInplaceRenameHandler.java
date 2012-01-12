@@ -107,7 +107,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  public VariableInplaceRenamer doRename(final @NotNull PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  public InplaceRefactoring doRename(final @NotNull PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
     boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
 

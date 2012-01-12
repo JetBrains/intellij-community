@@ -138,7 +138,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected boolean appendAdditionalElement(List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected boolean appendAdditionalElement(Collection<Pair<PsiElement, TextRange>> stringUsages) {
     boolean showChooser = super.appendAdditionalElement(stringUsages);
     PsiNamedElement variable = getVariable();
     if (variable != null) {
@@ -157,7 +157,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     return showChooser;
   }
 
-  private void appendAdditionalElement(List<Pair<PsiElement, TextRange>> stringUsages,
+  private void appendAdditionalElement(Collection<Pair<PsiElement, TextRange>> stringUsages,
                                        PsiNamedElement variable,
                                        PsiElement element) {
     if (element != variable && element instanceof PsiNameIdentifierOwner &&
@@ -170,7 +170,6 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   protected void performRefactoringRename(final String newName,
-                                          PsiElement context,
                                           final StartMarkAction markAction) {
     try {
       final PsiNamedElement variable = getVariable();
@@ -216,18 +215,14 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(boolean processTextOccurrences, List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
     //do not highlight non-code usages in file
   }
 
   @Override
-  protected void restoreStateBeforeTemplateIsFinished() {
+  public void finish() {
+    super.finish();
     revertState();
-  }
-
-  @Override
-  protected String getNewName(String newName, ResolveSnapshotProvider.ResolveSnapshot snapshot) {
-    return newName;
   }
 
   @Nullable

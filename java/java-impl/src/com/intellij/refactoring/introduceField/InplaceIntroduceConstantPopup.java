@@ -172,33 +172,31 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   }
 
   @Override
-  protected void moveOffsetAfter(boolean success) {
-    if (success) {
-      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = myMoveToAnotherClassCb.isSelected();
-      if (myMoveToAnotherClassCb.isSelected()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myEditor.putUserData(ACTIVE_INTRODUCE, InplaceIntroduceConstantPopup.this);
-            try {
-              final IntroduceConstantHandler constantHandler = new IntroduceConstantHandler();
-              final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
-              if (localVariable != null) {
-                constantHandler.invokeImpl(myProject, localVariable, myEditor);
-              }
-              else {
-                constantHandler.invokeImpl(myProject, myExpr, myEditor);
-              }
+  protected boolean performRefactoring() {
+    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = myMoveToAnotherClassCb.isSelected();
+    if (myMoveToAnotherClassCb.isSelected()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myEditor.putUserData(ACTIVE_INTRODUCE, InplaceIntroduceConstantPopup.this);
+          try {
+            final IntroduceConstantHandler constantHandler = new IntroduceConstantHandler();
+            final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
+            if (localVariable != null) {
+              constantHandler.invokeImpl(myProject, localVariable, myEditor);
             }
-            finally {
-              myEditor.putUserData(ACTIVE_INTRODUCE, null);
+            else {
+              constantHandler.invokeImpl(myProject, myExpr, myEditor);
             }
           }
-        });
-        return;
-      }
+          finally {
+            myEditor.putUserData(ACTIVE_INTRODUCE, null);
+          }
+        }
+      });
+      return false;
     }
-    super.moveOffsetAfter(success);
+    return super.performRefactoring();
   }
 
   @Override
@@ -248,9 +246,5 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   @Override
   protected String getActionName() {
     return "IntroduceConstant";
-  }
-
-  public String getCommandName() {
-    return IntroduceConstantHandler.REFACTORING_NAME;
   }
 }
