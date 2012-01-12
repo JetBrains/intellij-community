@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.projectWizard.ProjectJdkListRenderer;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -48,7 +47,6 @@ import java.util.Comparator;
  * @since May 18, 2005
  */
 class JdkComboBox extends ComboBoxWithWidePopup {
-  private final JButton myEditButton = new JButton(ApplicationBundle.message("button.edit"));
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     super(new JdkComboBoxModel(jdkModel));
@@ -101,17 +99,12 @@ class JdkComboBox extends ComboBoxWithWidePopup {
     return minSize;
   }
 
-  public JButton createSetupButton(final Project project, final ProjectSdksModel jdksModel, final JdkComboBoxItem firstItem) {
-    return createSetupButton(project, jdksModel, firstItem, null, false);
-  }
-
-
-  public JButton createSetupButton(final Project project,
-                                   final ProjectSdksModel jdksModel,
-                                   final JdkComboBoxItem firstItem,
-                                   @Nullable final Condition<Sdk> additionalSetup,
-                                   final boolean moduleJdkSetup) {
-    final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
+  public void setSetupButton(final JButton setUpButton,
+                                final Project project,
+                                final ProjectSdksModel jdksModel,
+                                final JdkComboBoxItem firstItem,
+                                @Nullable final Condition<Sdk> additionalSetup,
+                                final boolean moduleJdkSetup) {
     setUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
@@ -130,15 +123,15 @@ class JdkComboBox extends ComboBoxWithWidePopup {
         });
         JBPopupFactory.getInstance()
           .createActionGroupPopup(ProjectBundle.message("project.roots.set.up.jdk.title", moduleJdkSetup ? 1 : 2), group,
-                                  DataManager.getInstance().getDataContext(JdkComboBox.this), JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
+                                  DataManager.getInstance().getDataContext(JdkComboBox.this), JBPopupFactory.ActionSelectionAid.MNEMONICS,
+                                  false)
           .showUnderneathOf(setUpButton);
       }
     });
-    return setUpButton;
   }
 
-  public void appendEditButton(final Project project, final JPanel panel, GridBagConstraints gc, final Computable<Sdk> retrieveJDK){
-    myEditButton.addActionListener(new ActionListener() {
+  public void setEditButton(final JButton editButton, final Project project, final Computable<Sdk> retrieveJDK){
+    editButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Sdk projectJdk = retrieveJDK.compute();
         if (projectJdk != null) {
@@ -146,17 +139,17 @@ class JdkComboBox extends ComboBoxWithWidePopup {
         }
       }
     });
-    addActionListener(new ActionListener(){
+    addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final JdkComboBoxItem selectedItem = getSelectedItem();
         if (selectedItem instanceof ProjectJdkComboBoxItem) {
-          myEditButton.setEnabled(ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectSdk() != null);
-        } else {
-          myEditButton.setEnabled(!(selectedItem instanceof InvalidJdkComboBoxItem) && selectedItem != null && selectedItem.getJdk() != null);
+          editButton.setEnabled(ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectSdk() != null);
+        }
+        else {
+          editButton.setEnabled(!(selectedItem instanceof InvalidJdkComboBoxItem) && selectedItem != null && selectedItem.getJdk() != null);
         }
       }
     });
-    panel.add(myEditButton, gc);
   }
 
   public JdkComboBoxItem getSelectedItem() {
