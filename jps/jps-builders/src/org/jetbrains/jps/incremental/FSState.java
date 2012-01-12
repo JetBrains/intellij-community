@@ -27,8 +27,6 @@ public class FSState {
   public boolean markInitialScanPerformed(Module module, boolean forTests) {
     final Set<Module> map = forTests ? myInitialTestsScanPerformed : myInitialProductionScanPerformed;
     return map.add(module);
-    // todo: temp comment
-    //return true;
   }
 
   public void beforeNextRoundStart() {
