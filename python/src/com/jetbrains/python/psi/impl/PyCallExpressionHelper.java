@@ -313,4 +313,17 @@ public class PyCallExpressionHelper {
     }
     return false;
   }
+
+  @Nullable
+  public static PyExpression getKeywordArgument(PyCallExpression expr, String keyword) {
+    for (PyExpression arg : expr.getArguments()) {
+      if (arg instanceof PyKeywordArgument) {
+        PyKeywordArgument kwarg = (PyKeywordArgument)arg;
+        if (keyword.equals(kwarg.getKeyword())) {
+          return kwarg.getValueExpression();
+        }
+      }
+    }
+    return null;
+  }
 }
