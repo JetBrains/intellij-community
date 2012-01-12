@@ -84,6 +84,13 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
   }
 
+  public void testCreatingAndUpdatingLocalWhenNoDirectory() throws Exception {
+    MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("do_not_exist"), MavenIndex.Kind.LOCAL);
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+
+    assertUnorderedElementsAreEqual(i.getGroupIds());
+  }
+
   public void testCreatingSeveral() throws Exception {
     MavenIndex i1 = myIndices.add("id1", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     MavenIndex i2 = myIndices.add("id2", myRepositoryHelper.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
