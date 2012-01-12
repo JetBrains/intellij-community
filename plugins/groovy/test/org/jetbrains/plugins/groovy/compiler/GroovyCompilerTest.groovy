@@ -154,6 +154,12 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertEmpty(make());
   }
 
+  public void testJavaDependsOnGroovyEnum() throws Throwable {
+    myFixture.addFileToProject("Foo.groovy", "enum Foo { FOO }")
+    myFixture.addClass("class Bar { Foo f; }")
+    assertEmpty(make())
+  }
+
   public void testDeleteTransitiveJavaClass() throws Throwable {
     myFixture.addClass("public interface IFoo { int foo(); }");
     myFixture.addClass("public class Foo implements IFoo {" +
