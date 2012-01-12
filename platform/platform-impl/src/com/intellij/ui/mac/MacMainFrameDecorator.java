@@ -125,7 +125,14 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     final ID pool = invoke("NSAutoreleasePool", "new");
 
     int v = UNIQUE_COUNTER.incrementAndGet();
-
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowDeiconified(WindowEvent e) {
+        if (e.getWindow() == frame && frame.getState() == Frame.ICONIFIED) {
+          frame.setState(Frame.NORMAL);
+        }
+      }
+    });
     try {
       if (SystemInfo.isMacOSLion) {
         // fullscreen support
