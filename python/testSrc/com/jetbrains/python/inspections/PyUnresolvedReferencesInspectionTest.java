@@ -76,6 +76,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
   public void testImportFunction() {  // PY-1896
     doTest();
   }
+  
+  public void testSuperclassAsLocal() {  // PY-5427
+    doTest();
+  }
 
   public void testImportToContainingFile() {  // PY-4372
     myFixture.copyFileToProject("inspections/PyUnresolvedReferencesInspection/__init__.py", "PyUnresolvedReferencesInspection/__init__.py");
