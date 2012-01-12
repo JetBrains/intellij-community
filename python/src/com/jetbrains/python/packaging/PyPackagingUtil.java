@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,8 +39,9 @@ public class PyPackagingUtil {
   @NotNull
   public static String createVirtualEnv(@NotNull Sdk sdk, @NotNull String desinationDir) throws PyExternalProcessException {
     runPythonHelper(sdk, VIRTUALENV, list("--never-download", "--distribute", desinationDir));
-    // TODO: Return the path to the virtualenv interpreter
-    return desinationDir;
+    final String binary = PythonSdkType.getVirtualEnvInterpreter(desinationDir);
+    final String binaryFallback = desinationDir + File.separator + "bin" + File.separator + "python";
+    return (binary != null) ? binary : binaryFallback;
   }
 
   public static void deleteVirtualEnv(@NotNull String virtualEnvDir) {

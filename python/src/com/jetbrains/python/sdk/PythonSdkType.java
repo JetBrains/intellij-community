@@ -240,6 +240,22 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @Nullable
+  public static String getVirtualEnvInterpreter(@NotNull String virtualEnvDir) {
+    for (String dir : DIRS_WITH_BINARY) {
+      final File binDir = new File(virtualEnvDir, dir);
+      if (binDir.isDirectory()) {
+        for (String binary : BINARY_NAMES) {
+          final File binFile = new File(binDir, binary);
+          if (binFile.exists()) {
+            return binFile.getPath();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   /**
    * Finds a file that looks executable: an .exe or .cmd under windows, plain file under *nix.
    * @param parent directory to look at
