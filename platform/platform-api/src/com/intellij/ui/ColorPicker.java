@@ -64,7 +64,6 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
     this(null, false);
   }
 
-
   public ColorPicker(@Nullable Color color, boolean enableOpacity) {
     this(color, true, enableOpacity);
   }
@@ -1404,37 +1403,33 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
         myPoint.x = mouseLoc.x + myPickOffset.x;
         myPoint.y = mouseLoc.y + myPickOffset.y;
 
-        if (myPoint.x >= 0 && myPoint.y >= 0) {
-          Color c = myRobot.getPixelColor(myPoint.x, myPoint.y);
-          if (!c.equals(myPreviousColor) || !mouseLoc.equals(myPreviousLocation)) {
-            myPreviousColor = c;
-            myPreviousLocation = mouseLoc;
-            myCaptureRect.setLocation(mouseLoc.x + myCaptureOffset.x, mouseLoc.y + myCaptureOffset.y);
+        Color c = myRobot.getPixelColor(myPoint.x, myPoint.y);
+        if (!c.equals(myPreviousColor) || !mouseLoc.equals(myPreviousLocation)) {
+          myPreviousColor = c;
+          myPreviousLocation = mouseLoc;
+          myCaptureRect.setLocation(mouseLoc.x + myCaptureOffset.x, mouseLoc.y + myCaptureOffset.y);
 
-            if (myCaptureRect.x >= 0 && myCaptureRect.y >= 0) {
-              BufferedImage capture = myRobot.createScreenCapture(myCaptureRect);
+          BufferedImage capture = myRobot.createScreenCapture(myCaptureRect);
 
-              // Clear the cursor graphics
-              myGraphics.setComposite(AlphaComposite.Src);
-              myGraphics.setColor(myTransparentColor);
-              myGraphics.fillRect(0, 0, myImage.getWidth(), myImage.getHeight());
+          // Clear the cursor graphics
+          myGraphics.setComposite(AlphaComposite.Src);
+          myGraphics.setColor(myTransparentColor);
+          myGraphics.fillRect(0, 0, myImage.getWidth(), myImage.getHeight());
 
-              myGraphics.drawImage(capture, myZoomRect.x, myZoomRect.y, myZoomRect.width, myZoomRect.height, this);
-              
-              // cropping round image
-              myGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_OUT));
-              myGraphics.drawImage(myMaskImage, myZoomRect.x, myZoomRect.y, myZoomRect.width, myZoomRect.height, this);
-              
-              // paint magnifier
-              myGraphics.setComposite(AlphaComposite.SrcOver);
-              myGraphics.drawImage(myMagnifierImage, 0, 0, this);
+          myGraphics.drawImage(capture, myZoomRect.x, myZoomRect.y, myZoomRect.width, myZoomRect.height, this);
 
-              // We need to create a new subImage. This forces that
-              // the color picker uses the new imagery.
-              //BufferedImage subImage = myImage.getSubimage(0, 0, myImage.getWidth(), myImage.getHeight());
-              myPickerFrame.setCursor(myParent.getToolkit().createCustomCursor(myImage, myHotspot, "ColorPicker"));
-            }
-          }
+          // cropping round image
+          myGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_OUT));
+          myGraphics.drawImage(myMaskImage, myZoomRect.x, myZoomRect.y, myZoomRect.width, myZoomRect.height, this);
+
+          // paint magnifier
+          myGraphics.setComposite(AlphaComposite.SrcOver);
+          myGraphics.drawImage(myMagnifierImage, 0, 0, this);
+
+          // We need to create a new subImage. This forces that
+          // the color picker uses the new imagery.
+          //BufferedImage subImage = myImage.getSubimage(0, 0, myImage.getWidth(), myImage.getHeight());
+          myPickerFrame.setCursor(myParent.getToolkit().createCustomCursor(myImage, myHotspot, "ColorPicker"));
         }
       }
     }
