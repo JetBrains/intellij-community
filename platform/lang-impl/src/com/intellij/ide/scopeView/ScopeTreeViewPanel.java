@@ -438,6 +438,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
             }
           }
           TreeUtil.sort(rootToReload, getNodeComparator());
+          treeModel.reload(rootToReload);
         }
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -960,8 +961,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
       final TreePath path = event.getPath();
       if (path == null) return;
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      TreeUtil.sort(node, getNodeComparator());
+      final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+      node.sortChildren();
+      ((DefaultTreeModel)myTree.getModel()).reload(node);
     }
 
     @Override
