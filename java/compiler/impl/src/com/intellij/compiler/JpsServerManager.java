@@ -126,20 +126,24 @@ public class JpsServerManager implements ApplicationComponent{
   }
 
   public void sendReloadRequest(final Project project) {
-    myTaskExecutor.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final Client client = ensureServerRunningAndClientConnected(false);
-          if (client != null) {
-            client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
+    if (!project.isDefault() && project.isOpen()) {
+      myTaskExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            if (!project.isDisposed()) {
+              final Client client = ensureServerRunningAndClientConnected(false);
+              if (client != null) {
+                client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
+              }
+            }
+          }
+          catch (Throwable e) {
+            LOG.info(e);
           }
         }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-      }
-    });
+      });
+    }
   }
 
   private void sendNotification(final Collection<String> paths, final boolean isDeleted) {
