@@ -15,6 +15,10 @@
  */
 package com.intellij.ui.mac;
 
+import com.apple.eawt.AppEvent;
+import com.apple.eawt.FullScreenAdapter;
+import com.apple.eawt.FullScreenUtilities;
+import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -31,11 +35,8 @@ import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
@@ -101,10 +102,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
 
   private static Runnable CURRENT_SETTER = null;
   private static Function<Object, Boolean> CURRENT_GETTER = null;
-  
-  private Callback myDidExit;
-  private Callback myDidEnter;
-  private Callback myWindowWillMiniaturize;
+
   private boolean myInFullScreen;
   private IdeFrameImpl myFrame;
 
@@ -128,113 +126,43 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
 
     try {
       if (SystemInfo.isMacOSLion) {
-        // fullscreen support
-        frame.addWindowListener(new WindowAdapter() {
+        FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
           @Override
-          public void windowDeiconified(WindowEvent e) {
-            Window window1 = e.getWindow();
-            
-            if (window1 instanceof JFrame) {
-              ID w = MacUtil.findWindowForTitle(((JFrame)window1).getTitle());
-              if (w != null && w.intValue() > 0) {
-                try {
-                  Thread.sleep(300);
+          public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
+            myInFullScreen = true;
+
+            JRootPane rootPane = frame.getRootPane();
+            if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
+            if (Patches.APPLE_BUG_ID_10207064) {
+              // fix problem with bottom empty bar
+              // it seems like the title is still visible in fullscreen but the window itself shifted up for titlebar height
+              // and the size of the frame is still calculated to be the height of the screen which is wrong
+              // so just add these titlebar height to the frame height once again
+              Timer timer = new Timer(300, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                  SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                      frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
+                    }
+                  });
                 }
-                catch (InterruptedException e1) {
-                  // ignore
-                }
-                
-                invoke(w, "setCollectionBehavior:", 1 << 7);
-              }
+              });
+              timer.setRepeats(false);
+              timer.start();
             }
+          }
+
+          @Override
+          public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
+            myInFullScreen = false;
+            frame.storeFullScreenStateIfNeeded(false);
+
+            JRootPane rootPane = frame.getRootPane();
+            if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
           }
         });
-        
-        final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "IdeaNSWindowDelegate" + v);
-        Foundation.registerObjcClassPair(delegateClass);
-
-        
-        // something happens with event processing if main frame will be minimized and then restored back under java version "1.6.0_29" and maybe later
-        // so we will drop this behavior and restore it back on deminiaturization (see above)
-        myWindowWillMiniaturize = new Callback() {
-          public void callback(ID caller, ID notification) {
-            ID w = MacUtil.findWindowForTitle(frame.getTitle());
-            if (w != null && w.intValue() > 0) {
-              invoke(w, "setCollectionBehavior:", 0);
-            }
-          }
-        };
-        Foundation.addMethod(delegateClass, Foundation.createSelector("windowWillMiniaturize:"), myWindowWillMiniaturize, "v*");
-        
-        myDidExit = new Callback() {
-          public void callback(ID caller, ID notification) {
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                myInFullScreen = false;
-                frame.storeFullScreenStateIfNeeded(false);
-
-                JRootPane rootPane = frame.getRootPane();
-                if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
-              }
-            });
-          }
-        };
-        Foundation.addMethod(delegateClass, Foundation.createSelector("windowDidExitFullScreen:"), myDidExit, "v*");
-
-        myDidEnter = new Callback() {
-          public void callback(ID caller, ID notification) {
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                myInFullScreen = true;
-                //((IdeFrameImpl)frame).storeFullScreenStateIfNeeded(true);
-
-                // fix problem with bottom empty bar
-                // it seems like the title is still visible in fullscreen but the window itself shifted up for titlebar height
-                // and the size of the frame is still calculated to be the height of the screen which is wrong
-                // so just add these titlebar height to the frame height once again
-                Timer timer = new Timer(300, new ActionListener() {
-                  @Override
-                  public void actionPerformed(ActionEvent e) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                      @Override
-                      public void run() {
-                        frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
-                      }
-                    });
-                  }
-                });
-
-                JRootPane rootPane = frame.getRootPane();
-                if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
-
-                timer.setRepeats(false);
-                timer.start();
-              }
-            });
-          }
-        };
-
-        Foundation.addMethod(delegateClass, Foundation.createSelector("windowDidEnterFullScreen:"), myDidEnter, "v*");
-
-        // enable fullscreen titlebar button
-        invoke(window, "setCollectionBehavior:", 1 << 7); // NSCollectionBehaviorFullScreenPrimary = 1 << 7, NSCollectionBehaviorFullScreenAuxiliary = 1 << 8
-
-        ID notificationCenter = invoke("NSNotificationCenter", "defaultCenter");
-
-        ID delegate = invoke(invoke("IdeaNSWindowDelegate" + v, "alloc"), "init");
-        invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
-               Foundation.createSelector("windowDidEnterFullScreen:"), 
-               Foundation.nsString("NSWindowDidEnterFullScreenNotification"), window);
-
-        invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
-               Foundation.createSelector("windowDidExitFullScreen:"), 
-               Foundation.nsString("NSWindowDidExitFullScreenNotification"), window);
-
-        invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
-               Foundation.createSelector("windowWillMiniaturize:"), 
-               Foundation.nsString("NSWindowWillMiniaturizeNotification"), window);
       } else {
         // toggle toolbar
         String className = "IdeaToolbar" + v;

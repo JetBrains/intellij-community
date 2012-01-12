@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.apple.eawt.FullScreenUtilities;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
@@ -45,7 +46,10 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.status.*;
+import com.intellij.openapi.wm.impl.status.EncodingPanel;
+import com.intellij.openapi.wm.impl.status.InsertOverwritePanel;
+import com.intellij.openapi.wm.impl.status.PositionPanel;
+import com.intellij.openapi.wm.impl.status.ToggleReadOnlyAttributePanel;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
@@ -108,7 +112,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfo.isMac) setIconImage(null); 
+    if (SystemInfo.isMac) setIconImage(null);
+    // enable fullscreen titlebar button
+    if (SystemInfo.isMacOSLion) FullScreenUtilities.setWindowCanFullScreen(this, true);
     
     MouseGestureManager.getInstance().add(this);
   }
