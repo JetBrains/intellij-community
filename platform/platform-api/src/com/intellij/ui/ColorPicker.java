@@ -389,7 +389,6 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
           }, ColorPicker.this);
         }
       });
-      pipette.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
       previewPanel.add(pipette, BorderLayout.WEST);
     }
     
