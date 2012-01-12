@@ -17,13 +17,10 @@
     <orderEntry type="module" module-name="processor-api" />
     <orderEntry type="module" module-name="intellij-facade-api" />
     <orderEntry type="module" module-name="intellij-facade-factory" />
-    <orderEntry type="module" module-name="intellij-facade-9" />
-    <orderEntry type="module" module-name="intellij-facade-10" />
-    <orderEntry type="module" module-name="intellij-facade-11" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:openapi:10.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:idea:10.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:10.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:openapi:11.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:idea:11.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:11.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:11.0" level="project" />
   </component>
 </module>
 
