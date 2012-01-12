@@ -105,16 +105,20 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   @NotNull
   public String[] getSeparators() {
     if (mySeparators == null) {
-      final Set<String> separators = new HashSet<String>();
-      separators.add(".");
-      for(ChooseByNameContributor c: getContributors()) {
-        if (c instanceof GotoClassContributor) {
-          separators.add(((GotoClassContributor)c).getQualifiedNameSeparator());
-        }
-      }
-      mySeparators = separators.toArray(new String[separators.size()]);
+      mySeparators = getSeparatorsFromContributors(getContributors());
     }
     return mySeparators;
+  }
+
+  public static String[] getSeparatorsFromContributors(ChooseByNameContributor[] contributors) {
+    final Set<String> separators = new HashSet<String>();
+    separators.add(".");
+    for(ChooseByNameContributor c: contributors) {
+      if (c instanceof GotoClassContributor) {
+        separators.add(((GotoClassContributor)c).getQualifiedNameSeparator());
+      }
+    }
+    return separators.toArray(new String[separators.size()]);
   }
 
   @Override
