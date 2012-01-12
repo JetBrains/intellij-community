@@ -86,11 +86,16 @@ class ServerMessageHandler extends SimpleChannelHandler {
           final String projectId = fsEvent.getProjectId();
           final ProjectDescriptor pd = facade.getProjectDescriptor(projectId);
           if (pd != null) {
-            for (String path : fsEvent.getChangedPathsList()) {
-              facade.notifyFileChanged(pd, new File(path));
+            try {
+              for (String path : fsEvent.getChangedPathsList()) {
+                facade.notifyFileChanged(pd, new File(path));
+              }
+              for (String path : fsEvent.getDeletedPathsList()) {
+                facade.notifyFileDeleted(pd, new File(path));
+              }
             }
-            for (String path : fsEvent.getDeletedPathsList()) {
-              facade.notifyFileDeleted(pd, new File(path));
+            finally {
+              pd.release();
             }
           }
           break;

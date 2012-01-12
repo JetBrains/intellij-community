@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -98,12 +97,6 @@ public class JpsServerManager implements ApplicationComponent{
     mySystemDirectory = system;
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
-    final MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    appConnection.subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
-      public void saved(@NotNull Project project) {
-        sendReloadRequest(project);
-      }
-    });
 
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
@@ -402,7 +395,7 @@ public class JpsServerManager implements ApplicationComponent{
 
     // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
+    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");

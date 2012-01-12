@@ -40,8 +40,7 @@ class ServerState {
       for (Map.Entry<String, ProjectDescriptor> entry : myProjects.entrySet()) {
         final String projectPath = entry.getKey();
         final ProjectDescriptor descriptor = entry.getValue();
-        LOG.info("Global configuration changed: Closing descriptor for project " + projectPath);
-        descriptor.close();
+        descriptor.release();
       }
       myProjects.clear(); // projects should be reloaded against the latest data
       myGlobalLibraries.clear();
@@ -80,6 +79,9 @@ class ServerState {
     final ProjectDescriptor pd;
     synchronized (myConfigurationLock) {
       pd = myProjects.get(projectPath);
+      if (pd != null) {
+        pd.incUsageCounter();
+      }
     }
     return pd;
   }
@@ -88,10 +90,8 @@ class ServerState {
     synchronized (myConfigurationLock) {
       for (String projectPath : projectPaths) {
         final ProjectDescriptor descriptor = myProjects.remove(projectPath);
-        LOG.info("Clearing descriptor for project " + projectPath);
         if (descriptor != null) {
-          LOG.info("Closing descriptor for project " + projectPath);
-          descriptor.close();
+          descriptor.release();
         }
       }
     }
@@ -101,19 +101,19 @@ class ServerState {
     final String projectName = getProjectName(projectPath);
     BuildType buildType = params.buildType;
 
-    ProjectDescriptor descriptor;
+    ProjectDescriptor pd;
     synchronized (myConfigurationLock) {
-      descriptor = myProjects.get(projectPath);
-      if (descriptor == null) {
-        LOG.info("Creating project descriptor for project " + projectPath);
+      pd = myProjects.get(projectPath);
+      if (pd == null) {
         final Project project = loadProject(projectPath, params);
         final FSState fsState = new FSState();
-        descriptor = new ProjectDescriptor(projectName, project, fsState, new ProjectTimestamps(projectName));
-        myProjects.put(projectPath, descriptor);
+        pd = new ProjectDescriptor(projectName, project, fsState, new ProjectTimestamps(projectName));
+        myProjects.put(projectPath, pd);
       }
+      pd.incUsageCounter();
     }
 
-    final Project project = descriptor.project;
+    final Project project = pd.project;
 
     try {
       final List<Module> toCompile = new ArrayList<Module>();
@@ -130,7 +130,7 @@ class ServerState {
 
       final CompileScope compileScope = new CompileScope(project, toCompile);
 
-      final IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance());
+      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance());
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
       }
@@ -154,6 +154,7 @@ class ServerState {
       }
     }
     finally {
+      pd.release();
       clearZipIndexCache();
     }
   }

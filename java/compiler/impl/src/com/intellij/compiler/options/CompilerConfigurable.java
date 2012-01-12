@@ -18,6 +18,7 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerSettingsFactory;
+import com.intellij.compiler.JpsServerManager;
 import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
@@ -120,7 +121,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
           }
         };
 
-      kids.add(createExcludesWrapper(excludes));
+      kids.add(createExcludesWrapper(excludes, myProject));
 
       ArrayList<Configurable> additional = new ArrayList<Configurable>();
 
@@ -156,7 +157,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     return myKids;
   }
 
-  private static Configurable createExcludesWrapper(final ExcludedEntriesConfigurable excludes) {
+  private static Configurable createExcludesWrapper(final ExcludedEntriesConfigurable excludes, final Project project) {
     return new SearchableConfigurable() {
       @Nls
       public String getDisplayName() {
@@ -177,6 +178,11 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
 
       public void apply() {
         excludes.apply();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            JpsServerManager.getInstance().sendReloadRequest(project);
+          }
+        });
       }
 
       public boolean isModified() {
