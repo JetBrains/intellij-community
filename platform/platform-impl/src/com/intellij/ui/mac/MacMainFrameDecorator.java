@@ -35,8 +35,11 @@ import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
@@ -123,7 +126,14 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     final ID pool = invoke("NSAutoreleasePool", "new");
 
     int v = UNIQUE_COUNTER.incrementAndGet();
-
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowDeiconified(WindowEvent e) {
+        if (e.getWindow() == frame && frame.getState() == Frame.ICONIFIED) {
+          frame.setState(Frame.NORMAL);
+        }
+      }
+    });
     try {
       if (SystemInfo.isMacOSLion) {
         FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
