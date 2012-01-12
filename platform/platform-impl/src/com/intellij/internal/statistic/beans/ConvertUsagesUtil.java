@@ -165,12 +165,12 @@ public class ConvertUsagesUtil {
 
   public static void assertDescriptorName(String key) {
     assert key != null;
-    assert containsChar(key, ConvertUsagesUtil.GROUP_SEPARATOR) == false;
-    assert containsChar(key, ConvertUsagesUtil.GROUPS_SEPARATOR) == false;
-    assert containsChar(key, ConvertUsagesUtil.GROUP_VALUE_SEPARATOR) == false;
-    assert key.contains("=") == false;
-    assert key.contains("'") == false;
-    assert key.contains("\"") == false;
+    assert key.indexOf(GROUP_SEPARATOR) == -1 : key + " contains invalid chars";
+    assert key.indexOf(GROUPS_SEPARATOR) == -1 : key + " contains invalid chars";
+    assert key.indexOf(GROUP_VALUE_SEPARATOR) == -1 : key + " contains invalid chars";
+    assert !key.contains("=") : key + " contains invalid chars";
+    assert !key.contains("'") : key + " contains invalid chars";
+    assert !key.contains("\"") : key + " contains invalid chars";
   }
 
   @NotNull
@@ -188,14 +188,10 @@ public class ConvertUsagesUtil {
           escaped.append(' ');
           break;
         default:
-            escaped.append(ch);
+          escaped.append(ch);
           break;
       }
     }
     return escaped.toString();
-  }
-
-  public static boolean containsChar(final String value, final char ch) {
-    return value.indexOf(ch) >= 0;
   }
 }
