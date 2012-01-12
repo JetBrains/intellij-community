@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2011 JetBrains s.r.o.
  *
@@ -232,7 +231,7 @@ public class HighlightUtil {
 
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
-    for (@Modifier String incompatible : incompatibles) {
+    for (@PsiModifier.ModifierConstant String incompatible : incompatibles) {
       if (modifierList.hasModifierProperty(incompatible)) {
         return incompatible;
       }
@@ -271,7 +270,7 @@ public class HighlightUtil {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       PsiModifierList modifierListCopy = facade.getElementFactory().createFieldFromText("int a;", null).getModifierList();
       modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
-      @Modifier String minModifier = PsiModifier.PACKAGE_LOCAL;
+      String minModifier = PsiModifier.PACKAGE_LOCAL;
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         minModifier = PsiModifier.PROTECTED;
       }
@@ -280,7 +279,7 @@ public class HighlightUtil {
       }
       String[] modifiers = {PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
       for (int i = ArrayUtil.indexOf(modifiers, minModifier); i < modifiers.length; i++) {
-        @Modifier String modifier = modifiers[i];
+        @PsiModifier.ModifierConstant String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
         if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
           IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement, modifier, true, true);
@@ -761,7 +760,7 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkIllegalModifierCombination(PsiKeyword keyword, PsiModifierList modifierList) {
-    @Modifier String modifier = keyword.getText();
+    @PsiModifier.ModifierConstant String modifier = keyword.getText();
     String incompatible = getIncompatibleModifier(modifier, modifierList);
 
     HighlightInfo highlightInfo = null;
@@ -803,7 +802,7 @@ public class HighlightUtil {
     PsiElement modifierOwner = modifierList.getParent();
     if (modifierOwner == null) return null;
     if (PsiUtilCore.hasErrorElementChild(modifierOwner)) return null;
-    @Modifier String modifier = keyword.getText();
+    @PsiModifier.ModifierConstant String modifier = keyword.getText();
     final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
     if (incompatibleModifierMap == null) return null;
     Set<String> incompatibles = incompatibleModifierMap.get(modifier);
@@ -1796,7 +1795,7 @@ public class HighlightUtil {
       if (thisExpression.getQualifier() != null) {
         resolvedName = referencedClass == null
                        ? null
-                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME) + ".this";
+                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtilBase.SHOW_NAME) + ".this";
       }
       else {
         resolvedName = "this";

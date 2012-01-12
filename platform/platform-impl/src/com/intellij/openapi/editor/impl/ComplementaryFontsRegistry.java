@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TIntHashSet;
@@ -46,7 +47,7 @@ public class ComplementaryFontsRegistry {
     public int mySize;
     public int myStyle;
 
-    public FontKey(@NotNull String familyName, final int size, final int style) {
+    public FontKey(@NotNull String familyName, final int size, @TextAttributes.FontStyle int style) {
       myFamilyName = familyName;
       mySize = size;
       myStyle = style;
@@ -117,7 +118,7 @@ public class ComplementaryFontsRegistry {
     return Pair.create(found ? styledFamilyName : familyName, found ? Font.PLAIN : style);
   }
   
-  public static FontInfo getFontAbleToDisplay(char c, int size, int style, @NotNull String defaultFontFamily) {
+  public static FontInfo getFontAbleToDisplay(char c, int size, @TextAttributes.FontStyle int style, @NotNull String defaultFontFamily) {
     synchronized (lock) {
       Pair<String, Integer> p = fontFamily(defaultFontFamily, style);
       if (ourSharedKeyInstance.mySize == size &&

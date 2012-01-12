@@ -18,6 +18,7 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -66,7 +67,8 @@ public class MacOSDefaultKeymap extends DefaultKeymapImpl {
                              macShortcut.getClickCount());
   }
 
-  private static int mapModifiers(int modifiers) {
+  @JdkConstants.InputEventMask
+  private static int mapModifiers(@JdkConstants.InputEventMask int modifiers) {
     boolean meta = false;
 
     if ((modifiers & InputEvent.META_MASK) != 0) {

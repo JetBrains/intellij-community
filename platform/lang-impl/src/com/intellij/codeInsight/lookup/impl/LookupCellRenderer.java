@@ -247,7 +247,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private void renderItemName(LookupElement item,
                       Color foreground,
                       boolean selected,
-                      int style,
+                      @SimpleTextAttributes.StyleAttributeConstant int style,
                       String name,
                       final SimpleColoredComponent nameComponent) {
     final SimpleTextAttributes base = new SimpleTextAttributes(style, foreground);

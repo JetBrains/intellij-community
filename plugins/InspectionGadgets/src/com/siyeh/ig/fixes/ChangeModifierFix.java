@@ -17,10 +17,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.Modifier;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -30,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChangeModifierFix extends InspectionGadgetsFix {
 
-  @Modifier private final String modifierText;
+  @PsiModifier.ModifierConstant private final String modifierText;
 
-  public ChangeModifierFix(@NonNls @Modifier String modifierText) {
+  public ChangeModifierFix(@NonNls @PsiModifier.ModifierConstant String modifierText) {
     this.modifierText = modifierText;
   }
 

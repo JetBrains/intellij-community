@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.awt.RelativePoint;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,7 +187,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   void pack(boolean with, boolean height);
 
-  void setAdText(String s, int alignment);
+  void setAdText(String s, @JdkConstants.HorizontalAlignment int alignment);
 
   void setDataProvider(@NotNull DataProvider dataProvider);
 }

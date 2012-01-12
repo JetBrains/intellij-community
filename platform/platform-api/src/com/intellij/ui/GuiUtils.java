@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,7 +108,7 @@ public class GuiUtils {
     });
   }
 
-  public static JComponent constructLabeledComponent(String aLabelText, JComponent aComponent, int aAxis) {
+  public static JComponent constructLabeledComponent(String aLabelText, JComponent aComponent, @JdkConstants.BoxLayoutAxis int aAxis) {
     JPanel result = new JPanel();
     BoxLayout boxLayout = new BoxLayout(result, aAxis);
     result.setLayout(boxLayout);

@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 
@@ -24,12 +25,12 @@ public class JBScrollBar extends JScrollBar{
     init();
   }
 
-  public JBScrollBar(int orientation) {
+  public JBScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
     super(orientation);
     init();
   }
 
-  public JBScrollBar(int orientation, int value, int extent, int min, int max) {
+  public JBScrollBar(@JdkConstants.AdjustableOrientation int orientation, int value, int extent, int min, int max) {
     super(orientation, value, extent, min, max);
     init();
   }

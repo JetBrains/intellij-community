@@ -807,7 +807,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             final MethodSignature signature = myMethod.getSignature(substitutor);
             PsiMethod outerMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, false);
             if (outerMethod == null) {
-              @Modifier String visibility = checkOuterClassAbstractMethod(signature);
+              String visibility = checkOuterClassAbstractMethod(signature);
               PsiMethod newOuterMethod = (PsiMethod)myClass.add(myMethod);
               PsiUtil.setModifierProperty(newOuterMethod, visibility, true);
               final PsiDocComment docComment = newOuterMethod.getDocComment();
@@ -862,9 +862,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
    * @param methodSignature
    * @return Visibility
    */
-  @Modifier
+  @PsiModifier.ModifierConstant
   private String checkOuterClassAbstractMethod(MethodSignature methodSignature) {
-    @Modifier String visibility = PsiModifier.PROTECTED;
+    String visibility = PsiModifier.PROTECTED;
     for (PsiMethod method : myDelegatedMethods) {
       MethodSignature otherSignature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
 

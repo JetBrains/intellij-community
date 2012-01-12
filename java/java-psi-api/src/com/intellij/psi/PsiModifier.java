@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -37,4 +38,7 @@ public interface PsiModifier {
   @NonNls String[] MODIFIERS = {
     PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE
   };
+
+  @MagicConstant(stringValues = {PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, PACKAGE_LOCAL})
+  @interface ModifierConstant {}
 }

@@ -28,12 +28,12 @@ import javax.swing.*;
 
 public class IconUtilEx {
 
-  public static Icon getIcon(Object object, int flags, Project project) {
+  public static Icon getIcon(Object object, @Iconable.IconFlags int flags, Project project) {
     if (object instanceof PsiElement) {
       return ((PsiElement)object).getIcon(flags);
     }
     if (object instanceof Module) {
-      return ModuleType.get(((Module)object)).getNodeIcon((flags & Iconable.ICON_FLAG_OPEN) != 0);
+      return ModuleType.get((Module)object).getNodeIcon((flags & Iconable.ICON_FLAG_OPEN) != 0);
     }
     if (object instanceof VirtualFile) {
       VirtualFile file = (VirtualFile)object;

@@ -43,7 +43,7 @@ import java.awt.image.BufferedImage;
  * @author Konstantin Bulenkov
  */
 public class IconUtil {
-  private static Key<Boolean> PROJECT_WAS_EVER_INITIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
+  private static final Key<Boolean> PROJECT_WAS_EVER_INITIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
 
   private static boolean wasEverInitialized(Project project) {
     Boolean was = project.getUserData(PROJECT_WAS_EVER_INITIALIZED);
@@ -89,7 +89,7 @@ public class IconUtil {
     return new ImageIcon(img);
   }
   
-  public static Icon getIcon(final VirtualFile file, final int flags, final Project project) {
+  public static Icon getIcon(final VirtualFile file, @Iconable.IconFlags final int flags, final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
     final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file);
@@ -130,7 +130,7 @@ public class IconUtil {
   }
 
   @Nullable
-  private static Icon getProvidersIcon(VirtualFile file, int flags, Project project) {
+  private static Icon getProvidersIcon(VirtualFile file, @Iconable.IconFlags int flags, Project project) {
     for (FileIconProvider provider : getProviders()) {
       final Icon icon = provider.getIcon(file, flags, project);
       if (icon != null) return icon;

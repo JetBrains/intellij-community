@@ -16,7 +16,6 @@
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -32,6 +31,7 @@ import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -250,7 +250,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
   }
 
-  public final void registerAction(@NonNls String aActionName, int aKeyCode, int aModifier, Action aAction) {
+  public final void registerAction(@NonNls String aActionName, int aKeyCode, @JdkConstants.InputEventMask  int aModifier, Action aAction) {
     myInputMap.put(KeyStroke.getKeyStroke(aKeyCode, aModifier), aActionName);
     myActionMap.put(aActionName, aAction);
   }

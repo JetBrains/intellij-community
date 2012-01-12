@@ -29,6 +29,7 @@ import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,12 +55,12 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
   private final boolean myAllowRootSelection;
   private final boolean myShowModules;
   private final Project myProject;
-  private final int mySelectionMode;
+  @JdkConstants.TreeSelectionMode private final int mySelectionMode;
   private final LoadingNode.Manager myLoadingNodeManager = new LoadingNode.Manager();
 
   @NonNls public static final String SELECTION_CHANGED = "Selection Changed";
 
-  public CvsTree(Project project, boolean allowRootSelection, int selectionMode, boolean showModules, boolean showFiles,
+  public CvsTree(Project project, boolean allowRootSelection, @JdkConstants.TreeSelectionMode int selectionMode, boolean showModules, boolean showFiles,
                  Consumer<VcsException> errorCallback) {
     super(new BorderLayout());
     myProject = project;

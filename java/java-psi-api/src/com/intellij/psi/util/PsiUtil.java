@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
@@ -303,7 +304,7 @@ public final class PsiUtil extends PsiUtilCore {
     }
   }
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   @Nullable
   public static String getAccessModifier(int accessLevel) {
     return accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
@@ -434,10 +435,12 @@ public final class PsiUtil extends PsiUtilCore {
     return getApplicabilityLevel(method, substitutorForMethod, types, getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
+  @MethodCandidateInfo.ApplicabilityLevelConstant
   public static int getApplicabilityLevel(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
     return getApplicabilityLevel(method, substitutorForMethod, argList.getExpressionTypes(), getLanguageLevel(argList));
   }
 
+  @MethodCandidateInfo.ApplicabilityLevelConstant
   public static int getApplicabilityLevel(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutorForMethod, @NotNull final PsiType[] args,
                                            @NotNull final LanguageLevel languageLevel) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
@@ -900,7 +903,7 @@ public final class PsiUtil extends PsiUtilCore {
     }
   };
 
-  public static void setModifierProperty(@NotNull PsiModifierListOwner owner, @NotNull @Modifier String property, boolean value) {
+  public static void setModifierProperty(@NotNull PsiModifierListOwner owner, @NotNull @PsiModifier.ModifierConstant String property, boolean value) {
     final PsiModifierList modifierList = owner.getModifierList();
     assert modifierList != null : owner;
     modifierList.setModifierProperty(property, value);

@@ -35,7 +35,7 @@ import java.util.*;
 class JavaChangeInfoImpl implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   final String newVisibility;
   private PsiMethod method;
   String oldName;
@@ -71,7 +71,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
   /**
    * @param newExceptions null if not changed
    */
-  public JavaChangeInfoImpl(@Modifier String newVisibility,
+  public JavaChangeInfoImpl(@PsiModifier.ModifierConstant String newVisibility,
                     PsiMethod method,
                     String newName,
                     CanonicalTypes.Type newType,
@@ -88,7 +88,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
    * @param newExceptions null if not changed
    * @param oldName
    */
-  public JavaChangeInfoImpl(String newVisibility,
+  public JavaChangeInfoImpl(@PsiModifier.ModifierConstant String newVisibility,
                             PsiMethod method,
                             String newName,
                             CanonicalTypes.Type newType,
@@ -222,7 +222,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     return newParms;
   }
 
-  @Modifier
+  @PsiModifier.ModifierConstant
   public String getNewVisibility() {
     return newVisibility;
   }

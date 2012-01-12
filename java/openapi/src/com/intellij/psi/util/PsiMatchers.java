@@ -29,7 +29,7 @@ public class PsiMatchers {
   private PsiMatchers() {
   }
 
-  public static PsiMatcherExpression hasModifier(@Modifier final String modifier, final boolean shouldHave) {
+  public static PsiMatcherExpression hasModifier(@PsiModifier.ModifierConstant final String modifier, final boolean shouldHave) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {

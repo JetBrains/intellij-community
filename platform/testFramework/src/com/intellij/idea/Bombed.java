@@ -15,6 +15,8 @@
  */
 package com.intellij.idea;
 
+import org.intellij.lang.annotations.JdkConstants;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -24,7 +26,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Bombed {
   int year() default 2012;
-  int month();
+  @JdkConstants.CalendarMonth int month();
   int day();
   int time() default 0;
   String user() default "unknown, or, rather, Max";

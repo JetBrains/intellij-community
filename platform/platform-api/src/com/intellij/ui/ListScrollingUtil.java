@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -179,7 +180,7 @@ public class ListScrollingUtil {
     return list.getLastVisibleIndex() - list.getFirstVisibleIndex() + 1;
   }
 
-  public static void moveDown(JList list, final int modifiers) {
+  public static void moveDown(JList list, @JdkConstants.InputEventMask final int modifiers) {
     int size = list.getModel().getSize();
     if (size == 0) {
       return;
@@ -209,7 +210,7 @@ public class ListScrollingUtil {
     }
   }
 
-  public static void moveUp(JList list, int modifiers) {
+  public static void moveUp(JList list, @JdkConstants.InputEventMask int modifiers) {
     int size = list.getModel().getSize();
     final ListSelectionModel selectionModel = list.getSelectionModel();
     int index = selectionModel.getMinSelectionIndex();

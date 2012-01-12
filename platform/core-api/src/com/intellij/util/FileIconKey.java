@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -24,9 +25,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 class FileIconKey {
   private final VirtualFile myFile;
   private final Project myProject;
-  private final int myFlags;
+  @Iconable.IconFlags private final int myFlags;
 
-  FileIconKey(final VirtualFile file, final Project project, final int flags) {
+  FileIconKey(final VirtualFile file, final Project project, @Iconable.IconFlags int flags) {
     myFile = file;
     myProject = project;
     myFlags = flags;
@@ -62,6 +63,7 @@ class FileIconKey {
     return myProject;
   }
 
+  @Iconable.IconFlags
   public int getFlags() {
     return myFlags;
   }

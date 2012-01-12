@@ -22,6 +22,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +146,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
   }
 
-  public final void registerCustomShortcutSet(int keyCode, int modifiers, JComponent component) {
+  public final void registerCustomShortcutSet(int keyCode, @JdkConstants.InputEventMask int modifiers, JComponent component) {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, modifiers)), component);
   } 
 

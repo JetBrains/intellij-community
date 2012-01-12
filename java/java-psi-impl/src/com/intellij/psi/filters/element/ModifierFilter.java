@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.filters.element;
 
-import com.intellij.psi.Modifier;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import org.jetbrains.annotations.NonNls;
 
@@ -40,19 +37,19 @@ public class ModifierFilter extends ClassFilter{
     super(PsiModifierListOwner.class);
   }
 
-  public ModifierFilter(@Modifier String modifier, boolean hasToBe){
+  public ModifierFilter(@PsiModifier.ModifierConstant String modifier, boolean hasToBe){
     this();
     addModiferRestriction(modifier, hasToBe);
   }
 
   public ModifierFilter(String... modifiers){
     this();
-    for (@Modifier String modifier : modifiers) {
+    for (@PsiModifier.ModifierConstant String modifier : modifiers) {
       addModiferRestriction(modifier, true);
     }
   }
 
-  private void addModiferRestriction(@Modifier String mod, boolean hasToBe){
+  private void addModiferRestriction(@PsiModifier.ModifierConstant String mod, boolean hasToBe){
     myModifierRestrictions.add(new ModifierRestriction(mod, hasToBe));
   }
 
@@ -74,10 +71,10 @@ public class ModifierFilter extends ClassFilter{
   }
 
   protected static final class ModifierRestriction{
-    @Modifier public final String myModifierName;
+    @PsiModifier.ModifierConstant public final String myModifierName;
     public final boolean myIsSet;
 
-    ModifierRestriction(@Modifier String modifierName, boolean isSet){
+    ModifierRestriction(@PsiModifier.ModifierConstant String modifierName, boolean isSet){
       myModifierName = modifierName;
       myIsSet = isSet;
     }

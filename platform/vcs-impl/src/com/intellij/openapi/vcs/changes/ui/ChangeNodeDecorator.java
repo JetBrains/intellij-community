@@ -21,7 +21,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.List;
 
 public interface ChangeNodeDecorator {
@@ -32,14 +31,15 @@ public interface ChangeNodeDecorator {
   void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten);
 
   enum Stress {
-    BOLD(Font.BOLD),
-    ITALIC(Font.ITALIC),
-    BOLD_ITALIC(Font.BOLD | Font.ITALIC),
-    PLAIN(Font.PLAIN);
+    BOLD(SimpleTextAttributes.STYLE_BOLD),
+    ITALIC(SimpleTextAttributes.STYLE_ITALIC),
+    BOLD_ITALIC(SimpleTextAttributes.STYLE_BOLD | SimpleTextAttributes.STYLE_ITALIC),
+    PLAIN(SimpleTextAttributes.STYLE_PLAIN);
 
+    @SimpleTextAttributes.StyleAttributeConstant
     private final int myFontStyle;
 
-    private Stress(int fontStyle) {
+    private Stress(@SimpleTextAttributes.StyleAttributeConstant int fontStyle) {
       myFontStyle = fontStyle;
     }
 

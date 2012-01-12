@@ -22,6 +22,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -128,8 +129,8 @@ public class DialogBuilder implements Disposable {
     Disposer.register(this, disposable);
   }
 
-  public void setButtonsAlignment(int alignment) {
-    myDialogWrapper.setButtonsAlignment1(alignment);
+  public void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
+    myDialogWrapper.setButtonsAlignment(alignment);
   }
 
   public DialogWrapper getDialogWrapper() {
@@ -293,7 +294,7 @@ public class DialogBuilder implements Disposable {
     public void init() { super.init(); }
     public Action getOKAction() { return super.getOKAction(); } // Make it public
     public Action getCancelAction() { return super.getCancelAction(); } // Make it public
-    public void setButtonsAlignment1(int alignment) { setButtonsAlignment(alignment);}
+
     protected JComponent createCenterPanel() { return myCenterPanel; }
 
     public void dispose() {
