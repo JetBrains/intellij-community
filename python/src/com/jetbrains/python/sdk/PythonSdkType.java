@@ -63,6 +63,8 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
+  private static final String[] DIRS_WITH_BINARY = new String[]{"bin", "Scripts"};
+  private static final String[] BINARY_NAMES = new String[]{"python.exe", "python", "jython.bat", "jython", "ipy.exe", "pypy.exe", "pypy"};
 
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls public static final String SKELETONS_TOPIC = "Skeletons";
@@ -225,16 +227,12 @@ public class PythonSdkType extends SdkType {
     // binaryPath should contain an 'activate' script, and root should have bin (with us) and include and lib.
     try {
       File parent = new File(binaryPath).getParentFile();
-      sure(parent != null && "bin".equals(parent.getName()));
+      sure(parent != null);
       File activate_script = new File(parent, "activate_this.py");
       sure(activate_script.exists());
       File activate_source = findExecutableFile(parent, "activate");
-      sure(activate_source);
-      // NOTE: maybe read activate_source and see if it handles "VIRTUAL_ENV"
-      File root = parent.getParentFile();
-      sure(new File(root, "lib").exists());
-      sure(new File(root, "include").exists());
-      return root;
+      sure(activate_source != null);
+      return parent.getParentFile();
     }
     catch (IncorrectOperationException ignore) {
       // did not succeed
