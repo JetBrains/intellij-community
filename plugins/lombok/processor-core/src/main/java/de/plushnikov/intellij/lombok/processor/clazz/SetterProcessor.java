@@ -1,5 +1,12 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -11,17 +18,12 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
-import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.processor.field.SetterFieldProcessor;
+import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
+import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Inspect and validate @Setter lombok annotation on a class
@@ -75,6 +77,7 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
     final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
+    final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
     for (PsiField psiField : psiClass.getFields()) {
       boolean createSetter = true;
       PsiModifierList modifierList = psiField.getModifierList();
@@ -88,7 +91,7 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
         //Skip fields that start with $
         createSetter &= !psiField.getName().startsWith(LombokConstants.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists
-        final Collection<String> methodNames = getFieldProcessor().getAllSetterNames(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
+        final Collection<String> methodNames = getFieldProcessor().getAllSetterNames(psiField, booleanType.equals(psiField.getType()));
         createSetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);
       }
       if (createSetter) {

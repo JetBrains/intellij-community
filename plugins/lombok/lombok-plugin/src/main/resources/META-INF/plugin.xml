@@ -1,64 +1,51 @@
-<idea-plugin version="2">
-	<id>Lombook Plugin</id>
-	<name>Lombok Plugin</name>
-	<vendor email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-	<version>0.3</version>
-	<idea-version since-build="99.18" />
+<idea-plugin version="2" url="http://code.google.com/p/lombok-intellij-plugin">
+  <id>Lombook Plugin</id>
+  <name>Lombok Plugin</name>
+  <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
+  <version>0.3</version>
+  <idea-version since-build="93.13"/>
 
-	<description><![CDATA[
+  <description><![CDATA[
     A plugin that adds first-class support for Project Lombok
     ]]>
-	</description>
-	<category>Tools Integration</category>
+  </description>
+  <category>Tools Integration</category>
 
-	<depends>InspectionGadgets</depends>
-	<depends>IntentionPowerPack</depends>
+  <depends>InspectionGadgets</depends>
+  <depends>IntentionPowerPack</depends>
 
-	<application-components>
-		<!-- Add your application components here -->
-		<component>
-			<implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
-		</component>
-	</application-components>
+  <application-components>
+    <component>
+      <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
+    </component>
+  </application-components>
 
-	<project-components>
-		<!-- Add your project components here -->
-	</project-components>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
+    <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
+    <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
+  </extensions>
 
-	<actions>
-		<!-- Add your actions here -->
-	</actions>
-
-	<extensions defaultExtensionNs="com.intellij">
-		<!-- Add your extensions here -->
-		<lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider" />
-		<implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider" />
-		<inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider" />
-
-		<renameHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementRenameHandler" order="first" />
-		<!--<refactoring.changeSignatureUsageProcessor implementation=""/>-->
-		<!--<refactoring.safeDeleteProcessor      -->
-		<!--<refactoring.moveHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementMoveHandler" order="first"/>-->
-	</extensions>
-
-	<change-notes><![CDATA[
+  <change-notes><![CDATA[
 		<ul>
 			<li>0.3
 				<ol>
-			        <li>Fixed issue #4 "Getter/Setter on generic types"</li>
-			        <li>Fixed issue #6 "The Plugin panel in IDEA lists the plugin as "Lombook Plugin (doubled letter 'o')"</li>
-			        <li>Fixed issue #9 "@Data(staticConstructor="of") is not created"</li>
-			        <li>Fixed issue #10 "Empty constructor is created even if it already exists"</li>
-					<li>Added more inspections and QuickFixes for some of lombok annotations.</li>
+            <li>Fixed issue #7 "Added support for IntelliJ 11"</li>
+            <li>Fixed issue #4 "Getter/Setter on generic types"</li>
+            <li>Fixed issue #6 "The Plugin panel in IDEA lists the plugin as "Lombook Plugin (doubled letter 'o')"</li>
+            <li>Fixed issue #9 "@Data(staticConstructor="of") is not created"</li>
+            <li>Fixed issue #10 "Empty constructor is created even if it already exists"</li>
+            <li>Added more inspections and QuickFixes for some of lombok annotations.</li>
+            <li>Added support for "LazyGetter" and "FluentSetter" annotations from lombok-pg</li>
 				</ol>
 			</li>
 			<li>0.2
 				<ol>
-			<li>Added inspections for lombok annotations.</li>
-            <li>Added some simple QuickFixes for lombok inspections.</li>
-            <li>Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.</li>
-            <li>Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor</li>
-            <li>General bug fixing and many improvements</li>
+					<li>Added inspections for lombok annotations.</li>
+					<li>Added some simple QuickFixes for lombok inspections.</li>
+					<li>Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.</li>
+					<li>Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor</li>
+					<li>General bug fixing and many improvements</li>
 				</ol>
 			</li>
 			<li>0.1
@@ -68,5 +55,5 @@
 			</li>
 		</ul>
 	]]>
-	</change-notes>
+  </change-notes>
 </idea-plugin>

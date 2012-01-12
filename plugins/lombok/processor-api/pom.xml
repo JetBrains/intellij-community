@@ -16,28 +16,25 @@
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>openapi</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>util</artifactId>
-      <scope>provided</scope>
     </dependency>
-
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>annotations</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.intellij.idea</groupId>
-      <artifactId>idea</artifactId>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <classifier>${idea.version}</classifier>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>

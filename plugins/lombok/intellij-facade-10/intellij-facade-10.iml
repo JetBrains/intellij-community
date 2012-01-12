@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/annotations" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target/classes" />
+      <excludeFolder url="file://$MODULE_DIR$/target/maven-archiver" />
+      <excludeFolder url="file://$MODULE_DIR$/target/surefire" />
+      <excludeFolder url="file://$MODULE_DIR$/target/test-classes" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij-facade-api" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:openapi:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:extensions:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:util:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:annotations:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.intellij.idea:idea:10.0" level="project" />
+  </component>
+</module>
+

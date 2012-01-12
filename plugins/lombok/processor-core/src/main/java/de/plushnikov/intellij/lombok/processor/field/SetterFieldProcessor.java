@@ -1,5 +1,11 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
@@ -11,18 +17,15 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
-import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
+import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Setter;
 import lombok.core.TransformationsUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Inspect and validate @Setter lombok annotation on a field
@@ -80,7 +83,8 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
       final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+      final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
+      final boolean isBoolean = booleanType.equals(psiField.getType());
       final Collection<String> methodNames = getAllSetterNames(psiField, isBoolean);
 
       for (String methodName : methodNames) {
@@ -107,7 +111,8 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   public PsiMethod createSetterMethod(@NotNull PsiField psiField, @Modifier @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
-    final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
+    final PsiType booleanType = PsiPrimitiveTypeFactory.getInstance().getBooleanType();
+    final String methodName = getSetterName(psiField, booleanType.equals(psiFieldType));
 
 //      final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField);
 //      final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
@@ -118,25 +123,23 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
 
     UserMapKeys.addWriteUsageFor(psiField);
 
-    //return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiField);
-    //PsiMethod method = PropertyUtil.generateSetterPrototype(psiField);
-    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
-        .setMethodReturnType(getReturnType(psiField))
-        .setContainingClass(psiClass)
-        .addParameter(fieldName, psiFieldType)
-        .setNavigationElement(psiField);
+    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
+        .withMethodReturnType(getReturnType(psiField))
+        .withContainingClass(psiClass)
+        .withParameter(fieldName, psiFieldType)
+        .withNavigationElement(psiField);
     if (StringUtil.isNotEmpty(methodModifier)) {
-      method.addModifier(methodModifier);
+      method.withModifier(methodModifier);
     }
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-      method.addModifier(PsiModifier.STATIC);
+      method.withModifier(PsiModifier.STATIC);
     }
     return method;
 
   }
 
   protected PsiType getReturnType(@NotNull PsiField psiField) {
-    return PsiType.VOID;
+    return PsiPrimitiveTypeFactory.getInstance().getVoidType();
   }
 
 }

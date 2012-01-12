@@ -7,13 +7,16 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/target/test-classes" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/test-annotations" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/annotations" isTestSource="false" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="IDEA IC-111.69" jdkType="IDEA JDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij-facade-api" />
     <orderEntry type="module" module-name="processor-api" />
     <orderEntry type="module" module-name="processor-core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij-facade-factory" />
   </component>
 </module>
 

@@ -15,11 +15,23 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>intellij-facade-api</artifactId>
+      <classifier>${idea.version}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>intellij-facade-factory</artifactId>
+      <classifier>${idea.version}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>processor-api</artifactId>
+      <classifier>${idea.version}</classifier>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>processor-core</artifactId>
+      <classifier>${idea.version}</classifier>
       <scope>runtime</scope>
     </dependency>
 
@@ -39,14 +51,14 @@
       <groupId>com.intellij.idea</groupId>
       <artifactId>annotations</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>extensions</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.intellij.idea</groupId>
-      <artifactId>extensions</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jdom</groupId>
@@ -66,28 +78,19 @@
     </dependency>
   </dependencies>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>processor-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>processor-core</artifactId>
-        <version>${project.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <properties>
     <skipTests>true</skipTests>
   </properties>
 
   <build>
     <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <classifier>${idea.version}</classifier>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -136,11 +139,11 @@
               <resources>
                 <resource>
                   <directory>${project.build.directory}/generated-test-resources/lombok</directory>
-
+                  <targetPath>lombok-src</targetPath>
                 </resource>
                 <resource>
                   <directory>${project.build.directory}/generated-test-resources/lombok-pg</directory>
-
+                  <targetPath>lombok-pg-src</targetPath>
                 </resource>
               </resources>
             </configuration>

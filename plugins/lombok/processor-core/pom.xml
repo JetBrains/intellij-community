@@ -16,29 +16,45 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>processor-api</artifactId>
-      <version>${project.version}</version>
+      <classifier>${idea.version}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>intellij-facade-api</artifactId>
+      <classifier>${idea.version}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>intellij-facade-factory</artifactId>
+      <classifier>${idea.version}</classifier>
     </dependency>
 
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>openapi</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>idea</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>util</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
       <artifactId>annotations</artifactId>
-      <scope>provided</scope>
     </dependency>
-
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <classifier>${idea.version}</classifier>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
