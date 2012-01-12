@@ -288,7 +288,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
     putCaretOnFieldName(operation.getEditor(), occurrence != null ? occurrence : target);
     final InplaceVariableIntroducer<PsiElement> introducer = new PyInplaceFieldIntroducer(target, operation, occurrences);
-    introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));
+    introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
   }
 
   private static void putCaretOnFieldName(Editor editor, PsiElement occurrence) {
