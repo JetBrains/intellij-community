@@ -29,6 +29,7 @@ public class ProjectTimestamps {
         result = new TimestampStorage(dataFile);
       }
       catch (Exception e) {
+        LOG.info("Error opening timestamp storage: ", e);
         FileUtil.delete(root);
         result = new TimestampStorage(dataFile);
       }
@@ -52,9 +53,7 @@ public class ProjectTimestamps {
   public void clean() throws IOException {
     final TimestampStorage timestamps = myTimestamps;
     if (timestamps != null) {
-      synchronized (timestamps) {
-        timestamps.wipe();
-      }
+      timestamps.wipe();
     }
     else {
       FileUtil.delete(getTimestampsRoot());
@@ -64,14 +63,12 @@ public class ProjectTimestamps {
   public void close() {
     final TimestampStorage timestamps = myTimestamps;
     if (timestamps != null) {
-      synchronized (timestamps) {
-        try {
-          timestamps.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          FileUtil.delete(getTimestampsRoot());
-        }
+      try {
+        timestamps.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        FileUtil.delete(getTimestampsRoot());
       }
     }
   }
