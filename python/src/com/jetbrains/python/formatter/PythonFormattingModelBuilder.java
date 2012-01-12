@@ -87,7 +87,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .around(SHIFT_OPERATIONS).spaceIf(settings.SPACE_AROUND_SHIFT_OPERATORS)
       .around(BITWISE_OPERATIONS).spaceIf(settings.SPACE_AROUND_BITWISE_OPERATORS)
       .around(EQUALITY_OPERATIONS).spaceIf(settings.SPACE_AROUND_EQUALITY_OPERATORS)
-      .around(RELATIONAL_OPERATIONS).spaceIf(settings.SPACE_AROUND_RELATIONAL_OPERATORS);
+      .around(RELATIONAL_OPERATIONS).spaceIf(settings.SPACE_AROUND_RELATIONAL_OPERATORS)
+      .around(IN_KEYWORD).spaces(1);
   }
 
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
