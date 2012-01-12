@@ -169,6 +169,7 @@ public class PyNames {
     .put("__contains__", _self_item_descr)
     //_BuiltinMethods.put("__debug__", _only_self_descr);
     .put("__del__", _only_self_descr)
+    .put("__delete__", new BuiltinDescription("(self, instance)"))
     .put("__delattr__", _self_item_descr)
     .put("__delitem__", _self_key_descr)
     .put("__delslice__", new BuiltinDescription("(self, i, j)"))
@@ -185,6 +186,7 @@ public class PyNames {
     .put("__floordiv__", _self_other_descr)
     //_BuiltinMethods.put("__future__", _only_self_descr);
     .put("__ge__", _self_other_descr)
+    .put("__get__", new BuiltinDescription("(self, instance, owner)"))
     .put("__getattr__", _self_item_descr)
     .put("__getattribute__", _self_item_descr)
     .put("__getitem__", _self_item_descr)
@@ -248,6 +250,7 @@ public class PyNames {
     .put("__rsub__", _self_other_descr)
     .put("__rtruediv__", _self_other_descr)
     .put("__rxor__", _self_other_descr)
+    .put("__set__", new BuiltinDescription("(self, instance, value)"))
     .put("__setattr__", new BuiltinDescription("(self, key, value)"))
     .put("__setitem__", new BuiltinDescription("(self, key, value)"))
     .put("__setslice__", new BuiltinDescription("(self, i, j, sequence)"))
