@@ -467,4 +467,26 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "}";
     doTextTest(text, text);
   }
+
+  public void testIncompleteMethodCall() throws Exception {
+    // Inspired by IDEA-79836.
+
+    doMethodTest(
+      "test(new Runnable() {\n" +
+      "         public void run() {\n" +
+      "         }\n" +
+      "     }, new Runnable() {\n" +
+      "         public void run() {\n" +
+      "         }\n" +
+      "     }, )",
+      "test(new Runnable() {\n" +
+      "         public void run() {\n" +
+      "         }\n" +
+      "     }, new Runnable() {\n" +
+      "         public void run() {\n" +
+      "         }\n" +
+      "     },\n" +
+      ")"
+    );
+  }
 }

@@ -1087,7 +1087,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         }
         else if (child.getElementType() == to) {
           result.add(createJavaBlock(child, mySettings,
-                                     isAfterIncomplete ? internalIndent : externalIndent,
+                                     externalIndent,
                                      null,
                                      isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment));
           return child;

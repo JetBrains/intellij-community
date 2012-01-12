@@ -55,6 +55,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -475,6 +476,7 @@ public class FileStructurePopup implements Disposable {
     });
 
     checkBox.setFocusable(false);
+    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, checkBox);
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(checkBox, BorderLayout.WEST);
     return panel;
