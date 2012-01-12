@@ -102,15 +102,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   private static boolean isNotInstanceModifier(final PsiModifierList list2) {
-    return list2.hasModifierProperty("static") ||
-           list2.hasModifierProperty("abstract");
+    return list2.hasModifierProperty(PsiModifier.STATIC) ||
+           list2.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
   @Override
   public final void visitModifierList(final PsiModifierList list) {
     final PsiModifierList list2 = (PsiModifierList)myMatchingVisitor.getElement();
 
-    for (@Modifier String aMODIFIERS : MODIFIERS) {
+    for (@PsiModifier.ModifierConstant String aMODIFIERS : MODIFIERS) {
       if (list.hasModifierProperty(aMODIFIERS) && !list2.hasModifierProperty(aMODIFIERS)) {
         myMatchingVisitor.setResult(false);
         return;
@@ -136,7 +136,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
               boolean matchedOne = false;
 
               for (PsiAnnotationMemberValue v : ((PsiArrayInitializerMemberValue)value).getInitializers()) {
-                final String name = StringUtil.stripQuotesAroundValue(v.getText());
+                @PsiModifier.ModifierConstant String name = StringUtil.stripQuotesAroundValue(v.getText());
                 if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
                   if (isNotInstanceModifier(list2)) {
                     myMatchingVisitor.setResult(false);
@@ -158,7 +158,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
               }
             }
             else {
-              final String name = StringUtil.stripQuotesAroundValue(value.getText());
+              @PsiModifier.ModifierConstant String name = StringUtil.stripQuotesAroundValue(value.getText());
               if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
                 if (isNotInstanceModifier(list2)) {
                   myMatchingVisitor.setResult(false);
