@@ -95,6 +95,10 @@ public class UpdateRequestsQueue {
   }
 
   public void schedule() {
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("UpdateRequestsQueue.schedule");
+    }
+
     synchronized (myLock) {
       if (! myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
 
@@ -140,31 +144,43 @@ public class UpdateRequestsQueue {
 
   @TestOnly
   public void waitUntilRefreshed() {
-    while (true) {
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      synchronized (myLock) {
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            semaphore.up();
-          }
-        };
-        if (myRequestSubmitted && !myStopped) {
-          myWaitingUpdateCompletionQueue.add(runnable);
-        } else {
-          runnable.run();
-        }
-      }
-      if (!semaphore.waitFor(10000)) {
-        LOG.error("Too long VCS update");
-        return;
-      }
+    if (ChangeListManagerImpl.DEBUG) {
+      System.out.println("UpdateRequestsQueue.waitUntilRefreshed");
+    }
 
-      synchronized (myLock) {
-        if (!myRequestSubmitted || myStopped) {
+    try {
+      while (true) {
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
+        synchronized (myLock) {
+          final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+              semaphore.up();
+            }
+          };
+          if (myRequestSubmitted && !myStopped) {
+            myWaitingUpdateCompletionQueue.add(runnable);
+          }
+          else {
+            runnable.run();
+          }
+        }
+        if (!semaphore.waitFor(10000)) {
+          LOG.error("Too long VCS update");
           return;
         }
+
+        synchronized (myLock) {
+          if (!myRequestSubmitted || myStopped) {
+            return;
+          }
+        }
+      }
+    }
+    finally {
+      if (ChangeListManagerImpl.DEBUG) {
+        System.out.println(" - end - UpdateRequestsQueue.waitUntilRefreshed");
       }
     }
   }
