@@ -1304,6 +1304,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public boolean ensureUpToDate(final boolean canBeCanceled) {
     final EnsureUpToDateFromNonAWTThread worker = new EnsureUpToDateFromNonAWTThread(myProject);
     worker.execute();
+    myUpdater.waitUntilRefreshed();
     return worker.isDone();
   }
 
