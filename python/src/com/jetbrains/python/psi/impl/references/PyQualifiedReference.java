@@ -26,7 +26,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.ResolveResultList;
-import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
@@ -401,6 +400,10 @@ public class PyQualifiedReference extends PyReferenceImpl {
           || (isSubclass(bClass, aClass))) {
         return true;
       }
+    }
+
+    if (resolvesToWrapper(element, resolveResult)) {
+      return true;
     }
 
     return false;

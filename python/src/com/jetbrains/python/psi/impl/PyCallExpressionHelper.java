@@ -37,14 +37,14 @@ public class PyCallExpressionHelper {
   /**
    * Tries to interpret a call as a call to built-in {@code classmethod} or {@code staticmethod}.
    *
-   * @param redefining_call the possible call, generally a result of chasing a chain of assignments
+   * @param redefiningCall the possible call, generally a result of chasing a chain of assignments
    * @param us              any in-project PSI element, used to determine SDK and ultimately builtins module used to check the wrapping functions
    * @return a pair of wrapper name and wrapped function; for {@code staticmethod(foo)} it would be ("staticmethod", foo).
    */
   @Nullable
-  public static Pair<String, PyFunction> interpretAsStaticmethodOrClassmethodWrappingCall(PyCallExpression redefining_call, PsiElement us) {
-    PyExpression redefining_callee = redefining_call.getCallee();
-    if (redefining_callee instanceof PyReferenceExpression) {
+  public static Pair<String, PyFunction> interpretAsModifierWrappingCall(PyCallExpression redefiningCall, PsiElement us) {
+    PyExpression redefining_callee = redefiningCall.getCallee();
+    if (redefiningCall.isCalleeText(PyNames.CLASSMETHOD, PyNames.STATICMETHOD)) {
       final PyReferenceExpression refex = (PyReferenceExpression)redefining_callee;
       final String refname = refex.getReferencedName();
       if ((PyNames.CLASSMETHOD.equals(refname) || PyNames.STATICMETHOD.equals(refname))) {
@@ -54,7 +54,7 @@ public class PyCallExpressionHelper {
           if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findInitOrNew(true);
           if (true_func == redefining_func) {
             // yes, really a case of "foo = classmethod(foo)"
-            PyArgumentList arglist = redefining_call.getArgumentList();
+            PyArgumentList arglist = redefiningCall.getArgumentList();
             if (arglist != null) { // really can't be any other way
               PyExpression[] args = arglist.getArguments();
               if (args.length == 1) {
@@ -120,7 +120,7 @@ public class PyCallExpressionHelper {
     }
     else if (resolved instanceof PyCallExpression) {
       PyCallExpression redefiningCall = (PyCallExpression)resolved;
-      Pair<String, PyFunction> wrapperInfo = interpretAsStaticmethodOrClassmethodWrappingCall(redefiningCall, call);
+      Pair<String, PyFunction> wrapperInfo = interpretAsModifierWrappingCall(redefiningCall, call);
       if (wrapperInfo != null) {
         resolved = wrapperInfo.getSecond();
       }
@@ -162,7 +162,7 @@ public class PyCallExpressionHelper {
     else if (resolved instanceof PyCallExpression) {
       // is it a case of "foo = classmethod(foo)"?
       PyCallExpression redefiningCall = (PyCallExpression)resolved;
-      Pair<String, PyFunction> wrapperInfo = interpretAsStaticmethodOrClassmethodWrappingCall(redefiningCall, us);
+      Pair<String, PyFunction> wrapperInfo = interpretAsModifierWrappingCall(redefiningCall, us);
       if (wrapperInfo != null) {
         resolved = wrapperInfo.getSecond();
         String wrapper_name = wrapperInfo.getFirst();

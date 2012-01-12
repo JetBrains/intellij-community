@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -36,7 +35,7 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
-import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 
 /**
  * Implements PyFunction.
@@ -480,7 +479,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
           if (value instanceof PyCallExpression) {
             PyExpression target = pair.getFirst();
             if (target instanceof PyTargetExpression && func_name.equals(target.getName())) {
-              Pair<String, PyFunction> interpreted = interpretAsStaticmethodOrClassmethodWrappingCall((PyCallExpression)value, this);
+              Pair<String, PyFunction> interpreted = interpretAsModifierWrappingCall((PyCallExpression)value, this);
               if (interpreted != null) {
                 PyFunction original = interpreted.getSecond();
                 if (original == this) {
