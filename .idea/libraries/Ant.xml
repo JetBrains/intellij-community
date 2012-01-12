@@ -5,7 +5,6 @@
       <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-jmf.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-apache-resolver.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-jai.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-nodeps.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-apache-bsf.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-commons-logging.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-junit.jar!/" />
