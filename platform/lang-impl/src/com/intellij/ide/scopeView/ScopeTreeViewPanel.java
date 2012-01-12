@@ -79,8 +79,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -241,8 +244,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       }
     };
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myTree, myProject);
-    for (ScopeTreeStructureExpander expander : Extensions.getExtensions(ScopeTreeStructureExpander.EP_NAME, myProject)) {
+    final ScopeTreeStructureExpander[] extensions = Extensions.getExtensions(ScopeTreeStructureExpander.EP_NAME, myProject);
+    for (ScopeTreeStructureExpander expander : extensions) {
       myTree.addTreeWillExpandListener(expander);
+    }
+    if (extensions.length == 0) {
+      myTree.addTreeWillExpandListener(new SortingExpandListener());
     }
     myTree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
@@ -946,5 +953,18 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
       }
     }
+  }
+
+  private class SortingExpandListener implements TreeWillExpandListener {
+    @Override
+    public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+      final TreePath path = event.getPath();
+      if (path == null) return;
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      TreeUtil.sort(node, getNodeComparator());
+    }
+
+    @Override
+    public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {}
   }
 }

@@ -42,7 +42,7 @@ public class ClassNode extends BasePsiNode<PsiClass> implements Comparable<Class
   public int compareTo(final ClassNode o) {
     final int comparision = ClassTreeNode.getClassPosition((PsiClass)getPsiElement()) - ClassTreeNode.getClassPosition((PsiClass)o.getPsiElement());
     if (comparision == 0) {
-      return toString().compareTo(o.toString());
+      return toString().compareToIgnoreCase(o.toString());
     }
     return comparision;
   }
