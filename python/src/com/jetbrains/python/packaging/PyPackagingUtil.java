@@ -3,16 +3,14 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author vlan
@@ -26,13 +24,26 @@ public class PyPackagingUtil {
   public final static int ERROR_INVALID_OUTPUT = -3;
 
   private static final String PACKAGING_TOOL = "packaging_tool.py";
-  private static final int TIMEOUT = 5000;
+  private static final String VIRTUALENV = "virtualenv.py";
+  private static final int TIMEOUT = 30000;
   private static final Logger LOG = Logger.getInstance("#" + PyPackagingUtil.class.getName());
   private static PyPackagingUtil ourInstance = null;
 
   private Map<Sdk, List<PyPackage>> myPackagesCache = new HashMap<Sdk, List<PyPackage>>();
 
   private PyPackagingUtil() {
+  }
+
+  @NotNull
+  public static String createVirtualEnv(@NotNull Sdk sdk, @NotNull String desinationDir) throws PyExternalProcessException {
+    final String virtualenv = PythonHelpersLocator.getHelperPath(VIRTUALENV);
+    runPythonHelper(sdk, list(virtualenv, "--never-download", "--distribute", desinationDir));
+    // TODO: Return the path to the virtualenv interpreter
+    return desinationDir;
+  }
+
+  public static void deleteVirtualEnv(@NotNull String virtualEnvDir) {
+    FileUtil.delete(new File(virtualEnvDir));
   }
 
   @NotNull
@@ -49,33 +60,50 @@ public class PyPackagingUtil {
     if (cached != null) {
       return cached;
     }
-    final String homePath = sdk.getHomePath();
-    if (homePath == null) {
-      throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find interpreter for SDK");
-    }
-    final List<PyPackage> packages = getInstalledPackages(homePath);
+    final String packagingTool = PythonHelpersLocator.getHelperPath(PACKAGING_TOOL);
+    final String output = runPythonHelper(sdk, list(packagingTool, "list"));
+    final List<PyPackage> packages = parsePackagingToolOutput(output);
     myPackagesCache.put(sdk, packages);
     return packages;
   }
 
+  public void clearCaches() {
+    myPackagesCache.clear();
+  }
+
+  private static <T> List<T> list(T... xs) {
+    return Arrays.asList(xs);
+  }
+
   @NotNull
-  public static List<PyPackage> getInstalledPackages(@NotNull String homePath) throws PyExternalProcessException {
+  private static String runPythonHelper(@NotNull Sdk sdk, @NotNull List<String> cmd) throws PyExternalProcessException {
+    final String homePath = sdk.getHomePath();
+    if (homePath == null) {
+      throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find interpreter for SDK");
+    }
     final String parentDir = new File(homePath).getParent();
-    final String formatter = PythonHelpersLocator.getHelperPath(PACKAGING_TOOL);
-    final String[] cmd = new String[] {homePath, formatter, "list"};
-    ProcessOutput output = SdkUtil.getProcessOutput(parentDir, cmd, null, TIMEOUT);
+    final List<String> cmdline = new ArrayList<String>();
+    cmdline.add(homePath);
+    cmdline.addAll(cmd);
+    ProcessOutput output = SdkUtil.getProcessOutput(parentDir, cmdline.toArray(new String[cmdline.size()]), null, TIMEOUT);
     final int retcode = output.getExitCode();
     if (output.isTimeout()) {
       throw new PyExternalProcessException(ERROR_TIMEOUT, "Timed out");
     }
     else if (retcode != 0) {
-      throw new PyExternalProcessException(retcode, output.getStderr());
+      final String stdout = output.getStdout();
+      final String stderr = output.getStderr();
+      String message = stderr;
+      if (message.trim().isEmpty()) {
+        message = stdout;
+      }
+      LOG.debug(String.format("Error when running '%s'\nSTDOUT: %s\nSTDERR: %s\n\n",
+                              StringUtil.join(cmdline, " "),
+                              stdout,
+                              stderr));
+      throw new PyExternalProcessException(retcode, message);
     }
-    return parsePackagingToolOutput(output.getStdout());
-  }
-
-  public void clearCaches() {
-    myPackagesCache.clear();
+    return output.getStdout();
   }
 
   @NotNull
