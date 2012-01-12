@@ -1,11 +1,15 @@
 package com.jetbrains.python;
 
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyPresentableElementImpl;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
@@ -19,7 +23,7 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class PyGotoSymbolContributor implements ChooseByNameContributor {
+public class PyGotoSymbolContributor implements GotoClassContributor {
   @NotNull
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
     Set<String> symbols = new HashSet<String>();
@@ -43,4 +47,25 @@ public class PyGotoSymbolContributor implements ChooseByNameContributor {
     return symbols.toArray(new NavigationItem[symbols.size()]);
   }
 
+  @Override
+  public String getQualifiedName(NavigationItem item) {
+    if (item instanceof PyClass) {
+      return ((PyClass) item).getQualifiedName();      
+    }
+    if (item instanceof PyFunction) {
+      PyFunction function = (PyFunction) item;
+      final PyClass containingClass = function.getContainingClass();
+      if (containingClass != null) {
+        return containingClass.getQualifiedName() + "." + function.getName();
+      }
+      PsiFile file = function.getContainingFile();
+      return PyPresentableElementImpl.getPackageForFile(file) + "." + function.getName();
+    }
+    return null;
+  }
+
+  @Override
+  public String getQualifiedNameSeparator() {
+    return ".";
+  }
 }
