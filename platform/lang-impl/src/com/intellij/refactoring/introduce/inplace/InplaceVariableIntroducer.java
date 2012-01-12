@@ -77,6 +77,11 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     initOccurrencesMarkers();
   }
 
+  @Deprecated
+  public boolean performInplaceRename() {
+    return performInplaceRefactoring(null);
+  }
+  
   @Override
   protected boolean shouldSelectAll() {
     return true;
