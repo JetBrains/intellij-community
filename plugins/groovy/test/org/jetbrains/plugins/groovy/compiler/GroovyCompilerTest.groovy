@@ -490,11 +490,11 @@ class Indirect {
     assert oldBaseStamp == findClassFile("Base").modificationStamp
   }
 
-  public static class IdeaMode extends GroovyCompilerTest {
+  public static class IdeaModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }
 
-  public static class JpsMode extends GroovyCompilerTest {
+  public static class JpsModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { true }
 
     @Override

@@ -115,12 +115,12 @@ class A {
     assertOutput "B", "239"
   }
 
-  public static class IdeaMode extends GppCompilerTest {
+  public static class IdeaModeTest extends GppCompilerTest {
     @Override
     protected boolean useJps() { false }
   }
 
-  public static class JpsMode extends GppCompilerTest {
+  public static class JpsModeTest extends GppCompilerTest {
     @Override
     protected boolean useJps() { true }
 
