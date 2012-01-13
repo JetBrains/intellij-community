@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -36,16 +35,26 @@ public class PyPackagingUtil {
   private PyPackagingUtil() {
   }
 
+  public void uninstallPackage(@NotNull Sdk sdk, @NotNull PyPackage pkg) throws PyExternalProcessException {
+    runPythonHelper(sdk, PACKAGING_TOOL, list("uninstall", pkg.getName()));
+    myPackagesCache.remove(sdk);
+  }
+
   @NotNull
   public static String createVirtualEnv(@NotNull Sdk sdk, @NotNull String desinationDir) throws PyExternalProcessException {
+    // TODO: Add boolean systemSitePackages option
     runPythonHelper(sdk, VIRTUALENV, list("--never-download", "--distribute", desinationDir));
-    final String binary = PythonSdkType.getVirtualEnvInterpreter(desinationDir);
+    final String binary = PythonSdkType.getPythonExecutable(desinationDir);
     final String binaryFallback = desinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;
   }
 
-  public static void deleteVirtualEnv(@NotNull String virtualEnvDir) {
-    FileUtil.delete(new File(virtualEnvDir));
+  public static void deleteVirtualEnv(@NotNull Sdk sdk, @NotNull String sdkHome) throws PyExternalProcessException {
+    final File root = PythonSdkType.getVirtualEnvRoot(sdkHome);
+    if (root == null) {
+      throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find virtualenv root for interpreter");
+    }
+    runPythonHelper(sdk, PACKAGING_TOOL, list("rmtree", root.getPath()));
   }
 
   @NotNull
