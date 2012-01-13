@@ -86,6 +86,11 @@ public class PyDynamicMember {
     return this;
   }
 
+  public PyDynamicMember toFunctionRecursive(String name) {
+    myPsiPath = new PyPsiPath.ToFunctionRecursive(myPsiPath, name);
+    return this;
+  }
+
   public PyDynamicMember toClassAttribute(String name) {
     myPsiPath = new PyPsiPath.ToClassAttribute(myPsiPath, name);
     return this;

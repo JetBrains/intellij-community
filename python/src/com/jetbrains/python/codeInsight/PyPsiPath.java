@@ -121,6 +121,44 @@ public abstract class PyPsiPath {
     }
   }
 
+  private static class FunctionFinder extends PyRecursiveElementVisitor {
+    private final String myName;
+    private PyFunction myResult;
+
+    public FunctionFinder(String name) {
+      myName = name;
+    }
+
+    @Override
+    public void visitPyFunction(PyFunction node) {
+      super.visitPyFunction(node);
+      if (myName.equals(node.getName())) {
+        myResult = node;
+      }
+    }
+  }
+
+  public static class ToFunctionRecursive extends PyPsiPath {
+    private final PyPsiPath myParent;
+    private final String myFunctionName;
+
+    public ToFunctionRecursive(PyPsiPath parent, String functionName) {
+      myParent = parent;
+      myFunctionName = functionName;
+    }
+
+    @Override
+    public PsiElement resolve(PsiElement context) {
+      PsiElement parent = myParent.resolve(context);
+      if (parent == null) {
+        return null;
+      }
+      FunctionFinder finder = new FunctionFinder(myFunctionName);
+      parent.acceptChildren(finder);
+      return finder.myResult != null ? finder.myResult : parent;
+    }
+  }
+
   public static class ToClassAttribute extends PyPsiPath {
     private final PyPsiPath myParent;
     private final String myAttributeName;
