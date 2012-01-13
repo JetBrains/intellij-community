@@ -232,8 +232,22 @@ public final class UpdateChecker {
   public static boolean checkPluginsHost(final String host,
                                          final List<PluginDownloader> downloaded,
                                          final boolean collectToUpdate) throws Exception {
-    final Document document = loadVersionInfo(host);
-    if (document == null) return false;
+    InputStream inputStream = loadVersionInfo(host);
+    if (inputStream == null) return false;
+    final Document document;
+    try {
+      document = JDOMUtil.loadDocument(inputStream);
+    }
+    catch (JDOMException e) {
+      return false;
+    }
+
+    inputStream = loadVersionInfo(host);
+    if (inputStream == null) return false;
+    final ArrayList<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream);
+    for (IdeaPluginDescriptor descriptor : descriptors) {
+      downloaded.add(PluginDownloader.createDownloader(descriptor));
+    }
 
     boolean success = true;
     for (Object plugin : document.getRootElement().getChildren("plugin")) {
@@ -398,11 +412,11 @@ public final class UpdateChecker {
     }
 }
 
-  private static Document loadVersionInfo(final String url) throws Exception {
+  private static InputStream loadVersionInfo(final String url) throws Exception {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + url + "' )");
     }
-    final Document[] document = new Document[]{null};
+    final InputStream[] inputStreams = new InputStream[]{null};
     final Exception[] exception = new Exception[]{null};
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
@@ -413,19 +427,10 @@ public final class UpdateChecker {
 
           final URL requestUrl =
             new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
-          final InputStream inputStream = requestUrl.openStream();
-          try {
-            document[0] = JDOMUtil.loadDocument(inputStream);
-          }
-          finally {
-            inputStream.close();
-          }
+          inputStreams[0] = requestUrl.openStream();
         }
         catch (IOException e) {
           exception[0] = e;
-        }
-        catch (JDOMException e) {
-          LOG.info(e); // Broken xml downloaded. Don't bother telling user.
         }
       }
     });
@@ -443,7 +448,7 @@ public final class UpdateChecker {
     }
 
     if (exception[0] != null) throw exception[0];
-    return document[0];
+    return inputStreams[0];
   }
 
   public static String getInstallationUID() {

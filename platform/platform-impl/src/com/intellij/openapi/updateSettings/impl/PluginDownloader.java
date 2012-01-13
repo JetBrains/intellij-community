@@ -423,6 +423,10 @@ public class PluginDownloader {
 
   @Nullable
   public static PluginNode createPluginNode(String host, PluginDownloader downloader) {
+    if (downloader.getDescriptor() instanceof PluginNode) {
+      return (PluginNode)downloader.getDescriptor();
+    }
+
     final PluginNode node = new PluginNode();
     final VirtualFile pluginFile = findPluginFile(downloader.myPluginUrl, host);
     if (pluginFile != null) {

@@ -142,6 +142,18 @@ public class RepositoryHelper {
     }
   }
 
+  public static ArrayList<IdeaPluginDescriptor> loadPluginsFromDescription(InputStream inputStream) throws SAXException, IOException, ParserConfigurationException {
+    try {
+      RepositoryContentHandler handler = new RepositoryContentHandler();
+      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+      parser.parse(inputStream, handler);
+      return handler.getPluginsList();
+    }
+    finally {
+      inputStream.close();
+    }
+  }
+
   public static String getRepositoryHost() {
     return ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl();
   }
