@@ -50,6 +50,9 @@ public class PerformanceWatcher implements ApplicationComponent {
   private File myCurHangLogDir;
   private List<StackTraceElement> myStacktraceCommonPart;
 
+  /**
+   * If the product is unresponsive for UNRESPONSIVE_THRESHOLD seconds, dump threads every UNRESPONSIVE_INTERVAL seconds
+   */
   private int UNRESPONSIVE_THRESHOLD = 5;
   private int UNRESPONSIVE_INTERVAL = 5;
 
@@ -160,7 +163,7 @@ public class PerformanceWatcher implements ApplicationComponent {
         break;
       }
       if (mySwingThreadCounter != myLoopCounter) {
-        myUnresponsiveDuration++;
+        myUnresponsiveDuration += UNRESPONSIVE_INTERVAL;
         if (myUnresponsiveDuration == UNRESPONSIVE_THRESHOLD) {
           //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
           myCurHangLogDir = new File(myLogDir, myDateFormat.format(new Date()));
