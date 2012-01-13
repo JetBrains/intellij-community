@@ -1,22 +1,18 @@
 import sys
 import logging
 import traceback
-import shutil
 
 ERROR_WRONG_USAGE = 1
 ERROR_NO_PACKAGING_TOOLS = 2
 ERROR_EXCEPTION = 3
 
 def usage():
-    logging.error('Usage: packaging_tool.py <list|rmtree|install|uninstall>')
+    logging.error('Usage: packaging_tool.py <list|install|uninstall>')
     sys.exit(ERROR_WRONG_USAGE)
 
 def error(message, retcode):
     logging.error('Error: %s' % message)
     sys.exit(retcode)
-
-def do_rmtree(path):
-    shutil.rmtree(path)
 
 def do_list():
     try:
@@ -44,11 +40,6 @@ def main():
             if len(sys.argv) != 2:
                 usage()
             do_list()
-        elif cmd == 'rmtree':
-            if len(sys.argv) != 3:
-                usage()
-            path = sys.argv[2]
-            do_rmtree(path)
         elif cmd == 'install':
             if len(sys.argv) != 3:
                 usage()
