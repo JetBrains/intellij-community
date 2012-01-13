@@ -60,7 +60,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private long myModificationCount = 0;
 
-  private ModificationTracker myModificationTracker = new ModificationTracker() {
+  private final ModificationTracker myModificationTracker = new ModificationTracker() {
     @Override
     public long getModificationCount() {
       return myModificationCount;

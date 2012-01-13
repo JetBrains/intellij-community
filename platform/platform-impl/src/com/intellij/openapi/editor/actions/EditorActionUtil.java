@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,27 +55,38 @@ public class EditorActionUtil {
   private EditorActionUtil() {
   }
 
-  public static void scrollRelatively(Editor editor, int lineShift) {
+  /**
+   * Tries to change given editor's viewport position in vertical dimension by the given number of visual lines.
+   * 
+   * @param editor     target editor which viewport position should be changed
+   * @param lineShift  defines viewport position's change length
+   * @param moveCaret  flag that identifies whether caret should be moved if its current position becomes off-screen
+   */
+  public static void scrollRelatively(Editor editor, int lineShift, boolean moveCaret) {
     if (lineShift != 0) {
       editor.getScrollingModel().scrollVertically(
         editor.getScrollingModel().getVerticalScrollOffset() + lineShift * editor.getLineHeight()
       );
     }
 
-    //Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
-    //int lineNumber = editor.getCaretModel().getVisualPosition().line;
-    //if (viewRectangle != null) {
-    //  VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
-    //  int start = startPos.line + 1;
-    //  VisualPosition endPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y + viewRectangle.height));
-    //  int end = endPos.line - 2;
-      //if (lineNumber < start) {
-      //  editor.getCaretModel().moveCaretRelatively(0, start - lineNumber, false, false, true);
-      //}
-      //else if (lineNumber > end) {
-      //  editor.getCaretModel().moveCaretRelatively(0, end - lineNumber, false, false, true);
-      //}
-    //}
+    if (!moveCaret) {
+      return;
+    }
+    
+    Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
+    int lineNumber = editor.getCaretModel().getVisualPosition().line;
+    if (viewRectangle != null) {
+      VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
+      int start = startPos.line + 1;
+      VisualPosition endPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y + viewRectangle.height));
+      int end = endPos.line - 2;
+      if (lineNumber < start) {
+        editor.getCaretModel().moveCaretRelatively(0, start - lineNumber, false, false, true);
+      }
+      else if (lineNumber > end) {
+        editor.getCaretModel().moveCaretRelatively(0, end - lineNumber, false, false, true);
+      }
+    }
   }
 
   public static void moveCaretRelativelyAndScroll(Editor editor,
@@ -215,9 +226,11 @@ public class EditorActionUtil {
     }
 
     if (isCamel) {
-      if (firstIsIdentifierPart && secondIsIdentifierPart &&
-          (Character.isLowerCase(prev) && Character.isUpperCase(current) || prev != '_' && current == '_' ||
-          Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next))) {
+      if (firstIsIdentifierPart
+          && (Character.isLowerCase(prev) && Character.isUpperCase(current)
+              || prev != '_' && current == '_'
+              || Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next)))
+      {
         return true;
       }
     }

@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.Function;
@@ -112,10 +112,6 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return (AbstractProjectTreeStructure)myStructure;
   }
 
-  protected void assertStructureEqual(@NonNls String expected) {
-    assertStructureEqual(myStructure.getRootElement(), expected);
-  }
-
   protected void assertStructureEqual(String expected, Comparator comparator) {
     assertStructureEqual(myStructure.getRootElement(), expected, 27, comparator);
   }
@@ -123,16 +119,12 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   private void assertStructureEqual(PsiDirectory root, String expected, int maxRowCount, AbstractTreeStructure structure) {
     assertNotNull(root);
     PsiDirectoryNode rootNode = new PsiDirectoryNode(myProject, root, (ViewSettings)structure);
-    assertStructureEqual(rootNode, expected, maxRowCount, IdeaTestUtil.createComparator(myPrintInfo));
-  }
-
-  private void assertStructureEqual(Object rootNode, String expected) {
-    assertStructureEqual(rootNode, expected, 17, IdeaTestUtil.createComparator(myPrintInfo));
+    assertStructureEqual(rootNode, expected, maxRowCount, PlatformTestUtil.createComparator(myPrintInfo));
   }
 
   private void assertStructureEqual(Object rootNode, String expected, int maxRowCount, Comparator comparator) {
     checkGetParentConsistency(rootNode);
-    StringBuffer actual = IdeaTestUtil.print(myStructure, rootNode, 0, comparator, maxRowCount, ' ', myPrintInfo);
+    StringBuffer actual = PlatformTestUtil.print(myStructure, rootNode, 0, comparator, maxRowCount, ' ', myPrintInfo);
     assertEquals(expected, actual.toString());
   }
 
@@ -185,7 +177,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected static void assertListsEqual(ListModel model, String expected) {
-    assertEquals(expected, IdeaTestUtil.print(model));
+    assertEquals(expected, PlatformTestUtil.print(model));
   }
 
   public static void checkContainsMethod(final Object rootElement, final AbstractTreeStructure structure) {

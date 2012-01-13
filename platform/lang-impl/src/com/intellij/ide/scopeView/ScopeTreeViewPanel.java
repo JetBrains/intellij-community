@@ -428,6 +428,8 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       final boolean wasCollapsed = myTree.isCollapsed(path);
       final Runnable runnable = new Runnable() {
         public void run() {
+          TreeUtil.sort(rootToReload, getNodeComparator());
+          treeModel.reload(rootToReload);
           if (!wasCollapsed) {
             myTree.collapsePath(path);
             for (TreePath treePath : treePaths) {
@@ -437,8 +439,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
               TreeUtil.selectPath(myTree, selectionPath);
             }
           }
-          TreeUtil.sort(rootToReload, getNodeComparator());
-          treeModel.reload(rootToReload);
         }
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {

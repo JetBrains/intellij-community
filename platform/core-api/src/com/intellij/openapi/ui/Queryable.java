@@ -26,8 +26,8 @@ public interface Queryable {
   void putInfo(@NotNull Map<String, String> info);
 
   class PrintInfo {
-    String[] myIdKeys;
-    String[] myInfoKeys;
+    private final String[] myIdKeys;
+    private final String[] myInfoKeys;
 
     public PrintInfo() {
       this(null, null);
@@ -57,13 +57,13 @@ public interface Queryable {
 
       String id = null;
 
-      String[] names = print.myIdKeys != null ? print.myIdKeys : new String[] {"name"};
-      for (String eachKey : names) {
-        String eachValue = map.get(eachKey);
-        if (eachValue != null) {
-          id = eachValue;
-        }
-      }
+      //String[] names = print.myIdKeys != null ? print.myIdKeys : new String[] {"name"};
+      //for (String eachKey : names) {
+      //  String eachValue = map.get(eachKey);
+      //  if (eachValue != null) {
+      //    id = eachValue;
+      //  }
+      //}
 
       if (!map.isEmpty()) {
         id = map.values().iterator().next();

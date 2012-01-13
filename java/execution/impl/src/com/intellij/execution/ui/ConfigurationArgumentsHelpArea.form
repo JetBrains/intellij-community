@@ -30,6 +30,7 @@
             <properties>
               <editable value="false"/>
               <lineWrap value="true"/>
+              <minimumSize width="250" height="16"/>
               <wrapStyleWord value="true"/>
             </properties>
           </component>
