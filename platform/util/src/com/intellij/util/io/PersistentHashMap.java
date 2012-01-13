@@ -327,6 +327,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   public final boolean processKeysWithExistingMapping(Processor<Key> processor) throws IOException {
     synchronized (myEnumerator) {
+      myAppendCache.clear();
       return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
         public boolean accept(final int id) {
           return readValueId(id).address != NULL_ADDR;
