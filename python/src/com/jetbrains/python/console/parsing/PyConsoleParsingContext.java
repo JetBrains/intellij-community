@@ -112,7 +112,7 @@ public class PyConsoleParsingContext extends ParsingContext {
 
             return;
           }
-          builder.error("end of statement expected");
+          builder.error("End of statement expected");
         }
       }
       else {

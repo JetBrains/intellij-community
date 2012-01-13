@@ -388,7 +388,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     operation.getEditor().getCaretModel().moveToOffset(elementForCaret.getTextRange().getStartOffset());
     final InplaceVariableIntroducer<PsiElement> introducer =
             new PyInplaceVariableIntroducer(target, operation, occurrences);
-    introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));
+    introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
   }
 
   protected void performIntroduceWithDialog(IntroduceOperation operation) {

@@ -39,6 +39,20 @@ public interface PyCallExpression extends PyExpression {
   @Nullable
   <T extends PsiElement> T getArgument(int index, Class<T> argClass);
 
+  /**
+   * Returns the argument at the specified position or the argument marked with the specified keyword, if one is present in the list.
+   *
+   * @param index    argument index
+   * @param keyword  the argument keyword
+   * @param argClass argument expected type
+   * @return the argument or null
+   */
+  @Nullable
+  <T extends PsiElement> T getArgument(int index, String keyword, Class<T> argClass);
+
+  @Nullable
+  PyExpression getKeywordArgument(String keyword);
+
   void addArgument(PyExpression expression);
 
   /**

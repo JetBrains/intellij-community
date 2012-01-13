@@ -80,7 +80,7 @@ public class PyOperatorReference extends PyReferenceImpl {
 
   public String getReadableOperatorName() {
     final String name = myElement.getReferencedName();
-    if (PyNames.SUBCRIPTION_OPERATORS.contains(name)) {
+    if (PyNames.SUBSCRIPTION_OPERATORS.contains(name)) {
       return "[]";
     }
     else {

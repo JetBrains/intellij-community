@@ -314,7 +314,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
 
   private void addInheritedMembers(String name, PyExpression expressionHook, ProcessingContext context, List<Object> ret) {
     for (PyClass ancestor : myClass.getSuperClasses()) {
-      Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(name, expressionHook, context);
+      Object[] ancestry = (new PyClassType(ancestor, myIsDefinition)).getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
         if (!isClassPrivate(ob.toString())) ret.add(ob);
       }
