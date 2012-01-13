@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
@@ -46,6 +48,10 @@ public interface ToolWindowEx extends ToolWindow {
   void stretchHeight(int value);
 
   InternalDecorator getDecorator();
+
+  void setAdditionalGearActions(ActionGroup additionalGearActions);
+
+  void setTitleActions(AnAction[] actions);
 
   void setUseLastFocusedOnActivation(boolean focus);
 

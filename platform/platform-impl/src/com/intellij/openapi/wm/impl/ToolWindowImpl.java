@@ -19,6 +19,7 @@ import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -279,6 +280,16 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public InternalDecorator getDecorator() {
     return myDecorator;
+  }
+
+  @Override
+  public void setAdditionalGearActions(ActionGroup additionalGearActions) {
+    getDecorator().setAdditionalGearActions(additionalGearActions);
+  }
+
+  @Override
+  public void setTitleActions(AnAction[] actions) {
+    getDecorator().setTitleActions(actions);
   }
 
   public final void setAvailable(final boolean available, final Runnable runnable) {

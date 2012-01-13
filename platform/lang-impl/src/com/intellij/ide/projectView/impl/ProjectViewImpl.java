@@ -68,10 +68,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.InternalDecorator;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -511,8 +510,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void updateTitleActions() {
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow("Project");
-    if (!(window instanceof ToolWindowImpl)) return;
-    final InternalDecorator decorator = ((ToolWindowImpl)window).getDecorator();
+    if (!(window instanceof ToolWindowEx)) return;
     ScrollFromSourceAction scrollAction = null;
     CollapseAllToolbarAction collapseAction = null;
     for (AnAction action : myActionGroup.getChildren(null)) {
@@ -526,7 +524,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         myActionGroup.remove(collapseAction);
       }
     }
-    decorator.setTitleActions(new AnAction[] {scrollAction, collapseAction});
+    ((ToolWindowEx)window).setTitleActions(new AnAction[] {scrollAction, collapseAction});
   }
 
   // public for tests
@@ -544,7 +542,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myContentManager = toolWindow.getContentManager();
       toolWindow.setContentUiType(ToolWindowContentUiType.getInstance("combo"), null);
       toolWindow.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl()));
-      ((ToolWindowImpl)toolWindow).getDecorator().setAdditionalGearActions(myActionGroup);
+      ((ToolWindowEx)toolWindow).setAdditionalGearActions(myActionGroup);
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
     } else {
       final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
