@@ -637,8 +637,9 @@ public class MavenUtil {
   }
   
   public static int getXmlCrc(@NotNull String xmlText) {
+    String trimmedText = xmlText.trim();
     Lexer lexer = new XmlLexer();
-    lexer.start(xmlText.trim());
+    lexer.start(trimmedText);
 
     CRC32 crc = new CRC32();
 
@@ -661,7 +662,7 @@ public class MavenUtil {
       }
       else {
         for (int start = lexer.getTokenStart(), end = lexer.getTokenEnd(); start < end; start++) {
-          char a = xmlText.charAt(start);
+          char a = trimmedText.charAt(start);
           crc.update(a);
           crc.update(a >>> 8);
         }
