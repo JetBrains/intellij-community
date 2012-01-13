@@ -446,7 +446,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }, ProjectBundle.message("project.load.progress"), true, project);
 
     if (!ok) {
-      closeProject(project, false, false);
+      closeProject(project, false, false, true);
       notifyProjectOpenFailed();
       return false;
     }
@@ -957,15 +957,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public boolean closeProject(@NotNull final Project project) {
-    return closeProject(project, true, false);
+    return closeProject(project, true, false, true);
   }
 
-  private boolean closeProject(final Project project, final boolean save, final boolean dispose) {
+  public boolean closeProject(final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
     if (ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("lighttemp")) {
       throw new AssertionError("must not close light project");
     }
     if (!isProjectOpened(project)) return true;
-    if (!canClose(project)) return false;
+    if (checkCanClose && !canClose(project)) return false;
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
@@ -974,7 +974,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         project.save();
       }
 
-      if (!ensureCouldCloseIfUnableToSave(project)) {
+      if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
         return false;
       }
 
@@ -1006,7 +1006,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public boolean closeAndDispose(@NotNull final Project project) {
-    return closeProject(project, true, true);
+    return closeProject(project, true, true, true);
   }
 
   private void fireProjectClosing(Project project) {
