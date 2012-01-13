@@ -119,6 +119,7 @@ message Message {
       optional uint64 problem_location_offset = 6;
       optional uint64 line = 7;
       optional uint64 column = 8;
+      optional float  done = 9;
     }
 
     required Type response_type = 1;

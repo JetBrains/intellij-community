@@ -7,6 +7,7 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -192,11 +193,15 @@ class ServerMessageHandler extends SimpleChannelHandler {
               response = ProtoUtil.createCompileMessageResponse(
                 compilerMessage.getKind(), text, compilerMessage.getSourcePath(),
                 compilerMessage.getProblemBeginOffset(), compilerMessage.getProblemEndOffset(),
-                compilerMessage.getProblemLocationOffset(), compilerMessage.getLine(), compilerMessage.getColumn()
-              );
+                compilerMessage.getProblemLocationOffset(), compilerMessage.getLine(), compilerMessage.getColumn(),
+                -1.0f);
             }
             else {
-              response = ProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText());
+              float done = -1.0f;
+              if (buildMessage instanceof ProgressMessage) {
+                done = ((ProgressMessage)buildMessage).getDone();
+              }
+              response = ProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText(), done);
             }
             Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, response));
           }

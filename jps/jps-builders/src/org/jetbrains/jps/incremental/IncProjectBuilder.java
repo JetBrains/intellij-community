@@ -36,11 +36,17 @@ public class IncProjectBuilder {
     }
   };
 
+  private float myModulesProcessed = 0.0f;
+  private final float myTotalModulesWork;
+  private final int myTotalBuilderCount;
+
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
+    myTotalModulesWork = (float) pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
+    myTotalBuilderCount = builderRegistry.getTotalBuilderCount();
   }
 
   public void addMessageHandler(MessageHandler handler) {
@@ -97,7 +103,14 @@ public class IncProjectBuilder {
     }
   }
 
+  private float updateFractionBuilderFinished(final float delta) {
+    myModulesProcessed += delta;
+    return myModulesProcessed / myTotalModulesWork;
+  }
+
   private void runBuild(CompileContext context) throws ProjectBuildException {
+    context.setDone(0.0f);
+
     if (context.isProjectRebuild()) {
       cleanOutputRoots(context);
     }
@@ -198,6 +211,10 @@ public class IncProjectBuilder {
       if (scope.isAffected(chunk)) {
         buildChunk(context, chunk);
       }
+      else {
+        final float fraction = updateFractionBuilderFinished(chunk.getModules().size());
+        context.setDone(fraction);
+      }
     }
   }
 
@@ -279,18 +296,34 @@ public class IncProjectBuilder {
     if (builders.isEmpty()) {
       return;
     }
+
+    float stageCount = myTotalBuilderCount;
+    int stagesPassed = 0;
+    final int modulesInChunk = chunk.getModules().size();
+
     boolean nextPassRequired;
     do {
       nextPassRequired = false;
       context.beforeNextCompileRound(chunk);
       for (Builder builder : builders) {
         final Builder.ExitCode buildResult = builder.build(context, chunk);
+
         if (buildResult == Builder.ExitCode.ABORT) {
           throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
         }
         if (buildResult == Builder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+          if (!nextPassRequired) {
+            // recalculate basis
+            myModulesProcessed -= (stagesPassed * modulesInChunk) / stageCount;
+            stageCount += myTotalBuilderCount;
+            myModulesProcessed += (stagesPassed * modulesInChunk) / stageCount;
+          }
           nextPassRequired = true;
         }
+
+        stagesPassed++;
+        final float fraction = updateFractionBuilderFinished(modulesInChunk / (stageCount));
+        context.setDone(fraction);
       }
     }
     while (nextPassRequired);

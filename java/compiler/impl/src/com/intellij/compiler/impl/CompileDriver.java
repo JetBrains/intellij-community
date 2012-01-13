@@ -426,14 +426,17 @@ public class CompileDriver {
         moduleNames.add(module.getName());
       }
     }
-    compileContext.getProgressIndicator().setIndeterminate(true); // todo
     return JpsServerManager.getInstance().submitCompilationTask(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
 
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
         final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compilerMessage.getKind();
         //System.out.println(compilerMessage.getText());
         if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.PROGRESS) {
-          compileContext.getProgressIndicator().setText(compilerMessage.getText());
+          final ProgressIndicator indicator = compileContext.getProgressIndicator();
+          indicator.setText(compilerMessage.getText());
+          if (compilerMessage.hasDone()) {
+            indicator.setFraction(compilerMessage.getDone());
+          }
         }
         else {
           final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR

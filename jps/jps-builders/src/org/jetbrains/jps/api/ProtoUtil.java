@@ -132,11 +132,11 @@ public class ProtoUtil {
   }
 
   public static JpsRemoteProto.Message.Response createCompileInfoMessageResponse(String text, String path) {
-    return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, path, -1L, -1L, -1L, -1, -1);
+    return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, path, -1L, -1L, -1L, -1, -1, -1.0f);
   }
 
-  public static JpsRemoteProto.Message.Response createCompileProgressMessageResponse(String text) {
-    return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1);
+  public static JpsRemoteProto.Message.Response createCompileProgressMessageResponse(String text, float done) {
+    return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
   }
 
   public static JpsRemoteProto.Message.Response createCompileErrorMessageResponse(String text, String path,
@@ -145,14 +145,14 @@ public class ProtoUtil {
                                                                                   long offset,
                                                                                   long line,
                                                                                   long column) {
-    return createCompileMessageResponse(CompilerMessage.Kind.ERROR, text, path, beginOffset, endOffset, offset, line, column);
+    return createCompileMessageResponse(CompilerMessage.Kind.ERROR, text, path, beginOffset, endOffset, offset, line, column, -1.0f);
   }
 
   public static JpsRemoteProto.Message.Response createCompileMessageResponse(final BuildMessage.Kind kind,
                                                                              String text,
                                                                              String path,
                                                                              long beginOffset, long endOffset, long offset, long line,
-                                                                             long column) {
+                                                                             long column, float done) {
 
     final JpsRemoteProto.Message.Response.CompileMessage.Builder builder = JpsRemoteProto.Message.Response.CompileMessage.newBuilder();
     switch (kind) {
@@ -188,6 +188,9 @@ public class ProtoUtil {
     }
     if (column > 0L) {
       builder.setColumn(column);
+    }
+    if (done >= 0.0f) {
+      builder.setDone(done);
     }
     return JpsRemoteProto.Message.Response.newBuilder().setResponseType(JpsRemoteProto.Message.Response.Type.COMPILE_MESSAGE).setCompileMessage(builder.build()).build();
   }

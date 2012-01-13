@@ -4346,6 +4346,13 @@ public final class JpsRemoteProto {
         public boolean hasColumn() { return hasColumn; }
         public long getColumn() { return column_; }
         
+        // optional float done = 9;
+        public static final int DONE_FIELD_NUMBER = 9;
+        private boolean hasDone;
+        private float done_ = 0F;
+        public boolean hasDone() { return hasDone; }
+        public float getDone() { return done_; }
+        
         private void initFields() {
           kind_ = org.jetbrains.jps.api.JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR;
         }
@@ -4380,6 +4387,9 @@ public final class JpsRemoteProto {
           }
           if (hasColumn()) {
             output.writeUInt64(8, getColumn());
+          }
+          if (hasDone()) {
+            output.writeFloat(9, getDone());
           }
         }
         
@@ -4420,6 +4430,10 @@ public final class JpsRemoteProto {
           if (hasColumn()) {
             size += com.google.protobuf.CodedOutputStream
               .computeUInt64Size(8, getColumn());
+          }
+          if (hasDone()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeFloatSize(9, getDone());
           }
           memoizedSerializedSize = size;
           return size;
@@ -4589,6 +4603,9 @@ public final class JpsRemoteProto {
             if (other.hasColumn()) {
               setColumn(other.getColumn());
             }
+            if (other.hasDone()) {
+              setDone(other.getDone());
+            }
             return this;
           }
           
@@ -4641,6 +4658,10 @@ public final class JpsRemoteProto {
                 }
                 case 64: {
                   setColumn(input.readUInt64());
+                  break;
+                }
+                case 77: {
+                  setDone(input.readFloat());
                   break;
                 }
               }
@@ -4798,6 +4819,24 @@ public final class JpsRemoteProto {
           public Builder clearColumn() {
             result.hasColumn = false;
             result.column_ = 0L;
+            return this;
+          }
+          
+          // optional float done = 9;
+          public boolean hasDone() {
+            return result.hasDone();
+          }
+          public float getDone() {
+            return result.getDone();
+          }
+          public Builder setDone(float value) {
+            result.hasDone = true;
+            result.done_ = value;
+            return this;
+          }
+          public Builder clearDone() {
+            result.hasDone = false;
+            result.done_ = 0F;
             return this;
           }
           

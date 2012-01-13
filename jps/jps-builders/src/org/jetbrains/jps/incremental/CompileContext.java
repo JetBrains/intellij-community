@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
@@ -33,6 +34,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private volatile boolean myErrorsFound = false;
   private final long myCompilationStartStamp;
   private final TimestampStorage myTsStorage;
+  private float myDone = -1.0f;
 
   public CompileContext(String projectName, CompileScope scope,
                         boolean isMake,
@@ -158,6 +160,9 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     if (msg.getKind() == BuildMessage.Kind.ERROR) {
       myErrorsFound = true;
     }
+    if (msg instanceof ProgressMessage) {
+      ((ProgressMessage)msg).setDone(myDone);
+    }
     myDelegateMessageHandler.processMessage(msg);
   }
 
@@ -211,6 +216,15 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   @NotNull
   public List<RootDescriptor> getModuleRoots(Module module) {
     return myRootsIndex.getModuleRoots(module);
+  }
+
+  public int getTotalModuleCount() {
+    return myRootsIndex.getTotalModuleCount();
+  }
+
+  public void setDone(float done) {
+    myDone = done;
+    processMessage(new ProgressMessage("", done));
   }
 
   private static enum DirtyMarkScope{

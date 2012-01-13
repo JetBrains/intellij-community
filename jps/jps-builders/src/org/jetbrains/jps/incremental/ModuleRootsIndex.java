@@ -16,9 +16,12 @@ import java.util.*;
 public class ModuleRootsIndex {
   private final Map<File, RootDescriptor> myRootToModuleMap = new HashMap<File, RootDescriptor>();
   private final Map<Module, List<RootDescriptor>> myModuleToRootsMap = new HashMap<Module, List<RootDescriptor>>();
+  private final int myTotalModuleCount;
 
   public ModuleRootsIndex(Project project) {
-    for (Module module : project.getModules().values()) {
+    final Collection<Module> allModules = project.getModules().values();
+    myTotalModuleCount = allModules.size();
+    for (Module module : allModules) {
       List<RootDescriptor> moduleRoots = myModuleToRootsMap.get(module);
       if (moduleRoots == null) {
         moduleRoots = new ArrayList<RootDescriptor>();
@@ -37,6 +40,10 @@ public class ModuleRootsIndex {
         moduleRoots.add(descriptor);
       }
     }
+  }
+
+  public int getTotalModuleCount() {
+    return myTotalModuleCount;
   }
 
   @NotNull
