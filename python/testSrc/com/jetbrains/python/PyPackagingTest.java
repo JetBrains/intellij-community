@@ -11,13 +11,15 @@ import com.jetbrains.python.env.debug.PyEnvTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackagingUtil;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,17 +28,17 @@ import java.util.List;
 public class PyPackagingTest extends PyTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
-  public void testGetInstalledPackages() {
+  public void testGetPackages() {
     forAllPythonEnvs(new Processor<Sdk>() {
       @Override
       public boolean process(Sdk sdk) {
         List<PyPackage> packages = null;
         try {
-          packages = PyPackagingUtil.getInstance().getInstalledPackages(sdk);
+          packages = PyPackageManager.getInstance(sdk).getPackages();
         }
         catch (PyExternalProcessException e) {
           final int retcode = e.getRetcode();
-          if (retcode != PyPackagingUtil.ERROR_NO_PACKAGING_TOOLS) {
+          if (retcode != PyPackageManager.ERROR_NO_PACKAGING_TOOLS) {
             fail(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()));
           }
         }
@@ -57,11 +59,11 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(Sdk sdk) {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-          final String venvSdkHome = PyPackagingUtil.createVirtualEnv(sdk, tempDir.toString());
+          final String venvSdkHome = PyPackageManager.getInstance(sdk).createVirtualEnv(tempDir.toString());
           final Sdk venvSdk = createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
-          final List<PyPackage> packages = PyPackagingUtil.getInstance().getInstalledPackages(venvSdk);
+          final List<PyPackage> packages = PyPackageManager.getInstance(venvSdk).getPackages();
           final PyPackage distribute = findPackage("distribute", packages);
           assertNotNull(distribute);
           assertEquals("distribute", distribute.getName());
@@ -82,24 +84,32 @@ public class PyPackagingTest extends PyTestCase {
     });
   }
 
-  public void testUninstallPackage() {
+  public void testInstallPackage() {
     forAllPythonEnvs(new Processor<Sdk>() {
       @Override
       public boolean process(final Sdk sdk) {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-          final String venvSdkHome = PyPackagingUtil.createVirtualEnv(sdk, tempDir.getPath());
+          final String venvSdkHome = PyPackageManager.getInstance(sdk).createVirtualEnv(tempDir.getPath());
           final Sdk venvSdk = createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
-          final PyPackagingUtil packaging = PyPackagingUtil.getInstance();
-          final List<PyPackage> packages1 = packaging.getInstalledPackages(venvSdk);
+          final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
+          final List<PyPackage> packages1 = manager.getPackages();
+          final PyPackage markdown1 = new PyPackage("Markdown", "2.1.0", null, new ArrayList<PyRequirement>());
+          assertTrue(!markdown1.isInstalled());
+          // TODO: Install Markdown from a local file
+          manager.install(markdown1);
+          final List<PyPackage> packages2 = manager.getPackages();
+          final PyPackage markdown2 = findPackage("Markdown", packages2);
+          assertNotNull(markdown2);
+          assertTrue(markdown2.isInstalled());
           final PyPackage pip1 = findPackage("pip", packages1);
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
           assertEquals("1.0.2", pip1.getVersion());
-          packaging.uninstallPackage(venvSdk, pip1);
-          final List<PyPackage> packages2 = packaging.getInstalledPackages(venvSdk);
-          final PyPackage pip2 = findPackage("pip", packages2);
+          manager.uninstall(pip1);
+          final List<PyPackage> packages3 = manager.getPackages();
+          final PyPackage pip2 = findPackage("pip", packages3);
           assertNull(pip2);
         }
         catch (PyExternalProcessException e) {
