@@ -18,14 +18,12 @@ package git4idea.update;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -181,31 +179,6 @@ public abstract class GitUpdater {
    * <code>git diff --name-only master..origin/master</code>
    */
   protected @NotNull Collection<String> getRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
-    final Collection<String> remoteChanges = new HashSet<String>();
-    iterateRemotelyChangedPaths(currentBranch, remoteBranch, new Processor<String>() {
-      @Override
-      public boolean process(String s) {
-        remoteChanges.add(s);
-        return false;
-      }
-    });
-    return remoteChanges;
-  }
-
-  protected boolean hasRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
-    final Ref<Boolean> ref = new Ref<Boolean>(false);
-    iterateRemotelyChangedPaths(currentBranch, remoteBranch, new Processor<String>() {
-      @Override
-      public boolean process(String s) {
-        ref.set(true);
-        return true;
-      }
-    });
-    return ref.get();
-  }
-
-  private void iterateRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch,
-                                                    final Processor<String> pathsConsumer) throws VcsException {
     final GitSimpleHandler toPull = new GitSimpleHandler(myProject, myRoot, GitCommand.DIFF);
     toPull.addParameters("--name-only", "--pretty=format:");
     toPull.addParameters(currentBranch + ".." + remoteBranch);
@@ -214,13 +187,19 @@ public abstract class GitUpdater {
     toPull.setStderrSuppressed(true);
     final String output = toPull.run();
 
+    final Collection<String> remoteChanges = new HashSet<String>();
     for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
       final String relative = s.line();
       if (StringUtil.isEmptyOrSpaces(relative)) {
         continue;
       }
       final String path = myRoot.getPath() + "/" + GitUtil.unescapePath(relative);
-      if (pathsConsumer.process(FilePathsHelper.convertPath(path))) break;
+      remoteChanges.add(FilePathsHelper.convertPath(path));
     }
+    return remoteChanges;
+  }
+
+  protected boolean hasRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
+    return !getRemotelyChangedPaths(currentBranch, remoteBranch).isEmpty();
   }
 }
