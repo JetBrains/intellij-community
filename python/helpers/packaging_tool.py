@@ -14,6 +14,9 @@ def error(message, retcode):
     logging.error('Error: %s' % message)
     sys.exit(retcode)
 
+def error_no_pip():
+    error("Python package management tool 'pip' not found. Please install 'pip'", ERROR_NO_PACKAGING_TOOLS)
+
 def do_list():
     try:
         import pkg_resources
@@ -22,11 +25,18 @@ def do_list():
     for pkg in pkg_resources.working_set:
         print('\t'.join([pkg.project_name, pkg.version, pkg.location]))
 
+def do_install(pkg):
+    try:
+        import pip
+    except ImportError:
+        error_no_pip()
+    return pip.main(['install', pkg])
+
 def do_uninstall(pkg):
     try:
         import pip
     except ImportError:
-        error("Python package management tool 'pip' not found. Please install 'pip'", ERROR_NO_PACKAGING_TOOLS)
+        error_no_pip()
     return pip.main(['uninstall', '-y', pkg])
 
 def main():
