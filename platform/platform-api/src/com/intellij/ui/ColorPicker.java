@@ -91,13 +91,14 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       add(myRecentColorsComponent, BorderLayout.SOUTH);
     }
-    catch (ParseException e) {
-      // hell
+    catch (ParseException ignore) {
     }
 
-    Color _color = color == null ? myRecentColorsComponent.getMostRecentColor() : color;
-    if (_color == null) _color = Color.WHITE;
-    setColor(_color, this);
+    Color c = color == null ? myRecentColorsComponent.getMostRecentColor() : color;
+    if (c == null) {
+      c = Color.WHITE;
+    }
+    setColor(c, this);
 
     setSize(300, 350);
   }
@@ -120,9 +121,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     return myHex;
   }
 
-  private void setColor(Color _color, Object src) {
-    colorChanged(_color, src);
-    myColorWheelPanel.setColor(_color, src);
+  private void setColor(Color color, Object src) {
+    colorChanged(color, src);
+    myColorWheelPanel.setColor(color, src);
   }
 
   public void appendRecentColor() {
@@ -172,49 +173,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     if (color != null) {
       updatePreview(color, src == myHex);
     }
-    //forEveryKey(new PairFunction<JTextField, Pair<String, String>, Boolean>() {
-    //              @Override
-    //              public Boolean fun(JTextField field, Pair<String, String> pair) {
-    //                if (field.hasFocus()) {
-    //                  final String key = pair.getFirst();
-    //                  if ("hex".equals(key)) {
-    //                    // updating preview from hex
-    //
-    //                    Color color = null;
-    //                    final String str = pair.getSecond();
-    //                    if (str.length() == 3) {
-    //                      color = new Color(
-    //                        17 * Integer.valueOf(String.valueOf(str.charAt(0)), 16).intValue(),
-    //                        17 * Integer.valueOf(String.valueOf(str.charAt(1)), 16).intValue(),
-    //                        17 * Integer.valueOf(String.valueOf(str.charAt(2)), 16).intValue());
-    //                    }
-    //                    else if (str.length() == 6) {
-    //                      color = Color.decode("0x" + str);
-    //                    }
-    //
-    //                    if (color != null) {
-    //                      updatePreview(color, false);
-    //                    }
-    //                  }
-    //                  else {
-    //                    final Color color = gatherRGB();
-    //                    if (color != null) {
-    //                      updatePreview(color, false);
-    //                    }
-    //                  }
-    //
-    //                  return true;
-    //                }
-    //
-    //                return false;
-    //              }
-    //            }, this, new Function<String, Boolean>() {
-    //              @Override
-    //              public Boolean fun(String s) {
-    //                return true;
-    //              }
-    //            }
-    //);
   }
 
   private void updatePreview(Color color, boolean fromHex) {
@@ -276,31 +234,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     return null;
   }
-
-  //private static boolean forEveryKey(PairFunction<JTextField, Pair<String, String>, Boolean> fun, JComponent c,
-  //                                   Function<String, Boolean> filter) {
-  //  if (c instanceof JTextField) {
-  //    final String key = (String)c.getClientProperty("_key");
-  //    if (key != null && filter.fun(key)) {
-  //      final String text = ((JTextField)c).getText();
-  //      if (fun.fun((JTextField)c, Pair.create(key, text))) {
-  //        return true;
-  //      }
-  //    }
-  //  }
-  //  else {
-  //    final Component[] components = c.getComponents();
-  //    for (Component component : components) {
-  //      if (component instanceof JComponent) {
-  //        if (forEveryKey(fun, (JComponent)component, filter)) {
-  //          return true;
-  //        }
-  //      }
-  //    }
-  //  }
-  //
-  //  return false;
-  //}
 
   private JComponent buildTopPanel(boolean enablePipette) throws ParseException {
     final JPanel result = new JPanel(new BorderLayout());
@@ -630,12 +563,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         public void mouseDragged(MouseEvent e) {
           final int x = e.getX();
           final int y = e.getY();
-          int midx = myWheel.x + myWheel.width / 2;
-          int midy = myWheel.y + myWheel.height / 2;
+          int mx = myWheel.x + myWheel.width / 2;
+          int my = myWheel.y + myWheel.height / 2;
           double s;
           double h;
-          s = Math.sqrt((double)((x - midx) * (x - midx) + (y - midy) * (y - midy))) / (myWheel.height / 2);
-          h = -Math.atan2((double)(y - midy), (double)(x - midx)) / (2 * Math.PI);
+          s = Math.sqrt((double)((x - mx) * (x - mx) + (y - my) * (y - my))) / (myWheel.height / 2);
+          h = -Math.atan2((double)(y - my), (double)(x - mx)) / (2 * Math.PI);
           if (h < 0) h += 1.0;
           if (s > 1) s = 1.0;
 
@@ -648,12 +581,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         public void mousePressed(MouseEvent e) {
           final int x = e.getX();
           final int y = e.getY();
-          int midx = myWheel.x + myWheel.width / 2;
-          int midy = myWheel.y + myWheel.height / 2;
+          int mx = myWheel.x + myWheel.width / 2;
+          int my = myWheel.y + myWheel.height / 2;
           double s;
           double h;
-          s = Math.sqrt((double)((x - midx) * (x - midx) + (y - midy) * (y - midy))) / (myWheel.height / 2);
-          h = -Math.atan2((double)(y - midy), (double)(x - midx)) / (2 * Math.PI);
+          s = Math.sqrt((double)((x - mx) * (x - mx) + (y - my) * (y - my))) / (myWheel.height / 2);
+          h = -Math.atan2((double)(y - my), (double)(x - mx)) / (2 * Math.PI);
           if (h < 0) h += 1.0;
           if (s <= 1) {
             setHSBValue((float)h, (float)s, myBrightness, myOpacity);
@@ -745,14 +678,14 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1.0f));
 
-      int midx = myWheel.x + myWheel.width / 2;
-      int midy = myWheel.y + myWheel.height / 2;
+      int mx = myWheel.x + myWheel.width / 2;
+      int my = myWheel.y + myWheel.height / 2;
       g.setColor(Color.white);
       int arcw = (int)(myWheel.width * mySaturation / 2);
       int arch = (int)(myWheel.height * mySaturation / 2);
       double th = myHue * 2 * Math.PI;
-      final int x = (int)(midx + arcw * Math.cos(th));
-      final int y = (int)(midy - arch * Math.sin(th));
+      final int x = (int)(mx + arcw * Math.cos(th));
+      final int y = (int)(my - arch * Math.sin(th));
       g.fillRect(x - 2, y - 2, 4, 4);
       g.setColor(Color.BLACK);
       g.drawRect(x - 2, y - 2, 4, 4);
@@ -1162,11 +1095,11 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       Dialog picker = getPicker();
       picker.setVisible(true);
       // it seems like it's the lowest value for opacity for mouse events to be processed correctly
-      WindowManager.getInstance().setAlphaModeRatio(picker, 0.95f);
+      WindowManager.getInstance().setAlphaModeRatio(picker, 0.99f);
     }
 
     @Override
-    public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {
+    public boolean imageUpdate(Image img, int flags, int x, int y, int width, int height) {
       return false;
     }
 
