@@ -652,9 +652,8 @@ public class GitUtil {
    * <code>git diff --name-only master..origin/master</code>
    */
   @NotNull
-  public static Collection<String> getPathsDiffBetweenRefs(@NotNull String beforeRef,
-                                                           @NotNull String afterRef,
-                                                           Project project, VirtualFile root) throws VcsException {
+  public static Collection<String> getPathsDiffBetweenRefs(@NotNull String beforeRef, @NotNull String afterRef, @NotNull Project project,
+                                                           @NotNull VirtualFile root) throws VcsException {
     final GitSimpleHandler toPull = new GitSimpleHandler(project, root, GitCommand.DIFF);
     toPull.addParameters("--name-only", "--pretty=format:");
     toPull.addParameters(beforeRef + ".." + afterRef);
