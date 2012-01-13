@@ -7,7 +7,6 @@ def foo() {
  * <caret>
  * @return
  */
-
 def foo() {
   2
 }
