@@ -19,6 +19,8 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.XmlLexer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -44,6 +46,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,6 +69,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.zip.CRC32;
 
 public class MavenUtil {
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
@@ -629,5 +634,42 @@ public class MavenUtil {
 
   public interface MavenTaskHandler {
     void waitFor();
+  }
+  
+  public static int getXmlCrc(@NotNull String xmlText) {
+    Lexer lexer = new XmlLexer();
+    lexer.start(xmlText.trim());
+
+    CRC32 crc = new CRC32();
+
+    while (true) {
+      IElementType tokenType = lexer.getTokenType();
+      if (tokenType == null) break;
+
+      if (XmlTokenType.XML_REAL_WHITE_SPACE == tokenType
+          || XmlTokenType.XML_WHITE_SPACE == tokenType
+          || XmlTokenType.COMMENTS.contains(tokenType)) {
+        crc.update(1);
+        
+        do {
+          lexer.advance();
+          tokenType = lexer.getTokenType();
+        }
+        while (XmlTokenType.XML_REAL_WHITE_SPACE == tokenType
+               || XmlTokenType.XML_WHITE_SPACE == tokenType
+               || XmlTokenType.COMMENTS.contains(tokenType));
+      }
+      else {
+        for (int start = lexer.getTokenStart(), end = lexer.getTokenEnd(); start < end; start++) {
+          char a = xmlText.charAt(start);
+          crc.update(a);
+          crc.update(a >>> 8);
+        }
+
+        lexer.advance();
+      }
+    }
+
+    return (int)crc.getValue();
   }
 }

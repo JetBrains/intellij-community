@@ -56,6 +56,7 @@ import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class MavenProjectsManagerWatcher {
@@ -395,9 +396,9 @@ public class MavenProjectsManagerWatcher {
           filesToUpdate.removeAll(filesToRemove);
           scheduleUpdate(filesToUpdate, filesToRemove, false, forceImportAndResolve);
         }
-      }
 
-      clearLists();
+        clearLists();
+      }
     }
 
     private boolean areFileSetsInitialised() {
@@ -426,6 +427,9 @@ public class MavenProjectsManagerWatcher {
   }
 
   private static abstract class MyFileChangeListenerBase implements BulkFileListener {
+    
+    private static final Key<Integer> CONTENT_CRC_KEY = Key.create("MyFileChangeListenerBase");
+    
     protected abstract boolean isRelevant(String path);
 
     protected abstract void updateFile(VirtualFile file);
@@ -451,6 +455,21 @@ public class MavenProjectsManagerWatcher {
             String newPath = moveEvent.getNewParent().getPath() + "/" + moveEvent.getFile().getName();
             if (!isRelevant(newPath)) {
               deleteRecursively(moveEvent.getFile());
+            }
+          }
+          else if (each instanceof VFileContentChangeEvent) {
+            VirtualFile virtualFile = each.getFile();
+            if (virtualFile == null) continue;
+
+            if (virtualFile.getLength() < 40 * 1024) {
+              try {
+                String content = VfsUtil.loadText(virtualFile);
+                int crc = MavenUtil.getXmlCrc(content);
+                virtualFile.putUserData(CONTENT_CRC_KEY, crc);
+              }
+              catch (IOException e) {
+                // Ignore
+              }
             }
           }
         }
@@ -489,7 +508,25 @@ public class MavenProjectsManagerWatcher {
           }
         }
         else if (each instanceof VFileContentChangeEvent) {
-          updateFile(each.getFile());
+          VirtualFile virtualFile = each.getFile();
+          if (virtualFile == null) continue;
+
+          Integer oldCrc = virtualFile.getUserData(CONTENT_CRC_KEY);
+          if (oldCrc != null) {
+            try {
+              virtualFile.putUserData(CONTENT_CRC_KEY, null);
+
+              String content = VfsUtil.loadText(virtualFile);
+              int newCrc = MavenUtil.getXmlCrc(content);
+
+              if (newCrc == oldCrc) continue;
+            }
+            catch (IOException e) {
+              // Ignore
+            }
+          }
+
+          updateFile(virtualFile);
         }
         else if (each instanceof VFilePropertyChangeEvent) {
           if (isRenamed(each)) {
