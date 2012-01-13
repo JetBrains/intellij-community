@@ -717,9 +717,18 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     // We want to align chained method calls only if method target is explicitly specified, i.e. we don't want to align methods
     // chain like 'recursive().recursive().recursive()' but want to align calls like 'foo.recursive().recursive().recursive()'
     boolean callPointDefined = false;
+    List<ASTNode> lookAheadNodes = null;
+    boolean afterIdentifier = false;
 
-    while (!nodes.isEmpty()) {
-      ArrayList<ASTNode> subNodes = readToNextDot(nodes);
+    while (!nodes.isEmpty() || lookAheadNodes != null) {
+      final List<ASTNode> subNodes;
+      if (lookAheadNodes == null) {
+        subNodes = readToNextDot(nodes);
+      }
+      else {
+        subNodes = new ArrayList<ASTNode>(lookAheadNodes);
+        lookAheadNodes = null;
+      }
       Alignment alignmentToUseForSubBlock = null;
 
       // Just create a no-aligned sub-block if we don't need to bother with it's alignment (either due to end-user
@@ -743,6 +752,18 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (callPointDefined && currentSubBlockIsMethodCall) {
         alignmentToUseForSubBlock = chainedCallsAlignment;
       }
+      else if (afterIdentifier && lastNodeType == JavaTokenType.IDENTIFIER) {
+        // Align method call to the last field access. Example:
+        //     MyClass.staticField
+        //            .foo();
+        lookAheadNodes = readToNextDot(nodes);
+        if (lookAheadNodes != null && !lookAheadNodes.isEmpty()
+            && lookAheadNodes.get(lookAheadNodes.size() - 1).getElementType() == JavaElementType.EXPRESSION_LIST)
+        {
+          alignmentToUseForSubBlock = chainedCallsAlignment;
+        }
+      }
+      afterIdentifier = lastNodeType == JavaTokenType.IDENTIFIER;
       subBlocks.add(createSyntheticBlock(subNodes, wrap, alignmentToUseForSubBlock));
     }
 
@@ -750,7 +771,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), blockWrap);
   }
 
-  private Block createSyntheticBlock(final ArrayList<ASTNode> subNodes, final Wrap wrap, @Nullable final Alignment alignment) {
+  private Block createSyntheticBlock(final List<ASTNode> subNodes, final Wrap wrap, @Nullable final Alignment alignment) {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     final ASTNode firstNode = subNodes.get(0);
     if (firstNode.getElementType() == JavaTokenType.DOT) {
@@ -768,7 +789,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  private List<Block> createJavaBlocks(final ArrayList<ASTNode> subNodes) {
+  private List<Block> createJavaBlocks(final List<ASTNode> subNodes) {
     final ArrayList<Block> result = new ArrayList<Block>();
     for (ASTNode node : subNodes) {
       result.add(createJavaBlock(node, getSettings(), Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), null,
@@ -777,7 +798,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return result;
   }
 
-  private static ArrayList<ASTNode> readToNextDot(final ArrayList<ASTNode> nodes) {
+  private static List<ASTNode> readToNextDot(final ArrayList<ASTNode> nodes) {
     final ArrayList<ASTNode> result = new ArrayList<ASTNode>();
     result.add(nodes.remove(0));
     for (Iterator<ASTNode> iterator = nodes.iterator(); iterator.hasNext();) {
