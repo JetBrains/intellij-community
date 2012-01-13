@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -50,8 +49,12 @@ public class PyPackagingUtil {
     return (binary != null) ? binary : binaryFallback;
   }
 
-  public static void deleteVirtualEnv(@NotNull String virtualEnvDir) {
-    FileUtil.delete(new File(virtualEnvDir));
+  public static void deleteVirtualEnv(@NotNull Sdk sdk, @NotNull String sdkHome) throws PyExternalProcessException {
+    final File root = PythonSdkType.getVirtualEnvRoot(sdkHome);
+    if (root == null) {
+      throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find virtualenv root for interpreter");
+    }
+    runPythonHelper(sdk, PACKAGING_TOOL, list("rmtree", root.getPath()));
   }
 
   @NotNull
