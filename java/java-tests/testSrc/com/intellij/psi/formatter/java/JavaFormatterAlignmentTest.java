@@ -36,6 +36,18 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doTest();
   }
 
+  public void testMethodAndChainedField() throws Exception {
+    // Inspired by IDEA-79806
+
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doMethodTest(
+      "Holder.INSTANCE\n" +
+      "                .foo();",
+      "Holder.INSTANCE\n" +
+      "      .foo();"
+    );
+  }
+
   public void testMultipleMethodAnnotationsCommentedInTheMiddle() throws Exception {
     getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
