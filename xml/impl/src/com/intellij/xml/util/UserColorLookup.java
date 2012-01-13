@@ -15,44 +15,52 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupValueWithPriority;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.ColorChooser;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 /**
  * @author maxim
  */
-public class UserColorLookup implements DeferredUserLookupValue, LookupValueWithPriority {
+public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   private static final String COLOR_STRING = XmlBundle.message("choose.color.in.color.lookup");
 
-  public String getPresentation() {
-    return COLOR_STRING;
+  public UserColorLookup() {
+    super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(COLOR_STRING).setInsertHandler(new InsertHandler<LookupElement>() {
+      @Override
+      public void handleInsert(InsertionContext context, LookupElement item) {
+        handleUserSelection(context);
+      }
+    }), LookupValueWithPriority.HIGH));
   }
 
-  public boolean handleUserSelection(LookupItem item, Project project) {
+  private static void handleUserSelection(InsertionContext context) {
     Color myColorAtCaret = null;
 
-    Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    PsiElement element = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument())
-      .findElementAt(selectedTextEditor.getCaretModel().getOffset());
+    Editor selectedTextEditor = context.getEditor();
+    PsiElement element = context.getFile().findElementAt(selectedTextEditor.getCaretModel().getOffset());
 
     if (element instanceof XmlToken) {
       myColorAtCaret = getColorFromElement(element);
     }
 
+    context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
+
     Color color = ColorChooser
-      .chooseColor(WindowManager.getInstance().suggestParentWindow(project), XmlBundle.message("choose.color.dialog.title"),
+      .chooseColor(WindowManager.getInstance().suggestParentWindow(context.getProject()), XmlBundle.message("choose.color.dialog.title"),
                    myColorAtCaret, true);
 
     if (color != null) {
@@ -64,12 +72,13 @@ public class UserColorLookup implements DeferredUserLookupValue, LookupValueWith
         }
         s = buf.toString();
       }
-      item.setLookupString("#" + s);
+      s = "#" + s;
+      context.getDocument().insertString(context.getStartOffset(), s);
+      context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
     }
-
-    return color != null;
   }
 
+  @Nullable
   public static Color getColorFromElement(final PsiElement element) {
     Color myColorAtCaret = null;
 
@@ -108,7 +117,4 @@ public class UserColorLookup implements DeferredUserLookupValue, LookupValueWith
     return myColorAtCaret;
   }
 
-  public int getPriority() {
-    return HIGH;
-  }
 }
