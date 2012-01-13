@@ -246,7 +246,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       final ProjectManager projectManager = ProjectManager.getInstance();
       boolean noProjects = projectManager.getOpenProjects().length == 0;
       boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
-      final Balloon balloon = createBalloon(notification, false, !sticky, !sticky);
+      final Balloon balloon = createBalloon(notification, false, false, !sticky);
       Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
       ((IdeFrameImpl)window).getBalloonLayout().add(balloon);
       if (noProjects && NotificationDisplayType.BALLOON == displayType) {
