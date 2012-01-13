@@ -36,10 +36,16 @@ public class PyPackagingUtil {
   private PyPackagingUtil() {
   }
 
+  public void uninstallPackage(@NotNull Sdk sdk, @NotNull PyPackage pkg) throws PyExternalProcessException {
+    runPythonHelper(sdk, PACKAGING_TOOL, list("uninstall", pkg.getName()));
+    myPackagesCache.remove(sdk);
+  }
+
   @NotNull
   public static String createVirtualEnv(@NotNull Sdk sdk, @NotNull String desinationDir) throws PyExternalProcessException {
+    // TODO: Add boolean systemSitePackages option
     runPythonHelper(sdk, VIRTUALENV, list("--never-download", "--distribute", desinationDir));
-    final String binary = PythonSdkType.getVirtualEnvInterpreter(desinationDir);
+    final String binary = PythonSdkType.getPythonExecutable(desinationDir);
     final String binaryFallback = desinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;
   }
