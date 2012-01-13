@@ -52,6 +52,7 @@ public class UpdateRequestsQueue {
   private volatile boolean myIgnoreBackgroundOperation;
 
   private boolean myRequestSubmitted;
+  private boolean myRequestRunning;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
   private final ProjectLevelVcsManager myPlVcsManager;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
@@ -156,7 +157,7 @@ public class UpdateRequestsQueue {
               semaphore.up();
             }
           };
-          if (myRequestSubmitted && !myStopped) {
+          if (myRequestSubmitted || myRequestRunning) {
             myWaitingUpdateCompletionQueue.add(runnable);
           }
           else {
@@ -169,7 +170,7 @@ public class UpdateRequestsQueue {
         }
 
         synchronized (myLock) {
-          if (!myRequestSubmitted || myStopped) {
+          if (!myRequestSubmitted && !myRequestRunning) {
             return;
           }
         }
@@ -236,9 +237,10 @@ public class UpdateRequestsQueue {
   private class MyRunnable implements Runnable {
     public void run() {
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
-
       try {
         synchronized (myLock) {
+          LOG.assertTrue(!myRequestRunning);
+          myRequestRunning = true;
           if (myStopped) {
             myRequestSubmitted = false;
             LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
@@ -269,6 +271,7 @@ public class UpdateRequestsQueue {
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         synchronized (myLock) {
+          myRequestRunning = false;
           LOG.debug("MyRunnable: delete executed, project: " + myProject.getName() + ", runnable: " + hashCode());
           if (! copy.isEmpty()) {
             myWaitingUpdateCompletionQueue.removeAll(copy);
