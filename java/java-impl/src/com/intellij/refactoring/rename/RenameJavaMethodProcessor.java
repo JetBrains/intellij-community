@@ -18,6 +18,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -230,11 +231,13 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     if (psiMethod.isConstructor()) {
       PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass == null) return null;
-      element = containingClass;
-      if (!PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
-        return null;
+      if (Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
+        element = containingClass;
+        if (!PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
+          return null;
+        }
+        return element;
       }
-      return element;
     }
     return SuperMethodWarningUtil.checkSuperMethod(psiMethod, RefactoringBundle.message("to.rename"));
   }
@@ -243,8 +246,14 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   public void substituteElementToRename(@NotNull PsiElement element,
                                         @NotNull final Editor editor,
                                         @NotNull final Pass<PsiElement> renameCallback) {
-    PsiMethod psiMethod = (PsiMethod)element;
+    final PsiMethod psiMethod = (PsiMethod)element;
     if (psiMethod.isConstructor()) {
+      final PsiClass containingClass = psiMethod.getContainingClass();
+      if (containingClass == null) return;
+      if (!Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
+        renameCallback.pass(psiMethod);
+        return;
+      }
       super.substituteElementToRename(element, editor, renameCallback);
     }
     else {
