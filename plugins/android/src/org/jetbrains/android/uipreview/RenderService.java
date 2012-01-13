@@ -17,12 +17,8 @@
 package org.jetbrains.android.uipreview;
 
 import com.android.ide.common.rendering.LayoutLibrary;
-import com.android.ide.common.rendering.api.ILayoutPullParser;
-import com.android.ide.common.rendering.api.IProjectCallback;
-import com.android.ide.common.rendering.api.RenderSession;
-import com.android.ide.common.rendering.api.SessionParams;
+import com.android.ide.common.rendering.api.*;
 import com.android.ide.common.rendering.api.SessionParams.RenderingMode;
-import com.android.ide.common.resources.ResourceResolver;
 import com.android.ide.common.resources.configuration.*;
 import com.android.resources.Density;
 import com.android.resources.ScreenOrientation;
@@ -45,7 +41,7 @@ class RenderService {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.uipreview.RenderService");
 
   private final IProjectCallback myProjectCallback;
-  private final ResourceResolver myResourceResolver;
+  private final RenderResources myResourceResolver;
   private final LayoutLibrary myLayoutLib;
   private final FolderConfiguration myConfig;
   private final int myMinSdkVersion;
@@ -53,7 +49,7 @@ class RenderService {
   private final float myYdpi;
 
   RenderService(LayoutLibrary layoutLibrary,
-                @NotNull ResourceResolver resourceResolver,
+                @NotNull RenderResources resourceResolver,
                 FolderConfiguration config,
                 float xdpi,
                 float ydpi,
