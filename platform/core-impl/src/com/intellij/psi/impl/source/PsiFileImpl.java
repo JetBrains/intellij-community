@@ -1029,7 +1029,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  public void putInfo(Map<String, String> info) {
+  public void putInfo(@NotNull Map<String, String> info) {
     putInfo(this, info);
   }
 
