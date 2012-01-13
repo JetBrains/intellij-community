@@ -16,15 +16,24 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.net.IOExceptionDialog;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +90,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
     if (userConfirm(selection)) {
-      ArrayList<PluginNode> list = new ArrayList<PluginNode>();
+      final ArrayList<PluginNode> list = new ArrayList<PluginNode>();
       for (IdeaPluginDescriptor descr : selection) {
         PluginNode pluginNode = null;
         if (descr instanceof PluginNode) {
@@ -99,29 +108,67 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         }
       }
       try {
-        if (PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view)) {
-          for (PluginNode pluginNode : list) {
-            final String idString = pluginNode.getPluginId().getIdString();
-            final PluginManagerUISettings pluginManagerUISettings = PluginManagerUISettings.getInstance();
-            if (!pluginManagerUISettings.myInstalledPlugins.contains(idString)) {
-              pluginManagerUISettings.myInstalledPlugins.add(idString);
+        final Runnable onInstallRunnable = new Runnable() {
+          @Override
+          public void run() {
+            installedPluginsToModel(list);
+            installed.setRequireShutdown(true);
+            if (!installed.isDisposed()) {
+              getPluginTable().updateUI();
             }
-            pluginManagerUISettings.myOutdatedPlugins.remove(idString);
+            else {
+              notifyPluginsWereInstalled();
+            }
           }
-          final InstalledPluginsTableModel installedPluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
-          for (PluginNode node : list) {
-            installedPluginsModel.appendOrUpdateDescriptor(node);
-          }
-          installed.setRequireShutdown(true);
-        }
+        };
+        PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view, onInstallRunnable);
       }
       catch (IOException e1) {
         PluginManagerMain.LOG.error(e1);
         IOExceptionDialog
           .showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
       }
-      getPluginTable().updateUI();
     }
+  }
+
+  private void installedPluginsToModel(ArrayList<PluginNode> list) {
+    for (PluginNode pluginNode : list) {
+      final String idString = pluginNode.getPluginId().getIdString();
+      final PluginManagerUISettings pluginManagerUISettings = PluginManagerUISettings.getInstance();
+      if (!pluginManagerUISettings.myInstalledPlugins.contains(idString)) {
+        pluginManagerUISettings.myInstalledPlugins.add(idString);
+      }
+      pluginManagerUISettings.myOutdatedPlugins.remove(idString);
+    }
+
+    final InstalledPluginsTableModel installedPluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
+    for (PluginNode node : list) {
+      installedPluginsModel.appendOrUpdateDescriptor(node);
+    }
+  }
+
+  private static void notifyPluginsWereInstalled() {
+    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    final boolean restartCapable = app.isRestartCapable();
+    String message = "<html>";
+    message += restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName()) 
+                              : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName());
+    message += "<br><a href=";
+    message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
+    message += "</a></html>";
+    Notifications.Bus.notify(new Notification(IdeBundle.message("title.plugin.error"), IdeBundle.message("title.plugin.error"),
+                                              message, NotificationType.INFORMATION, new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        notification.expire();
+        if (restartCapable) {
+          app.restart();
+        }
+        else {
+          app.exit(true);
+        }
+      }
+    }));
   }
 
 
