@@ -375,10 +375,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void updateImmediately() {
-    if (DEBUG) {
-      System.out.println("ChangeListManagerImpl.updateImmediately");
-    }
-
     final DataHolder dataHolder;
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
