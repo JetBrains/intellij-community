@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -39,7 +40,10 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
   private final Project myProject;
   private final List<Change> myChanges;
 
-  static boolean showAndGetAnswer(final Project project, final List<Change> changes) {
+  /**
+   * @return true if smart checkout has to be performed, false if user doesn't want to checkout.
+   */
+  static boolean showAndGetAnswer(@NotNull final Project project, @NotNull final List<Change> changes) {
     final AtomicBoolean ok = new AtomicBoolean();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -52,7 +56,7 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
     return ok.get();
   }
 
-  private GitWouldBeOverwrittenByCheckoutDialog(Project project, List<Change> changes) {
+  private GitWouldBeOverwrittenByCheckoutDialog(@NotNull Project project, @NotNull List<Change> changes) {
     super(project);
     myProject = project;
     myChanges = changes;
