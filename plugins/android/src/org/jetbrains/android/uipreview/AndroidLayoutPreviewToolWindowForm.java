@@ -799,18 +799,14 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       return;
     }
 
-    final LocaleData oldSelectedLocale = (LocaleData)myLocaleCombo.getSelectedItem();
-    myLocales = new ArrayList<LocaleData>();
-    myLocaleCombo.setModel(new DefaultComboBoxModel());
-
     final AndroidFacet facet = AndroidFacet.getInstance(myFile);
     if (facet == null) {
       return;
     }
-
+    final LocaleData oldSelectedLocale = (LocaleData)myLocaleCombo.getSelectedItem();
     final Map<String, Set<String>> language2Regions = new HashMap<String, Set<String>>();
-
     final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
+
     for (VirtualFile resourceDir : resourceDirs) {
       for (VirtualFile child : resourceDir.getChildren()) {
         if (child.isDirectory()) {
@@ -842,7 +838,6 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
         }
       }
     }
-
     final List<LocaleData> locales = new ArrayList<LocaleData>();
 
     for (String language : language2Regions.keySet()) {
@@ -857,7 +852,6 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
                                   : String.format("%1$s / Any", language);
       locales.add(new LocaleData(language, null, presentation));
     }
-
     locales.add(new LocaleData(null, null, language2Regions.size() > 0 ? "Other locale" : "Any locale"));
 
     LocaleData newSelectedLocale = null;
