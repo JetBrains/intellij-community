@@ -50,8 +50,12 @@ public class PyPackagingUtil {
     return (binary != null) ? binary : binaryFallback;
   }
 
-  public static void deleteVirtualEnv(@NotNull String virtualEnvDir) {
-    FileUtil.delete(new File(virtualEnvDir));
+  public static void deleteVirtualEnv(@NotNull Sdk sdk, @NotNull String sdkHome) throws PyExternalProcessException {
+    final File root = PythonSdkType.getVirtualEnvRoot(sdkHome);
+    if (root == null) {
+      throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find virtualenv root for interpreter");
+    }
+    FileUtil.delete(root);
   }
 
   @NotNull

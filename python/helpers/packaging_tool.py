@@ -30,6 +30,7 @@ def do_uninstall(pkg):
     return pip.main(['uninstall', '-y', pkg])
 
 def main():
+    retcode = 0
     try:
         logging.basicConfig(format='%(message)s')
         if len(sys.argv) < 2:
@@ -43,17 +44,18 @@ def main():
             if len(sys.argv) != 3:
                 usage()
             pkg = sys.argv[2]
-            do_install(pkg)
+            retcode = do_install(pkg)
         elif cmd == 'uninstall':
             if len(sys.argv) != 3:
                 usage()
             pkg = sys.argv[2]
-            do_uninstall(pkg)
+            retcode = do_uninstall(pkg)
         else:
             usage()
     except Exception:
         traceback.print_exc()
         sys.exit(ERROR_EXCEPTION)
+    sys.exit(retcode)
 
 if __name__ == '__main__':
     main()
