@@ -188,7 +188,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public boolean isSpecialFile(@NotNull final VirtualFile file) {
     if (!SystemInfo.isUnix) return false;
     final File ioFile = convertToIOFile(file);
-    return ioFile.exists() && !ioFile.isFile() && !ioFile.isDirectory();
+    return !ioFile.isFile() && !ioFile.isDirectory() && ioFile.exists();
   }
 
   @Override
