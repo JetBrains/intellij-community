@@ -24,6 +24,13 @@ public class FSState {
   public FSState() {
   }
 
+  public void onRebuild() {
+    clearRoundDeltas();
+    myInitialProductionScanPerformed.clear();
+    myInitialTestsScanPerformed.clear();
+    myDeltas.clear();
+  }
+
   public boolean markInitialScanPerformed(Module module, boolean forTests) {
     final Set<Module> map = forTests ? myInitialTestsScanPerformed : myInitialProductionScanPerformed;
     return map.add(module);

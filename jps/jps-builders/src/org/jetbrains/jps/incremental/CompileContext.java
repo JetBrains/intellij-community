@@ -10,6 +10,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.server.BuildCanceledStatus;
 
 import java.io.File;
 import java.util.*;
@@ -34,6 +35,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private volatile boolean myErrorsFound = false;
   private final long myCompilationStartStamp;
   private final TimestampStorage myTsStorage;
+  private final BuildCanceledStatus myCancelStatus;
   private float myDone = -1.0f;
 
   public CompileContext(String projectName, CompileScope scope,
@@ -41,8 +43,9 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
                         boolean isProjectRebuild,
                         ProjectChunks productionChunks,
                         ProjectChunks testChunks,
-                        FSState fsState, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex) throws ProjectBuildException {
+                        FSState fsState, TimestampStorage tsStorage, MessageHandler delegateMessageHandler, final ModuleRootsIndex rootsIndex, BuildCanceledStatus cancelStatus) throws ProjectBuildException {
     myTsStorage = tsStorage;
+    myCancelStatus = cancelStatus;
     myCompilationStartStamp = System.currentTimeMillis();
     myScope = scope;
     myIsProjectRebuild = isProjectRebuild;
@@ -131,9 +134,12 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myDataManager.getMappings().clearMemoryCaches();
 
     try {
-      if (!myErrorsFound) {
+      if (!myErrorsFound && !myCancelStatus.isCanceled()) {
         final boolean compilingTests = isCompilingTests();
         for (Module module : chunk.getModules()) {
+          if (isProjectRebuild()) {
+            myFsState.markInitialScanPerformed(module, compilingTests);
+          }
           final List<RootDescriptor> roots = myRootsIndex.getModuleRoots(module);
           for (RootDescriptor descriptor : roots) {
             if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {

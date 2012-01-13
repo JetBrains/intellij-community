@@ -97,7 +97,7 @@ class ServerState {
     }
   }
 
-  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable{
+  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler, BuildCanceledStatus cs) throws Throwable{
     final String projectName = getProjectName(projectPath);
     BuildType buildType = params.buildType;
 
@@ -130,7 +130,7 @@ class ServerState {
 
       final CompileScope compileScope = new CompileScope(project, toCompile);
 
-      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance());
+      final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs);
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
       }

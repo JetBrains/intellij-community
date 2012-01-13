@@ -29,6 +29,7 @@ message Message {
       SETUP_COMMAND = 3;
       RELOAD_PROJECT_COMMAND = 4;
       FS_EVENT = 5;
+      CANCEL_BUILD_COMMAND = 6;
     }
 
     message CompilationRequest {
@@ -36,8 +37,7 @@ message Message {
         REBUILD = 1;
         MAKE = 2;
         CLEAN = 3;
-        CANCEL = 4;
-        FORCED_COMPILATION = 5;
+        FORCED_COMPILATION = 4;
       }
       required Type command_type = 1;
       optional string project_id = 2;
@@ -73,6 +73,10 @@ message Message {
       repeated string project_id = 1;
     }
 
+    message CancelBuildCommand {
+      required UUID target_session_id = 1;
+    }
+
     message FSEvent {
       required string project_id = 1;
       repeated string changed_paths = 2;
@@ -85,6 +89,7 @@ message Message {
     optional SetupCommand setup_command = 4;
     optional ReloadProjectCommand reload_project_command = 5;
     optional FSEvent fs_event = 6;
+    optional CancelBuildCommand cancel_build_command = 7;
   }
 
   message Response {

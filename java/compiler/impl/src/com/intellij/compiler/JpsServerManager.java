@@ -139,6 +139,23 @@ public class JpsServerManager implements ApplicationComponent{
     }
   }
 
+  public void sendCancelBuildRequest(final UUID sessionId) {
+    myTaskExecutor.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final Client client = ensureServerRunningAndClientConnected(false);
+          if (client != null) {
+            client.sendCancelBuildRequest(sessionId);
+          }
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+      }
+    });
+  }
+
   private void sendNotification(final Collection<String> paths, final boolean isDeleted) {
     try {
       final Client client = ensureServerRunningAndClientConnected(false);
@@ -175,7 +192,7 @@ public class JpsServerManager implements ApplicationComponent{
   }
 
   @Nullable
-  public Future submitCompilationTask(final String projectId, final List<String> modules, final boolean rebuild, final JpsServerResponseHandler handler) {
+  public RequestFuture submitCompilationTask(final String projectId, final List<String> modules, final boolean rebuild, final JpsServerResponseHandler handler) {
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
       public void run() {

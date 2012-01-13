@@ -9,6 +9,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.server.BuildCanceledStatus;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
@@ -22,9 +23,11 @@ import java.util.*;
  */
 public class IncProjectBuilder {
   public static final String JPS_SERVER_NAME = "JPS BUILD";
+  private static final String CANCELED_MESSAGE = "The build has been canceled";
 
   private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
+  private final BuildCanceledStatus myCancelStatus;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
@@ -40,9 +43,10 @@ public class IncProjectBuilder {
   private final float myTotalModulesWork;
   private final int myTotalBuilderCount;
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry) {
+  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, BuildCanceledStatus cs) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
+    myCancelStatus = cs;
     myProductionChunks = new ProjectChunks(pd.project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(pd.project, ClasspathKind.TEST_COMPILE);
     myTotalModulesWork = (float) pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
@@ -52,7 +56,7 @@ public class IncProjectBuilder {
   public void addMessageHandler(MessageHandler handler) {
     myMessageHandlers.add(handler);
   }
-  
+
   public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild) {
     CompileContext context = null;
     try {
@@ -136,18 +140,25 @@ public class IncProjectBuilder {
     final FSState fsState = myProjectDescriptor.fsState;
     final ModuleRootsIndex rootsIndex = myProjectDescriptor.rootsIndex;
     return new CompileContext(
-      projectName, scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, tsStorage, myMessageDispatcher, rootsIndex
+      projectName, scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, tsStorage, myMessageDispatcher, rootsIndex, myCancelStatus
     );
   }
 
-  private static void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
+  private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
+    try {
+      myProjectDescriptor.timestamps.clean();
+    }
+    catch (IOException e) {
+      throw new ProjectBuildException("Error cleaning timestamps storage", e);
+    }
     try {
       context.getDataManager().clean();
     }
     catch (IOException e) {
       throw new ProjectBuildException("Error cleaning compiler storages", e);
     }
+    myProjectDescriptor.fsState.onRebuild();
 
     final Collection<Module> modulesToClean = context.getProject().getModules().values();
     final Set<File> toDelete = new HashSet<File>();
@@ -189,6 +200,9 @@ public class IncProjectBuilder {
         final File[] children = outputRoot.listFiles();
         if (children != null) {
           for (File child : children) {
+            if (myCancelStatus.isCanceled()) {
+              throw new ProjectBuildException(CANCELED_MESSAGE);
+            }
             FileUtil.delete(child);
           }
         }
@@ -310,6 +324,9 @@ public class IncProjectBuilder {
 
         if (buildResult == Builder.ExitCode.ABORT) {
           throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
+        }
+        if (myCancelStatus.isCanceled()) {
+          throw new ProjectBuildException(CANCELED_MESSAGE);
         }
         if (buildResult == Builder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
           if (!nextPassRequired) {

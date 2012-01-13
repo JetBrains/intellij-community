@@ -96,11 +96,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.api.JpsServerResponseHandlerAdapter;
+import org.jetbrains.jps.api.RequestFuture;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class CompileDriver {
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
@@ -417,7 +417,7 @@ public class CompileDriver {
   }
 
   @Nullable
-  private Future compileOnServer(final CompileContext compileContext, Collection<Module> modules, boolean isMake, @Nullable final CompileStatusNotification callback)
+  private RequestFuture compileOnServer(final CompileContext compileContext, Collection<Module> modules, boolean isMake, @Nullable final CompileStatusNotification callback)
     throws Exception {
     List<String> moduleNames = Collections.emptyList();
     if (modules != null && modules.size() > 0) {
@@ -426,7 +426,8 @@ public class CompileDriver {
         moduleNames.add(module.getName());
       }
     }
-    return JpsServerManager.getInstance().submitCompilationTask(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
+    final JpsServerManager jpsServerManager = JpsServerManager.getInstance();
+    return jpsServerManager.submitCompilationTask(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
 
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
         final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compilerMessage.getKind();
@@ -440,21 +441,21 @@ public class CompileDriver {
         }
         else {
           final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
-                                                   : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
+            : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
           Navigatable navigatable = null;
 
-          String sourceFilePath = compilerMessage.hasSourceFilePath()? compilerMessage.getSourceFilePath() : null;
+          String sourceFilePath = compilerMessage.hasSourceFilePath() ? compilerMessage.getSourceFilePath() : null;
           if (sourceFilePath != null) {
             sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
           }
-          final long offset = compilerMessage.hasProblemLocationOffset()? compilerMessage.getProblemLocationOffset() : -1L;
+          final long offset = compilerMessage.hasProblemLocationOffset() ? compilerMessage.getProblemLocationOffset() : -1L;
           if (sourceFilePath != null && offset >= 0L) {
             final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(sourceFilePath);
             if (file != null) {
               navigatable = new OpenFileDescriptor(myProject, file, (int)offset);
             }
           }
-          final String srcUrl = sourceFilePath != null? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
+          final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(
             category, compilerMessage.getText(), srcUrl, (int)compilerMessage.getLine(), (int)compilerMessage.getColumn(), navigatable
           );
@@ -543,7 +544,8 @@ public class CompileDriver {
     if (useServer) {
       compileWork = new Runnable() {
         public void run() {
-          if (compileContext.getProgressIndicator().isCanceled()) {
+          final ProgressIndicator indicator = compileContext.getProgressIndicator();
+          if (indicator.isCanceled()) {
             if (callback != null) {
               callback.finished(true, 0, 0, compileContext);
             }
@@ -558,8 +560,27 @@ public class CompileDriver {
             if (message != null) {
               compileContext.addMessage(message);
             }
-            final Future future = compileOnServer(compileContext, Arrays.asList(compileContext.getCompileScope().getAffectedModules()), compileContext.isMake(), callback);
+            final RequestFuture future = compileOnServer(compileContext, Arrays.asList(compileContext.getCompileScope().getAffectedModules()), compileContext.isMake(), callback);
             if (future != null) {
+              // start cancel watcher
+              ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                public void run() {
+                  while (true) {
+                    try {
+                      Thread.sleep(200L);
+                      if (future.isDone() || future.isCancelled()) {
+                        break;
+                      }
+                      if (indicator.isCanceled()) {
+                        future.cancel(true);
+                        break;
+                      }
+                    }
+                    catch (InterruptedException ignored) {
+                    }
+                  }
+                }
+              });
               try {
                 future.get();
               }

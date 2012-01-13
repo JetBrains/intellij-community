@@ -55,6 +55,18 @@ class ServerMessageHandler extends SimpleChannelHandler {
         case RELOAD_PROJECT_COMMAND:
           final JpsRemoteProto.Message.Request.ReloadProjectCommand reloadProjectCommand = request.getReloadProjectCommand();
           facade.clearProjectCache(reloadProjectCommand.getProjectIdList());
+          reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
+          break;
+        case CANCEL_BUILD_COMMAND:
+          final JpsRemoteProto.Message.Request.CancelBuildCommand cancelCommand = request.getCancelBuildCommand();
+          final UUID targetSessionId = ProtoUtil.fromProtoUUID(cancelCommand.getTargetSessionId());
+          for (CompilationTask task : myBuildsInProgress.values()) {
+            if (task.getSessionId().equals(targetSessionId)) {
+              task.cancel();
+              break;
+            }
+          }
+          reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
         case SETUP_COMMAND:
           final Map<String, String> pathVars = new HashMap<String, String>();
@@ -99,6 +111,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
               pd.release();
             }
           }
+          reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
         default:
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unknown request: " + message));
@@ -136,14 +149,6 @@ class ServerMessageHandler extends SimpleChannelHandler {
         return null;
       }
 
-      case CANCEL: {
-        final CompilationTask task = myBuildsInProgress.get(projectId);
-        if (task != null && task.getSessionId() == sessionId) {
-          task.cancel();
-        }
-        return null;
-      }
-
       default:
         return ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unsupported command: '" + compileType + "'"));
     }
@@ -156,13 +161,14 @@ class ServerMessageHandler extends SimpleChannelHandler {
     ctx.sendUpstream(e);
   }
 
-  private class CompilationTask implements Runnable {
+  private class CompilationTask implements Runnable, BuildCanceledStatus {
 
     private final UUID mySessionId;
     private final ChannelHandlerContext myChannelContext;
     private final String myProjectPath;
     private final Set<String> myModules;
     private final BuildParameters myParams;
+    private volatile boolean myCanceled = false;
 
     public CompilationTask(UUID sessionId, ChannelHandlerContext channelContext, String projectId, List<String> modules) {
       mySessionId = sessionId;
@@ -178,6 +184,10 @@ class ServerMessageHandler extends SimpleChannelHandler {
 
     public UUID getSessionId() {
       return mySessionId;
+    }
+
+    public boolean isCanceled() {
+      return myCanceled;
     }
 
     public void run() {
@@ -205,7 +215,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
             }
             Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, response));
           }
-        });
+        }, this);
       }
       catch (Throwable e) {
         error = e;
@@ -251,7 +261,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
     }
 
     public void cancel() {
-      // todo
+      myCanceled = true;
     }
   }
 

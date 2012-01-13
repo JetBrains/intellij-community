@@ -6,7 +6,10 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,8 +43,10 @@ public class ProtoUtil {
     return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.CLEAN, project, modules);
   }
 
-  public static JpsRemoteProto.Message.Request createCancelRequest(String project) {
-    return createCompileRequest(JpsRemoteProto.Message.Request.CompilationRequest.Type.CANCEL, project, Collections.<String>emptyList());
+  public static JpsRemoteProto.Message.Request createCancelRequest(UUID compileSessionId) {
+    final JpsRemoteProto.Message.Request.CancelBuildCommand.Builder builder = JpsRemoteProto.Message.Request.CancelBuildCommand.newBuilder();
+    builder.setTargetSessionId(toProtoUUID(compileSessionId));
+    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.CANCEL_BUILD_COMMAND).setCancelBuildCommand(builder.build()).build();
   }
 
   public static JpsRemoteProto.Message.Request createCompileRequest(final JpsRemoteProto.Message.Request.CompilationRequest.Type command, String project, Collection<String> modules) {
