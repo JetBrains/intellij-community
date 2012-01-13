@@ -212,9 +212,6 @@ public class JavaBuilder extends Builder{
 
     final ProjectPaths paths = context.getProjectPaths();
 
-    final Mappings delta = context.createDelta();
-    DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
-
     // todo: consider corresponding setting in CompilerWorkspaceConfiguration
     final boolean addNotNullAssertions = true;
 
@@ -226,6 +223,8 @@ public class JavaBuilder extends Builder{
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
     final OutputFilesSink outputSink = new OutputFilesSink(context);
+    final Mappings delta = context.createDelta();
+    DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
     try {
       if (hasSourcesToCompile) {
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context,Collections.<File>emptySet());

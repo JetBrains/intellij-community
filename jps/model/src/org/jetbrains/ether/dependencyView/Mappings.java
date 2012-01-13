@@ -69,14 +69,14 @@ public class Mappings {
 
     myRootDir.mkdirs();
 
-    //createImplementation(myRootDir, myIsTansient);
+    createImplementation(myRootDir, true);
 
-    myClassToSubclasses = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
-    mySourceFileToClasses = new TransientMultiMaplet<DependencyContext.S, ClassRepr>(ourClassSetConstructor);
-    mySourceFileToUsages = new TransientMaplet<DependencyContext.S, UsageRepr.Cluster>();
-    mySourceFileToAnnotationUsages = new TransientMultiMaplet<DependencyContext.S, UsageRepr.Usage>(ourUsageSetConstructor);
-    myClassToSourceFile = new TransientMaplet<DependencyContext.S, DependencyContext.S>();
-    myClassToClassDependency = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
+    //myClassToSubclasses = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
+    //mySourceFileToClasses = new TransientMultiMaplet<DependencyContext.S, ClassRepr>(ourClassSetConstructor);
+    //mySourceFileToUsages = new TransientMaplet<DependencyContext.S, UsageRepr.Cluster>();
+    //mySourceFileToAnnotationUsages = new TransientMultiMaplet<DependencyContext.S, UsageRepr.Usage>(ourUsageSetConstructor);
+    //myClassToSourceFile = new TransientMaplet<DependencyContext.S, DependencyContext.S>();
+    //myClassToClassDependency = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
   }
 
   public Mappings(final File rootDir) throws IOException {
@@ -1264,74 +1264,79 @@ public class Mappings {
   }
 
   public void integrate(final Mappings delta, final Collection<File> compiled, final Collection<String> removed) {
-    if (removed != null) {
-      for (String file : removed) {
-        final DependencyContext.S key = myContext.get(file);
-        final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(key);
-        final UsageRepr.Cluster cluster = mySourceFileToUsages.get(key);
-        final Set<UsageRepr.Usage> usages = cluster == null ? null : cluster.getUsages();
+    try {
+      if (removed != null) {
+        for (String file : removed) {
+          final DependencyContext.S key = myContext.get(file);
+          final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(key);
+          final UsageRepr.Cluster cluster = mySourceFileToUsages.get(key);
+          final Set<UsageRepr.Usage> usages = cluster == null ? null : cluster.getUsages();
 
-        if (classes != null) {
-          for (ClassRepr cr : classes) {
-            myClassToSubclasses.remove(cr.name);
-            myClassToSourceFile.remove(cr.name);
-            myClassToClassDependency.remove(cr.name);
+          if (classes != null) {
+            for (ClassRepr cr : classes) {
+              myClassToSubclasses.remove(cr.name);
+              myClassToSourceFile.remove(cr.name);
+              myClassToClassDependency.remove(cr.name);
 
-            for (DependencyContext.S superSomething : cr.getSupers()) {
-              myClassToSubclasses.removeFrom(superSomething, cr.name);
-            }
+              for (DependencyContext.S superSomething : cr.getSupers()) {
+                myClassToSubclasses.removeFrom(superSomething, cr.name);
+              }
 
-            if (usages != null) {
-              for (UsageRepr.Usage u : usages) {
-                if (u instanceof UsageRepr.ClassUsage) {
-                  final Set<DependencyContext.S> residents = cluster.getResidence(u);
+              if (usages != null) {
+                for (UsageRepr.Usage u : usages) {
+                  if (u instanceof UsageRepr.ClassUsage) {
+                    final Set<DependencyContext.S> residents = cluster.getResidence(u);
 
-                  if (residents != null && residents.contains(cr.name)) {
-                    myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                    if (residents != null && residents.contains(cr.name)) {
+                      myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                    }
                   }
                 }
               }
             }
           }
-        }
 
-        mySourceFileToClasses.remove(key);
-        mySourceFileToUsages.remove(key);
+          mySourceFileToClasses.remove(key);
+          mySourceFileToUsages.remove(key);
+        }
+      }
+
+      //final Set<ClassRepr> cl = (Set<ClassRepr>) delta.mySourceFileToClasses.get(new DependencyContext.S(352));
+
+      //System.out.println("There: " + (cl == null ? "wow..." : cl.size()));
+
+      myClassToSubclasses.putAll(delta.myClassToSubclasses);
+      mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
+      mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
+      mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
+      myClassToSourceFile.putAll(delta.myClassToSourceFile);
+
+      for (DependencyContext.S file : delta.myClassToClassDependency.keyCollection()) {
+        final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(file);
+        final Collection<DependencyContext.S> past = myClassToClassDependency.get(file);
+
+        if (past == null) {
+          myClassToClassDependency.put(file, now);
+        }
+        else {
+          final Collection<DependencyContext.S> removeSet = new HashSet<DependencyContext.S>();
+
+          for (File c : compiled) {
+            removeSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
+          }
+
+          removeSet.removeAll(now);
+
+          past.addAll(now);
+          past.removeAll(removeSet);
+
+          myClassToClassDependency.remove(file);
+          myClassToClassDependency.put(file, past);
+        }
       }
     }
-
-    //final Set<ClassRepr> cl = (Set<ClassRepr>) delta.mySourceFileToClasses.get(new DependencyContext.S(352));
-
-    //System.out.println("There: " + (cl == null ? "wow..." : cl.size()));
-
-    myClassToSubclasses.putAll(delta.myClassToSubclasses);
-    mySourceFileToClasses.putAll(delta.mySourceFileToClasses);
-    mySourceFileToUsages.putAll(delta.mySourceFileToUsages);
-    mySourceFileToAnnotationUsages.putAll(delta.mySourceFileToAnnotationUsages);
-    myClassToSourceFile.putAll(delta.myClassToSourceFile);
-
-    for (DependencyContext.S file : delta.myClassToClassDependency.keyCollection()) {
-      final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(file);
-      final Collection<DependencyContext.S> past = myClassToClassDependency.get(file);
-
-      if (past == null) {
-        myClassToClassDependency.put(file, now);
-      }
-      else {
-        final Collection<DependencyContext.S> removeSet = new HashSet<DependencyContext.S>();
-
-        for (File c : compiled) {
-          removeSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
-        }
-
-        removeSet.removeAll(now);
-
-        past.addAll(now);
-        past.removeAll(removeSet);
-
-        myClassToClassDependency.remove(file);
-        myClassToClassDependency.put(file, past);
-      }
+    finally {
+      delta.close();
     }
   }
 
