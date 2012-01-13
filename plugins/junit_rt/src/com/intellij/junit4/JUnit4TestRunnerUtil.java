@@ -124,20 +124,9 @@ public class JUnit4TestRunnerUtil {
           final RunWith clazzAnnotation = (RunWith)clazz.getAnnotation(RunWith.class);
           if (clazzAnnotation == null) { //do not override external runners
             try {
-              Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
               final Method method = clazz.getMethod(methodName, null);
               if (method != null && notForked && method.getAnnotation(Ignore.class) != null) { //override ignored case only
-                final Request classRequest = new ClassRequest(clazz) {
-                  public Runner getRunner() {
-                    try {
-                      return new IgnoreIgnoredTestJUnit4ClassRunner(clazz);
-                    }
-                    catch (Exception ignored) {
-                      //return super runner
-                    }
-                    return super.getRunner();
-                  }
-                };
+                final Request classRequest = createIgnoreIgnoredClassRequest(clazz);
                 final Filter ignoredTestFilter = Filter.matchMethodDescription(Description.createTestDescription(clazz, methodName));
                 return classRequest.filterWith(new Filter() {
                   public boolean shouldRun(Description description) {
@@ -171,7 +160,34 @@ public class JUnit4TestRunnerUtil {
       }
     }
 
-    return result.size() == 1 ? Request.aClass((Class)result.get(0)) : Request.classes(getArrayOfClasses(result));
+    if (result.size() == 1) {
+      final Class clazz = (Class)result.get(0);
+      try {
+        if (clazz.getAnnotation(Ignore.class) != null) { //override ignored case only
+          return createIgnoreIgnoredClassRequest(clazz);
+        }
+      }
+      catch (ClassNotFoundException e) {
+        //return simple class runner
+      }
+      return Request.aClass(clazz);
+    }
+    return Request.classes(getArrayOfClasses(result));
+  }
+
+  private static Request createIgnoreIgnoredClassRequest(final Class clazz) throws ClassNotFoundException {
+    Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
+    return new ClassRequest(clazz) {
+      public Runner getRunner() {
+        try {
+          return new IgnoreIgnoredTestJUnit4ClassRunner(clazz);
+        }
+        catch (Exception ignored) {
+          //return super runner
+        }
+        return super.getRunner();
+      }
+    };
   }
 
   private static Request getClassRequestsUsing44API(String suiteName, Class[] classes) {
