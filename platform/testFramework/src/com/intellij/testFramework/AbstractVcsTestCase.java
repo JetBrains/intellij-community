@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -75,7 +74,7 @@ public abstract class AbstractVcsTestCase {
     }
     Collections.addAll(arguments, commandLine);
     if (myTraceClient) {
-      System.out.println("*** running:\n" + StringUtil.join(arguments," "));
+      System.out.println("*** running:\n" + arguments);
     }
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     if (workingDir != null) {

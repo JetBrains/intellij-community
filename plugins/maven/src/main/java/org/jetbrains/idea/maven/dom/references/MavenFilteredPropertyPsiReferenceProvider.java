@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,18 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
-  public static final boolean SOFT_DEFAULT = false;
+public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
+  private static final Pattern PATTERN = Pattern.compile("\\$\\{([^\\}]+?)\\}|@([^@]+?)@");
+  
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    return getReferences(element, SOFT_DEFAULT);
-  }
-
-  public static PsiReference[] getReferences(PsiElement element, boolean isSoft) {
-    TextRange textRange = ElementManipulators.getValueTextRange(element);
-    if (textRange.isEmpty()) return PsiReference.EMPTY_ARRAY;
+    if (!MavenDomUtil.isFilteredResourceFile(element)) return PsiReference.EMPTY_ARRAY;
 
     String text = element.getText();
-
     if (StringUtil.isEmptyOrSpaces(text)) return PsiReference.EMPTY_ARRAY;
 
     MavenProject mavenProject = MavenDomUtil.findContainingProject(element);
@@ -53,13 +49,21 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
     List<PsiReference> result = new ArrayList<PsiReference>();
 
-    Matcher matcher = MavenPropertyResolver.PATTERN.matcher(textRange.substring(text));
+    Matcher matcher = PATTERN.matcher(text);
     while (matcher.find()) {
       String propertyName = matcher.group(1);
-      int from = textRange.getStartOffset() + matcher.start(1);
+      int from;
+      if (propertyName == null) {
+        propertyName = matcher.group(2);
+        from = matcher.start(2);
+      }
+      else {
+        from = matcher.start(1);
+      }
+
       TextRange range = TextRange.from(from, propertyName.length());
 
-      result.add(new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft));
+      result.add(new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range, MavenPropertyPsiReferenceProvider.SOFT_DEFAULT));
     }
 
     return result.toArray(new PsiReference[result.size()]);

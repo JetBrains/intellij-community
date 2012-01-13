@@ -124,6 +124,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   synchronized Change removeChange(Change change) {
     if (ChangeListManagerImpl.DEBUG) {
       System.out.println("LocalChangeListImpl.removeChange: this = " + this + ", change = " + change);
+      System.out.println("myChanges.size() = " + myChanges.size());
     }
     for (Change localChange : myChanges) {
       if (localChange.equals(change)) {
