@@ -1324,6 +1324,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
+    if (myLookupStartMarker != null) {
+      myLookupStartMarker.dispose();
+      myLookupStartMarker = null;
+    }
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
 

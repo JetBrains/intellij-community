@@ -150,7 +150,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   @Override
   protected void beforeTemplateStart() {
     myCaretRangeMarker = myEditor.getDocument()
-          .createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
+      .createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
   }
 
   @Override
@@ -173,8 +173,28 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     return result;
   }
 
-  protected void releaseResources() {
+  @Override
+  protected void moveOffsetAfter(boolean success) {
+    super.moveOffsetAfter(success);
+    if (myOccurrenceMarkers != null) {
+      for (RangeMarker marker : myOccurrenceMarkers) {
+        marker.dispose();
+      }
+    }
+    if (myCaretRangeMarker != null) {
+      myCaretRangeMarker.dispose();
+    }
+    if (myExprMarker != null && !isRestart()) {
+      myExprMarker.dispose();
+    }
+  }
 
+  protected boolean isRestart() {
+    final Boolean isRestart = myEditor.getUserData(INTRODUCE_RESTART);
+    return isRestart != null && isRestart;
+  }
+  
+  protected void releaseResources() {
   }
 
   protected void showBalloon() {

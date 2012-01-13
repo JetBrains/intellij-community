@@ -339,6 +339,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected void releaseResources() {
+    super.releaseResources();
     if (myPreview == null) return;
 
     EditorFactory.getInstance().releaseEditor(myPreview);
@@ -503,6 +504,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       }
     }
     super.moveOffsetAfter(success);
+    if (myLocalMarker != null && !isRestart()) {
+      myLocalMarker.dispose();
+    }
     if (success) {
       performPostIntroduceTasks();
     }

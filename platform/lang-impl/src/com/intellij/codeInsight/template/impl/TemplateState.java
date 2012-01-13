@@ -248,7 +248,10 @@ public class TemplateState implements Disposable {
       mySegments.removeAll();
       mySegments = null;
     }
-    myTemplateRange = null;
+    if (myTemplateRange != null) {
+      myTemplateRange.dispose();
+      myTemplateRange = null;
+    }
     myPrevTemplate = myTemplate;
     myTemplate = null;
     releaseEditor();
