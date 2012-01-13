@@ -156,7 +156,7 @@ public class GitMergeUpdater extends GitUpdater {
     String currentBranch = gitBranchPair.getBranch().getName();
     String remoteBranch = gitBranchPair.getDest().getName();
     try {
-      final Collection<String> remotelyChanged = getRemotelyChangedPaths(currentBranch, remoteBranch);
+      final Collection<String> remotelyChanged = GitUtil.getPathsDiffBetweenRefs(currentBranch, remoteBranch, myProject, myRoot);
       final List<File> locallyChanged = myChangeListManager.getAffectedPaths();
       for (File localPath : locallyChanged) {
         if (remotelyChanged.contains(FilePathsHelper.convertPath(localPath.getPath()))) {

@@ -18,9 +18,11 @@ package git4idea;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -622,5 +624,54 @@ public class GitUtil {
 
   public static boolean repoContainsRemoteBranch(@NotNull GitRepository repository, @NotNull GitBranch dest) {
     return repository.getBranches().getRemoteBranches().contains(dest);
+  }
+
+  /**
+   * Convert {@link GitBranch GitBranches} to their names.
+   */
+  @NotNull
+  public static Collection<String> getBranchNames(@NotNull Collection<GitBranch> branches) {
+    Collection<String> names = new ArrayList<String>(branches.size());
+    for (GitBranch branch : branches) {
+      names.add(branch.getName());
+    }
+    return names;
+  }
+
+  @NotNull
+  public static Collection<VirtualFile> getRoots(@NotNull Collection<GitRepository> repositories) {
+    Collection<VirtualFile> roots = new ArrayList<VirtualFile>(repositories.size());
+    for (GitRepository repository : repositories) {
+      roots.add(repository.getRoot());
+    }
+    return roots;
+  }
+
+  /**
+   * Returns paths which have changed remotely comparing to the current branch, i.e. performs
+   * <code>git diff --name-only master..origin/master</code>
+   */
+  @NotNull
+  public static Collection<String> getPathsDiffBetweenRefs(@NotNull String beforeRef,
+                                                           @NotNull String afterRef,
+                                                           Project project, VirtualFile root) throws VcsException {
+    final GitSimpleHandler toPull = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    toPull.addParameters("--name-only", "--pretty=format:");
+    toPull.addParameters(beforeRef + ".." + afterRef);
+    toPull.setNoSSH(true);
+    toPull.setStdoutSuppressed(true);
+    toPull.setStderrSuppressed(true);
+    final String output = toPull.run();
+
+    final Collection<String> remoteChanges = new HashSet<String>();
+    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
+      final String relative = s.line();
+      if (StringUtil.isEmptyOrSpaces(relative)) {
+        continue;
+      }
+      final String path = root.getPath() + "/" + unescapePath(relative);
+      remoteChanges.add(FilePathsHelper.convertPath(path));
+    }
+    return remoteChanges;
   }
 }
