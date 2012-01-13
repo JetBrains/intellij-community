@@ -990,7 +990,7 @@ public class JavaDocInfoGenerator {
         }
       }
       else {
-        buffer.append(StringUtil.unescapeStringCharacters(element.getText()));
+        buffer.append(element.getText());
       }
     }
   }
