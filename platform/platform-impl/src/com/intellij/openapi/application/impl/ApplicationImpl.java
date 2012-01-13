@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.*;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.StartupUtil;
@@ -47,6 +46,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -56,7 +56,10 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.ReflectionCache;
+import com.intellij.util.Restarter;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -287,7 +290,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
               saveAll();
             }
             finally {
-              disposeSelf();
+              disposeSelf(true);
             }
           }
         });
@@ -295,14 +298,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     });
   }
 
-  private boolean disposeSelf() {
+  private boolean disposeSelf(final boolean checkCanCloseProject) {
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     final Ref<Boolean> canClose = new Ref<Boolean>(Boolean.TRUE);
     for (final Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
       try {
         commandProcessor.executeCommand(project, new Runnable() {
           public void run() {
-            canClose.set(ProjectUtil.closeAndDispose(project));
+            canClose.set(((ProjectManagerImpl)ProjectManagerEx.getInstanceEx()).closeProject(project, true, true, checkCanCloseProject));
           }
         }, ApplicationBundle.message("command.exit"), null);
       }
@@ -756,12 +759,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         saveSettings();
 
-        if (!canExit() && allowListenersToCancel) {
+        if (allowListenersToCancel && !canExit()) {
           myExitCode = 0;
           return;
         }
 
-        final boolean success = disposeSelf();
+        final boolean success = disposeSelf(allowListenersToCancel);
         if (!success || isUnitTestMode()) {
           myExitCode = 0;
           return;
