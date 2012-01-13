@@ -207,7 +207,7 @@ class DocumentationBuilder {
     // it may be a call to a standard wrapper
     if (myElement instanceof PyCallExpression) {
       final PyCallExpression call = (PyCallExpression)myElement;
-      Pair<String, PyFunction> wrap_info = PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall(call, myOriginalElement);
+      Pair<String, PyFunction> wrap_info = PyCallExpressionHelper.interpretAsModifierWrappingCall(call, myOriginalElement);
       if (wrap_info != null) {
         String wrapper_name = wrap_info.getFirst();
         PyFunction wrapped_func = wrap_info.getSecond();

@@ -466,11 +466,23 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (cls.findProperty(refText) != null) {
             return true;
           }
+          if (hasUnresolvedAncestors(cls)) {
+            return true;
+          }
         }
       }
       if (qtype instanceof CythonBuiltinType ||
           (qtype instanceof CythonType && reference instanceof PyOperatorReference)) {
         return true;
+      }
+      return false;
+    }
+
+    private static boolean hasUnresolvedAncestors(PyClass cls) {
+      for (PyClassRef classRef : cls.iterateAncestors()) {
+        if (classRef.getPyClass() == null) {
+          return true;
+        }
       }
       return false;
     }

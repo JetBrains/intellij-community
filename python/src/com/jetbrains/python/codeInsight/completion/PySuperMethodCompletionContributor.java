@@ -8,13 +8,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -39,10 +40,11 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                if (containingClass == null) {
                  return;
                }
-               List<String> seenNames = new ArrayList<String>();
+               Set<String> seenNames = new HashSet<String>();
                for (PyFunction function : containingClass.getMethods()) {
                  seenNames.add(function.getName());
                }
+               seenNames.addAll(PyNames.BuiltinMethods.keySet());
                for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {

@@ -499,4 +499,17 @@ public class PythonCompletionTest extends PyTestCase {
   public void testAsName() {
     doMultiFileTest();
   }
+  
+  public void testKeywordArgumentsForImplicitCall() {
+    doTest();
+  }
+  
+  public void testTypeMembers() {  // PY-5311
+    myFixture.configureByText(PythonFileType.INSTANCE, "a = 'string'\n" +
+                                                       "a.<caret>");
+
+    myFixture.completeBasic();
+    final List<String> strings = myFixture.getLookupElementStrings();
+    assertFalse(strings.contains("mro"));
+  }
 }

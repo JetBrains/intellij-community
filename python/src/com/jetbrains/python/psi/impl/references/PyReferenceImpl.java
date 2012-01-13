@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -24,10 +25,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -97,13 +95,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       return cache.resolveWithCaching(this, CachingResolver.INSTANCE, false, incompleteCode);
     }
     else {
-      return multiResolveInner(incompleteCode);
+      return multiResolveInner();
     }
   }
 
   // sorts and modifies results of resolveInner
 
-  private ResolveResult[] multiResolveInner(boolean incomplete) {
+  private ResolveResult[] multiResolveInner() {
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
 
@@ -337,7 +335,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       // may be import via alias, so don't check if names match, do simple resolve check instead
       PsiElement resolveResult = resolve();
@@ -362,28 +360,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         // TODO: Cython-dependent code without CythonLanguageDialect.isInsideCythonFile() check
         if (element instanceof PyParameter || element instanceof PyTargetExpression || element instanceof CythonVariable) {
           // Check if the reference is in the same or inner scope of the element scope, not shadowed by an intermediate declaration
-          PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class, PyComprehensionElement.class);
-          PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, PyComprehensionElement.class);
-          if (ourContainer != null) {
-            if (ourContainer == theirContainer) {
-              return true;
-            }
-            if (PsiTreeUtil.isAncestor(theirContainer, ourContainer, true)) {
-              if (ourScopeOwner != theirScopeOwner) {
-                boolean shadowsName = false;
-                ScopeOwner owner = ourScopeOwner;
-                while(owner != theirScopeOwner && owner != null) {
-                  if (ControlFlowCache.getScope(owner).containsDeclaration(elementName)) {
-                    shadowsName = true;
-                    break;
-                  }
-                  owner = ScopeUtil.getScopeOwner(owner);
-                }
-                if (!shadowsName) {
-                  return true;
-                }
-              }
-            }
+          if (resolvesToSameLocal(element, elementName, ourScopeOwner, theirScopeOwner)) {
+            return true;
           }
         }
 
@@ -393,20 +371,72 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
 
         if (!haveQualifiers(element) && ourScopeOwner != null && theirScopeOwner != null) {
-          // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
-          final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
-          final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
-          final PsiFile ourFile = getElement().getContainingFile();
-          final PsiFile theirFile = element.getContainingFile();
+          if (resolvesToSameGlobal(element, elementName, ourScopeOwner, theirScopeOwner, resolveResult)) return true;
+        }
 
-          if (ourIsGlobal && theirIsGlobal && ourFile == theirFile) {
-            return true;
+        if (resolvesToWrapper(element, resolveResult)) {
+          return true;
+        }        
+        
+        return false; // TODO: handle multi-resolve
+      }
+    }
+    return false;
+  }
+
+  private boolean resolvesToSameLocal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner) {
+    PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class, PyComprehensionElement.class);
+    PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, PyComprehensionElement.class);
+    if (ourContainer != null) {
+      if (ourContainer == theirContainer) {
+        return true;
+      }
+      if (PsiTreeUtil.isAncestor(theirContainer, ourContainer, true)) {
+        if (ourScopeOwner != theirScopeOwner) {
+          boolean shadowsName = false;
+          ScopeOwner owner = ourScopeOwner;
+          while(owner != theirScopeOwner && owner != null) {
+            if (ControlFlowCache.getScope(owner).containsDeclaration(elementName)) {
+              shadowsName = true;
+              break;
+            }
+            owner = ScopeUtil.getScopeOwner(owner);
           }
-          if (theirIsGlobal && ScopeUtil.getScopeOwner(resolveResult) == ourFile) {
+          if (!shadowsName) {
             return true;
           }
         }
-        return false; // TODO: handle multi-resolve
+      }
+    }
+    return false;
+  }
+
+  private boolean resolvesToSameGlobal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner,
+                                       PsiElement resolveResult) {
+    // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
+    final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
+    final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
+    final PsiFile ourFile = getElement().getContainingFile();
+    final PsiFile theirFile = element.getContainingFile();
+
+    if (ourIsGlobal && theirIsGlobal && ourFile == theirFile) {
+      return true;
+    }
+    if (theirIsGlobal && ScopeUtil.getScopeOwner(resolveResult) == ourFile) {
+      return true;
+    }
+    return false;
+  }
+
+  protected boolean resolvesToWrapper(PsiElement element, PsiElement resolveResult) {
+    if (element instanceof PyFunction && ((PyFunction) element).getContainingClass() != null && resolveResult instanceof PyTargetExpression) {
+      final PyExpression assignedValue = ((PyTargetExpression)resolveResult).findAssignedValue();
+      if (assignedValue instanceof PyCallExpression) {
+        final PyCallExpression call = (PyCallExpression)assignedValue;
+        final Pair<String,PyFunction> functionPair = PyCallExpressionHelper.interpretAsModifierWrappingCall(call, myElement);
+        if (functionPair != null && functionPair.second == element) {
+          return true;
+        }
       }
     }
     return false;
@@ -503,7 +533,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         System.out.println("Stack overflow pending");
       }
       try {
-        return ref.multiResolveInner(incompleteCode);
+        return ref.multiResolveInner();
       }
       finally {
         myNesting.get().getAndDecrement();

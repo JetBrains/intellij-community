@@ -37,6 +37,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -828,21 +829,8 @@ public class PyUtil {
   }
 
   @Nullable
-  public static PyExpression getKeywordArgument(PyCallExpression expr, String keyword) {
-    for (PyExpression arg : expr.getArguments()) {
-      if (arg instanceof PyKeywordArgument) {
-        PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-        if (keyword.equals(kwarg.getKeyword())) {
-          return kwarg.getValueExpression();
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   public static String getKeywordArgumentString(PyCallExpression expr, String keyword) {
-    return strValue(getKeywordArgument(expr, keyword));
+    return strValue(expr.getKeywordArgument(keyword));
   }
 
   public static boolean isExceptionClass(PyClass pyClass) {
