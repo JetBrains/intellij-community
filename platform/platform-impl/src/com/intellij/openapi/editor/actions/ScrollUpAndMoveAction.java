@@ -13,30 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 13, 2002
- * Time: 10:55:09 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-public class ScrollDownAction extends InactiveEditorAction {
-  public ScrollDownAction() {
+/**
+ * Moves editor viewport one visual line up. Caret is also moved one line up if it becomes off-screen.
+ * 
+ * @author Denis Zhdanov
+ * @since 1/13/12 1:21 PM
+ */
+public class ScrollUpAndMoveAction extends InactiveEditorAction {
+  
+  public ScrollUpAndMoveAction() {
     super(new Handler());
   }
 
   private static class Handler extends EditorActionHandler {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.scrollRelatively(editor, 1, false);
+      EditorActionUtil.scrollRelatively(editor, -1, true);
     }
   }
 }
