@@ -6,7 +6,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>Git4Idea</depends>
-  <depends>com.intellij.tasks</depends>
+  <depends optional="true" config-file="githubtracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -14,7 +14,6 @@
     <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.GithubSettings"/>
     <applicationConfigurable instance="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable"/>
-    <checkoutCompletedListener implementation="org.jetbrains.plugins.github.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
   </extensions>
   <actions>
     <action id="Github.Share" class="org.jetbrains.plugins.github.GithubShareAction">
