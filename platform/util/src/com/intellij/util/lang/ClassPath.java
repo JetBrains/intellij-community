@@ -20,9 +20,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
@@ -103,6 +105,7 @@ class ClassPath {
     push(urls);
   }
 
+  // Accessed by reflection from PluginClassLoader
   void addURL(URL url) {
     push(new URL[]{url});
   }
@@ -114,8 +117,7 @@ class ClassPath {
     try {
       int i;
       if (myCanUseCache) {
-        final List<Loader> loaders = myCache.getLoaders(s);
-        for (Loader loader : loaders) {
+        for (Loader loader : getLoaders(s)) {
           final Resource resource = loader.getResource(s, flag);
           if (resource != null) {
             if (ourDumpOrder) {
@@ -150,6 +152,10 @@ class ClassPath {
         System.out.println((doneFor/1000000) + " ms for getResource:"+s+", flag:"+flag);
       }
     }
+  }
+
+  private @NotNull List<Loader> getLoaders(String s) {
+    return myCache.getLoaders(s);
   }
 
   public Enumeration<URL> getResources(final String name, final boolean check) {
@@ -233,20 +239,45 @@ class ClassPath {
     private Resource myRes = null;
     private final String myName;
     private final boolean myCheck;
+    private final List<Loader> myLoaders;
 
     public MyEnumeration(String name, boolean check) {
       myName = name;
       myCheck = check;
+      List<Loader> loaders = null;
+
+      if (myCanUseCache) {
+        synchronized (myUrls) {
+          if (myUrls.isEmpty()) {
+            loaders = getLoaders(name);
+            if (!name.endsWith("/")) {
+              loaders = new SmartList<Loader>(loaders);
+              loaders.addAll(getLoaders(name + "/"));
+            }
+          }
+        }
+      }
+
+      myLoaders = loaders;
     }
 
     private boolean next() {
       if (myRes != null) return true;
 
       Loader loader;
-      while ((loader = getLoader(myIndex++)) != null) {
-        myRes = loader.getResource(myName, myCheck);
-        if (myRes != null) return true;
+
+      if (myLoaders != null) {
+        while (myIndex < myLoaders.size()) {
+          myRes = myLoaders.get(myIndex++).getResource(myName, myCheck);
+          if (myRes != null) return true;
+        }
+      } else {
+        while ((loader = getLoader(myIndex++)) != null) {
+          myRes = loader.getResource(myName, myCheck);
+          if (myRes != null) return true;
+        }
       }
+
 
       return false;
     }
