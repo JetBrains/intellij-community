@@ -108,6 +108,13 @@
 
   <problem>
     <file>ForCanBeForEach.java</file>
+    <line>252</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable with 'for each'</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop replaceable with 'for each' #loc</description>
+  </problem>
+
+  <problem>
+    <file>ForCanBeForEach.java</file>
     <line>259</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop replaceable with 'for each'</problem_class>
     <description>&lt;code&gt;for&lt;/code&gt; loop replaceable with 'for each' #loc</description>

@@ -258,5 +258,13 @@ public class ForCanBeForEach {
   public void food(int[] is) {
     for (int i = 0; is.length > i; i++) {
     }
+    for (int i = 0, j = 10; i < is.length; i++) {
+    }
+  }
+
+  void foo(List<String> l) {
+    for (int i = 0, j = 10; i < l.size(); i++) {
+      System.out.println(j);
+    }
   }
 }
