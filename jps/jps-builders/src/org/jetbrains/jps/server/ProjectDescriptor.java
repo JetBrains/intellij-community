@@ -9,12 +9,14 @@ import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 * @author Eugene Zhuravlev
 *         Date: 1/8/12
 */
-public class ProjectDescriptor {
+public final class ProjectDescriptor {
   public final String projectName;
   public final Project project;
   public final FSState fsState;
   public final ProjectTimestamps timestamps;
   public ModuleRootsIndex rootsIndex;
+
+  private int myUseCounter = 1;
 
   ProjectDescriptor(String projectName, Project project, FSState fsState, ProjectTimestamps timestamps) {
     this.projectName = projectName;
@@ -23,8 +25,18 @@ public class ProjectDescriptor {
     this.timestamps = timestamps;
     this.rootsIndex = new ModuleRootsIndex(project);
   }
+  public synchronized void incUsageCounter() {
+    myUseCounter++;
+  }
 
-  public void close() {
-    timestamps.close();
+  public void release() {
+    boolean shouldClose;
+    synchronized (this) {
+      --myUseCounter;
+      shouldClose = myUseCounter == 0;
+    }
+    if (shouldClose) {
+      timestamps.close();
+    }
   }
 }

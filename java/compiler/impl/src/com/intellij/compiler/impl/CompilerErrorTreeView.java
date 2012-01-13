@@ -17,10 +17,7 @@ package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.HelpID;
+import com.intellij.compiler.*;
 import com.intellij.compiler.options.CompilerConfigurable;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -112,6 +109,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
           public void run() {
             if (!project.isDisposed()) {
               project.save();
+              JpsServerManager.getInstance().sendReloadRequest(project);
             }
           }
         });

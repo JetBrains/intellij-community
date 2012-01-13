@@ -11,6 +11,7 @@
     <applicationService serviceInterface="com.intellij.lang.properties.LastSelectedPropertiesFileStore"
                         serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
     <annotator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesAnnotator"/>
+    <completion.contributor language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCompletionContributor"/>
     <lang.refactoringSupport language="Properties" implementationClass="com.intellij.lang.properties.refactoring.PropertiesRefactoringSupportProvider"/>
     <lang.documentationProvider language="Properties" implementationClass="com.intellij.lang.properties.PropertiesDocumentationProvider"/>
     <lang.findUsagesProvider language="Properties"

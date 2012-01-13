@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -98,12 +97,6 @@ public class JpsServerManager implements ApplicationComponent{
     mySystemDirectory = system;
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
-    final MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    appConnection.subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
-      public void saved(@NotNull Project project) {
-        sendReloadRequest(project);
-      }
-    });
 
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override

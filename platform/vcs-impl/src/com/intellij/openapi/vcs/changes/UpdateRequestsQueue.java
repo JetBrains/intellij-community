@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -95,15 +94,14 @@ public class UpdateRequestsQueue {
   }
 
   public void schedule() {
-    if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("UpdateRequestsQueue.schedule");
-    }
-
     synchronized (myLock) {
       if (! myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
 
       if (! myStopped) {
         if (! myRequestSubmitted) {
+          if (ChangeListManagerImpl.DEBUG) {
+            System.out.println("UpdateRequestsQueue.schedule");
+          }
           final MyRunnable runnable = new MyRunnable();
           myRequestSubmitted = true;
           myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS);
@@ -142,7 +140,6 @@ public class UpdateRequestsQueue {
     LOG.debug("Stop finished for project: " + myProject.getName());
   }
 
-  @TestOnly
   public void waitUntilRefreshed() {
     if (ChangeListManagerImpl.DEBUG) {
       System.out.println("UpdateRequestsQueue.waitUntilRefreshed");
@@ -261,7 +258,14 @@ public class UpdateRequestsQueue {
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
+        if (ChangeListManagerImpl.DEBUG) {
+          System.out.println("UpdateRequestsQueue$MyRunnable.run");
+        }
+
         myDelegate.run();
+        if (ChangeListManagerImpl.DEBUG) {
+          System.out.println(" - end - UpdateRequestsQueue$MyRunnable.run");
+        }
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         synchronized (myLock) {

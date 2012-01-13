@@ -98,6 +98,13 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     if (!workspaceConfiguration.USE_COMPILE_SERVER) {
       JpsServerManager.getInstance().shutdownServer();
     }
+    else {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          JpsServerManager.getInstance().sendReloadRequest(myProject);
+        }
+      });
+    }
   }
 
   private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
