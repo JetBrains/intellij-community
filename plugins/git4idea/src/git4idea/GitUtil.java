@@ -654,13 +654,13 @@ public class GitUtil {
   @NotNull
   public static Collection<String> getPathsDiffBetweenRefs(@NotNull String beforeRef, @NotNull String afterRef, @NotNull Project project,
                                                            @NotNull VirtualFile root) throws VcsException {
-    final GitSimpleHandler toPull = new GitSimpleHandler(project, root, GitCommand.DIFF);
-    toPull.addParameters("--name-only", "--pretty=format:");
-    toPull.addParameters(beforeRef + ".." + afterRef);
-    toPull.setNoSSH(true);
-    toPull.setStdoutSuppressed(true);
-    toPull.setStderrSuppressed(true);
-    final String output = toPull.run();
+    final GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    diff.addParameters("--name-only", "--pretty=format:");
+    diff.addParameters(beforeRef + ".." + afterRef);
+    diff.setNoSSH(true);
+    diff.setStdoutSuppressed(true);
+    diff.setStderrSuppressed(true);
+    final String output = diff.run();
 
     final Collection<String> remoteChanges = new HashSet<String>();
     for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
