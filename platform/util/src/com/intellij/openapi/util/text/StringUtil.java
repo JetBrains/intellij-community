@@ -1950,7 +1950,7 @@ public class StringUtil {
     return packageName + '.' + className;
   }
 
-  public static int compareVersionNumbers(String v1, String v2) {
+  public static int compareVersionNumbers(@Nullable String v1, @Nullable String v2) {
     if (v1 == null && v2 == null) {
       return 0;
     }
