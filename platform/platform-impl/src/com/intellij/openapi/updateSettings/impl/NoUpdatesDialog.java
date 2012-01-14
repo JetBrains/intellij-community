@@ -39,7 +39,7 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
 
   @Override
   protected String getOkButtonText() {
-    return myUploadedPlugins == null ? CommonBundle.getOkButtonText() : IdeBundle.message("update.plugins.update.action");
+    return myUploadedPlugins == null ? CommonBundle.getCloseButtonText() : IdeBundle.message("update.plugins.update.action");
   }
 
   protected Action[] createActions() {
