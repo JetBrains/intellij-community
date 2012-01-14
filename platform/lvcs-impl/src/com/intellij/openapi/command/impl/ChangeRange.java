@@ -19,7 +19,7 @@ package com.intellij.openapi.command.impl;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.revertion.ChangeRevertingVisitor;
+import com.intellij.history.integration.revertion.UndoChangeRevertingVisitor;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +54,9 @@ public class ChangeRange {
     };
     myVcs.addListener(l, null);
     try {
-      myVcs.accept(new ChangeRevertingVisitor(myGateway, myToChangeId, myFromChangeId));
+      myVcs.accept(new UndoChangeRevertingVisitor(myGateway, myToChangeId, myFromChangeId));
     }
-    catch (ChangeRevertingVisitor.RuntimeIOException e) {
+    catch (UndoChangeRevertingVisitor.RuntimeIOException e) {
       throw (IOException)e.getCause();
     }
     finally {

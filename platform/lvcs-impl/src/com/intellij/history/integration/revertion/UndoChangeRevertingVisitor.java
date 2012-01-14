@@ -22,6 +22,9 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.openapi.command.impl.DocumentUndoProvider;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
@@ -34,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class ChangeRevertingVisitor extends ChangeVisitor {
+public class UndoChangeRevertingVisitor extends ChangeVisitor {
   private final IdeaGateway myGateway;
   private final Set<DelayedApply> myDelayedApplies = new HashSet<DelayedApply>();
 
@@ -43,7 +46,7 @@ public class ChangeRevertingVisitor extends ChangeVisitor {
 
   private boolean isReverting;
 
-  public ChangeRevertingVisitor(IdeaGateway gw, @NotNull Long fromChangeId, @Nullable Long toChangeId) {
+  public UndoChangeRevertingVisitor(IdeaGateway gw, @NotNull Long fromChangeId, @Nullable Long toChangeId) {
     myGateway = gw;
     myFromChangeId = fromChangeId;
     myToChangeId = toChangeId == null ? -1 : toChangeId;
@@ -245,7 +248,14 @@ public class ChangeRevertingVisitor extends ChangeVisitor {
       boolean isReadOnly = !myFile.isWritable();
       ReadOnlyAttributeUtil.setReadOnlyAttribute(myFile, false);
 
-      myFile.setBinaryContent(myContent.getBytes(), -1, myTimestamp);
+      Document doc = FileDocumentManager.getInstance().getCachedDocument(myFile);
+      DocumentUndoProvider.startDocumentUndo(doc);
+      try {
+        myFile.setBinaryContent(myContent.getBytes(), -1, myTimestamp);
+      }
+      finally {
+        DocumentUndoProvider.finishDocumentUndo(doc);
+      }
 
       ReadOnlyAttributeUtil.setReadOnlyAttribute(myFile, isReadOnly);
     }

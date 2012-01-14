@@ -47,13 +47,26 @@ class EditorChangeAction extends BasicUndoableAction {
   }
 
   public void undo() {
-    exchangeStrings(myNewString, myOldString);
+    DocumentUndoProvider.startDocumentUndo(getDocument());
+    try {
+      exchangeStrings(myNewString, myOldString);
+    }
+    finally {
+      DocumentUndoProvider.finishDocumentUndo(getDocument());
+    }
+
     getDocument().setModificationStamp(myOldTimeStamp);
     refreshFileStatus();
   }
 
   public void redo() {
-    exchangeStrings(myOldString, myNewString);
+    DocumentUndoProvider.startDocumentUndo(getDocument());
+    try {
+      exchangeStrings(myOldString, myNewString);
+    }
+    finally {
+      DocumentUndoProvider.finishDocumentUndo(getDocument());
+    }
     getDocument().setModificationStamp(myNewTimeStamp);
     refreshFileStatus();
   }
@@ -89,7 +102,7 @@ class EditorChangeAction extends BasicUndoableAction {
 
   @NonNls
   public String toString() {
-    return "editor change: '" + myOldString + "' to '" + myNewString + "'";
+    return "editor change: '" + myOldString + "' to '" + myNewString + "'" + " at: " + myOffset;
   }
 }
 
