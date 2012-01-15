@@ -423,7 +423,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     if (rootToReload != null && rootToReload != treeModel.getRoot()) {
       final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree, new TreePath(rootToReload.getPath()));
       final List<TreePath> selectionPaths = TreeUtil.collectSelectedPaths(myTree, new TreePath(rootToReload.getPath()));
-      treeModel.reload(rootToReload);
       final TreePath path = new TreePath(rootToReload.getPath());
       final boolean wasCollapsed = myTree.isCollapsed(path);
       final Runnable runnable = new Runnable() {
