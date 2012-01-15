@@ -457,6 +457,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           !method.hasModifierProperty(PsiModifier.NATIVE) &&
           !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
           !PsiClassImplUtil.isMainMethod(method)) {
+        if (UnusedSymbolLocalInspection.isInjected(method)) return null;
         HighlightInfo highlightInfo = checkUnusedParameter(parameter, progress);
         if (highlightInfo != null) {
           final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
