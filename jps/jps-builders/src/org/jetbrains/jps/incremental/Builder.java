@@ -71,10 +71,8 @@ public abstract class Builder {
         if (incremental) {
           final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
           newlyAffectedFiles.removeAll(affectedBeforeDif);
-          // todo: temp code
-          for (String removedPath : removedPaths) {
-            newlyAffectedFiles.remove(new File(removedPath));
-          }
+          newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
+
           if (!newlyAffectedFiles.isEmpty()) {
             for (File file : newlyAffectedFiles) {
               context.markDirty(file);

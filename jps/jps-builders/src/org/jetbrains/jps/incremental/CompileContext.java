@@ -126,6 +126,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myCompilingTests = compilingTests;
   }
 
+  public void onChunkBuildStart(ModuleChunk chunk) {
+    myFsState.setContextChunk(chunk);
+  }
+
   void beforeNextCompileRound(@NotNull ModuleChunk chunk) {
     myFsState.beforeNextRoundStart();
   }
@@ -150,7 +154,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       }
     }
     finally {
-      myFsState.clearRoundDeltas();
+      myFsState.clearContextRoundData();
     }
   }
 
@@ -204,7 +208,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       // can check if the file exists
       final File file = new File(path);
       if (!currentFiles.contains(file)) {
-        myFsState.registerDeleted(module, path, isCompilingTests(), myTsStorage);
+        myFsState.registerDeleted(module, file, isCompilingTests(), myTsStorage);
       }
     }
   }
@@ -222,10 +226,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   @NotNull
   public List<RootDescriptor> getModuleRoots(Module module) {
     return myRootsIndex.getModuleRoots(module);
-  }
-
-  public int getTotalModuleCount() {
-    return myRootsIndex.getTotalModuleCount();
   }
 
   public void setDone(float done) {

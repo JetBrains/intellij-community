@@ -273,6 +273,8 @@ public class IncProjectBuilder {
         }
       }
 
+      context.onChunkBuildStart(chunk);
+
       for (BuilderCategory category : BuilderCategory.values()) {
         runBuilders(context, chunk, category);
       }

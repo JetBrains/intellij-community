@@ -1,7 +1,6 @@
 package org.jetbrains.jps.server;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JavaSdk;
@@ -66,7 +65,7 @@ class ServerState {
     try {
       final RootDescriptor moduleAndRoot = pd.rootsIndex.getModuleAndRoot(file);
       if (moduleAndRoot != null) {
-        pd.fsState.registerDeleted(moduleAndRoot.module, FileUtil.toCanonicalPath(file.getPath()), moduleAndRoot.isTestRoot, pd.timestamps.getStorage());
+        pd.fsState.registerDeleted(moduleAndRoot.module, file, moduleAndRoot.isTestRoot, pd.timestamps.getStorage());
       }
     }
     catch (Exception e) {

@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.CompilerExcludes;
 import org.jetbrains.jps.Module;
+import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
@@ -18,6 +19,8 @@ public class FSState {
   private final Map<Module, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<Module, FilesDelta>());
   private final Set<Module> myInitialTestsScanPerformed = Collections.synchronizedSet(new HashSet<Module>());
   private final Set<Module> myInitialProductionScanPerformed = Collections.synchronizedSet(new HashSet<Module>());
+
+  private final Set<Module> myContextModules = new HashSet<Module>();
   private volatile FilesDelta myCurrentRoundDelta;
   private volatile FilesDelta myLastRoundDelta;
 
@@ -25,7 +28,7 @@ public class FSState {
   }
 
   public void onRebuild() {
-    clearRoundDeltas();
+    clearContextRoundData();
     myInitialProductionScanPerformed.clear();
     myInitialTestsScanPerformed.clear();
     myDeltas.clear();
@@ -36,14 +39,19 @@ public class FSState {
     return map.add(module);
   }
 
+  public void setContextChunk(ModuleChunk chunk) {
+    myContextModules.addAll(chunk.getModules());
+  }
+
   public void beforeNextRoundStart() {
     myLastRoundDelta = myCurrentRoundDelta;
     myCurrentRoundDelta = new FilesDelta();
   }
 
-  public void clearRoundDeltas() {
+  public void clearContextRoundData() {
     myCurrentRoundDelta = null;
     myLastRoundDelta = null;
+    myContextModules.clear();
   }
 
   public void clearRecompile(RootDescriptor rd) {
@@ -53,7 +61,9 @@ public class FSState {
   public void markDirty(final File file, final RootDescriptor rd, final @Nullable TimestampStorage tsStorage) throws Exception {
     final FilesDelta roundDelta = myCurrentRoundDelta;
     if (roundDelta != null) {
-      roundDelta.markRecompile(rd.root, rd.isTestRoot, file);
+      if (myContextModules.contains(rd.module)) {
+        roundDelta.markRecompile(rd.root, rd.isTestRoot, file);
+      }
     }
     final FilesDelta mainDelta = getDelta(rd.module);
     final boolean marked = mainDelta.markRecompile(rd.root, rd.isTestRoot, file);
@@ -108,10 +118,10 @@ public class FSState {
     return true;
   }
 
-  public void registerDeleted(final Module module, final String path, final boolean isTest, @Nullable TimestampStorage tsStorage) throws Exception {
-    getDelta(module).addDeleted(path, isTest);
+  public void registerDeleted(final Module module, final File file, final boolean isTest, @Nullable TimestampStorage tsStorage) throws Exception {
+    getDelta(module).addDeleted(file, isTest);
     if (tsStorage != null) {
-      tsStorage.remove(new File(path));
+      tsStorage.remove(file);
     }
   }
 
@@ -161,9 +171,16 @@ public class FSState {
       return files.add(file);
     }
 
-    public void addDeleted(String path, boolean isTest) {
-      final Set<String> map = isTest? myDeletedTests : myDeletedProduction;
-      map.add(path);
+    public void addDeleted(File file, boolean isTest) {
+      // ensure the file is no more marked to recompilation
+      final Map<File, Set<File>> toRecompile = isTest ? myTestsToRecompile : mySourcesToRecompile;
+      synchronized (toRecompile) {
+        for (Set<File> files : toRecompile.values()) {
+          files.remove(file);
+        }
+      }
+      final Set<String> deletedMap = isTest? myDeletedTests : myDeletedProduction;
+      deletedMap.add(FileUtil.toCanonicalPath(file.getPath()));
     }
 
     public void clearDeletedPaths(boolean isTest) {
