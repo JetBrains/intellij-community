@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -28,6 +29,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.net.IOExceptionDialog;
@@ -37,6 +39,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author lloix
@@ -115,6 +119,21 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
             installed.setRequireShutdown(true);
             if (!installed.isDisposed()) {
               getPluginTable().updateUI();
+              final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
+              final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
+              for (PluginNode node : list) {
+                final PluginId pluginId = node.getPluginId();
+                if (pluginsModel.isDisabled(pluginId)) {
+                  disabled.add(node);
+                }
+              }
+              if (!disabled.isEmpty()) {
+                String message = "Updated plugin" + (disabled.size() > 1 ? "s are " : " is ") + "disabled. Would you like to enable " + (disabled.size() > 1 ? "them" : "it") + "?";
+                if (Messages.showOkCancelDialog(host.pluginTable, message, CommonBundle.getWarningTitle(), Messages.getQuestionIcon()) ==
+                    DialogWrapper.OK_EXIT_CODE) {
+                  pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
+                }
+              }
             }
             else {
               notifyPluginsWereInstalled();
