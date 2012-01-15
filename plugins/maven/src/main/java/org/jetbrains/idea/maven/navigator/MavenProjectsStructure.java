@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,7 +55,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = new Comparator<MavenSimpleNode>() {
     public int compare(MavenSimpleNode o1, MavenSimpleNode o2) {
-      return Comparing.compare(o1.getName(), o2.getName());
+      return StringUtil.compare(o1.getName(), o2.getName(), true);
     }
   };
 
