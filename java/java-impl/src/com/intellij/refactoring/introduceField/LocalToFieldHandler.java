@@ -139,7 +139,6 @@ public abstract class LocalToFieldHandler {
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     try {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
-      field = (PsiField)CodeStyleManager.getInstance(project).reformat(field);
 
       field.getTypeElement().replace(factory.createTypeElement(forcedType));
       if (includeInitializer) {
@@ -148,6 +147,9 @@ public abstract class LocalToFieldHandler {
         field.getInitializer().replace(initializer);
       }
 
+      for (PsiAnnotation annotation : local.getModifierList().getAnnotations()) {
+        field.getModifierList().add(annotation.copy());
+      }
       return field;
     }
     catch (IncorrectOperationException e) {
