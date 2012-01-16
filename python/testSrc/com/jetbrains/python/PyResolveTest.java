@@ -325,7 +325,7 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testUnresolvedImport() {
     final ResolveResult[] results = multiResolve();
     assertEquals(1, results.length);
-    assertTrue(results [0] instanceof ImportedResolveResult);
+    assertInstanceOf(results [0], ImportedResolveResult.class);
     ImportedResolveResult result = (ImportedResolveResult) results [0];
     assertNull(result.getElement());
   }
