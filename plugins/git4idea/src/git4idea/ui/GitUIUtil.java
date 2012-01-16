@@ -487,17 +487,6 @@ public class GitUIUtil {
     l.actionPerformed(null);
   }
 
-  /**
-   * Handles a low-level Git execution exception.
-   * Checks that Git executable is valid. If it is not, then shows proper notification with an option to fix the path to Git.
-   * If it's valid, then we don't know what could happen and just display the general error notification.
-   */
-  public static void checkGitExecutableAndShowNotification(final Project project, VcsException e) {
-    if (GitVcs.getInstance(project).getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(GitBundle.getString("general.error"), e.getLocalizedMessage(), NotificationType.ERROR, null).notify(project);
-    }
-  }
-
   public static String bold(String s) {
     return surround(s, "b");
   }
