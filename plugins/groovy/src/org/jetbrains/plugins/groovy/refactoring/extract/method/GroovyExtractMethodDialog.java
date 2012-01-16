@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
@@ -49,8 +50,9 @@ import java.util.EventListener;
  */
 public class GroovyExtractMethodDialog extends DialogWrapper {
 
+  private final ExtractInitialInfo myInfo;
   private final ExtractMethodInfoHelper myHelper;
-  private final Project myProject;
+
   private final EventListenerList myListenerList = new EventListenerList();
 
   private JPanel contentPane;
@@ -60,17 +62,18 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private JTextArea mySignatureArea;
   private VisibilityPanel myVisibilityPanel;
   private ParameterTablePanel myParameterTablePanel;
-//  private JButton buttonOK;
+  private final Project myProject;
 
-  public GroovyExtractMethodDialog(ExtractMethodInfoHelper helper, Project project) {
-    super(project, true);
-    myProject = project;
-    myHelper = helper;
+  public GroovyExtractMethodDialog(ExtractInitialInfo info) {
+    super(info.getProject(), true);
+    myProject = info.getProject();
+    myInfo = info;
+    myHelper = new ExtractMethodInfoHelper(info, "");
+
     setUpNameField();
-    myParameterTablePanel.init(this, myHelper);
+    myParameterTablePanel.init(this, myInfo);
 
     setModal(true);
-//    getRootPane().setDefaultButton(buttonOK);
     setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
     init();
     setUpDialog();
@@ -94,9 +97,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private void setUpDialog() {
     myCbSpecifyType.setMnemonic(KeyEvent.VK_T);
     myCbSpecifyType.setFocusable(false);
-    myCbSpecifyType.setEnabled(myHelper.specifyType());
-    myCbSpecifyType.setSelected(myHelper.specifyType());
-    if (myCbSpecifyType.isEnabled() && GroovyApplicationSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE != null) {
+    myCbSpecifyType.setSelected(true);
+    if (GroovyApplicationSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE != null) {
       myCbSpecifyType.setSelected(GroovyApplicationSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE);
     }
 
@@ -148,6 +150,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
 
   private void update() {
     String text = getEnteredName();
+    myHelper.setName(text);
     updateSignature();
     setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
   }
@@ -157,7 +160,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     String text = myNameField.getText();
     if (text != null && text.trim().length() > 0) {
       return text.trim();
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -203,7 +207,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     Object[] list = myListenerList.getListenerList();
     for (Object aList : list) {
       if (aList instanceof DataChangedListener) {
-        ((DataChangedListener) aList).dataChanged();
+        ((DataChangedListener)aList).dataChanged();
       }
     }
   }
@@ -246,12 +250,12 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     }
 
     @NotNull
-      public ExtractMethodInfoHelper getHelper() {
-          return myHelper;
-        }
+    public ExtractMethodInfoHelper getHelper() {
+      return myHelper;
+    }
 
     public String getEnteredName() {
-          return myEnteredName;
-        }
+      return myEnteredName;
+    }
   }
 }

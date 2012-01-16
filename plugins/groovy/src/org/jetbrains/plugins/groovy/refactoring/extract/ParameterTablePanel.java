@@ -32,7 +32,6 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.GroovyExtractMethodDialog;
 
 import javax.swing.*;
@@ -65,7 +64,7 @@ public class ParameterTablePanel extends JPanel {
     super(new BorderLayout());
   }
 
-  public void init(GroovyExtractMethodDialog dialog, ExtractMethodInfoHelper helper) {
+  public void init(GroovyExtractMethodDialog dialog, ExtractInitialInfo helper) {
 
     setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("parameters.border.title"), false, false, true));
 

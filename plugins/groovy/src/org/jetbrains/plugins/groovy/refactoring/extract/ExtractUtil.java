@@ -102,9 +102,9 @@ public class ExtractUtil {
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCallByHelper(methodName, helper);
 
-    if ((outputVars.length == 0 || PsiType.VOID.equals(type)) && !helper.isReturnStatement()) return new GrStatement[]{callExpression};
+    if ((outputVars.length == 0 || PsiType.VOID.equals(type)) && !helper.hasReturnValue()) return new GrStatement[]{callExpression};
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
-    if (helper.isReturnStatement()) {
+    if (helper.hasReturnValue()) {
       return new GrStatement[]{factory.createStatementFromText("return " + callExpression.getText())};
     }
 

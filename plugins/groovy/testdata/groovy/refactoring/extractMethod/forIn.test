@@ -7,11 +7,11 @@ void aaa(Map map) {
 -----
 void aaa(Map map) {
     for (Map.Entry<String, String> versionEntry in map.entrySet()) {
-        testMethod(versionEntry);
+        testMethod(versionEntry)
     }
 }
 
 private testMethod(Map.Entry<String, String> versionEntry) {
     String name = versionEntry.getKey();
-    System.out.println(name)
+    System.out.println(name);
 }

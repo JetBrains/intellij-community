@@ -17,123 +17,54 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelper;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
-
-import java.util.*;
 
 /**
  * @author ilyas
  */
-public class ExtractMethodInfoHelper {
+public class ExtractMethodInfoHelper implements ExtractInfoHelper {
+  private final ExtractInitialInfo myInitialInfo;
 
-  private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
-  private final VariableInfo[] myOutputNames;
-  private final PsiType myOutputType;
-  private final GrMemberOwner myTargetClass;
   private final boolean myIsStatic;
-  private final boolean myIsReturnStatement;
   private boolean mySpecifyType = true;
-  private final PsiElement[] myInnerElements;
   private String myVisibility;
-  private final Project myProject;
-  private final GrStatement[] myStatements;
+  private String myName;
 
-  public ExtractMethodInfoHelper(VariableInfo[] inputInfos,
-                                 VariableInfo[] outputInfos,
-                                 PsiElement[] innerElements,
-                                 GrStatement[] statements,
-                                 GrMemberOwner targetClass,
-                                 boolean isStatic,
-                                 ArrayList<GrStatement> returnStatements) {
-    myInnerElements = innerElements;
-    myStatements = statements;
-    myTargetClass = targetClass;
-    myIsStatic = isStatic;
-    myIsReturnStatement = ContainerUtil.find(returnStatements, new Condition<GrStatement>() {
-      @Override
-      public boolean value(GrStatement statement) {
-        return statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null;
-      }
-    }) != null;
+  public ExtractMethodInfoHelper(ExtractInitialInfo initialInfo, String name) {
+    myInitialInfo = initialInfo;
+
     myVisibility = PsiModifier.PRIVATE;
-    assert myStatements.length > 0;
-    myProject = myStatements[0].getProject();
-    int i = 0;
-    for (VariableInfo info : inputInfos) {
-      PsiType type = info.getType();
-      ParameterInfo pInfo = new ParameterInfo(info.getName(), i, type);
-      myInputNamesMap.put(info.getName(), pInfo);
-      i++;
-    }
+    myName = name;
 
-    PsiType outputType = PsiType.VOID;
-    myOutputNames = outputInfos;
-    if (outputInfos.length > 0) {
-      if (outputInfos.length == 1) {
-        outputType = outputInfos[0].getType();
-      }
-      else {
-        outputType = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, myTargetClass);
-      }
-    }
-    else if (ExtractUtil.isSingleExpression(statements)) {
-      final GrStatement lastExpr = statements[statements.length - 1];
-      if (!(lastExpr.getParent() instanceof GrCodeBlock)) {
-        outputType = ((GrExpression)lastExpr).getType();
-      }
-    }
-    else {
-      if (myIsReturnStatement) {
-        assert returnStatements.size() > 0;
-        List<PsiType> types = new ArrayList<PsiType>(returnStatements.size());
-        for (GrStatement statement : returnStatements) {
-          if (statement instanceof GrReturnStatement) {
-            GrExpression returnValue = ((GrReturnStatement)statement).getReturnValue();
-            if (returnValue != null) {
-              types.add(returnValue.getType());
-            }
-          }
-          else if (statement instanceof GrExpression) {
-            types.add(((GrExpression)statement).getType());
-          }
-        }
-        outputType = TypesUtil.getLeastUpperBoundNullable(types, targetClass.getManager());
-      }
-    }
-    myOutputType = outputType != null ? outputType : PsiType.VOID;
+    myIsStatic = ExtractUtil.canBeStatic(initialInfo.getStatements()[0]);
   }
 
+  @Override
   @NotNull
   public Project getProject() {
-    return myProject;
-  }
-
-  public ParameterInfo[] getParameterInfos() {
-    Collection<ParameterInfo> collection = myInputNamesMap.values();
-    ParameterInfo[] infos = new ParameterInfo[collection.size()];
-    for (ParameterInfo info : collection) {
-      int position = info.getPosition();
-      assert position < infos.length && infos[position] == null;
-      infos[position] = info;
-    }
-    return infos;
+    return myInitialInfo.getProject();
   }
 
   @NotNull
+  @Override
+  public ParameterInfo[] getParameterInfos() {
+    return myInitialInfo.getParameterInfos();
+  }
+
+  @Override
+  @NotNull
   public VariableInfo[] getOutputNames() {
-    return myOutputNames;
+    return myInitialInfo.getOutputNames();
   }
 
   /**
@@ -141,30 +72,28 @@ public class ExtractMethodInfoHelper {
    *
    * @return array of argument names
    */
+  @NotNull
+  @Override
   public String[] getArgumentNames() {
-    Collection<ParameterInfo> infos = myInputNamesMap.values();
-    String[] argNames = new String[infos.size()];
-    for (ParameterInfo info : infos) {
-      int position = info.getPosition();
-      assert position < argNames.length;
-      argNames[position] = info.passAsParameter() ? info.getOldName() : "";
-    }
-    return argNames;
+    return myInitialInfo.getArgumentNames();
   }
 
+  @Override
   @NotNull
   public PsiType getOutputType() {
-    return myOutputType;
+    return myInitialInfo.getOutputType();
   }
 
+  @Override
   @NotNull
   public PsiElement[] getInnerElements() {
-    return myInnerElements;
+    return myInitialInfo.getInnerElements();
   }
 
+  @Override
   @NotNull
   public GrStatement[] getStatements() {
-    return myStatements;
+    return myInitialInfo.getStatements();
   }
 
   public boolean isStatic() {
@@ -187,12 +116,21 @@ public class ExtractMethodInfoHelper {
     mySpecifyType = specifyType;
   }
 
+  @Override
   @NotNull
   public GrMemberOwner getOwner() {
-    return myTargetClass;
+    return myInitialInfo.getOwner();
   }
 
-  public boolean isReturnStatement() {
-    return myIsReturnStatement;
+  public boolean hasReturnValue() {
+    return myInitialInfo.hasReturnValue();
+  }
+
+  public String getName() {
+    return myName;
+  }
+
+  public void setName(String name) {
+    myName = name;
   }
 }
