@@ -70,6 +70,8 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
         updateActions();
       }
     });
+    setDefaultSelection();
+
 
     myDeleteButton.addActionListener(new ActionListener() {
       @Override
@@ -345,5 +347,14 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     mySchemesTableModel.copyToProject(getSelectedScheme());
   }
 
+  private void setDefaultSelection() {
+    CodeStyleScheme selectedScheme = myModel.getSelectedScheme();
+    for (int i = 0; i < mySchemesTableModel.getRowCount(); i ++) {
+      if (mySchemesTableModel.getSchemeAt(i).equals(selectedScheme)) {
+        mySchemesTable.getSelectionModel().setSelectionInterval(i, i);
+        return;
+      }
+    }
+  }
 
 }
