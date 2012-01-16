@@ -38,7 +38,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyFunction(final PyFunction node) {
     // Create node and stop here
     myBuilder.startNode(node);
-    ParamHelper.walkDownParamArray(node.getParameterList().getParameters(), new ParamHelper.ParamVisitor() {
+    visitDefaultParameterValues(node.getParameterList());
+
+    final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
+    myBuilder.addNode(instruction);
+    myBuilder.checkPending(instruction);
+  }
+
+  private void visitDefaultParameterValues(PyParameterList parameterList) {
+    ParamHelper.walkDownParamArray(parameterList.getParameters(), new ParamHelper.ParamVisitor() {
       @Override
       public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
         final PyExpression defaultValue = param.getDefaultValue();
@@ -47,10 +55,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         }
       }
     });
-
-    final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
   }
 
   @Override
@@ -664,6 +668,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
     myBuilder.startNode(node);
+    visitDefaultParameterValues(node.getParameterList());
   }
 
   @Override

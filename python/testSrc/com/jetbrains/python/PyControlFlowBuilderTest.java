@@ -161,6 +161,10 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  public void testLambdaDefaultParameter() {
+    doTest();
+  }
+
   public void testQualifiedSelfReference() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
