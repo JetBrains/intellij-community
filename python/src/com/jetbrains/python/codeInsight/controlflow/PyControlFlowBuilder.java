@@ -38,8 +38,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyFunction(final PyFunction node) {
     // Create node and stop here
     myBuilder.startNode(node);
-    visitDefaultParameterValues(node.getParameterList());
+    visitParameterListExpressions(node.getParameterList());
     visitDecorators(node.getDecoratorList());
+    final PyAnnotation annotation = node.getAnnotation();
+    if (annotation != null) {
+      annotation.accept(this);
+    }
 
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
@@ -54,13 +58,17 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
   }
 
-  private void visitDefaultParameterValues(PyParameterList parameterList) {
+  private void visitParameterListExpressions(PyParameterList parameterList) {
     ParamHelper.walkDownParamArray(parameterList.getParameters(), new ParamHelper.ParamVisitor() {
       @Override
       public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
         final PyExpression defaultValue = param.getDefaultValue();
         if (defaultValue != null) {
           defaultValue.accept(PyControlFlowBuilder.this);
+        }
+        final PyAnnotation annotation = param.getAnnotation();
+        if (annotation != null) {
+          annotation.accept(PyControlFlowBuilder.this);
         }
       }
     });
@@ -678,7 +686,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
     myBuilder.startNode(node);
-    visitDefaultParameterValues(node.getParameterList());
+    visitParameterListExpressions(node.getParameterList());
   }
 
   @Override

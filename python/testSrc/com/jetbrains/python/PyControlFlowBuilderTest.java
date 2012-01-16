@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -172,6 +173,16 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
 
   public void testSetComprehension() {
     doTest();
+  }
+  
+  public void testTypeAnnotations() {
+    setLanguageLevel(LanguageLevel.PYTHON30);
+    try {
+      doTest();
+    }
+    finally {
+      setLanguageLevel(null);
+    }
   }
 
   public void testQualifiedSelfReference() {
