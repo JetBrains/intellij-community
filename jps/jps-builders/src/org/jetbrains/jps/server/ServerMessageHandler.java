@@ -137,7 +137,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
       case MAKE:
       case FORCED_COMPILATION:
       case REBUILD: {
-        final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, compileRequest.getModuleNameList());
+        final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, compileRequest.getModuleNameList(), compileRequest.getFilePathList());
         if (myBuildsInProgress.putIfAbsent(projectId, task) == null) {
           task.getBuildParams().buildType = convertCompileType(compileType);
           task.getBuildParams().useInProcessJavac = true;
@@ -166,14 +166,16 @@ class ServerMessageHandler extends SimpleChannelHandler {
     private final UUID mySessionId;
     private final ChannelHandlerContext myChannelContext;
     private final String myProjectPath;
+    private final Collection<String> myPaths;
     private final Set<String> myModules;
     private final BuildParameters myParams;
     private volatile boolean myCanceled = false;
 
-    public CompilationTask(UUID sessionId, ChannelHandlerContext channelContext, String projectId, List<String> modules) {
+    public CompilationTask(UUID sessionId, ChannelHandlerContext channelContext, String projectId, Collection<String> modules, Collection<String> paths) {
       mySessionId = sessionId;
       myChannelContext = channelContext;
       myProjectPath = projectId;
+      myPaths = paths;
       myModules = new HashSet<String>(modules);
       myParams = new BuildParameters();
     }
@@ -194,7 +196,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
       Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildStartedEvent("build started")));
       Throwable error = null;
       try {
-        ServerState.getInstance().startBuild(myProjectPath, myModules, myParams, new MessageHandler() {
+        ServerState.getInstance().startBuild(myProjectPath, myModules, myPaths, myParams, new MessageHandler() {
           public void processMessage(BuildMessage buildMessage) {
             final JpsRemoteProto.Message.Response response;
             if (buildMessage instanceof CompilerMessage) {

@@ -87,12 +87,18 @@ public class Client {
   }
 
   @NotNull
-  public RequestFuture sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) throws Exception{
+  public RequestFuture sendCompileRequest(boolean isMake, String projectId, Collection<String> modules, Collection<String> paths, JpsServerResponseHandler handler) throws Exception{
     checkConnected();
-    return sendRequest(
-      rebuild? ProtoUtil.createRebuildRequest(projectId, modules) : ProtoUtil.createMakeRequest(projectId, modules),
-      handler
-    );
+    final JpsRemoteProto.Message.Request request = isMake?
+      ProtoUtil.createMakeRequest(projectId, modules) :
+      ProtoUtil.createForceCompileRequest(projectId, modules, paths);
+    return sendRequest(request, handler);
+  }
+
+  @NotNull
+  public RequestFuture sendRebuildRequest(String projectId, JpsServerResponseHandler handler) throws Exception{
+    checkConnected();
+    return sendRequest(ProtoUtil.createRebuildRequest(projectId), handler);
   }
 
   @NotNull

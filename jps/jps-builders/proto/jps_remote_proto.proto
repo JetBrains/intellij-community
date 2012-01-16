@@ -42,6 +42,7 @@ message Message {
       required Type command_type = 1;
       optional string project_id = 2;
       repeated string module_name = 3;
+      repeated string file_path = 4;
     }
 
     message ShutdownCommand {

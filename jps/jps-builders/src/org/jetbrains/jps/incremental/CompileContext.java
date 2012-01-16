@@ -83,7 +83,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
-  public void markDirty(ModuleChunk chunk) throws Exception {
+  public void markDirtyRecursively(ModuleChunk chunk) throws Exception {
     final Set<Module> modules = chunk.getModules();
     final Set<Module> dirtyModules = new HashSet<Module>(modules);
 
@@ -147,7 +147,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
           final List<RootDescriptor> roots = myRootsIndex.getModuleRoots(module);
           for (RootDescriptor descriptor : roots) {
             if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {
-              myFsState.markAllUpToDate(descriptor, myTsStorage, myCompilationStartStamp);
+              myFsState.markAllUpToDate(getScope(), descriptor, myTsStorage, myCompilationStartStamp);
             }
           }
         }
@@ -178,7 +178,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public void processFilesToRecompile(ModuleChunk chunk, FileProcessor processor) throws Exception {
     for (Module module : chunk.getModules()) {
-      myFsState.processFilesToRecompile(module, isCompilingTests(), processor);
+      myFsState.processFilesToRecompile(this, module, processor);
     }
   }
 
@@ -188,10 +188,16 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
         markDirtyFiles(module, myTsStorage, true, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
       }
       else {
-        // in 'make' mode
-        // todo: consider situation when only several files are forced to be compiled => this is not project rebuild and not make
-        if (myFsState.markInitialScanPerformed(module, isCompilingTests())) {
-          initModuleFSState(module);
+        if (isMake()) {
+          if (myFsState.markInitialScanPerformed(module, isCompilingTests())) {
+            initModuleFSState(module);
+          }
+        }
+        else {
+          // forced compilation mode
+          if (getScope().isRecompilationForced(module)) {
+            markDirtyFiles(module, myTsStorage, true, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
+          }
         }
       }
     }
@@ -233,7 +239,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     processMessage(new ProgressMessage("", done));
   }
 
-  private static enum DirtyMarkScope{
+  public static enum DirtyMarkScope{
     PRODUCTION, TESTS, BOTH
   }
 

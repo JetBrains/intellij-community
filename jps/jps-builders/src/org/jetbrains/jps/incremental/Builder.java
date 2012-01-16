@@ -82,7 +82,7 @@ public abstract class Builder {
         }
         else {
           additionalPassRequired = context.isMake();
-          context.markDirty(chunk);
+          context.markDirtyRecursively(chunk);
         }
       }
 

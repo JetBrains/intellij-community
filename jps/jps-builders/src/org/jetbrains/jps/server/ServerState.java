@@ -14,6 +14,7 @@ import org.jetbrains.jps.api.SdkLibrary;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -96,7 +97,7 @@ class ServerState {
     }
   }
 
-  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler, BuildCanceledStatus cs) throws Throwable{
+  public void startBuild(String projectPath, Set<String> modules, Collection<String> paths, final BuildParameters params, final MessageHandler msgHandler, BuildCanceledStatus cs) throws Throwable{
     final String projectName = getProjectName(projectPath);
     BuildType buildType = params.buildType;
 
@@ -115,20 +116,7 @@ class ServerState {
     final Project project = pd.project;
 
     try {
-      final List<Module> toCompile = new ArrayList<Module>();
-      if (modules != null && modules.size() > 0) {
-        for (Module m : project.getModules().values()) {
-          if (modules.contains(m.getName())){
-            toCompile.add(m);
-          }
-        }
-      }
-      else {
-        toCompile.addAll(project.getModules().values());
-      }
-
-      final CompileScope compileScope = new CompileScope(project, toCompile);
-
+      final CompileScope compileScope = createCompilationScope(buildType, pd, modules, paths);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), cs);
       if (msgHandler != null) {
         builder.addMessageHandler(msgHandler);
@@ -156,6 +144,60 @@ class ServerState {
       pd.release();
       clearZipIndexCache();
     }
+  }
+
+  private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, Set<String> modules, Collection<String> paths) throws Exception {
+    final CompileScope compileScope;
+    if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
+      compileScope = new AllProjectScope(pd.project, buildType != BuildType.MAKE);
+    }
+    else {
+      final Set<Module> forcedModules;
+      if (!modules.isEmpty()) {
+        forcedModules = new HashSet<Module>();
+        for (Module m : pd.project.getModules().values()) {
+          if (modules.contains(m.getName())){
+            forcedModules.add(m);
+          }
+        }
+      }
+      else {
+        forcedModules = Collections.emptySet();
+      }
+
+      final TimestampStorage tsStorage = pd.timestamps.getStorage();
+
+      final Map<Module, Set<File>> filesToCompile;
+      if (!paths.isEmpty()) {
+        filesToCompile = new HashMap<Module, Set<File>>();
+        for (String path : paths) {
+          final File file = new File(path);
+          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+          if (rd != null) {
+            Set<File> files = filesToCompile.get(rd.module);
+            if (files == null) {
+              files = new HashSet<File>();
+              filesToCompile.put(rd.module, files);
+            }
+            files.add(file);
+            if (buildType == BuildType.FORCED_COMPILATION) {
+              pd.fsState.markDirty(file, rd, tsStorage);
+            }
+          }
+        }
+      }
+      else {
+        filesToCompile = Collections.emptyMap();
+      }
+
+      if (filesToCompile.isEmpty()) {
+        compileScope = new ModulesScope(pd.project, forcedModules, buildType != BuildType.MAKE);
+      }
+      else {
+        compileScope = new ModulesAndFilesScope(pd.project, forcedModules, filesToCompile, buildType != BuildType.MAKE);
+      }
+    }
+    return compileScope;
   }
 
   private static void clearZipIndexCache() {

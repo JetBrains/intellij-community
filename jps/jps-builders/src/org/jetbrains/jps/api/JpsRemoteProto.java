@@ -845,6 +845,18 @@ public final class JpsRemoteProto {
           return moduleName_.get(index);
         }
         
+        // repeated string file_path = 4;
+        public static final int FILE_PATH_FIELD_NUMBER = 4;
+        private java.util.List<java.lang.String> filePath_ =
+          java.util.Collections.emptyList();
+        public java.util.List<java.lang.String> getFilePathList() {
+          return filePath_;
+        }
+        public int getFilePathCount() { return filePath_.size(); }
+        public java.lang.String getFilePath(int index) {
+          return filePath_.get(index);
+        }
+        
         private void initFields() {
           commandType_ = org.jetbrains.jps.api.JpsRemoteProto.Message.Request.CompilationRequest.Type.REBUILD;
         }
@@ -864,6 +876,9 @@ public final class JpsRemoteProto {
           }
           for (java.lang.String element : getModuleNameList()) {
             output.writeString(3, element);
+          }
+          for (java.lang.String element : getFilePathList()) {
+            output.writeString(4, element);
           }
         }
         
@@ -889,6 +904,15 @@ public final class JpsRemoteProto {
             }
             size += dataSize;
             size += 1 * getModuleNameList().size();
+          }
+          {
+            int dataSize = 0;
+            for (java.lang.String element : getFilePathList()) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeStringSizeNoTag(element);
+            }
+            size += dataSize;
+            size += 1 * getFilePathList().size();
           }
           memoizedSerializedSize = size;
           return size;
@@ -1031,6 +1055,10 @@ public final class JpsRemoteProto {
               result.moduleName_ =
                 java.util.Collections.unmodifiableList(result.moduleName_);
             }
+            if (result.filePath_ != java.util.Collections.EMPTY_LIST) {
+              result.filePath_ =
+                java.util.Collections.unmodifiableList(result.filePath_);
+            }
             org.jetbrains.jps.api.JpsRemoteProto.Message.Request.CompilationRequest returnMe = result;
             result = null;
             return returnMe;
@@ -1049,6 +1077,12 @@ public final class JpsRemoteProto {
                 result.moduleName_ = new java.util.ArrayList<java.lang.String>();
               }
               result.moduleName_.addAll(other.moduleName_);
+            }
+            if (!other.filePath_.isEmpty()) {
+              if (result.filePath_.isEmpty()) {
+                result.filePath_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.filePath_.addAll(other.filePath_);
             }
             return this;
           }
@@ -1082,6 +1116,10 @@ public final class JpsRemoteProto {
                 }
                 case 26: {
                   addModuleName(input.readString());
+                  break;
+                }
+                case 34: {
+                  addFilePath(input.readString());
                   break;
                 }
               }
@@ -1168,6 +1206,46 @@ public final class JpsRemoteProto {
           }
           public Builder clearModuleName() {
             result.moduleName_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // repeated string file_path = 4;
+          public java.util.List<java.lang.String> getFilePathList() {
+            return java.util.Collections.unmodifiableList(result.filePath_);
+          }
+          public int getFilePathCount() {
+            return result.getFilePathCount();
+          }
+          public java.lang.String getFilePath(int index) {
+            return result.getFilePath(index);
+          }
+          public Builder setFilePath(int index, java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.filePath_.set(index, value);
+            return this;
+          }
+          public Builder addFilePath(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.filePath_.isEmpty()) {
+              result.filePath_ = new java.util.ArrayList<java.lang.String>();
+            }
+            result.filePath_.add(value);
+            return this;
+          }
+          public Builder addAllFilePath(
+              java.lang.Iterable<? extends java.lang.String> values) {
+            if (result.filePath_.isEmpty()) {
+              result.filePath_ = new java.util.ArrayList<java.lang.String>();
+            }
+            super.addAll(values, result.filePath_);
+            return this;
+          }
+          public Builder clearFilePath() {
+            result.filePath_ = java.util.Collections.emptyList();
             return this;
           }
           

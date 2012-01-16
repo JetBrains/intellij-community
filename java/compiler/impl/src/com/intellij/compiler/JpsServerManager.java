@@ -192,14 +192,16 @@ public class JpsServerManager implements ApplicationComponent{
   }
 
   @Nullable
-  public RequestFuture submitCompilationTask(final String projectId, final List<String> modules, final boolean rebuild, final JpsServerResponseHandler handler) {
+  public RequestFuture submitCompilationTask(final String projectId, final boolean isRebuild, final boolean isMake, final Collection<String> modules, final Collection<String> paths, final JpsServerResponseHandler handler) {
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
       public void run() {
         try {
           final Client client = ensureServerRunningAndClientConnected(true);
           if (client != null) {
-            final RequestFuture requestFuture = client.sendCompileRequest(projectId, modules, rebuild, handler);
+            final RequestFuture requestFuture = isRebuild ?
+              client.sendRebuildRequest(projectId, handler) :
+              client.sendCompileRequest(isMake, projectId, modules, paths, handler);
             futureRef.set(requestFuture);
           }
           else {
@@ -412,7 +414,7 @@ public class JpsServerManager implements ApplicationComponent{
 
     // debugging
     cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
+    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5008");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");

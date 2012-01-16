@@ -1,46 +1,42 @@
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/17/11
+ *         Date: 1/15/12
  */
-public class CompileScope {
+public abstract class CompileScope {
 
+  @NotNull
   private final Project myProject;
-  private final Collection<Module> myModules;
 
-  public CompileScope(Project project) {
-    this(project, project.getModules().values());
-  }
-
-  public CompileScope(Project project, Collection<Module> modules) {
+  protected CompileScope(@NotNull Project project) {
     myProject = project;
-    myModules = modules;
   }
 
-  public Collection<Module> getAffectedModules() {
-    return Collections.unmodifiableCollection(myModules);
-  }
+  public abstract boolean isAffected(Module module, @NotNull File file);
 
-  public boolean isAffected(ModuleChunk chunk) {
-    final Set<Module> modules = chunk.getModules();
-    for (Module module : getAffectedModules()) {
-      if (modules.contains(module)) {
+  public abstract boolean isAffected(@NotNull Module module);
+
+  public abstract boolean isRecompilationForced(@NotNull Module module);
+
+  public final boolean isAffected(ModuleChunk chunk) {
+    for (Module module : chunk.getModules()) {
+      if (isAffected(module)) {
         return true;
       }
     }
     return false;
   }
 
-  public Project getProject() {
+  @NotNull
+  public final Project getProject() {
     return myProject;
   }
 }

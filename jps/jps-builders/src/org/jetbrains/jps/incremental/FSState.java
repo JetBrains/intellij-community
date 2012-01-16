@@ -72,21 +72,26 @@ public class FSState {
     }
   }
 
-  public void markAllUpToDate(final RootDescriptor rd, final TimestampStorage tsStorage, final long compilationStartStamp) throws Exception {
+  public void markAllUpToDate(CompileScope scope, final RootDescriptor rd, final TimestampStorage tsStorage, final long compilationStartStamp) throws Exception {
     final FilesDelta delta = getDelta(rd.module);
     final Set<File> files = delta.clearRecompile(rd.root, rd.isTestRoot);
     if (files != null) {
       final CompilerExcludes excludes = rd.module.getProject().getCompilerConfiguration().getExcludes();
       for (File file : files) {
         if (!excludes.isExcluded(file)) {
-          final long stamp = file.lastModified();
-          if (stamp > compilationStartStamp) {
-            // if the file was modified after the compilation had started,
-            // do not save the stamp considering file dirty
-            delta.markRecompile(rd.root, rd.isTestRoot, file);
+          if (scope.isAffected(rd.module, file)) {
+            final long stamp = file.lastModified();
+            if (stamp > compilationStartStamp) {
+              // if the file was modified after the compilation had started,
+              // do not save the stamp considering file dirty
+              delta.markRecompile(rd.root, rd.isTestRoot, file);
+            }
+            else {
+              tsStorage.saveStamp(file, stamp);
+            }
           }
           else {
-            tsStorage.saveStamp(file, stamp);
+            delta.markRecompile(rd.root, rd.isTestRoot, file);
           }
         }
         else {
@@ -96,16 +101,19 @@ public class FSState {
     }
   }
 
-
-  public boolean processFilesToRecompile(final Module module, final boolean forTests, final FileProcessor processor) throws Exception {
+  public boolean processFilesToRecompile(CompileContext context, final Module module, final FileProcessor processor) throws Exception {
     final FilesDelta lastRoundDelta = myLastRoundDelta;
     final FilesDelta delta = lastRoundDelta != null? lastRoundDelta : getDelta(module);
-    final Map<File, Set<File>> data = delta.getSourcesToRecompile(forTests);
+    final Map<File, Set<File>> data = delta.getSourcesToRecompile(context.isCompilingTests());
     final CompilerExcludes excludes = module.getProject().getCompilerConfiguration().getExcludes();
+    final CompileScope scope = context.getScope();
     synchronized (data) {
       for (Map.Entry<File, Set<File>> entry : data.entrySet()) {
         final String root = FileUtil.toSystemIndependentName(entry.getKey().getPath());
         for (File file : entry.getValue()) {
+          if (!scope.isAffected(module, file)) {
+            continue;
+          }
           if (excludes.isExcluded(file)) {
             continue;
           }

@@ -417,9 +417,9 @@ public class CompileDriver {
   }
 
   @Nullable
-  private RequestFuture compileOnServer(final CompileContext compileContext, Collection<Module> modules, boolean isMake, @Nullable final CompileStatusNotification callback)
+  private RequestFuture compileOnServer(final CompileContext compileContext, Collection<Module> modules, final Collection<String> paths, @Nullable final CompileStatusNotification callback)
     throws Exception {
-    List<String> moduleNames = Collections.emptyList();
+    Collection<String> moduleNames = Collections.emptyList();
     if (modules != null && modules.size() > 0) {
       moduleNames = new ArrayList<String>(modules.size());
       for (Module module : modules) {
@@ -427,7 +427,7 @@ public class CompileDriver {
       }
     }
     final JpsServerManager jpsServerManager = JpsServerManager.getInstance();
-    return jpsServerManager.submitCompilationTask(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
+    return jpsServerManager.submitCompilationTask(myProject.getLocation(), compileContext.isRebuild(), compileContext.isMake(), moduleNames, paths, new JpsServerResponseHandlerAdapter() {
 
       public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
         final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compilerMessage.getKind();
@@ -560,7 +560,9 @@ public class CompileDriver {
             if (message != null) {
               compileContext.addMessage(message);
             }
-            final RequestFuture future = compileOnServer(compileContext, Arrays.asList(compileContext.getCompileScope().getAffectedModules()), compileContext.isMake(), callback);
+            final Collection<String> paths = fetchFiles(compileContext);
+            final List<Module> modules = paths.isEmpty()? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
+            final RequestFuture future = compileOnServer(compileContext, modules, paths, callback);
             if (future != null) {
               // start cancel watcher
               ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -673,6 +675,32 @@ public class CompileDriver {
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
       }
     });
+  }
+
+  private static List<String> fetchFiles(CompileContextImpl context) {
+    if (context.isRebuild()) {
+      return Collections.emptyList();
+    }
+    final CompileScope scope = context.getCompileScope();
+    if (shouldFetchFiles(scope)) {
+      final List<String> paths = new ArrayList<String>();
+      for (VirtualFile file : scope.getFiles(null, true)) {
+        paths.add(file.getPath());
+      }
+      return paths;
+    }
+    return Collections.emptyList();
+  }
+
+  private static boolean shouldFetchFiles(CompileScope scope) {
+    if (scope instanceof CompositeScope) {
+      for (CompileScope compileScope : ((CompositeScope)scope).getScopes()) {
+        if (shouldFetchFiles(compileScope)) {
+          return true;
+        }
+      }
+    }
+    return scope instanceof OneProjectItemCompileScope || scope instanceof FileSetCompileScope;
   }
 
   private void doCompile(final CompileContextImpl compileContext,
