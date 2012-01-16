@@ -17,13 +17,14 @@ package org.jetbrains.android.compiler.tools;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * IDL compiler.
@@ -38,13 +39,13 @@ public final class AndroidIdl {
   public static Map<CompilerMessageCategory, List<String>> execute(@NotNull IAndroidTarget target,
                                                                    @NotNull String file,
                                                                    @NotNull String outFile,
-                                                                   @NotNull VirtualFile[] sourceRoots) throws IOException {
+                                                                   @NotNull String[] sourceRootPaths) throws IOException {
     List<String> commands = new ArrayList<String>();
     String frameworkAidlPath = target.getPath(IAndroidTarget.ANDROID_AIDL);
     commands.add(target.getPath(IAndroidTarget.AIDL));
     commands.add("-p" + frameworkAidlPath);
-    for (VirtualFile root : sourceRoots) {
-      commands.add("-I" + root.getPath());
+    for (String path : sourceRootPaths) {
+      commands.add("-I" + path);
     }
     commands.add(file);
     commands.add(outFile);
