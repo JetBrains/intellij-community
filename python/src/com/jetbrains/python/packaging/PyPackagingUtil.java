@@ -9,6 +9,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -38,6 +39,11 @@ public class PyPackagingUtil {
 
   public void uninstallPackage(@NotNull Sdk sdk, @NotNull PyPackage pkg) throws PyExternalProcessException {
     runPythonHelper(sdk, PACKAGING_TOOL, list("uninstall", pkg.getName()));
+    myPackagesCache.remove(sdk);
+  }
+
+  public void installPackage(@NotNull Sdk sdk, @NotNull PyPackage pkg, @Nullable String options) throws PyExternalProcessException {
+    runPythonHelper(sdk, PACKAGING_TOOL, list("install", pkg.getName(), options));
     myPackagesCache.remove(sdk);
   }
 
@@ -136,7 +142,8 @@ public class PyPackagingUtil {
       final String name = fields.get(0);
       final String version = fields.get(1);
       final String location = fields.get(2);
-      packages.add(new PyPackage(name, version, location, new ArrayList<PyRequirement>()));
+      if (!"Python".equals(name) && !"wsgiref".equals(name))
+        packages.add(new PyPackage(name, version, location, new ArrayList<PyRequirement>()));
     }
     return packages;
   }
