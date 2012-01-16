@@ -39,10 +39,19 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     // Create node and stop here
     myBuilder.startNode(node);
     visitDefaultParameterValues(node.getParameterList());
+    visitDecorators(node.getDecoratorList());
 
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
+  }
+
+  private void visitDecorators(PyDecoratorList list) {
+    if (list != null) {
+      for (PyDecorator decorator : list.getDecorators()) {
+        decorator.accept(this);
+      }
+    }
   }
 
   private void visitDefaultParameterValues(PyParameterList parameterList) {
@@ -64,6 +73,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     for (PsiElement element : node.getSuperClassExpressions()) {
       element.accept(this);
     }
+    visitDecorators(node.getDecoratorList());
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
