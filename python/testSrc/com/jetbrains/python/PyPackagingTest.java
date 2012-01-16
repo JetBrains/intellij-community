@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -95,10 +95,8 @@ public class PyPackagingTest extends PyTestCase {
           assertNotNull(venvSdk);
           final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.getPackages();
-          final PyPackage markdown1 = new PyPackage("Markdown", "2.1.0", null, new ArrayList<PyRequirement>());
-          assertTrue(!markdown1.isInstalled());
           // TODO: Install Markdown from a local file
-          manager.install(markdown1);
+          manager.install(list(new PyRequirement("Markdown", "<", "2.2"), new PyRequirement("httplib2")));
           final List<PyPackage> packages2 = manager.getPackages();
           final PyPackage markdown2 = findPackage("Markdown", packages2);
           assertNotNull(markdown2);
@@ -121,6 +119,13 @@ public class PyPackagingTest extends PyTestCase {
         return true;
       }
     });
+  }
+
+  public void testParseRequirement() {
+    assertEquals(new PyRequirement("Django", null, null), PyRequirement.parse("Django"));
+    assertEquals(new PyRequirement("django", null, null), PyRequirement.parse("Django"));
+    assertEquals(new PyRequirement("Django", "==", "1.3.1"), PyRequirement.parse("Django==1.3.1"));
+    assertEquals(new PyRequirement("Django", "<", "1.4"), PyRequirement.parse("   Django       <   1.4   "));
   }
 
   @Nullable
@@ -157,5 +162,9 @@ public class PyPackagingTest extends PyTestCase {
       return SdkConfigurationUtil.setupSdk(new Sdk[0], binary, PythonSdkType.getInstance(), true, null, null);
     }
     return null;
+  }
+
+  private static <T> List<T> list(T... xs) {
+    return Arrays.asList(xs);
   }
 }
