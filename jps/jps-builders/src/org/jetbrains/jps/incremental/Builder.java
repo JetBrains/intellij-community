@@ -51,7 +51,7 @@ public abstract class Builder {
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (globalMappings) {
-      if (!context.isProjectRebuild()) {
+      if (!context.isProjectRebuild() && context.shouldDifferentiate(chunk, context.isCompilingTests())) {
         final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
         final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
