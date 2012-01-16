@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -37,6 +38,16 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyFunction(final PyFunction node) {
     // Create node and stop here
     myBuilder.startNode(node);
+    ParamHelper.walkDownParamArray(node.getParameterList().getParameters(), new ParamHelper.ParamVisitor() {
+      @Override
+      public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+        final PyExpression defaultValue = param.getDefaultValue();
+        if (defaultValue != null) {
+          defaultValue.accept(PyControlFlowBuilder.this);
+        }
+      }
+    });
+
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
