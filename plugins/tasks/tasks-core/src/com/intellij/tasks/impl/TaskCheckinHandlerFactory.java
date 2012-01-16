@@ -48,21 +48,18 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
           final Project project = panel.getProject();
           final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
           if (manager.getState().saveContextOnCommit) {
-            final Task task = findTask(message, manager);
+            Task task = findTask(message, manager);
+            if (task == null) {
+              task = manager.createLocalTask(message);
+            }
+            final LocalTask localTask = manager.addTask(task);
+            localTask.setUpdated(new Date());
 
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
-                final WorkingContextManager contextManager = WorkingContextManager.getInstance(project);
-                if (task != null) {
-                  LocalTask localTask = manager.addTask(task);
-                  localTask.setUpdated(new Date());
-                  contextManager.saveContext(localTask);
-                }
-                else {
-                  contextManager.saveContext(null, message);
-                }
+                WorkingContextManager.getInstance(project).saveContext(localTask);
               }
             });
           }
