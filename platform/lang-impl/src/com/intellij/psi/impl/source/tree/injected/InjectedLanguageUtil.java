@@ -91,7 +91,12 @@ public class InjectedLanguageUtil {
         }
       }
     });
-    return result.isEmpty() ? null : result;
+    if (result.isEmpty()) {
+      return null;
+    }
+    else {
+      return result;
+    }
   }
 
   public static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> getHighlightTokens(PsiFile file) {
@@ -134,8 +139,10 @@ public class InjectedLanguageUtil {
     }
 
     MultiHostRegistrarImpl registrar = probeElementsUp(host, containingFile, probeUp);
-    if (registrar == null) return;
-    List<Pair<Place, PsiFile>> places = registrar.result;
+    if (registrar == null) {
+      return;
+    }
+    List<Pair<Place, PsiFile>> places = registrar.getResult();
     for (Pair<Place, PsiFile> pair : places) {
       PsiFile injectedPsi = pair.second;
       visitor.visit(injectedPsi, pair.first);
@@ -202,7 +209,9 @@ public class InjectedLanguageUtil {
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
-    if (injectedManager == null) return null; //for tests
+    if (injectedManager == null) {
+      return null; //for tests
+    }
     MultiHostRegistrarImpl registrar = null;
     PsiElement current = element;
     nextParent:
@@ -216,10 +225,12 @@ public class InjectedLanguageUtil {
       else {
         registrar = data.getValue(current);
       }
+      log(current, (registrar == null ? "!": "")+" computed result="+registrar);
+
       current = current.getParent(); // cache no injection for current
 
       if (registrar != null) {
-        List<Pair<Place, PsiFile>> places = registrar.result;
+        List<Pair<Place, PsiFile>> places = registrar.getResult();
         // check that injections found intersect with queried element
         TextRange elementRange = element.getTextRange();
         for (Pair<Place, PsiFile> pair : places) {
@@ -242,31 +253,28 @@ public class InjectedLanguageUtil {
         ProgressManager.checkCanceled();
         if (registrar == null) {
           e.putUserData(INJECTED_PSI, null);
+          log(e, "Cache .INJECTED_PSI=null");
         }
         else {
           ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
             CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
 
-          CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, calcDependencies(registrar));
+          CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, registrar);
           ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
 
           e.putUserData(INJECTED_PSI, cachedValue);
+
+          log(e, "Cache .INJECTED_PSI="+result);
         }
       }
     }
     return registrar;
   }
 
-  private static Object[] calcDependencies(@NotNull MultiHostRegistrarImpl registrar) {
-    List<Pair<Place, PsiFile>> result = registrar.getResult();
-    Object[] deps = new Object[result.size()];
-    for (int i = 0; i < result.size(); i++) {
-      Pair<Place, PsiFile> pair = result.get(i);
-      PsiFile injectedFile = pair.second;
-      Document injDocument = injectedFile.getViewProvider().getDocument();
-      deps[i] = injDocument;
-    }
-    return deps;
+  public static void log(PsiElement e, String msg) {
+    //if (e.getClass().getName().equals("com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl")) {
+    //  System.out.println(e+": "+ msg + "  ("+Thread.currentThread()+")");
+    //}
   }
 
   public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {

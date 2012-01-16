@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,6 +28,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author cdr
@@ -50,11 +53,14 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
   }
 
   @Nullable
-  static MultiHostRegistrarImpl doCompute(final PsiElement element, InjectedLanguageManagerImpl injectedManager, Project project, PsiFile hostPsiFile) {
+  static MultiHostRegistrarImpl doCompute(final PsiElement element,
+                                          InjectedLanguageManagerImpl injectedManager,
+                                          Project project,
+                                          PsiFile hostPsiFile) {
     MyInjProcessor processor = new MyInjProcessor(project, hostPsiFile);
     injectedManager.processInPlaceInjectorsFor(element, processor);
     MultiHostRegistrarImpl registrar = processor.hostRegistrar;
-    return registrar == null || registrar.result == null ? null : registrar;
+    return registrar == null || registrar.getResult() == null ? null : registrar;
   }
 
   private static class MyInjProcessor implements InjectedLanguageManagerImpl.InjProcessor {
@@ -73,7 +79,8 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
         hostRegistrar = new MultiHostRegistrarImpl(myProject, myHostPsiFile, element);
       }
       injector.getLanguagesToInject(hostRegistrar, element);
-      return hostRegistrar.result == null;
+      List<Pair<Place,PsiFile>> result = hostRegistrar.getResult();
+      return result == null;
     }
   }
 }

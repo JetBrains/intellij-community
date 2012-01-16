@@ -1,14 +1,11 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.idea.Bombed;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-
-import java.util.Calendar;
 
 /**
  * @author ven
@@ -107,10 +104,9 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     checkResultByFile("/refactoring/introduceField/afterEnclosingAnonymous.java");
   }
 
-  @Bombed(month = Calendar.JANUARY, day = 17)
   public void testLocalVarAnnotations() throws Exception {
     configureByFile("/refactoring/introduceField/beforeLocalVarAnnotations.java");
-    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR, false);
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterLocalVarAnnotations.java");
   }
 }

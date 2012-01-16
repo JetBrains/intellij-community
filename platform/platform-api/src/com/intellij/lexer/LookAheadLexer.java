@@ -17,8 +17,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ImmutableUserMap;
-
-import java.util.LinkedList;
+import com.intellij.util.containers.Queue;
 
 /**
  * @author peter
@@ -29,20 +28,27 @@ public abstract class LookAheadLexer extends LexerBase{
 
   private final Lexer myBaseLexer;
   private int myTokenStart;
-  private final LinkedList<IElementType> myTypeCache = new LinkedList<IElementType>();
-  private final LinkedList<Integer> myEndOffsetCache = new LinkedList<Integer>();
+  private final Queue<IElementType> myTypeCache;
+  private final Queue<Integer> myEndOffsetCache;
+
+  public LookAheadLexer(final Lexer baseLexer, int capacity) {
+    myBaseLexer = baseLexer;
+    myTypeCache = new Queue<IElementType>(capacity);
+    myEndOffsetCache = new Queue<Integer>(capacity);
+  }
 
   public LookAheadLexer(final Lexer baseLexer) {
-    myBaseLexer = baseLexer;
+    this(baseLexer, 64);
   }
+
 
   protected void addToken(IElementType type) {
     addToken(myBaseLexer.getTokenEnd(), type);
   }
 
   protected void addToken(int endOffset, IElementType type) {
-    myTypeCache.add(type);
-    myEndOffsetCache.add(endOffset);
+    myTypeCache.addLast(type);
+    myEndOffsetCache.addLast(endOffset);
   }
 
   protected void lookAhead(Lexer baseLexer) {
@@ -51,8 +57,8 @@ public abstract class LookAheadLexer extends LexerBase{
 
   public void advance() {
     if (!myTypeCache.isEmpty()) {
-      myTypeCache.removeFirst();
-      myTokenStart = myEndOffsetCache.removeFirst();
+      myTypeCache.pullFirst();
+      myTokenStart = myEndOffsetCache.pullFirst();
     }
     if (myTypeCache.isEmpty()) {
       doLookAhead();
@@ -92,7 +98,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   public int getTokenEnd() {
-    return myEndOffsetCache.getFirst();
+    return myEndOffsetCache.peekFirst();
   }
 
   public int getTokenStart() {
@@ -115,7 +121,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   public IElementType getTokenType() {
-    return myTypeCache.getFirst();
+    return myTypeCache.peekFirst();
   }
 
   @Override

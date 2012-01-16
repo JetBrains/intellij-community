@@ -30,10 +30,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -395,6 +392,13 @@ public class MagicConstantInspection extends LocalInspectionTool {
                                     new Function<PsiAnnotationMemberValue, String>() {
                                       @Override
                                       public String fun(PsiAnnotationMemberValue value) {
+                                        if (value instanceof PsiReferenceExpression) {
+                                          PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+                                          if (resolved instanceof PsiVariable) {
+                                            return PsiFormatUtil.formatVariable((PsiVariable)resolved, PsiFormatUtilBase.SHOW_NAME |
+                                                                                                       PsiFormatUtilBase.SHOW_CONTAINING_CLASS, PsiSubstitutor.EMPTY);
+                                          }
+                                        }
                                         return value.getText();
                                       }
                                     }, ", ");

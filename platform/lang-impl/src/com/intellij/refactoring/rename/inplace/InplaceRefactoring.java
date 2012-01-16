@@ -466,7 +466,9 @@ public abstract class InplaceRefactoring {
             }
           }
         });
-        PsiDocumentManager.getInstance(myProject).commitDocument(topLevelEditor.getDocument());
+        if (!myProject.isDisposed() && myProject.isOpen()) {
+          PsiDocumentManager.getInstance(myProject).commitDocument(topLevelEditor.getDocument());
+        }
       }
     }, getCommandName(), null);
   }

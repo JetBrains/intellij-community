@@ -190,32 +190,33 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                                  final PsiNameValuePair[] value) {
     final Project project = listOwner.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
-    if (containingFile instanceof PsiJavaFile) {
-      final String packageName = ((PsiJavaFile)containingFile).getPackageName();
-      final VirtualFile virtualFile = containingFile.getVirtualFile();
-      LOG.assertTrue(virtualFile != null);
-      final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-      if (!entries.isEmpty()) {
-        for (final OrderEntry entry : entries) {
-          if (!(entry instanceof ModuleOrderEntry)) {
-            final VirtualFile[] virtualFiles = AnnotationOrderRootType.getFiles(entry);
-            if (virtualFiles.length > 0) {
-              chooseRootAndAnnotateExternally(listOwner, annotationFQName, fromFile, project, packageName, virtualFile, virtualFiles, value);
-            }
-            else {
-              if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-                return;
-              }
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, virtualFile, value);
-                }
-              });
-            }
-            break;
-          }
-        }
+    if (!(containingFile instanceof PsiJavaFile)) {
+      return;
+    }
+    final String packageName = ((PsiJavaFile)containingFile).getPackageName();
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    LOG.assertTrue(virtualFile != null);
+    final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
+    if (entries.isEmpty()) {
+      return;
+    }
+    for (final OrderEntry entry : entries) {
+      if (entry instanceof ModuleOrderEntry) continue;
+      final VirtualFile[] virtualFiles = AnnotationOrderRootType.getFiles(entry);
+      if (virtualFiles.length > 0) {
+        chooseRootAndAnnotateExternally(listOwner, annotationFQName, fromFile, project, packageName, virtualFile, virtualFiles, value);
       }
+      else {
+        if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          return;
+        }
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, virtualFile, value);
+          }
+        });
+      }
+      break;
     }
   }
 
@@ -226,27 +227,28 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
     descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
     final VirtualFile file = FileChooser.chooseFile(project, descriptor);
-    if (file != null) {
-      new WriteCommandAction(project) {
-        protected void run(final Result result) throws Throwable {
-          appendChosenAnnotationsRoot(entry, file);
-          final List<XmlFile> xmlFiles = findExternalAnnotationsFile(listOwner);
-          if (xmlFiles != null) { //file already exists under appeared content root
-            if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFiles.get(0))) return;
-            annotateExternally(listOwner, annotationFQName, xmlFiles.get(0), fromFile, value);
-          }
-          else {
-            final XmlFile annotationsXml = createAnnotationsXml(file, packageName);
-            if (annotationsXml != null) {
-              final List<XmlFile> createdFiles = new ArrayList<XmlFile>();
-              createdFiles.add(annotationsXml);
-              myExternalAnnotations.put(getFQN(packageName, virtualFile), createdFiles);
-            }
-            annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
-          }
-        }
-      }.execute();
+    if (file == null) {
+      return;
     }
+    new WriteCommandAction(project) {
+      protected void run(final Result result) throws Throwable {
+        appendChosenAnnotationsRoot(entry, file);
+        final List<XmlFile> xmlFiles = findExternalAnnotationsFile(listOwner);
+        if (xmlFiles != null) { //file already exists under appeared content root
+          if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFiles.get(0))) return;
+          annotateExternally(listOwner, annotationFQName, xmlFiles.get(0), fromFile, value);
+        }
+        else {
+          final XmlFile annotationsXml = createAnnotationsXml(file, packageName);
+          if (annotationsXml != null) {
+            final List<XmlFile> createdFiles = new ArrayList<XmlFile>();
+            createdFiles.add(annotationsXml);
+            myExternalAnnotations.put(getFQN(packageName, virtualFile), createdFiles);
+          }
+          annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
+        }
+      }
+    }.execute();
   }
 
   private void chooseRootAndAnnotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName, @NotNull final PsiFile fromFile,

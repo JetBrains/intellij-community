@@ -345,6 +345,9 @@ public class HighlightInfo implements Segment {
     if (quickFixActionRanges != null) {
       s+= "; quickFixes: "+quickFixActionRanges;
     }
+    if (gutterIconRenderer != null) {
+      s += "; gutter: " + gutterIconRenderer;
+    }
     return s;
   }
 

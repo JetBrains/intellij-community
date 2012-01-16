@@ -79,10 +79,10 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     if (dependency == PsiModificationTracker.MODIFICATION_COUNT) {
       return myManager.getModificationTracker().getModificationCount();
     }
-    else if (dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT) {
+    if (dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT) {
       return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
     }
-    else if (dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT) {
+    if (dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT) {
       return myManager.getModificationTracker().getJavaStructureModificationCount();
     }
 

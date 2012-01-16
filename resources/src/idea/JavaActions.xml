@@ -4,6 +4,7 @@
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
       <action id="GenerateSetUpMethod" class="com.intellij.testIntegration.GenerateSetUpMethodAction"/>
       <action id="GenerateTearDownMethod" class="com.intellij.testIntegration.GenerateTearDownMethodAction"/>
+      <action id="GenerateDataMethod" class="com.intellij.testIntegration.GenerateDataMethodAction"/>
       <separator/>
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
       <action id="GenerateGetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAction"/>

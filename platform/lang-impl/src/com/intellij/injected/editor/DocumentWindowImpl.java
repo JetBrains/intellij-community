@@ -58,7 +58,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   private CachedText myCachedText = null;
 
-  public DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, Place shreds) {
+  public DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, @NotNull Place shreds) {
     myDelegate = delegate;
     myOneLine = oneLine;
     synchronized (myLock) {
@@ -889,13 +889,12 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   public void setShreds(@NotNull Place shreds) {
     synchronized (myLock) {
-      if (myShreds != shreds) {
-        myShreds.dispose();
-        myShreds = shreds;
-      }
+      myShreds.dispose();
+      myShreds = shreds;
     }
   }
 
+  @NotNull
   public Place getShreds() {
     synchronized (myLock) {
       return myShreds;

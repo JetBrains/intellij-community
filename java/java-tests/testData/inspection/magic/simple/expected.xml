@@ -432,4 +432,18 @@
     <description>Must be one of the: Const.X, Const.Y</description>
   </problem>
 
+  <problem>
+    <file>X.java</file>
+    <line>238</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Magic Constant</problem_class>
+    <description>Must be one of the: Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, Calendar.JUNE, Calendar.JULY, Calendar.AUGUST, Calendar.SEPTEMBER, Calendar.OCTOBER, Calendar.NOVEMBER, Calendar.DECEMBER</description>
+  </problem>
+
+  <problem>
+    <file>X.java</file>
+    <line>239</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Magic Constant</problem_class>
+    <description>Must be one of the: SwingConstants.LEFT, SwingConstants.CENTER, SwingConstants.RIGHT, SwingConstants.LEADING, SwingConstants.TRAILING</description>
+  </problem>
+
 </problems>

@@ -114,11 +114,31 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     return file;
   }
 
-  void setShreds(@NotNull Place shreds) {
+  // returns true if shreds were set, false if old ones were reused
+  boolean setShreds(@NotNull Place newShreds, @NotNull Project project) {
     synchronized (myLock) {
-      myProject = shreds.get(0).host.getProject();
-      myDocumentWindow.setShreds(shreds);
+      myProject = project;
+      Place oldShreds = myDocumentWindow.getShreds();
+      // try to reuse shreds, otherwise there are too many range markers disposals/re-creations
+      if (same(oldShreds, newShreds)) {
+        return false;
+      }
+      else {
+        myDocumentWindow.setShreds(newShreds);
+        return true;
+      }
     }
+  }
+
+  private static boolean same(Place oldShreds, Place newShreds) {
+    if (oldShreds == newShreds) return true;
+    if (oldShreds.size() != newShreds.size()) return false;
+    for (int i = 0; i < oldShreds.size(); i++) {
+      PsiLanguageInjectionHost.Shred oldShred = oldShreds.get(i);
+      PsiLanguageInjectionHost.Shred newShred = newShreds.get(i);
+      if (!oldShred.equals(newShred)) return false;
+    }
+    return true;
   }
 
   boolean isValid() {

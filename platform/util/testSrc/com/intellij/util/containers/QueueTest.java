@@ -57,6 +57,28 @@ public class QueueTest extends TestCase {
     assertEquals(xxx,x);
     assertTrue(queue.isEmpty());
   }
+
+  public void testRemoving() {
+    com.intellij.util.containers.Queue queue = new com.intellij.util.containers.Queue(10);
+    for (int i = 0; i < 9; i++) {
+      queue.addLast(String.valueOf(i));
+    }
+    for (int i = 0; i < 4; i++) {
+      Object first = queue.pullFirst();      
+      queue.addLast(first);
+    }
+    for (int i = 3; i >= 0; i--) {
+      Assert.assertEquals(String.valueOf(i), queue.removeLast());
+    }
+    for (int i = 8; i >= 6; i--) {
+      Assert.assertEquals(String.valueOf(i), queue.removeLast());
+    }
+    for (int i = 4; i <= 5; i++) {
+      Assert.assertEquals(String.valueOf(i), queue.pullFirst());
+    }
+  }
+
+
   public void testCycling() {
     com.intellij.util.containers.Queue queue = new com.intellij.util.containers.Queue(10);
     for (int i = 0; i < 9; i++) {

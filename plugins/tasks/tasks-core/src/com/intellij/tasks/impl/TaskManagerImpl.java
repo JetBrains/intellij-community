@@ -279,6 +279,13 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
+  public LocalTask addTask(Task issue) {
+    LocalTaskImpl task = issue instanceof LocalTaskImpl ? (LocalTaskImpl)issue : new LocalTaskImpl(issue);
+    addTask(task);
+    return task;
+  }
+
+  @Override
   public LocalTaskImpl createLocalTask(String summary) {
     return createTask(LOCAL_TASK_ID_FORMAT.format(myConfig.localTasksCounter++), summary);
   }
@@ -353,7 +360,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       task.setUpdated(new Date());
     }
     task.setActive(true);
-    myTasks.put(task.getId(), task);
+    addTask(task);
     if (task.isIssue()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
@@ -372,6 +379,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myDispatcher.getMulticaster().taskActivated(task);
     }
     return task;
+  }
+
+  private void addTask(LocalTaskImpl task) {
+    myTasks.put(task.getId(), task);
   }
 
   @Override
@@ -446,7 +457,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myTasks.clear();
     for (LocalTaskImpl task : config.tasks) {
       if (!task.isClosed()) {
-        myTasks.put(task.getId(), task);
+        addTask(task);
       }
     }
 
@@ -555,7 +566,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     LocalTaskImpl defaultTask = myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID);
     if (defaultTask == null) {
       defaultTask = createDefaultTask();
-      myTasks.put(defaultTask.getId(), defaultTask);
+      addTask(defaultTask);
     }
     // make sure the task is associated with default changelist
     LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
@@ -577,9 +588,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       if (!infos.contains(info)) {
         String name = localChangeList.getName();
         String id = extractId(name);
-        LocalTask existing = id == null ? myTasks.get(name) : myTasks.get(id);
+        LocalTaskImpl existing = id == null ? myTasks.get(name) : myTasks.get(id);
         if (existing != null) {
-          ((LocalTaskImpl)existing).getChangeLists().add(info);
+          existing.getChangeLists().add(info);
         } else {
           LocalTaskImpl task;
           if (id == null) {
@@ -590,7 +601,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
             task.setIssue(true);
           }
           task.getChangeLists().add(info);          
-          myTasks.put(task.getId(), task);
+          addTask(task);
         }
       }
     }
