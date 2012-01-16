@@ -26,7 +26,7 @@ public class PyDefUseUtil {
   }
 
   @NotNull
-  public static List<ReadWriteInstruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor) {
+  public static List<ReadWriteInstruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor, boolean acceptTypeAssertions) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
@@ -35,13 +35,14 @@ public class PyDefUseUtil {
     }
     final boolean[] visited = new boolean[instructions.length];
     final Collection<ReadWriteInstruction> result = new LinkedHashSet<ReadWriteInstruction>();
-    getLatestDefs(varName, instructions, instr, visited, result);
+    getLatestDefs(varName, instructions, instr, acceptTypeAssertions, visited, result);
     return new ArrayList<ReadWriteInstruction>(result);
   }
 
   private static void getLatestDefs(String varName,
                                     final Instruction[] instructions,
                                     final int instr,
+                                    final boolean acceptTypeAssertions,
                                     final boolean[] visited,
                                     final Collection<ReadWriteInstruction> result) {
     if (visited[instr]) return;
@@ -51,13 +52,13 @@ public class PyDefUseUtil {
       final PsiElement element = instruction.getElement();
       final String name = elementName(element);
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
-      if ((access.isWriteAccess() || access.isAssertTypeAccess()) && Comparing.strEqual(name, varName)) {
+      if ((access.isWriteAccess() || (acceptTypeAssertions && access.isAssertTypeAccess())) && Comparing.strEqual(name, varName)) {
         result.add(instruction);
         return;
       }
     }
     for (Instruction instruction : instructions[instr].allPred()) {
-      getLatestDefs(varName, instructions, instruction.num(), visited, result);
+      getLatestDefs(varName, instructions, instruction.num(), acceptTypeAssertions, visited, result);
     }
   }
 

@@ -284,8 +284,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         try {
           final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner,
                                                                              ((PyElement)target).getName(),
-                                                                             augAssignment != null ? augAssignment : anchor
-          );
+                                                                             augAssignment != null ? augAssignment : anchor,
+                                                                             true);
           if (!defs.isEmpty()) {
             PyType type = defs.get(0).getType(context);
             for (int i = 1; i < defs.size(); i++) {

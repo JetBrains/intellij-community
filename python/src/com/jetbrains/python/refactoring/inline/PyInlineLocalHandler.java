@@ -141,7 +141,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
     for (final PsiElement ref : refsToInline) {
       final List<PsiElement> elems = new ArrayList<PsiElement>();
-      final List<ReadWriteInstruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref);
+      final List<ReadWriteInstruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false);
       for (ReadWriteInstruction i : latestDefs) {
         elems.add(i.getElement());
       }
@@ -216,7 +216,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
                                                                   PyTargetExpression local, Project project) {
     if (expr != null) {
       try {
-        final List<ReadWriteInstruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), expr);
+        final List<ReadWriteInstruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), expr, true);
         if (candidates.size() == 1) {
           final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
           return Pair.create(expression, false);
