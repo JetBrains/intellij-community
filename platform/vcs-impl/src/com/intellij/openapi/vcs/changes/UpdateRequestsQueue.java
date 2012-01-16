@@ -54,6 +54,7 @@ public class UpdateRequestsQueue {
   private boolean myRequestSubmitted;
   private boolean myRequestRunning;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
+  private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<Semaphore>();
   private final ProjectLevelVcsManager myPlVcsManager;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
@@ -149,30 +150,17 @@ public class UpdateRequestsQueue {
     try {
       while (true) {
         final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-        synchronized (myLock) {
-          final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-              semaphore.up();
-            }
-          };
-          if (myRequestSubmitted || myRequestRunning) {
-            myWaitingUpdateCompletionQueue.add(runnable);
-          }
-          else {
-            runnable.run();
-          }
-        }
-        if (!semaphore.waitFor(10000)) {
-          LOG.error("Too long VCS update");
-          return;
-        }
-
         synchronized (myLock) {
           if (!myRequestSubmitted && !myRequestRunning) {
             return;
           }
+
+          semaphore.down();
+          myWaitingUpdateCompletionSemaphores.add(semaphore);
+        }
+        if (!semaphore.waitFor(10000)) {
+          LOG.error("Too long VCS update");
+          return;
         }
       }
     }
@@ -180,6 +168,15 @@ public class UpdateRequestsQueue {
       if (ChangeListManagerImpl.DEBUG) {
         System.out.println(" - end - UpdateRequestsQueue.waitUntilRefreshed");
       }
+    }
+  }
+
+  private void freeSemaphores() {
+    synchronized (myLock) {
+      for (Semaphore semaphore : myWaitingUpdateCompletionSemaphores) {
+        semaphore.up();
+      }
+      myWaitingUpdateCompletionSemaphores.clear();
     }
   }
 
@@ -285,6 +282,7 @@ public class UpdateRequestsQueue {
         for (Runnable runnable : copy) {
           runnable.run();
         }
+        freeSemaphores();
         LOG.debug("MyRunnable: Runnables executed, project: " + myProject.getName() + ", runnable: " + hashCode());
       }
     }
