@@ -16,9 +16,9 @@
 
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -127,7 +127,8 @@ public class CreateFormAction extends AbstractCreateFormAction {
     private JTextField myFormNameTextField;
     private JCheckBox myCreateBoundClassCheckbox;
     private JTextField myClassNameTextField;
-    private JComboBox myBaseLayoutManagerCombo;
+    private TemplateKindCombo myBaseLayoutManagerCombo;
+    private JLabel myUpDownHintForm;
     private boolean myAdjusting = false;
     private boolean myNeedAdjust = true;
 
@@ -139,6 +140,8 @@ public class CreateFormAction extends AbstractCreateFormAction {
       super(project, true);
       myProject = project;
       myValidator = validator;
+      myBaseLayoutManagerCombo.registerUpDownHint(myFormNameTextField);
+      myUpDownHintForm.setIcon(PlatformIcons.UP_DOWN_ARROWS);
       init();
       setTitle(UIDesignerBundle.message("title.new.gui.form"));
       setOKActionEnabled(false);
@@ -168,14 +171,11 @@ public class CreateFormAction extends AbstractCreateFormAction {
         }
       });
 
-      myBaseLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
-      myBaseLayoutManagerCombo.setRenderer(new ListCellRendererWrapper<String>(myBaseLayoutManagerCombo.getRenderer()) {
-        @Override
-        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-          setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
-        }
-      });
-      myBaseLayoutManagerCombo.setSelectedItem(GuiDesignerConfiguration.getInstance(project).DEFAULT_LAYOUT_MANAGER);
+      for (String layoutName: LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()) {
+        String displayName = LayoutManagerRegistry.getLayoutManagerDisplayName(layoutName);
+        myBaseLayoutManagerCombo.addItem(displayName, null, layoutName);
+      }
+      myBaseLayoutManagerCombo.setSelectedName(GuiDesignerConfiguration.getInstance(project).DEFAULT_LAYOUT_MANAGER);
     }
 
     protected JComponent createCenterPanel() {
@@ -189,7 +189,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
       else {
         myLastClassName = null;
       }
-      myLastLayoutManager = (String)myBaseLayoutManagerCombo.getSelectedItem();
+      myLastLayoutManager = myBaseLayoutManagerCombo.getSelectedName();
       GuiDesignerConfiguration.getInstance(myProject).DEFAULT_LAYOUT_MANAGER = myLastLayoutManager;
       final String inputString = myFormNameTextField.getText().trim();
       if (myValidator.checkInput(inputString) && myValidator.canClose(inputString)) {
