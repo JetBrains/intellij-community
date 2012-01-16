@@ -76,6 +76,10 @@ public abstract class PythonSdkFlavor {
 
   @Nullable
   public static PythonSdkFlavor getFlavor(String sdkPath) {
+    if (sdkPath == null) {
+      return null;
+    }
+
     for (PythonSdkFlavor flavor : getApplicableFlavors()) {
       if (flavor.isValidSdkHome(sdkPath)) {
         return flavor;
