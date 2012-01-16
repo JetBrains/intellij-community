@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.extractMethod;
+package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
@@ -78,8 +80,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   protected void doOKAction() {
     String name = getEnteredName();
     if (name == null) return;
-    GrMethod method = ExtractMethodUtil.createMethodByHelper(name, myHelper);
-    if (method != null && !ExtractMethodUtil.validateMethod(method, myHelper)) {
+    GrMethod method = ExtractUtil.createMethodByHelper(name, myHelper);
+    if (method != null && !ExtractUtil.validateMethod(method, myHelper)) {
       return;
     }
     if (myCbSpecifyType.isEnabled()) {
@@ -209,16 +211,16 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   /*
   Update signature text area
    */
-  void updateSignature() {
+  public void updateSignature() {
     if (mySignatureArea == null) return;
     @NonNls StringBuilder buffer = new StringBuilder();
-    String modifier = ExtractMethodUtil.getModifierString(myHelper);
+    String modifier = ExtractUtil.getModifierString(myHelper);
     buffer.append(modifier);
-    buffer.append(ExtractMethodUtil.getTypeString(myHelper, true, modifier));
+    buffer.append(ExtractUtil.getTypeString(myHelper, true, modifier));
     String name = getEnteredName() == null ? "" : getEnteredName();
     buffer.append(name);
     buffer.append("(");
-    String[] params = ExtractMethodUtil.getParameterString(myHelper);
+    String[] params = ExtractUtil.getParameterString(myHelper);
     if (params.length > 0) {
       String INDENT = "    ";
       buffer.append("\n");
@@ -230,7 +232,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     mySignatureArea.setText(buffer.toString());
   }
 
-  ExtractMethodSettings getSettings() {
+  public ExtractMethodSettings getSettings() {
     return new MyExtractMethodSettings(this);
   }
 

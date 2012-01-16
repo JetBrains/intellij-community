@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.extractMethod;
+package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.IdeBorderFactory;
@@ -83,16 +83,7 @@ public class VisibilityPanel extends JPanel {
     if (myRbProtected.isSelected()) {
       return PsiModifier.PROTECTED;
     }
-    if (myRbPrivate.isSelected()) {
-      return PsiModifier.PRIVATE;
-    }
     return PsiModifier.PRIVATE;
-  }
-
-  public void setVisibilityEnabled(String visibility, boolean value) {
-    if(PsiModifier.PRIVATE.equals(visibility)) myRbPrivate.setEnabled(value);
-    else if(PsiModifier.PROTECTED.equals(visibility)) myRbProtected.setEnabled(value);
-    else if(PsiModifier.PUBLIC.equals(visibility)) myRbPublic.setEnabled(value);
   }
 
   public void setVisibility(String visibility) {
@@ -107,7 +98,7 @@ public class VisibilityPanel extends JPanel {
     }
   }
 
-  public static interface VisibilityStateChanged extends EventListener {
+  public interface VisibilityStateChanged extends EventListener {
     void visibilityChanged(String newVisibility);
   }
 

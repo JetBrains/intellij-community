@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.extractMethod;
+package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +69,7 @@ import java.util.Set;
  */
 public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMethodHandler");
+  private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
   private String myInvokeResult = "ok";
 
@@ -105,12 +106,12 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     int endOffset = selectionModel.getSelectionEnd();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    PsiElement[] elements = ExtractMethodUtil.getElementsInOffset(file, startOffset, endOffset);
+    PsiElement[] elements = ExtractUtil.getElementsInOffset(file, startOffset, endOffset);
     if (elements.length == 1 && elements[0] instanceof GrExpression) {
       selectionModel.setSelection(startOffset, elements[0].getTextRange().getEndOffset());
     }
 
-    GrStatement[] statements = ExtractMethodUtil.getStatementsByElements(elements);
+    GrStatement[] statements = ExtractUtil.getStatementsByElements(elements);
 
     if (statements.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.should.represent.a.statement.set"));
@@ -128,17 +129,17 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     GrStatement statement0 = statements[0];
-    GrMemberOwner owner = ExtractMethodUtil.getMemberOwner(statement0);
-    GrStatementOwner declarationOwner = ExtractMethodUtil.getDeclarationOwner(statement0);
-    if (owner == null ||
-        (declarationOwner == null && !ExtractMethodUtil.isSingleExpression(statements))) {
+    GrMemberOwner owner = ExtractUtil.getMemberOwner(statement0);
+    GrStatementOwner declarationOwner = ExtractUtil.getDeclarationOwner(statement0);
+    if (owner == null || declarationOwner == null && !ExtractUtil.isSingleExpression(statements)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
       showErrorMessage(message, project, editor);
       return false;
     }
     if (declarationOwner == null &&
-        ExtractMethodUtil.isSingleExpression(statements) &&
-        statement0 instanceof GrExpression && PsiType.VOID.equals(((GrExpression)statement0).getType())) {
+        ExtractUtil.isSingleExpression(statements) &&
+        statement0 instanceof GrExpression &&
+        PsiType.VOID.equals(((GrExpression)statement0).getType())) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(message, project, editor);
       return false;
@@ -166,8 +167,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(statement0, statements[statements.length - 1]);
     VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
     VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
-    if (/*outputInfos.length > 1 ||*/
-        outputInfos.length == 1 && returnStatements.size() > 0) {
+    if (outputInfos.length == 1 && returnStatements.size() > 0) {
       String message = GroovyRefactoringBundle.message("multiple.output.values");
       showErrorMessage(message, project, editor);
       return false;
@@ -176,17 +176,15 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     boolean hasInterruptingStatements = false;
 
     for (GrStatement statement : statements) {
-      if (hasInterruptingStatements =
-          GroovyRefactoringUtil.hasWrongBreakStatements(statement) ||
-              GroovyRefactoringUtil.haswrongContinueStatements(statement)) {
-        break;
-      }
+      hasInterruptingStatements = GroovyRefactoringUtil.hasWrongBreakStatements(statement) || GroovyRefactoringUtil.haswrongContinueStatements(statement);
+      if (hasInterruptingStatements) break;
     }
+
     // must be replaced by return statement
     boolean hasReturns = returnStatements.size() > 0;
     List<GrStatement> returnStatementsCopy = new ArrayList<GrStatement>(returnStatements.size());
     returnStatementsCopy.addAll(returnStatements);
-    boolean isReturnStatement = ExtractMethodUtil.isReturnStatement(statements[statements.length - 1], returnStatementsCopy);
+    boolean isReturnStatement = ExtractUtil.isReturnStatement(statements[statements.length - 1], returnStatementsCopy);
     boolean isLastStatementOfMethod = isLastStatementOfMethodOrClosure(statements);
     if (hasReturns && !isLastStatementOfMethod && !isReturnStatement || hasInterruptingStatements) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow");
@@ -194,7 +192,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
-    boolean canBeStatic = ExtractMethodUtil.canBeStatic(statement0);
+    boolean canBeStatic = ExtractUtil.canBeStatic(statement0);
 
     ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputInfos, outputInfos, elements, statements, owner, canBeStatic, returnStatements);
 
@@ -207,7 +205,8 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       ExtractMethodSettings settings = dialog.getSettings();
       methodName = settings.getEnteredName();
       helper = settings.getHelper();
-    } else {
+    }
+    else {
       methodName = "testMethod";
     }
 
@@ -239,19 +238,19 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
                                      final Editor editor,
                                      final PsiElement startElement) {
 
-    final GrMethod method = ExtractMethodUtil.createMethodByHelper(methodName, helper);
+    final GrMethod method = ExtractUtil.createMethodByHelper(methodName, helper);
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          PsiElement anchor = ExtractMethodUtil.calculateAnchorToInsertBefore(owner, startElement);
+          PsiElement anchor = ExtractUtil.calculateAnchorToInsertBefore(owner, startElement);
           GrMethod newMethod = owner.addMemberDeclaration(method, anchor);
-          ExtractMethodUtil.renameParameterOccurrences(newMethod, helper);
+          ExtractUtil.renameParameterOccurrences(newMethod, helper);
           GrReferenceAdjuster.shortenReferences(newMethod);
           GrStatement realStatement;
 
-          if (declarationOwner != null && !ExtractMethodUtil.isSingleExpression(helper.getStatements())) {
+          if (declarationOwner != null && !ExtractUtil.isSingleExpression(helper.getStatements())) {
             // Replace set of statements
-            final GrStatement[] newStatement = ExtractMethodUtil.createResultStatement(helper, methodName);
+            final GrStatement[] newStatement = ExtractUtil.createResultStatement(helper, methodName);
             // add call statement
             final GrStatement[] statements = helper.getStatements();
             assert statements.length > 0;
@@ -261,12 +260,13 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
             }
             assert realStatement != null;
             // remove old statements
-            ExtractMethodUtil.removeOldStatements(declarationOwner, helper);
+            ExtractUtil.removeOldStatements(declarationOwner, helper);
             PsiImplUtil.removeNewLineAfter(realStatement);
-          } else {
+          }
+          else {
             // Expression call replace
-            GrExpression methodCall = ExtractMethodUtil.createMethodCallByHelper(methodName, helper);
-            GrExpression oldExpr = (GrExpression) helper.getStatements()[0];
+            GrExpression methodCall = ExtractUtil.createMethodCallByHelper(methodName, helper);
+            GrExpression oldExpr = (GrExpression)helper.getStatements()[0];
             realStatement = oldExpr.replaceWithExpression(methodCall, true);
           }
           GrReferenceAdjuster.shortenReferences(realStatement);
@@ -280,26 +280,22 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
           // move to offset
           if (editor != null) {
             PsiDocumentManager.getInstance(helper.getProject()).commitDocument(editor.getDocument());
-            editor.getCaretModel().moveToOffset(ExtractMethodUtil.getCaretOffset(realStatement));
+            editor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(realStatement));
           }
-
-        } catch (IncorrectOperationException e) {
+        }
+        catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
     };
 
     Project project = helper.getProject();
-    CommandProcessor.getInstance().executeCommand(
-        project,
-        new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(runnable);
-            editor.getSelectionModel().removeSelection();
-          }
-        }, REFACTORING_NAME, null);
-
-
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(runnable);
+        editor.getSelectionModel().removeSelection();
+      }
+    }, REFACTORING_NAME, null);
   }
 
   private static GroovyExtractMethodDialog getDialog(@NotNull final ExtractMethodInfoHelper helper) {

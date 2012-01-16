@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.extractMethod;
+package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -28,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
 
 import java.util.*;
 
@@ -42,7 +44,7 @@ public class ExtractMethodInfoHelper {
   private final GrMemberOwner myTargetClass;
   private final boolean myIsStatic;
   private final boolean myIsReturnStatement;
-  private boolean mySpecifyType;
+  private boolean mySpecifyType = true;
   private final PsiElement[] myInnerElements;
   private String myVisibility;
   private final Project myProject;
@@ -86,7 +88,7 @@ public class ExtractMethodInfoHelper {
         outputType = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, myTargetClass);
       }
     }
-    else if (ExtractMethodUtil.isSingleExpression(statements)) {
+    else if (ExtractUtil.isSingleExpression(statements)) {
       final GrStatement lastExpr = statements[statements.length - 1];
       if (!(lastExpr.getParent() instanceof GrCodeBlock)) {
         outputType = ((GrExpression)lastExpr).getType();
@@ -111,7 +113,6 @@ public class ExtractMethodInfoHelper {
       }
     }
     myOutputType = outputType != null ? outputType : PsiType.VOID;
-    mySpecifyType = !(PsiType.VOID.equals(outputType) || myOutputType.equalsToText("java.lang.Object"));
   }
 
   @NotNull

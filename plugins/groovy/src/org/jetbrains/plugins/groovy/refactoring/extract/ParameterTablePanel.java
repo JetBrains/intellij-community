@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.extractMethod;
+package org.jetbrains.plugins.groovy.refactoring.extract;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPrimitiveType;
@@ -26,11 +27,13 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
+import org.jetbrains.plugins.groovy.refactoring.extract.method.GroovyExtractMethodDialog;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -48,12 +51,11 @@ import java.awt.event.KeyEvent;
  */
 public class ParameterTablePanel extends JPanel {
 
-  private Project myProject;
   private ParameterInfo[] myParameterInfos;
   private TypeSelector[] myParameterTypeSelectors;
   private GroovyExtractMethodDialog myDialog;
 
-  private Table myTable;
+  private JBTable myTable;
   private MyTableModel myTableModel;
   private JButton myUpButton;
   private JButton myDownButton;
@@ -63,16 +65,15 @@ public class ParameterTablePanel extends JPanel {
     super(new BorderLayout());
   }
 
-  void init(GroovyExtractMethodDialog dialog, ExtractMethodInfoHelper helper) {
+  public void init(GroovyExtractMethodDialog dialog, ExtractMethodInfoHelper helper) {
 
     setBorder(IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("parameters.border.title"), false, false, true));
 
     myDialog = dialog;
-    myProject = helper.getProject();
     myParameterInfos = helper.getParameterInfos();
 
     myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
     DefaultCellEditor defaultEditor = (DefaultCellEditor) myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 
@@ -89,14 +90,15 @@ public class ParameterTablePanel extends JPanel {
       }
     });
 
-    PsiManager manager = PsiManager.getInstance(myProject);
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    Project project = helper.getProject();
+    PsiManager manager = PsiManager.getInstance(project);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     myParameterTypeSelectors = new TypeSelector[myParameterInfos.length];
     for (int i = 0; i < myParameterTypeSelectors.length; i++) {
-//      final GrExpression[] occurrences = ExtractMethodUtil.findVariableOccurrences(helper.getStatements(), myParameterInfos[i].getName());
+//      final GrExpression[] occurrences = ExtractUtil.findVariableOccurrences(helper.getStatements(), myParameterInfos[i].getName());
 //      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, myParameterInfos[i].getType(), occurrences, areTypesDirected());
       PsiType type = myParameterInfos[i].getType();
-      myParameterTypeSelectors[i] = new TypeSelector(type != null ? type : PsiType.getJavaLangObject(manager, scope), myProject);
+      myParameterTypeSelectors[i] = new TypeSelector(type != null ? type : PsiType.getJavaLangObject(manager, scope), project);
 //      myParameterInfos[i].setTypeName(myParameterTypeSelectors[i].getSelectedType());
     }
 
@@ -104,16 +106,13 @@ public class ParameterTablePanel extends JPanel {
     myTypeRendererCombo.setOpaque(true);
     myTypeRendererCombo.setBorder(null);
 
-    myTypeRendererCombo.setRenderer(new DefaultListCellRenderer() {
-
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        PsiType type = ((ParameterInfo) value).getType();
+    myTypeRendererCombo.setRenderer(new ListCellRendererWrapper<ParameterInfo>(myTypeRendererCombo.getRenderer()) {
+      @Override
+      public void customize(JList list, ParameterInfo info, int index, boolean selected, boolean hasFocus) {
+        PsiType type = info.getType();
         PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
         type = unboxed != null ? unboxed : type;
         setText(type != null ? type.getPresentableText() : "");
-        return this;
       }
     });
 
