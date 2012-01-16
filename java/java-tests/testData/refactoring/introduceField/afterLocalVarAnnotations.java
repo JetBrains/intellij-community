@@ -1,5 +1,7 @@
 class Test {
-  void foo() {
-    @Deprecated String foo;
-  }
+    @Deprecated
+    public final String string = "";
+
+    void foo() {
+    }
 }
