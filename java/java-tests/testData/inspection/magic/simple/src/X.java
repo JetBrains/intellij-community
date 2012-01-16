@@ -232,4 +232,11 @@ public class X {
     }
 
   }
+
+  class ExternalAnnotations {
+    void f() {
+      java.util.Calendar.getInstance().set(2000,9,0)
+      new javax.swing.JLabel("text", 3);
+    }
+  }
 }

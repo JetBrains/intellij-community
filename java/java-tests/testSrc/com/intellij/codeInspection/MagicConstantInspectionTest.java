@@ -27,6 +27,12 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class MagicConstantInspectionTest extends InspectionTestCase {
@@ -35,41 +41,21 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
+  @Override
+  protected Sdk getTestProjectSdk() {
+    // add JDK annotations
+    Sdk sdk = super.getTestProjectSdk();
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(PathManager.getHomePath() + "/jdkAnnotations");
+    sdkModificator.addRoot(root, AnnotationOrderRootType.getInstance());
+    sdkModificator.commitChanges();
+
+    return sdk;
+  }
+
   private void doTest() throws Exception {
     doTest("magic/" + getTestName(true), new LocalInspectionToolWrapper(new MagicConstantInspection()), "jdk 1.7");
   }
 
   public void testSimple() throws Exception { doTest(); }
-
-
-
-  //{
-  //  SecurityManager securityManager = System.getSecurityManager();
-  //  securityManager.checkMemberAccess(getClass(), 948);
-  //
-  //  Font font = null;
-  //  new Cursor() ;
-  //  JOptionPane.showConfirmDialog(null, null, null, 0, );
-  //  JList l = null;
-  //  l.getSelectionModel().setSelectionMode();
-  //  new JSplitPane(9);
-  //  MouseWheelEvent event = new MouseWheelEvent(null,0,0,0,0,0,0,false,0,0,0 );
-  //  Pattern p = Pattern.compile("", Pattern.CANON_EQ);
-  //  JTree t = null; t.getSelectionModel().setSelectionMode();
-  //
-  //  TitledBorder border = new TitledBorder(null,"",0,0);
-  //  new JLabel("text", )
-  //  Calendar calendar = Calendar.getInstance();
-  //  new Font("Arial", )
-  //}
-
-  //public static Font createFont() {
-  //  return new Font("Arial", );
-  //}
-
-
-
-
-
-
 }

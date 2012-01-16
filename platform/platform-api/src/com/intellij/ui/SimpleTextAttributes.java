@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,7 +192,7 @@ public final class SimpleTextAttributes {
     return new SimpleTextAttributes(attributes.getBackgroundColor(), foregroundColor, attributes.getEffectColor(), style);
   }
 
-  @TextAttributes.FontStyle
+  @JdkConstants.FontStyle
   public int getFontStyle() {
     return myStyle & FONT_MASK;
   }

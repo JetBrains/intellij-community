@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.markup.TextAttributes;
 import gnu.trove.TIntHashSet;
+import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,12 +28,12 @@ public class FontInfo {
   private final String myFamilyName;
   private final Font myFont;
   private final int mySize;
-  @TextAttributes.FontStyle private final int myStyle;
+  @JdkConstants.FontStyle private final int myStyle;
   private final TIntHashSet mySafeCharacters = new TIntHashSet();
   private FontMetrics myFontMetrics = null;
   private final int[] charWidth = new int[128];
 
-  public FontInfo(final String familyName, final int size, @TextAttributes.FontStyle int style) {
+  public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
     myFamilyName = familyName;
     mySize = size;
     myStyle = style;
@@ -80,7 +80,7 @@ public class FontInfo {
     return mySize;
   }
 
-  @TextAttributes.FontStyle
+  @JdkConstants.FontStyle
   public int getStyle() {
     return myStyle;
   }
