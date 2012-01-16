@@ -1,15 +1,15 @@
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
@@ -40,9 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -50,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -66,6 +66,7 @@ public class GrabDependencies implements IntentionAction {
   private static final String GRAPES_ANNO = "groovy.lang.Grapes";
   private static final String GRAB_EXCLUDE_ANNO = "groovy.lang.GrabExclude";
   private static final String GRAB_RESOLVER_ANNO = "groovy.lang.GrabResolver";
+  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
 
   @NotNull
   public String getText() {
@@ -124,9 +125,21 @@ public class GrabDependencies implements IntentionAction {
       //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
       DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "org.jetbrains.plugins.groovy.grape.GrapeRunner");
+      PathsList list;
+      try {
+        list = GroovyScriptRunner.getClassPathFromRootModel(module, ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(vfile), javaParameters, true);
+      }
+      catch (CantRunException e) {
+        NOTIFICATION_GROUP.createNotification("Can't run @Grab: " + ExceptionUtil.getMessage(e), ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
+        return;
+      }
+      if (list == null) {
+        list = new PathsList();
+      }
+      list.add(PathUtil.getJarPathForClass(GrapeRunner.class));
 
       javaParameters.getProgramParametersList().add("--classpath");
-      javaParameters.getProgramParametersList().add(PathUtil.getJarPathForClass(GrapeRunner.class));
+      javaParameters.getProgramParametersList().add(list.getPathsString());
       javaParameters.getProgramParametersList().add(queries.get(grabText));
 
       lines.put(grabText, JdkUtil.setupJVMCommandLine(exePath, javaParameters, true));
@@ -155,13 +168,7 @@ public class GrabDependencies implements IntentionAction {
 
         final String finalMessages = messages;
         final String title = jarCount + " Grape dependency jar" + (jarCount == 1 ? "" : "s") + " added";
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (project.isDisposed()) return;
-            Notifications.Bus.notify(new Notification("Grape", title, finalMessages, NotificationType.INFORMATION), project);
-          }
-        });
+        NOTIFICATION_GROUP.createNotification(title, finalMessages, NotificationType.INFORMATION, null).notify(project);
       }
     });
 
