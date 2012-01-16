@@ -51,6 +51,8 @@ public abstract class TaskManager {
   public abstract Task updateIssue(String id); 
 
   public abstract LocalTask[] getLocalTasks();
+  
+  public abstract LocalTask addTask(Task issue);
 
   public abstract LocalTask createLocalTask(String summary);
 

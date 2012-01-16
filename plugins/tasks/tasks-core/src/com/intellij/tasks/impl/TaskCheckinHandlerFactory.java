@@ -20,11 +20,16 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.context.WorkingContextManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Date;
 
 /**
  * @author Dmitry Avdeev
@@ -41,17 +46,46 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
         final String message = panel.getCommitMessage();
         if (message != null) {
           final Project project = panel.getProject();
-          TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
+          final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
           if (manager.getState().saveContextOnCommit) {
+            final Task task = findTask(message, manager);
+
+            //noinspection SSBasedInspection
             SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
-                WorkingContextManager.getInstance(project).saveContext(null, message);
+                final WorkingContextManager contextManager = WorkingContextManager.getInstance(project);
+                if (task != null) {
+                  LocalTask localTask = manager.addTask(task);
+                  localTask.setUpdated(new Date());
+                  contextManager.saveContext(localTask);
+                }
+                else {
+                  contextManager.saveContext(null, message);
+                }
               }
             });
           }
         }
       }
     };
+  }
+
+  @Nullable
+  private static Task findTask(String message, TaskManager manager) {
+    TaskRepository[] repositories = manager.getAllRepositories();
+    for (TaskRepository repository : repositories) {
+      String id = repository.extractId(message);
+      try {
+        Task task = repository.findTask(id);
+        if (task != null) {
+          return task;
+        }
+      }
+      catch (Exception ignore) {
+
+      }
+    }
+    return null;
   }
 }
