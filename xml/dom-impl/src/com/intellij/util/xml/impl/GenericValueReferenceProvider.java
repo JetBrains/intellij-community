@@ -21,11 +21,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.*;
-import com.intellij.pom.references.PomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,18 +83,6 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       for (PsiReference reference : references) {
         if (!reference.isSoft()) {
           LOG.error("dom reference should be soft: " + reference + " (created by " + converter + ")");
-        }
-      }
-    }
-    // creating "declaration" reference
-    if (references.length == 0) {
-      final NameValue nameValue = domElement.getAnnotation(NameValue.class);
-      if (nameValue != null && nameValue.referencable()) {
-        DomElement parent = domElement.getParent();
-        assert parent != null;
-        final DomTarget target = DomTarget.getTarget(parent);
-        if (target != null) {
-          references = ArrayUtil.append(references, PsiReferenceBase.createSelfReference(psiElement, PomService.convertToPsi(target)), PsiReference.class);
         }
       }
     }
