@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
@@ -29,6 +30,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine) {
     super(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
+  }
+
+  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
+    super(process, commandLine, charset);
   }
 
   @Override

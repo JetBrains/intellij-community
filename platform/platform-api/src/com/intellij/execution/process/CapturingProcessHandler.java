@@ -39,7 +39,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
   }
 
   public CapturingProcessHandler(final Process process, final Charset charset, final String commandLine) {
-    super(process, commandLine);
+    super(process, commandLine, charset);
     myCharset = charset;
     addProcessListener(new ProcessAdapter() {
       @Override
