@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,8 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private volatile boolean myCompilingTests = false;
   private final BuildDataManager myDataManager;
   private final ModuleRootsIndex myRootsIndex;
+
+  private final Set<Pair<Module, DirtyMarkScope>> myNonIncrementalModules = new HashSet<Pair<Module, DirtyMarkScope>>();
 
   private final ProjectPaths myProjectPaths;
   private volatile boolean myErrorsFound = false;
@@ -110,8 +113,28 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
 
     for (Module module : dirtyModules) {
-      markDirtyFiles(module, myTsStorage, true, DirtyMarkScope.BOTH, null);
+      markDirtyFiles(module, myTsStorage, true, isCompilingTests()? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
+      if (isMake()) {
+        if (!isCompilingTests()) {
+          myNonIncrementalModules.add(new Pair<Module, DirtyMarkScope>(module, DirtyMarkScope.PRODUCTION));
+        }
+        myNonIncrementalModules.add(new Pair<Module, DirtyMarkScope>(module, DirtyMarkScope.TESTS));
+      }
     }
+  }
+
+  boolean shouldDifferentiate(ModuleChunk chunk, boolean forTests) {
+    if (!isMake()) {
+      // the check makes sense only in make mode
+      return true;
+    }
+    final DirtyMarkScope dirtyScope = forTests ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION;
+    for (Module module : chunk.getModules()) {
+      if (myNonIncrementalModules.contains(new Pair<Module, DirtyMarkScope>(module, dirtyScope))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public Mappings createDelta() {
@@ -140,7 +163,12 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     try {
       if (!myErrorsFound && !myCancelStatus.isCanceled()) {
         final boolean compilingTests = isCompilingTests();
+        final DirtyMarkScope dirtyScope = compilingTests ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION;
         for (Module module : chunk.getModules()) {
+          if (isMake()) {
+            // ensure non-incremental flag cleared
+            myNonIncrementalModules.remove(new Pair<Module, DirtyMarkScope>(module, dirtyScope));
+          }
           if (isProjectRebuild()) {
             myFsState.markInitialScanPerformed(module, compilingTests);
           }
