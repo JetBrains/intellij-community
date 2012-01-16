@@ -24,6 +24,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
@@ -164,12 +165,12 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     for(int i = 0; i < newParms.length; i++){
       ParameterInfoImpl info = newParms[i];
       if (info.oldParameterIndex < 0 && !info.isVarargType()){
-        if (info.defaultValue == null) continue;
+        if (StringUtil.isEmpty(info.defaultValue)) continue;
         try{
           defaultValues[i] = factory.createExpressionFromText(info.defaultValue, method);
         }
         catch(IncorrectOperationException e){
-          LOG.error(e);
+          LOG.info(e);
         }
       }
     }

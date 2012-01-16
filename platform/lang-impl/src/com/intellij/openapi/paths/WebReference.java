@@ -56,5 +56,12 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
       public String getPresentableText() {
         return getValue();
       }
+
+      @Override
+      public TextRange getTextRange() {
+        final TextRange rangeInElement = getRangeInElement();
+        final TextRange elementRange = myElement.getTextRange();
+        return elementRange != null ? rangeInElement.shiftRight(elementRange.getStartOffset()) : rangeInElement;
+      }
   }
 }
