@@ -8,6 +8,7 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
@@ -164,6 +165,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
       if (!myErrorsFound && !myCancelStatus.isCanceled()) {
         final boolean compilingTests = isCompilingTests();
         final DirtyMarkScope dirtyScope = compilingTests ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION;
+        boolean marked = false;
         for (Module module : chunk.getModules()) {
           if (isMake()) {
             // ensure non-incremental flag cleared
@@ -175,9 +177,12 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
           final List<RootDescriptor> roots = myRootsIndex.getModuleRoots(module);
           for (RootDescriptor descriptor : roots) {
             if (compilingTests? descriptor.isTestRoot : !descriptor.isTestRoot) {
-              myFsState.markAllUpToDate(getScope(), descriptor, myTsStorage, myCompilationStartStamp);
+              marked |= myFsState.markAllUpToDate(getScope(), descriptor, myTsStorage, myCompilationStartStamp);
             }
           }
+        }
+        if (marked) {
+          processMessage(UptoDateFilesSavedEvent.INSTANCE);
         }
       }
     }

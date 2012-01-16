@@ -72,7 +72,11 @@ public class FSState {
     }
   }
 
-  public void markAllUpToDate(CompileScope scope, final RootDescriptor rd, final TimestampStorage tsStorage, final long compilationStartStamp) throws Exception {
+  /**
+   * @return true if marked something, false otherwise
+   */
+  public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final TimestampStorage tsStorage, final long compilationStartStamp) throws Exception {
+    boolean marked = false;
     final FilesDelta delta = getDelta(rd.module);
     final Set<File> files = delta.clearRecompile(rd.root, rd.isTestRoot);
     if (files != null) {
@@ -87,6 +91,7 @@ public class FSState {
               delta.markRecompile(rd.root, rd.isTestRoot, file);
             }
             else {
+              marked = true;
               tsStorage.saveStamp(file, stamp);
             }
           }
@@ -99,6 +104,7 @@ public class FSState {
         }
       }
     }
+    return marked;
   }
 
   public boolean processFilesToRecompile(CompileContext context, final Module module, final FileProcessor processor) throws Exception {

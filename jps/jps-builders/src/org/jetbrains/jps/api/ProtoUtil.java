@@ -2,7 +2,6 @@ package org.jetbrains.jps.api;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -117,44 +116,30 @@ public class ProtoUtil {
   }
 
   public static JpsRemoteProto.Message.Response createBuildStartedEvent(@Nullable String description) {
-    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_STARTED, description);
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_STARTED, description, null);
   }
 
-  public static JpsRemoteProto.Message.Response createBuildCompletedEvent(@Nullable String description) {
-    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED, description);
-  }
-
-  public static JpsRemoteProto.Message.Response createBuildCanceledEvent(@Nullable String description) {
-    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_CANCELED, description);
+  public static JpsRemoteProto.Message.Response createBuildCompletedEvent(@Nullable String description, final JpsRemoteProto.Message.Response.BuildEvent.Status status) {
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED, description, status);
   }
 
   public static JpsRemoteProto.Message.Response createCommandCompletedEvent(@Nullable String description) {
-    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.COMMAND_COMPLETED, description);
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.COMMAND_COMPLETED, description, null);
   }
 
-  public static JpsRemoteProto.Message.Response createBuildEvent(final JpsRemoteProto.Message.Response.BuildEvent.Type type, @Nullable String description) {
+  public static JpsRemoteProto.Message.Response createBuildEvent(final JpsRemoteProto.Message.Response.BuildEvent.Type type, @Nullable String description, final JpsRemoteProto.Message.Response.BuildEvent.Status status) {
     final JpsRemoteProto.Message.Response.BuildEvent.Builder builder = JpsRemoteProto.Message.Response.BuildEvent.newBuilder().setEventType(type);
     if (description != null) {
       builder.setDescription(description);
     }
+    if (status != null) {
+      builder.setCompletionStatus(status);
+    }
     return JpsRemoteProto.Message.Response.newBuilder().setResponseType(JpsRemoteProto.Message.Response.Type.BUILD_EVENT).setBuildEvent(builder.build()).build();
-  }
-
-  public static JpsRemoteProto.Message.Response createCompileInfoMessageResponse(String text, String path) {
-    return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, path, -1L, -1L, -1L, -1, -1, -1.0f);
   }
 
   public static JpsRemoteProto.Message.Response createCompileProgressMessageResponse(String text, float done) {
     return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
-  }
-
-  public static JpsRemoteProto.Message.Response createCompileErrorMessageResponse(String text, String path,
-                                                                                  long beginOffset,
-                                                                                  long endOffset,
-                                                                                  long offset,
-                                                                                  long line,
-                                                                                  long column) {
-    return createCompileMessageResponse(CompilerMessage.Kind.ERROR, text, path, beginOffset, endOffset, offset, line, column, -1.0f);
   }
 
   public static JpsRemoteProto.Message.Response createCompileMessageResponse(final BuildMessage.Kind kind,

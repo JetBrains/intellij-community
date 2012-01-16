@@ -1,6 +1,7 @@
 package org.jetbrains.jps.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import org.jboss.netty.channel.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
@@ -8,6 +9,7 @@ import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -195,15 +197,26 @@ class ServerMessageHandler extends SimpleChannelHandler {
     public void run() {
       Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildStartedEvent("build started")));
       Throwable error = null;
+      final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
+      final Ref<Boolean> markedFilesUptodate = new Ref<Boolean>(false);
       try {
         ServerState.getInstance().startBuild(myProjectPath, myModules, myPaths, myParams, new MessageHandler() {
           public void processMessage(BuildMessage buildMessage) {
             final JpsRemoteProto.Message.Response response;
-            if (buildMessage instanceof CompilerMessage) {
+            if (buildMessage instanceof UptoDateFilesSavedEvent) {
+              markedFilesUptodate.set(true);
+              response = null;
+            }
+            else if (buildMessage instanceof CompilerMessage) {
+              markedFilesUptodate.set(true);
               final CompilerMessage compilerMessage = (CompilerMessage)buildMessage;
               final String text = compilerMessage.getCompilerName() + ": " + compilerMessage.getMessageText();
+              final BuildMessage.Kind kind = compilerMessage.getKind();
+              if (kind == BuildMessage.Kind.ERROR) {
+                hasErrors.set(true);
+              }
               response = ProtoUtil.createCompileMessageResponse(
-                compilerMessage.getKind(), text, compilerMessage.getSourcePath(),
+                kind, text, compilerMessage.getSourcePath(),
                 compilerMessage.getProblemBeginOffset(), compilerMessage.getProblemEndOffset(),
                 compilerMessage.getProblemLocationOffset(), compilerMessage.getLine(), compilerMessage.getColumn(),
                 -1.0f);
@@ -215,7 +228,9 @@ class ServerMessageHandler extends SimpleChannelHandler {
               }
               response = ProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText(), done);
             }
-            Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, response));
+            if (response != null) {
+              Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, response));
+            }
           }
         }, this);
       }
@@ -223,11 +238,11 @@ class ServerMessageHandler extends SimpleChannelHandler {
         error = e;
       }
       finally {
-        finishBuild(error);
+        finishBuild(error, hasErrors.get(), markedFilesUptodate.get());
       }
     }
 
-    private void finishBuild(@Nullable Throwable error) {
+    private void finishBuild(@Nullable Throwable error, boolean hadBuildErrors, boolean markedUptodateFiles) {
       JpsRemoteProto.Message lastMessage = null;
       try {
         if (error != null) {
@@ -247,7 +262,17 @@ class ServerMessageHandler extends SimpleChannelHandler {
           lastMessage = ProtoUtil.toMessage(mySessionId, ProtoUtil.createFailure(messageText.toString(), cause));
         }
         else {
-          lastMessage = ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildCompletedEvent("build completed"));
+          JpsRemoteProto.Message.Response.BuildEvent.Status status = JpsRemoteProto.Message.Response.BuildEvent.Status.SUCCESS;
+          if (myCanceled) {
+            status = JpsRemoteProto.Message.Response.BuildEvent.Status.CANCELED;
+          }
+          else if (hadBuildErrors) {
+            status = JpsRemoteProto.Message.Response.BuildEvent.Status.ERRORS;
+          }
+          else if (!markedUptodateFiles){
+            status = JpsRemoteProto.Message.Response.BuildEvent.Status.UP_TO_DATE;
+          }
+          lastMessage = ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildCompletedEvent("build completed", status));
         }
       }
       catch (Throwable e) {

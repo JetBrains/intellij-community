@@ -55,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
@@ -156,26 +155,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return false;
   }
 
-  public void updateZippedOuput(String outputDir, String relativePath) throws IOException {
-    /*
-    final File file = new File(outputDir, relativePath);
-    final JBZipFile zip = lookupZip(outputDir);
-    final long fileStamp = file.lastModified();
-    if (fileStamp <= 0L) { // does not exist
-      final JBZipEntry entry = zip.getEntry(relativePath);
-      if (entry != null) {
-        entry.erase();
-      }
-    }
-    else {
-      final JBZipEntry entry = zip.getOrCreateEntry(relativePath);
-      if (entry.getTime() != fileStamp) {
-        entry.setData(FileUtil.loadFileBytes(file), fileStamp);
-      }
-    }
-    */
-  }
-
   /*
   private JBZipFile lookupZip(String outputDir) {
     synchronized (myOpenZipFiles) {
@@ -208,34 +187,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
   */
-
-  public void commitZipFiles() {
-    /*
-    synchronized (myOpenZipFiles) {
-      for (JBZipFile zipFile : myOpenZipFiles.values()) {
-        try {
-          zipFile.close();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          addMessage(CompilerMessageCategory.ERROR, "Cannot save zip files: " + e.getMessage(), null, -1, -1);
-        }
-      }
-      myOpenZipFiles.clear();
-    }
-    */
-  }
-
-  public void commitZip(String outputDir) throws IOException {
-    /*
-    synchronized (myOpenZipFiles) {
-      JBZipFile zip = myOpenZipFiles.remove(outputDir);
-      if (zip != null) {
-        zip.close();
-      }
-    }
-    */
-  }
 
   public Project getProject() {
     return myProject;

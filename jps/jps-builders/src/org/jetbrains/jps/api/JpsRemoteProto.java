@@ -4329,8 +4329,7 @@ public final class JpsRemoteProto {
             implements com.google.protobuf.Internal.EnumLite {
           BUILD_STARTED(0, 1),
           BUILD_COMPLETED(1, 2),
-          BUILD_CANCELED(2, 3),
-          COMMAND_COMPLETED(3, 4),
+          COMMAND_COMPLETED(2, 3),
           ;
           
           
@@ -4340,8 +4339,7 @@ public final class JpsRemoteProto {
             switch (value) {
               case 1: return BUILD_STARTED;
               case 2: return BUILD_COMPLETED;
-              case 3: return BUILD_CANCELED;
-              case 4: return COMMAND_COMPLETED;
+              case 3: return COMMAND_COMPLETED;
               default: return null;
             }
           }
@@ -4368,6 +4366,49 @@ public final class JpsRemoteProto {
           // @@protoc_insertion_point(enum_scope:org.jetbrains.jpsservice.Message.Response.BuildEvent.Type)
         }
         
+        public enum Status
+            implements com.google.protobuf.Internal.EnumLite {
+          CANCELED(0, 1),
+          ERRORS(1, 2),
+          SUCCESS(2, 3),
+          UP_TO_DATE(3, 4),
+          ;
+          
+          
+          public final int getNumber() { return value; }
+          
+          public static Status valueOf(int value) {
+            switch (value) {
+              case 1: return CANCELED;
+              case 2: return ERRORS;
+              case 3: return SUCCESS;
+              case 4: return UP_TO_DATE;
+              default: return null;
+            }
+          }
+          
+          public static com.google.protobuf.Internal.EnumLiteMap<Status>
+              internalGetValueMap() {
+            return internalValueMap;
+          }
+          private static com.google.protobuf.Internal.EnumLiteMap<Status>
+              internalValueMap =
+                new com.google.protobuf.Internal.EnumLiteMap<Status>() {
+                  public Status findValueByNumber(int number) {
+                    return Status.valueOf(number)
+          ;        }
+                };
+          
+          private final int index;
+          private final int value;
+          private Status(int index, int value) {
+            this.index = index;
+            this.value = value;
+          }
+          
+          // @@protoc_insertion_point(enum_scope:org.jetbrains.jpsservice.Message.Response.BuildEvent.Status)
+        }
+        
         // required .org.jetbrains.jpsservice.Message.Response.BuildEvent.Type event_type = 1;
         public static final int EVENT_TYPE_FIELD_NUMBER = 1;
         private boolean hasEventType;
@@ -4382,8 +4423,16 @@ public final class JpsRemoteProto {
         public boolean hasDescription() { return hasDescription; }
         public java.lang.String getDescription() { return description_; }
         
+        // optional .org.jetbrains.jpsservice.Message.Response.BuildEvent.Status completion_status = 3;
+        public static final int COMPLETION_STATUS_FIELD_NUMBER = 3;
+        private boolean hasCompletionStatus;
+        private org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Status completionStatus_;
+        public boolean hasCompletionStatus() { return hasCompletionStatus; }
+        public org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Status getCompletionStatus() { return completionStatus_; }
+        
         private void initFields() {
           eventType_ = org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_STARTED;
+          completionStatus_ = org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Status.CANCELED;
         }
         public final boolean isInitialized() {
           if (!hasEventType) return false;
@@ -4398,6 +4447,9 @@ public final class JpsRemoteProto {
           }
           if (hasDescription()) {
             output.writeString(2, getDescription());
+          }
+          if (hasCompletionStatus()) {
+            output.writeEnum(3, getCompletionStatus().getNumber());
           }
         }
         
@@ -4414,6 +4466,10 @@ public final class JpsRemoteProto {
           if (hasDescription()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(2, getDescription());
+          }
+          if (hasCompletionStatus()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeEnumSize(3, getCompletionStatus().getNumber());
           }
           memoizedSerializedSize = size;
           return size;
@@ -4565,6 +4621,9 @@ public final class JpsRemoteProto {
             if (other.hasDescription()) {
               setDescription(other.getDescription());
             }
+            if (other.hasCompletionStatus()) {
+              setCompletionStatus(other.getCompletionStatus());
+            }
             return this;
           }
           
@@ -4593,6 +4652,14 @@ public final class JpsRemoteProto {
                 }
                 case 18: {
                   setDescription(input.readString());
+                  break;
+                }
+                case 24: {
+                  int rawValue = input.readEnum();
+                  org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Status value = org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Status.valueOf(rawValue);
+                  if (value != null) {
+                    setCompletionStatus(value);
+                  }
                   break;
                 }
               }
@@ -4639,6 +4706,27 @@ public final class JpsRemoteProto {
           public Builder clearDescription() {
             result.hasDescription = false;
             result.description_ = getDefaultInstance().getDescription();
+            return this;
+          }
+          
+          // optional .org.jetbrains.jpsservice.Message.Response.BuildEvent.Status completion_status = 3;
+          public boolean hasCompletionStatus() {
+            return result.hasCompletionStatus();
+          }
+          public org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Status getCompletionStatus() {
+            return result.getCompletionStatus();
+          }
+          public Builder setCompletionStatus(org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Status value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            result.hasCompletionStatus = true;
+            result.completionStatus_ = value;
+            return this;
+          }
+          public Builder clearCompletionStatus() {
+            result.hasCompletionStatus = false;
+            result.completionStatus_ = org.jetbrains.jps.api.JpsRemoteProto.Message.Response.BuildEvent.Status.CANCELED;
             return this;
           }
           
