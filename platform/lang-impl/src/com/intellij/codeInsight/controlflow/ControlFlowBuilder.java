@@ -92,7 +92,7 @@ public class ControlFlowBuilder {
    * @param pendingScope Scope for instruction
    * @param instruction  "Last" pending instruction
    */
-  public void addPendingEdge(final PsiElement pendingScope, final Instruction instruction) {
+  public void addPendingEdge(@Nullable final PsiElement pendingScope, final Instruction instruction) {
     if (instruction == null) {
       return;
     }
@@ -155,7 +155,7 @@ public class ControlFlowBuilder {
    * @param element Element to create instruction for
    * @return new instruction
    */
-  public Instruction startNode(final PsiElement element) {
+  public Instruction startNode(@Nullable final PsiElement element) {
     final Instruction instruction = new InstructionImpl(this, element);
     addNode(instruction);
     checkPending(instruction);
