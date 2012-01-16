@@ -145,7 +145,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
             }
           }
         }
-        final Set<PsiMethod> methodsToSearchDuplicates = new HashSet<PsiMethod>();
+        final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
         for (PsiMember psiMember : myMembersAfterMove) {
           if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).getBody() != null) {
             methodsToSearchDuplicates.add((PsiMethod)psiMember);

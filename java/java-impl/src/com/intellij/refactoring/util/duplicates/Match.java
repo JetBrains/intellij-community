@@ -307,11 +307,13 @@ public final class Match {
     }
   }
 
-  private PsiElement replaceWithExpression(final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  public PsiElement replaceWithExpression(final PsiExpression psiExpression) throws IncorrectOperationException {
     final PsiElement matchStart = getMatchStart();
     LOG.assertTrue(matchStart == getMatchEnd());
-    if (matchStart instanceof PsiReferenceExpression && matchStart.getParent() instanceof PsiMethodCallExpression) return matchStart.replace(methodCallExpression.getMethodExpression());
-    return matchStart.replace(methodCallExpression);
+    if (psiExpression instanceof PsiMethodCallExpression && matchStart instanceof PsiReferenceExpression && matchStart.getParent() instanceof PsiMethodCallExpression) {
+      return matchStart.replace(((PsiMethodCallExpression)psiExpression).getMethodExpression());
+    }
+    return matchStart.replace(psiExpression);
   }
 
   TextRange getTextRange() {

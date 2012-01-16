@@ -35,22 +35,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,29 +59,14 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
-    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    if (method == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("locate.caret.inside.a.method"));
+    final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
+    final String cannotRefactorMessage = getCannotRefactorMessage(member);
+    if (cannotRefactorMessage != null) {
+      String message = RefactoringBundle.getCannotRefactorMessage(cannotRefactorMessage);
       showErrorMessage(message, project, editor);
       return;
     }
-    if (method.isConstructor()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("replace.with.method.call.does.not.work.for.constructors"));
-      showErrorMessage(message, project, editor);
-    }
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.does.not.have.a.body", method.getName()));
-      showErrorMessage(message, project, editor);
-      return;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length == 0) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.has.an.empty.body", method.getName()));
 
-      showErrorMessage(message, project, editor);
-      return;
-    }
     final AnalysisScope scope = new AnalysisScope(file);
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
@@ -102,31 +79,64 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         @Override
         public void run() {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          invokeOnScope(project, method, dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module));
+          invokeOnScope(project, member, dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module));
         }
-      }, "Locate method duplicates", true, project) ;
+      }, "Locate duplicates", true, project) ;
     }
   }
 
-  public static void invokeOnScope(final Project project, final PsiMethod method, final AnalysisScope scope) {
-    invokeOnScope(project, Collections.singleton(method), scope, false);
+  @Nullable
+  private static String getCannotRefactorMessage(PsiMember member) {
+    if (member == null) {
+      return RefactoringBundle.message("locate.caret.inside.a.method");
+    }
+    if (member instanceof PsiMethod) {
+      if (((PsiMethod)member).isConstructor()) {
+        return RefactoringBundle.message("replace.with.method.call.does.not.work.for.constructors");
+      }
+      final PsiCodeBlock body = ((PsiMethod)member).getBody();
+      if (body == null) {
+        return RefactoringBundle.message("method.does.not.have.a.body", member.getName());
+      }
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        return RefactoringBundle.message("method.has.an.empty.body", member.getName());
+      }
+    } else if (member instanceof PsiField) {
+      final PsiField field = (PsiField)member;
+      if (!field.hasInitializer()) {
+        return "Field " + member.getName() + " doesn't have initializer";
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (!field.hasModifierProperty(PsiModifier.FINAL) || !field.hasModifierProperty(PsiModifier.STATIC) ||
+          containingClass == null || containingClass.getQualifiedName() == null) {
+        return "Replace Duplicates works with constants only";
+      }
+    } else {
+      return "Caret should be inside method or constant";
+    }
+    return null;
   }
 
-  public static void invokeOnScope(final Project project, final Set<PsiMethod> methods, final AnalysisScope scope, boolean silent) {
-    final Map<PsiMethod, List<Match>> duplicates = new HashMap<PsiMethod, List<Match>>();
+  public static void invokeOnScope(final Project project, final PsiMember member, final AnalysisScope scope) {
+    invokeOnScope(project, Collections.singleton(member), scope, false);
+  }
+
+  public static void invokeOnScope(final Project project, final Set<PsiMember> members, final AnalysisScope scope, boolean silent) {
+    final Map<PsiMember, List<Match>> duplicates = new HashMap<PsiMember, List<Match>>();
     scope.accept(new PsiRecursiveElementVisitor() {
       @Override public void visitFile(final PsiFile file) {
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if (progressIndicator != null && progressIndicator.isCanceled()) return;
-        for (PsiMethod method : methods) {
+        for (PsiMember method : members) {
           final List<Match> matchList = hasDuplicates(file, method);
           for (Iterator<Match> iterator = matchList.iterator(); iterator.hasNext(); ) {
             Match match = iterator.next();
             final PsiElement matchStart = match.getMatchStart();
             final PsiElement matchEnd = match.getMatchEnd();
-            for (PsiMethod psiMethod : methods) {
-              if (PsiTreeUtil.isAncestor(psiMethod, matchStart, false) ||
-                  PsiTreeUtil.isAncestor(psiMethod, matchEnd, false)) {
+            for (PsiMember psiMember : members) {
+              if (PsiTreeUtil.isAncestor(psiMember, matchStart, false) ||
+                  PsiTreeUtil.isAncestor(psiMember, matchEnd, false)) {
                 iterator.remove();
                 break;
               }
@@ -143,7 +153,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         }
       }
     });
-    replaceDuplicate(project, duplicates, methods);
+    replaceDuplicate(project, duplicates, members);
     if (!silent) {
       final Runnable nothingFoundRunnable = new Runnable() {
         @Override
@@ -163,7 +173,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
   }
 
-  private static void replaceDuplicate(final Project project, final Map<PsiMethod, List<Match>> duplicates, final Set<PsiMethod> methods) {
+  private static void replaceDuplicate(final Project project, final Map<PsiMember, List<Match>> duplicates, final Set<PsiMember> methods) {
     LocalHistoryAction a = LocalHistory.getInstance().startAction(REFACTORING_NAME);
     try {
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -172,8 +182,8 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       final Runnable replaceRunnable = new Runnable() {
         @Override
         public void run() {
-          for (final PsiMethod method : methods) {
-            final List<Match> matches = duplicates.get(method);
+          for (final PsiMember member : methods) {
+            final List<Match> matches = duplicates.get(member);
             if (matches == null) continue;
             final int duplicatesNo = matches.size();
             WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
@@ -183,7 +193,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
                 PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
                   @Override
                   public void run() {
-                    DuplicatesImpl.invoke(project, new MethodDuplicatesMatchProvider(method, matches));
+                    final MatchProvider matchProvider =
+                      member instanceof PsiMethod ? new MethodDuplicatesMatchProvider((PsiMethod)member, matches)
+                                                  : new ConstantMatchProvider(member, project, matches);
+                    DuplicatesImpl.invoke(project, matchProvider);
                   }
                 });
               }
@@ -200,37 +213,46 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
   }
 
-  public static List<Match> hasDuplicates(final PsiFile file, final PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    LOG.assertTrue(body != null);
-    final PsiStatement[] statements = body.getStatements();
-    PsiElement[] pattern = statements;
+  public static List<Match> hasDuplicates(final PsiFile file, final PsiMember member) {
+    PsiElement[] pattern;
     ReturnValue matchedReturnValue = null;
-    if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
-      final PsiStatement lastStatement = statements.length > 0 ? statements[statements.length - 1] : null;
-      if (lastStatement instanceof PsiReturnStatement) {
-        final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
-        if (returnValue instanceof PsiReferenceExpression) {
-          final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
-          if (resolved instanceof PsiVariable) {
-            pattern = new PsiElement[statements.length - 1];
-            System.arraycopy(statements, 0, pattern, 0, statements.length - 1);
-            matchedReturnValue = new VariableReturnValue((PsiVariable)resolved);
+    if (member instanceof PsiMethod) {
+      final PsiCodeBlock body = ((PsiMethod)member).getBody();
+      LOG.assertTrue(body != null);
+      final PsiStatement[] statements = body.getStatements();
+      pattern = statements;
+      matchedReturnValue = null;
+      if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
+        final PsiStatement lastStatement = statements.length > 0 ? statements[statements.length - 1] : null;
+        if (lastStatement instanceof PsiReturnStatement) {
+          final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
+          if (returnValue instanceof PsiReferenceExpression) {
+            final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
+            if (resolved instanceof PsiVariable) {
+              pattern = new PsiElement[statements.length - 1];
+              System.arraycopy(statements, 0, pattern, 0, statements.length - 1);
+              matchedReturnValue = new VariableReturnValue((PsiVariable)resolved);
+            }
           }
+        }
+      } else {
+        final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
+        if (returnValue != null) {
+          pattern = new PsiElement[]{returnValue};
         }
       }
     } else {
-      final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
-      if (returnValue != null) {
-        pattern = new PsiElement[]{returnValue};
-      }
+      pattern = new PsiElement[]{((PsiField)member).getInitializer()};
     }
     if (pattern.length == 0) {
       return Collections.emptyList();
     }
+    final List<? extends PsiVariable> inputVariables = 
+      member instanceof PsiMethod ? Arrays.asList(((PsiMethod)member).getParameterList().getParameters()) : new ArrayList<PsiVariable>();
     final DuplicatesFinder duplicatesFinder =
       new DuplicatesFinder(pattern, 
-                           new InputVariables(Arrays.asList(method.getParameterList().getParameters()), method.getProject(), new LocalSearchScope(pattern), false), matchedReturnValue,
+                           new InputVariables(inputVariables, member.getProject(), new LocalSearchScope(pattern), false), 
+                           matchedReturnValue,
                            new ArrayList<PsiVariable>());
 
     return duplicatesFinder.findDuplicates(file);
@@ -247,150 +269,5 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     throw new UnsupportedOperationException();
-  }
-
-  private static class MethodDuplicatesMatchProvider implements MatchProvider {
-    private final PsiMethod myMethod;
-    private final List<Match> myDuplicates;
-
-    private MethodDuplicatesMatchProvider(PsiMethod method, List<Match> duplicates) {
-      myMethod = method;
-      myDuplicates = duplicates;
-    }
-
-    @Override
-    public PsiElement processMatch(Match match) throws IncorrectOperationException {
-      match.changeSignature(myMethod);
-      final PsiClass containingClass = myMethod.getContainingClass();
-      if (isEssentialStaticContextAbsent(match)) {
-        PsiUtil.setModifierProperty(myMethod, PsiModifier.STATIC, true);
-      }
-
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
-      final boolean needQualifier = match.getInstanceExpression() != null;
-      final boolean needStaticQualifier = isExternal(match);
-      final boolean nameConflicts = nameConflicts(match);
-      @NonNls final String text = needQualifier || needStaticQualifier || nameConflicts
-                                  ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
-      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
-      methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
-      final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-      for (final PsiParameter parameter : parameters) {
-        final List<PsiElement> parameterValue = match.getParameterValues(parameter);
-        if (parameterValue != null) {
-          for (PsiElement val : parameterValue) {
-            methodCallExpression.getArgumentList().add(val);
-          }
-        }
-        else {
-          methodCallExpression.getArgumentList().add(factory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(parameter.getType()), parameter));
-        }
-      }
-      if (needQualifier || needStaticQualifier || nameConflicts) {
-        final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
-        LOG.assertTrue(qualifierExpression != null);
-        if (needQualifier) {
-          qualifierExpression.replace(match.getInstanceExpression());
-        } else if (needStaticQualifier || myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-          qualifierExpression.replace(factory.createReferenceExpression(containingClass));
-        } else {
-          final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
-          if (psiClass != null && psiClass.isInheritor(containingClass, true)) {
-            qualifierExpression.replace(RefactoringUtil.createSuperExpression(containingClass.getManager(), null));
-          } else {
-            qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
-          }
-        }
-      }
-      VisibilityUtil.escalateVisibility(myMethod, match.getMatchStart());
-      final PsiCodeBlock body = myMethod.getBody();
-      assert body != null;
-      final PsiStatement[] statements = body.getStatements();
-      if (statements[statements.length - 1] instanceof PsiReturnStatement) {
-        final PsiExpression value = ((PsiReturnStatement)statements[statements.length - 1]).getReturnValue();
-        if (value instanceof PsiReferenceExpression) {
-          final PsiElement var = ((PsiReferenceExpression)value).resolve();
-          if (var instanceof PsiVariable) {
-            match.replace(myMethod, methodCallExpression, (PsiVariable)var);
-            return methodCallExpression;
-          }
-        }
-      }
-      return match.replace(myMethod, methodCallExpression, null);
-    }
-
-
-
-    private boolean isExternal(final Match match) {
-      final PsiElement matchStart = match.getMatchStart();
-      final PsiClass containingClass = myMethod.getContainingClass();
-      if (PsiTreeUtil.isAncestor(containingClass, matchStart, false)) {
-        return false;
-      }
-      final PsiClass psiClass = PsiTreeUtil.getParentOfType(matchStart, PsiClass.class);
-      if (psiClass != null) {
-        if (InheritanceUtil.isInheritorOrSelf(psiClass, containingClass, true)) return false;
-      }
-      return true;
-    }
-
-    private boolean nameConflicts(Match match) {
-      PsiClass matchClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
-      while (matchClass != null && matchClass != myMethod.getContainingClass()) {
-        if (matchClass.findMethodsBySignature(myMethod, false).length > 0) {
-          return true;
-        }
-        matchClass = PsiTreeUtil.getParentOfType(matchClass, PsiClass.class);
-      }
-      return false;
-    }
-
-    private boolean isEssentialStaticContextAbsent(final Match match) {
-      if (!myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiExpression instanceExpression = match.getInstanceExpression();
-        if (instanceExpression != null) return false;
-        if (isExternal(match)) return true;
-        if (PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false) && RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass())) return true;
-      }
-      return false;
-    }
-
-    @Override
-    public List<Match> getDuplicates() {
-      return myDuplicates;
-    }
-
-    @Override
-    public boolean hasDuplicates() {
-      return myDuplicates.isEmpty();
-    }
-
-    @Override
-    @Nullable
-    public String getConfirmDuplicatePrompt(final Match match) {
-      final PsiElement matchStart = match.getMatchStart();
-      String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
-      final boolean shouldBeStatic = isEssentialStaticContextAbsent(match);
-      final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
-      if (signature != null) {
-        return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", signature);
-      }
-      final boolean needToEscalateVisibility = !PsiUtil.isAccessible(myMethod, matchStart, null);
-      if (needToEscalateVisibility) {
-        final String visibilityPresentation = VisibilityUtil.toPresentableText(visibility);
-        return shouldBeStatic
-               ? RefactoringBundle.message("replace.this.code.fragment.and.make.method.static.visible", visibilityPresentation)
-               : RefactoringBundle.message("replace.this.code.fragment.and.make.method.visible", visibilityPresentation);
-      }
-      if (shouldBeStatic) {
-        return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
-      }
-      return null;
-    }
-
-    @Override
-    public String getReplaceDuplicatesTitle(int idx, int size) {
-      return RefactoringBundle.message("process.methods.duplicates.title", idx, size, myMethod.getName());
-    }
   }
 }
