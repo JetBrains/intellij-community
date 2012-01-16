@@ -61,6 +61,15 @@ public class TestIntegrationUtils {
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTestMethodFileTemplateDescriptor();
       }
+    },
+    DATA("data") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        if (framework instanceof JavaTestFramework) {
+          return ((JavaTestFramework)framework).getParametersMethodFileTemplateDescriptor();
+        }
+        return null;
+      }
     };
     private String myDefaultName;
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.testIntegration;
 
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
@@ -89,4 +90,18 @@ public abstract class JavaTestFramework implements TestFramework {
 
   @Nullable
   protected abstract PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
+  
+  public boolean isParameterized(PsiClass clazz) {
+    return false;
+  }
+
+  @Nullable
+  public PsiMethod findParametersMethod(PsiClass clazz) {
+    return null;
+  }
+
+  @Nullable
+  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+    return null;
+  }
 }
