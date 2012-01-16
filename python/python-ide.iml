@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="colorSchemes" scope="RUNTIME" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
   </component>
 </module>
 
