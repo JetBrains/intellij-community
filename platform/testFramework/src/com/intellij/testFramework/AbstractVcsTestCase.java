@@ -340,10 +340,14 @@ public abstract class AbstractVcsTestCase {
       @Override
       protected void run() throws Throwable {
         try {
-          final long newModTs = Math.max(System.currentTimeMillis(), file.getModificationStamp() + 1100);
+          long newModTs = Math.max(System.currentTimeMillis(), file.getModificationStamp() + 1100);
           final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
           file.setBinaryContent(newContent.getBytes(), newModTs, newTs);
           final File file1 = new File(file.getPath());
+          FileUtil.writeToFile(file1, newContent.getBytes());
+          file.refresh(false, false);
+//          file.setBinaryContent(newContent.getBytes(), newModTs, newTs);
+          newModTs = Math.max(System.currentTimeMillis() + 1100, file.getModificationStamp() + 1100);
           file1.setLastModified(newModTs);
         }
         catch(IOException ex) {
