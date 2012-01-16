@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitDeprecatedRemote;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -508,4 +510,18 @@ public class GitUIUtil {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
 
+  @NotNull
+  public static String getShortRepositoryName(@NotNull GitRepository repository) {
+    VirtualFile projectDir = repository.getProject().getBaseDir();
+
+    String repositoryPath = repository.getPresentableUrl();
+    if (projectDir != null) {
+      String relativePath = VfsUtilCore.getRelativePath(repository.getRoot(), projectDir, File.separatorChar);
+      if (relativePath != null) {
+        repositoryPath = relativePath;
+      }
+    }
+
+    return repositoryPath.isEmpty() ? "<Project>" : "." + File.separator + repositoryPath;
+  }
 }
