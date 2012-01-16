@@ -263,15 +263,15 @@ public class GradleApiFacadeManager {
     // Check that significant settings are not changed
     RemoteGradleProcessSettings oldSettings = pair.second;
     RemoteGradleProcessSettings currentSettings = getRemoteSettings();
-    if (!StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome())) {
-      try {
-        pair.first.applySettings(currentSettings);
-      }
-      catch (RemoteException e) {
-        return false;
-      }
-    }
-    return true;
+    
+    // We restart the slave process because there is a possible case that it was started with the incorrect classpath.
+    // For example, it could be started with gradle milestone-3 and that means that its classpath doesn't contain BasicIdeaProject.class.
+    // So, even if the user defines gradle milestone-7 to use, the slave process still is unable to operate because its classpath
+    // is still not changed.
+    //
+    // Please note that that should be changed when we support gradle wrapper. I.e. minimum set of gradle binaries will be bundled
+    // to the gradle plugin and they will contain all necessary binaries all the time.
+    return StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome());
   }
 
   @NotNull
