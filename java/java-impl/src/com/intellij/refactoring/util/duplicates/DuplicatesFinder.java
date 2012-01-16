@@ -395,7 +395,7 @@ public class DuplicatesFinder {
         PsiClass contextClass = PsiTreeUtil.getParentOfType(pattern, PsiClass.class);
         if (candidateQualifier instanceof PsiReferenceExpression) {
           final PsiElement resolved = ((PsiReferenceExpression)candidateQualifier).resolve();
-          if (resolved instanceof PsiClass && contextClass != null && contextClass.isInheritor((PsiClass)resolved, true)) {
+          if (resolved instanceof PsiClass && contextClass != null && InheritanceUtil.isInheritorOrSelf(contextClass, (PsiClass)resolved, true)) {
             return true;
           }
         }
@@ -430,7 +430,7 @@ public class DuplicatesFinder {
                 final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();
                 if (resolved instanceof PsiClass) {
                   final PsiClass classContext = PsiTreeUtil.getParentOfType(candidate, PsiClass.class);
-                  if (classContext != null && classContext.isInheritor((PsiClass)resolved, true)) {
+                  if (classContext != null && InheritanceUtil.isInheritorOrSelf(classContext, (PsiClass)resolved, true)) {
                     return true;
                   }
                 }
