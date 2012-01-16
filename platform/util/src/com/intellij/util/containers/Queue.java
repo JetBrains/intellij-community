@@ -50,6 +50,18 @@ public class Queue<T> {
       myLast = 0;
     }
   }
+  
+  public T removeLast() {
+    if (myLast == 0) {
+      isWrapped = !isWrapped;
+      myLast = myArray.length;
+    }
+    myLast--;
+    T result = (T)myArray[myLast];
+    myArray[myLast] = null;
+    return result;
+  }
+  
 
   public boolean isEmpty() {
     return size() == 0;
