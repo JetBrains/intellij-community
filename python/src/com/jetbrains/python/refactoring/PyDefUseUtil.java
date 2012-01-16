@@ -11,6 +11,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,7 @@ public class PyDefUseUtil {
   }
 
   @NotNull
-  public static List<ReadWriteInstruction> getLatestDefs(ScopeOwner block, PyElement var, PsiElement anchor) {
+  public static List<ReadWriteInstruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
@@ -34,11 +35,11 @@ public class PyDefUseUtil {
     }
     final boolean[] visited = new boolean[instructions.length];
     final Collection<ReadWriteInstruction> result = new LinkedHashSet<ReadWriteInstruction>();
-    getLatestDefs(var, instructions, instr, visited, result);
+    getLatestDefs(varName, instructions, instr, visited, result);
     return new ArrayList<ReadWriteInstruction>(result);
   }
 
-  private static void getLatestDefs(final PyElement var,
+  private static void getLatestDefs(String varName,
                                     final Instruction[] instructions,
                                     final int instr,
                                     final boolean[] visited,
@@ -50,18 +51,21 @@ public class PyDefUseUtil {
       final PsiElement element = instruction.getElement();
       final String name = elementName(element);
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
-      if ((access.isWriteAccess() || access.isAssertTypeAccess()) && Comparing.strEqual(name, var.getName())) {
+      if ((access.isWriteAccess() || access.isAssertTypeAccess()) && Comparing.strEqual(name, varName)) {
         result.add(instruction);
         return;
       }
     }
     for (Instruction instruction : instructions[instr].allPred()) {
-      getLatestDefs(var, instructions, instruction.num(), visited, result);
+      getLatestDefs(varName, instructions, instruction.num(), visited, result);
     }
   }
 
   @Nullable
   private static String elementName(PsiElement element) {
+    if (element instanceof PyImportElement) {
+      return ((PyImportElement) element).getVisibleName();
+    }
     return element instanceof PyElement ? ((PyElement)element).getName() : null;
   }
 
