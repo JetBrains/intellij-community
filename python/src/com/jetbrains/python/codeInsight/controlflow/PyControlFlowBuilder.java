@@ -46,6 +46,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyClass(final PyClass node) {
     // Create node and stop here
     myBuilder.startNode(node);
+    for (PsiElement element : node.getSuperClassExpressions()) {
+      element.accept(this);
+    }
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
@@ -436,10 +439,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       pendingBackup.addAll(myBuilder.pending);
       myBuilder.pending = emptyMutableList();
       myBuilder.flowAbrupted();
-      final Instruction exceptInstrcution = myBuilder.startNode(exceptPart);
+      final Instruction exceptInstruction = myBuilder.startNode(exceptPart);
       exceptPart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-      exceptInstructions.add(exceptInstrcution);
+      exceptInstructions.add(exceptInstruction);
     }
     for (Pair<PsiElement, Instruction> pair : pendingBackup) {
       myBuilder.addPendingEdge(pair.first, pair.second);

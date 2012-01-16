@@ -152,6 +152,10 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   public void testManyIfs() {
     doTest();
   }
+  
+  public void testSuperclass() {
+    doTest();
+  }
 
   public void testQualifiedSelfReference() {
     final String testName = getTestName(false).toLowerCase();
