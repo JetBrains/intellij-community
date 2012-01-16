@@ -15,9 +15,14 @@
  */
 package com.intellij.packaging.impl.compiler;
 
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetRootsProvider;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -92,7 +97,7 @@ public class ArtifactCompilerUtil {
       ContainerUtil.addIfNotNull(artifact.getOutputFile(), allOutputs);
     }
 
-    final Set<VirtualFile> affectedOutputPaths = new HashSet<VirtualFile>();
+    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     final PackagingElementResolvingContext context = ArtifactManager.getInstance(project).getResolvingContext();
     for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
       ArtifactUtil.processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
@@ -106,16 +111,31 @@ public class ArtifactCompilerUtil {
           if (element instanceof FileOrDirectoryCopyPackagingElement<?>) {
             final VirtualFile file = ((FileOrDirectoryCopyPackagingElement)element).findFile();
             if (file != null) {
-              for (VirtualFile output : allOutputs) {
-                if (VfsUtilCore.isAncestor(output, file, false)) {
-                  affectedOutputPaths.add(output);
-                }
-              }
+              roots.add(file);
             }
           }
           return true;
         }
       }, context, true);
+    }
+
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
+      for (Facet facet : facets) {
+        if (facet instanceof FacetRootsProvider) {
+          roots.addAll(((FacetRootsProvider)facet).getFacetRoots());
+        }
+      }
+    }
+
+    final Set<VirtualFile> affectedOutputPaths = new HashSet<VirtualFile>();
+    for (VirtualFile output : allOutputs) {
+      for (VirtualFile root : roots) {
+        if (VfsUtilCore.isAncestor(output, root, false)) {
+          affectedOutputPaths.add(output);
+        }
+      }
     }
     return affectedOutputPaths;
   }
