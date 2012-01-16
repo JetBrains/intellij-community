@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
+import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
@@ -47,6 +48,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
@@ -1326,7 +1328,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
     final Balloon balloon =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listenerWrapper)
-        .setHideOnClickOutside(true).setHideOnFrameResize(false).createBalloon();
+        .setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
+    FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        ((BalloonImpl)balloon).setHideOnClickOutside(true);
+      }
+    });
     listenerWrapper.myBalloon = balloon;
     myWindow2Balloon.put(toolWindowId, balloon);
     Disposer.register(balloon, new Disposable() {

@@ -148,32 +148,18 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
 
     if (NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS) {
-      showWhenVisible(notification, project);
-    }
-  }
-
-  private static void showWhenVisible(final Notification notification, final Project project) {
-    FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        if (project != null) {
-          if (project.isDisposed()) {
-            return;
-          }
-
-          if (!project.isInitialized()) {
-            StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-              @Override
-              public void run() {
-                showWhenVisible(notification, project);
-              }
-            });
-            return;
-          }
+      final Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          showNotification(notification, project);
         }
-        showNotification(notification, project);
+      };
+      if (project == null) {
+        runnable.run();
+      } else if (!project.isDisposed()) {
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(runnable);
       }
-    });
+    }
   }
 
   private static void showNotification(final Notification notification, @Nullable final Project project) {
@@ -244,18 +230,33 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     Window window = findWindowForBalloon(project);
     if (window instanceof IdeFrameImpl) {
       final ProjectManager projectManager = ProjectManager.getInstance();
-      boolean noProjects = projectManager.getOpenProjects().length == 0;
-      boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
-      final Balloon balloon = createBalloon(notification, false, false, !sticky);
+      final boolean noProjects = projectManager.getOpenProjects().length == 0;
+      final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
+      final Balloon balloon = createBalloon(notification, false, false);
       Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
       ((IdeFrameImpl)window).getBalloonLayout().add(balloon);
-      if (noProjects && NotificationDisplayType.BALLOON == displayType) {
-        projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
+      if (NotificationDisplayType.BALLOON == displayType) {
+        FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
           @Override
-          public void projectOpened(Project project) {
-            projectManager.removeProjectManagerListener(this);
-            if (!balloon.isDisposed()) {
-              ((BalloonImpl)balloon).startFadeoutTimer(300);
+          public void run() {
+            if (balloon.isDisposed()) {
+              return;
+            }
+
+            if (!sticky) {
+              ((BalloonImpl)balloon).startFadeoutTimer(3000);
+            }
+            else //noinspection ConstantConditions
+              if (noProjects) {
+              projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
+                @Override
+                public void projectOpened(Project project) {
+                  projectManager.removeProjectManagerListener(this);
+                  if (!balloon.isDisposed()) {
+                    ((BalloonImpl)balloon).startFadeoutTimer(300);
+                  }
+                }
+              });
             }
           }
         });
@@ -274,7 +275,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     return frame;
   }
 
-  public static Balloon createBalloon(final Notification notification, final boolean showCallout, final boolean hideOnClickOutside, final boolean fadeOut) {
+  public static Balloon createBalloon(final Notification notification, final boolean showCallout, final boolean hideOnClickOutside) {
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
 
@@ -311,10 +312,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
       .setHideOnClickOutside(hideOnClickOutside)
       .setHideOnAction(hideOnClickOutside)
       .setHideOnKeyOutside(hideOnClickOutside).setHideOnFrameResize(false);
-
-    if (fadeOut) {
-      builder.setFadeoutTime(3000);
-    }
 
     final Balloon balloon = builder.createBalloon();
     balloon.addListener(new JBPopupAdapter() {
