@@ -144,7 +144,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (value != null) {
       value.accept(this);
     }
-    for (PyExpression expression : node.getTargets()) {
+    for (PyExpression expression : node.getRawTargets()) {
       expression.accept(this);
     }
   }
