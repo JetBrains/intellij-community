@@ -39,21 +39,6 @@ def do_uninstall(pkg):
         error_no_pip()
     return pip.main(['uninstall', '-y', pkg])
 
-def do_install(pkg, options):
-    """
-    simple realization for install packages
-    """
-    #TODO: test install
-    try:
-        import pip
-    except ImportError:
-        error("Python package management tool 'pip' not found. Please install 'pip'", ERROR_NO_PACKAGING_TOOLS)
-
-    if options:
-        return pip.main(['install', pkg, options])
-    else:
-        return pip.main(['install', pkg])
-
 def main():
     retcode = 0
     try:
@@ -66,11 +51,10 @@ def main():
                 usage()
             do_list()
         elif cmd == 'install':
-            if len(sys.argv) < 3:
+            if len(sys.argv) != 3:
                 usage()
             pkg = sys.argv[2]
-            options = sys.argv[3]
-            retcode = do_install(pkg, options)
+            retcode = do_install(pkg)
         elif cmd == 'uninstall':
             if len(sys.argv) != 3:
                 usage()

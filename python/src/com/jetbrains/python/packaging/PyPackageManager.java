@@ -9,7 +9,6 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -76,11 +75,6 @@ public class PyPackageManager {
       myPackagesCache = parsePackagingToolOutput(output);
     }
     return myPackagesCache;
-  }
-
-  public void installPackage(@NotNull Sdk sdk, @NotNull PyPackage pkg, @Nullable String options) throws PyExternalProcessException {
-    runPythonHelper(sdk, PACKAGING_TOOL, list("install", pkg.getName(), options));
-    myPackagesCache.remove(sdk);
   }
 
   @NotNull
