@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -54,7 +55,7 @@ public class PyPackagingUtil {
     if (root == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find virtualenv root for interpreter");
     }
-    runPythonHelper(sdk, PACKAGING_TOOL, list("rmtree", root.getPath()));
+    FileUtil.delete(root);
   }
 
   @NotNull
