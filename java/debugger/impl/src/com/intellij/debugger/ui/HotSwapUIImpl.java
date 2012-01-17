@@ -157,7 +157,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
       return;
     }
 
-    final HotSwapProgressImpl findClassesProgress = new HotSwapProgressImpl(myProject);
+    final HotSwapProgressImpl findClassesProgress = generatedPaths == null? new HotSwapProgressImpl(myProject) : null;
     
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
