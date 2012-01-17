@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
-import git4idea.commands.GitFileUtils;
+import git4idea.util.GitFileUtils;
 
 import java.util.List;
 

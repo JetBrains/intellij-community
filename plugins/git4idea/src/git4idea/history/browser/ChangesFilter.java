@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

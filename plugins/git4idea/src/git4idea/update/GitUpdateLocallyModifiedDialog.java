@@ -23,13 +23,13 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
+import git4idea.util.StringScanner;
 import git4idea.i18n.GitBundle;
 import git4idea.rollback.GitRollbackEnvironment;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

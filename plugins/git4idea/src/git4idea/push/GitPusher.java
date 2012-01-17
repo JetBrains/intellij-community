@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.Git;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.GitCommandResult;

@@ -35,7 +35,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.merge.GitConflictResolver;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

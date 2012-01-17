@@ -73,6 +73,7 @@ import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
+import git4idea.util.GitUtil;
 import git4idea.vfs.GitRootTracker;
 import git4idea.vfs.GitRootsListener;
 import git4idea.vfs.GitVFSListener;

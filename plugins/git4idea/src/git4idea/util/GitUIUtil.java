@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.ui;
+package git4idea.util;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.notification.NotificationGroup;

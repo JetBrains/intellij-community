@@ -16,7 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitFileUtils;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -29,7 +29,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import git4idea.util.UntrackedFilesNotifier;
 
 import java.util.Collections;

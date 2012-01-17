@@ -24,12 +24,12 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitSimpleEventDetector;
 import git4idea.repo.GitRepository;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-import static git4idea.ui.GitUIUtil.code;
+import static git4idea.util.GitUIUtil.code;
 
 /**
 * @author Kirill Likhodedov

@@ -29,9 +29,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.commands.GitFileUtils;
+import git4idea.util.GitFileUtils;
 import git4idea.history.wholeTree.GitBinaryMultipleContentsRevision;
 import git4idea.history.wholeTree.GitMultipleContentsRevision;
+import git4idea.util.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

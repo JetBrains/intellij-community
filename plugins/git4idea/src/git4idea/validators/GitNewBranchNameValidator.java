@@ -17,7 +17,7 @@ package git4idea.validators;
 
 import com.intellij.openapi.ui.InputValidatorEx;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;

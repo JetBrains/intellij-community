@@ -31,10 +31,10 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.tests.GitTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

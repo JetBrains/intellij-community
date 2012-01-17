@@ -25,7 +25,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
 import java.awt.*;

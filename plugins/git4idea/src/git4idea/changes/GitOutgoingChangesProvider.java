@@ -27,7 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.SHAHash;

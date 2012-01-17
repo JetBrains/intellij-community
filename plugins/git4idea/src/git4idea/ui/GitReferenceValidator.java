@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitRevisionNumber;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
+import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

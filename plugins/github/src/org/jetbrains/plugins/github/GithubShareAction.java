@@ -26,14 +26,15 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitDeprecatedRemote;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
-import git4idea.checkin.GitPushUtils;
+import git4idea.push.GitPushUtils;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import java.io.IOException;

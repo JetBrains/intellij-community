@@ -29,7 +29,7 @@ import git4idea.actions.BasicAction;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import git4idea.jgit.GitHttpAdapter;
-import git4idea.ui.GitUIUtil;
+import git4idea.util.GitUIUtil;
 import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;

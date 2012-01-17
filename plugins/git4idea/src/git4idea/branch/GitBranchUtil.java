@@ -16,7 +16,7 @@
 package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 

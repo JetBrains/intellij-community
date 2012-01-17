@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
+import git4idea.util.GitUtil;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static git4idea.ui.GitUIUtil.code;
+import static git4idea.util.GitUIUtil.code;
 
 /**
  * @author Kirill Likhodedov
