@@ -69,4 +69,8 @@ public class GitCommandResult {
   public String getErrorOutputAsHtmlString() {
     return StringUtil.join(myErrorOutput, "<br/>");
   }
+  
+  public String getErrorOutputAsJoinedString() {
+    return StringUtil.join(myErrorOutput, "\n");
+  }
 }

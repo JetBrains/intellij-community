@@ -15,47 +15,33 @@
  */
 package git4idea.process;
 
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.Git;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommandResult;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.stash.GitChangesSaver;
 import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
-import git4idea.update.GitComplexProcess;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static git4idea.ui.GitUIUtil.notifyError;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Executor of Git branching operations.
@@ -67,7 +53,7 @@ public final class GitBranchOperationsProcessor {
   private static final Logger LOG = Logger.getInstance(GitBranchOperationsProcessor.class);
 
   private final Project myProject;
-  private final GitRepository myRepository;
+  private final Collection<GitRepository> myRepositories;
   @Nullable private final Runnable myCallInAwtAfterExecution;
 
   public GitBranchOperationsProcessor(@NotNull GitRepository repository) {
@@ -75,9 +61,17 @@ public final class GitBranchOperationsProcessor {
   }
   
   public GitBranchOperationsProcessor(@NotNull GitRepository repository, @Nullable Runnable callInAwtAfterExecution) {
-    myProject = repository.getProject();
-    myRepository = repository;
+    this(repository.getProject(), Collections.singleton(repository), callInAwtAfterExecution);
+  }
+
+  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @Nullable Runnable callInAwtAfterExecution) {
+    myProject = project;
+    myRepositories = repositories;
     myCallInAwtAfterExecution = callInAwtAfterExecution;
+  }
+
+  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
+    this(project, repositories, null);
   }
 
   /**
@@ -98,32 +92,29 @@ public final class GitBranchOperationsProcessor {
   public void createNewTag(@NotNull final String name, final String reference) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        Git.createNewTag(myRepository, name, null, reference);
+        for (GitRepository repository : myRepositories) {
+          Git.createNewTag(repository, name, null, reference);
+        }
       }
     }.runInBackground();
   }
 
   private void doCheckoutNewBranch(@NotNull final String name) {
-    GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
-    GitCommandResult result = Git.checkoutNewBranch(myRepository, name, unmergedDetector);
-    if (result.success()) {
-      updateRepository();
-      notifySuccess(String.format("Branch <b><code>%s</code></b> was created", name));
-    } else if (unmergedDetector.hasHappened()) {
-      GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
-      if (gitConflictResolver.merge()) { // try again to checkout
-        doCheckoutNewBranch(name);
-      }
-    } else { // other error
-      showErrorMessage("Couldn't create new branch " + name, result.getErrorOutput());
-    }
+    GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
+    String currentBranch = multiRootBranchConfig.getCurrentBranch();
+    LOG.assertTrue(currentBranch != null, "Repositories have unexpectedly diverged. " + multiRootBranchConfig);
+
+    GitCheckoutNewBranchOperation operation = new GitCheckoutNewBranchOperation(myProject, myRepositories, name, currentBranch);
+    new GitMultiRootOperationExecutor(myProject, myRepositories).execute(operation);
   }
 
-  private GitConflictResolver prepareConflictResolverForUnmergedFilesBeforeCheckout() {
+
+  @NotNull
+  static GitConflictResolver prepareConflictResolverForUnmergedFilesBeforeCheckout(Project project, Collection<VirtualFile> roots) {
     GitConflictResolver.Params params = new GitConflictResolver.Params().
       setMergeDescription("The following files have unresolved conflicts. You need to resolve them before checking out.").
       setErrorNotificationTitle("Can't create new branch");
-    return new GitConflictResolver(myProject, Collections.singleton(myRepository.getRoot()), params);
+    return new GitConflictResolver(project, roots, params);
   }
 
   /**
@@ -135,8 +126,7 @@ public final class GitBranchOperationsProcessor {
    * @param newBranchName     Name of new local branch.
    * @param startPoint        Reference to checkout.
    */
-  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
-                                            @NotNull String startPoint) {
+  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint) {
     commonCheckout(startPoint, newBranchName);
   }
 
@@ -165,252 +155,30 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newBranch) {
-    final GitMessageWithFilesDetector checkoutListener = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, myRepository.getRoot());
-    GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
-    GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY, myRepository.getRoot());
+    GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
+    String currentBranch = multiRootBranchConfig.getCurrentBranch();
+    LOG.assertTrue(currentBranch != null, "Repositories have unexpectedly diverged. " + multiRootBranchConfig);
 
-    GitCommandResult result = Git.checkout(myRepository, reference, newBranch, checkoutListener, unmergedDetector, untrackedOverwrittenByCheckout);
-    if (result.success()) {
-      refreshRoot();
-      updateRepository();
-      if (newBranch == null) {
-        notifySuccess(String.format("Checked out <b><code>%s</code></b>", reference));
-      } else {
-        notifySuccess(String.format("Checked out new branch <b><code>%s</code></b> from <b><code>%s</code></b>", newBranch, reference));
-      }
-    }
-    else if (unmergedDetector.hasHappened()) {
-      GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
-      if (gitConflictResolver.merge()) { // try again to checkout
-        doCheckout(indicator, reference, newBranch);
-      }
-    }
-    else if (checkoutListener.wasMessageDetected()) {
-      List<Change> affectedChanges = getChangesAffectedByCheckout(checkoutListener.getRelativeFilePaths());
-      if (GitWouldBeOverwrittenByCheckoutDialog.showAndGetAnswer(myProject, affectedChanges)) {
-        smartCheckout(reference, newBranch, indicator);
-      }
-    }
-    else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
-      LOG.info("doCheckout: untracked files would be overwritten by checkout");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedOverwrittenByCheckout.getFiles(), "checkout");
-    }
-    else {
-      showErrorMessage("Couldn't checkout " + reference, result.getErrorOutput());
-    }
-  }
-
-  // stash - checkout - unstash
-  private void smartCheckout(@NotNull final String reference, @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
-    final GitChangesSaver saver = configureSaver(reference, indicator);
-
-    GitComplexProcess.Operation checkoutOperation = new GitComplexProcess.Operation() {
-      @Override public void run(ContinuationContext context) {
-        if (saveOrNotify(saver)) {
-          try {
-            checkoutOrNotify(reference, newBranch);
-          } finally {
-            saver.restoreLocalChanges(context);
-          }
-        }
-      }
-    };
-    GitComplexProcess.execute(myProject, "checkout", checkoutOperation);
-  }
-
-  /**
-   * Configures the saver, actually notifications and texts in the GitConflictResolver used inside.
-   */
-  private GitChangesSaver configureSaver(final String reference, ProgressIndicator indicator) {
-    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, indicator, String.format("Checkout %s at %s",
-                                                                                         reference,
-                                                                                         DateFormatUtil.formatDateTime(Clock.getTime())));
-    MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
-      @Override
-      public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
-        return String.format(
-          "<html>Uncommitted changes that were saved before checkout have conflicts with files from <code>%s</code></html>",
-          reference);
-      }
-
-      @Override
-      public String getLeftPanelTitle(VirtualFile file) {
-        return "Uncommitted changes";
-      }
-
-      @Override
-      public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
-        return String.format("<html>Changes from <b><code>%s</code></b></html>", reference);
-      }
-    };
-
-    GitConflictResolver.Params params = new GitConflictResolver.Params().
-      setReverse(true).
-      setMergeDialogCustomizer(mergeDialogCustomizer).
-      setErrorNotificationTitle("Local changes were not restored");
-
-    saver.setConflictResolverParams(params);
-    return saver;
-  }
-
-  /**
-   * Saves local changes. In case of error shows a notification and returns false.
-   */
-  private boolean saveOrNotify(GitChangesSaver saver) {
-    try {
-      saver.saveLocalChanges(Collections.singleton(myRepository.getRoot()));
-      return true;
-    } catch (VcsException e) {
-      LOG.info("Couldn't save local changes", e);
-      notifyError(myProject, "Git checkout failed",
-                  "Tried to save uncommitted changes in " + saver.getSaverName() + " before checkout, but failed with an error.<br/>" +
-                  "Update was cancelled.", true, e);
-      return false;
-    }
-  }
-
-  /**
-   * Checks out or shows an error message.
-   */
-  private boolean checkoutOrNotify(@NotNull String reference, @Nullable String newBranch) {
-    GitCommandResult checkoutResult = Git.checkout(myRepository, reference, newBranch);
-    if (checkoutResult.success()) {
-      return true;
-    }
-    else {
-      showErrorMessage("Couldn't checkout " + reference, checkoutResult.getErrorOutput());
-      return false;
-    }
-  }
-
-  /**
-   * Forms the list of the changes, that would be overwritten by checkout.
-   * @param affectedRelativePaths paths returned by Git.
-   * @return List of Changes is these paths.
-   */
-  private List<Change> getChangesAffectedByCheckout(Set<String> affectedRelativePaths) {
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    List<Change> affectedChanges = new ArrayList<Change>();
-    for (String relPath : affectedRelativePaths) {
-      VirtualFile file = myRepository.getRoot().findFileByRelativePath(FileUtil.toSystemIndependentName(relPath));
-      if (file != null) {
-        Change change = changeListManager.getChange(file);
-        if (change != null) {
-          affectedChanges.add(change);
-        }
-      }
-    }
-    return affectedChanges;
-  }
-
-  private void refreshRoot() {
-    myRepository.getRoot().refresh(true, true);
+    GitMultiRootOperationExecutor executor = new GitMultiRootOperationExecutor(myProject, myRepositories);
+    GitCheckoutOperation operation = new GitCheckoutOperation(myProject, myRepositories, reference, newBranch, currentBranch, executor, indicator);
+    executor.execute(operation);
   }
 
   public void deleteBranch(final String branchName) {
     new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doDelete(branchName);
+        doDelete(branchName, indicator);
       }
     }.runInBackground();
   }
 
-  private void doDelete(final String branchName) {
-    GitSimpleEventDetector notFullyMergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.BRANCH_NOT_FULLY_MERGED);
-    GitCommandResult result = Git.branchDelete(myRepository, branchName, false, notFullyMergedDetector);
-    if (result.success()) {
-      notifyBranchDeleteSuccess(branchName);
-    } else if (notFullyMergedDetector.hasHappened()) {
-      boolean forceDelete = showNotFullyMergedDialog(branchName);
-      if (forceDelete) {
-        doForceDelete(branchName);
-      }
-    } else {
-      showErrorMessage("Couldn't delete " + branchName, result.getErrorOutput());
-    }
-  }
+  private void doDelete(final String branchName, ProgressIndicator indicator) {
+    GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(myRepositories);
+    String currentBranch = multiRootBranchConfig.getCurrentBranch();
+    LOG.assertTrue(currentBranch != null, "Repositories have unexpectedly diverged. " + multiRootBranchConfig);
 
-  /**
-   * Shows a dialog "the branch is not fully merged" with the list of commits.
-   * User may still want to force delete the branch.
-   * @return true if the branch should be force deleted.
-   */
-  private boolean showNotFullyMergedDialog(@NotNull final String branchName) {
-    final List<String> mergedToBranches = getMergedToBranches(branchName);
-
-    final List<GitCommit> history;
-    try {
-      history = GitHistoryUtils.history(myProject, myRepository.getRoot(), ".." + branchName);
-    } catch (VcsException e) {
-      // this is critical, because we need to show the list of unmerged commits, and it shouldn't happen => inform user and developer
-      throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + myRepository.getRoot() + "]", e);
-    }
-
-    final AtomicBoolean forceDelete = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
-        forceDelete.set(GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, myRepository, branchName, mergedToBranches));
-      }
-    });
-    return forceDelete.get();
-  }
-
-  /**
-   * Branches which the given branch is merged to ({@code git branch --merged},
-   * except the given branch itself.
-   */
-  private List<String> getMergedToBranches(@NotNull String branchName) {
-    String tip = tip(branchName);
-    if (tip == null) {
-      return Collections.emptyList();
-    }
-    return branchContainsCommit(tip, branchName);
-  }
-
-  @Nullable
-  private String tip(@NotNull String branchName) {
-    GitCommandResult result = Git.tip(myRepository, branchName);
-    if (result.success() && result.getOutput().size() == 1) {
-      return result.getOutput().get(0).trim();
-    }
-    // failing in this method is not critical - it is just additional information. So we just log the error
-    LOG.info("Failed to get [git rev-list -1] for branch [" + branchName + "]. " + result);
-    return null;
-  }
-
-  private List<String> branchContainsCommit(@NotNull String tip, @NotNull String branchName) {
-    GitCommandResult result = Git.branchContains(myRepository, tip);
-    if (result.success()) {
-      List<String> branches = new ArrayList<String>();
-      for (String s : result.getOutput()) {
-        s = s.trim();
-        if (s.startsWith("*")) {
-          s = s.substring(2);
-        }
-        if (!s.equals(branchName)) { // this branch contains itself - not interesting
-          branches.add(s);
-        }
-      }
-      return branches;
-    } 
-      
-    // failing in this method is not critical - it is just additional information. So we just log the error
-    LOG.info("Failed to get [git branch --contains] for hash [" + tip + "]. " + result);
-    return Collections.emptyList();
-  }
-
-  private void notifyBranchDeleteSuccess(String branchName) {
-    updateRepository();
-    notifySuccess(String.format("Deleted branch <b><code>%s</code></b>", branchName));
-  }
-
-  private void doForceDelete(@NotNull String branchName) {
-    GitCommandResult res = Git.branchDelete(myRepository, branchName, true);
-    if (res.success()) {
-      notifyBranchDeleteSuccess(branchName);
-    } else {
-      showErrorMessage("Couldn't delete " + branchName, res.getErrorOutput());
-    }
+    GitDeleteBranchOperation operation = new GitDeleteBranchOperation(myProject, myRepositories, branchName, currentBranch, indicator);
+    operation.execute();
   }
 
   /**
@@ -418,61 +186,49 @@ public final class GitBranchOperationsProcessor {
    * @param branchName name of the branch to compare with.
    */
   public void compare(@NotNull final String branchName) {
+    // TODO: make available for several roots
+    if (myRepositories.size() > 1 || myRepositories.isEmpty()) {
+      return;
+    }
+    final GitRepository repository = myRepositories.iterator().next();
     new CommonBackgroundTask(myProject, "Comparing with " + branchName, myCallInAwtAfterExecution) {
-
+  
       private Pair<List<GitCommit>,List<GitCommit>> myCommits;
-
+  
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        myCommits = loadCommitsToCompare(branchName);
+        myCommits = loadCommitsToCompare(repository, branchName);
       }
-
+  
       @Override
       public void onSuccess() {
-        displayCompareDialog(myCommits.getFirst(), myCommits.getSecond(), branchName);
+        displayCompareDialog(repository, myCommits.getFirst(), myCommits.getSecond(), branchName);
       }
     }.runInBackground();
   }
-
-  private Pair<List<GitCommit>, List<GitCommit>> loadCommitsToCompare(@NotNull final String branchName) {
+  
+  private Pair<List<GitCommit>, List<GitCommit>> loadCommitsToCompare(GitRepository repository, @NotNull final String branchName) {
     final List<GitCommit> headToBranch;
     final List<GitCommit> branchToHead;
     try {
-      headToBranch = GitHistoryUtils.history(myProject, myRepository.getRoot(), ".." + branchName);
-      branchToHead = GitHistoryUtils.history(myProject, myRepository.getRoot(), branchName + "..");
+      headToBranch = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
+      branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");
     }
     catch (VcsException e) {
       // we treat it as critical and report an error
-      throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + myRepository.getRoot() + "]", e);
+      throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + repository.getRoot() + "]", e);
     }
     return Pair.create(headToBranch, branchToHead);
   }
-
-  private void displayCompareDialog(List<GitCommit> headToBranch, List<GitCommit> branchToHead, String branchName) {
+  
+  private void displayCompareDialog(GitRepository repository, List<GitCommit> headToBranch, List<GitCommit> branchToHead, String branchName) {
     if (headToBranch.isEmpty() && branchToHead.isEmpty()) {
-      String currentBranch = GitBranchUiUtil.getBranchNameOrRev(myRepository);
+      String currentBranch = GitBranchUiUtil.getBranchNameOrRev(repository);
       Messages.showInfoMessage(myProject, String.format("<html>There are no changes between <code>%s</code> and <code>%s</code></html>",
                                                         currentBranch, branchName), "No Changes Detected");
     } else {
-      new GitCompareBranchesDialog(myRepository, branchName, headToBranch, branchToHead).show();
+      new GitCompareBranchesDialog(repository, branchName, headToBranch, branchToHead).show();
     }
-  }
-
-  private void updateRepository() {
-    myRepository.update(GitRepository.TrackedTopic.CURRENT_BRANCH, GitRepository.TrackedTopic.BRANCHES);
-  }
-  
-  private void showErrorMessage(@NotNull final String message, @NotNull final List<String> errorOutput) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(myProject, StringUtil.join(errorOutput, "\n"), message);
-      }
-    });
-  }
-  
-  private void notifySuccess(String message) {
-    GitVcs.NOTIFICATION_GROUP_ID.createNotification(message, NotificationType.INFORMATION).notify(myProject);
   }
 
   /**

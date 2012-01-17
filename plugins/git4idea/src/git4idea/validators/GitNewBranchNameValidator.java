@@ -17,10 +17,12 @@ package git4idea.validators;
 
 import com.intellij.openapi.ui.InputValidatorEx;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * <p>
@@ -28,32 +30,24 @@ import java.util.Set;
  *   with any existing local or remote branch.
  * </p>
  * <p>Use it when creating new branch.</p>
+ * <p>
+ *   If several repositories are specified (to create a branch in all of them at once, for example), all branches of all repositories are
+ *   checked for conflicts.
+ * </p>
  *
  * @author Kirill Likhodedov
  */
 public final class GitNewBranchNameValidator implements InputValidatorEx {
 
-  private final GitRepository myRepository;
+  private final Collection<GitRepository> myRepositories;
   private String myErrorText;
-  private Set<String> myLocalNames = new HashSet<String>();
-  private Set<String> myRemoteNames = new HashSet<String>();
 
-  private GitNewBranchNameValidator(GitRepository repository) {
-    myRepository = repository;
-    cacheBranchNames();
+  private GitNewBranchNameValidator(@NotNull Collection<GitRepository> repositories) {
+    myRepositories = repositories;
   }
 
-  private void cacheBranchNames() {
-    for (GitBranch branch : myRepository.getBranches().getLocalBranches()) {
-      myLocalNames.add(branch.getName());
-    }
-    for (GitBranch branch : myRepository.getBranches().getRemoteBranches()) {
-      myRemoteNames.add(branch.getName());
-    }
-  }
-
-  public static GitNewBranchNameValidator newInstance(GitRepository repository) {
-    return new GitNewBranchNameValidator(repository);
+  public static GitNewBranchNameValidator newInstance(@NotNull Collection<GitRepository> repositories) {
+    return new GitNewBranchNameValidator(repositories);
   }
 
   @Override
@@ -66,15 +60,46 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
   }
 
   private boolean checkBranchConflict(String inputString) {
-    if (myLocalNames.contains(inputString)) {
-      myErrorText = "Branch " + inputString + " already exists";
-      return false;
-    }
-    if (myRemoteNames.contains(inputString)) {
-      myErrorText = "Branch name " + inputString + " clashes with remote branch with the same name";
+    if (conflictsWithLocalBranch(inputString) || conflictsWithRemoteBranch(inputString)) {
       return false;
     }
     myErrorText = null;
+    return true;
+  }
+
+  private boolean conflictsWithLocalBranch(String inputString) {
+    return conflictsWithLocalOrRemote(inputString, true, " already exists");
+  }
+
+  private boolean conflictsWithRemoteBranch(String inputString) {
+    return conflictsWithLocalOrRemote(inputString, false, " clashes with remote branch with the same name");
+  }
+
+  private boolean conflictsWithLocalOrRemote(String inputString, boolean local, String message) {
+    for (GitRepository repository : myRepositories) {
+      GitBranchesCollection branchesCollection = repository.getBranches();
+      Collection<GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
+      for (GitBranch branch : branches) {
+        if (branch.getName().equals(inputString)) {
+          myErrorText = "Branch name " + inputString + message;
+          if (myRepositories.size() > 1 && !allReposHaveBranch(inputString, local)) {
+            myErrorText += " in repository " + repository.getPresentableUrl();
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean allReposHaveBranch(String inputString, boolean local) {
+    for (GitRepository repository : myRepositories) {
+      GitBranchesCollection branchesCollection = repository.getBranches();
+      Collection<GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
+      if (!GitUtil.getBranchNames(branches).contains(inputString)) {
+        return false;
+      }
+    }
     return true;
   }
 

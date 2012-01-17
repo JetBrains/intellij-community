@@ -2354,7 +2354,7 @@ public class GitLogUI implements Disposable {
       if (repository == null) return;
 
       String reference = commitAt.getHash().getString();
-      final String name = GitBranchUiUtil.getNewBranchNameFromUser(repository, "Checkout New Branch From " + reference);
+      final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
       if (name != null) {
         new GitBranchOperationsProcessor(repository, myRefresh).checkoutNewBranchStartingFrom(name, reference);
       }

@@ -109,6 +109,13 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
     myTable.clearSelection();
   }
 
+  public void setCommits(@NotNull List<GitCommit> commits) {
+    myCommits.clear();
+    myCommits.addAll(commits);
+    myTable.setModel(new GitCommitListTableModel(myCommits));
+    myTable.repaint();
+  }
+
   private static class GitCommitListTableModel extends AbstractTableModel {
 
     private final List<GitCommit> myCommits;
