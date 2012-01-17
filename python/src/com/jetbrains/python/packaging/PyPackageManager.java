@@ -79,6 +79,12 @@ public class PyPackageManager {
     if (myPackagesCache == null) {
       final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
       myPackagesCache = parsePackagingToolOutput(output);
+      Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
+        @Override
+        public int compare(PyPackage aPackage, PyPackage aPackage1) {
+          return aPackage.getName().compareTo(aPackage1.getName());
+        }
+      });
     }
     return myPackagesCache;
   }
