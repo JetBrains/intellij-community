@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
@@ -118,10 +117,6 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
     return node;
   }
 
-  /**
-   * In "[x+1 for x in (1,2,3) if x > 2]" an "if component" is "x > 2".
-   * @return all "if components"
-   */
   @NotNull
   public Iterable<PyElement> iterateNames() {
     // extract whatever names are defined in "for" components

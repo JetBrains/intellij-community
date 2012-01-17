@@ -314,7 +314,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
     }
-    
+
     if (myElement instanceof PyTargetExpression) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
       final Scope scope = ControlFlowCache.getScope(scopeOwner);
@@ -448,8 +448,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
         if (resolvesToWrapper(element, resolveResult)) {
           return true;
-        }        
-        
+        }
+
         return false; // TODO: handle multi-resolve
       }
     }
