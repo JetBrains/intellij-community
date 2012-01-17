@@ -36,8 +36,13 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public String getVersionString(String sdkHome) {
-    return getVersionFromOutput(sdkHome, "--version", "(Jython \\S+)( on .*)?");
+  public String getVersionRegexp() {
+    return "(Jython \\S+)( on .*)?";
+  }
+
+  @Override
+  public String getVersionOption() {
+    return "--version";
   }
 
   @Override

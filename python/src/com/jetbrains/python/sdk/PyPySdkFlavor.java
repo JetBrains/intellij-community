@@ -24,9 +24,12 @@ public class PyPySdkFlavor extends PythonSdkFlavor {
     return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("pypy");
   }
 
-  @Override
-  public String getVersionString(String sdkHome) {
-    return getVersionFromOutput(sdkHome, "--version", "\\[(PyPy \\S+).*\\]");
+  public String getVersionRegexp() {
+    return "\\[(PyPy \\S+).*\\]";
+  }
+
+  public String getVersionOption() {
+    return "--version";
   }
 
   @NotNull

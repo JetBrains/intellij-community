@@ -749,6 +749,7 @@
     <extensionPoint qualifiedName="Pythonid.javascriptDebugger"
                     interface="com.jetbrains.django.run.PythonJavaScriptDebuggerStarter" />
     <extensionPoint qualifiedName="Pythonid.visitorFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager" interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
