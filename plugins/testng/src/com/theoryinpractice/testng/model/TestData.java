@@ -20,6 +20,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -210,7 +211,7 @@ public class TestData implements Cloneable
     final PsiMethod method = location.getPsiElement();
     METHOD_NAME = method.getName();
     TEST_OBJECT = TestType.METHOD.getType();
-    return setMainClass(method.getContainingClass());
+    return setMainClass(location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : method.getContainingClass());
   }
 
   public Module setPackage(PsiPackage pkg) {

@@ -370,6 +370,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     myData.setPatterns(patterns);
     myData.METHOD_NAME = method.getName();
     myData.TEST_OBJECT = TEST_PATTERN;
+    setGeneratedName();
   }
 
   public static class Data implements Cloneable {

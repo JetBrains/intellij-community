@@ -22,6 +22,8 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.junit.InheritorChooser;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -30,6 +32,8 @@ import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer{
   private PsiElement myPsiElement = null;
@@ -65,7 +69,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
       }
       element = element.getParent();
     }
-    if (psiClass == null || !PsiClassUtil.isRunnableClass(psiClass, true) || !TestNGUtil.hasTest(psiClass)) return null;
+    if (psiClass == null || !PsiClassUtil.isRunnableClass(psiClass, true, false) || !TestNGUtil.hasTest(psiClass)) return null;
 
     myPsiElement = psiClass;
     final Project project = location.getProject();
@@ -89,5 +93,33 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
 
   public int compareTo(Object o) {
     return PREFERED;
+  }
+
+  @Override
+  public void perform(final ConfigurationContext context, final Runnable performRunnable) {
+    if (myPsiElement instanceof PsiMethod) {
+      final PsiMethod psiMethod = (PsiMethod)myPsiElement;
+      final PsiClass containingClass = psiMethod.getContainingClass();
+      final InheritorChooser inheritorChooser = new InheritorChooser() {
+        @Override
+        protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
+          ((TestNGConfiguration)context.getConfiguration().getConfiguration()).bePatternConfiguration(classes, method);
+          super.runForClasses(classes, method, context, performRunnable);
+        }
+
+        @Override
+        protected void runForClass(PsiClass aClass,
+                                   PsiMethod psiMethod,
+                                   ConfigurationContext context,
+                                   Runnable performRunnable) {
+          final Project project = psiMethod.getProject();
+          final MethodLocation methodLocation = new MethodLocation(project, psiMethod, PsiLocation.fromPsiElement(aClass));
+          ((TestNGConfiguration)context.getConfiguration().getConfiguration()).setMethodConfiguration(methodLocation);
+          super.runForClass(aClass, psiMethod, context, performRunnable);
+        }
+      };
+      if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass)) return;
+    }
+    super.perform(context, performRunnable);
   }
 }
