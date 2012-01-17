@@ -1,5 +1,6 @@
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -9,6 +10,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.SdkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -54,20 +56,26 @@ public class PyPackageManager {
   }
 
   public void install(@NotNull List<PyRequirement> requirements) throws PyExternalProcessException {
+    install(requirements, null);
+  }
+
+  public void install(@NotNull PyRequirement requirement) throws PyExternalProcessException {
+    install(requirement, null);
+  }
+
+  public void install(@NotNull PyRequirement requirement, @Nullable List<String> options) throws PyExternalProcessException {
+    install(Lists.newArrayList(requirement), options);
+  }
+
+  public void install(@NotNull List<PyRequirement> requirements, @Nullable List<String> options) throws PyExternalProcessException {
     myPackagesCache = null;
     final List<String> args = new ArrayList<String>();
     args.add("install");
     for (PyRequirement req : requirements) {
       args.add(req.toString());
     }
-    runPythonHelper(PACKAGING_TOOL, args);
-  }
-
-  public void install(@NotNull PyRequirement requirement) throws PyExternalProcessException {
-    myPackagesCache = null;
-    final List<String> args = new ArrayList<String>();
-    args.add("install");
-    args.add(requirement.toString());
+    if (options != null)
+      args.addAll(options);
     runPythonHelper(PACKAGING_TOOL, args);
   }
 
