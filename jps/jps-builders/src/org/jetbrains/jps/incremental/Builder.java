@@ -8,6 +8,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -43,53 +44,62 @@ public abstract class Builder {
    * @throws Exception
    */
   public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws Exception {
-    boolean additionalPassRequired = false;
+    try {
+      boolean additionalPassRequired = false;
 
-    final Set<String> removedPaths = getRemovedPaths(context);
+      final Set<String> removedPaths = getRemovedPaths(context);
 
-    final Mappings globalMappings = context.getDataManager().getMappings();
+      final Mappings globalMappings = context.getDataManager().getMappings();
 
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (globalMappings) {
-      if (!context.isProjectRebuild() && context.shouldDifferentiate(chunk, context.isCompilingTests())) {
-        final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
-        final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (globalMappings) {
+        if (!context.isProjectRebuild() && context.shouldDifferentiate(chunk, context.isCompilingTests())) {
+          final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
+          final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
-        // mark as affected all files that were dirty before compilation
-        allAffectedFiles.addAll(filesToCompile);
-        // accumulate all successfully compiled in this round
-        allCompiledFiles.addAll(successfullyCompiled);
-        // unmark as affected all successfully compiled
-        allAffectedFiles.removeAll(successfullyCompiled);
+          // mark as affected all files that were dirty before compilation
+          allAffectedFiles.addAll(filesToCompile);
+          // accumulate all successfully compiled in this round
+          allCompiledFiles.addAll(successfullyCompiled);
+          // unmark as affected all successfully compiled
+          allAffectedFiles.removeAll(successfullyCompiled);
 
-        final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
+          final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
 
-        final boolean incremental = globalMappings.differentiate(
-          delta, removedPaths, successfullyCompiled, allCompiledFiles, allAffectedFiles
-        );
+          final boolean incremental = globalMappings.differentiate(
+            delta, removedPaths, successfullyCompiled, allCompiledFiles, allAffectedFiles
+          );
 
-        if (incremental) {
-          final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
-          newlyAffectedFiles.removeAll(affectedBeforeDif);
-          newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
+          if (incremental) {
+            final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
+            newlyAffectedFiles.removeAll(affectedBeforeDif);
+            newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
-          if (!newlyAffectedFiles.isEmpty()) {
-            for (File file : newlyAffectedFiles) {
-              context.markDirty(file);
+            if (!newlyAffectedFiles.isEmpty()) {
+              for (File file : newlyAffectedFiles) {
+                context.markDirty(file);
+              }
+              additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
-            additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+          }
+          else {
+            additionalPassRequired = context.isMake();
+            context.markDirtyRecursively(chunk);
           }
         }
-        else {
-          additionalPassRequired = context.isMake();
-          context.markDirtyRecursively(chunk);
-        }
+
+        globalMappings.integrate(delta, successfullyCompiled, removedPaths);
       }
 
-      globalMappings.integrate(delta, successfullyCompiled, removedPaths);
+      return additionalPassRequired;
     }
-
-    return additionalPassRequired;
+    catch(RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw ((IOException)cause);
+      }
+      throw e;
+    }
   }
 
   // delete all class files that according to mappings correspond to given sources
