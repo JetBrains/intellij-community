@@ -63,6 +63,15 @@ public class PyPackageManager {
     runPythonHelper(PACKAGING_TOOL, args);
   }
 
+  public void install(@NotNull PyRequirement requirement) throws PyExternalProcessException {
+    myPackagesCache = null;
+    final List<String> args = new ArrayList<String>();
+    args.add("install");
+    args.add(requirement.toString());
+    runPythonHelper(PACKAGING_TOOL, args);
+  }
+
+  @Deprecated
   public void install(@NotNull PyPackage pkg) throws PyExternalProcessException {
     // TODO: Add options for mirrors, web pages with indices, upgrade flag, package file path
     myPackagesCache = null;
