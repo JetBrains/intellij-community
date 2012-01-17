@@ -24,9 +24,11 @@ import java.net.URL;
 
 abstract class Loader {
   private final URL myURL;
+  private final int myIndex;
 
-  protected Loader(URL url) {
+  protected Loader(URL url, int index) {
     myURL = url;
+    myIndex = index;
   }
 
 
@@ -38,4 +40,8 @@ abstract class Loader {
   abstract Resource getResource(final String name, boolean flag);
 
   abstract void buildCache(ClasspathCache cache) throws IOException;
+
+  public int getIndex() {
+    return myIndex;
+  }
 }

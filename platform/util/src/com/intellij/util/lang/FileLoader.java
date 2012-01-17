@@ -27,10 +27,12 @@ import java.net.URL;
 class FileLoader extends Loader {
   private final File myRootDir;
   private final String myRootDirAbsolutePath;
+  private static int misses;
+  private static int hits;
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  FileLoader(URL url) throws IOException {
-    super(url);
+  FileLoader(URL url, int index) throws IOException {
+    super(url, index);
     if (!"file".equals(url.getProtocol())) {
       throw new IllegalArgumentException("url");
     }
@@ -58,8 +60,10 @@ class FileLoader extends Loader {
           cache.addResourceEntry(getRelativeResourcePath(file), this);
           containsClasses = true;
         }
+        cache.addNameEntry(file.getName(), this);
       }
       else {
+        cache.addNameEntry(file.getName(), this);
         buildPackageCache(file, cache);
       }
     }
@@ -79,7 +83,18 @@ class FileLoader extends Loader {
       if (!url.getFile().startsWith(getBaseURL().getFile())) return null;
 
       final File file = new File(myRootDir, name.replace('/', File.separatorChar));
-      if (file.exists()) return new MyResource(name, url, file);
+      if (file.exists()) {
+        ++hits;
+        if (hits % 1000 == 0 && UrlClassLoader.doDebug) {
+          UrlClassLoader.debug("Exists file loader: misses:" + misses + ", hits:" + hits);
+        }
+        return new MyResource(name, url, file);
+      }
+
+      if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
+        UrlClassLoader.debug("Missed " + name + " from " + myRootDir);
+      }
+      ++misses;
     }
     catch (Exception exception) {
       return null;

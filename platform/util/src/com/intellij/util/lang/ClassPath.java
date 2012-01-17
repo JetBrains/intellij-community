@@ -24,7 +24,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
@@ -105,7 +104,7 @@ class ClassPath {
     push(urls);
   }
 
-  // Accessed by reflection from PluginClassLoader
+  // Accessed by reflection from PluginClassLoader // TODO: do we need it?
   void addURL(URL url) {
     push(new URL[]{url});
   }
@@ -117,7 +116,10 @@ class ClassPath {
     try {
       int i;
       if (myCanUseCache) {
-        for (Loader loader : getLoaders(s)) {
+        List<Loader> loaders = myCache.getLoaders(s);
+        for (int j = 0, size = loaders.size(); j < size; ++j ) {
+          final Loader loader = loaders.get(j);
+          if (!myCache.loaderHasName(s, loader)) continue;
           final Resource resource = loader.getResource(s, flag);
           if (resource != null) {
             if (ourDumpOrder) {
@@ -154,10 +156,6 @@ class ClassPath {
     }
   }
 
-  private @NotNull List<Loader> getLoaders(String s) {
-    return myCache.getLoaders(s);
-  }
-
   public Enumeration<URL> getResources(final String name, final boolean check) {
     return new MyEnumeration(name, check);
   }
@@ -175,7 +173,7 @@ class ClassPath {
 
       Loader loader;
       try {
-        loader = getLoader(url);
+        loader = getLoader(url, myLoaders.size());
         if (loader == null) continue;
       }
       catch (IOException ioexception) {
@@ -190,7 +188,7 @@ class ClassPath {
   }
 
   @Nullable
-  private Loader getLoader(final URL url) throws IOException {
+  private Loader getLoader(final URL url, int index) throws IOException {
     String s;
     if (myAcceptUnescapedUrls) {
       s = url.getFile();
@@ -206,11 +204,11 @@ class ClassPath {
     Loader loader = null;
     if (s != null  && new File(s).isDirectory()) {
       if (FILE_PROTOCOL.equals(url.getProtocol())) {
-        loader = new FileLoader(url);
+        loader = new FileLoader(url, index);
       }
     }
     else {
-      JarLoader jarLoader = new JarLoader(url, myCanLockJars);
+      JarLoader jarLoader = new JarLoader(url, myCanLockJars, index);
       jarLoader.preLoadClasses();
       loader = jarLoader;
     }
@@ -249,10 +247,10 @@ class ClassPath {
       if (myCanUseCache) {
         synchronized (myUrls) {
           if (myUrls.isEmpty()) {
-            loaders = getLoaders(name);
+            loaders = myCache.getLoaders(name);
             if (!name.endsWith("/")) {
               loaders = new SmartList<Loader>(loaders);
-              loaders.addAll(getLoaders(name + "/"));
+              loaders.addAll(myCache.getLoaders(name + "/"));
             }
           }
         }
@@ -268,7 +266,12 @@ class ClassPath {
 
       if (myLoaders != null) {
         while (myIndex < myLoaders.size()) {
-          myRes = myLoaders.get(myIndex++).getResource(myName, myCheck);
+          loader = myLoaders.get(myIndex++);
+          if (!myCache.loaderHasName(myName, loader)) {
+            myRes = null;
+            continue;
+          }
+          myRes = loader.getResource(myName, myCheck);
           if (myRes != null) return true;
         }
       } else {

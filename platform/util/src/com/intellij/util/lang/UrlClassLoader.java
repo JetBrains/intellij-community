@@ -16,6 +16,7 @@
 
 package com.intellij.util.lang;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,7 +125,7 @@ public class UrlClassLoader extends ClassLoader {
     return defineClass(name, b, 0, b.length);
   }
 
-  @Nullable
+  @Nullable  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   public URL findResource(final String name) {
     final long started = myDebugTime ? System.nanoTime():0;
 
@@ -165,7 +166,16 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
+  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   protected Enumeration<URL> findResources(String name) throws IOException {
     return myClassPath.getResources(name, true);
+  }
+  
+  static final boolean doDebug = System.getProperty("idea.classloading.debug") != null;
+  private static final Logger LOG = Logger.getInstance("idea.UrlClassLoader");
+
+  static void debug(String s) {
+    System.out.println(s); // TODO: remove
+    LOG.debug(s);
   }
 }
