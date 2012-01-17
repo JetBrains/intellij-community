@@ -143,9 +143,9 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     }
   }
 
-  public void updateAllRepositories(GitRepository.TrackedTopic trackedTopic) {
+  public void updateAllRepositories(GitRepository.TrackedTopic... topics) {
     for (VirtualFile root : myRepositories.keySet()) {
-      updateRepository(root, trackedTopic);
+      updateRepository(root, topics);
     }
   }
 
