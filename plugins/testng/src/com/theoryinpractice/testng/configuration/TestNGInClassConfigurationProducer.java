@@ -22,6 +22,7 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -39,6 +40,11 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
 
   @Nullable
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
+    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
+    if (elements != null && TestNGPatternConfigurationProducer.collectTestClasses(elements).size() > 1) {
+      return null;
+    }
+
     PsiClass psiClass = null;
     PsiElement element = location.getPsiElement();
     while (element != null) {

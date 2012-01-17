@@ -371,6 +371,30 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         }
       }
     }
+    else if (data.TEST_OBJECT.equals(TestType.PATTERN.getType())) {
+      for (final String className : data.getPatterns()) {
+        final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+          @Nullable
+          @Override
+          public PsiClass compute() {
+            return ClassUtil.findPsiClass(psiManager, className.replace('/', '.'), null, true, getSearchScope());
+          }
+        });
+        if (psiClass == null) {
+          throw new CantRunException("Class " + className + " not found");
+        }
+        if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return TestNGUtil.hasTest(psiClass);
+          }
+        })) {
+          calculateDependencies(null, classes, psiClass);
+        } else {
+          throw new CantRunException("No tests found in class " + className);
+        }
+      }
+    }
   }
 
   private Map<String, String> buildTestParameters() {

@@ -44,17 +44,21 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
+  @NonNls private static final String PATTERNS_EL_NAME = "patterns";
+  @NonNls private static final String PATTERN_EL_NAME = "pattern";
+  @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
+  
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
   protected transient Project project;
@@ -305,6 +309,21 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       catch (Exception e) {
         throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
       }
+    } else if (data.TEST_OBJECT.equals(TestType.PATTERN.getType())) {
+      final Set<String> patterns = data.getPatterns();
+      if (patterns.isEmpty()) {
+        throw new RuntimeConfigurationWarning("No pattern selected");
+      }
+      final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getProject());
+      for (String pattern : patterns) {
+        final PsiClass psiClass = JavaExecutionUtil.findMainClass(getProject(), pattern, searchScope);
+        if (psiClass == null) {
+          throw new RuntimeConfigurationWarning("Class " + pattern + " not found");
+        }
+        if (!TestNGUtil.hasTest(psiClass)) {
+          throw new RuntimeConfigurationWarning("Class " + pattern + " not a test");
+        }
+      }
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
     //TODO add various checks here
@@ -338,6 +357,15 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       for (Element listenerClassName : children) {
         listeners.add(listenerClassName.getAttributeValue("class"));
       }
+    }
+    final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
+    if (patternsElement != null) {
+      final Set<String> tests = new LinkedHashSet<String>();
+      for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
+        Element patternElement = (Element)o;
+        tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
+      }
+      getPersistantData().setPatterns(tests);
     }
   }
 
@@ -376,6 +404,16 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       Element listenerElement = new Element("listener");
       listenerElement.setAttribute("class", listener);
       listenersElement.addContent(listenerElement);
+    }
+    final Set<String> patterns = getPersistantData().getPatterns();
+    if (!patterns.isEmpty()) {
+      final Element patternsElement = new Element(PATTERNS_EL_NAME);
+      for (String o : patterns) {
+        final Element patternElement = new Element(PATTERN_EL_NAME);
+        patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
+        patternsElement.addContent(patternElement);
+      }
+      element.addContent(patternsElement);
     }
 
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
