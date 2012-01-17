@@ -1341,14 +1341,14 @@ public class Mappings {
   }
 
   private void updateSourceToUsages(final DependencyContext.S source, final UsageRepr.Cluster usages) {
-    final UsageRepr.Cluster c = mySourceFileToUsages.get(source);
-
+    UsageRepr.Cluster c = mySourceFileToUsages.get(source);
     if (c == null) {
-      mySourceFileToUsages.put(source, usages);
+      c = usages;
     }
     else {
       c.updateCluster(usages);
     }
+    mySourceFileToUsages.put(source, c);
   }
 
   private void updateSourceToAnnotationUsages(final DependencyContext.S source, final Set<UsageRepr.Usage> usages) {
