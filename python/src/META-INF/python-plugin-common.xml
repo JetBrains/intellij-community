@@ -60,6 +60,9 @@
     <projectService serviceInterface="com.jetbrains.python.psi.PyElementGenerator"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyElementGeneratorImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.configuration.PyPackageService"
+                    serviceImplementation="com.jetbrains.python.configuration.PyPackageService"/>
+
     <typedHandler implementation="com.jetbrains.python.codeInsight.KeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler"
                   id="pyDjangoBraceInterpolation"/>
