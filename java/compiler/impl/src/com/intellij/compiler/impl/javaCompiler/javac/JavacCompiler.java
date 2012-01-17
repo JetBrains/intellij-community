@@ -79,48 +79,49 @@ public class JavacCompiler extends ExternalCompiler {
     final Set<Sdk> checkedJdks = new HashSet<Sdk>();
     for (final Module module : modules) {
       final Sdk jdk  = ModuleRootManager.getInstance(module).getSdk();
-      if (jdk == null) {
+      if (jdk == null || checkedJdks.contains(jdk)) {
         continue;
       }
-      if (checkedJdks.contains(jdk)) {
+      checkedJdks.add(jdk);
+      final SdkType sdkType = jdk.getSdkType();
+      if (!(sdkType instanceof JavaSdkType)) {
         continue;
       }
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null) {
-        Messages.showMessageDialog(myProject, CompilerBundle.jdkHomeNotFoundMessage(jdk),
-                                   CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
+        Messages.showMessageDialog(
+          myProject, CompilerBundle.jdkHomeNotFoundMessage(jdk), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon()
+        );
         return false;
       }
-      final SdkType sdkType = jdk.getSdkType();
-
-      if (sdkType instanceof JavaSdkType){
-        final String vmExecutablePath = ((JavaSdkType)sdkType).getVMExecutablePath(jdk);
-        if (vmExecutablePath == null) {
-          Messages.showMessageDialog(myProject,
-                                     CompilerBundle.message("javac.error.vm.executable.missing", jdk.getName()),
-                                     CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
-          return false;
-        }
-        final String toolsJarPath = ((JavaSdkType)sdkType).getToolsPath(jdk);
-        if (toolsJarPath == null) {
-          Messages.showMessageDialog(myProject,
-                                     CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()), CompilerBundle.message("compiler.javac.name"),
-                                     Messages.getErrorIcon());
-          return false;
-        }
-        final String versionString = jdk.getVersionString();
-        if (versionString == null) {
-          Messages.showMessageDialog(myProject, CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()),
-                                     CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
-          return false;
-        }
-
-        if (CompilerUtil.isOfVersion(versionString, "1.0")) {
-          Messages.showMessageDialog(myProject, CompilerBundle.message("javac.error.1_0_compilation.not.supported"), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
-          return false;
-        }
+      final String vmExecutablePath = ((JavaSdkType)sdkType).getVMExecutablePath(jdk);
+      if (vmExecutablePath == null) {
+        Messages.showMessageDialog(
+          myProject, CompilerBundle.message("javac.error.vm.executable.missing", jdk.getName()), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon()
+        );
+        return false;
       }
-      checkedJdks.add(jdk);
+      final String toolsJarPath = ((JavaSdkType)sdkType).getToolsPath(jdk);
+      if (toolsJarPath == null) {
+        Messages.showMessageDialog(
+          myProject, CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon()
+        );
+        return false;
+      }
+      final String versionString = jdk.getVersionString();
+      if (versionString == null) {
+        Messages.showMessageDialog(
+          myProject, CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon()
+        );
+        return false;
+      }
+
+      if (CompilerUtil.isOfVersion(versionString, "1.0")) {
+        Messages.showMessageDialog(
+          myProject, CompilerBundle.message("javac.error.1_0_compilation.not.supported"), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon()
+        );
+        return false;
+      }
     }
 
     return true;
