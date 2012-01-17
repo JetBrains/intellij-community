@@ -25,12 +25,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn17.SvnBundle;
 import org.jetbrains.idea.svn17.SvnVcs17;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -55,7 +59,7 @@ public class CleanupWorker {
     final SvnVcs17 vcs = SvnVcs17.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
 
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, SvnBundle.message(myTitleKey), false, PerformInBackgroundOption.DEAF) {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, SvnBundle.message(myTitleKey), true, BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         VirtualFile currentRoot;
@@ -64,6 +68,16 @@ public class CleanupWorker {
           try {
             final String path = root.getPath();
             indicator.setText(SvnBundle.message("action.Subversion.cleanup.progress.text", path));
+            wcClient.setEventHandler(new ISVNEventHandler() {
+              @Override
+              public void handleEvent(SVNEvent event, double progress) throws SVNException {
+              }
+
+              @Override
+              public void checkCancelled() throws SVNCancelException {
+                if (indicator.isCanceled()) throw new SVNCancelException();
+              }
+            });
             wcClient.doCleanup(new File(path));
           }
           catch (SVNException ex) {
