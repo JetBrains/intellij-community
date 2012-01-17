@@ -62,7 +62,7 @@ public class BasePathMacroManager extends PathMacroManager {
         putIfAbsent(result, path, s, check);
       }
 
-      if (dir.getPath().equals(stopAt)) {
+      if (stopAt == null || dir.getPath().equals(stopAt)) {
         break;
       }
 
