@@ -500,6 +500,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myConfirmExit = confirmExit;
   }
 
+  @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
+  @interface OpenNewProjectOption {}
   /**
    * @return
    * <ul>
@@ -508,12 +510,12 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
    * <li>{@link GeneralSettings#OPEN_PROJECT_ASK} if a confirmation dialog should be shown
    * </ul>
    */
+  @OpenNewProjectOption
   public int getConfirmOpenNewProject() {
     return myConfirmOpenNewProject;
   }
 
-  public void setConfirmOpenNewProject(@MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
-                                       int confirmOpenNewProject) {
+  public void setConfirmOpenNewProject(@OpenNewProjectOption int confirmOpenNewProject) {
     myConfirmOpenNewProject = confirmOpenNewProject;
   }
 
