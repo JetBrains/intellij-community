@@ -29,7 +29,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.Git;
+import git4idea.commands.Git;
 import git4idea.util.GitUtil;
 import git4idea.GitVcs;
 import git4idea.util.GitFileUtils;

@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.Git;
+import git4idea.commands.Git;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.commands.GitCommandResult;

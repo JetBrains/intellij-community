@@ -33,7 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.Git;
+import git4idea.commands.Git;
 import git4idea.util.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommandResult;

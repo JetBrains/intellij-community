@@ -20,7 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ui.UIUtil;
-import git4idea.Git;
+import git4idea.commands.Git;
 import git4idea.GitExecutionException;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;

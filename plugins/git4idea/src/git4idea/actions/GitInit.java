@@ -32,7 +32,7 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.Git;
+import git4idea.commands.Git;
 import git4idea.util.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;

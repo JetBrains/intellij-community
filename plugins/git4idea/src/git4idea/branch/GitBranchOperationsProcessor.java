@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import git4idea.Git;
+import git4idea.commands.Git;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
 import git4idea.history.GitHistoryUtils;

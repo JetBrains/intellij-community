@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
-import git4idea.Git;
+import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
+package git4idea.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.commands.*;
+import git4idea.GitBranch;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;

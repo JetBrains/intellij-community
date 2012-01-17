@@ -18,7 +18,7 @@ package git4idea.branch;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.Git;
+import git4idea.commands.Git;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
