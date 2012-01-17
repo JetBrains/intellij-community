@@ -64,11 +64,12 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
-  private static final String[] DIRS_WITH_BINARY = new String[]{"bin", "Scripts"};
-  private static final String[] BINARY_NAMES = new String[]{"python.exe", "python", "jython.bat", "jython", "ipy.exe", "pypy.exe", "pypy"};
 
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls public static final String SKELETONS_TOPIC = "Skeletons";
+  private static final String[] DIRS_WITH_BINARY = new String[]{"", "bin", "Scripts"};
+  private static final String[] UNIX_BINARY_NAMES = new String[]{"python", "jython", "pypy"};
+  private static final String[] WIN_BINARY_NAMES = new String[]{"python.exe", "jython.bat", "ipy.exe", "pypy.exe"};
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -237,22 +238,6 @@ public class PythonSdkType extends SdkType {
     }
     catch (IncorrectOperationException ignore) {
       // did not succeed
-    }
-    return null;
-  }
-
-  @Nullable
-  public static String getVirtualEnvInterpreter(@NotNull String virtualEnvDir) {
-    for (String dir : DIRS_WITH_BINARY) {
-      final File binDir = new File(virtualEnvDir, dir);
-      if (binDir.isDirectory()) {
-        for (String binary : BINARY_NAMES) {
-          final File binFile = new File(binDir, binary);
-          if (binFile.exists()) {
-            return binFile.getPath();
-          }
-        }
-      }
     }
     return null;
   }
@@ -774,6 +759,42 @@ public class PythonSdkType extends SdkType {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static String getPythonExecutable(@NotNull String rootPath) {
+    final File rootFile = new File(rootPath);
+    if (rootFile.isFile()) {
+      return rootFile.getAbsolutePath();
+    }
+    for (String dir : DIRS_WITH_BINARY) {
+      final File subDir;
+      if (StringUtil.isEmpty(dir)) {
+        subDir = rootFile;
+      }
+      else {
+        subDir = new File(rootFile, dir);
+      }
+      if (!subDir.isDirectory()) {
+        continue;
+      }
+      for (String binaryName : getBinaryNames()) {
+        final File executable = new File(subDir, binaryName);
+        if (executable.isFile()) {
+          return executable.getAbsolutePath();
+        }
+      }
+    }
+    return null;
+  }
+
+  private static String[] getBinaryNames() {
+    if (SystemInfo.isUnix) {
+      return UNIX_BINARY_NAMES;
+    }
+    else {
+      return WIN_BINARY_NAMES;
+    }
   }
 }
 

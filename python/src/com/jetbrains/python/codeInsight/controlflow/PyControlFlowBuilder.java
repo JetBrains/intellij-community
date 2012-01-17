@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -37,15 +38,50 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyFunction(final PyFunction node) {
     // Create node and stop here
     myBuilder.startNode(node);
+    visitParameterListExpressions(node.getParameterList());
+    visitDecorators(node.getDecoratorList());
+    final PyAnnotation annotation = node.getAnnotation();
+    if (annotation != null) {
+      annotation.accept(this);
+    }
+
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
+  }
+
+  private void visitDecorators(PyDecoratorList list) {
+    if (list != null) {
+      for (PyDecorator decorator : list.getDecorators()) {
+        decorator.accept(this);
+      }
+    }
+  }
+
+  private void visitParameterListExpressions(PyParameterList parameterList) {
+    ParamHelper.walkDownParamArray(parameterList.getParameters(), new ParamHelper.ParamVisitor() {
+      @Override
+      public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+        final PyExpression defaultValue = param.getDefaultValue();
+        if (defaultValue != null) {
+          defaultValue.accept(PyControlFlowBuilder.this);
+        }
+        final PyAnnotation annotation = param.getAnnotation();
+        if (annotation != null) {
+          annotation.accept(PyControlFlowBuilder.this);
+        }
+      }
+    });
   }
 
   @Override
   public void visitPyClass(final PyClass node) {
     // Create node and stop here
     myBuilder.startNode(node);
+    for (PsiElement element : node.getSuperClassExpressions()) {
+      element.accept(this);
+    }
+    visitDecorators(node.getDecoratorList());
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
@@ -116,7 +152,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (value != null) {
       value.accept(this);
     }
-    for (PyExpression expression : node.getTargets()) {
+    for (PyExpression expression : node.getRawTargets()) {
       expression.accept(this);
     }
   }
@@ -436,10 +472,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       pendingBackup.addAll(myBuilder.pending);
       myBuilder.pending = emptyMutableList();
       myBuilder.flowAbrupted();
-      final Instruction exceptInstrcution = myBuilder.startNode(exceptPart);
+      final Instruction exceptInstruction = myBuilder.startNode(exceptPart);
       exceptPart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-      exceptInstructions.add(exceptInstrcution);
+      exceptInstructions.add(exceptInstruction);
     }
     for (Pair<PsiElement, Instruction> pair : pendingBackup) {
       myBuilder.addPendingEdge(pair.first, pair.second);
@@ -650,6 +686,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
     myBuilder.startNode(node);
+    visitParameterListExpressions(node.getParameterList());
   }
 
   @Override

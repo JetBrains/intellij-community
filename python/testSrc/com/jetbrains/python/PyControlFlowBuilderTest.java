@@ -7,7 +7,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -152,6 +154,36 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   public void testManyIfs() {
     doTest();
   }
+  
+  public void testSuperclass() {
+    doTest();
+  }
+  
+  public void testDefaultParameterValue() {
+    doTest();
+  }
+
+  public void testLambdaDefaultParameter() {
+    doTest();
+  }
+  
+  public void testDecorator() {
+    doTestFirstStatement();
+  }
+
+  public void testSetComprehension() {
+    doTest();
+  }
+  
+  public void testTypeAnnotations() {
+    setLanguageLevel(LanguageLevel.PYTHON30);
+    try {
+      doTest();
+    }
+    finally {
+      setLanguageLevel(null);
+    }
+  }
 
   public void testQualifiedSelfReference() {
     final String testName = getTestName(false).toLowerCase();
@@ -180,10 +212,14 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testFunction() {
+    doTestFirstStatement();
+  }
+
+  private void doTestFirstStatement() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
-    final ControlFlow flow = ControlFlowCache.getControlFlow((PyFunction)((PyFile)myFile).getStatements().get(0));
+    final ControlFlow flow = ControlFlowCache.getControlFlow((ScopeOwner)((PyFile)myFile).getStatements().get(0));
     check(fullPath, flow);
   }
 

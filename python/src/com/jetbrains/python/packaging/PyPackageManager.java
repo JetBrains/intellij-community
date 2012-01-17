@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * @author vlan
  */
-public class PyPackagingUtil {
+public class PyPackageManager {
   public final static int OK = 0;
   public final static int ERROR_WRONG_USAGE = 1;
   public final static int ERROR_NO_PACKAGING_TOOLS = 2;
@@ -28,48 +28,80 @@ public class PyPackagingUtil {
   private static final String PACKAGING_TOOL = "packaging_tool.py";
   private static final String VIRTUALENV = "virtualenv.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
-  private static final Logger LOG = Logger.getInstance("#" + PyPackagingUtil.class.getName());
-  private static PyPackagingUtil ourInstance = null;
+  private static final Logger LOG = Logger.getInstance("#" + PyPackageManager.class.getName());
 
-  private Map<Sdk, List<PyPackage>> myPackagesCache = new HashMap<Sdk, List<PyPackage>>();
+  private static final Map<Sdk, PyPackageManager> ourInstances = new HashMap<Sdk, PyPackageManager>();
 
-  private PyPackagingUtil() {
+  private List<PyPackage> myPackagesCache = null;
+  private Sdk mySdk;
+
+  private PyPackageManager(@NotNull Sdk sdk) {
+    mySdk = sdk;
   }
 
   @NotNull
-  public static String createVirtualEnv(@NotNull Sdk sdk, @NotNull String desinationDir) throws PyExternalProcessException {
-    runPythonHelper(sdk, VIRTUALENV, list("--never-download", "--distribute", desinationDir));
-    final String binary = PythonSdkType.getVirtualEnvInterpreter(desinationDir);
+  public static PyPackageManager getInstance(@NotNull Sdk sdk) {
+    PyPackageManager manager = ourInstances.get(sdk);
+    if (manager == null) {
+      manager = new PyPackageManager(sdk);
+      ourInstances.put(sdk, manager);
+    }
+    return manager;
+  }
+
+  public Sdk getSdk() {
+    return mySdk;
+  }
+
+  public void install(@NotNull List<PyRequirement> requirements) throws PyExternalProcessException {
+    myPackagesCache = null;
+    final List<String> args = new ArrayList<String>();
+    args.add("install");
+    for (PyRequirement req : requirements) {
+      args.add(req.toString());
+    }
+    runPythonHelper(PACKAGING_TOOL, args);
+  }
+
+  public void install(@NotNull PyPackage pkg) throws PyExternalProcessException {
+    // TODO: Add options for mirrors, web pages with indices, upgrade flag, package file path
+    myPackagesCache = null;
+    runPythonHelper(PACKAGING_TOOL, list("install", pkg.getName()));
+  }
+
+  public void uninstall(@NotNull PyPackage pkg) throws PyExternalProcessException {
+    myPackagesCache = null;
+    runPythonHelper(PACKAGING_TOOL, list("uninstall", pkg.getName()));
+  }
+
+  @NotNull
+  public List<PyPackage> getPackages() throws PyExternalProcessException {
+    if (myPackagesCache == null) {
+      final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
+      myPackagesCache = parsePackagingToolOutput(output);
+    }
+    return myPackagesCache;
+  }
+
+  @NotNull
+  public String createVirtualEnv(@NotNull String desinationDir) throws PyExternalProcessException {
+    // TODO: Add boolean systemSitePackages option
+    runPythonHelper(VIRTUALENV, list("--never-download", "--distribute", desinationDir));
+    final String binary = PythonSdkType.getPythonExecutable(desinationDir);
     final String binaryFallback = desinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;
   }
 
-  public static void deleteVirtualEnv(@NotNull String virtualEnvDir) {
-    FileUtil.delete(new File(virtualEnvDir));
-  }
-
-  @NotNull
-  public static PyPackagingUtil getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new PyPackagingUtil();
+  public static void deleteVirtualEnv(@NotNull String sdkHome) throws PyExternalProcessException {
+    final File root = PythonSdkType.getVirtualEnvRoot(sdkHome);
+    if (root == null) {
+      throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find virtualenv root for interpreter");
     }
-    return ourInstance;
-  }
-
-  @NotNull
-  public List<PyPackage> getInstalledPackages(@NotNull Sdk sdk) throws PyExternalProcessException {
-    final List<PyPackage> cached = myPackagesCache.get(sdk);
-    if (cached != null) {
-      return cached;
-    }
-    final String output = runPythonHelper(sdk, PACKAGING_TOOL, list("list"));
-    final List<PyPackage> packages = parsePackagingToolOutput(output);
-    myPackagesCache.put(sdk, packages);
-    return packages;
+    FileUtil.delete(root);
   }
 
   public void clearCaches() {
-    myPackagesCache.clear();
+    myPackagesCache = null;
   }
 
   private static <T> List<T> list(T... xs) {
@@ -77,10 +109,9 @@ public class PyPackagingUtil {
   }
 
   @NotNull
-  private static String runPythonHelper(@NotNull Sdk sdk,
-                                        @NotNull String helper,
-                                        @NotNull List<String> args) throws PyExternalProcessException {
-    final String homePath = sdk.getHomePath();
+  private String runPythonHelper(@NotNull String helper,
+                                 @NotNull List<String> args) throws PyExternalProcessException {
+    final String homePath = mySdk.getHomePath();
     if (homePath == null) {
       throw new PyExternalProcessException(ERROR_INVALID_SDK, "Cannot find interpreter for SDK");
     }
@@ -126,7 +157,8 @@ public class PyPackagingUtil {
       final String name = fields.get(0);
       final String version = fields.get(1);
       final String location = fields.get(2);
-      packages.add(new PyPackage(name, version, location, new ArrayList<PyRequirement>()));
+      if (!"Python".equals(name) && !"wsgiref".equals(name))
+        packages.add(new PyPackage(name, version, location, new ArrayList<PyRequirement>()));
     }
     return packages;
   }

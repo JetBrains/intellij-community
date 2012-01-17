@@ -6,6 +6,7 @@ import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -29,6 +30,8 @@ public class ScopeImpl implements Scope {
   private Set<String> myNonlocals;
   private final ScopeOwner myFlowOwner;
   private Set<String> myAllNames;
+  private Map<String, PsiElement> myDeclarations;
+  private List<NameDefiner> myStarDeclarations;  // declarations which declare unknown set of names, such as 'from ... import *'
   private static final Logger LOG = Logger.getInstance(ScopeImpl.class.getName());
 
   public ScopeImpl(final ScopeOwner flowOwner) {
@@ -107,6 +110,55 @@ public class ScopeImpl implements Scope {
       return vars.get(n - 1).values();
     }
     return Collections.emptyList();
+  }
+
+  @Override
+  public List<NameDefiner> getStarDeclarations() {
+    if (myDeclarations == null) {
+      collectDeclarations();
+    }
+    return myStarDeclarations;
+  }
+
+  @Override
+  public PsiElement getDeclaration(String name) {
+    if (myDeclarations == null) {
+      collectDeclarations();
+    }
+    return myDeclarations.get(name);
+  }
+
+  private void collectDeclarations() {
+    final Map<String, PsiElement> declarations = new HashMap<String, PsiElement>();
+    final List<NameDefiner> starDeclarations = new ArrayList<NameDefiner>();
+    myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyFunction(PyFunction node) {
+        declarations.put(node.getName(), node);
+      }
+
+      @Override
+      public void visitPyClass(PyClass node) {
+        declarations.put(node.getName(), node);
+      }
+
+      @Override
+      public void visitPyElement(PyElement node) {
+        if (node instanceof PsiNamedElement) {
+          declarations.put(node.getName(), node);
+        }
+        super.visitPyElement(node);
+      }
+
+      @Override
+      public void visitPyStarImportElement(PyStarImportElement node) {
+        starDeclarations.add(node);
+      }
+      
+      // TODO...
+    });
+    myDeclarations = declarations;
+    myStarDeclarations = starDeclarations;
   }
 
   private Set<String> computeAllNames() {

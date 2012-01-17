@@ -1,7 +1,5 @@
 package com.jetbrains.python.psi;
 
-import java.util.List;
-
 /**
  * Generator expression PSI.
  *
