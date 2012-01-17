@@ -126,7 +126,7 @@ public class Growl {
   }
 
   private static ID invoke(@NotNull final String className, @NotNull final String selector, Object... args) {
-    return invoke(Foundation.getClass(className), selector, args);
+    return invoke(Foundation.getObjcClass(className), selector, args);
   }
 
   private static ID invoke(@NotNull final ID id, @NotNull final String selector, Object... args) {

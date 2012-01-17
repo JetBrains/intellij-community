@@ -30,5 +30,7 @@ public class ID extends NativeLong {
   public ID(long peer) {
     super(peer);
   }
+  
+  public final static ID NIL = new ID(0);
 
 }

@@ -56,7 +56,7 @@ public class Foundation {
   /**
    * Get the ID of the NSClass with className
    */
-  public static ID getClass(String className) {
+  public static ID getObjcClass(String className) {
     return myFoundationLibrary.objc_getClass(className);
   }
   
@@ -73,7 +73,7 @@ public class Foundation {
   }
 
   public static ID invoke(final String cls, final String selector, Object... args) {
-    return invoke(getClass(cls), createSelector(selector), args);
+    return invoke(getObjcClass(cls), createSelector(selector), args);
   }
 
   public static ID invoke(final ID id, final String selector, Object... args) {
@@ -229,7 +229,7 @@ public class Foundation {
       ourMainThreadRunnables.put(String.valueOf(ourCurrentRunnableCount), new RunnableInfo(runnable, withAutoreleasePool));
     }
 
-    final ID ideaRunnable = getClass("IdeaRunnable");
+    final ID ideaRunnable = getObjcClass("IdeaRunnable");
     final ID runnableObject = invoke(invoke(ideaRunnable, "alloc"), "init");
     invoke(runnableObject, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector("run:"),
            nsString(String.valueOf(ourCurrentRunnableCount)), Boolean.valueOf(waitUntilDone));
@@ -238,7 +238,7 @@ public class Foundation {
 
   private static void initRunnableSupport() {
     if (ourRunnableCallback == null) {
-      final ID runnableClass = allocateObjcClassPair(getClass("NSObject"), "IdeaRunnable");
+      final ID runnableClass = allocateObjcClassPair(getObjcClass("NSObject"), "IdeaRunnable");
       registerObjcClassPair(runnableClass);
 
       final Callback callback = new Callback() {
@@ -273,6 +273,54 @@ public class Foundation {
         throw new RuntimeException("Unable to add method to objective-c runnableClass class!");
       }
       ourRunnableCallback = callback;
+    }
+  }
+  
+  public static class NSDictionary {
+    private ID myDelegate;
+    
+    public NSDictionary(ID delegate) {
+      myDelegate = delegate;
+    }
+    
+    public ID get(ID key) {
+      return invoke(myDelegate, "objectForKey:", key);
+    }
+    
+    public ID get(String key) {
+      return get(nsString(key));
+    }
+
+    public int count() {
+      return invoke(myDelegate, "count").intValue();
+    }
+  }
+
+  public static class NSArray {
+    private ID myDelegate;
+
+    public NSArray(ID delegate) {
+      myDelegate = delegate;
+    }
+
+    public int count() {
+      return invoke(myDelegate, "count").intValue();
+    }
+
+    public ID at(int index) {
+      return invoke(myDelegate, "objectAtIndex:", index);
+    }
+  }
+  
+  public static class NSAutoreleasePool {
+    private ID myDelegate;
+
+    public NSAutoreleasePool() {
+      myDelegate = invoke(invoke("NSAutoreleasePool", "alloc"), "init");
+    }
+
+    public void drain() {
+      invoke(myDelegate, "drain");
     }
   }
 }
