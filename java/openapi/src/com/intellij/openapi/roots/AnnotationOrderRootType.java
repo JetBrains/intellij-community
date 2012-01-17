@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +44,8 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     return true;
   }
 
-  public static VirtualFile[] getFiles(OrderEntry entry) {
+  @NotNull
+  public static VirtualFile[] getFiles(@NotNull OrderEntry entry) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     RootPolicy<List<VirtualFile>> policy = new RootPolicy<List<VirtualFile>>() {
       @Override
@@ -69,7 +71,8 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  public static String[] getUrls(OrderEntry entry) {
+  @NotNull
+  public static String[] getUrls(@NotNull OrderEntry entry) {
     List<String> result = new ArrayList<String>();
     RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
       @Override

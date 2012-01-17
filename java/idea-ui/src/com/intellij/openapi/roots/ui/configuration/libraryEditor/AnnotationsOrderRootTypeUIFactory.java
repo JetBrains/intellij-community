@@ -20,7 +20,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
@@ -45,6 +45,6 @@ public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory
 
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new SdkPathEditor(ProjectBundle.message("sdk.configure.annotations.tab"), AnnotationOrderRootType.getInstance(),
-                          FileChooserDescriptorFactory.createSingleFolderDescriptor());
+                             new FileChooserDescriptor(false, true, true, false, true, false));
   }
 }
