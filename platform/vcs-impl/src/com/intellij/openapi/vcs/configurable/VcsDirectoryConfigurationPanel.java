@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -165,7 +166,8 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
-    myProjectMessage = "<html>" + StringUtil.escapeXml(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " + VcsMappingConfigurationDialog.getProjectMessage(myProject).replace('\n', ' ') + "</html>";
+    myProjectMessage = "<html>" + StringUtil.escapeXml(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " +
+                       DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage(myProject).replace('\n', ' ') + "</html>";
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();

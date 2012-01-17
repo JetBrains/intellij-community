@@ -160,12 +160,5 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         builder.addDirtyFile(new VcsRoot(vcs, myBaseDir));
       }
     }
-
-    final VcsRoot[] vcsRoots = plVcsManager.getAllVcsRoots();
-    for (VcsRoot root : vcsRoots) {
-      //if (! root.path.equals(baseDir)) {
-        builder.addDirtyDirRecursively(root);
-      //}
-    }
   }
 }

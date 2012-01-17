@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
@@ -45,4 +47,23 @@ public abstract class DefaultVcsRootPolicy {
   public abstract VirtualFile getVcsRootFor(final VirtualFile file);
 
   public abstract void markDefaultRootsDirty(final DirtBuilder builder, VcsGuess vcsGuess);
+  
+  public String getProjectConfigurationMessage(final Project project) {
+    final StorageScheme storageScheme = ((ProjectEx) project).getStateStore().getStorageScheme();
+    boolean isDirectoryBased = StorageScheme.DIRECTORY_BASED.equals(storageScheme);
+    final String[] parts = new String[] {"Content roots of all modules", "all immediate descendants of project base directory",
+      ".idea directory contents"};
+    final StringBuilder sb = new StringBuilder(parts[0]);
+    if (isDirectoryBased) {
+      sb.append(", ");
+    } else {
+      sb.append(", and ");
+    }
+    sb.append(parts[1]);
+    if (isDirectoryBased) {
+      sb.append(", and ");
+      sb.append(parts[2]);
+    }
+    return sb.toString();
+  }
 }

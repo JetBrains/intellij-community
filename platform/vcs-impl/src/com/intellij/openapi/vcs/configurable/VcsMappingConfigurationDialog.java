@@ -16,19 +16,18 @@
 
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
@@ -168,27 +167,8 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myDirectoryRadioButton.setSelected(true);
   }
 
-  public static String getProjectMessage(final Project project) {
-    final StorageScheme storageScheme = ((ProjectEx) project).getStateStore().getStorageScheme();
-    boolean isDirectoryBased = StorageScheme.DIRECTORY_BASED.equals(storageScheme);
-    final String[] parts = new String[] {"Content roots of all modules", "all immediate descendants of project base directory",
-      ".idea directory contents"};
-    final StringBuilder sb = new StringBuilder(parts[0]);
-    if (isDirectoryBased) {
-      sb.append(", ");
-    } else {
-      sb.append(", and ");
-    }
-    sb.append(parts[1]);
-    if (isDirectoryBased) {
-      sb.append(", and ");
-      sb.append(parts[2]);
-    }
-    return sb.toString();
-  }
-
   public void initProjectMessage() {
-    myProjectButtonComment.setText("<html>" + getProjectMessage(myProject) + "</html>");
+    myProjectButtonComment.setText("<html>" + DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage(myProject) + "</html>");
   }
 
   private class MyBrowseFolderListener extends ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> {
