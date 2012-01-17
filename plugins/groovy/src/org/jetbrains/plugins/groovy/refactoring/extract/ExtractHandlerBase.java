@@ -152,7 +152,7 @@ public abstract class ExtractHandlerBase<InfoHelper extends ExtractInfoHelper> i
       throw new ExtractException(message);
     }
 
-    ExtractInitialInfo info = new ExtractInitialInfo(inputInfos, outputInfos, elements, statements, owner, returnStatements);
+    InitialInfo info = new InitialInfo(inputInfos, outputInfos, elements, statements, owner, returnStatements);
 
     InfoHelper helper = getSettings(info);
     if (helper == null) return;
@@ -176,7 +176,7 @@ public abstract class ExtractHandlerBase<InfoHelper extends ExtractInfoHelper> i
   }
 
   @Nullable
-  public abstract InfoHelper getSettings(@NotNull final ExtractInitialInfo initialInfo);
+  public abstract InfoHelper getSettings(@NotNull final InitialInfo initialInfo);
 
   public abstract void performRefactoring(@NotNull final InfoHelper helper,
                                           @NotNull final GrMemberOwner owner,

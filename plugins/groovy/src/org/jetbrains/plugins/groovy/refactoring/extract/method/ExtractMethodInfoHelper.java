@@ -25,22 +25,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelper;
-import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
 
 /**
  * @author ilyas
  */
 public class ExtractMethodInfoHelper implements ExtractInfoHelper {
-  private final ExtractInitialInfo myInitialInfo;
+  private final InitialInfo myInitialInfo;
 
   private final boolean myIsStatic;
   private boolean mySpecifyType = true;
   private String myVisibility;
   private String myName;
 
-  public ExtractMethodInfoHelper(ExtractInitialInfo initialInfo, String name) {
+  public ExtractMethodInfoHelper(InitialInfo initialInfo, String name) {
     myInitialInfo = initialInfo;
 
     myVisibility = PsiModifier.PRIVATE;

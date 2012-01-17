@@ -41,8 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractException;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 
 /**
  * @author ilyas
@@ -141,7 +141,7 @@ public class GroovyExtractMethodHandler extends ExtractHandlerBase<ExtractMethod
   }
 
   @Override
-  public ExtractMethodInfoHelper getSettings(@NotNull ExtractInitialInfo initialInfo) {
+  public ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, "testMethod");
       final PsiType type = helper.getOutputType();

@@ -37,7 +37,7 @@ import java.util.*;
 /**
  * @author Max Medvedev
  */
-public class ExtractInitialInfo implements ExtractInfoHelper {
+public class InitialInfo implements ExtractInfoHelper {
   private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
   private final VariableInfo[] myOutputNames;
   private final PsiType myOutputType;
@@ -47,12 +47,12 @@ public class ExtractInitialInfo implements ExtractInfoHelper {
   private final GrStatement[] myStatements;
   private final boolean myHasReturnValue;
 
-  public ExtractInitialInfo(VariableInfo[] inputInfos,
-                            VariableInfo[] outputInfos,
-                            PsiElement[] innerElements,
-                            GrStatement[] statements,
-                            GrMemberOwner targetClass,
-                            ArrayList<GrStatement> returnStatements) {
+  public InitialInfo(VariableInfo[] inputInfos,
+                     VariableInfo[] outputInfos,
+                     PsiElement[] innerElements,
+                     GrStatement[] statements,
+                     GrMemberOwner targetClass,
+                     ArrayList<GrStatement> returnStatements) {
     myInnerElements = innerElements;
     myStatements = statements;
     myTargetClass = targetClass;

@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
@@ -23,6 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
+import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +33,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
-import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
+import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -49,8 +54,6 @@ import java.util.EventListener;
  * @author ilyas
  */
 public class GroovyExtractMethodDialog extends DialogWrapper {
-
-  private final ExtractInitialInfo myInfo;
   private final ExtractMethodInfoHelper myHelper;
 
   private final EventListenerList myListenerList = new EventListenerList();
@@ -59,19 +62,18 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private EditorTextField myNameField;
   private JCheckBox myCbSpecifyType;
   private JLabel myNameLabel;
-  private JTextArea mySignatureArea;
-  private VisibilityPanel myVisibilityPanel;
+  private MethodSignatureComponent mySignature;
+  private ComboBoxVisibilityPanel myVisibilityPanel;
   private ParameterTablePanel myParameterTablePanel;
   private final Project myProject;
 
-  public GroovyExtractMethodDialog(ExtractInitialInfo info) {
+  public GroovyExtractMethodDialog(InitialInfo info) {
     super(info.getProject(), true);
     myProject = info.getProject();
-    myInfo = info;
     myHelper = new ExtractMethodInfoHelper(info, "");
 
     setUpNameField();
-    myParameterTablePanel.init(this, myInfo);
+    myParameterTablePanel.init(this, info);
 
     setModal(true);
     setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
@@ -179,17 +181,27 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
+    mySignature = new MethodSignatureComponent("", myProject, JavaFileType.INSTANCE) {
+      @Override
+      protected String getFileName() {
+        return "dummy." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension();
+      }
+    };
+    mySignature.setPreferredSize(new Dimension(500, 100));
+    mySignature.setMinimumSize(new Dimension(500, 100));
+
     myNameField = new EditorTextField("", myProject, GroovyFileType.GROOVY_FILE_TYPE);
-    myVisibilityPanel = new VisibilityPanel();
+    myVisibilityPanel = new GroovyComboboxVisibilityPanel();
 
     String visibility = GroovyApplicationSettings.getInstance().EXTRACT_METHOD_VISIBILITY;
     if (visibility == null) {
       visibility = PsiModifier.PRIVATE;
     }
     myVisibilityPanel.setVisibility(visibility);
-    myVisibilityPanel.addStateChangedListener(new VisibilityPanel.VisibilityStateChanged() {
-      public void visibilityChanged(String newVisibility) {
-        myHelper.setVisibility(newVisibility);
+    myVisibilityPanel.addListener(new ChangeListener(){
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        myHelper.setVisibility(myVisibilityPanel.getVisibility());
         updateSignature();
       }
     });
@@ -216,7 +228,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   Update signature text area
    */
   public void updateSignature() {
-    if (mySignatureArea == null) return;
+    if (mySignature == null) return;
     @NonNls StringBuilder buffer = new StringBuilder();
     String modifier = ExtractUtil.getModifierString(myHelper);
     buffer.append(modifier);
@@ -224,7 +236,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     String name = getEnteredName() == null ? "" : getEnteredName();
     buffer.append(name);
     buffer.append("(");
-    String[] params = ExtractUtil.getParameterString(myHelper);
+    String[] params = ExtractUtil.getParameterString(myHelper, false);
     if (params.length > 0) {
       String INDENT = "    ";
       buffer.append("\n");
@@ -233,7 +245,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       }
     }
     buffer.append(")");
-    mySignatureArea.setText(buffer.toString());
+    mySignature.setSignature(buffer.toString());
   }
 
   public ExtractMethodSettings getSettings() {

@@ -302,7 +302,7 @@ public class ExtractUtil {
     buffer.append(typeText);
     buffer.append(name);
     buffer.append("(");
-    for (String param : getParameterString(helper)) {
+    for (String param : getParameterString(helper, true)) {
       buffer.append(param);
     }
     buffer.append(") { \n");
@@ -364,7 +364,7 @@ public class ExtractUtil {
     return method;
   }
 
-  public static String[] getParameterString(ExtractMethodInfoHelper helper) {
+  public static String[] getParameterString(ExtractMethodInfoHelper helper, boolean useCanonicalText) {
     int i = 0;
     ParameterInfo[] infos = helper.getParameterInfos();
     int number = 0;
@@ -377,7 +377,14 @@ public class ExtractUtil {
         PsiType paramType = info.getType();
         final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
         if (unboxed != null) paramType = unboxed;
-        String paramTypeText = paramType == null || paramType.equalsToText("java.lang.Object") ? "" : paramType.getCanonicalText() + " ";
+        String paramTypeText;
+
+        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          paramTypeText = "";
+        }
+        else {
+          paramTypeText = (useCanonicalText ? paramType.getCanonicalText() : paramType.getPresentableText()) + " ";
+        }
         params.add(paramTypeText + info.getName() + (i < number - 1 ? ", " : ""));
         i++;
       }
