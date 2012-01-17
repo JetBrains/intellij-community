@@ -41,7 +41,7 @@ public class GroovyReferenceCharFilter extends CharFilter {
       return Result.ADD_TO_PREFIX;
     }
 
-    if ((c == '[' || c == '<' || c == '.' || c == ' ') && JavaCharFilter.isNonImportedClassEntered((LookupImpl)lookup)) {
+    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') && JavaCharFilter.isNonImportedClassEntered((LookupImpl)lookup)) {
       return Result.HIDE_LOOKUP;
     }
 

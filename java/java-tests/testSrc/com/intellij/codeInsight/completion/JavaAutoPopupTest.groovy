@@ -1100,6 +1100,10 @@ public class UTest {
     edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
     type ' '
     assert myFixture.file.text.contains('Foo239Util2 ')
+
+    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
+    type 'new Foo239('
+    assert myFixture.file.text.contains('new Foo239()')
   }
 
   public void testTypingFirstVarargDot() {

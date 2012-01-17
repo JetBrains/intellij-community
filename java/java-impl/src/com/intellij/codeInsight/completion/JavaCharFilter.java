@@ -102,7 +102,7 @@ public class JavaCharFilter extends CharFilter {
     }
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
 
-    if ((c == '[' || c == '<' || c == '.' || c == ' ') && isNonImportedClassEntered((LookupImpl)lookup)) {
+    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') && isNonImportedClassEntered((LookupImpl)lookup)) {
       return Result.HIDE_LOOKUP;
     }
     
