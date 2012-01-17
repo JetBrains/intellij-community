@@ -321,7 +321,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return result;
   }
 
-  private List<ColorAndFontPanelFactory> createPanelFactories() {
+  protected List<ColorAndFontPanelFactory> createPanelFactories() {
     ArrayList<ColorAndFontPanelFactory> result = new ArrayList<ColorAndFontPanelFactory>();
     result.add(new FontConfigurableFactory());
     result.add(new ConsoleFontConfigurableFactory());
