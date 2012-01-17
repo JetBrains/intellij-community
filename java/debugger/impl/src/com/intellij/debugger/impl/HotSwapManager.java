@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +68,7 @@ public class HotSwapManager extends AbstractProjectComponent {
     myTimeStamps.put(session, Long.valueOf(tStamp));
   }
 
-  public Map<String, HotSwapFile> getModifiedClasses(final DebuggerSession session, final HotSwapProgress progress) {
+  public Map<String, HotSwapFile> scanForModifiedClasses(final DebuggerSession session, final HotSwapProgress progress) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     final List<File> outputRoots = new ArrayList<File>();
@@ -125,7 +126,39 @@ public class HotSwapManager extends AbstractProjectComponent {
     setTimeStamp(session, newSwapTime);
   }
 
-  public static Map<DebuggerSession, Map<String, HotSwapFile>> getModifiedClasses(final List<DebuggerSession> sessions, final HotSwapProgress swapProgress) {
+  public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<DebuggerSession> sessions, Map<String, List<String>> generatedPaths) {
+    final Map<DebuggerSession, Map<String, HotSwapFile>> result = new java.util.HashMap<DebuggerSession, Map<String, HotSwapFile>>();
+    List<Pair<DebuggerSession, Long>> sessionWithStamps = new ArrayList<Pair<DebuggerSession, Long>>();
+    for (DebuggerSession session : sessions) {
+      sessionWithStamps.add(new Pair<DebuggerSession, Long>(session, getInstance(session.getProject()).getTimeStamp(session)));
+    }
+    for (Map.Entry<String, List<String>> entry : generatedPaths.entrySet()) {
+      final File root = new File(entry.getKey());
+      for (String relativePath : entry.getValue()) {
+        if (SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(relativePath, CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(relativePath, CLASS_EXTENSION)) {
+          final String qualifiedName = relativePath.substring(0, relativePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
+          final HotSwapFile hotswapFile = new HotSwapFile(new File(root, relativePath));
+          final long fileStamp = hotswapFile.file.lastModified();
+
+          for (Pair<DebuggerSession, Long> pair : sessionWithStamps) {
+            final DebuggerSession session = pair.first;
+            if (fileStamp > pair.second) {
+              Map<String, HotSwapFile> container = result.get(session);
+              if (container == null) {
+                container = new java.util.HashMap<String, HotSwapFile>();
+                result.put(session, container);
+              }
+              container.put(qualifiedName, hotswapFile);
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+
+  public static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(final List<DebuggerSession> sessions, final HotSwapProgress swapProgress) {
     final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new HashMap<DebuggerSession, Map<String, HotSwapFile>>();
 
     final MultiProcessCommand scanClassesCommand = new MultiProcessCommand();
@@ -141,7 +174,7 @@ public class HotSwapManager extends AbstractProjectComponent {
         scanClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
           protected void action() throws Exception {
             swapProgress.setDebuggerSession(debuggerSession);
-            final Map<String, HotSwapFile> sessionClasses = getInstance(swapProgress.getProject()).getModifiedClasses(debuggerSession, swapProgress);
+            final Map<String, HotSwapFile> sessionClasses = getInstance(swapProgress.getProject()).scanForModifiedClasses(debuggerSession, swapProgress);
             if (!sessionClasses.isEmpty()) {
               modifiedClasses.put(debuggerSession, sessionClasses);
             }

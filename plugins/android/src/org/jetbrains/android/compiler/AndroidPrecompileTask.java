@@ -109,7 +109,7 @@ public class AndroidPrecompileTask implements CompileTask {
       CompilerManager.getInstance(project).addCompilationStatusListener(new MyCompilationStatusListener(project, addedEntries), project);
     }
 
-    CompilerManager.getInstance(project).addCompilationStatusListener(new CompilationStatusListener() {
+    CompilerManager.getInstance(project).addCompilationStatusListener(new CompilationStatusAdapter() {
       @Override
       public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -199,7 +199,7 @@ public class AndroidPrecompileTask implements CompileTask {
     }
   }
 
-  private static class MyCompilationStatusListener implements CompilationStatusListener {
+  private static class MyCompilationStatusListener extends CompilationStatusAdapter {
     private final Project myProject;
     private final Set<ExcludeEntryDescription> myEntriesToRemove;
 

@@ -32,4 +32,6 @@ public interface CompilationStatusListener extends EventListener {
    * @param compileContext context for the finished compilation
    */
   void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext);
+
+  void fileGenerated(String outputRoot, String relativePath);
 }

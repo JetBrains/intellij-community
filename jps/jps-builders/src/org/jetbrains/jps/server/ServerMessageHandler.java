@@ -1,15 +1,13 @@
 package org.jetbrains.jps.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import org.jboss.netty.channel.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
+import org.jetbrains.jps.incremental.messages.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -203,7 +201,11 @@ class ServerMessageHandler extends SimpleChannelHandler {
         ServerState.getInstance().startBuild(myProjectPath, myModules, myPaths, myParams, new MessageHandler() {
           public void processMessage(BuildMessage buildMessage) {
             final JpsRemoteProto.Message.Response response;
-            if (buildMessage instanceof UptoDateFilesSavedEvent) {
+            if (buildMessage instanceof FileGeneratedEvent) {
+              final Collection<Pair<String, String>> paths = ((FileGeneratedEvent)buildMessage).getPaths();
+              response = !paths.isEmpty()? ProtoUtil.createFileGeneratedEvent(paths) : null;
+            }
+            else if (buildMessage instanceof UptoDateFilesSavedEvent) {
               markedFilesUptodate.set(true);
               response = null;
             }
