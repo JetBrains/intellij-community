@@ -318,7 +318,12 @@ public class FileBasedIndex implements ApplicationComponent {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
         @Override
         public void run() {
-          performShutdown();
+          ShutDownTracker.invokeAndWait(ApplicationManager.getApplication().isUnitTestMode(), new Runnable() {
+            @Override
+            public void run() {
+              performShutdown();
+            }
+          });
         }
       });
       //FileUtil.createIfDoesntExist(workInProgressFile);
