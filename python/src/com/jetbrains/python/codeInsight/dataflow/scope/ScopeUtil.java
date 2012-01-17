@@ -56,6 +56,15 @@ public class ScopeUtil {
   }
 
   @Nullable
+  public static ScopeOwner getResolveScopeOwner(PsiElement element) {
+    // References in default values of parameters are defined somewhere in outer scopes, as well as references in decorators
+    if (PsiTreeUtil.getParentOfType(element, PyParameter.class, PyDecorator.class) != null) {
+      element = getScopeOwner(element);
+    }
+    return PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+  }
+
+  @Nullable
   public static ScopeOwner getDeclarationScopeOwner(PsiElement anchor, String name) {
     PsiElement element = anchor;
     if (name != null) {

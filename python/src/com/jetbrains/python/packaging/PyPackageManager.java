@@ -53,8 +53,14 @@ public class PyPackageManager {
     return mySdk;
   }
 
-  public void install(@NotNull List<PyRequirement> requirements) {
-    throw new UnsupportedOperationException("Not implemented");
+  public void install(@NotNull List<PyRequirement> requirements) throws PyExternalProcessException {
+    myPackagesCache = null;
+    final List<String> args = new ArrayList<String>();
+    args.add("install");
+    for (PyRequirement req : requirements) {
+      args.add(req.toString());
+    }
+    runPythonHelper(PACKAGING_TOOL, args);
   }
 
   public void install(@NotNull PyPackage pkg) throws PyExternalProcessException {

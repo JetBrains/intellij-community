@@ -47,7 +47,7 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testToConstructor() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyFunction);
-    assertEquals(((PyFunction)target).getName(), PyNames.INIT);
+    assertEquals(PyNames.INIT, ((PyFunction)target).getName());
   }
 
   public void testToConstructorInherited() {
@@ -57,16 +57,17 @@ public class PyResolveTest extends PyResolveTestCase {
     // class
     elt = targets[0].getElement();
     assertTrue(elt instanceof PyClass);
-    assertEquals(((PyClass)elt).getName(), "Bar");
+    assertEquals("Bar", ((PyClass)elt).getName());
     // init
     elt = targets[1].getElement();
     assertTrue(elt instanceof PyFunction);
     PyFunction fun = (PyFunction)elt;
-    assertEquals(fun.getName(), PyNames.INIT);
+    assertEquals(PyNames.INIT, fun.getName());
     PyClass cls = fun.getContainingClass();
     assertNotNull(cls);
-    assertEquals(cls.getName(), "Foo");
+    assertEquals("Foo", cls.getName());
   }
+
   // NOTE: maybe this test does not belong exactly here; still it's the best place currently.
   public void testComplexCallee() {
     PsiElement targetElement = resolve();
@@ -85,7 +86,7 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertNotNull(targetElement);
     assertTrue(targetElement instanceof PyTargetExpression);
-    assertEquals(((PyTargetExpression)targetElement).getName(), "FOO");
+    assertEquals("FOO", ((PyTargetExpression)targetElement).getName());
   }
 
   public void testQualifiedFunc() {
@@ -324,7 +325,7 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testUnresolvedImport() {
     final ResolveResult[] results = multiResolve();
     assertEquals(1, results.length);
-    assertTrue(results [0] instanceof ImportedResolveResult);
+    assertInstanceOf(results [0], ImportedResolveResult.class);
     ImportedResolveResult result = (ImportedResolveResult) results [0];
     assertNull(result.getElement());
   }

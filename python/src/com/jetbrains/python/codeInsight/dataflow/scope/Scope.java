@@ -2,10 +2,12 @@ package com.jetbrains.python.codeInsight.dataflow.scope;
 
 import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.NameDefiner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author oleg
@@ -33,4 +35,8 @@ public interface Scope {
    */
   @NotNull
   Collection<ScopeVariable> getAllDeclaredVariables() throws DFALimitExceededException;
+  
+  List<NameDefiner> getStarDeclarations();
+  
+  PsiElement getDeclaration(String name);
 }

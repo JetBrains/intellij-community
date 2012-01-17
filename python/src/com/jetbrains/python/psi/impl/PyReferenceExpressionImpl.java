@@ -282,8 +282,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (scopeOwner != null && scopeOwner == PsiTreeUtil.getStubOrPsiParentOfType(target, ScopeOwner.class)) {
         PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
         try {
-          final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyElement)target,
-                                                                             augAssignment != null ? augAssignment : anchor);
+          final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner,
+                                                                             ((PyElement)target).getName(),
+                                                                             augAssignment != null ? augAssignment : anchor,
+                                                                             true);
           if (!defs.isEmpty()) {
             PyType type = defs.get(0).getType(context);
             for (int i = 1; i < defs.size(); i++) {

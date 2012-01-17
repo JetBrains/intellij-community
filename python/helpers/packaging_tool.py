@@ -25,12 +25,12 @@ def do_list():
     for pkg in pkg_resources.working_set:
         print('\t'.join([pkg.project_name, pkg.version, pkg.location]))
 
-def do_install(pkg):
+def do_install(pkgs):
     try:
         import pip
     except ImportError:
         error_no_pip()
-    return pip.main(['install', pkg])
+    return pip.main(['install'] + pkgs)
 
 def do_uninstall(pkg):
     try:
@@ -51,10 +51,10 @@ def main():
                 usage()
             do_list()
         elif cmd == 'install':
-            if len(sys.argv) != 3:
+            if len(sys.argv) < 2:
                 usage()
-            pkg = sys.argv[2]
-            retcode = do_install(pkg)
+            pkgs = sys.argv[2:]
+            retcode = do_install(pkgs)
         elif cmd == 'uninstall':
             if len(sys.argv) != 3:
                 usage()

@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
  * clone of JSExpressionCodeFragment
  */
 public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpressionCodeFragment {
-  public static Key<PsiElement> CONTEXT_KEY = new Key<PsiElement>("PyExpressionCodeFragmentContext");
-
   private PsiElement myContext;
   private boolean myPhysical;
   private FileViewProvider myViewProvider;

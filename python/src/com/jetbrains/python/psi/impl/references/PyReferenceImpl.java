@@ -8,6 +8,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,10 +18,14 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonResolveUtil;
-import com.jetbrains.cython.psi.*;
+import com.jetbrains.cython.psi.CythonFile;
+import com.jetbrains.cython.psi.CythonFunction;
+import com.jetbrains.cython.psi.CythonIncludeStatement;
+import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.django.util.PythonDataflowUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -30,13 +35,11 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -171,18 +174,62 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       realContext = containingClass;
     }
 
+    PsiElement uexpr = null;
+
     PsiElement roof = findResolveRoof(referencedName, realContext);
-    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, roof);
-    if ((uexpr != null)) {
-      // sort what we got
-      for (PsiElement hit : processor.getDefiners()) {
-        ret.poke(hit, getRate(hit));
+
+    if (Registry.is("python.new.style.resolve")) {
+      ScopeOwner scopeOwner = ScopeUtil.getResolveScopeOwner(realContext);
+      if (scopeOwner != null) {
+        final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, referencedName, myElement, false);
+        if (!defs.isEmpty()) {
+          for (ReadWriteInstruction def : defs) {
+            addResolvedElement(ret, referencedName, def.getElement());
+          }
+          return ret;
+        }
+        final Scope scope = ControlFlowCache.getScope(scopeOwner);
+        checkStarDeclarations(ret, referencedName, scope);
+        if (!ret.isEmpty()) {
+          return ret;
+        }
+
+        while (true) {
+          scopeOwner = PsiTreeUtil.getParentOfType(scopeOwner, ScopeOwner.class);
+          if (scopeOwner == null) {
+            break;
+          }
+          final Scope parentScope = ControlFlowCache.getScope(scopeOwner);
+          final PsiElement declaration = parentScope.getDeclaration(referencedName);
+          if (declaration != null) {
+            addResolvedElement(ret, referencedName, declaration);
+          }
+          else {
+            checkStarDeclarations(ret, referencedName, parentScope);
+          }
+          if (!ret.isEmpty()) {
+            return ret;
+          }
+          if (scopeOwner == roof) {
+            break;
+          }
+        }
       }
-      uexpr = PyUtil.turnDirIntoInit(uexpr); // an import statement may have returned a dir
     }
-    else if (!processor.getDefiners().isEmpty()) {
-      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW-1, processor.getDefiners()));
+    else {
+      uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, roof);
+      if ((uexpr != null)) {
+        // sort what we got
+        for (PsiElement hit : processor.getDefiners()) {
+          ret.poke(hit, getRate(hit));
+        }
+        uexpr = PyUtil.turnDirIntoInit(uexpr); // an import statement may have returned a dir
+      }
+      else if (!processor.getDefiners().isEmpty()) {
+        ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW-1, processor.getDefiners()));
+      }
     }
+
     PyBuiltinCache builtins_cache = PyBuiltinCache.getInstance(realContext);
     if (uexpr == null) {
       // ...as a part of current module
@@ -225,6 +272,31 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     return ret;
+  }
+
+  private static void addResolvedElement(ResolveResultList ret, String referencedName, PsiElement element) {
+    if (element instanceof NameDefiner && !(element instanceof PsiNamedElement)) {
+      final NameDefiner definer = (NameDefiner)element;
+      final PsiElement result = definer.getElementNamed(referencedName);
+      ret.add(new ImportedResolveResult(result, RatedResolveResult.RATE_NORMAL, Collections.<PsiElement>singletonList(definer)));
+      // TODO this kind of resolve contract is quite stupid
+      if (result != null) {
+        ret.poke(definer, RatedResolveResult.RATE_LOW);
+      }
+    }
+    else {
+      ret.poke(element, RatedResolveResult.RATE_HIGH);
+    }
+  }
+
+  private static void checkStarDeclarations(ResolveResultList ret, String referencedName, Scope scope) {
+    for (NameDefiner definer : scope.getStarDeclarations()) {
+      final PsiElement result = definer.getElementNamed(referencedName);
+      if (result != null) {
+        ret.add(new ImportedResolveResult(result, RatedResolveResult.RATE_NORMAL, Collections.<PsiElement>singletonList(definer)));
+        ret.poke(definer, RatedResolveResult.RATE_LOW);
+      }
+    }
   }
 
   private PsiElement findResolveRoof(String referencedName, PsiElement realContext) {

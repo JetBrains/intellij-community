@@ -195,12 +195,6 @@ public class PyPsiUtils {
       return element;
     }
     final PsiFile file = element.getContainingFile();
-    if (file != null) {
-      final PsiElement context = file.getCopyableUserData(PyExpressionCodeFragmentImpl.CONTEXT_KEY);
-      if (context != null){
-        return context;
-      }
-    }
     if (file instanceof PyExpressionCodeFragment) {
       final PsiElement context = file.getContext();
       if (LOG.isDebugEnabled()){
