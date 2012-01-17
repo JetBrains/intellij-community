@@ -47,8 +47,10 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
     Sdk sdk = super.getTestProjectSdk();
     SdkModificator sdkModificator = sdk.getSdkModificator();
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(PathManager.getHomePath() + "/jdkAnnotations");
-    sdkModificator.addRoot(root, AnnotationOrderRootType.getInstance());
-    sdkModificator.commitChanges();
+    if (root != null) {
+      sdkModificator.addRoot(root, AnnotationOrderRootType.getInstance());
+      sdkModificator.commitChanges();
+    }
 
     return sdk;
   }
