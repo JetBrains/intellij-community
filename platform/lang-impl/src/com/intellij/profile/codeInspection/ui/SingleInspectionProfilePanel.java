@@ -264,7 +264,7 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                  JPanel parent,
                                                  String profileName) {
 
-    profileName = Messages.showInputDialog(parent, profileName, "Create new inspection profile", Messages.getQuestionIcon());
+    profileName = Messages.showInputDialog(parent, profileName, "Create New Inspection Profile", Messages.getQuestionIcon());
     if (profileName == null) return null;
     final ProfileManager profileManager = selectedProfile.getProfileManager();
     if (ArrayUtil.find(profileManager.getAvailableProfileNames(), profileName) != -1) {
