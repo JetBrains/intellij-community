@@ -648,7 +648,7 @@ public class GitUtil {
   }
 
   /**
-   * Returns paths which have changed remotely comparing to the current branch, i.e. performs
+   * Returns absolute paths which have changed remotely comparing to the current branch, i.e. performs
    * <code>git diff --name-only master..origin/master</code>
    */
   @NotNull
