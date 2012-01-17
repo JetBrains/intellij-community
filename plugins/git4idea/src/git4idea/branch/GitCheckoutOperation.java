@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.process;
+package git4idea.branch;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +38,8 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
+import git4idea.commands.GitMessageWithFilesDetector;
+import git4idea.commands.GitSimpleEventDetector;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;

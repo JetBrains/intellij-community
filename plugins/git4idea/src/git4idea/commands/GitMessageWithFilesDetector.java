@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.process;
+package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitLineHandlerListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

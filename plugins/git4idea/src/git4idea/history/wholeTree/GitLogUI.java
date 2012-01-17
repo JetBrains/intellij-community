@@ -60,7 +60,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
-import git4idea.process.GitBranchOperationsProcessor;
+import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchUiUtil;

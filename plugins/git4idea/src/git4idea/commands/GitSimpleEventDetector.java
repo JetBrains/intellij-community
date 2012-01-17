@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.process;
+package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
-import git4idea.commands.GitLineHandlerListener;
 
 /**
  * @author Kirill Likhodedov
  */
-class GitSimpleEventDetector implements GitLineHandlerListener {
+public class GitSimpleEventDetector implements GitLineHandlerListener {
 
   private final Event myEvent;
   private boolean myHappened;
 
-  enum Event {
+  public enum Event {
     UNMERGED("you need to resolve your current index first"),
     BRANCH_NOT_FULLY_MERGED("is not fully merged");
 
@@ -37,7 +36,7 @@ class GitSimpleEventDetector implements GitLineHandlerListener {
     }
   }
 
-  GitSimpleEventDetector(Event event) {
+  public GitSimpleEventDetector(Event event) {
     myEvent = event;
   }
 
@@ -56,7 +55,7 @@ class GitSimpleEventDetector implements GitLineHandlerListener {
   public void startFailed(Throwable exception) {
   }
 
-  boolean hasHappened() {
+  public boolean hasHappened() {
     return myHappened;
   }
 

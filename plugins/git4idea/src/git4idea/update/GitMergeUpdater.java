@@ -33,7 +33,7 @@ import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
-import git4idea.process.GitMessageWithFilesDetector;
+import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.ui.GitUIUtil;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;

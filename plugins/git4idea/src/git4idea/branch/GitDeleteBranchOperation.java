@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.process;
+package git4idea.branch;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,6 +24,7 @@ import git4idea.Git;
 import git4idea.GitExecutionException;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
+import git4idea.commands.GitSimpleEventDetector;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
@@ -32,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static git4idea.process.GitMultiRootOperationExecutor.*;
 
 /**
  * Note: GitDeleteBranchOperation doesn't implement {@link GitBranchOperation}, because we don't need nor retry, neither rollback,
@@ -82,28 +81,29 @@ class GitDeleteBranchOperation {
         }
         else {
           if (succeeded.isEmpty()) {
-            showFatalError(getErrorTitle(), "The branch is not fully merged to the current branch.", myProject);
+            GitMultiRootOperationExecutor
+              .showFatalError(getErrorTitle(), "The branch is not fully merged to the current branch.", myProject);
           }
           else {
             StringBuilder message = new StringBuilder();
-            message.append("Successfully removed in ").append(joinRepositoryUrls(succeeded, "<br/>"))
+            message.append("Successfully removed in ").append(GitMultiRootOperationExecutor.joinRepositoryUrls(succeeded, "<br/>"))
               .append("The branch is not fully merged to the current branch in other repositories.");
-            showFatalError(getErrorTitle() + " in some repositories", message.toString(), myProject);
+            GitMultiRootOperationExecutor.showFatalError(getErrorTitle() + " in some repositories", message.toString(), myProject);
           }
           return;
         }
       }
       else {
-        showFatalError(getErrorTitle(), result.getErrorOutputAsHtmlString(), myProject);
+        GitMultiRootOperationExecutor.showFatalError(getErrorTitle(), result.getErrorOutputAsHtmlString(), myProject);
         return;
       }
     }
-    notifySuccess(getSuccessMessage(), myProject);
+    GitMultiRootOperationExecutor.notifySuccess(getSuccessMessage(), myProject);
   }
 
   private void notifyError(Collection<GitRepository> succeeded, GitCompoundResult compoundResult) {
     if (succeeded.isEmpty()) {
-      showFatalError(getErrorTitle(), compoundResult.getErrorOutputWithReposIndication(), myProject);
+      GitMultiRootOperationExecutor.showFatalError(getErrorTitle(), compoundResult.getErrorOutputWithReposIndication(), myProject);
     }
     else {
       notifyPartialError(succeeded, compoundResult);
@@ -113,9 +113,9 @@ class GitDeleteBranchOperation {
   private void notifyPartialError(Collection<GitRepository> succeeded, GitCompoundResult compoundResult) {
     String title = "Couldn't delete branch " + myBranchName + " in some repositories";
     StringBuilder message = new StringBuilder();
-    message.append("Successfully removed in ").append(joinRepositoryUrls(succeeded, "<br/>"))
+    message.append("Successfully removed in ").append(GitMultiRootOperationExecutor.joinRepositoryUrls(succeeded, "<br/>"))
       .append(compoundResult.getErrorOutputWithReposIndication());
-    showFatalError(title, message.toString(), myProject);
+    GitMultiRootOperationExecutor.showFatalError(title, message.toString(), myProject);
   }
 
   @NotNull

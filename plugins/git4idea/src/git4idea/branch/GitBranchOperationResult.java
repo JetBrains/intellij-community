@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.process;
+package git4idea.branch;
 
 import org.jetbrains.annotations.Nullable;
 
