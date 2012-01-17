@@ -22,15 +22,14 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract external tool for compiler.
@@ -38,12 +37,6 @@ import java.util.*;
  * @author Alexey Efimov
  */
 public final class ExecutionUtil {
-  @NonNls
-  private static final String[] COMMAND_COM = {"command.com", "/C"};
-  @NonNls
-  private static final String[] CMD_EXE = {"cmd.exe", "/C"};
-
-  //private final static Pattern SKIPPING_HIDDEN_FILES = Pattern.compile("^\\s+\\(skipping hidden file\\s'(.*)'\\)$");
 
   private static final String IGNORING = "ignoring";
   private static final String SKIPPING = "skipping";
@@ -54,17 +47,23 @@ public final class ExecutionUtil {
   // can't be invoked from dispatch thread
   @NotNull
   public static Map<CompilerMessageCategory, List<String>> execute(String... argv) throws IOException {
-    return performCommand(toPlatformDependedCommand(argv));
-  }
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    ProcessBuilder builder = new ProcessBuilder(argv);
+    ProcessResult result = readProcessOutput(builder.start());
+    Map<CompilerMessageCategory, List<String>> messages = result.getMessages();
+    int code = result.getExitCode();
+    List<String> errMessages = messages.get(CompilerMessageCategory.ERROR);
 
-  private static String[] toPlatformDependedCommand(String... argv) {
-    if (SystemInfo.isWindows) {
-      List<String> command = new ArrayList<String>();
-      //command.addAll(Arrays.asList(SystemInfo.isWindows9x ? COMMAND_COM : CMD_EXE));
-      ContainerUtil.addAll(command, argv);
-      return ArrayUtil.toStringArray(command);
+    if (code != 0 && errMessages.isEmpty()) {
+      throw new IOException(AndroidBundle.message("command.0.execution.failed.with.exit.code.1", concat(argv), code));
     }
-    return argv;
+    else {
+      if (code == 0) {
+        messages.get(CompilerMessageCategory.INFORMATION).addAll(errMessages);
+        errMessages.clear();
+      }
+      return messages;
+    }
   }
 
   private static String concat(String... strs) {
@@ -76,26 +75,6 @@ public final class ExecutionUtil {
       }
     }
     return builder.toString();
-  }
-
-  @NotNull
-  private static Map<CompilerMessageCategory, List<String>> performCommand(String... command) throws IOException {
-    assert !ApplicationManager.getApplication().isDispatchThread();
-    ProcessBuilder builder = new ProcessBuilder(command);
-    ProcessResult result = readProcessOutput(builder.start());
-    Map<CompilerMessageCategory, List<String>> messages = result.getMessages();
-    int code = result.getExitCode();
-    List<String> errMessages = messages.get(CompilerMessageCategory.ERROR);
-    if (code != 0 && errMessages.isEmpty()) {
-      throw new IOException(AndroidBundle.message("command.0.execution.failed.with.exit.code.1", concat(command), code));
-    }
-    else {
-      if (code == 0) {
-        messages.get(CompilerMessageCategory.INFORMATION).addAll(errMessages);
-        errMessages.clear();
-      }
-      return messages;
-    }
   }
 
   @NotNull
