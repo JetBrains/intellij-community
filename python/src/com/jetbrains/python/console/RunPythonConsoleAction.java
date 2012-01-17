@@ -79,7 +79,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
     String workingDir = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings().getWorkingDirectory();
     if (StringUtil.isEmpty(workingDir)) {
-      if (module != null) {
+      if (module != null && ModuleRootManager.getInstance(module).getContentRoots().length > 0) {
         workingDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getPath();
       }
       else {
